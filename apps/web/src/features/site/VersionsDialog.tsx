@@ -1,9 +1,8 @@
 import type { Site } from '@leadflow/shared';
 import { useState } from 'react';
-import { Alert, Button, Spinner } from '../../components/ui';
+import { Alert, Button, DialogShell, Spinner } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';
 import { useRollback, useUnpublish, useVersions } from './api';
-import { DialogShell } from './PublishDialog';
 
 const dateFormat = new Intl.DateTimeFormat('he-IL', { dateStyle: 'medium', timeStyle: 'short' });
 

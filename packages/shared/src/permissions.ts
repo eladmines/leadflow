@@ -27,6 +27,10 @@ export const PERMISSIONS = {
   /** Everyone can open the leads area; employees only see leads assigned to them (PRD §20). */
   'leads.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'leads.view.all': ['OWNER', 'MANAGER'],
+  /** Employees may create leads (assigned to themselves) and update leads assigned to them. */
+  'leads.create': ['OWNER', 'MANAGER', 'EMPLOYEE'],
+  'leads.update': ['OWNER', 'MANAGER', 'EMPLOYEE'],
+  'leads.assign': ['OWNER', 'MANAGER'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;
