@@ -17,6 +17,7 @@ docker compose up -d            # Postgres (localhost:5432) + Mailpit (UI localh
 cp apps/api/.env.example apps/api/.env   # first time only
 pnpm install
 pnpm db:migrate                 # prisma migrate dev (apps/api)
+pnpm --filter @leadflow/api exec prisma generate   # after pulling/merging schema changes (stale client = type errors)
 pnpm dev                        # API :4000 + web :5173 (web proxies /api)
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 pnpm e2e                        # Playwright, desktop + mobile
