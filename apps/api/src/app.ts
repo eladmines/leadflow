@@ -22,6 +22,7 @@ import { healthRoutes } from './modules/health/routes';
 import { authRoutes } from './modules/auth/routes';
 import { businessRoutes, businessTenantRoutes } from './modules/businesses/routes';
 import { siteTenantRoutes } from './modules/sites/routes';
+import { leadTenantRoutes } from './modules/leads/routes';
 import { PublishedSiteCache } from './public/cache';
 
 declare module 'fastify' {
@@ -111,6 +112,7 @@ export async function buildApp({ config, prisma, emailSender, logStream, siteCac
     tenantScope(async (scope) => {
       await scope.register(businessTenantRoutes);
       await scope.register(siteTenantRoutes);
+      await scope.register(leadTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

@@ -29,16 +29,7 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { segment: '', label: 'דשבורד', icon: LayoutDashboard },
   { segment: 'site', label: 'האתר שלי', icon: Globe },
-  {
-    segment: 'leads',
-    label: 'לקוחות ולידים',
-    icon: Users,
-    comingSoon: {
-      title: 'ניהול לקוחות ולידים בדרך',
-      description:
-        'כל פנייה מהאתר תיכנס לכאן כליד, עם מקור ההגעה. תוכלו לנהל משפך מכירה, להוסיף הערות ולעקוב אחרי כל לקוח.',
-    },
-  },
+  { segment: 'leads', label: 'לקוחות ולידים', icon: Users },
   {
     segment: 'conversations',
     label: 'שיחות',

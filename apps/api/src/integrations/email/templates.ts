@@ -86,3 +86,41 @@ ${button(params.link, 'איפוס הסיסמה')}
   ].join('\n');
   return { subject, html, text };
 }
+
+/** F07: a new website lead, sent to owners and managers. Personal data stays out of the subject. */
+export function newLeadTemplate(params: {
+  businessName: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  message: string | null;
+  link: string;
+}): RenderedEmail {
+  const subject = `פנייה חדשה מהאתר — ${params.businessName}`;
+  const rows: [string, string][] = [
+    ['שם', params.name],
+    ['טלפון', params.phone],
+    ...(params.email ? ([['אימייל', params.email]] as [string, string][]) : []),
+    ...(params.message ? ([['הודעה', params.message]] as [string, string][]) : []),
+  ];
+  const html = layout(
+    subject,
+    `<h1 style="font-size:20px;margin:0 0 16px;">התקבלה פנייה חדשה מהאתר</h1>
+<table style="border-collapse:collapse;width:100%;margin:0 0 8px;">${rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="padding:6px 0;color:#6b7280;width:80px;vertical-align:top;">${k}</td><td style="padding:6px 0;white-space:pre-wrap;">${escapeHtml(v)}</td></tr>`,
+      )
+      .join('')}</table>
+${button(params.link, 'לצפייה בליד')}
+<p style="margin:0;color:#6b7280;">כדאי לחזור ללקוח מהר — פניות שנענות מהר נסגרות יותר.</p>`,
+  );
+  const text = [
+    'התקבלה פנייה חדשה מהאתר',
+    '',
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    '',
+    `לצפייה בליד: ${params.link}`,
+  ].join('\n');
+  return { subject, html, text };
+}

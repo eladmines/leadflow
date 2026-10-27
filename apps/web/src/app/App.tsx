@@ -13,6 +13,7 @@ import { SettingsPage } from '../features/settings/SettingsPage';
 import { BusinessLayout } from '../features/shell/BusinessLayout';
 import { ComingSoonPage } from '../features/shell/ComingSoonPage';
 import { navItems } from '../features/shell/nav';
+import { LeadsPage } from '../features/leads/LeadsPage';
 import { SitePage } from '../features/site/SitePage';
 import { TeamPage } from '../features/team/TeamPage';
 import { ContinueOnboardingPage, NewBusinessPage } from '../features/onboarding/OnboardingPage';
@@ -103,6 +104,7 @@ export function AppRoutes() {
             />
           ))}
         <Route path="site" element={<SitePage />} />
+        <Route path="leads" element={<LeadsPage />} />
         <Route path="team" element={<TeamPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />

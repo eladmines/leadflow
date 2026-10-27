@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
 /**
@@ -56,6 +57,13 @@ const envSchema = z
       .regex(/^[a-z0-9.-]+(:\d+)?$/i)
       .default('lvh.me:4100'),
     PUBLIC_SITE_PROTOCOL: z.enum(['http', 'https']).optional(),
+
+    // F07 — Lead forms
+    /** HMAC secret for public form tokens (≥ 32 chars). Random per boot outside production. */
+    FORM_TOKEN_SECRET: z.string().min(32).optional(),
+    /** Accepted form submissions per visitor IP per site per window. */
+    LEAD_FORM_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
+    LEAD_FORM_RATE_LIMIT_WINDOW: z.coerce.number().int().positive().default(600_000),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'production') return;
@@ -73,6 +81,13 @@ const envSchema = z
         message: 'must be true in production',
       });
     }
+    if (!env.FORM_TOKEN_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FORM_TOKEN_SECRET'],
+        message: 'is required in production',
+      });
+    }
     if (env.EMAIL_TRANSPORT === 'memory') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -87,6 +102,7 @@ const envSchema = z
     COOKIE_SECURE: env.COOKIE_SECURE ?? env.NODE_ENV === 'production',
     PUBLIC_SITE_PROTOCOL:
       env.PUBLIC_SITE_PROTOCOL ?? (env.NODE_ENV === 'production' ? 'https' : 'http'),
+    FORM_TOKEN_SECRET: env.FORM_TOKEN_SECRET ?? randomBytes(32).toString('base64url'),
   }));
 
 export type AppConfig = z.infer<typeof envSchema>;

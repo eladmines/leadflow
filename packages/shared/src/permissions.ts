@@ -24,6 +24,9 @@ export const PERMISSIONS = {
   /** PRD §20: site editing — owner yes, manager "by permission" (not by default), employee no. */
   'site.edit': ['OWNER'],
   'site.publish': ['OWNER'],
+  /** Everyone can open the leads area; employees only see leads assigned to them (PRD §20). */
+  'leads.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
+  'leads.view.all': ['OWNER', 'MANAGER'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

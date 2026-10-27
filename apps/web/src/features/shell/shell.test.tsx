@@ -42,11 +42,11 @@ describe('app shell', () => {
 
   it('renders a "coming soon" page for sections that are not built yet', async () => {
     mockApi({ [meKey]: me(testUser) });
-    renderApp(section('leads'));
+    renderApp(section('conversations'));
     expect(
-      await screen.findByRole('heading', { name: 'ניהול לקוחות ולידים בדרך' }),
+      await screen.findByRole('heading', { name: 'תיבת שיחות WhatsApp בדרך' }),
     ).toBeInTheDocument();
-    expect(within(mainNav()).getByRole('link', { name: /לקוחות ולידים/ })).toHaveAttribute(
+    expect(within(mainNav()).getByRole('link', { name: /שיחות/ })).toHaveAttribute(
       'aria-current',
       'page',
     );

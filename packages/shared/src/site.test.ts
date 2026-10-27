@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultOpeningHours } from './business';
 import {
+  DEFAULT_CONTACT_FORM,
   saveDraftRequestSchema,
   sectionSchema,
   SECTION_TYPES,
@@ -95,6 +96,7 @@ describe('renderSitePage', () => {
         showPhone: true,
         showAddress: true,
         showHours: false,
+        form: { ...DEFAULT_CONTACT_FORM, successMessage: evil, buttonLabel: evil.slice(0, 40) },
       },
     ];
     const html = renderSitePage(

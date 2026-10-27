@@ -16,6 +16,7 @@ describe('publishing (F06)', () => {
       config: ctx.app.config,
       prisma: ctx.prisma,
       cache: ctx.app.siteCache,
+      email: ctx.email,
     });
   });
   afterAll(async () => {
@@ -182,6 +183,7 @@ describe('public site server', () => {
       config: ctx.app.config,
       prisma: ctx.prisma,
       cache: ctx.app.siteCache,
+      email: ctx.email,
     });
   });
   afterAll(async () => {
@@ -207,13 +209,13 @@ describe('public site server', () => {
     expect(res.headers['content-security-policy']).toContain("default-src 'none'");
     expect(res.headers['content-security-policy']).not.toContain('script-src');
     expect(res.headers['x-frame-options']).toBe('DENY');
-    expect(res.headers['cache-control']).toBe('no-cache');
-    const again = await pub.inject({
-      method: 'GET',
-      url: '/',
-      headers: { host: host('garage'), 'if-none-match': res.headers.etag as string },
-    });
-    expect(again.statusCode).toBe(304);
+    expect(res.headers['cache-control']).toBe('no-store');
+    // Each view gets its own form token (the placeholder never leaks to visitors).
+    const again = await pub.inject({ method: 'GET', url: '/', headers: { host: host('garage') } });
+    const token = (html: string) => /name="_t" value="([^"]+)"/.exec(html)?.[1];
+    expect(token(res.body)).toMatch(/^\d{13}\./);
+    expect(token(again.body)).not.toBe(token(res.body));
+    expect(res.body).not.toContain('__LF_FORM_TOKEN__');
     expect(res.headers['set-cookie']).toBeUndefined();
     expect(res.body).toContain('dir="rtl"');
   });

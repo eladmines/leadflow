@@ -156,6 +156,46 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
             checked={s.showHours}
             onChange={(e) => onChange({ showHours: e.target.checked })}
           />
+          <fieldset className="flex flex-col gap-3 rounded-2xl border border-surface-border p-4">
+            <legend className="px-1 text-sm font-medium text-ink">טופס פנייה</legend>
+            <Checkbox
+              label="הצגת טופס פנייה באתר"
+              checked={s.form.enabled}
+              onChange={(e) => onChange({ form: { ...s.form, enabled: e.target.checked } })}
+            />
+            {s.form.enabled && (
+              <>
+                <p className="text-xs text-ink-muted">
+                  שם וטלפון הם תמיד חובה. כל פנייה נכנסת כליד ומגיעה אליך באימייל.
+                </p>
+                <Checkbox
+                  label="שדה אימייל"
+                  checked={s.form.askEmail}
+                  onChange={(e) => onChange({ form: { ...s.form, askEmail: e.target.checked } })}
+                />
+                <Checkbox
+                  label="שדה הודעה חופשית"
+                  checked={s.form.askMessage}
+                  onChange={(e) => onChange({ form: { ...s.form, askMessage: e.target.checked } })}
+                />
+                <Field
+                  label="טקסט כפתור השליחה"
+                  maxLength={40}
+                  value={s.form.buttonLabel}
+                  onChange={(e) => onChange({ form: { ...s.form, buttonLabel: e.target.value } })}
+                />
+                <Textarea
+                  label="הודעה אחרי שליחה"
+                  rows={2}
+                  maxLength={SITE_LIMITS.shortText}
+                  value={s.form.successMessage}
+                  onChange={(e) =>
+                    onChange({ form: { ...s.form, successMessage: e.target.value } })
+                  }
+                />
+              </>
+            )}
+          </fieldset>
         </div>
       );
     case 'cta':
