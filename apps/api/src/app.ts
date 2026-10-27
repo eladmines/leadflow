@@ -52,6 +52,19 @@ export async function buildApp({ config, prisma, emailSender, logStream }: AppDe
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  // Treat an empty JSON body as "no body" instead of a 400, so body-less POSTs (logout,
+  // resend-verification) work even when a client sends `Content-Type: application/json`.
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+    if (body === '') return done(null, undefined);
+    try {
+      done(null, JSON.parse(body as string));
+    } catch (err) {
+      (err as { statusCode?: number }).statusCode = 400;
+      done(err as Error, undefined);
+    }
+  });
+
   app.decorate('config', config);
   app.decorate('prisma', prisma);
 

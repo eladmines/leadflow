@@ -44,3 +44,4 @@ F06 ─► F11 (after spike)
 
 - 2026-10-27 — F00 complete: monorepo, API skeleton, Prisma baseline migration, web RTL kit,
   tests (13 unit/integration, 6 e2e), CI, planning docs, agent definitions.
+- 2026-10-27 — F01 complete: 8 auth endpoints, 6 RTL screens, 182 tests + 7 e2e; QA verdict ready; QA-F01-1 (empty JSON body on logout) fixed.
