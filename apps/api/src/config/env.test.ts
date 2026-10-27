@@ -48,14 +48,27 @@ describe('loadConfig', () => {
       DATABASE_URL: DB,
       NODE_ENV: 'production',
       APP_URL: 'https://app.leadflow.test',
+      FORM_TOKEN_SECRET: 's'.repeat(32),
     });
     expect(cfg.COOKIE_SECURE).toBe(true);
   });
 
   it('rejects an insecure cookie or the memory email transport in production', () => {
-    const base = { DATABASE_URL: DB, NODE_ENV: 'production', APP_URL: 'https://a.test' };
+    const base = {
+      DATABASE_URL: DB,
+      NODE_ENV: 'production',
+      APP_URL: 'https://a.test',
+      FORM_TOKEN_SECRET: 's'.repeat(32),
+    };
     expect(() => loadConfig({ ...base, COOKIE_SECURE: 'false' })).toThrow(/COOKIE_SECURE/);
     expect(() => loadConfig({ ...base, EMAIL_TRANSPORT: 'memory' })).toThrow(/EMAIL_TRANSPORT/);
+  });
+
+  it('requires FORM_TOKEN_SECRET in production and generates one elsewhere', () => {
+    expect(() =>
+      loadConfig({ DATABASE_URL: DB, NODE_ENV: 'production', APP_URL: 'https://a.test' }),
+    ).toThrow(/FORM_TOKEN_SECRET/);
+    expect(loadConfig({ DATABASE_URL: DB }).FORM_TOKEN_SECRET.length).toBeGreaterThanOrEqual(32);
   });
 
   it('parses rate-limit settings as numbers', () => {

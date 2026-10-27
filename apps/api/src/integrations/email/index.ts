@@ -6,7 +6,7 @@ import type { EmailSender } from './types';
 export type { EmailMessage, EmailSender } from './types';
 export { MemoryEmailSender } from './memory';
 export { SmtpEmailSender } from './smtp';
-export { passwordResetTemplate, verifyEmailTemplate } from './templates';
+export { newLeadTemplate, passwordResetTemplate, verifyEmailTemplate } from './templates';
 
 /** Picks the adapter from `EMAIL_TRANSPORT`. */
 export function createEmailSender(config: AppConfig): EmailSender {

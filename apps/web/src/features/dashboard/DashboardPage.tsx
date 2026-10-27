@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 import { buttonClasses, Card, TextLink } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
+import { timeAgo, useLeads } from '../leads/api';
 import { useSite } from '../site/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
@@ -125,6 +126,7 @@ export function DashboardPage() {
   const business = useCurrentBusiness();
   const user = useMe().data?.user;
   const site = useSite(business.id).data;
+  const leads = useLeads(business.id).data ?? [];
   const firstName = user?.fullName.trim().split(/\s+/)[0] ?? '';
 
   const checklist: { label: string; hint: string; state: ItemState }[] = [
@@ -271,14 +273,41 @@ export function DashboardPage() {
         </Card>
 
         <Card className="flex flex-col gap-3 lg:col-span-2">
-          <h2 className="text-lg font-semibold text-ink">פניות אחרונות</h2>
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
-            <EmptyInboxArt />
-            <p className="text-base font-medium text-ink">עדיין אין פניות</p>
-            <p className="max-w-xs text-sm text-ink-muted">
-              אחרי שהאתר יפורסם, כל פנייה מהטופס תופיע כאן ותקבלו עליה התראה.
-            </p>
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-semibold text-ink">פניות אחרונות</h2>
+            {leads.length > 0 && (
+              <TextLink to={businessWebPaths.section(business.id, 'leads')}>לכל הפניות</TextLink>
+            )}
           </div>
+          {leads.length > 0 ? (
+            <ul aria-label="פניות אחרונות" className="flex flex-col divide-y divide-surface-border">
+              {leads.slice(0, 5).map((l) => (
+                <li key={l.id} className="flex items-center gap-3 py-3">
+                  <span
+                    aria-hidden
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-100 text-sm font-semibold text-accent-700"
+                  >
+                    {l.contact.name.trim().charAt(0)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-ink">{l.contact.name}</p>
+                    <p className="truncate text-xs text-ink-muted">{l.message ?? 'ללא הודעה'}</p>
+                  </div>
+                  <time dateTime={l.createdAt} className="shrink-0 text-xs text-ink-muted">
+                    {timeAgo(l.createdAt)}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
+              <EmptyInboxArt />
+              <p className="text-base font-medium text-ink">עדיין אין פניות</p>
+              <p className="max-w-xs text-sm text-ink-muted">
+                אחרי שהאתר יפורסם, כל פנייה מהטופס תופיע כאן ותקבלו עליה התראה.
+              </p>
+            </div>
+          )}
         </Card>
       </div>
 

@@ -1,4 +1,10 @@
-import type { Section, SiteSeo, SiteTheme, TemplateKey } from './site';
+import {
+  DEFAULT_CONTACT_FORM,
+  type Section,
+  type SiteSeo,
+  type SiteTheme,
+  type TemplateKey,
+} from './site';
 
 /** The business details a template or the renderer needs. */
 export interface SiteBusinessInfo {
@@ -103,6 +109,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
           showPhone: true,
           showAddress: true,
           showHours: true,
+          form: { ...DEFAULT_CONTACT_FORM },
         },
       ],
     };
@@ -187,6 +194,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
         showPhone: true,
         showAddress: true,
         showHours: true,
+        form: { ...DEFAULT_CONTACT_FORM },
       },
     ],
   };
@@ -244,6 +252,7 @@ export function newSection(type: Section['type'], id: string): Section {
         showPhone: true,
         showAddress: true,
         showHours: true,
+        form: { ...DEFAULT_CONTACT_FORM },
       };
     case 'cta':
       return {

@@ -43,6 +43,7 @@ model User {
   auditLogs    AuditLog[]
   memberships  Membership[]
   siteVersions SiteVersion[]
+  ownedLeads   Lead[]
 
   @@map("users")
 }
@@ -150,6 +151,9 @@ model Business {
   memberships Membership[]
   auditLogs   AuditLog[]
   site        Site?
+  contacts    Contact[]
+  leads       Lead[]
+  stages      PipelineStage[]
 
   @@map("businesses")
 }
@@ -201,9 +205,10 @@ model Site {
   createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business         Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  versions         SiteVersion[] @relation("SiteVersions")
-  publishedVersion SiteVersion?  @relation("PublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  business         Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  versions         SiteVersion[]    @relation("SiteVersions")
+  submissions      FormSubmission[]
+  publishedVersion SiteVersion?     @relation("PublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
 
   @@map("sites")
 }
@@ -231,4 +236,119 @@ model SiteVersion {
   @@unique([siteId, number])
   @@index([businessId])
   @@map("site_versions")
+}
+
+// ---------------------------------------------------------------------------
+// F07 — Lead capture (F08 builds the CRM on these tables)
+// ---------------------------------------------------------------------------
+
+enum StageKind {
+  OPEN
+  WON
+  LOST
+}
+
+enum LeadSource {
+  website_form
+  manual
+  whatsapp
+}
+
+/// A person who contacted the business. Matched by phone within the business.
+model Contact {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  name       String   @db.VarChar(80)
+  /// E.164.
+  phone      String?  @db.VarChar(20)
+  email      String?  @db.VarChar(254)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  leads    Lead[]
+
+  @@index([businessId, phone])
+  @@index([businessId, email])
+  @@map("contacts")
+}
+
+/// Ordered pipeline stages per business; seeded with the PRD defaults on first use.
+model PipelineStage {
+  id         String    @id @default(uuid()) @db.Uuid
+  businessId String    @map("business_id") @db.Uuid
+  name       String    @db.VarChar(40)
+  position   Int
+  kind       StageKind @default(OPEN)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  leads    Lead[]
+
+  @@unique([businessId, position])
+  @@map("pipeline_stages")
+}
+
+model Lead {
+  id         String     @id @default(uuid()) @db.Uuid
+  businessId String     @map("business_id") @db.Uuid
+  contactId  String     @map("contact_id") @db.Uuid
+  stageId    String     @map("stage_id") @db.Uuid
+  /// Assigned team member (F08). Employees only see leads assigned to them.
+  ownerId    String?    @map("owner_id") @db.Uuid
+  source     LeadSource
+  sourceUrl  String?    @map("source_url") @db.VarChar(300)
+  message    String?    @db.VarChar(1000)
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business   Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact    Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  stage      PipelineStage   @relation(fields: [stageId], references: [id])
+  owner      User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  activities Activity[]
+  submission FormSubmission?
+
+  @@index([businessId, createdAt])
+  @@index([businessId, stageId])
+  @@index([businessId, ownerId])
+  @@map("leads")
+}
+
+/// Raw accepted website-form submission; the idempotency key stops double-submits creating two leads.
+model FormSubmission {
+  id             String   @id @default(uuid()) @db.Uuid
+  businessId     String   @map("business_id") @db.Uuid
+  siteId         String   @map("site_id") @db.Uuid
+  idempotencyKey String   @map("idempotency_key") @db.VarChar(64)
+  /// The validated fields (name, phone, email, message) — personal data; never logged.
+  payload        Json
+  consentAt      DateTime @map("consent_at") @db.Timestamptz(3)
+  /// Salted hash of the visitor IP (abuse analysis without storing the IP).
+  ipHash         String   @map("ip_hash") @db.VarChar(64)
+  leadId         String   @unique @map("lead_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, idempotencyKey])
+  @@index([businessId, createdAt])
+  @@map("form_submissions")
+}
+
+/// History of a lead (created, stage changed, note…). F08 adds more types.
+model Activity {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  leadId     String   @map("lead_id") @db.Uuid
+  type       String   @db.VarChar(50)
+  data       Json     @default("{}")
+  actorId    String?  @map("actor_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, leadId, createdAt])
+  @@map("activities")
 }

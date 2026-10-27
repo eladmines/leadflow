@@ -132,6 +132,23 @@ export const heroActionLabels: Record<(typeof HERO_ACTIONS)[number], string> = {
   contact: 'מעבר ליצירת קשר',
 };
 
+/** Lead form inside the contact section (F07). Defaults keep drafts saved before F07 valid. */
+export const DEFAULT_CONTACT_FORM = {
+  enabled: true,
+  askEmail: true,
+  askMessage: true,
+  buttonLabel: 'שליחה',
+  successMessage: 'תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.',
+};
+export const contactFormSchema = z.object({
+  enabled: z.boolean(),
+  askEmail: z.boolean(),
+  askMessage: z.boolean(),
+  buttonLabel: z.string().trim().min(1, siteMessages.required).max(40, siteMessages.textTooLong),
+  successMessage: short,
+});
+export type ContactForm = z.infer<typeof contactFormSchema>;
+
 export const sectionSchema = z.discriminatedUnion('type', [
   z.object({
     ...base,
@@ -177,6 +194,7 @@ export const sectionSchema = z.discriminatedUnion('type', [
     showPhone: z.boolean(),
     showAddress: z.boolean(),
     showHours: z.boolean(),
+    form: contactFormSchema.default(DEFAULT_CONTACT_FORM),
   }),
   z.object({
     ...base,
