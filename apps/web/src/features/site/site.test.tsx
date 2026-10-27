@@ -1,0 +1,184 @@
+import {
+  apiPaths,
+  buildTemplateDraft,
+  businessWebPaths,
+  type Business,
+  type Site,
+} from '@leadflow/shared';
+import { screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  apiError,
+  callsTo,
+  json,
+  me,
+  mockApi,
+  renderApp,
+  testBusiness,
+  testUser,
+} from '../../test/utils';
+import { siteBusinessInfo } from './api';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  localStorage.clear();
+});
+
+const sp = apiPaths.site;
+const meKey = `GET ${apiPaths.auth.me}`;
+const sitePath = businessWebPaths.section(testBusiness.id, 'site');
+const draft = buildTemplateDraft('beauty', siteBusinessInfo(testBusiness));
+const site: Site = {
+  id: '7e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b',
+  ...draft,
+  revision: 0,
+  status: 'DRAFT',
+  updatedAt: '2026-10-27T10:00:00.000Z',
+};
+const getSite = (s: Site | null) => ({
+  [`GET ${sp.site(testBusiness.id)}`]: () => json(200, { site: s }),
+});
+/** PUT that behaves like the API: bumps the revision. */
+const putOk = (body: unknown) =>
+  json(200, {
+    site: { ...site, ...(body as object), revision: (body as { revision: number }).revision + 1 },
+  });
+const asRole = (role: Business['role']) => ({
+  [`GET ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+    json(200, { business: { ...testBusiness, role } }),
+});
+const previewHtml = () =>
+  (screen.getByTitle('תצוגה מקדימה של האתר') as HTMLIFrameElement).getAttribute('srcdoc') ?? '';
+
+describe('template picker', () => {
+  it('suggests the template for the industry and creates the site', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(null),
+      [`POST ${sp.site(testBusiness.id)}`]: () => json(201, { site }),
+    });
+    const { user } = renderApp(sitePath);
+    expect(
+      await screen.findByRole('heading', { name: 'בואו נבנה את האתר שלך' }),
+    ).toBeInTheDocument();
+    const cards = screen.getAllByRole('article');
+    expect(within(cards[0]!).getByText('מומלץ לעסק שלך')).toBeInTheDocument();
+    expect(within(cards[0]!).getByRole('heading', { name: 'יופי וטיפוח' })).toBeInTheDocument();
+
+    await user.click(within(cards[0]!).getByRole('button', { name: 'בחירת התבנית' }));
+    expect(await screen.findByRole('heading', { name: 'האתר שלי' })).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'POST', sp.site(testBusiness.id))).toEqual([
+      { templateKey: 'beauty' },
+    ]);
+  });
+
+  it('non-owners see an empty state instead of the picker', async () => {
+    mockApi({ [meKey]: me(testUser), ...asRole('EMPLOYEE'), ...getSite(null) });
+    renderApp(sitePath);
+    expect(await screen.findByRole('heading', { name: 'האתר עדיין לא נבנה' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'בחירת התבנית' })).not.toBeInTheDocument();
+  });
+});
+
+describe('site editor', () => {
+  it('edits a section, autosaves with the current revision and updates the preview', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: putOk,
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: /^כותרת ראשית/ }));
+    const title = screen.getByLabelText('כותרת');
+    await user.clear(title);
+    await user.type(title, 'שירן — עיצוב שיער');
+
+    await waitFor(
+      () => expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).length).toBeGreaterThan(0),
+      {
+        timeout: 3000,
+      },
+    );
+    await waitFor(() => expect(screen.getByText('כל השינויים נשמרו')).toBeInTheDocument(), {
+      timeout: 3000,
+    });
+    const puts = callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id));
+    expect(puts[0].revision).toBe(0);
+    expect(puts.at(-1).sections[0].title).toBe('שירן — עיצוב שיער');
+    // Later saves carry the revision returned by the previous one.
+    if (puts.length > 1) expect(puts[1].revision).toBe(1);
+    await waitFor(() => expect(previewHtml()).toContain('שירן — עיצוב שיער'));
+  });
+
+  it('hides and reorders sections', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: putOk,
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'הסתרת המלצות' }));
+    await user.click(screen.getByRole('button', { name: 'הזזת מחירון למעלה' }));
+    await waitFor(
+      () => expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).length).toBeGreaterThan(0),
+      {
+        timeout: 3000,
+      },
+    );
+    const last = callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).at(-1);
+    expect(last.sections.map((s: { type: string }) => s.type).slice(0, 3)).toEqual([
+      'hero',
+      'pricing',
+      'services',
+    ]);
+    expect(last.sections.find((s: { type: string }) => s.type === 'testimonials').visible).toBe(
+      false,
+    );
+    await waitFor(() => expect(previewHtml()).not.toContain('מה הלקוחות מספרים'));
+  });
+
+  it('stops autosave and explains when another window saved first (409)', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: () =>
+        apiError(409, 'CONFLICT', 'האתר נערך בינתיים בחלון אחר.'),
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'הסתרת המלצות' }));
+    expect(
+      await screen.findByText('האתר נערך בחלון אחר', {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'טעינה מחדש' })).toBeInTheDocument();
+  });
+
+  it('keeps a local backup when saving fails, and retries', async () => {
+    let fail = true;
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: (body) =>
+        fail ? apiError(500, 'INTERNAL_ERROR', 'שגיאה') : putOk(body),
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'הסתרת המלצות' }));
+    expect(await screen.findByText('השמירה נכשלה', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(localStorage.getItem(`leadflow:site-draft:${testBusiness.id}`)).toContain(
+      '"revision":0',
+    );
+
+    fail = false;
+    await user.click(screen.getByRole('button', { name: 'נסו שוב' }));
+    expect(await screen.findByText('כל השינויים נשמרו')).toBeInTheDocument();
+    expect(localStorage.getItem(`leadflow:site-draft:${testBusiness.id}`)).toBeNull();
+    expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id))).toHaveLength(2);
+  });
+
+  it('is read-only for non-owners (preview only)', async () => {
+    mockApi({ [meKey]: me(testUser), ...asRole('MANAGER'), ...getSite(site) });
+    renderApp(sitePath);
+    expect(await screen.findByText(/רק בעל\/ת העסק יכול\/ה לערוך את האתר/)).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(previewHtml()).toContain('מספרת שירן');
+  });
+});

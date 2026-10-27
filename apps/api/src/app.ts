@@ -9,18 +9,19 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
-import { CSRF_HEADER_NAME } from '@leadflow/shared';
+import { apiPaths, CSRF_HEADER_NAME } from '@leadflow/shared';
 import type { AppConfig } from './config/env';
 import { loggerOptions, type LogStream } from './lib/logger';
 import { AppError } from './lib/errors';
 import { registerErrorHandler } from './plugins/error-handler';
 import { registerCsrfGuard } from './plugins/csrf';
 import { registerSessionPlugin } from './plugins/session';
-import { registerTenantSupport } from './plugins/tenant';
+import { registerTenantSupport, tenantScope } from './plugins/tenant';
 import { createEmailSender, SmtpEmailSender, type EmailSender } from './integrations/email';
 import { healthRoutes } from './modules/health/routes';
 import { authRoutes } from './modules/auth/routes';
-import { businessRoutes } from './modules/businesses/routes';
+import { businessRoutes, businessTenantRoutes } from './modules/businesses/routes';
+import { siteTenantRoutes } from './modules/sites/routes';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -99,6 +100,14 @@ export async function buildApp({ config, prisma, emailSender, logStream }: AppDe
   await app.register(healthRoutes);
   await app.register(authRoutes, { email });
   await app.register(businessRoutes);
+  // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
+  await app.register(
+    tenantScope(async (scope) => {
+      await scope.register(businessTenantRoutes);
+      await scope.register(siteTenantRoutes);
+    }),
+    { prefix: apiPaths.businesses.tenantPrefix },
+  );
 
   return app;
 }

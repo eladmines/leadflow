@@ -28,16 +28,7 @@ export interface NavItem {
 /** Navigation map, in the order of the UX spec (doc 03). */
 export const navItems: NavItem[] = [
   { segment: '', label: 'דשבורד', icon: LayoutDashboard },
-  {
-    segment: 'site',
-    label: 'האתר שלי',
-    icon: Globe,
-    comingSoon: {
-      title: 'בונה האתרים בדרך',
-      description:
-        'כאן תבחרו תבנית לפי תחום העסק, תערכו את המקטעים והמיתוג, תצפו בתצוגה מקדימה לנייד ולמחשב ותפרסמו את האתר בלחיצה.',
-    },
-  },
+  { segment: 'site', label: 'האתר שלי', icon: Globe },
   {
     segment: 'leads',
     label: 'לקוחות ולידים',

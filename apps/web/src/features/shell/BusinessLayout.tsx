@@ -2,9 +2,10 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { businessWebPaths } from '@leadflow/shared';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import { Navigate, Outlet, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useMatch, useParams } from 'react-router-dom';
 import { Alert, Button, FullPageSpinner, Logo } from '../../components/ui';
 import { ApiError } from '../../lib/api';
+import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { UnverifiedEmailBanner } from '../auth/UnverifiedEmailBanner';
 import { useBusiness } from '../businesses/api';
@@ -20,6 +21,8 @@ export function BusinessLayout() {
   const { businessId = '' } = useParams();
   const business = useBusiness(businessId);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The site editor needs the full width for its live preview.
+  const wide = useMatch('/b/:businessId/site') !== null;
 
   if (business.isPending) return <FullPageSpinner label="טוענים את העסק…" />;
   if (business.isError) {
@@ -97,7 +100,10 @@ export function BusinessLayout() {
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6 lg:px-12 lg:py-12"
+          className={cn(
+            'mx-auto flex flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6',
+            wide ? 'max-w-[1600px] lg:px-8 lg:py-8' : 'max-w-5xl lg:px-12 lg:py-12',
+          )}
         >
           <UnverifiedEmailBanner />
           <Outlet context={context} />
