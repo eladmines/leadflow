@@ -74,7 +74,7 @@ describe('lead form rendering', () => {
 
   it('renders an escaped, noindex message page in the site theme', () => {
     const html = renderSiteMessagePage(
-      { palette: 'rose', font: 'rubik' },
+      { palette: 'rose', font: 'rubik', logoAssetId: null },
       { name: '<b>x</b>' },
       {
         title: 'תודה!',

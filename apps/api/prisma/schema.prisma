@@ -156,6 +156,7 @@ model Business {
   leads       Lead[]
   stages      PipelineStage[]
   invitations Invitation[]
+  assets      Asset[]
 
   @@map("businesses")
 }
@@ -382,4 +383,28 @@ model Invitation {
 
   @@index([businessId, email])
   @@map("invitations")
+}
+
+// ---------------------------------------------------------------------------
+// F05 — Media
+// ---------------------------------------------------------------------------
+
+/// An uploaded image, re-encoded to WebP. The file lives in object storage under `key`.
+model Asset {
+  id           String   @id @default(uuid()) @db.Uuid
+  businessId   String   @map("business_id") @db.Uuid
+  /// `<businessId>/<uuid>.webp` — unguessable, immutable (new upload = new key).
+  key          String   @unique @db.VarChar(120)
+  mime         String   @db.VarChar(40)
+  sizeBytes    Int      @map("size_bytes")
+  width        Int
+  height       Int
+  originalName String?  @map("original_name") @db.VarChar(200)
+  createdById  String?  @map("created_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@map("assets")
 }

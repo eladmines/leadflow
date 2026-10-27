@@ -9,6 +9,7 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:4000',
       '/health': 'http://localhost:4000',
+      '/media': 'http://localhost:4000',
     },
   },
 });

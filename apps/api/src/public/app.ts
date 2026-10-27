@@ -22,6 +22,8 @@ import { loggerOptions, type LogStream } from '../lib/logger';
 import { newLeadTemplate, type EmailSender } from '../integrations/email';
 import { LeadService } from '../modules/leads/service';
 import { PublishedSiteCache, type PublishedPage } from './cache';
+import type { StorageProvider } from '../integrations/storage';
+import { registerMediaServing } from '../modules/media/serve';
 
 /**
  * Public-site server (F06): serves each business's *published* version by Host header,
@@ -53,6 +55,8 @@ export interface PublicAppDeps {
   cache?: PublishedSiteCache;
   /** New-lead notifications (F07). */
   email: EmailSender;
+  /** Uploaded images, served at /media on every site host (same origin → CSP 'self'). */
+  storage?: StorageProvider;
   logStream?: LogStream;
 }
 
@@ -67,6 +71,7 @@ export async function buildPublicApp({
   prisma,
   cache = new PublishedSiteCache(),
   email,
+  storage,
   logStream,
 }: PublicAppDeps) {
   const leads = new LeadService(prisma);
@@ -135,6 +140,7 @@ export async function buildPublicApp({
     );
 
   app.get('/health', async () => ({ status: 'ok' }));
+  if (storage) registerMediaServing(app, storage);
 
   app.get('/*', async (req, reply) => {
     const subdomain = subdomainOf(req.host);

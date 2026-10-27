@@ -3,6 +3,17 @@ import { FORM_TOKEN_PLACEHOLDER, HONEYPOT_FIELD, LEAD_FORM_PATH } from './leads'
 import { FONTS, PALETTES, type Section, type SiteTheme } from './site';
 import type { SiteBusinessInfo, SiteDraft } from './site-templates';
 
+/** Resolved image for rendering (built by the server from the business's own assets). */
+export interface MediaRef {
+  url: string;
+  width: number;
+  height: number;
+}
+export type MediaMap = Record<string, MediaRef>;
+
+const img = (m: MediaRef, alt: string, cls: string, lazy = true) =>
+  `<img class="${cls}" src="${esc(m.url)}" alt="${esc(alt)}" width="${m.width}" height="${m.height}"${lazy ? ' loading="lazy" decoding="async"' : ''}>`;
+
 /**
  * Renders a site draft to a complete, static, RTL HTML document.
  * Pure and dependency-free, shared by the editor preview (iframe srcdoc) and publishing (F06).
@@ -49,7 +60,12 @@ ${f.askMessage ? '<label>איך נוכל לעזור? (לא חובה)<textarea na
 </form>`;
 }
 
-function section(s: Section, b: SiteBusinessInfo, contactId: string | undefined): string {
+function section(
+  s: Section,
+  b: SiteBusinessInfo,
+  contactId: string | undefined,
+  media: MediaMap,
+): string {
   const id = `s-${esc(s.id)}`;
   switch (s.type) {
     case 'hero': {
@@ -59,13 +75,28 @@ function section(s: Section, b: SiteBusinessInfo, contactId: string | undefined)
           : contactId
             ? `#s-${esc(contactId)}`
             : '';
-      return `<header class="hero" id="${id}"><div class="wrap">
+      const bg = s.imageAssetId ? media[s.imageAssetId] : undefined;
+      return `<header class="hero${bg ? ' has-img' : ''}" id="${id}">${bg ? img(bg, '', 'hero-bg', false) : ''}<div class="wrap">
 <h1>${esc(s.title)}</h1>${s.subtitle ? `<p class="lead">${esc(s.subtitle)}</p>` : ''}
 ${s.buttonLabel && href ? `<a class="btn" href="${href}">${esc(s.buttonLabel)}</a>` : ''}
 </div></header>`;
     }
-    case 'about':
-      return `<section id="${id}"><div class="wrap narrow"><h2>${esc(s.title)}</h2>${paragraphs(s.body)}</div></section>`;
+    case 'about': {
+      const pic = s.imageAssetId ? media[s.imageAssetId] : undefined;
+      return pic
+        ? `<section id="${id}"><div class="wrap about-grid"><div><h2>${esc(s.title)}</h2>${paragraphs(s.body)}</div>${img(pic, s.imageAlt, 'about-img')}</div></section>`
+        : `<section id="${id}"><div class="wrap narrow"><h2>${esc(s.title)}</h2>${paragraphs(s.body)}</div></section>`;
+    }
+    case 'gallery': {
+      const pics = s.items.filter((i) => media[i.assetId]);
+      if (pics.length === 0) return '';
+      return `<section id="${id}"><div class="wrap"><h2>${esc(s.title)}</h2><div class="gallery">${pics
+        .map(
+          (i) =>
+            `<figure>${img(media[i.assetId]!, i.caption, 'gallery-img')}${i.caption ? `<figcaption>${esc(i.caption)}</figcaption>` : ''}</figure>`,
+        )
+        .join('')}</div></div></section>`;
+    }
     case 'services':
       return `<section id="${id}" class="soft"><div class="wrap"><h2>${esc(s.title)}</h2><div class="grid">${s.items
         .map(
@@ -180,6 +211,15 @@ footer{padding:28px 0;text-align:center;color:var(--muted);font-size:.9rem;borde
 .lead-form .consent{flex-direction:row;align-items:flex-start;gap:10px;font-weight:400;color:var(--muted);font-size:.9rem}
 .lead-form .consent input{margin-top:4px;width:18px;height:18px;accent-color:var(--p)}
 .lead-form .btn{border:0;cursor:pointer;font:inherit;font-weight:500;align-self:flex-start}
+.brand{display:inline-flex;align-items:center;gap:10px}.logo{height:40px;width:auto;max-width:140px;object-fit:contain}
+.hero.has-img{background:#1f2933;color:#fff}.hero.has-img::after{display:none}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45}
+.hero.has-img .wrap{position:relative;z-index:1}.hero.has-img h1{color:#fff}.hero.has-img .lead{color:rgba(255,255,255,.9)}
+.about-grid{display:grid;gap:32px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:center}
+.about-img{width:100%;height:auto;border-radius:24px;object-fit:cover}
+.gallery{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.gallery figure{margin:0}.gallery-img{width:100%;height:240px;object-fit:cover;border-radius:16px;display:block}
+.gallery figcaption{font-size:.9rem;color:var(--muted);padding:6px 2px 0}
 .hp{position:absolute;inset-inline-start:-10000px;width:1px;height:1px;overflow:hidden}
 .msg{max-width:560px;margin:0 auto;padding:96px 20px;text-align:center}.msg ul{text-align:start;color:var(--muted)}
 @media (max-width:640px){section{padding:48px 0}.hero{padding:64px 0 56px}}
@@ -187,14 +227,19 @@ footer{padding:28px 0;text-align:center;color:var(--muted);font-size:.9rem;borde
 </head>`;
 }
 
-export function renderSitePage(draft: Omit<SiteDraft, 'templateKey'>, b: SiteBusinessInfo): string {
+export function renderSitePage(
+  draft: Omit<SiteDraft, 'templateKey'>,
+  b: SiteBusinessInfo,
+  media: MediaMap = {},
+): string {
+  const logo = draft.theme.logoAssetId ? media[draft.theme.logoAssetId] : undefined;
   const visible = draft.sections.filter((s) => s.visible);
   const contactId = visible.find((s) => s.type === 'contact')?.id;
 
   return `${documentHead(draft.theme, draft.seo.title || b.name, draft.seo.description)}
 <body>
-<nav class="nav"><div class="wrap"><a class="brand" href="#">${esc(b.name)}</a>${b.phone ? `<a class="call" href="${telHref(b.phone)}">חייגו: <bdi dir="ltr">${esc(formatIsraeliPhone(b.phone))}</bdi></a>` : ''}</div></nav>
-<main>${visible.length ? visible.map((s) => section(s, b, contactId)).join('\n') : '<div class="empty">אין מקטעים מוצגים באתר.</div>'}</main>
+<nav class="nav"><div class="wrap"><a class="brand" href="#">${logo ? img(logo, b.name, 'logo', false) : ''}<span>${esc(b.name)}</span></a>${b.phone ? `<a class="call" href="${telHref(b.phone)}">חייגו: <bdi dir="ltr">${esc(formatIsraeliPhone(b.phone))}</bdi></a>` : ''}</div></nav>
+<main>${visible.length ? visible.map((s) => section(s, b, contactId, media)).join('\n') : '<div class="empty">אין מקטעים מוצגים באתר.</div>'}</main>
 <footer><div class="wrap">© ${esc(b.name)}</div></footer>
 </body>
 </html>`;
