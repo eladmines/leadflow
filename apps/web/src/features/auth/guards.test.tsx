@@ -1,7 +1,7 @@
 import { apiPaths } from '@leadflow/shared';
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { apiError, me, mockApi, renderApp, testUser } from '../../test/utils';
+import { apiError, me, mockApi, renderApp, testBusinessHome, testUser } from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -30,12 +30,12 @@ describe('route guards', () => {
   });
 
   it.each(['/login', '/register', '/forgot-password'])(
-    'sends a signed-in user away from %s to /app',
+    'sends a signed-in user away from %s via /app to their business',
     async (path) => {
       mockApi({ [meKey]: me(testUser) });
       const { location } = renderApp(path);
       expect(await screen.findByRole('heading', { name: /שלום, דנה כהן/ })).toBeInTheDocument();
-      expect(location()).toBe('/app');
+      expect(location()).toBe(testBusinessHome);
     },
   );
 

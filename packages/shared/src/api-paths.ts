@@ -1,4 +1,5 @@
 import { authApiPaths } from './auth';
+import { businessApiPaths } from './business';
 
 export const API_PREFIX = '/api/v1';
 
@@ -8,4 +9,5 @@ export const API_PREFIX = '/api/v1';
  */
 export const apiPaths = {
   auth: authApiPaths,
+  businesses: businessApiPaths,
 } as const;

@@ -44,8 +44,9 @@ async function register(page: Page, email: string, fullName = 'דנה כהן') {
   await page.getByRole('textbox', { name: 'סיסמה', exact: true }).fill(PASSWORD);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'יצירת חשבון' }).click();
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole('heading', { name: `שלום, ${fullName}` })).toBeVisible();
+  // A new account has no business yet, so /app continues into the setup wizard (F02).
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole('heading', { name: wizardStart })).toBeVisible();
 }
 
 async function login(page: Page, email: string, password: string) {
@@ -54,30 +55,30 @@ async function login(page: Page, email: string, password: string) {
   await page.getByRole('button', { name: 'כניסה', exact: true }).click();
 }
 
+const wizardStart = 'בואו נכיר את העסק שלך';
 const banner = (page: Page) => page.getByRole('heading', { name: 'כדאי לאמת את כתובת האימייל' });
 
-test('(a) register → /app greeting + unverified banner → verify link → banner gone', async ({
-  page,
-}) => {
+test('(a) register → wizard + unverified banner → verify link → banner gone', async ({ page }) => {
   const email = uniqueEmail('verify');
   await register(page, email);
   await expect(banner(page)).toBeVisible();
-  await expect(page.locator('span[dir="ltr"]', { hasText: email }).first()).toBeVisible();
 
   const link = await linkFromMailpit(page, email, /אימות/);
   await page.goto(link);
   await expect(page.getByText('תודה! כתובת האימייל שלך אומתה בהצלחה.')).toBeVisible();
   await page.getByRole('link', { name: 'המשך ל-LeadFlow' }).click();
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole('heading', { name: 'שלום, דנה כהן' })).toBeVisible();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole('heading', { name: wizardStart })).toBeVisible();
   await expect(banner(page)).toHaveCount(0);
 });
 
-test('(b) logout → /app redirects to /login?next=… → login returns to /app', async ({ page }) => {
+test('(b) logout → /app redirects to /login?next=… → login continues where the user was', async ({
+  page,
+}) => {
   const email = uniqueEmail('logout');
   await register(page, email);
   await page.reload(); // refresh keeps the session
-  await expect(page.getByRole('heading', { name: 'שלום, דנה כהן' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: wizardStart })).toBeVisible();
 
   await page.getByRole('button', { name: 'התנתקות' }).click();
   await expect(page).toHaveURL(/\/login/);
@@ -86,8 +87,8 @@ test('(b) logout → /app redirects to /login?next=… → login returns to /app
   await expect(page).toHaveURL(/\/login\?next=%2Fapp|\/login\?next=\/app/);
 
   await login(page, email.toUpperCase(), PASSWORD);
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole('heading', { name: 'שלום, דנה כהן' })).toBeVisible();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole('heading', { name: wizardStart })).toBeVisible();
 });
 
 test('(c) forgot → reset link → new password works; reused link shows invalid state', async ({
@@ -112,7 +113,7 @@ test('(c) forgot → reset link → new password works; reused link shows invali
   await expect(page.getByText('הסיסמה עודכנה. אפשר להתחבר')).toBeVisible();
 
   await login(page, email, NEW_PASSWORD);
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/onboarding$/);
 
   // Reusing the same link: the reset page works signed in or not; the server rejects the token.
   await page.goto(link);

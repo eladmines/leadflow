@@ -16,9 +16,11 @@ import { AppError } from './lib/errors';
 import { registerErrorHandler } from './plugins/error-handler';
 import { registerCsrfGuard } from './plugins/csrf';
 import { registerSessionPlugin } from './plugins/session';
+import { registerTenantSupport } from './plugins/tenant';
 import { createEmailSender, SmtpEmailSender, type EmailSender } from './integrations/email';
 import { healthRoutes } from './modules/health/routes';
 import { authRoutes } from './modules/auth/routes';
+import { businessRoutes } from './modules/businesses/routes';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -89,12 +91,14 @@ export async function buildApp({ config, prisma, emailSender, logStream }: AppDe
 
   registerCsrfGuard(app);
   registerSessionPlugin(app);
+  registerTenantSupport(app);
 
   const email = emailSender ?? createEmailSender(config);
   if (email instanceof SmtpEmailSender) app.addHook('onClose', async () => email.close());
 
   await app.register(healthRoutes);
   await app.register(authRoutes, { email });
+  await app.register(businessRoutes);
 
   return app;
 }
