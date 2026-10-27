@@ -49,15 +49,23 @@ export function BusinessSwitcher({
           </select>
         </>
       ) : (
-        <div className="flex flex-col">
-          <span className="text-xs font-medium text-ink-muted">העסק הנוכחי</span>
-          <span className="truncate font-semibold text-ink">{business.name}</span>
+        <div className="flex items-center gap-3 rounded-2xl bg-surface-muted p-3">
+          <span
+            aria-hidden
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-base font-semibold text-brand-700"
+          >
+            {business.name.trim().charAt(0)}
+          </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-xs text-ink-muted">העסק הנוכחי</span>
+            <span className="truncate font-semibold text-ink">{business.name}</span>
+          </div>
         </div>
       )}
       <Link
         to={businessWebPaths.onboarding}
         onClick={onNavigate}
-        className="inline-flex items-center gap-1 self-start text-xs font-medium text-brand-700 hover:underline"
+        className="inline-flex items-center gap-1 self-start px-1 text-xs font-medium text-brand-700 hover:underline"
       >
         <Plus aria-hidden className="h-3.5 w-3.5" />
         הוספת עסק

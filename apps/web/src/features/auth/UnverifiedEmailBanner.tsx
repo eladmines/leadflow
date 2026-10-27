@@ -1,3 +1,4 @@
+import { MailCheck } from 'lucide-react';
 import { useId } from 'react';
 import { useMe } from './api';
 import { ResendVerification } from './ResendVerification';
@@ -15,14 +16,14 @@ export function UnverifiedEmailBanner() {
   return (
     <section
       aria-labelledby={titleId}
-      className="rounded-xl border border-warning-600/30 bg-warning-50 px-4 py-4 sm:px-5"
+      className="rounded-2xl border border-accent-200 bg-accent-50 px-4 py-4 sm:px-5"
     >
       <div className="flex items-start gap-3">
         <span
           aria-hidden
-          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-warning-600 text-sm font-bold text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-accent-600 shadow-sm"
         >
-          !
+          <MailCheck className="h-5 w-5" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex flex-col gap-1">

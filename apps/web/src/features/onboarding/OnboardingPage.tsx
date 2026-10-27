@@ -26,7 +26,7 @@ function WizardFrame({ step, children }: { step: number; children: React.ReactNo
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-8 sm:py-10">
         <UnverifiedEmailBanner />
         <StepProgress step={step} />
-        <Card>{children}</Card>
+        <Card className="p-6 sm:p-8">{children}</Card>
         <p className="text-center text-xs text-ink-muted">
           ההתקדמות נשמרת בכל מעבר שלב — אפשר לצאת ולחזור בכל זמן.
         </p>

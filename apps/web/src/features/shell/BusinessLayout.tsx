@@ -54,13 +54,13 @@ export function BusinessLayout() {
         דילוג לתוכן הראשי
       </a>
 
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-e border-surface-border bg-surface lg:block">
+      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-e border-surface-border bg-surface lg:block">
         <Sidebar business={b} />
       </aside>
 
       <div className="min-w-0 flex-1">
         <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
-          <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-surface-border bg-surface px-4 py-3 lg:hidden">
+          <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-surface-border bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
             <Dialog.Trigger asChild>
               <button
                 type="button"
@@ -74,10 +74,10 @@ export function BusinessLayout() {
             <span className="ms-auto truncate text-sm font-medium text-ink-muted">{b.name}</span>
           </header>
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/40 lg:hidden" />
+            <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm lg:hidden" />
             <Dialog.Content
               aria-describedby={undefined}
-              className="fixed inset-y-0 start-0 z-50 w-[85vw] max-w-xs overflow-y-auto bg-surface shadow-xl focus:outline-none lg:hidden"
+              className="fixed inset-y-0 start-0 z-50 w-[85vw] max-w-xs overflow-y-auto rounded-e-3xl bg-surface shadow-lift focus:outline-none lg:hidden"
             >
               <Dialog.Title className="sr-only">תפריט ניווט</Dialog.Title>
               <Dialog.Close asChild>
@@ -97,7 +97,7 @@ export function BusinessLayout() {
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6 lg:px-10 lg:py-10"
+          className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6 lg:px-12 lg:py-12"
         >
           <UnverifiedEmailBanner />
           <Outlet context={context} />
