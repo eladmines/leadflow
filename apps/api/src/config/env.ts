@@ -43,6 +43,19 @@ const envSchema = z
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
     /** Rate-limit window in milliseconds. */
     AUTH_RATE_LIMIT_WINDOW: z.coerce.number().int().positive().default(900_000),
+
+    // F06 — Published sites
+    /** Port of the public-site server (customer sites by Host header). */
+    PUBLIC_PORT: z.coerce.number().int().positive().default(4100),
+    /**
+     * Host suffix of customer sites as visitors type it, including a port if any.
+     * Local: lvh.me (wildcard DNS → 127.0.0.1) on PUBLIC_PORT. Production: e.g. leadflow.co.il.
+     */
+    PUBLIC_SITE_HOST: z
+      .string()
+      .regex(/^[a-z0-9.-]+(:\d+)?$/i)
+      .default('lvh.me:4100'),
+    PUBLIC_SITE_PROTOCOL: z.enum(['http', 'https']).optional(),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'production') return;
@@ -72,6 +85,8 @@ const envSchema = z
     ...env,
     APP_URL: env.APP_URL ?? 'http://localhost:5173',
     COOKIE_SECURE: env.COOKIE_SECURE ?? env.NODE_ENV === 'production',
+    PUBLIC_SITE_PROTOCOL:
+      env.PUBLIC_SITE_PROTOCOL ?? (env.NODE_ENV === 'production' ? 'https' : 'http'),
   }));
 
 export type AppConfig = z.infer<typeof envSchema>;

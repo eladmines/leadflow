@@ -19,6 +19,8 @@ import {
   ArrowUp,
   CircleAlert,
   Cloud,
+  ExternalLink,
+  History,
   Eye,
   EyeOff,
   Loader2,
@@ -32,6 +34,8 @@ import { cn } from '../../lib/cn';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { siteBusinessInfo } from './api';
 import { PreviewFrame } from './PreviewFrame';
+import { PublishDialog } from './PublishDialog';
+import { VersionsDialog } from './VersionsDialog';
 import { SectionForm } from './SectionForm';
 import { useDraftAutosave, type Draft, type SaveState } from './useDraftAutosave';
 
@@ -69,6 +73,9 @@ function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => vo
 export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: Draft }) {
   const business = useCurrentBusiness();
   const editable = can(business.role, 'site.edit');
+  const canPublish = can(business.role, 'site.publish');
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(
     initialDraft ?? {
       templateKey: site.templateKey,
@@ -77,7 +84,9 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
       sections: site.sections,
     },
   );
-  const { state, retry } = useDraftAutosave(business.id, site, draft);
+  const { state, retry, revision } = useDraftAutosave(business.id, site, draft);
+  const live = site.published;
+  const unpublishedChanges = live !== null && (live.revision !== revision() || state !== 'saved');
   const [tab, setTab] = useState<Tab>('sections');
   const [selected, setSelected] = useState<string | null>(null);
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
@@ -111,17 +120,54 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">האתר שלי</h1>
-          <p className="text-sm text-ink-muted">
-            עורכים את הטיוטה. האתר יעלה לאוויר רק אחרי פרסום.
-          </p>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">האתר שלי</h1>
+            <span
+              className={cn(
+                'rounded-full px-2.5 py-1 text-xs font-medium',
+                !live && 'bg-surface-sunken text-ink-muted',
+                live && !unpublishedChanges && 'bg-success-50 text-success-600',
+                live && unpublishedChanges && 'bg-accent-50 text-accent-700',
+              )}
+            >
+              {!live
+                ? 'טיוטה · לא פורסם'
+                : unpublishedChanges
+                  ? 'באוויר · יש שינויים שלא פורסמו'
+                  : 'באוויר'}
+            </span>
+          </div>
+          {live && site.publicUrl ? (
+            <a
+              href={site.publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
+            >
+              <bdi dir="ltr">{site.publicUrl.replace(/^https?:\/\//, '')}</bdi>
+              <ExternalLink aria-hidden className="h-3.5 w-3.5" />
+              <span className="sr-only">(נפתח בחלון חדש)</span>
+            </a>
+          ) : (
+            <p className="text-sm text-ink-muted">
+              עורכים את הטיוטה. האתר יעלה לאוויר רק אחרי פרסום.
+            </p>
+          )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {editable && <SaveIndicator state={state} onRetry={retry} />}
-          <Button disabled title="הפרסום יתווסף בקרוב">
-            פרסום — בקרוב
-          </Button>
+          {live !== null || canPublish ? (
+            <Button variant="ghost" onClick={() => setHistoryOpen(true)}>
+              <History aria-hidden className="h-4 w-4" />
+              היסטוריה
+            </Button>
+          ) : null}
+          {canPublish && (
+            <Button onClick={() => setPublishOpen(true)}>
+              {live ? 'פרסום השינויים' : 'פרסום האתר'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -140,6 +186,24 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
       {!editable && (
         <Alert tone="info">רק בעל/ת העסק יכול/ה לערוך את האתר. כאן אפשר לצפות בטיוטה.</Alert>
       )}
+
+      {canPublish && (
+        <PublishDialog
+          open={publishOpen}
+          onOpenChange={setPublishOpen}
+          site={site}
+          businessId={business.id}
+          saveState={state}
+          revision={revision}
+        />
+      )}
+      <VersionsDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        site={site}
+        businessId={business.id}
+        canPublish={canPublish}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
         {editable && (

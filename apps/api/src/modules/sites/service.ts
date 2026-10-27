@@ -1,7 +1,9 @@
-import { Prisma, type PrismaClient, type Site as SiteRow } from '@prisma/client';
+import { Prisma, type PrismaClient, type Site as SiteRow, type SiteVersion } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   buildTemplateDraft,
+  openingHoursSchema,
+  renderSitePage,
   sectionSchema,
   seoSchema,
   siteMessages,
@@ -9,19 +11,40 @@ import {
   themeSchema,
   type SaveDraftRequest,
   type Site,
+  type SiteBusinessInfo,
+  type SiteVersion as SiteVersionDto,
   type TemplateKey,
 } from '@leadflow/shared';
 import { z } from 'zod';
+import type { AppConfig } from '../../config/env';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
+import type { PublishedSiteCache } from '../../public/cache';
 
 const storedSections = z.array(sectionSchema);
+type SiteWithLive = SiteRow & { publishedVersion: SiteVersion | null };
+
+export function publicUrlFor(config: AppConfig, subdomain: string) {
+  return `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}.${config.PUBLIC_SITE_HOST}`;
+}
 
 /** Maps a row to the API shape, re-validating stored JSON (never trust what's in the DB blindly). */
-export function toSiteDto(row: SiteRow): Site {
+export function toSiteDto(row: SiteWithLive, config: AppConfig): Site {
+  const live = row.publishedVersion;
   return {
     id: row.id,
+    subdomain: row.subdomain,
+    publicUrl: row.subdomain ? publicUrlFor(config, row.subdomain) : null,
+    publicDomain: config.PUBLIC_SITE_HOST,
+    published: live
+      ? {
+          versionId: live.id,
+          number: live.number,
+          revision: live.draftRevision,
+          publishedAt: live.createdAt.toISOString(),
+        }
+      : null,
     templateKey: templateKeySchema.parse(row.templateKey),
     theme: themeSchema.parse(row.theme),
     seo: seoSchema.parse(row.seo),
@@ -32,15 +55,35 @@ export function toSiteDto(row: SiteRow): Site {
   };
 }
 
+const withLive = { publishedVersion: true } as const;
+
 export class SiteService {
   constructor(
     private readonly prisma: PrismaClient,
+    private readonly config: AppConfig,
     private readonly log: FastifyBaseLogger,
+    private readonly cache: PublishedSiteCache,
   ) {}
 
+  private dto(row: SiteWithLive) {
+    return toSiteDto(row, this.config);
+  }
+
+  private async requireSite(ctx: TenantContext): Promise<SiteWithLive> {
+    const row = await this.prisma.site.findUnique({
+      where: { businessId: ctx.businessId },
+      include: withLive,
+    });
+    if (!row) throw new AppError('NOT_FOUND');
+    return row;
+  }
+
   async get(ctx: TenantContext): Promise<Site | null> {
-    const row = await this.prisma.site.findUnique({ where: { businessId: ctx.businessId } });
-    return row ? toSiteDto(row) : null;
+    const row = await this.prisma.site.findUnique({
+      where: { businessId: ctx.businessId },
+      include: withLive,
+    });
+    return row ? this.dto(row) : null;
   }
 
   /** Creates the business's site from a template, pre-filled with the business profile. */
@@ -66,6 +109,7 @@ export class SiteService {
             seo: draft.seo,
             sections: draft.sections as unknown as Prisma.InputJsonArray,
           },
+          include: withLive,
         });
         await recordAudit(tx, {
           action: 'site.created',
@@ -77,7 +121,7 @@ export class SiteService {
         });
         return created;
       });
-      return toSiteDto(row);
+      return this.dto(row);
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         throw new AppError('CONFLICT', siteMessages.siteExists);
@@ -88,7 +132,7 @@ export class SiteService {
 
   /**
    * Replaces the draft only if the client saw the latest revision (optimistic locking), so two
-   * open editors can never silently overwrite each other. Never touches the published site.
+   * open editors can never silently overwrite each other. Never touches the published version.
    */
   async saveDraft(ctx: TenantContext, input: SaveDraftRequest): Promise<Site> {
     const result = await this.prisma.site.updateMany({
@@ -102,12 +146,195 @@ export class SiteService {
       },
     });
     if (result.count === 0) {
-      const exists = await this.prisma.site.count({ where: { businessId: ctx.businessId } });
-      if (!exists) throw new AppError('NOT_FOUND');
+      await this.requireSite(ctx);
       throw new AppError('CONFLICT', siteMessages.revisionConflict);
     }
-    const row = await this.prisma.site.findUniqueOrThrow({ where: { businessId: ctx.businessId } });
-    this.log.debug({ businessId: ctx.businessId, revision: row.revision }, 'site draft saved');
-    return toSiteDto(row);
+    return this.dto(await this.requireSite(ctx));
+  }
+
+  async setSubdomain(ctx: TenantContext, subdomain: string): Promise<Site> {
+    const site = await this.requireSite(ctx);
+    if (site.subdomain === subdomain) return this.dto(site);
+    try {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const updated = await tx.site.update({
+          where: { id: site.id },
+          data: { subdomain },
+          include: withLive,
+        });
+        await recordAudit(tx, {
+          action: 'site.subdomain.changed',
+          businessId: ctx.businessId,
+          actorUserId: ctx.userId,
+          entityType: 'site',
+          entityId: site.id,
+          metadata: { from: site.subdomain, to: subdomain },
+        });
+        return updated;
+      });
+      this.cache.invalidate(site.subdomain, subdomain);
+      return this.dto(row);
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new AppError('CONFLICT', siteMessages.subdomainTaken, {
+          subdomain: siteMessages.subdomainTaken,
+        });
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Renders the draft at `revision` into an immutable version and makes it live, atomically.
+   * Rendering happens before the transaction; any failure leaves the current live version as is.
+   */
+  async publish(ctx: TenantContext, revision: number): Promise<Site> {
+    const site = await this.requireSite(ctx);
+    if (!site.subdomain) {
+      throw new AppError('VALIDATION_ERROR', siteMessages.subdomainRequired, {
+        subdomain: siteMessages.subdomainRequired,
+      });
+    }
+    if (site.revision !== revision) throw new AppError('CONFLICT', siteMessages.publishStale);
+
+    const business = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+    });
+    const hours = openingHoursSchema.safeParse(business.openingHours);
+    const info: SiteBusinessInfo = {
+      name: business.name,
+      industry: business.industry,
+      phone: business.phone,
+      address: business.address,
+      serviceAreas: business.serviceAreas,
+      openingHours: hours.success ? hours.data : null,
+    };
+    const draft = {
+      theme: themeSchema.parse(site.theme),
+      seo: seoSchema.parse(site.seo),
+      sections: storedSections.parse(site.sections),
+    };
+    const html = renderSitePage(draft, info);
+
+    try {
+      const row = await this.prisma.$transaction(async (tx) => {
+        // Re-check the revision inside the transaction: a save may have landed meanwhile.
+        const fresh = await tx.site.findUniqueOrThrow({ where: { id: site.id } });
+        if (fresh.revision !== revision) throw new AppError('CONFLICT', siteMessages.publishStale);
+        const last = await tx.siteVersion.aggregate({
+          where: { siteId: site.id },
+          _max: { number: true },
+        });
+        const version = await tx.siteVersion.create({
+          data: {
+            businessId: ctx.businessId,
+            siteId: site.id,
+            number: (last._max.number ?? 0) + 1,
+            draftRevision: revision,
+            html,
+            content: { ...draft, business: info } as unknown as Prisma.InputJsonObject,
+            createdById: ctx.userId,
+          },
+        });
+        const updated = await tx.site.update({
+          where: { id: site.id },
+          data: { publishedVersionId: version.id, status: 'PUBLISHED' },
+          include: withLive,
+        });
+        await recordAudit(tx, {
+          action: 'site.published',
+          businessId: ctx.businessId,
+          actorUserId: ctx.userId,
+          entityType: 'site_version',
+          entityId: version.id,
+          metadata: { number: version.number },
+        });
+        return updated;
+      });
+      this.cache.invalidate(site.subdomain);
+      this.log.info({ businessId: ctx.businessId, siteId: site.id }, 'site published');
+      return this.dto(row);
+    } catch (err) {
+      // Two publishes racing for the same version number: the loser retries by hand.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new AppError('CONFLICT', siteMessages.publishStale);
+      }
+      throw err;
+    }
+  }
+
+  async listVersions(ctx: TenantContext): Promise<SiteVersionDto[]> {
+    const site = await this.requireSite(ctx);
+    const versions = await this.prisma.siteVersion.findMany({
+      where: { siteId: site.id, businessId: ctx.businessId },
+      select: {
+        id: true,
+        number: true,
+        createdAt: true,
+        createdBy: { select: { fullName: true } },
+      },
+      orderBy: { number: 'desc' },
+      take: 50,
+    });
+    return versions.map((v) => ({
+      id: v.id,
+      number: v.number,
+      publishedAt: v.createdAt.toISOString(),
+      publishedBy: v.createdBy?.fullName ?? null,
+      live: v.id === site.publishedVersionId,
+    }));
+  }
+
+  /** Makes an earlier version live again. The version must belong to this business's site. */
+  async rollback(ctx: TenantContext, versionId: string): Promise<Site> {
+    const site = await this.requireSite(ctx);
+    const version = z.string().uuid().safeParse(versionId).success
+      ? await this.prisma.siteVersion.findFirst({
+          where: { id: versionId, siteId: site.id, businessId: ctx.businessId },
+        })
+      : null;
+    if (!version) throw new AppError('NOT_FOUND');
+    if (!site.subdomain) throw new AppError('VALIDATION_ERROR', siteMessages.subdomainRequired);
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.site.update({
+        where: { id: site.id },
+        data: { publishedVersionId: version.id, status: 'PUBLISHED' },
+        include: withLive,
+      });
+      await recordAudit(tx, {
+        action: 'site.rolled_back',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'site_version',
+        entityId: version.id,
+        metadata: { number: version.number },
+      });
+      return updated;
+    });
+    this.cache.invalidate(site.subdomain);
+    return this.dto(row);
+  }
+
+  /** Takes the site offline. Versions are kept; publishing again brings it back. */
+  async unpublish(ctx: TenantContext): Promise<Site> {
+    const site = await this.requireSite(ctx);
+    const row = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.site.update({
+        where: { id: site.id },
+        data: { publishedVersionId: null, status: 'DRAFT' },
+        include: withLive,
+      });
+      await recordAudit(tx, {
+        action: 'site.unpublished',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'site',
+        entityId: site.id,
+      });
+      return updated;
+    });
+    this.cache.invalidate(site.subdomain);
+    return this.dto(row);
   }
 }

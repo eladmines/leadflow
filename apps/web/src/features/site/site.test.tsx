@@ -30,6 +30,10 @@ const sitePath = businessWebPaths.section(testBusiness.id, 'site');
 const draft = buildTemplateDraft('beauty', siteBusinessInfo(testBusiness));
 const site: Site = {
   id: '7e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b',
+  subdomain: null,
+  publicUrl: null,
+  publicDomain: 'lvh.me:4100',
+  published: null,
   ...draft,
   revision: 0,
   status: 'DRAFT',
@@ -81,6 +85,19 @@ describe('template picker', () => {
 });
 
 describe('site editor', () => {
+  it('does not save anything just by opening the editor', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: putOk,
+    });
+    renderApp(sitePath);
+    expect(await screen.findByRole('heading', { name: 'האתר שלי' })).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 1200)); // longer than the autosave debounce
+    expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id))).toHaveLength(0);
+    expect(screen.getByText('כל השינויים נשמרו')).toBeInTheDocument();
+  });
+
   it('edits a section, autosaves with the current revision and updates the preview', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),

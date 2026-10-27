@@ -125,3 +125,19 @@ describe('renderSitePage', () => {
     expect(html).not.toContain('tel:');
   });
 });
+
+describe('subdomain', () => {
+  it('normalises and accepts valid names', async () => {
+    const { subdomainSchema } = await import('./site');
+    expect(subdomainSchema.parse('  Shiran-Salon ')).toBe('shiran-salon');
+    expect(subdomainSchema.parse('abc')).toBe('abc');
+  });
+
+  it.each(['ab', '-shiran', 'shiran-', 'שירן', 'shi ran', 'a'.repeat(41), 'www', 'admin'])(
+    'rejects %j',
+    async (name) => {
+      const { subdomainSchema } = await import('./site');
+      expect(subdomainSchema.safeParse(name).success).toBe(false);
+    },
+  );
+});

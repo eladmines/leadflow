@@ -18,9 +18,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Card, TextLink } from '../../components/ui';
+import { Link } from 'react-router-dom';
+import { buttonClasses, Card, TextLink } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
+import { useSite } from '../site/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
 type ItemState = 'done' | 'todo' | 'soon';
@@ -122,6 +124,7 @@ function ProfileRow({
 export function DashboardPage() {
   const business = useCurrentBusiness();
   const user = useMe().data?.user;
+  const site = useSite(business.id).data;
   const firstName = user?.fullName.trim().split(/\s+/)[0] ?? '';
 
   const checklist: { label: string; hint: string; state: ItemState }[] = [
@@ -135,8 +138,16 @@ export function DashboardPage() {
       hint: 'כדי שנוכל לשלוח לך התראות על פניות',
       state: user?.emailVerified ? 'done' : 'todo',
     },
-    { label: 'בניית אתר העסק', hint: 'בחירת תבנית ועריכת התוכן', state: 'soon' },
-    { label: 'פרסום האתר וקבלת פניות', hint: 'כל פנייה מהטופס תיכנס כליד', state: 'soon' },
+    {
+      label: 'בניית אתר העסק',
+      hint: 'בחירת תבנית ועריכת התוכן',
+      state: site ? 'done' : 'todo',
+    },
+    {
+      label: 'פרסום האתר',
+      hint: 'בחירת כתובת והעלאה לאוויר',
+      state: site?.published ? 'done' : 'todo',
+    },
     { label: 'חיבור WhatsApp עסקי', hint: 'מענה ללקוחות מתוך המערכת', state: 'soon' },
   ];
   const done = checklist.filter((i) => i.state === 'done').length;
@@ -167,6 +178,15 @@ export function DashboardPage() {
                   : `הצעד הבא: ${next.label}.`
                 : 'כל הצעדים הושלמו. העסק מוכן לעבודה!'}
             </p>
+            {can(business.role, 'site.edit') &&
+              (next?.label === 'בניית אתר העסק' || next?.label === 'פרסום האתר') && (
+                <Link
+                  to={businessWebPaths.section(business.id, 'site')}
+                  className={buttonClasses('primary', 'md', 'mt-2 self-start')}
+                >
+                  {next.label === 'בניית אתר העסק' ? 'לבניית האתר' : 'לפרסום האתר'}
+                </Link>
+              )}
           </div>
           <div
             role="progressbar"

@@ -2,9 +2,12 @@ import {
   apiPaths,
   type Business,
   type CreateSiteRequest,
+  type PublishRequest,
   type SaveDraftRequest,
+  type SetSubdomainRequest,
   type SiteBusinessInfo,
   type SiteResponse,
+  type SiteVersionListResponse,
 } from '@leadflow/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
@@ -58,4 +61,59 @@ export function siteBusinessInfo(b: Business): SiteBusinessInfo {
     serviceAreas: b.serviceAreas,
     openingHours: b.openingHours,
   };
+}
+
+// ---------------------------------------------------------------------------
+// F06 — publishing
+// ---------------------------------------------------------------------------
+
+export const versionsQueryKey = (businessId: string) =>
+  [...siteQueryKey(businessId), 'versions'] as const;
+
+/** Mutations that return the site update the cached site (status, live version, address). */
+function useSiteMutation<TBody>(
+  businessId: string,
+  request: (body: TBody) => Promise<SiteResponse>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: request,
+    onSuccess: (data) => {
+      queryClient.setQueryData(siteQueryKey(businessId), data);
+      void queryClient.invalidateQueries({ queryKey: versionsQueryKey(businessId) });
+    },
+  });
+}
+
+const send = (method: 'PUT' | 'POST', path: string, body?: unknown) =>
+  apiFetch<SiteResponse>(path, {
+    method,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+
+export const useSetSubdomain = (businessId: string) =>
+  useSiteMutation(businessId, (body: SetSubdomainRequest) =>
+    send('PUT', paths.subdomain(businessId), body),
+  );
+
+export const usePublish = (businessId: string) =>
+  useSiteMutation(businessId, (body: PublishRequest) =>
+    send('POST', paths.publish(businessId), body),
+  );
+
+export const useUnpublish = (businessId: string) =>
+  useSiteMutation(businessId, () => send('POST', paths.unpublish(businessId)));
+
+export const useRollback = (businessId: string) =>
+  useSiteMutation(businessId, (versionId: string) =>
+    send('POST', paths.rollback(businessId, versionId)),
+  );
+
+export function useVersions(businessId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: versionsQueryKey(businessId),
+    queryFn: () => apiFetch<SiteVersionListResponse>(paths.versions(businessId)),
+    select: (data) => data.versions,
+    enabled,
+  });
 }
