@@ -227,7 +227,7 @@ describe('lead page', () => {
     expect(within(history).getByText('הליד נוצר מטופס באתר')).toBeInTheDocument();
 
     await screen.findByRole('option', { name: 'נוצר קשר' });
-    await screen.findByRole('option', { name: 'יוסי מזרחי' });
+    await screen.findAllByRole('option', { name: 'יוסי מזרחי' });
     await user.selectOptions(screen.getByLabelText('שלב'), contacted!.id);
     await user.selectOptions(
       screen.getByLabelText('אחראי'),

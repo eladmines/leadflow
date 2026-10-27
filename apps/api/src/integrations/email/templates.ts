@@ -153,3 +153,31 @@ ${button(params.link, 'הצטרפות לצוות')}
   ].join('\n');
   return { subject, html, text };
 }
+
+/** F10: a task is due. */
+export function taskReminderTemplate(params: {
+  name: string;
+  title: string;
+  dueText: string;
+  leadName: string | null;
+  link: string;
+}): RenderedEmail {
+  const subject = `תזכורת: ${params.title}`;
+  const html = layout(
+    subject,
+    `<h1 style="font-size:20px;margin:0 0 16px;">שלום ${escapeHtml(params.name)}, הגיע הזמן למשימה</h1>
+<p style="margin:0 0 4px;font-size:16px;"><strong>${escapeHtml(params.title)}</strong></p>
+<p style="margin:0 0 4px;color:#6b7280;">מועד: ${escapeHtml(params.dueText)}</p>
+${params.leadName ? `<p style="margin:0 0 4px;color:#6b7280;">ליד: ${escapeHtml(params.leadName)}</p>` : ''}
+${button(params.link, 'לפתיחה ב-LeadFlow')}`,
+  );
+  const text = [
+    `שלום ${params.name}, הגיע הזמן למשימה:`,
+    params.title,
+    `מועד: ${params.dueText}`,
+    ...(params.leadName ? [`ליד: ${params.leadName}`] : []),
+    '',
+    params.link,
+  ].join('\n');
+  return { subject, html, text };
+}

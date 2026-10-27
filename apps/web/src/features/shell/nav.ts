@@ -40,15 +40,7 @@ export const navItems: NavItem[] = [
         'חיבור מספר WhatsApp עסקי רשמי, תיבת שיחות משותפת לצוות, שיוך לעובד ומענה מתוך המערכת.',
     },
   },
-  {
-    segment: 'tasks',
-    label: 'משימות',
-    icon: ListTodo,
-    comingSoon: {
-      title: 'משימות מעקב בדרך',
-      description: 'משימות עם אחראי, תאריך יעד ותזכורת, מקושרות ללידים ולשיחות.',
-    },
-  },
+  { segment: 'tasks', label: 'משימות', icon: ListTodo },
   {
     segment: 'appointments',
     label: 'תורים',
