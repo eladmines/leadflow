@@ -249,6 +249,8 @@ export const leadsApiPaths = {
     `/api/v1/businesses/${businessId}/leads/${leadId}/notes`,
   pipeline: (businessId: string) => `/api/v1/businesses/${businessId}/pipeline`,
   duplicates: (businessId: string) => `/api/v1/businesses/${businessId}/contacts/duplicates`,
+  /** CSV download (same filters as the list). Plain GET so a link can trigger it. */
+  exportCsv: (businessId: string) => `/api/v1/businesses/${businessId}/leads/export.csv`,
 } as const;
 
-export const leadAuditActions = ['lead.created', 'lead.assigned'] as const;
+export const leadAuditActions = ['lead.created', 'lead.assigned', 'leads.exported'] as const;

@@ -268,3 +268,29 @@ describe('lead page', () => {
     expect(await screen.findByRole('heading', { name: 'הליד לא נמצא' })).toBeInTheDocument();
   });
 });
+
+describe('export', () => {
+  it('owners get an export link carrying the current filters (not the view)', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.list(id)}`]: () => json(200, { leads: [lead()] }),
+    });
+    renderApp(`${leadsPath}?view=list&source=manual`);
+    const link = await screen.findByRole('link', { name: 'ייצוא לאקסל' });
+    expect(link).toHaveAttribute('href', `${lp.exportCsv(id)}?source=manual`);
+    expect(link).toHaveAttribute('download');
+  });
+
+  it('managers and employees do not see it', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${apiPaths.businesses.detail(id)}`]: () =>
+        json(200, { business: { ...testBusiness, role: 'MANAGER' } }),
+    });
+    renderApp(leadsPath);
+    await screen.findByRole('button', { name: 'ליד חדש' });
+    expect(screen.queryByRole('link', { name: 'ייצוא לאקסל' })).not.toBeInTheDocument();
+  });
+});

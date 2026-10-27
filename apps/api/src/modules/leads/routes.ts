@@ -13,7 +13,10 @@ import {
   pipelineResponseSchema,
   updateLeadRequestSchema,
 } from '@leadflow/shared';
+import { formatIsraeliPhone, leadSourceLabels } from '@leadflow/shared';
+import { toCsv } from '../../lib/csv';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
+import { recordAudit } from '../audit/service';
 import { LeadService } from './service';
 
 const params = z.object({ businessId: z.string() });
@@ -34,6 +37,67 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (req) => ({ leads: await service.list(tenantOf(req), req.query) }),
+  );
+
+  // Registered before `/leads/:leadId`; Fastify prefers the static segment anyway.
+  app.get(
+    '/leads/export.csv',
+    {
+      preValidation: requirePermission('leads.export'),
+      schema: { params, querystring: leadListQuerySchema },
+    },
+    async (req, reply) => {
+      const ctx = tenantOf(req);
+      const leads = await service.list(ctx, req.query, 10_000);
+      const business = await app.prisma.business.findUniqueOrThrow({
+        where: { id: ctx.businessId },
+        select: { timezone: true },
+      });
+      const when = new Intl.DateTimeFormat('he-IL', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+        timeZone: business.timezone,
+      });
+      const csv = toCsv(
+        [
+          'שם',
+          'טלפון',
+          'אימייל',
+          'שלב',
+          'מקור',
+          'אחראי',
+          'ערך משוער (₪)',
+          'טיפול הבא',
+          'פרטי הפנייה',
+          'נוצר',
+        ],
+        leads.map((l) => [
+          l.contact.name,
+          l.contact.phone ? formatIsraeliPhone(l.contact.phone) : '',
+          l.contact.email,
+          l.stage.name,
+          leadSourceLabels[l.source],
+          l.owner?.name,
+          l.expectedValue,
+          l.nextActionAt ? when.format(new Date(l.nextActionAt)) : '',
+          l.message,
+          when.format(new Date(l.createdAt)),
+        ]),
+      );
+      await recordAudit(app.prisma, {
+        action: 'leads.exported',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'lead',
+        metadata: { count: leads.length },
+      });
+      const date = new Date().toISOString().slice(0, 10);
+      return reply
+        .header('content-type', 'text/csv; charset=utf-8')
+        .header('content-disposition', `attachment; filename="leadflow-leads-${date}.csv"`)
+        .header('cache-control', 'no-store')
+        .send(csv);
+    },
   );
 
   app.post(
