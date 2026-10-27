@@ -16,7 +16,10 @@ export default defineConfig({
   ],
   webServer: [
     {
+      // Many e2e registrations share one IP, so raise the auth rate limit for this server only.
+      // Rate limiting itself is covered by the API integration tests (security.test.ts).
       command: 'pnpm --filter @leadflow/api dev',
+      env: { AUTH_RATE_LIMIT_MAX: '1000' },
       url: 'http://localhost:4000/health',
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

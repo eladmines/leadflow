@@ -34,7 +34,7 @@ describe('route guards', () => {
     async (path) => {
       mockApi({ [meKey]: me(testUser) });
       const { location } = renderApp(path);
-      expect(await screen.findByRole('heading', { name: /שלום, דנה כהן/ })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /שלום, דנה/ })).toBeInTheDocument();
       expect(location()).toBe(testBusinessHome);
     },
   );

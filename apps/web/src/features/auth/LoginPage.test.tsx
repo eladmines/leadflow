@@ -90,7 +90,7 @@ describe('LoginPage', () => {
     await fill(user, '  Dana@Example.com ', 'correct-horse');
     await user.click(screen.getByRole('button', { name: 'כניסה' }));
 
-    expect(await screen.findByRole('heading', { name: /שלום, דנה כהן/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /שלום, דנה/ })).toBeInTheDocument();
     expect(location()).toBe(testBusinessHome);
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.login)).toEqual([
       { email: 'dana@example.com', password: 'correct-horse' },

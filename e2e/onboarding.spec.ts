@@ -51,7 +51,7 @@ test('owner completes onboarding (resuming after a reload) and reaches the busin
   await expect(page.getByText('שלב 4 מתוך 4')).toBeVisible();
   await page.getByRole('button', { name: 'סיום והמשך למערכת' }).click();
   await expect(page).toHaveURL(/\/b\/[0-9a-f-]{36}$/);
-  await expect(page.getByRole('heading', { name: 'שלום, שירן לוי' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'שלום, שירן' })).toBeVisible();
   await expect(page.getByText('050-1234567')).toBeVisible();
   await expect(page.getByText('חיפה, יקנעם')).toBeVisible();
   const homeUrl = page.url();

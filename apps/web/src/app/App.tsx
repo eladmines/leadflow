@@ -8,7 +8,12 @@ import { RegisterPage } from '../features/auth/RegisterPage';
 import { ResetPasswordPage } from '../features/auth/ResetPasswordPage';
 import { VerifyEmailPage } from '../features/auth/VerifyEmailPage';
 import { AppEntry } from '../features/businesses/AppEntry';
-import { BusinessHomePage } from '../features/businesses/BusinessHomePage';
+import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { SettingsPage } from '../features/settings/SettingsPage';
+import { BusinessLayout } from '../features/shell/BusinessLayout';
+import { ComingSoonPage } from '../features/shell/ComingSoonPage';
+import { navItems } from '../features/shell/nav';
+import { TeamPage } from '../features/team/TeamPage';
 import { ContinueOnboardingPage, NewBusinessPage } from '../features/onboarding/OnboardingPage';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -82,10 +87,24 @@ export function AppRoutes() {
         path={businessWebPaths.home(':businessId')}
         element={
           <RequireAuth>
-            <BusinessHomePage />
+            <BusinessLayout />
           </RequireAuth>
         }
-      />
+      >
+        <Route index element={<DashboardPage />} />
+        {navItems
+          .filter((item) => item.comingSoon)
+          .map((item) => (
+            <Route
+              key={item.segment}
+              path={item.segment}
+              element={<ComingSoonPage item={item} />}
+            />
+          ))}
+        <Route path="team" element={<TeamPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

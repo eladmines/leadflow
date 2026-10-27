@@ -87,7 +87,7 @@ describe('RegisterPage', () => {
     await fillValid(user);
     await user.click(screen.getByRole('button', { name: submitName }));
 
-    expect(await screen.findByRole('heading', { name: /שלום, דנה כהן/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /שלום, דנה/ })).toBeInTheDocument();
     expect(location()).toBe(testBusinessHome);
     expect(screen.getByRole('heading', { name: 'כדאי לאמת את כתובת האימייל' })).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.register)).toEqual([

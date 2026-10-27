@@ -171,16 +171,7 @@ describe('onboarding wizard', () => {
   });
 });
 
-describe('business home', () => {
-  it('shows the profile, the unverified banner, and the phone in LTR', async () => {
-    mockApi({ [meKey]: me(testUser) });
-    renderApp(businessWebPaths.home(testBusiness.id));
-    expect(await screen.findByRole('heading', { name: 'שלום, דנה כהן' })).toBeInTheDocument();
-    expect(screen.getByText('מספרת שירן · בעל/ת העסק')).toBeInTheDocument();
-    expect(screen.getByText('050-1234567')).toHaveAttribute('dir', 'ltr');
-    expect(screen.getByRole('region', { name: 'כדאי לאמת את כתובת האימייל' })).toBeInTheDocument();
-  });
-
+describe('business workspace', () => {
   it('shows "not found" for a business the user cannot access (API 404)', async () => {
     const other = '00000000-0000-4000-8000-000000000000';
     mockApi({
