@@ -12,7 +12,7 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
 /** Base input styling shared by Field and PasswordField. */
 export function inputClasses(hasError: boolean) {
   return cn(
-    'h-11 w-full rounded-lg border bg-surface px-3 text-base text-ink placeholder:text-ink-subtle sm:h-10 sm:text-sm',
+    'h-11 w-full rounded-xl border bg-surface px-3.5 text-base text-ink transition-colors placeholder:text-ink-subtle hover:border-brand-200 sm:text-sm',
     hasError ? 'border-danger-600' : 'border-surface-border focus-visible:border-brand-500',
   );
 }

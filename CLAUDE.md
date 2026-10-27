@@ -20,7 +20,7 @@ pnpm db:migrate                 # prisma migrate dev (apps/api)
 pnpm --filter @leadflow/api exec prisma generate   # after pulling/merging schema changes (stale client = type errors)
 pnpm dev                        # API :4000 + web :5173 (web proxies /api)
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
-pnpm e2e                        # Playwright, desktop + mobile
+pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` first; e2e starts its own servers)
 ```
 
 ## Non-negotiable rules

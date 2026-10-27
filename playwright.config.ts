@@ -21,13 +21,15 @@ export default defineConfig({
       command: 'pnpm --filter @leadflow/api dev',
       env: { AUTH_RATE_LIMIT_MAX: '1000' },
       url: 'http://localhost:4000/health',
-      reuseExistingServer: !process.env.CI,
+      // Never reuse a running dev server: it has the normal auth rate limit and would make
+      // tests flaky. Stop `pnpm dev` before `pnpm e2e`.
+      reuseExistingServer: false,
       timeout: 60_000,
     },
     {
       command: 'pnpm --filter @leadflow/web dev',
       url: 'http://localhost:5173',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 60_000,
     },
   ],

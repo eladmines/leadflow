@@ -21,7 +21,7 @@ describe('app shell', () => {
     renderApp(home);
     await screen.findByRole('heading', { name: 'שלום, דנה' });
     const links = within(mainNav()).getAllByRole('link');
-    expect(links.map((l) => l.textContent?.replace('בקרוב', '').trim())).toEqual([
+    expect(links.map((l) => l.textContent?.replace('(בקרוב)', '').trim())).toEqual([
       'דשבורד',
       'האתר שלי',
       'לקוחות ולידים',
