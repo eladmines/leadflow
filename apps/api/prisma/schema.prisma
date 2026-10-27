@@ -9,3 +9,97 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ---------------------------------------------------------------------------
+// F01 — Authentication & sessions. Users, sessions and auth tokens are global
+// (not tenant-owned). audit_logs carries a nullable business_id: auth events
+// have none; tenant events (F02+) always set it.
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  /// Always stored trimmed + lowercased (shared emailSchema), so plain equality is case-insensitive.
+  email           String     @unique @db.VarChar(254)
+  /// argon2id PHC string. Never selected into API responses or logs.
+  passwordHash    String     @map("password_hash")
+  fullName        String     @map("full_name") @db.VarChar(100)
+  emailVerifiedAt DateTime?  @map("email_verified_at") @db.Timestamptz(3)
+  status          UserStatus @default(ACTIVE)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sessions   Session[]
+  authTokens AuthToken[]
+  auditLogs  AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  /// SHA-256 (hex) of the cookie token. The raw token is never stored.
+  tokenHash         String    @unique @map("token_hash") @db.Char(64)
+  /// Sliding idle expiry: min(last_seen_at + 30d, absolute_expires_at).
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz(3)
+  /// created_at + 90d; never extended.
+  absoluteExpiresAt DateTime  @map("absolute_expires_at") @db.Timestamptz(3)
+  lastSeenAt        DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  ip                String?   @db.VarChar(45)
+  userAgent         String?   @map("user_agent") @db.VarChar(512)
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model AuthToken {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  type      AuthTokenType
+  /// SHA-256 (hex) of the emailed token. The raw token is never stored.
+  tokenHash String        @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime      @map("expires_at") @db.Timestamptz(3)
+  /// Set when consumed or superseded; a token with used_at is invalid.
+  usedAt    DateTime?     @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("auth_tokens")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  /// Null for platform-level events (auth). Relation to Business is added in F02.
+  businessId  String?  @map("business_id") @db.Uuid
+  /// Null when there is no authenticated actor (e.g. failed login for an unknown email).
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  /// Dotted action name, e.g. "auth.login.succeeded" (see shared authAuditActions).
+  action      String   @db.VarChar(100)
+  entityType  String?  @map("entity_type") @db.VarChar(50)
+  entityId    String?  @map("entity_id") @db.Uuid
+  /// Never contains passwords, tokens, hashes or cookies.
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@map("audit_logs")
+}
