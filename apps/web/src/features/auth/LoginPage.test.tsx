@@ -10,6 +10,7 @@ import {
   mockApi,
   renderApp,
   testUser,
+  testBusinessHome,
 } from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -90,7 +91,7 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'כניסה' }));
 
     expect(await screen.findByRole('heading', { name: /שלום, דנה כהן/ })).toBeInTheDocument();
-    expect(location()).toBe('/app');
+    expect(location()).toBe(testBusinessHome);
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.login)).toEqual([
       { email: 'dana@example.com', password: 'correct-horse' },
     ]);

@@ -1,13 +1,15 @@
-import { authWebPaths } from '@leadflow/shared';
+import { authWebPaths, businessWebPaths } from '@leadflow/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AppHomePage } from '../features/app-home/AppHomePage';
 import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage';
 import { RedirectIfAuthed, RequireAuth, RootRedirect } from '../features/auth/guards';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { ResetPasswordPage } from '../features/auth/ResetPasswordPage';
 import { VerifyEmailPage } from '../features/auth/VerifyEmailPage';
+import { AppEntry } from '../features/businesses/AppEntry';
+import { BusinessHomePage } from '../features/businesses/BusinessHomePage';
+import { ContinueOnboardingPage, NewBusinessPage } from '../features/onboarding/OnboardingPage';
 import { NotFoundPage } from './NotFoundPage';
 
 export function createQueryClient() {
@@ -56,7 +58,31 @@ export function AppRoutes() {
         path={authWebPaths.appHome}
         element={
           <RequireAuth>
-            <AppHomePage />
+            <AppEntry />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path={businessWebPaths.onboarding}
+        element={
+          <RequireAuth>
+            <NewBusinessPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path={businessWebPaths.onboardingFor(':businessId')}
+        element={
+          <RequireAuth>
+            <ContinueOnboardingPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path={businessWebPaths.home(':businessId')}
+        element={
+          <RequireAuth>
+            <BusinessHomePage />
           </RequireAuth>
         }
       />

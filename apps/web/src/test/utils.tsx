@@ -1,4 +1,11 @@
-import type { AuthUser, ErrorCode } from '@leadflow/shared';
+import {
+  apiPaths,
+  businessWebPaths,
+  defaultOpeningHours,
+  type AuthUser,
+  type Business,
+  type ErrorCode,
+} from '@leadflow/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -20,6 +27,24 @@ export const testUser: AuthUser = {
   emailVerified: false,
   createdAt: '2026-10-27T10:00:00.000Z',
 };
+
+export const testBusiness: Business = {
+  id: '3a7d9c1e-5b2f-4e8a-9c6d-1f2e3d4c5b6a',
+  name: 'מספרת שירן',
+  industry: 'beauty',
+  phone: '+972501234567',
+  address: 'הרצל 10, חיפה',
+  serviceAreas: ['חיפה', 'יקנעם'],
+  openingHours: defaultOpeningHours,
+  timezone: 'Asia/Jerusalem',
+  status: 'ACTIVE',
+  onboardingStep: 4,
+  role: 'OWNER',
+  createdAt: '2026-10-27T10:00:00.000Z',
+};
+
+/** Where `/app` lands for a user whose only business is `testBusiness`. */
+export const testBusinessHome = businessWebPaths.home(testBusiness.id);
 
 // ---------------------------------------------------------------------------
 // Mocked fetch
@@ -50,6 +75,13 @@ type Handler = (body: unknown) => Response | Promise<Response>;
  * Unknown routes fail the test loudly. Returns the mock for call assertions.
  */
 export function mockApi(routes: Record<string, Handler>) {
+  // Signed-in flows end at /app, which loads the user's businesses; default to one active business.
+  routes = {
+    [`GET ${apiPaths.businesses.list}`]: () => json(200, { businesses: [testBusiness] }),
+    [`GET ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+      json(200, { business: testBusiness }),
+    ...routes,
+  };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const method = (init.method ?? 'GET').toUpperCase();
     const key = `${method} ${String(input)}`;

@@ -10,6 +10,7 @@ import {
   mockApi,
   renderApp,
   testUser,
+  testBusinessHome,
 } from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -76,7 +77,7 @@ describe('RegisterPage', () => {
     expect(location()).toBe('/register');
   });
 
-  it('creates the account and lands on /app with the unverified banner', async () => {
+  it('creates the account and lands on the business home with the unverified banner', async () => {
     const fetchMock = mockApi({
       [meKey]: me(null),
       [registerKey]: () => json(201, { user: testUser }),
@@ -87,7 +88,7 @@ describe('RegisterPage', () => {
     await user.click(screen.getByRole('button', { name: submitName }));
 
     expect(await screen.findByRole('heading', { name: /שלום, דנה כהן/ })).toBeInTheDocument();
-    expect(location()).toBe('/app');
+    expect(location()).toBe(testBusinessHome);
     expect(screen.getByRole('heading', { name: 'כדאי לאמת את כתובת האימייל' })).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.register)).toEqual([
       {

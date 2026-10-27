@@ -38,9 +38,10 @@ model User {
   createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions   Session[]
-  authTokens AuthToken[]
-  auditLogs  AuditLog[]
+  sessions    Session[]
+  authTokens  AuthToken[]
+  auditLogs   AuditLog[]
+  memberships Membership[]
 
   @@map("users")
 }
@@ -85,7 +86,7 @@ model AuthToken {
 
 model AuditLog {
   id          String   @id @default(uuid()) @db.Uuid
-  /// Null for platform-level events (auth). Relation to Business is added in F02.
+  /// Null for platform-level events (auth). Always set for tenant events.
   businessId  String?  @map("business_id") @db.Uuid
   /// Null when there is no authenticated actor (e.g. failed login for an unknown email).
   actorUserId String?  @map("actor_user_id") @db.Uuid
@@ -97,9 +98,74 @@ model AuditLog {
   metadata    Json     @default("{}")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  actor    User?     @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
 
   @@index([businessId, createdAt])
   @@index([actorUserId, createdAt])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// F02 — Businesses (tenants) and memberships
+// ---------------------------------------------------------------------------
+
+enum BusinessStatus {
+  ONBOARDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum MembershipRole {
+  OWNER
+  MANAGER
+  EMPLOYEE
+}
+
+enum MembershipStatus {
+  ACTIVE
+  DISABLED
+}
+
+/// The tenant. Every tenant-owned table references it through business_id.
+model Business {
+  id             String         @id @default(uuid()) @db.Uuid
+  name           String         @db.VarChar(80)
+  /// Code from the shared INDUSTRIES list (validated in the app, not a DB enum).
+  industry       String         @db.VarChar(40)
+  /// E.164, e.g. +972501234567.
+  phone          String?        @db.VarChar(20)
+  address        String?        @db.VarChar(200)
+  serviceAreas   String[]       @default([]) @map("service_areas")
+  /// Shape: shared openingHoursSchema (sun..sat → { open, from, to }).
+  openingHours   Json?          @map("opening_hours")
+  timezone       String         @default("Asia/Jerusalem") @db.VarChar(64)
+  status         BusinessStatus @default(ONBOARDING)
+  /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.
+  onboardingStep Int            @default(1) @map("onboarding_step")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  memberships Membership[]
+  auditLogs   AuditLog[]
+
+  @@map("businesses")
+}
+
+model Membership {
+  id         String           @id @default(uuid()) @db.Uuid
+  userId     String           @map("user_id") @db.Uuid
+  businessId String           @map("business_id") @db.Uuid
+  role       MembershipRole
+  status     MembershipStatus @default(ACTIVE)
+  invitedAt  DateTime?        @map("invited_at") @db.Timestamptz(3)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+  @@index([businessId])
+  @@map("memberships")
 }

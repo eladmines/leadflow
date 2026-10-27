@@ -10,3 +10,4 @@ export { Logo } from './Logo';
 export { PasswordField } from './PasswordField';
 export { Spinner } from './Spinner';
 export { TextLink, textLinkClasses } from './TextLink';
+export { Select } from './Select';
