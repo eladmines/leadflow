@@ -187,6 +187,15 @@ export const onboardingContactSchema = z.object({
 });
 export type OnboardingContact = z.infer<typeof onboardingContactSchema>;
 
+/** Settings → business details form (the owner edits these after onboarding). */
+export const businessDetailsSchema = z.object({
+  name: businessNameSchema,
+  industry: industrySchema,
+  phone: phoneSchema,
+  address: addressSchema,
+});
+export type BusinessDetails = z.infer<typeof businessDetailsSchema>;
+
 /**
  * PATCH: every field optional; unknown keys (id, status, role, businessId…) are stripped, never
  * applied. `onboardingStep` saves wizard progress and is ignored once the business is ACTIVE.
@@ -275,4 +284,6 @@ export const businessWebPaths = {
   onboarding: '/onboarding',
   onboardingFor: (businessId: string) => `/onboarding/${businessId}`,
   home: (businessId: string) => `/b/${businessId}`,
+  /** A section inside the business workspace, e.g. `section(id, 'team')` → `/b/:id/team`. */
+  section: (businessId: string, section: string) => `/b/${businessId}/${section}`,
 } as const;
