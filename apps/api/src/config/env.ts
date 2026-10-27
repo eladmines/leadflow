@@ -64,6 +64,18 @@ const envSchema = z
     /** Accepted form submissions per visitor IP per site per window. */
     LEAD_FORM_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
     LEAD_FORM_RATE_LIMIT_WINDOW: z.coerce.number().int().positive().default(600_000),
+
+    // F05 — Media
+    /** Local folder for uploaded images (dev/test). Production uses object storage (R2). */
+    MEDIA_DIR: z.string().min(1).default('.data/media'),
+    /** URL prefix images are served from: same-origin `/media` locally, a CDN origin in production. */
+    MEDIA_PUBLIC_BASE: z.string().min(1).default('/media'),
+    /** Storage quota per business, in bytes (plan quotas arrive with F13). */
+    MEDIA_QUOTA_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(200 * 1024 * 1024),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'production') return;

@@ -1,5 +1,7 @@
 import { HERO_ACTIONS, heroActionLabels, SITE_LIMITS, type Section } from '@leadflow/shared';
 import { Checkbox, Field, Select, Textarea } from '../../components/ui';
+import { GalleryEditor } from '../media/GalleryEditor';
+import { ImageField } from '../media/ImageField';
 import { ItemsEditor } from './ItemsEditor';
 
 type Patch = (patch: Partial<Section>) => void;
@@ -40,6 +42,12 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
               onChange({ buttonAction: e.target.value as (typeof HERO_ACTIONS)[number] })
             }
           />
+          <ImageField
+            label="תמונת רקע"
+            hint="תמונה רחבה ואיכותית של העסק. הטקסט יוצג מעליה."
+            value={s.imageAssetId}
+            onChange={(imageAssetId) => onChange({ imageAssetId })}
+          />
         </div>
       );
     case 'about':
@@ -54,6 +62,27 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
             value={s.body}
             onChange={(e) => onChange({ body: e.target.value })}
           />
+          <ImageField
+            label="תמונה"
+            value={s.imageAssetId}
+            onChange={(imageAssetId) => onChange({ imageAssetId })}
+          />
+          {s.imageAssetId && (
+            <Field
+              label="תיאור התמונה"
+              hint="לנגישות ולגוגל, למשל: הצוות שלנו בסלון"
+              maxLength={160}
+              value={s.imageAlt}
+              onChange={(e) => onChange({ imageAlt: e.target.value })}
+            />
+          )}
+        </div>
+      );
+    case 'gallery':
+      return (
+        <div className="flex flex-col gap-4">
+          {titleField(s, onChange)}
+          <GalleryEditor items={s.items} onChange={(items) => onChange({ items })} />
         </div>
       );
     case 'services':

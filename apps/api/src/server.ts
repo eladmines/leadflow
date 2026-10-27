@@ -4,15 +4,23 @@ import { loadConfig } from './config/env';
 import { createPrisma } from './lib/db';
 import { buildPublicApp } from './public/app';
 import { PublishedSiteCache } from './public/cache';
+import { LocalDiskStorage } from './integrations/storage';
 
 const config = loadConfig();
 const prisma = createPrisma(config.DATABASE_URL);
 // One cache shared by both apps, so a publish is visible immediately.
 const siteCache = new PublishedSiteCache();
 const emailSender = createEmailSender(config);
-const app = await buildApp({ config, prisma, siteCache, emailSender });
+const storage = new LocalDiskStorage(config.MEDIA_DIR);
+const app = await buildApp({ config, prisma, siteCache, emailSender, storage });
 // Customer sites by Host header (F06). Same process in the MVP; a Cloudflare Worker later.
-const publicApp = await buildPublicApp({ config, prisma, cache: siteCache, email: emailSender });
+const publicApp = await buildPublicApp({
+  config,
+  prisma,
+  cache: siteCache,
+  email: emailSender,
+  storage,
+});
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'shutting down');

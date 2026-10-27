@@ -107,6 +107,7 @@ export const SECTION_TYPES = [
   'hero',
   'about',
   'services',
+  'gallery',
   'pricing',
   'testimonials',
   'faq',
@@ -119,6 +120,7 @@ export const sectionTypeLabels: Record<SectionType, string> = {
   hero: 'כותרת ראשית',
   about: 'אודות',
   services: 'שירותים',
+  gallery: 'גלריה',
   pricing: 'מחירון',
   testimonials: 'המלצות',
   faq: 'שאלות נפוצות',
@@ -149,6 +151,10 @@ export const contactFormSchema = z.object({
 });
 export type ContactForm = z.infer<typeof contactFormSchema>;
 
+/** Optional image reference (F05); defaults keep drafts saved before F05 valid. */
+const imageRef = z.string().uuid().nullable().default(null);
+const altText = z.string().trim().max(160, siteMessages.textTooLong).default('');
+
 export const sectionSchema = z.discriminatedUnion('type', [
   z.object({
     ...base,
@@ -157,8 +163,23 @@ export const sectionSchema = z.discriminatedUnion('type', [
     subtitle: short,
     buttonLabel: z.string().trim().max(40, siteMessages.textTooLong),
     buttonAction: z.enum(HERO_ACTIONS),
+    /** Background image (decorative). */
+    imageAssetId: imageRef,
   }),
-  z.object({ ...base, type: z.literal('about'), title, body }),
+  z.object({
+    ...base,
+    type: z.literal('about'),
+    title,
+    body,
+    imageAssetId: imageRef,
+    imageAlt: altText,
+  }),
+  z.object({
+    ...base,
+    type: z.literal('gallery'),
+    title,
+    items: items(z.object({ assetId: z.string().uuid(), caption: altText })),
+  }),
   z.object({
     ...base,
     type: z.literal('services'),
@@ -235,6 +256,8 @@ export const FONT_KEYS = Object.keys(FONTS) as [FontKey, ...FontKey[]];
 export const themeSchema = z.object({
   palette: z.enum(PALETTE_KEYS),
   font: z.enum(FONT_KEYS),
+  /** Logo shown in the site header (F05). */
+  logoAssetId: z.string().uuid().nullable().default(null),
 });
 export type SiteTheme = z.infer<typeof themeSchema>;
 

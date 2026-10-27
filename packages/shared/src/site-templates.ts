@@ -32,7 +32,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
   if (templateKey === 'beauty') {
     return {
       templateKey,
-      theme: { palette: 'rose', font: 'rubik' },
+      theme: { palette: 'rose', font: 'rubik', logoAssetId: null },
       seo: {
         title: b.name.slice(0, 70),
         description: `${b.name} — טיפולים מקצועיים באווירה נעימה. קבעו תור עוד היום.`.slice(0, 160),
@@ -46,6 +46,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
           subtitle: 'טיפולים מקצועיים באווירה אישית ונעימה. נשמח לראות אותך!',
           buttonLabel: 'לקביעת תור',
           buttonAction: b.phone ? 'call' : 'contact',
+          imageAssetId: null,
         },
         {
           id: 'services',
@@ -76,6 +77,8 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
           visible: true,
           title: 'נעים להכיר',
           body: `ב${b.name} אנחנו מאמינים שכל ביקור צריך להיות רגע של פינוק. אנחנו מקפידים על חומרים איכותיים, יחס אישי וזמנים מדויקים.`,
+          imageAssetId: null,
+          imageAlt: '',
         },
         {
           id: 'testimonials',
@@ -117,7 +120,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
 
   return {
     templateKey,
-    theme: { palette: 'navy', font: 'heebo' },
+    theme: { palette: 'navy', font: 'heebo', logoAssetId: null },
     seo: {
       title: b.name.slice(0, 70),
       description:
@@ -135,6 +138,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
         subtitle: `שירות מקצועי, אמין ומהיר${areas ? ` ב${areas}` : ''}. עובדים נקי, עומדים בזמנים.`,
         buttonLabel: 'התקשרו עכשיו',
         buttonAction: b.phone ? 'call' : 'contact',
+        imageAssetId: null,
       },
       {
         id: 'services',
@@ -153,6 +157,8 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
         visible: true,
         title: 'למה לבחור בנו',
         body: 'ניסיון של שנים, מחיר הוגן שנקבע מראש ואחריות על העבודה. אנחנו מגיעים בזמן, משאירים נקי ועונים לטלפון.',
+        imageAssetId: null,
+        imageAlt: '',
       },
       {
         id: 'testimonials',
@@ -212,9 +218,20 @@ export function newSection(type: Section['type'], id: string): Section {
         subtitle: '',
         buttonLabel: 'צרו קשר',
         buttonAction: 'contact',
+        imageAssetId: null,
       };
     case 'about':
-      return { id, type, visible: true, title: 'אודות', body: '' };
+      return {
+        id,
+        type,
+        visible: true,
+        title: 'אודות',
+        body: '',
+        imageAssetId: null,
+        imageAlt: '',
+      };
+    case 'gallery':
+      return { id, type, visible: true, title: 'גלריה', items: [] };
     case 'services':
       return {
         id,

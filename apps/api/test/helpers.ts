@@ -1,3 +1,5 @@
+import os from 'node:os';
+import path from 'node:path';
 import type { PrismaClient } from '@prisma/client';
 import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE, SESSION_COOKIE_NAME } from '@leadflow/shared';
 import { buildApp } from '../src/app';
@@ -20,6 +22,8 @@ export function testConfig(overrides: Partial<Record<string, string>> = {}): App
     APP_URL: TEST_WEB_ORIGIN,
     EMAIL_TRANSPORT: 'memory',
     AUTH_RATE_LIMIT_MAX: '10000',
+    // Uploaded images go to a throwaway folder, never the dev media folder.
+    MEDIA_DIR: path.join(os.tmpdir(), `leadflow-test-media-${process.pid}`),
     ...overrides,
   });
 }

@@ -32,6 +32,8 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { Alert, Button, Field, Select, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
+import { ImageField } from '../media/ImageField';
+import { useMediaMap } from '../media/api';
 import { siteBusinessInfo } from './api';
 import { PreviewFrame } from './PreviewFrame';
 import { PublishDialog } from './PublishDialog';
@@ -95,7 +97,8 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
 
   const info = useMemo(() => siteBusinessInfo(business), [business]);
   const deferred = useDeferredValue(draft);
-  const html = useMemo(() => renderSitePage(deferred, info), [deferred, info]);
+  const media = useMediaMap(business.id);
+  const html = useMemo(() => renderSitePage(deferred, info, media), [deferred, info, media]);
 
   const update = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const updateSection = (id: string, patch: Partial<Section>) =>
@@ -388,6 +391,12 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                   aria-labelledby="tab-design"
                   className="flex flex-col gap-6"
                 >
+                  <ImageField
+                    label="לוגו"
+                    hint="מוצג בראש האתר ליד שם העסק. עדיף לוגו על רקע שקוף או לבן."
+                    value={draft.theme.logoAssetId}
+                    onChange={(logoAssetId) => update({ theme: { ...draft.theme, logoAssetId } })}
+                  />
                   <fieldset className="flex flex-col gap-3">
                     <legend className="mb-2 text-sm font-medium text-ink">צבעים</legend>
                     <div className="grid grid-cols-2 gap-2">

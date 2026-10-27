@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
 import type { PrismaClient } from '@prisma/client';
 import {
   serializerCompiler,
@@ -25,6 +26,9 @@ import { siteTenantRoutes } from './modules/sites/routes';
 import { leadTenantRoutes } from './modules/leads/routes';
 import { teamRoutes, teamTenantRoutes } from './modules/team/routes';
 import { PublishedSiteCache } from './public/cache';
+import { LocalDiskStorage, type StorageProvider } from './integrations/storage';
+import { mediaTenantRoutes } from './modules/media/routes';
+import { registerMediaServing } from './modules/media/serve';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -34,6 +38,8 @@ declare module 'fastify' {
     siteCache: PublishedSiteCache;
     /** Outbound email (auth links, invitations). */
     email: EmailSender;
+    /** Uploaded media (F05). */
+    storage: StorageProvider;
   }
 }
 
@@ -44,12 +50,21 @@ export interface AppDeps {
   emailSender?: EmailSender;
   /** Pass the same instance to buildPublicApp so publishing shows immediately. */
   siteCache?: PublishedSiteCache;
+  /** Defaults to local disk at MEDIA_DIR. */
+  storage?: StorageProvider;
   /** Captures log lines (tests). */
   logStream?: LogStream;
 }
 
 /** Builds the Fastify app. Used by the server and by tests (via `app.inject`). */
-export async function buildApp({ config, prisma, emailSender, logStream, siteCache }: AppDeps) {
+export async function buildApp({
+  config,
+  prisma,
+  emailSender,
+  logStream,
+  siteCache,
+  storage,
+}: AppDeps) {
   const app = Fastify({
     logger: loggerOptions(config, logStream),
     genReqId: (req) => {
@@ -80,6 +95,7 @@ export async function buildApp({ config, prisma, emailSender, logStream, siteCac
   app.decorate('config', config);
   app.decorate('prisma', prisma);
   app.decorate('siteCache', siteCache ?? new PublishedSiteCache());
+  app.decorate('storage', storage ?? new LocalDiskStorage(config.MEDIA_DIR));
 
   app.addHook('onSend', async (req, reply) => {
     reply.header('x-request-id', req.id);
@@ -94,6 +110,8 @@ export async function buildApp({ config, prisma, emailSender, logStream, siteCac
     allowedHeaders: ['Content-Type', CSRF_HEADER_NAME],
   });
   await app.register(cookie);
+  // Uploads: one file per request; the route enforces the size limit too.
+  await app.register(multipart, { limits: { files: 1, fields: 5, fileSize: 8 * 1024 * 1024 } });
   // Not global: only routes with `config.rateLimit` are limited (per IP, per route).
   await app.register(rateLimit, {
     global: false,
@@ -109,6 +127,7 @@ export async function buildApp({ config, prisma, emailSender, logStream, siteCac
   app.decorate('email', email);
 
   await app.register(healthRoutes);
+  registerMediaServing(app, app.storage);
   await app.register(authRoutes, { email });
   await app.register(businessRoutes);
   await app.register(teamRoutes);
@@ -119,6 +138,7 @@ export async function buildApp({ config, prisma, emailSender, logStream, siteCac
       await scope.register(siteTenantRoutes);
       await scope.register(leadTenantRoutes);
       await scope.register(teamTenantRoutes);
+      await scope.register(mediaTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

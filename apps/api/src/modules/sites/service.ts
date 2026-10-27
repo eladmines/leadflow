@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   buildTemplateDraft,
   openingHoursSchema,
+  referencedAssetIds,
   renderSitePage,
   sectionSchema,
   seoSchema,
@@ -20,6 +21,7 @@ import type { AppConfig } from '../../config/env';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
+import { assertOwnAssets, mediaMapFor } from '../media/service';
 import type { PublishedSiteCache } from '../../public/cache';
 
 const storedSections = z.array(sectionSchema);
@@ -135,6 +137,7 @@ export class SiteService {
    * open editors can never silently overwrite each other. Never touches the published version.
    */
   async saveDraft(ctx: TenantContext, input: SaveDraftRequest): Promise<Site> {
+    await assertOwnAssets(this.prisma, ctx.businessId, referencedAssetIds(input));
     const result = await this.prisma.site.updateMany({
       where: { businessId: ctx.businessId, revision: input.revision },
       data: {
@@ -214,7 +217,13 @@ export class SiteService {
       seo: seoSchema.parse(site.seo),
       sections: storedSections.parse(site.sections),
     };
-    const html = renderSitePage(draft, info);
+    const media = await mediaMapFor(
+      this.prisma,
+      this.config,
+      ctx.businessId,
+      referencedAssetIds(draft),
+    );
+    const html = renderSitePage(draft, info, media);
 
     try {
       const row = await this.prisma.$transaction(async (tx) => {

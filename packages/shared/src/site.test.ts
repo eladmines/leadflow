@@ -79,6 +79,7 @@ describe('renderSitePage', () => {
         subtitle: evil,
         buttonLabel: evil,
         buttonAction: 'contact',
+        imageAssetId: null,
       },
       {
         id: 'f',
@@ -101,7 +102,7 @@ describe('renderSitePage', () => {
     ];
     const html = renderSitePage(
       {
-        theme: { palette: 'teal', font: 'rubik' },
+        theme: { palette: 'teal', font: 'rubik', logoAssetId: null },
         seo: { title: evil, description: evil },
         sections,
       },
