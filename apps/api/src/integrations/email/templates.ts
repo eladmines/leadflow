@@ -124,3 +124,32 @@ ${button(params.link, 'לצפייה בליד')}
   ].join('\n');
   return { subject, html, text };
 }
+
+/** F09: invitation to join a business's team. */
+export function inviteTemplate(params: {
+  businessName: string;
+  inviterName: string | null;
+  roleLabel: string;
+  link: string;
+  days: number;
+}): RenderedEmail {
+  const subject = `הוזמנת להצטרף לצוות של ${params.businessName} ב-LeadFlow`;
+  const who = params.inviterName ? `${escapeHtml(params.inviterName)} הזמין/ה אותך` : 'הוזמנת';
+  const html = layout(
+    subject,
+    `<h1 style="font-size:20px;margin:0 0 16px;">${who} להצטרף ל${escapeHtml(params.businessName)}</h1>
+<p style="margin:0 0 8px;">התפקיד שלך בצוות: <strong>${escapeHtml(params.roleLabel)}</strong>. ב-LeadFlow מנהלים את הפניות, הלקוחות והאתר של העסק במקום אחד.</p>
+${button(params.link, 'הצטרפות לצוות')}
+<p style="margin:0 0 8px;">ההזמנה תקפה ל-${params.days} ימים. כדי להצטרף צריך להתחבר (או להירשם) עם כתובת האימייל הזו.</p>
+<p style="margin:0;color:#6b7280;">אם לא ציפית להזמנה, אפשר להתעלם מהודעה זו.</p>`,
+  );
+  const text = [
+    `${params.inviterName ? `${params.inviterName} הזמין/ה אותך` : 'הוזמנת'} להצטרף ל${params.businessName} ב-LeadFlow.`,
+    `התפקיד שלך בצוות: ${params.roleLabel}.`,
+    '',
+    `להצטרפות: ${params.link}`,
+    '',
+    `ההזמנה תקפה ל-${params.days} ימים. כדי להצטרף צריך להתחבר (או להירשם) עם כתובת האימייל הזו.`,
+  ].join('\n');
+  return { subject, html, text };
+}

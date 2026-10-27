@@ -44,6 +44,7 @@ model User {
   memberships  Membership[]
   siteVersions SiteVersion[]
   ownedLeads   Lead[]
+  sentInvites  Invitation[]  @relation("InvitedBy")
 
   @@map("users")
 }
@@ -154,6 +155,7 @@ model Business {
   contacts    Contact[]
   leads       Lead[]
   stages      PipelineStage[]
+  invitations Invitation[]
 
   @@map("businesses")
 }
@@ -355,4 +357,29 @@ model Activity {
 
   @@index([businessId, leadId, createdAt])
   @@map("activities")
+}
+
+// ---------------------------------------------------------------------------
+// F09 — Team invitations
+// ---------------------------------------------------------------------------
+
+/// Pending/used invitation to join a business. Only the token hash is stored.
+model Invitation {
+  id          String         @id @default(uuid()) @db.Uuid
+  businessId  String         @map("business_id") @db.Uuid
+  /// Trimmed + lowercased; the invitee must sign in with exactly this address to accept.
+  email       String         @db.VarChar(254)
+  role        MembershipRole
+  tokenHash   String         @unique @map("token_hash") @db.VarChar(64)
+  expiresAt   DateTime       @map("expires_at") @db.Timestamptz(3)
+  invitedById String?        @map("invited_by_id") @db.Uuid
+  acceptedAt  DateTime?      @map("accepted_at") @db.Timestamptz(3)
+  revokedAt   DateTime?      @map("revoked_at") @db.Timestamptz(3)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  business  Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invitedBy User?    @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([businessId, email])
+  @@map("invitations")
 }

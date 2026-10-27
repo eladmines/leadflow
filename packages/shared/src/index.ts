@@ -7,3 +7,4 @@ export * from './site';
 export * from './site-templates';
 export * from './site-render';
 export * from './leads';
+export * from './team';
