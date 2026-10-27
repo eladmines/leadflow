@@ -1,0 +1,31 @@
+# Decision log
+
+Status: **Accepted** (approved by the product owner) · **Proposed** (recommended, awaiting
+confirmation) · **Open** (needs a decision before the named feature).
+
+| ID    | Decision                                                                            | Status   | Why / notes                                                                                                                    |
+| ----- | ----------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| D-001 | Own session auth in Postgres (argon2id, opaque cookie token)                        | Accepted | No vendor lock-in or cost; works on Supabase or Neon.                                                                          |
+| D-002 | Email verification is soft in the MVP (banner, not a gate)                          | Accepted | Less onboarding friction; enforcement can come later.                                                                          |
+| D-003 | Team invites after the core journey (F09)                                           | Accepted | Keeps the foundation small; Membership/RBAC exist from F02.                                                                    |
+| D-004 | Modular monolith: Fastify + Prisma + PostgreSQL; React + Vite SPA; pnpm monorepo    | Accepted | Solo-developer scale; Fastify gives typed validation, pino and `inject()` tests.                                               |
+| D-005 | Pin stable majors (TS 5.9, Prisma 6, Zod 3, Vite 6, Tailwind 3, React 18)           | Accepted | Newest majors (TS 7, Prisma 8 RC, Vite 8, Tailwind 4, Zod 4) aren't adopted yet.                                               |
+| D-006 | Roadmap order follows doc 08, not PRD §14                                           | Proposed | The docs conflict on where domains, quotes and billing go; 08 is more detailed. Re-confirm before F11.                         |
+| D-007 | App-layer tenant isolation now; Postgres RLS later as defence in depth              | Accepted | Docs say "consider RLS"; Prisma + poolers make RLS costly early. Every table keeps `business_id`.                              |
+| D-008 | Fixed roles OWNER / MANAGER / EMPLOYEE; matrix in `packages/shared`                 | Proposed | The PRD's "manager — by permission" and "by team" aren't specified. Teams and custom permissions stay Open.                    |
+| D-009 | tenant_id ≡ business_id; column name `business_id`                                  | Accepted | The docs use both names.                                                                                                       |
+| D-010 | Publishing: immutable static snapshots in object storage + atomic pointer switch    | Proposed | Meets "a failed publish keeps the live site" and "no DB hit per view".                                                         |
+| D-011 | Storage: S3-compatible adapter; MinIO locally, Cloudflare R2 in prod                | Proposed | R2 speaks the S3 API; MinIO is free locally.                                                                                   |
+| D-012 | Local public-site serving on `*.lvh.me`                                             | Proposed | Wildcard DNS to 127.0.0.1; no hosts-file edits.                                                                                |
+| D-013 | Form spam protection: honeypot + minimum fill time + IP rate limit; Turnstile later | Proposed | Free; no paid CAPTCHA in the MVP.                                                                                              |
+| D-014 | No payment step in onboarding until F13; businesses start in a trial state          | Proposed | Journey 1 mentions payment but billing is stage 3, and trial terms are undefined.                                              |
+| D-015 | Phone verification deferred; store E.164-normalised phone only                      | Proposed | The PRD is inconsistent; SMS costs money.                                                                                      |
+| D-016 | Plan/tier stored only on Subscription (F13), not on Business                        | Proposed | Avoids the duplication in doc 05.                                                                                              |
+| D-017 | Local Postgres on the default port 5432                                             | Accepted | Revised 2026-10-27: briefly used 5440 to avoid other local projects; the product owner chose to stop those containers instead. |
+| O-001 | Backend host (Fly.io / Railway / Render) and DB (Supabase vs Neon)                  | Open     | Decide before the first deploy.                                                                                                |
+| O-002 | Which industries get the first 1–2 site templates                                   | Open     | Needed at F04 design (PRD §16).                                                                                                |
+| O-003 | Teams and configurable manager permissions                                          | Open     | Before F09.                                                                                                                    |
+| O-004 | Payment provider (Israeli clearing + invoicing)                                     | Open     | Before F13.                                                                                                                    |
+| O-005 | WhatsApp: direct Cloud API vs a BSP; coexistence eligibility                        | Open     | Resolve with the POC spike before F12.                                                                                         |
+| O-006 | Custom domains via Cloudflare for SaaS: limits and pricing                          | Open     | Resolve with the POC spike before F11.                                                                                         |
+| O-007 | Data retention, deletion and RTO/RPO; Israeli privacy-law review                    | Open     | Before Beta (F14/F15).                                                                                                         |

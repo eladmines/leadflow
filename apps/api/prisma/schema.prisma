@@ -1,0 +1,11 @@
+// LeadFlow data model. Every tenant-owned table MUST carry business_id
+// (see docs/ARCHITECTURE.md#tenant-isolation). Models are added per feature.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
