@@ -1,4 +1,5 @@
 import {
+  apiPaths,
   businessWebPaths,
   can,
   formatIsraeliPhone,
@@ -8,7 +9,17 @@ import {
   type LeadListQuery,
   type PipelineStage,
 } from '@leadflow/shared';
-import { Columns3, Inbox, List, Mail, Phone, Plus, Search, UserRound } from 'lucide-react';
+import {
+  Columns3,
+  Download,
+  Inbox,
+  List,
+  Mail,
+  Phone,
+  Plus,
+  Search,
+  UserRound,
+} from 'lucide-react';
 import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Alert, Button, buttonClasses, Spinner } from '../../components/ui';
@@ -248,6 +259,13 @@ function Board({
   );
 }
 
+/** The list filters, without UI-only params (view). */
+function exportParams(params: URLSearchParams) {
+  const p = new URLSearchParams(params);
+  p.delete('view');
+  return p.toString();
+}
+
 /** F07/F08: leads as a pipeline board or a list, with search and filters kept in the URL. */
 export function LeadsPage() {
   const business = useCurrentBusiness();
@@ -299,10 +317,23 @@ export function LeadsPage() {
         title="לקוחות ולידים"
         description={seesAll ? 'כל הפניות של העסק, לפי שלב בתהליך המכירה.' : 'הפניות שהוקצו לך.'}
         actions={
-          <Button onClick={() => setNewOpen(true)}>
-            <Plus aria-hidden className="h-4 w-4" />
-            ליד חדש
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {can(business.role, 'leads.export') && (
+              <a
+                // Plain link: the browser downloads the CSV with the session cookie.
+                href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params)}` : ''}`}
+                download
+                className={buttonClasses('secondary', 'md')}
+              >
+                <Download aria-hidden className="h-4 w-4" />
+                ייצוא לאקסל
+              </a>
+            )}
+            <Button onClick={() => setNewOpen(true)}>
+              <Plus aria-hidden className="h-4 w-4" />
+              ליד חדש
+            </Button>
+          </div>
         }
       />
       <NewLeadDialog open={newOpen} onOpenChange={setNewOpen} />

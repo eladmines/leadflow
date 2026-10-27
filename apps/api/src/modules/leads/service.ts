@@ -181,7 +181,7 @@ export class LeadService {
   }
 
   /** Newest first, with search (name / phone / email) and filters. */
-  async list(ctx: TenantContext, query: ListQuery = {}): Promise<Lead[]> {
+  async list(ctx: TenantContext, query: ListQuery = {}, take = 500): Promise<Lead[]> {
     const q = query.q?.trim();
     const digits = q?.replace(/\D/g, '') ?? '';
     const phone = q ? normalizeIsraeliPhone(q) : null;
@@ -214,7 +214,7 @@ export class LeadService {
       },
       include: leadInclude,
       orderBy: { createdAt: 'desc' },
-      take: 500,
+      take,
     });
     return rows.map(toLeadDto);
   }

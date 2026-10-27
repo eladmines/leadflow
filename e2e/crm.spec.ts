@@ -75,4 +75,16 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await expect(page.getByRole('list', { name: 'פניות' }).getByRole('article')).toHaveCount(1);
   await page.getByLabel('חיפוש לידים').fill('אין כזה');
   await expect(page.getByText('לא נמצאו לידים שמתאימים לחיפוש.')).toBeVisible();
+
+  // Export what's on screen to Excel (CSV with BOM).
+  await page.getByLabel('חיפוש לידים').fill('');
+  await expect(page).not.toHaveURL(/q=/); // the search is debounced into the URL
+  const download = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'ייצוא לאקסל' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^leadflow-leads-\d{4}-\d{2}-\d{2}\.csv$/);
+  const { readFile } = await import('node:fs/promises');
+  const csv = await readFile((await file.path())!, 'utf8');
+  expect(csv.charCodeAt(0)).toBe(0xfeff);
+  expect(csv).toContain('אבי כהן,054-1112233');
 });
