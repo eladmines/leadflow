@@ -148,6 +148,7 @@ model Business {
 
   memberships Membership[]
   auditLogs   AuditLog[]
+  site        Site?
 
   @@map("businesses")
 }
@@ -168,4 +169,34 @@ model Membership {
   @@unique([userId, businessId])
   @@index([businessId])
   @@map("memberships")
+}
+
+// ---------------------------------------------------------------------------
+// F04 — Site builder (single-page site per business in the MVP, D-030)
+// ---------------------------------------------------------------------------
+
+enum SiteStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+}
+
+model Site {
+  id          String     @id @default(uuid()) @db.Uuid
+  /// One site per business in the MVP (Basic plan); becomes non-unique if plans allow more.
+  businessId  String     @unique @map("business_id") @db.Uuid
+  templateKey String     @map("template_key") @db.VarChar(30)
+  /// Shapes: shared themeSchema / seoSchema / sectionSchema[] (validated on every write).
+  theme       Json
+  seo         Json
+  sections    Json
+  /// Optimistic-locking counter for the draft; incremented on every successful save.
+  revision    Int        @default(0)
+  status      SiteStatus @default(DRAFT)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("sites")
 }

@@ -13,6 +13,7 @@ import { SettingsPage } from '../features/settings/SettingsPage';
 import { BusinessLayout } from '../features/shell/BusinessLayout';
 import { ComingSoonPage } from '../features/shell/ComingSoonPage';
 import { navItems } from '../features/shell/nav';
+import { SitePage } from '../features/site/SitePage';
 import { TeamPage } from '../features/team/TeamPage';
 import { ContinueOnboardingPage, NewBusinessPage } from '../features/onboarding/OnboardingPage';
 import { NotFoundPage } from './NotFoundPage';
@@ -101,6 +102,7 @@ export function AppRoutes() {
               element={<ComingSoonPage item={item} />}
             />
           ))}
+        <Route path="site" element={<SitePage />} />
         <Route path="team" element={<TeamPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />

@@ -11,9 +11,9 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F01 | [Authentication & sessions](features/F01.md)           | Core               | F00               | —             | Architect → Backend ∥ Frontend → QA | **Done** |
 | F02 | [Business onboarding, tenancy & RBAC](features/F02.md) | Core               | F01               | —             | Architect → Backend ∥ Frontend → QA | **Done** |
 | F03 | [App shell, navigation & dashboard](features/F03.md)   | Core               | F02 contract      | F02 backend   | Frontend → QA                       | **Done** |
-| F04 | [Site builder](features/F04.md)                        | Core               | F02, F03          | F05 backend   | Full pipeline                       | Planned  |
-| F05 | [Media & file storage](features/F05.md)                | Core-adjacent      | F02               | F04           | Architect → Backend → Frontend → QA | Planned  |
-| F06 | [Publishing & public serving](features/F06.md)         | Core               | F04 (+F05 images) | F07 backend   | Full pipeline                       | Planned  |
+| F04 | [Site builder](features/F04.md)                        | Core               | F02, F03          | F05 backend   | Full pipeline                       | **Done** |
+| F05 | [Media & file storage](features/F05.md)                | Core-adjacent      | F02               | F04           | Architect → Backend → Frontend → QA | **Done** |
+| F06 | [Publishing & public serving](features/F06.md)         | Core               | F04 (+F05 images) | F07 backend   | Full pipeline                       | **Done** |
 | F07 | [Lead capture forms](features/F07.md)                  | Core               | F06, F02          | F06           | Full pipeline                       | Planned  |
 | F08 | [CRM core](features/F08.md)                            | Core (journey end) | F07               | —             | Full pipeline                       | Planned  |
 | F09 | Team invitations & member management                   | High               | F02               | F04–F08       | Backend ∥ Frontend → QA             | Planned  |
@@ -47,3 +47,4 @@ F06 ─► F11 (after spike)
 - 2026-10-27 — F01 complete: 8 auth endpoints, 6 RTL screens, 182 tests + 7 e2e; QA verdict ready; QA-F01-1 (empty JSON body on logout) fixed.
 - 2026-10-27 — F02 complete (built directly, no agent pipeline): businesses + memberships, tenant scope with auto route walker, owner-only edits, 4-step wizard with server-saved resume, business home. 229 unit/integration tests + 16 e2e (desktop + mobile).
 - 2026-10-27 — F03 complete: app shell (right sidebar, mobile drawer, business switcher, skip link), dashboard with real setup checklist, coming-soon sections, team list, settings (details, areas, hours; owner-only edits). 240 unit/integration tests + 18 e2e.
+- 2026-10-27 — F04 complete (MVP): one-page site builder, 2 templates, 8 section types, presets, autosave with revision locking + local backup, live sandboxed preview, owner-only edit. 262 unit/integration tests + 20 e2e.

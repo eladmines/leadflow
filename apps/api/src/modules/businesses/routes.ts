@@ -9,7 +9,7 @@ import {
   updateBusinessRequestSchema,
 } from '@leadflow/shared';
 import { authOf, requireAuth } from '../../plugins/session';
-import { requirePermission, tenantOf, tenantScope } from '../../plugins/tenant';
+import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { BusinessService } from './service';
 
 const paths = apiPaths.businesses;
@@ -36,13 +36,12 @@ export const businessRoutes: FastifyPluginAsyncZod = async (app) => {
       return reply.status(201).send({ business });
     },
   );
-
-  // Everything below is tenant-scoped: membership verified before any handler runs.
-  await app.register(tenantScope(businessTenantRoutes(service)), { prefix: paths.tenantPrefix });
 };
 
-function businessTenantRoutes(service: BusinessService): FastifyPluginAsyncZod {
-  return async (app) => {
+/** Tenant routes (`/api/v1/businesses/:businessId/...`); registered inside the tenant scope. */
+export const businessTenantRoutes: FastifyPluginAsyncZod = async (app) => {
+  const service = new BusinessService(app.prisma, app.log);
+  {
     app.get(
       '',
       {
@@ -82,5 +81,5 @@ function businessTenantRoutes(service: BusinessService): FastifyPluginAsyncZod {
       },
       async (req) => ({ members: await service.listMembers(tenantOf(req)) }),
     );
-  };
-}
+  }
+};
