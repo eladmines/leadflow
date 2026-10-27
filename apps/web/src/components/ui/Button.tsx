@@ -19,6 +19,16 @@ const sizes: Record<Size, string> = {
   lg: 'h-12 px-6 text-base',
 };
 
+/** Button look for elements that aren't buttons (e.g. a router Link that acts as a CTA). */
+export function buttonClasses(variant: Variant = 'primary', size: Size = 'md', className?: string) {
+  return cn(
+    'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed',
+    variants[variant],
+    sizes[size],
+    className,
+  );
+}
+
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
@@ -35,12 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type ?? 'button'}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed',
-        variants[variant],
-        sizes[size],
-        className,
-      )}
+      className={buttonClasses(variant, size, className)}
       {...rest}
     >
       {loading && <Spinner size="sm" label="" />}

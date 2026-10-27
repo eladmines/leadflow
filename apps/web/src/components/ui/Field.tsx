@@ -9,6 +9,14 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   ltr?: boolean;
 }
 
+/** Base input styling shared by Field and PasswordField. */
+export function inputClasses(hasError: boolean) {
+  return cn(
+    'h-11 w-full rounded-lg border bg-surface px-3 text-base text-ink placeholder:text-ink-subtle sm:h-10 sm:text-sm',
+    hasError ? 'border-danger-600' : 'border-surface-border focus-visible:border-brand-500',
+  );
+}
+
 /** Labeled text input with hint and inline error, wired for screen readers. */
 export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
   { label, hint, error, ltr, className, id, required, ...rest },
@@ -36,12 +44,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         dir={ltr ? 'ltr' : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
-        className={cn(
-          'h-10 rounded-lg border bg-surface px-3 text-sm text-ink placeholder:text-ink-subtle',
-          ltr && 'text-end',
-          error ? 'border-danger-600' : 'border-surface-border focus-visible:border-brand-500',
-          className,
-        )}
+        className={cn(inputClasses(Boolean(error)), ltr && 'text-end', className)}
         {...rest}
       />
       {hint && !error && (
