@@ -80,6 +80,7 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.businesses.list}`]: () => json(200, { businesses: [testBusiness] }),
     [`GET ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
       json(200, { business: testBusiness }),
+    [`GET ${apiPaths.site.site(testBusiness.id)}`]: () => json(200, { site: null }),
     ...routes,
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {

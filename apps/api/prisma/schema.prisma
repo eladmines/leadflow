@@ -38,10 +38,11 @@ model User {
   createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions    Session[]
-  authTokens  AuthToken[]
-  auditLogs   AuditLog[]
-  memberships Membership[]
+  sessions     Session[]
+  authTokens   AuthToken[]
+  auditLogs    AuditLog[]
+  memberships  Membership[]
+  siteVersions SiteVersion[]
 
   @@map("users")
 }
@@ -182,21 +183,52 @@ enum SiteStatus {
 }
 
 model Site {
-  id          String     @id @default(uuid()) @db.Uuid
+  id                 String     @id @default(uuid()) @db.Uuid
   /// One site per business in the MVP (Basic plan); becomes non-unique if plans allow more.
-  businessId  String     @unique @map("business_id") @db.Uuid
-  templateKey String     @map("template_key") @db.VarChar(30)
+  businessId         String     @unique @map("business_id") @db.Uuid
+  templateKey        String     @map("template_key") @db.VarChar(30)
   /// Shapes: shared themeSchema / seoSchema / sectionSchema[] (validated on every write).
-  theme       Json
-  seo         Json
-  sections    Json
+  theme              Json
+  seo                Json
+  sections           Json
   /// Optimistic-locking counter for the draft; incremented on every successful save.
-  revision    Int        @default(0)
-  status      SiteStatus @default(DRAFT)
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  revision           Int        @default(0)
+  status             SiteStatus @default(DRAFT)
+  /// Globally unique public name (shared subdomainSchema). Null until chosen.
+  subdomain          String?    @unique @db.VarChar(40)
+  /// The live version; null = not published. Switched atomically on publish/rollback/unpublish.
+  publishedVersionId String?    @unique @map("published_version_id") @db.Uuid
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business         Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  versions         SiteVersion[] @relation("SiteVersions")
+  publishedVersion SiteVersion?  @relation("PublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
 
   @@map("sites")
+}
+
+/// Immutable published snapshot (D-036: stored in Postgres in the MVP, moves to R2 with the Worker).
+model SiteVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  businessId    String   @map("business_id") @db.Uuid
+  siteId        String   @map("site_id") @db.Uuid
+  /// 1, 2, 3… per site.
+  number        Int
+  /// The draft revision this version was rendered from.
+  draftRevision Int      @map("draft_revision")
+  /// Rendered page (renderSitePage) — served as-is by the public site server.
+  html          String
+  /// The draft (theme, seo, sections) and business info used, for audit and future re-rendering.
+  content       Json
+  createdById   String?  @map("created_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  site      Site  @relation("SiteVersions", fields: [siteId], references: [id], onDelete: Cascade)
+  liveOn    Site? @relation("PublishedVersion")
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([siteId, number])
+  @@index([businessId])
+  @@map("site_versions")
 }

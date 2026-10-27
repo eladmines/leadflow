@@ -44,7 +44,8 @@ export function useDraftAutosave(businessId: string, site: Site, draft: Draft) {
   const inFlight = useRef(false);
   const again = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>();
-  const first = useRef(true);
+  /** The draft the server has (initially the loaded one). Unchanged draft → nothing to save. */
+  const lastSaved = useRef(draft);
   const stopped = useRef(false);
   const scheduled = useRef(false);
 
@@ -62,6 +63,7 @@ export function useDraftAutosave(businessId: string, site: Site, draft: Draft) {
     const sending = latest.current;
     try {
       const res = await saveDraft(businessId, { ...sending, revision: revision.current });
+      lastSaved.current = sending;
       revision.current = res.site?.revision ?? revision.current + 1;
       clearBackup(businessId);
       setState(latest.current === sending && !again.current ? 'saved' : 'pending');
@@ -85,10 +87,8 @@ export function useDraftAutosave(businessId: string, site: Site, draft: Draft) {
   }, [businessId]);
 
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    // Robust to StrictMode's double effect run: only real changes schedule a save.
+    if (draft === lastSaved.current) return;
     if (stopped.current) return;
     setState('pending');
     scheduled.current = true;

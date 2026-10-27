@@ -22,11 +22,14 @@ import { healthRoutes } from './modules/health/routes';
 import { authRoutes } from './modules/auth/routes';
 import { businessRoutes, businessTenantRoutes } from './modules/businesses/routes';
 import { siteTenantRoutes } from './modules/sites/routes';
+import { PublishedSiteCache } from './public/cache';
 
 declare module 'fastify' {
   interface FastifyInstance {
     config: AppConfig;
     prisma: PrismaClient;
+    /** Published-page cache shared with the public-site server (invalidated on publish). */
+    siteCache: PublishedSiteCache;
   }
 }
 
@@ -35,12 +38,14 @@ export interface AppDeps {
   prisma: PrismaClient;
   /** Defaults to the adapter chosen by `EMAIL_TRANSPORT`. Tests inject a MemoryEmailSender. */
   emailSender?: EmailSender;
+  /** Pass the same instance to buildPublicApp so publishing shows immediately. */
+  siteCache?: PublishedSiteCache;
   /** Captures log lines (tests). */
   logStream?: LogStream;
 }
 
 /** Builds the Fastify app. Used by the server and by tests (via `app.inject`). */
-export async function buildApp({ config, prisma, emailSender, logStream }: AppDeps) {
+export async function buildApp({ config, prisma, emailSender, logStream, siteCache }: AppDeps) {
   const app = Fastify({
     logger: loggerOptions(config, logStream),
     genReqId: (req) => {
@@ -70,6 +75,7 @@ export async function buildApp({ config, prisma, emailSender, logStream }: AppDe
 
   app.decorate('config', config);
   app.decorate('prisma', prisma);
+  app.decorate('siteCache', siteCache ?? new PublishedSiteCache());
 
   app.addHook('onSend', async (req, reply) => {
     reply.header('x-request-id', req.id);

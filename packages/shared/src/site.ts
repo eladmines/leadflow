@@ -28,7 +28,65 @@ export const siteMessages = {
   required: 'שדה חובה',
   revisionConflict: 'האתר נערך בינתיים בחלון אחר. טענו מחדש כדי לראות את הגרסה העדכנית.',
   siteExists: 'לעסק כבר יש אתר',
+  subdomainRequired: 'יש לבחור כתובת לאתר',
+  subdomainInvalid: 'אפשר להשתמש באותיות באנגלית, ספרות ומקף (3–40 תווים), בלי מקף בהתחלה או בסוף',
+  subdomainReserved: 'הכתובת הזו שמורה למערכת. נסו כתובת אחרת',
+  subdomainTaken: 'הכתובת הזו כבר תפוסה. נסו כתובת אחרת',
+  publishStale: 'יש שינויים שעדיין נשמרים. נסו לפרסם שוב בעוד רגע',
 } as const;
+
+// ---------------------------------------------------------------------------
+// Subdomain (F06)
+// ---------------------------------------------------------------------------
+
+/** Names that must never be a customer's subdomain (platform hosts and confusing words). */
+export const RESERVED_SUBDOMAINS = new Set([
+  'www',
+  'app',
+  'api',
+  'admin',
+  'administrator',
+  'mail',
+  'email',
+  'smtp',
+  'static',
+  'assets',
+  'cdn',
+  'media',
+  'files',
+  'help',
+  'support',
+  'blog',
+  'status',
+  'docs',
+  'dashboard',
+  'login',
+  'signin',
+  'signup',
+  'register',
+  'account',
+  'billing',
+  'leadflow',
+  'test',
+  'dev',
+  'staging',
+  'preview',
+  'public',
+  'root',
+  'system',
+  'security',
+  'abuse',
+  'postmaster',
+]);
+
+/** Lowercase letters, digits and hyphens; 3–40 chars; no leading/trailing hyphen. */
+export const subdomainSchema = z
+  .string({ required_error: siteMessages.subdomainRequired })
+  .trim()
+  .toLowerCase()
+  .min(1, siteMessages.subdomainRequired)
+  .regex(/^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/, siteMessages.subdomainInvalid)
+  .refine((s) => !RESERVED_SUBDOMAINS.has(s), siteMessages.subdomainReserved);
 
 const title = z.string().trim().max(SITE_LIMITS.title, siteMessages.titleTooLong);
 const short = z.string().trim().max(SITE_LIMITS.shortText, siteMessages.textTooLong);
@@ -199,8 +257,22 @@ export function templateForIndustry(industry: string): TemplateKey {
 
 export const SITE_STATUSES = ['DRAFT', 'PUBLISHED', 'SUSPENDED'] as const;
 
+export const publishedVersionSchema = z.object({
+  versionId: z.string().uuid(),
+  number: z.number().int(),
+  /** Draft revision that was published; differs from `revision` when there are unpublished edits. */
+  revision: z.number().int(),
+  publishedAt: z.string().datetime(),
+});
+
 export const siteSchema = z.object({
   id: z.string().uuid(),
+  subdomain: z.string().nullable(),
+  /** Live address once a subdomain is chosen (e.g. http://shiran.lvh.me:4100). */
+  publicUrl: z.string().nullable(),
+  /** Host suffix shown next to the subdomain field, e.g. "lvh.me:4100". */
+  publicDomain: z.string(),
+  published: publishedVersionSchema.nullable(),
   templateKey: templateKeySchema,
   theme: themeSchema,
   seo: seoSchema,
@@ -231,7 +303,39 @@ export const saveDraftRequestSchema = z.object({
 });
 export type SaveDraftRequest = z.infer<typeof saveDraftRequestSchema>;
 
+export const setSubdomainRequestSchema = z.object({ subdomain: subdomainSchema });
+export type SetSubdomainRequest = z.infer<typeof setSubdomainRequestSchema>;
+
+/** Publishes exactly the draft revision the owner is looking at (409 if it moved on). */
+export const publishRequestSchema = z.object({ revision: z.number().int().min(0) });
+export type PublishRequest = z.infer<typeof publishRequestSchema>;
+
+export const siteVersionSchema = z.object({
+  id: z.string().uuid(),
+  number: z.number().int(),
+  publishedAt: z.string().datetime(),
+  publishedBy: z.string().nullable(),
+  live: z.boolean(),
+});
+export type SiteVersion = z.infer<typeof siteVersionSchema>;
+export const siteVersionListResponseSchema = z.object({ versions: z.array(siteVersionSchema) });
+export type SiteVersionListResponse = z.infer<typeof siteVersionListResponseSchema>;
+
+export const siteAuditActions = [
+  'site.created',
+  'site.subdomain.changed',
+  'site.published',
+  'site.rolled_back',
+  'site.unpublished',
+] as const;
+
 export const siteApiPaths = {
   site: (businessId: string) => `/api/v1/businesses/${businessId}/site`,
   draft: (businessId: string) => `/api/v1/businesses/${businessId}/site/draft`,
+  subdomain: (businessId: string) => `/api/v1/businesses/${businessId}/site/subdomain`,
+  publish: (businessId: string) => `/api/v1/businesses/${businessId}/site/publish`,
+  unpublish: (businessId: string) => `/api/v1/businesses/${businessId}/site/unpublish`,
+  versions: (businessId: string) => `/api/v1/businesses/${businessId}/site/versions`,
+  rollback: (businessId: string, versionId: string) =>
+    `/api/v1/businesses/${businessId}/site/versions/${versionId}/rollback`,
 } as const;
