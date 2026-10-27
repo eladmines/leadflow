@@ -46,7 +46,13 @@ export function RegisterPage() {
   } = useForm<RegisterRequest>({
     resolver: zodResolver(registerRequestSchema),
     mode: 'onTouched',
-    defaultValues: { fullName: '', email: '', password: '', acceptTerms: false },
+    // An invitation link pre-fills the invited address (`?email=`).
+    defaultValues: {
+      fullName: '',
+      email: params.get('email') ?? '',
+      password: '',
+      acceptTerms: false,
+    },
   });
 
   const onSubmit = handleSubmit(async (values) => {

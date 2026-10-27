@@ -1,4 +1,4 @@
-import { authWebPaths, businessWebPaths } from '@leadflow/shared';
+import { authWebPaths, businessWebPaths, INVITE_WEB_PATH } from '@leadflow/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage';
@@ -16,6 +16,7 @@ import { navItems } from '../features/shell/nav';
 import { LeadDetailPage } from '../features/leads/LeadDetailPage';
 import { LeadsPage } from '../features/leads/LeadsPage';
 import { SitePage } from '../features/site/SitePage';
+import { AcceptInvitePage } from '../features/team/AcceptInvitePage';
 import { TeamPage } from '../features/team/TeamPage';
 import { ContinueOnboardingPage, NewBusinessPage } from '../features/onboarding/OnboardingPage';
 import { NotFoundPage } from './NotFoundPage';
@@ -62,6 +63,7 @@ export function AppRoutes() {
       />
       <Route path={authWebPaths.resetPassword} element={<ResetPasswordPage />} />
       <Route path={authWebPaths.verifyEmail} element={<VerifyEmailPage />} />
+      <Route path={INVITE_WEB_PATH} element={<AcceptInvitePage />} />
       <Route
         path={authWebPaths.appHome}
         element={

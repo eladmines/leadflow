@@ -23,6 +23,7 @@ import { authRoutes } from './modules/auth/routes';
 import { businessRoutes, businessTenantRoutes } from './modules/businesses/routes';
 import { siteTenantRoutes } from './modules/sites/routes';
 import { leadTenantRoutes } from './modules/leads/routes';
+import { teamRoutes, teamTenantRoutes } from './modules/team/routes';
 import { PublishedSiteCache } from './public/cache';
 
 declare module 'fastify' {
@@ -31,6 +32,8 @@ declare module 'fastify' {
     prisma: PrismaClient;
     /** Published-page cache shared with the public-site server (invalidated on publish). */
     siteCache: PublishedSiteCache;
+    /** Outbound email (auth links, invitations). */
+    email: EmailSender;
   }
 }
 
@@ -103,16 +106,19 @@ export async function buildApp({ config, prisma, emailSender, logStream, siteCac
 
   const email = emailSender ?? createEmailSender(config);
   if (email instanceof SmtpEmailSender) app.addHook('onClose', async () => email.close());
+  app.decorate('email', email);
 
   await app.register(healthRoutes);
   await app.register(authRoutes, { email });
   await app.register(businessRoutes);
+  await app.register(teamRoutes);
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(
     tenantScope(async (scope) => {
       await scope.register(businessTenantRoutes);
       await scope.register(siteTenantRoutes);
       await scope.register(leadTenantRoutes);
+      await scope.register(teamTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );
