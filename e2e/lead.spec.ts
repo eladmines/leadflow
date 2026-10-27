@@ -54,7 +54,7 @@ test('a visitor submits the website form and the owner sees the lead (AC-04)', a
   await expect(visitor.getByText('קיבלנו את הפרטים')).toBeVisible();
 
   // The owner sees it in LeadFlow.
-  await page.goto(`/b/${owner.id}/leads`);
+  await page.goto(`/b/${owner.id}/leads?view=list`);
   const card = page.getByRole('list', { name: 'פניות' }).getByRole('article').first();
   await expect(card.getByRole('heading', { name: 'דנה כהן' })).toBeVisible();
   await expect(card.getByText('אשמח לתור ליום חמישי אחר הצהריים')).toBeVisible();

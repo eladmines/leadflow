@@ -29,7 +29,11 @@ const lead = (over: Partial<Lead> = {}): Lead => ({
   source: 'website_form',
   sourceUrl: 'http://salon.lvh.me:4100/',
   message: 'אשמח לתור ליום חמישי',
+  owner: null,
+  expectedValue: null,
+  nextActionAt: null,
   createdAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+  updatedAt: new Date().toISOString(),
   ...over,
 });
 const liveSite: Site = {
@@ -61,7 +65,7 @@ describe('leads page', () => {
           ],
         }),
     });
-    renderApp(businessWebPaths.section(id, 'leads'));
+    renderApp(`${businessWebPaths.section(id, 'leads')}?view=list`);
     const list = await screen.findByRole('list', { name: 'פניות' });
     const cards = within(list).getAllByRole('article');
     expect(cards).toHaveLength(2);

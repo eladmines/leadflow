@@ -43,6 +43,17 @@ export const testBusiness: Business = {
   createdAt: '2026-10-27T10:00:00.000Z',
 };
 
+export const testStages = [
+  { id: '0a000000-0000-4000-8000-000000000001', name: 'חדש', position: 0, kind: 'OPEN' as const },
+  {
+    id: '0a000000-0000-4000-8000-000000000002',
+    name: 'נוצר קשר',
+    position: 1,
+    kind: 'OPEN' as const,
+  },
+  { id: '0a000000-0000-4000-8000-000000000003', name: 'נסגר', position: 2, kind: 'WON' as const },
+];
+
 /** Where `/app` lands for a user whose only business is `testBusiness`. */
 export const testBusinessHome = businessWebPaths.home(testBusiness.id);
 
@@ -82,6 +93,7 @@ export function mockApi(routes: Record<string, Handler>) {
       json(200, { business: testBusiness }),
     [`GET ${apiPaths.site.site(testBusiness.id)}`]: () => json(200, { site: null }),
     [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [] }),
+    [`GET ${apiPaths.leads.pipeline(testBusiness.id)}`]: () => json(200, { stages: testStages }),
     ...routes,
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {

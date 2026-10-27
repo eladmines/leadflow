@@ -290,7 +290,14 @@ export function DashboardPage() {
                     {l.contact.name.trim().charAt(0)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink">{l.contact.name}</p>
+                    <p className="truncate text-sm font-medium text-ink">
+                      <Link
+                        to={`${businessWebPaths.section(business.id, 'leads')}/${l.id}`}
+                        className="hover:underline"
+                      >
+                        {l.contact.name}
+                      </Link>
+                    </p>
                     <p className="truncate text-xs text-ink-muted">{l.message ?? 'ללא הודעה'}</p>
                   </div>
                   <time dateTime={l.createdAt} className="shrink-0 text-xs text-ink-muted">
