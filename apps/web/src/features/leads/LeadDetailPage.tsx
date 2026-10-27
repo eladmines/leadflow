@@ -30,6 +30,9 @@ import {
   useUpdateLead,
 } from './api';
 import { stageTone } from './LeadsPage';
+import { NewTaskForm } from '../tasks/NewTaskForm';
+import { TaskItem } from '../tasks/TaskItem';
+import { useTasks } from '../tasks/api';
 
 const fieldLabels: Record<string, string> = {
   expectedValue: 'ערך משוער',
@@ -50,6 +53,10 @@ function activityText(a: Activity): string {
       return `עודכנו: ${((d.fields as string[]) ?? []).map((f) => fieldLabels[f] ?? f).join(', ')}`;
     case 'lead.note':
       return String(d.text ?? '');
+    case 'task.created':
+      return `נוספה משימה: ${String(d.title)}${d.assignee ? ` (${String(d.assignee)})` : ''}`;
+    case 'task.completed':
+      return `בוצעה משימה: ${String(d.title)}`;
   }
 }
 
@@ -210,6 +217,27 @@ function Notes({ leadId, activities }: { leadId: string; activities: Activity[] 
   );
 }
 
+function LeadTasks({ leadId }: { leadId: string }) {
+  const business = useCurrentBusiness();
+  const tasks = useTasks(business.id, { leadId });
+  const open = (tasks.data ?? []).filter((t) => t.status === 'OPEN');
+  return (
+    <Card className="flex flex-col gap-3">
+      <h2 className="text-lg font-semibold text-ink">משימות</h2>
+      {open.length > 0 ? (
+        <ul aria-label="משימות הליד" className="divide-y divide-surface-border">
+          {open.map((t) => (
+            <TaskItem key={t.id} task={t} businessId={business.id} showLead={false} />
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-ink-muted">אין משימות פתוחות לליד הזה.</p>
+      )}
+      <NewTaskForm leadId={leadId} compact />
+    </Card>
+  );
+}
+
 /** `/b/:businessId/leads/:leadId`: contact, stage, owner, value, next action, notes, history. */
 export function LeadDetailPage() {
   const business = useCurrentBusiness();
@@ -295,8 +323,9 @@ export function LeadDetailPage() {
       </section>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Notes leadId={lead.id} activities={activities} />
-        <div className="lg:order-first">
+        <div className="flex flex-col gap-6 lg:order-first">
           <Details key={lead.updatedAt} lead={lead} />
+          <LeadTasks leadId={lead.id} />
         </div>
       </div>
     </>

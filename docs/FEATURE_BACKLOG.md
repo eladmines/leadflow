@@ -17,7 +17,7 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F07 | [Lead capture forms](features/F07.md)                   | Core               | F06, F02          | F06           | Full pipeline                       | **Done** |
 | F08 | [CRM core](features/F08.md)                             | Core (journey end) | F07               | —             | Full pipeline                       | **Done** |
 | F09 | [Team invitations & member management](features/F09.md) | High               | F02               | F04–F08       | Backend ∥ Frontend → QA             | **Done** |
-| F10 | Tasks / follow-ups                                      | High               | F08               | F11 spike     | Full pipeline                       | **Done** |
+| F10 | [Tasks / follow-ups](features/F10.md)                   | High               | F08               | F11 spike     | Full pipeline                       | **Done** |
 | F11 | Custom domains + HTTPS                                  | High               | F06 + POC spike   | F12           | Spike → full pipeline               | **Done** |
 | F12 | WhatsApp connection & inbox                             | High               | F08 + POC spike   | F11           | Spike → full pipeline               | **Done** |
 | F13 | Plans, trial, billing & quotas                          | High               | F02, O-004        | F14           | Full pipeline                       | Planned  |
@@ -53,3 +53,4 @@ F06 ─► F11 (after spike)
 - 2026-10-27 — F08 complete (MVP): pipeline board with drag-and-drop + stage menu, list with search/filters, lead page with notes and history, manual leads with duplicate warning, employee visibility. **Stage 1 core journey (F01–F08) done.** 335 unit/integration tests + 28 e2e.
 - 2026-10-27 — F09 complete: email invitations (7-day single-use, email-bound), join from link incl. registration, role changes, removal, resend/cancel. 352 unit/integration tests + 30 e2e.
 - 2026-10-27 — F05 complete (MVP): image upload with server-side re-encoding (WebP, ≤1920px, EXIF stripped), storage interface, library with quota, logo/hero/about images and gallery, same-origin serving. 368 unit/integration tests + 32 e2e.
+- 2026-10-27 — F10 complete: follow-up tasks (lead-linked or standalone), tasks page, lead + dashboard integration, email reminders via an in-process job. **Stage 1 complete.** 384 unit/integration tests + 35 e2e.

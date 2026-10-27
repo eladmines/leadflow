@@ -94,6 +94,7 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.site.site(testBusiness.id)}`]: () => json(200, { site: null }),
     [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [] }),
     [`GET ${apiPaths.leads.pipeline(testBusiness.id)}`]: () => json(200, { stages: testStages }),
+    [`GET ${apiPaths.tasks.list(testBusiness.id)}`]: () => json(200, { tasks: [] }),
     [`GET ${apiPaths.media.assets(testBusiness.id)}`]: () =>
       json(200, { assets: [], usedBytes: 0, quotaBytes: 200 * 1024 * 1024 }),
     ...routes,
@@ -101,7 +102,8 @@ export function mockApi(routes: Record<string, Handler>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const method = (init.method ?? 'GET').toUpperCase();
     const key = `${method} ${String(input)}`;
-    const handler = routes[key];
+    // An exact match wins; a route registered without a query string also matches with one.
+    const handler = routes[key] ?? routes[`${method} ${String(input).split('?')[0]}`];
     if (!handler) throw new Error(`Unmocked request: ${key}`);
     const body = typeof init.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined;
     return handler(body);

@@ -10,6 +10,7 @@ export {
   inviteTemplate,
   newLeadTemplate,
   passwordResetTemplate,
+  taskReminderTemplate,
   verifyEmailTemplate,
 } from './templates';
 

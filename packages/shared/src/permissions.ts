@@ -33,6 +33,9 @@ export const PERMISSIONS = {
   'leads.create': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'leads.update': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'leads.assign': ['OWNER', 'MANAGER'],
+  /** Everyone has tasks; employees see and manage only tasks assigned to them. */
+  'tasks.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
+  'tasks.view.all': ['OWNER', 'MANAGER'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

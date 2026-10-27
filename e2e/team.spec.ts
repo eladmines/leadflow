@@ -96,7 +96,7 @@ test('owner invites an employee who registers from the email and joins with limi
   await page.reload();
   await expect(page.getByRole('list', { name: 'חברי הצוות' })).toContainText('יוסי מזרחי');
   await page.goto(`/b/${business.id}/leads/${lead.id}`);
-  await page.getByLabel('אחראי').selectOption({ label: 'יוסי מזרחי' });
+  await page.getByLabel('אחראי', { exact: true }).selectOption({ label: 'יוסי מזרחי' });
   await expect(page.getByText('הליד שויך ליוסי מזרחי')).toBeVisible();
 
   await emp.reload();

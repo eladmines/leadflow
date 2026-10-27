@@ -24,6 +24,8 @@ import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
 import { timeAgo, useLeads } from '../leads/api';
 import { useSite } from '../site/api';
+import { groupTasks, useTasks } from '../tasks/api';
+import { TaskItem } from '../tasks/TaskItem';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
 type ItemState = 'done' | 'todo' | 'soon';
@@ -127,6 +129,10 @@ export function DashboardPage() {
   const user = useMe().data?.user;
   const site = useSite(business.id).data;
   const leads = useLeads(business.id).data ?? [];
+  const myTasks = groupTasks(
+    useTasks(business.id, { assigneeId: 'me', status: 'OPEN' }).data ?? [],
+  );
+  const urgent = [...myTasks.overdue, ...myTasks.today];
   const firstName = user?.fullName.trim().split(/\s+/)[0] ?? '';
 
   const checklist: { label: string; hint: string; state: ItemState }[] = [
@@ -317,6 +323,33 @@ export function DashboardPage() {
           )}
         </Card>
       </div>
+
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-lg font-semibold text-ink">
+            המשימות שלי להיום
+            {myTasks.overdue.length > 0 && (
+              <span className="ms-2 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-medium text-danger-600">
+                {myTasks.overdue.length} באיחור
+              </span>
+            )}
+          </h2>
+          <TextLink to={businessWebPaths.section(business.id, 'tasks')}>לכל המשימות</TextLink>
+        </div>
+        {urgent.length > 0 ? (
+          <ul aria-label="המשימות שלי להיום" className="divide-y divide-surface-border">
+            {urgent.slice(0, 6).map((t) => (
+              <TaskItem key={t.id} task={t} businessId={business.id} showAssignee={false} />
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-ink-muted">
+            {myTasks.upcoming.length > 0
+              ? `אין משימות להיום. ${myTasks.upcoming.length} משימות בהמשך.`
+              : 'אין משימות פתוחות. 🎉'}
+          </p>
+        )}
+      </Card>
 
       <Card className="flex flex-col gap-5">
         <div className="flex items-baseline justify-between gap-3">
