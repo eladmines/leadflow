@@ -58,10 +58,14 @@ function appointmentFields(b: SiteBusinessInfo): string {
   }<div class="slot-row"><label>תאריך מבוקש<input name="date" type="date"></label><label>שעה מבוקשת<input name="time" type="time" step="900"></label></div><p class="slot-note">נחזור אליכם לאישור התור.</p></fieldset>`;
 }
 
-function leadForm(s: Extract<Section, { type: 'contact' }>, b: SiteBusinessInfo): string {
+function leadForm(
+  s: Extract<Section, { type: 'contact' }>,
+  b: SiteBusinessInfo,
+  pageSlug = '',
+): string {
   const f = s.form;
   return `<form class="lead-form" method="post" action="${LEAD_FORM_PATH}" aria-label="טופס יצירת קשר">
-<input type="hidden" name="_t" value="${FORM_TOKEN_PLACEHOLDER}"><input type="hidden" name="_s" value="${esc(s.id)}">
+<input type="hidden" name="_t" value="${FORM_TOKEN_PLACEHOLDER}"><input type="hidden" name="_s" value="${esc(s.id)}"><input type="hidden" name="_p" value="${esc(pageSlug)}">
 <div class="hp" aria-hidden="true"><label>אתר אינטרנט<input name="${HONEYPOT_FIELD}" tabindex="-1" autocomplete="off"></label></div>
 <label>שם מלא<input name="name" required minlength="2" maxlength="80" autocomplete="name"></label>
 <label>טלפון<input name="phone" type="tel" required inputmode="tel" dir="ltr" maxlength="20" pattern="[0-9+()\\s\\-]{9,20}" title="מספר טלפון ישראלי, לדוגמה 050-1234567" autocomplete="tel"></label>
@@ -82,6 +86,7 @@ const ICONS = {
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   chat: '<path d="M4 5h16v11H8l-4 4z"/>',
   arrow: '<path d="M19 12H5m6-6l-6 6 6 6"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
 } as const;
 const icon = (name: keyof typeof ICONS, cls = 'ic') =>
   `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name]}</svg>`;
@@ -115,7 +120,10 @@ export function hoursSummary(hours: SiteBusinessInfo['openingHours']): string[] 
 
 interface Ctx {
   b: SiteBusinessInfo;
-  contactId: string | undefined;
+  /** Link to the contact form: on this page, or on the home page (D-081); '' = none. */
+  contactHref: string;
+  /** Current page address ('' = home), posted with the lead form. */
+  pageSlug: string;
   media: MediaMap;
   testimonialCount: number;
   /** Editor preview: mark which draft field each text/image shows (D-071). */
@@ -170,9 +178,9 @@ const hoursHtml = (line: string) => {
 };
 
 function hero(s: Extract<Section, { type: 'hero' }>, id: string, c: Ctx): string {
-  const { b, contactId } = c;
+  const { b } = c;
   const call = b.phone ? telHref(b.phone) : '';
-  const toContact = contactId ? `#s-${esc(contactId)}` : '';
+  const toContact = c.contactHref;
   const primaryHref = s.buttonAction === 'call' && call ? call : toContact;
   // The second button offers the other way to reach the business.
   const secondary =
@@ -233,7 +241,7 @@ ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')
 }
 
 function section(s: Section, c: Ctx, alt: boolean): string {
-  const { b, contactId, media } = c;
+  const { b, media } = c;
   const id = `s-${esc(s.id)}`;
   const cls = alt ? ' class="soft"' : '';
   switch (s.type) {
@@ -320,12 +328,14 @@ function section(s: Section, c: Ctx, alt: boolean): string {
               },
             ).join('')}</table>`
           : '';
-      const form = s.form.enabled ? `<div class="form-wrap">${leadForm(s, b)}</div>` : '';
+      const form = s.form.enabled
+        ? `<div class="form-wrap">${leadForm(s, b, c.pageSlug)}</div>`
+        : '';
       return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading(navLabel(s), s.title, c.editor ? s.subtitle : s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true, 'משפט פתיחה (לא חובה)'), ea(c, s.id, 'navLabel'))}
 <div class="contact-grid"><div class="contact-info">${rows.length ? `<ul class="info">${rows.join('')}</ul>` : ''}${hours}</div>${form}</div></div></section>`;
     }
     case 'cta': {
-      const href = b.phone ? telHref(b.phone) : contactId ? `#s-${esc(contactId)}` : '';
+      const href = b.phone ? telHref(b.phone) : c.contactHref;
       return `<section id="${id}" class="cta-wrap"><div class="wrap"><div class="cta"><div><h2${ea(c, s.id, 'title')}>${esc(s.title)}</h2>${s.subtitle || c.editor ? `<p${ea(c, s.id, 'subtitle', true, 'טקסט (לא חובה)')}>${esc(s.subtitle)}</p>` : ''}</div>${s.buttonLabel && href ? `<a class="btn light" href="${href}">${b.phone ? icon('phone') : ''}${et(c, s.id, 'buttonLabel', s.buttonLabel)}</a>` : ''}</div></div></section>`;
     }
   }
@@ -377,6 +387,11 @@ a{color:var(--p)}
 .mark{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:var(--p);color:#fff;font-size:1.05rem}
 .menu{display:flex;gap:4px;list-style:none;margin:0;padding:0}
 .menu a{display:block;padding:8px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:.95rem;font-weight:500}
+.mmenu{display:none;position:relative}.mmenu summary{list-style:none;cursor:pointer;display:flex;width:42px;height:42px;align-items:center;justify-content:center;border-radius:12px;border:1px solid var(--line)}
+.mmenu summary::-webkit-details-marker{display:none}
+.mmenu ul{position:absolute;inset-inline-end:0;top:calc(100% + 8px);list-style:none;margin:0;padding:8px;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);z-index:30}
+.mmenu a{display:block;padding:10px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:500}.mmenu a[aria-current=page]{background:var(--soft);color:var(--p)}
+.menu a[aria-current=page]{color:var(--p);background:var(--soft)}
 .menu a:hover{background:var(--soft);color:var(--p)}
 .call{display:inline-flex;align-items:center;gap:8px;background:var(--p);color:#fff;text-decoration:none;border-radius:999px;padding:9px 18px;font-weight:700;font-size:.95rem;white-space:nowrap}
 .call:hover{background:var(--pd)}
@@ -467,13 +482,14 @@ details[open] summary::after{content:"−"}details p{margin:0 0 20px;color:var(-
 footer{background:#14181f;color:rgba(255,255,255,.72);padding:64px 0 0;font-size:.95rem}
 .foot{display:grid;gap:36px;grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,1fr));padding-bottom:44px}
 footer h3{color:#fff;font-size:1rem;margin:0 0 14px}footer .brand{color:#fff;margin-bottom:12px}footer p{margin:0;max-width:360px}
+footer .foot-pages{flex-direction:row;flex-wrap:wrap;gap:6px 16px;margin-top:14px}
 footer ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}footer a{color:#fff;text-decoration:none}footer a:hover{text-decoration:underline}
 .bottom{border-top:1px solid rgba(255,255,255,.1);padding:18px 0;font-size:.85rem;color:rgba(255,255,255,.5)}
 /* Mobile call bar */
 .mbar{display:none}
 .empty{padding:120px 20px;text-align:center;color:var(--muted)}
 .msg{max-width:560px;margin:0 auto;padding:96px 20px;text-align:center}.msg ul{text-align:start;color:var(--muted)}
-@media (max-width:960px){.menu{display:none}.hero-grid,.contact-grid{grid-template-columns:1fr}.hero-grid{gap:40px}.foot{grid-template-columns:1fr 1fr}.foot>div:first-child{grid-column:1/-1}}
+@media (max-width:960px){.menu{display:none}.mmenu{display:block}.hero-grid,.contact-grid{grid-template-columns:1fr}.hero-grid{gap:40px}.foot{grid-template-columns:1fr 1fr}.foot>div:first-child{grid-column:1/-1}}
 @media (max-width:640px){
 body{font-size:16px}section{padding:60px 0}.hero{padding:56px 0 64px}.head{margin-bottom:28px}
 .nav .wrap{height:62px}.call .num-text{display:none}.call{padding:9px 14px}
@@ -512,11 +528,26 @@ export function renderSitePage(
   draft: Omit<SiteDraft, 'templateKey'>,
   b: SiteBusinessInfo,
   media: MediaMap = {},
-  opts: { editor?: boolean } = {},
+  /** `page`: an extra page's address; omitted = the home page (D-081). */
+  opts: { editor?: boolean; page?: string } = {},
 ): string {
   const logo = draft.theme.logoAssetId ? media[draft.theme.logoAssetId] : undefined;
-  const visible = draft.sections.filter((s) => s.visible);
+  const pages = draft.pages ?? [];
+  const page = opts.page ? pages.find((p) => p.slug === opts.page) : undefined;
+  const visible = (page ? page.sections : draft.sections).filter((s) => s.visible);
+  const seo = page
+    ? {
+        title: page.seo.title || `${page.title} · ${b.name}`,
+        description: page.seo.description || draft.seo.description,
+      }
+    : draft.seo;
   const contactId = visible.find((s) => s.type === 'contact')?.id;
+  const homeContactId = draft.sections.find((s) => s.visible && s.type === 'contact')?.id;
+  const contactHref = contactId
+    ? `#s-${esc(contactId)}`
+    : homeContactId
+      ? `/#s-${esc(homeContactId)}`
+      : '';
   const testimonialCount = visible
     .filter((s) => s.type === 'testimonials')
     .reduce(
@@ -525,21 +556,35 @@ export function renderSitePage(
     );
   const ctx: Ctx = {
     b,
-    contactId,
+    contactHref,
+    pageSlug: page?.slug ?? '',
     media,
     testimonialCount,
     editor: opts.editor ?? false,
     labels: draft.theme.labels ?? {},
   };
 
-  // Header menu: the first section of each type that has a short label.
+  // Header menu: the site's pages when it has any in the menu (D-081); otherwise the first
+  // section of each type that has a short label.
+  const menuPages = pages.filter((p) => p.inMenu);
+  const pageLink = (href: string, label: string, current: boolean) =>
+    `<li><a href="${href}"${current ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`;
   const seen = new Set<string>();
-  const menu = visible
-    .filter((s) => NAV_LABELS[s.type] && !seen.has(s.type) && seen.add(s.type))
-    .filter((s) => s.type !== 'gallery' || s.items.some((i) => media[i.assetId]))
-    .slice(0, 6)
-    .map((s) => `<li><a href="#s-${esc(s.id)}">${et(ctx, s.id, 'navLabel', navLabel(s))}</a></li>`)
-    .join('');
+  const menu = menuPages.length
+    ? [
+        pageLink('/', 'ראשי', !page),
+        ...menuPages.map((p) => pageLink(`/${esc(p.slug)}`, p.title, p.slug === page?.slug)),
+      ]
+        .slice(0, 8)
+        .join('')
+    : visible
+        .filter((s) => NAV_LABELS[s.type] && !seen.has(s.type) && seen.add(s.type))
+        .filter((s) => s.type !== 'gallery' || s.items.some((i) => media[i.assetId]))
+        .slice(0, 6)
+        .map(
+          (s) => `<li><a href="#s-${esc(s.id)}">${et(ctx, s.id, 'navLabel', navLabel(s))}</a></li>`,
+        )
+        .join('');
 
   // Alternate soft backgrounds between content sections (hero and CTA have their own look).
   let n = 0;
@@ -553,19 +598,28 @@ export function renderSitePage(
 
   const call = b.phone ? telHref(b.phone) : '';
   const mbar =
-    call || contactId
-      ? `<div class="mbar">${call ? `<a href="${call}">${icon('phone')}${et(ctx, '$theme', 'labels.mobileCall', ctx.labels.mobileCall || 'חייגו עכשיו')}</a>` : ''}${contactId ? `<a${call ? ' class="alt"' : ''} href="#s-${esc(contactId)}">${icon('chat')}${et(ctx, '$theme', 'labels.mobileContact', ctx.labels.mobileContact || 'השארת פרטים')}</a>` : ''}</div>`
+    call || contactHref
+      ? `<div class="mbar">${call ? `<a href="${call}">${icon('phone')}${et(ctx, '$theme', 'labels.mobileCall', ctx.labels.mobileCall || 'חייגו עכשיו')}</a>` : ''}${contactHref ? `<a${call ? ' class="alt"' : ''} href="${contactHref}">${icon('chat')}${et(ctx, '$theme', 'labels.mobileContact', ctx.labels.mobileContact || 'השארת פרטים')}</a>` : ''}</div>`
       : '';
   const hours = hoursSummary(b.openingHours);
   // In the editor the logo (or its placeholder) is clickable to choose an image (D-076).
   const logoAttr = ei(ctx, '$theme', 'logoAssetId');
   const brand = `${logo ? img(logo, b.name, 'logo', false, logoAttr) : `<span class="mark${opts.editor ? ' mark-empty' : ''}" aria-hidden="true"${logoAttr}>${esc(b.name.trim().charAt(0))}</span>`}<span>${esc(b.name)}</span>`;
 
-  return `${documentHead(draft.theme, draft.seo.title || b.name, draft.seo.description)}
+  return `${documentHead(draft.theme, seo.title || b.name, seo.description)}
 <body${mbar ? ' class="has-mbar"' : ''}>${opts.editor ? EDITOR_STYLE : ''}
-<nav class="nav" aria-label="ראשי"><div class="wrap"><a class="brand" href="#">${brand}</a>${menu ? `<ul class="menu">${menu}</ul>` : ''}${call ? `<a class="call" href="${call}"${eb(ctx, 'phone')}>${icon('phone')}<span class="num-text"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></span></a>` : ''}</div></nav>
+<nav class="nav" aria-label="ראשי"><div class="wrap"><a class="brand" href="/">${brand}</a>${menu ? `<ul class="menu">${menu}</ul>` : ''}${
+    // Phones: a script-free menu for multi-page sites (the header menu is hidden there).
+    menuPages.length
+      ? `<details class="mmenu"><summary aria-label="תפריט">${icon('menu')}</summary><ul>${menu}</ul></details>`
+      : ''
+  }${call ? `<a class="call" href="${call}"${eb(ctx, 'phone')}>${icon('phone')}<span class="num-text"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></span></a>` : ''}</div></nav>
 <main>${html || '<div class="empty">אין מקטעים מוצגים באתר.</div>'}</main>
-<footer><div class="wrap foot"><div><a class="brand" href="#">${esc(b.name)}</a>${draft.seo.description ? `<p>${esc(draft.seo.description)}</p>` : ''}</div>
+<footer><div class="wrap foot"><div><a class="brand" href="/">${esc(b.name)}</a>${draft.seo.description ? `<p>${esc(draft.seo.description)}</p>` : ''}${
+    menuPages.length
+      ? `<ul class="foot-pages">${menuPages.map((p) => `<li><a href="/${esc(p.slug)}">${esc(p.title)}</a></li>`).join('')}</ul>`
+      : ''
+  }</div>
 ${call || b.address ? `<div><h3>יצירת קשר</h3><ul>${call ? `<li${eb(ctx, 'phone')}><a href="${call}"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></a></li>` : ''}${b.address ? `<li${eb(ctx, 'address')}><a href="${mapsHref(b.address)}" target="_blank" rel="noopener">${esc(b.address)}</a></li>` : ''}</ul></div>` : ''}
 ${hours.length ? `<div${eb(ctx, 'hours')}><h3>שעות פעילות</h3><ul>${hours.map((l) => `<li>${hoursHtml(l)}</li>`).join('')}</ul></div>` : ''}</div>
 <div class="bottom"><div class="wrap">© ${esc(b.name)} · האתר נבנה ב-LeadFlow</div></div></footer>

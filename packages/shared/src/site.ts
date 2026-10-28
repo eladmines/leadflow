@@ -11,6 +11,8 @@ import { z } from 'zod';
 
 export const SITE_LIMITS = {
   sections: 20,
+  /** Extra pages besides the home page (D-081). */
+  pages: 10,
   items: 20,
   title: 120,
   shortText: 300,
@@ -33,6 +35,11 @@ export const siteMessages = {
   subdomainReserved: 'הכתובת הזו שמורה למערכת. נסו כתובת אחרת',
   subdomainTaken: 'הכתובת הזו כבר תפוסה. נסו כתובת אחרת',
   publishStale: 'יש שינויים שעדיין נשמרים. נסו לפרסם שוב בעוד רגע',
+  pageTitleRequired: 'יש לתת שם לעמוד',
+  pageSlugInvalid: 'כתובת העמוד: אותיות באנגלית, ספרות ומקף (עד 40 תווים)',
+  pageSlugReserved: 'הכתובת הזו שמורה למערכת. בחרו כתובת אחרת',
+  pageSlugTaken: 'כבר יש עמוד בכתובת הזו',
+  tooManyPages: `אפשר עד ${10} עמודים נוספים`,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -239,6 +246,56 @@ export type Section = z.infer<typeof sectionSchema>;
 export type SectionOf<T extends SectionType> = Extract<Section, { type: T }>;
 
 // ---------------------------------------------------------------------------
+// Pages (D-081): the home page is the site's own sections; extra pages live in `pages`.
+// ---------------------------------------------------------------------------
+
+/** Addresses the public site server uses itself. */
+export const RESERVED_PAGE_SLUGS = new Set(['media', 'sitemap', 'robots', 'index', 'api', 'q']);
+export const pageSlugSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, siteMessages.pageSlugInvalid)
+  .max(40, siteMessages.pageSlugInvalid)
+  .refine((v) => !RESERVED_PAGE_SLUGS.has(v), siteMessages.pageSlugReserved);
+
+export const sitePageSchema = z.object({
+  id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/),
+  slug: pageSlugSchema,
+  /** Name in the site menu. */
+  title: z.string().trim().min(1, siteMessages.pageTitleRequired).max(30, siteMessages.textTooLong),
+  inMenu: z.boolean(),
+  seo: z.object({
+    title: z.string().trim().max(70, 'כותרת לגוגל יכולה להכיל עד 70 תווים'),
+    description: z.string().trim().max(160, 'תיאור לגוגל יכול להכיל עד 160 תווים'),
+  }),
+  sections: z.array(sectionSchema).max(SITE_LIMITS.sections, siteMessages.tooManySections),
+});
+export type SitePage = z.infer<typeof sitePageSchema>;
+
+/** Unique page addresses, and section ids unique across the whole site (forms post by id). */
+export function checkPages(
+  draft: { sections: { id: string }[]; pages: { slug: string; sections: { id: string }[] }[] },
+  ctx: z.RefinementCtx,
+) {
+  const slugs = new Set<string>();
+  draft.pages.forEach((p, i) => {
+    if (slugs.has(p.slug)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['pages', i, 'slug'],
+        message: siteMessages.pageSlugTaken,
+      });
+    }
+    slugs.add(p.slug);
+  });
+  const ids = [...draft.sections, ...draft.pages.flatMap((p) => p.sections)].map((s) => s.id);
+  if (new Set(ids).size !== ids.length) {
+    ctx.addIssue({ code: 'custom', path: ['sections'], message: 'מזהי מקטעים כפולים' });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Theme
 // ---------------------------------------------------------------------------
 
@@ -351,6 +408,7 @@ export const siteSchema = z.object({
   theme: themeSchema,
   seo: seoSchema,
   sections: z.array(sectionSchema),
+  pages: z.array(sitePageSchema),
   /** Optimistic-locking counter: every successful draft save increments it. */
   revision: z.number().int(),
   status: z.enum(SITE_STATUSES),
@@ -365,16 +423,19 @@ export const createSiteRequestSchema = z.object({ templateKey: templateKeySchema
 export type CreateSiteRequest = z.infer<typeof createSiteRequestSchema>;
 
 /** Full draft replace, guarded by the revision the client last saw (409 when stale). */
-export const saveDraftRequestSchema = z.object({
-  revision: z.number().int().min(0),
-  templateKey: templateKeySchema,
-  theme: themeSchema,
-  seo: seoSchema,
-  sections: z
-    .array(sectionSchema)
-    .max(SITE_LIMITS.sections, siteMessages.tooManySections)
-    .refine((s) => new Set(s.map((x) => x.id)).size === s.length, 'מזהי מקטעים כפולים'),
-});
+export const saveDraftRequestSchema = z
+  .object({
+    revision: z.number().int().min(0),
+    templateKey: templateKeySchema,
+    theme: themeSchema,
+    seo: seoSchema,
+    sections: z
+      .array(sectionSchema)
+      .max(SITE_LIMITS.sections, siteMessages.tooManySections)
+      .refine((s) => new Set(s.map((x) => x.id)).size === s.length, 'מזהי מקטעים כפולים'),
+    pages: z.array(sitePageSchema).max(SITE_LIMITS.pages, siteMessages.tooManyPages).default([]),
+  })
+  .superRefine((d, ctx) => checkPages(d, ctx));
 export type SaveDraftRequest = z.infer<typeof saveDraftRequestSchema>;
 
 export const setSubdomainRequestSchema = z.object({ subdomain: subdomainSchema });

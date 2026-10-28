@@ -5,6 +5,8 @@
  */
 export interface PublishedPage {
   html: string | null;
+  /** Extra pages' HTML by address (D-081). */
+  pages: Record<string, string>;
   versionId: string | null;
   updatedAt: Date | null;
 }

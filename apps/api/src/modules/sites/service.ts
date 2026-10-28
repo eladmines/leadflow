@@ -10,6 +10,7 @@ import {
   referencedAssetIds,
   renderSitePage,
   sectionSchema,
+  sitePageSchema,
   seoSchema,
   siteMessages,
   templateKeySchema,
@@ -29,6 +30,7 @@ import { assertOwnAssets, mediaMapFor, type MediaService } from '../media/servic
 import type { PublishedSiteCache } from '../../public/cache';
 
 const storedSections = z.array(sectionSchema);
+const storedPages = z.array(sitePageSchema).catch([]);
 type SiteWithLive = SiteRow & { publishedVersion: SiteVersion | null };
 
 export function publicUrlFor(config: AppConfig, subdomain: string) {
@@ -55,6 +57,7 @@ export function toSiteDto(row: SiteWithLive, config: AppConfig): Site {
     theme: themeSchema.parse(row.theme),
     seo: seoSchema.parse(row.seo),
     sections: storedSections.parse(row.sections),
+    pages: storedPages.parse(row.pages),
     revision: row.revision,
     status: row.status,
     updatedAt: row.updatedAt.toISOString(),
@@ -173,6 +176,7 @@ export class SiteService {
         theme: input.theme,
         seo: input.seo,
         sections: input.sections as unknown as Prisma.InputJsonArray,
+        pages: input.pages as unknown as Prisma.InputJsonArray,
         revision: { increment: 1 },
       },
     });
@@ -250,6 +254,7 @@ export class SiteService {
       theme: themeSchema.parse(site.theme),
       seo: seoSchema.parse(site.seo),
       sections: storedSections.parse(site.sections),
+      pages: storedPages.parse(site.pages),
     };
     const media = await mediaMapFor(
       this.prisma,
@@ -258,6 +263,10 @@ export class SiteService {
       referencedAssetIds(draft),
     );
     const html = renderSitePage(draft, info, media);
+    // Every extra page is rendered now too, so the whole site goes live together (D-081).
+    const pageHtml = Object.fromEntries(
+      draft.pages.map((p) => [p.slug, renderSitePage(draft, info, media, { page: p.slug })]),
+    );
 
     try {
       const row = await this.prisma.$transaction(async (tx) => {
@@ -275,6 +284,7 @@ export class SiteService {
             number: (last._max.number ?? 0) + 1,
             draftRevision: revision,
             html,
+            pageHtml,
             content: { ...draft, business: info } as unknown as Prisma.InputJsonObject,
             createdById: ctx.userId,
           },

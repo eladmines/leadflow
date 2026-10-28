@@ -12,6 +12,7 @@ import {
 import { hoursSummary, renderSitePage } from './site-render';
 import {
   buildTemplateDraft,
+  newPage,
   newSection,
   STOCK_PHOTOS,
   templatePreview,
@@ -222,6 +223,58 @@ describe('custom labels (D-075)', () => {
     expect(html).toContain(
       'class="mark mark-empty" aria-hidden="true" data-img="$theme:logoAssetId"',
     );
+  });
+});
+
+describe('pages (D-081)', () => {
+  let n = 0;
+  const id = () => `x${++n}`;
+  const base = () => ({ revision: 0, ...buildTemplateDraft('beauty', business) });
+
+  it('validates page addresses and site-wide unique section ids', () => {
+    const about = newPage('about', 'p1', id);
+    expect(saveDraftRequestSchema.safeParse({ ...base(), pages: [about] }).success).toBe(true);
+    const twice = saveDraftRequestSchema.safeParse({
+      ...base(),
+      pages: [about, { ...newPage('about', 'p2', id), slug: about.slug }],
+    });
+    expect(twice.error?.issues[0]?.message).toBe('כבר יש עמוד בכתובת הזו');
+    const reserved = saveDraftRequestSchema.safeParse({
+      ...base(),
+      pages: [{ ...about, slug: 'media' }],
+    });
+    expect(reserved.success).toBe(false);
+    const hebrew = saveDraftRequestSchema.safeParse({
+      ...base(),
+      pages: [{ ...about, slug: 'אודות' }],
+    });
+    expect(hebrew.success).toBe(false);
+    const clash = saveDraftRequestSchema.safeParse({
+      ...base(),
+      pages: [{ ...about, sections: [newSection('faq', 'hero')] }], // "hero" is a home section id
+    });
+    expect(clash.success).toBe(false);
+    expect(newPage('about', 'p3', id, ['about']).slug).toBe('about-2');
+  });
+
+  it('renders the page menu, the current page, and links to the home contact form', () => {
+    const draft = buildTemplateDraft('beauty', business);
+    draft.pages = [newPage('about', 'p1', id), { ...newPage('landing', 'p2', id), slug: 'sale' }];
+    draft.pages[0]!.sections = draft.pages[0]!.sections.filter((s) => s.type !== 'contact');
+    const home = renderSitePage(draft, business);
+    expect(home).toContain('<a href="/" aria-current="page">ראשי</a>');
+    expect(home).toContain('<a href="/about">אודות</a>');
+    expect(home).not.toContain('href="/sale"'); // landing pages stay out of the menu
+    expect(home).toContain('<details class="mmenu">');
+
+    const about = renderSitePage(draft, business, {}, { page: 'about' });
+    expect(about).toContain('<title>אודות · מספרת שירן</title>');
+    expect(about).toContain('<a href="/about" aria-current="page">אודות</a>');
+    // No form on this page: the call-to-action goes to the home page's form.
+    expect(about).toContain('href="/#s-contact"');
+
+    const sale = renderSitePage(draft, business, {}, { page: 'sale' });
+    expect(sale).toContain('<input type="hidden" name="_p" value="sale">');
   });
 });
 
