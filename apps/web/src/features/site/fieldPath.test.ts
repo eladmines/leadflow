@@ -12,6 +12,8 @@ describe('setSectionField', () => {
     expect(setSectionField(s, 'items.5.name', 'x')).toBe(s);
     expect(setSectionField(s, 'items.0.nope', 'x')).toBe(s);
     expect(setSectionField(s, 'nope', 'x')).toBe(s);
+    expect(setSectionField(s, 'navLabel', 'טיפולים')).toMatchObject({ navLabel: 'טיפולים' });
+    expect(setSectionField(s, 'secondaryLabel', 'x')).toBe(s); // hero only
   });
 
   it('limits follow the schema', () => {

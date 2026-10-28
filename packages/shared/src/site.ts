@@ -97,7 +97,12 @@ const items = <T extends z.ZodTypeAny>(item: T) =>
 
 /** Client-generated id (stable across saves, used as React key and for in-page anchors). */
 const sectionId = z.string().regex(/^[A-Za-z0-9_-]{1,40}$/);
-const base = { id: sectionId, visible: z.boolean() };
+const base = {
+  id: sectionId,
+  visible: z.boolean(),
+  /** Short name in the site menu and above the title; empty = the type's default (D-075). */
+  navLabel: z.string().trim().max(30, siteMessages.textTooLong).optional(),
+};
 
 // ---------------------------------------------------------------------------
 // Sections
@@ -163,6 +168,8 @@ export const sectionSchema = z.discriminatedUnion('type', [
     subtitle: short,
     buttonLabel: z.string().trim().max(40, siteMessages.textTooLong),
     buttonAction: z.enum(HERO_ACTIONS),
+    /** The second button (the other way to get in touch); empty = automatic label (D-075). */
+    secondaryLabel: z.string().trim().max(40, siteMessages.textTooLong).optional(),
     /** Background image (decorative). */
     imageAssetId: imageRef,
   }),
@@ -258,6 +265,14 @@ export const themeSchema = z.object({
   font: z.enum(FONT_KEYS),
   /** Logo shown in the site header (F05). */
   logoAssetId: z.string().uuid().nullable().default(null),
+  /** Wording of fixed site buttons; empty = default (D-075). */
+  labels: z
+    .object({
+      mobileCall: z.string().trim().max(30, siteMessages.textTooLong).optional(),
+      mobileContact: z.string().trim().max(30, siteMessages.textTooLong).optional(),
+      cardLink: z.string().trim().max(60, siteMessages.textTooLong).optional(),
+    })
+    .optional(),
 });
 export type SiteTheme = z.infer<typeof themeSchema>;
 

@@ -39,6 +39,7 @@ import { useMediaMap } from '../media/api';
 import { siteBusinessInfo } from './api';
 import { EditablePreview } from './EditablePreview';
 import { setSectionField } from './fieldPath';
+import { BusinessDetailsDialog } from './BusinessDetailsDialog';
 import { MediaPicker } from '../media/MediaPicker';
 import { PreviewFrame } from './PreviewFrame';
 import { PublishDialog } from './PublishDialog';
@@ -134,18 +135,26 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   };
   const setField = useCallback(
     (id: string, path: string, value: string | null) =>
-      setDraft((d) => ({
-        ...d,
-        sections: d.sections.map((s) =>
-          s.id !== id
-            ? s
-            : value === null
-              ? ({ ...s, [path]: null } as Section)
-              : setSectionField(s, path, value),
-        ),
-      })),
+      setDraft((d) => {
+        // Fixed button wording lives on the theme (D-075).
+        if (id === '$theme' && path.startsWith('labels.')) {
+          const key = path.slice('labels.'.length);
+          return { ...d, theme: { ...d.theme, labels: { ...d.theme.labels, [key]: value ?? '' } } };
+        }
+        return {
+          ...d,
+          sections: d.sections.map((s) =>
+            s.id !== id
+              ? s
+              : value === null
+                ? ({ ...s, [path]: null } as Section)
+                : setSectionField(s, path, value),
+          ),
+        };
+      }),
     [],
   );
+  const [bizOpen, setBizOpen] = useState(false);
   const [imagePick, setImagePick] = useState<{ id: string; path: string } | null>(null);
   /** On-page list controls (D-072): add a blank item, move one, or delete it. */
   const itemAction = (id: string, action: 'add' | 'up' | 'down' | 'del', n: number) =>
@@ -266,6 +275,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
           revision={revision}
         />
       )}
+      {editable && <BusinessDetailsDialog open={bizOpen} onOpenChange={setBizOpen} />}
       {editable && (
         <MediaPicker
           open={imagePick !== null}
@@ -653,6 +663,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 onHide={(id) => updateSection(id, { visible: false })}
                 onInsert={insertAfter}
                 onItem={itemAction}
+                onBusiness={() => setBizOpen(true)}
                 onSettings={(id) => {
                   select(id);
                   setPanelOpen(true);

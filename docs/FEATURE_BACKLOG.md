@@ -63,3 +63,4 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — Visual editing step 2: type directly on the page (titles, texts, services, prices, reviews, FAQ, buttons) and click photos to replace them.
 - 2026-10-28 — Page-first editor: full-width preview, settings panel on demand (settings only on desktop), add/move/delete list items on the page, placeholders for empty fields.
 - 2026-10-28 — Admin redesign: modern neutral look (tokens, UI kit, compact sidebar), Ctrl+K quick search, flat headers; fixed lead board labels widening the page.
+- 2026-10-28 — Editable menu labels, second hero button and mobile-bar buttons on the page; business details (phone, address, hours, areas) editable from the editor in a dialog.
