@@ -181,3 +181,25 @@ ${button(params.link, 'לפתיחה ב-LeadFlow')}`,
   ].join('\n');
   return { subject, html, text };
 }
+
+/** Security notice after a password change (O-008). */
+export function passwordChangedTemplate(params: {
+  fullName: string;
+  resetLink: string;
+}): RenderedEmail {
+  const subject = 'הסיסמה שלך ב-LeadFlow שונתה';
+  const html = layout(
+    subject,
+    `<h1 style="font-size:20px;margin:0 0 16px;">שלום ${escapeHtml(params.fullName)},</h1>
+<p style="margin:0 0 8px;">הסיסמה לחשבון LeadFlow שלך שונתה הרגע, וכל שאר המכשירים נותקו.</p>
+<p style="margin:0 0 8px;">אם זה לא היית את/ה, אפסו את הסיסמה מיד:</p>
+${button(params.resetLink, 'איפוס סיסמה')}`,
+  );
+  const text = [
+    `שלום ${params.fullName},`,
+    'הסיסמה לחשבון LeadFlow שלך שונתה הרגע, וכל שאר המכשירים נותקו.',
+    'אם זה לא היית את/ה, אפסו את הסיסמה מיד:',
+    params.resetLink,
+  ].join('\n');
+  return { subject, html, text };
+}

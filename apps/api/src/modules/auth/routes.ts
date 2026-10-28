@@ -1,11 +1,13 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import {
   apiPaths,
+  changePasswordRequestSchema,
   loginRequestSchema,
   meResponseSchema,
   passwordResetConfirmSchema,
   passwordResetRequestSchema,
   registerRequestSchema,
+  updateProfileRequestSchema,
   verifyEmailRequestSchema,
 } from '@leadflow/shared';
 import { authOf, requireAuth } from '../../plugins/session';
@@ -102,6 +104,35 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (app, 
       await service.confirmPasswordReset(req.body.token, req.body.newPassword, requestMeta(req));
       // All sessions were revoked, including this browser's.
       reply.clearSessionCookie();
+      return reply.status(204).send();
+    },
+  );
+
+  app.patch(
+    paths.profile,
+    {
+      preValidation: requireAuth,
+      schema: { body: updateProfileRequestSchema, response: { 200: meResponseSchema } },
+    },
+    async (req) => ({
+      user: toAuthUser(await service.updateProfile(authOf(req), req.body.fullName)),
+    }),
+  );
+
+  app.post(
+    paths.password,
+    {
+      config: rateLimit,
+      preValidation: requireAuth,
+      schema: { body: changePasswordRequestSchema },
+    },
+    async (req, reply) => {
+      await service.changePassword(
+        authOf(req),
+        req.body.currentPassword,
+        req.body.newPassword,
+        requestMeta(req),
+      );
       return reply.status(204).send();
     },
   );
