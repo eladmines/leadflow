@@ -302,6 +302,23 @@ describe('section look (D-082)', () => {
   });
 });
 
+describe('custom colours (D-083)', () => {
+  it('accepts readable main colours, darkens light ones, and renders them', async () => {
+    const { customColorsSchema, darkenForContrast, contrastWithWhite } = await import('./site');
+    expect(customColorsSchema.safeParse({ primary: '#1d4ed8', accent: '#f59e0b' }).success).toBe(
+      true,
+    );
+    const light = customColorsSchema.safeParse({ primary: '#ffd166', accent: '#000000' });
+    expect(light.error?.issues[0]?.message).toMatch(/בהיר מדי/);
+    const fixed = darkenForContrast('#ffd166');
+    expect(contrastWithWhite(fixed)).toBeGreaterThanOrEqual(4.5);
+    const draft = buildTemplateDraft('beauty', business);
+    draft.theme = { ...draft.theme, custom: { primary: '#1d4ed8', accent: '#f59e0b' } };
+    const html = renderSitePage(draft, business);
+    expect(html).toContain('--p:#1d4ed8;--a:#f59e0b;');
+  });
+});
+
 describe('hoursSummary', () => {
   it('groups consecutive days with the same hours and skips closed days', () => {
     expect(hoursSummary(defaultOpeningHours)).toEqual([

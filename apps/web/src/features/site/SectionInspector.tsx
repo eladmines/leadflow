@@ -1,10 +1,4 @@
-import {
-  PALETTES,
-  sectionTypeLabels,
-  type PaletteKey,
-  type Section,
-  type SectionStyle,
-} from '@leadflow/shared';
+import { sectionTypeLabels, type Section, type SectionStyle } from '@leadflow/shared';
 import { ArrowDown, ArrowUp, Copy, EyeOff, Trash2, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Button } from '../../components/ui';
@@ -79,7 +73,8 @@ export function SectionInspector({
   onClose,
 }: {
   section: Section;
-  palette: PaletteKey;
+  /** The site's colours (palette or custom). */
+  palette: { primary: string; accent: string; soft: string };
   index: number;
   count: number;
   onChange: (patch: Partial<Section>) => void;
@@ -93,7 +88,7 @@ export function SectionInspector({
   const st = s.style ?? {};
   const setStyle = (patch: SectionStyle) =>
     onChange({ style: { ...st, ...patch } } as Partial<Section>);
-  const p = PALETTES[palette];
+  const p = palette;
   const hasButton = s.type === 'hero' || s.type === 'cta';
   const swatches: { value: NonNullable<SectionStyle['bg']>; label: string; color: string }[] = [
     {

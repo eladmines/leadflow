@@ -68,3 +68,4 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — F18 quotes (first version): from a lead, items/discount/VAT, numbered drafts, private link + email + WhatsApp, customer accept/reject with print-to-PDF, lead card and history. Fixed a leads-page search race that could undo a navigation.
 - 2026-10-28 — Site pages: add pages (about, services, gallery, FAQ, contact, landing, blank), page switcher and settings in the editor, per-page Google details, live at /address with menu, phone menu and sitemap.
 - 2026-10-28 — Editor: section settings window on click (look from the palette, settings, actions), text/button toolbar, site design window from the logo.
+- 2026-10-28 — Custom site colours (main + accent) with a readability check and one-click darker fix.

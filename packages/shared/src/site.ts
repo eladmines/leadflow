@@ -332,8 +332,57 @@ export const FONTS = {
 export type FontKey = keyof typeof FONTS;
 export const FONT_KEYS = Object.keys(FONTS) as [FontKey, ...FontKey[]];
 
+// ---- Custom colours (D-083) -------------------------------------------------
+
+const HEX = /^#[0-9a-f]{6}$/i;
+const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const luminance = (hex: string) => {
+  const [r, g, b] = channels(hex).map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+/** WCAG contrast ratio of a colour against white (buttons carry white text). */
+export const contrastWithWhite = (hex: string) => 1.05 / (luminance(hex) + 0.05);
+/** Minimum for white button text on the main colour (WCAG AA, normal text). */
+export const MIN_BRAND_CONTRAST = 4.5;
+const toHex = (rgb: number[]) =>
+  `#${rgb
+    .map((v) =>
+      Math.round(Math.min(255, Math.max(0, v)))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+/** Mixes a colour with another (`t` = share of `other`, 0–1). */
+export const mixHex = (hex: string, other: string, t: number) => {
+  const a = channels(hex);
+  const b = channels(other);
+  return toHex(a.map((v, i) => v + (b[i]! - v) * t));
+};
+/** The same hue, darkened just enough for white text to be readable. */
+export function darkenForContrast(hex: string, min = MIN_BRAND_CONTRAST): string {
+  let out = hex.toLowerCase();
+  for (let i = 0; i < 40 && contrastWithWhite(out) < min; i++) out = mixHex(out, '#000000', 0.06);
+  return out;
+}
+export const customColorsSchema = z.object({
+  primary: z
+    .string()
+    .regex(HEX, 'צבע לא תקין')
+    .refine(
+      (v) => contrastWithWhite(v) >= MIN_BRAND_CONTRAST,
+      'הצבע הראשי בהיר מדי לטקסט לבן על כפתורים. בחרו גוון כהה יותר',
+    ),
+  accent: z.string().regex(HEX, 'צבע לא תקין'),
+});
+export type CustomColors = z.infer<typeof customColorsSchema>;
+
 export const themeSchema = z.object({
   palette: z.enum(PALETTE_KEYS),
+  /** Owner-chosen colours; when set they replace the palette's (D-083). */
+  custom: customColorsSchema.nullable().optional(),
   font: z.enum(FONT_KEYS),
   /** Logo shown in the site header (F05). */
   logoAssetId: z.string().uuid().nullable().default(null),
@@ -347,6 +396,19 @@ export const themeSchema = z.object({
     .optional(),
 });
 export type SiteTheme = z.infer<typeof themeSchema>;
+
+/** The colours a site actually uses: its custom colours, or the chosen palette. */
+export function resolvePalette(theme: Pick<SiteTheme, 'palette' | 'custom'>) {
+  if (theme.custom) {
+    return {
+      primary: theme.custom.primary,
+      accent: theme.custom.accent,
+      soft: mixHex(theme.custom.primary, '#ffffff', 0.92),
+    };
+  }
+  const p = PALETTES[theme.palette];
+  return { primary: p.primary, accent: p.accent, soft: p.soft };
+}
 
 export const seoSchema = z.object({
   title: z.string().trim().max(70, 'כותרת לגוגל יכולה להכיל עד 70 תווים'),
