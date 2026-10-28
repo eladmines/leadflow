@@ -8,6 +8,7 @@ import {
   type LeadListQuery,
   type LeadListResponse,
   type LeadResponse,
+  type LeadTagsResponse,
   type PipelineResponse,
   type UpdateLeadRequest,
 } from '@leadflow/shared';
@@ -38,6 +39,15 @@ export function useLeads(businessId: string, query: LeadListQuery = {}) {
     // New website leads arrive without any action in the app; refresh in the background.
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
+  });
+}
+
+/** Tags in use (for suggestions and the filter). Refreshed with every lead change. */
+export function useLeadTags(businessId: string) {
+  return useQuery({
+    queryKey: [...leadsQueryKey(businessId), 'tags'] as const,
+    queryFn: () => apiFetch<LeadTagsResponse>(lp.tags(businessId)),
+    select: (d) => d.tags,
   });
 }
 

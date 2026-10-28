@@ -30,7 +30,7 @@ import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { useSite } from '../site/api';
-import { shekel, timeAgo, useLeads, usePipeline, useUpdateLead } from './api';
+import { shekel, timeAgo, useLeads, useLeadTags, usePipeline, useUpdateLead } from './api';
 import { NewLeadDialog } from './NewLeadDialog';
 
 export const stageTone: Record<Lead['stage']['kind'], string> = {
@@ -43,6 +43,19 @@ const leadPath = (businessId: string, leadId: string) =>
   `${businessWebPaths.section(businessId, 'leads')}/${leadId}`;
 
 /** List view card. */
+export function TagChips({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null;
+  return (
+    <ul aria-label="תגיות" className="flex flex-wrap gap-1">
+      {tags.map((t) => (
+        <li key={t} className="rounded-full bg-accent-50 px-2 py-0.5 text-xs text-accent-700">
+          {t}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function LeadCard({ lead, businessId }: { lead: Lead; businessId: string }) {
   const phone = lead.contact.phone;
   return (
@@ -82,6 +95,7 @@ export function LeadCard({ lead, businessId }: { lead: Lead; businessId: string 
       {lead.message && (
         <p className="line-clamp-3 whitespace-pre-line text-sm text-ink">{lead.message}</p>
       )}
+      <TagChips tags={lead.tags} />
       <div className="flex flex-wrap gap-2">
         {phone && (
           <a
@@ -133,6 +147,7 @@ function BoardCard({
         </Link>
       </h3>
       {lead.message && <p className="line-clamp-2 text-xs text-ink-muted">{lead.message}</p>}
+      <TagChips tags={lead.tags} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
         <time dateTime={lead.createdAt}>{timeAgo(lead.createdAt)}</time>
         {lead.expectedValue !== null && (
@@ -279,13 +294,15 @@ export function LeadsPage() {
     stageId: params.get('stageId') ?? undefined,
     ownerId: (params.get('ownerId') as LeadListQuery['ownerId']) ?? undefined,
     source: (params.get('source') as LeadListQuery['source']) ?? undefined,
+    tag: params.get('tag') ?? undefined,
   };
   const leads = useLeads(business.id, query);
   const stages = usePipeline(business.id);
   const members = useMembers(business.id, can(business.role, 'members.view'));
   const site = useSite(business.id);
   const [newOpen, setNewOpen] = useState(false);
-  const filtered = Boolean(query.q || query.stageId || query.ownerId || query.source);
+  const tags = useLeadTags(business.id).data ?? [];
+  const filtered = Boolean(query.q || query.stageId || query.ownerId || query.source || query.tag);
 
   const setParam = (key: string, value: string | undefined) =>
     setParams(
@@ -400,6 +417,24 @@ export function LeadsPage() {
             </option>
           ))}
         </select>
+        {(tags.length > 0 || query.tag) && (
+          <select
+            aria-label="סינון לפי תגית"
+            value={query.tag ?? ''}
+            onChange={(e) => setParam('tag', e.target.value || undefined)}
+            className={selectClass}
+          >
+            <option value="">כל התגיות</option>
+            {query.tag && !tags.includes(query.tag) && (
+              <option value={query.tag}>{query.tag}</option>
+            )}
+            {tags.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        )}
         <div role="group" aria-label="תצוגה" className="flex rounded-xl bg-surface-sunken p-1">
           {(['board', 'list'] as const).map((v) => (
             <button

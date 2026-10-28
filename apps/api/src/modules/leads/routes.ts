@@ -10,6 +10,7 @@ import {
   leadListQuerySchema,
   leadListResponseSchema,
   leadResponseSchema,
+  leadTagsResponseSchema,
   pipelineResponseSchema,
   updateLeadRequestSchema,
 } from '@leadflow/shared';
@@ -68,6 +69,7 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
           'אחראי',
           'ערך משוער (₪)',
           'טיפול הבא',
+          'תגיות',
           'פרטי הפנייה',
           'נוצר',
         ],
@@ -80,6 +82,7 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
           l.owner?.name,
           l.expectedValue,
           l.nextActionAt ? when.format(new Date(l.nextActionAt)) : '',
+          l.tags.join(', '),
           l.message,
           when.format(new Date(l.createdAt)),
         ]),
@@ -98,6 +101,15 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
         .header('cache-control', 'no-store')
         .send(csv);
     },
+  );
+
+  app.get(
+    '/leads/tags',
+    {
+      preValidation: requirePermission('leads.view'),
+      schema: { params, response: { 200: leadTagsResponseSchema } },
+    },
+    async (req) => ({ tags: await service.tags(tenantOf(req)) }),
   );
 
   app.post(

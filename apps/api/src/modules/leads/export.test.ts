@@ -36,9 +36,11 @@ describe('leads CSV export', () => {
     const body = res.body;
     expect(body.charCodeAt(0)).toBe(0xfeff);
     const [header] = body.slice(1).split('\r\n');
-    expect(header).toBe('שם,טלפון,אימייל,שלב,מקור,אחראי,ערך משוער (₪),טיפול הבא,פרטי הפנייה,נוצר');
+    expect(header).toBe(
+      'שם,טלפון,אימייל,שלב,מקור,אחראי,ערך משוער (₪),טיפול הבא,תגיות,פרטי הפנייה,נוצר',
+    );
     expect(body).toContain(
-      '"דנה, כהן",052-7654321,,חדש,הוזן ידנית,,1500,,"שורה ראשונה\nשורה ""שנייה""",',
+      '"דנה, כהן",052-7654321,,חדש,הוזן ידנית,,1500,,,"שורה ראשונה\nשורה ""שנייה""",',
     );
     expect(body).toContain(`"'=HYPERLINK(""http://evil"",""x"")"`);
     expect(

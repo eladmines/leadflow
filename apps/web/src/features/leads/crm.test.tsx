@@ -36,6 +36,7 @@ const lead = (over: Partial<Lead> = {}): Lead => ({
   owner: null,
   expectedValue: 1500,
   nextActionAt: null,
+  tags: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   ...over,
@@ -260,6 +261,27 @@ describe('lead page', () => {
     expect(screen.queryByRole('combobox', { name: 'אחראי' })).not.toBeInTheDocument();
   });
 
+  it('adds a tag with Enter (no duplicates) and removes one', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.detail(id, lead().id)}`]: () =>
+        json(200, { ...detail, lead: lead({ tags: ['VIP'] }) }),
+      [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead({ tags: ['VIP'] }) }),
+    });
+    const { user } = renderApp(`${leadsPath}/${lead().id}`);
+    const input = await screen.findByLabelText('תגיות');
+    await user.type(input, 'חוזר{Enter}');
+    await user.type(input, 'vip{Enter}');
+    await user.click(screen.getByRole('button', { name: 'הסרת התגית VIP' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toEqual([
+        { tags: ['VIP', 'חוזר'] },
+        { tags: [] },
+      ]),
+    );
+  });
+
   it('the owner deletes a lead after confirming and returns to the list', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
@@ -299,6 +321,28 @@ describe('lead page', () => {
     });
     renderApp(`${leadsPath}/${lead().id}`);
     expect(await screen.findByRole('heading', { name: 'הליד לא נמצא' })).toBeInTheDocument();
+  });
+});
+
+describe('tags in the list', () => {
+  it('shows tags on cards and filters by tag through the URL and API', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.list(id)}`]: () => json(200, { leads: [lead({ tags: ['VIP'] })] }),
+      [`GET ${lp.tags(id)}`]: () => json(200, { tags: ['VIP', 'חוזר'] }),
+    });
+    const { user } = renderApp(`${leadsPath}?view=list`);
+    const chips = await screen.findByRole('list', { name: 'תגיות' });
+    expect(within(chips).getByText('VIP')).toBeInTheDocument();
+    await user.selectOptions(await screen.findByLabelText('סינון לפי תגית'), 'חוזר');
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(
+          ([u]) => String(u) === `${lp.list(id)}?tag=${encodeURIComponent('חוזר')}`,
+        ),
+      ).toBe(true),
+    );
   });
 });
 
