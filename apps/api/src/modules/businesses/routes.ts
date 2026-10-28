@@ -6,6 +6,8 @@ import {
   businessResponseSchema,
   createBusinessRequestSchema,
   memberListResponseSchema,
+  notificationPrefsResponseSchema,
+  notificationPrefsSchema,
   updateBusinessRequestSchema,
 } from '@leadflow/shared';
 import { authOf, requireAuth } from '../../plugins/session';
@@ -80,6 +82,27 @@ export const businessTenantRoutes: FastifyPluginAsyncZod = async (app) => {
         schema: { params: tenantParams, response: { 200: memberListResponseSchema } },
       },
       async (req) => ({ members: await service.listMembers(tenantOf(req)) }),
+    );
+
+    // Every member manages only their own preferences; membership is checked by the tenant scope.
+    app.get(
+      '/me/notifications',
+      { schema: { params: tenantParams, response: { 200: notificationPrefsResponseSchema } } },
+      async (req) => ({ prefs: await service.notificationPrefs(tenantOf(req)) }),
+    );
+
+    app.put(
+      '/me/notifications',
+      {
+        schema: {
+          params: tenantParams,
+          body: notificationPrefsSchema,
+          response: { 200: notificationPrefsResponseSchema },
+        },
+      },
+      async (req) => ({
+        prefs: await service.updateNotificationPrefs(tenantOf(req), req.body),
+      }),
     );
   }
 };

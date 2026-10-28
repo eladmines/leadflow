@@ -8,6 +8,7 @@ import {
   type BusinessSummary,
   type CreateBusinessRequest,
   type Member,
+  type NotificationPrefs,
   type Role,
   type updateBusinessRequestSchema,
 } from '@leadflow/shared';
@@ -131,6 +132,25 @@ export class BusinessService {
       return b;
     });
     return toBusinessDto(updated, ctx.role);
+  }
+
+  async notificationPrefs(ctx: TenantContext): Promise<NotificationPrefs> {
+    const m = await this.prisma.membership.findUniqueOrThrow({
+      where: { userId_businessId: { userId: ctx.userId, businessId: ctx.businessId } },
+      select: { notifyNewLeads: true },
+    });
+    return { newLeadEmail: m.notifyNewLeads };
+  }
+
+  async updateNotificationPrefs(
+    ctx: TenantContext,
+    prefs: NotificationPrefs,
+  ): Promise<NotificationPrefs> {
+    await this.prisma.membership.update({
+      where: { userId_businessId: { userId: ctx.userId, businessId: ctx.businessId } },
+      data: { notifyNewLeads: prefs.newLeadEmail },
+    });
+    return prefs;
   }
 
   async listMembers(ctx: TenantContext): Promise<Member[]> {

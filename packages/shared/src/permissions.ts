@@ -35,6 +35,8 @@ export const PERMISSIONS = {
   'leads.assign': ['OWNER', 'MANAGER'],
   /** PRD §20: exporting data — owner yes, manager "by permission" (not by default), employee no. */
   'leads.export': ['OWNER'],
+  /** PRD §20: deleting data follows the same rule as exporting it. Deletes the lead for good. */
+  'leads.delete': ['OWNER'],
   /** Everyone has tasks; employees see and manage only tasks assigned to them. */
   'tasks.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'tasks.view.all': ['OWNER', 'MANAGER'],

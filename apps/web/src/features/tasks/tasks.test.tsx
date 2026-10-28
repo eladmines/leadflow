@@ -129,6 +129,7 @@ describe('tasks elsewhere', () => {
         owner: null,
         expectedValue: null,
         nextActionAt: null,
+        tags: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },

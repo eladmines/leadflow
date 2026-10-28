@@ -7,6 +7,7 @@ import {
   json,
   me,
   mockApi,
+  noContent,
   renderApp,
   testBusiness,
   testStages,
@@ -35,6 +36,7 @@ const lead = (over: Partial<Lead> = {}): Lead => ({
   owner: null,
   expectedValue: 1500,
   nextActionAt: null,
+  tags: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   ...over,
@@ -259,6 +261,59 @@ describe('lead page', () => {
     expect(screen.queryByRole('combobox', { name: 'אחראי' })).not.toBeInTheDocument();
   });
 
+  it('adds a tag with Enter (no duplicates) and removes one', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.detail(id, lead().id)}`]: () =>
+        json(200, { ...detail, lead: lead({ tags: ['VIP'] }) }),
+      [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead({ tags: ['VIP'] }) }),
+    });
+    const { user } = renderApp(`${leadsPath}/${lead().id}`);
+    const input = await screen.findByLabelText('תגיות');
+    await user.type(input, 'חוזר{Enter}');
+    await user.type(input, 'vip{Enter}');
+    await user.click(screen.getByRole('button', { name: 'הסרת התגית VIP' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toEqual([
+        { tags: ['VIP', 'חוזר'] },
+        { tags: [] },
+      ]),
+    );
+  });
+
+  it('the owner deletes a lead after confirming and returns to the list', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.detail(id, lead().id)}`]: () => json(200, detail),
+      [`DELETE ${lp.detail(id, lead().id)}`]: () => noContent(),
+    });
+    const { user } = renderApp(`${leadsPath}/${lead().id}`);
+    await user.click(await screen.findByRole('button', { name: 'מחיקת הליד' }));
+    const dialog = screen.getByRole('dialog', { name: 'למחוק את הליד של דנה כהן?' });
+    await user.click(within(dialog).getByRole('button', { name: 'ביטול' }));
+    expect(callsTo(fetchMock, 'DELETE', lp.detail(id, lead().id))).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'מחיקת הליד' }));
+    await user.click(screen.getByRole('button', { name: 'מחיקה לצמיתות' }));
+    expect(await screen.findByRole('button', { name: 'ליד חדש' })).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'DELETE', lp.detail(id, lead().id))).toHaveLength(1);
+  });
+
+  it('managers do not get a delete button', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${apiPaths.businesses.detail(id)}`]: () =>
+        json(200, { business: { ...testBusiness, role: 'MANAGER' } }),
+      [`GET ${lp.detail(id, lead().id)}`]: () => json(200, detail),
+    });
+    renderApp(`${leadsPath}/${lead().id}`);
+    await screen.findByRole('heading', { name: 'דנה כהן', level: 1 });
+    expect(screen.queryByRole('button', { name: 'מחיקת הליד' })).not.toBeInTheDocument();
+  });
+
   it('shows "not found" for a lead outside the user\'s view (API 404)', async () => {
     mockApi({
       [meKey]: me(testUser),
@@ -266,6 +321,28 @@ describe('lead page', () => {
     });
     renderApp(`${leadsPath}/${lead().id}`);
     expect(await screen.findByRole('heading', { name: 'הליד לא נמצא' })).toBeInTheDocument();
+  });
+});
+
+describe('tags in the list', () => {
+  it('shows tags on cards and filters by tag through the URL and API', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.list(id)}`]: () => json(200, { leads: [lead({ tags: ['VIP'] })] }),
+      [`GET ${lp.tags(id)}`]: () => json(200, { tags: ['VIP', 'חוזר'] }),
+    });
+    const { user } = renderApp(`${leadsPath}?view=list`);
+    const chips = await screen.findByRole('list', { name: 'תגיות' });
+    expect(within(chips).getByText('VIP')).toBeInTheDocument();
+    await user.selectOptions(await screen.findByLabelText('סינון לפי תגית'), 'חוזר');
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(
+          ([u]) => String(u) === `${lp.list(id)}?tag=${encodeURIComponent('חוזר')}`,
+        ),
+      ).toBe(true),
+    );
   });
 });
 

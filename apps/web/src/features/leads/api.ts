@@ -8,6 +8,7 @@ import {
   type LeadListQuery,
   type LeadListResponse,
   type LeadResponse,
+  type LeadTagsResponse,
   type PipelineResponse,
   type UpdateLeadRequest,
 } from '@leadflow/shared';
@@ -38,6 +39,15 @@ export function useLeads(businessId: string, query: LeadListQuery = {}) {
     // New website leads arrive without any action in the app; refresh in the background.
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
+  });
+}
+
+/** Tags in use (for suggestions and the filter). Refreshed with every lead change. */
+export function useLeadTags(businessId: string) {
+  return useQuery({
+    queryKey: [...leadsQueryKey(businessId), 'tags'] as const,
+    queryFn: () => apiFetch<LeadTagsResponse>(lp.tags(businessId)),
+    select: (d) => d.tags,
   });
 }
 
@@ -100,6 +110,20 @@ export function useUpdateLead(businessId: string) {
       for (const [key, data] of context?.snapshot ?? []) queryClient.setQueryData(key, data);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: leadsQueryKey(businessId) }),
+  });
+}
+
+/** Deletes a lead for good (owner only). Tasks linked to it lose the link, so refresh them too. */
+export function useDeleteLead(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (leadId: string) =>
+      apiFetch<void>(lp.detail(businessId, leadId), { method: 'DELETE' }),
+    onSuccess: (_data, leadId) => {
+      queryClient.removeQueries({ queryKey: leadDetailKey(businessId, leadId) });
+      void queryClient.invalidateQueries({ queryKey: leadsQueryKey(businessId) });
+      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'tasks'] });
+    },
   });
 }
 

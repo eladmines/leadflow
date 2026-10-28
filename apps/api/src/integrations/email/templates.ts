@@ -95,6 +95,8 @@ export function newLeadTemplate(params: {
   email: string | null;
   message: string | null;
   link: string;
+  /** Where the recipient can turn these emails off. */
+  settingsLink: string;
 }): RenderedEmail {
   const subject = `פנייה חדשה מהאתר — ${params.businessName}`;
   const rows: [string, string][] = [
@@ -113,7 +115,8 @@ export function newLeadTemplate(params: {
       )
       .join('')}</table>
 ${button(params.link, 'לצפייה בליד')}
-<p style="margin:0;color:#6b7280;">כדאי לחזור ללקוח מהר — פניות שנענות מהר נסגרות יותר.</p>`,
+<p style="margin:0;color:#6b7280;">כדאי לחזור ללקוח מהר — פניות שנענות מהר נסגרות יותר.</p>
+<p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">לא רוצים לקבל את ההתראות האלה? <a href="${escapeHtml(params.settingsLink)}" style="color:#9ca3af;">אפשר לכבות אותן בהגדרות החשבון</a>.</p>`,
   );
   const text = [
     'התקבלה פנייה חדשה מהאתר',
@@ -121,6 +124,8 @@ ${button(params.link, 'לצפייה בליד')}
     ...rows.map(([k, v]) => `${k}: ${v}`),
     '',
     `לצפייה בליד: ${params.link}`,
+    '',
+    `לכיבוי ההתראות האלה: ${params.settingsLink}`,
   ].join('\n');
   return { subject, html, text };
 }

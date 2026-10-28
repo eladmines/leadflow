@@ -38,6 +38,7 @@ export function toLeadDto(row: LeadRow): Lead {
     owner: row.owner ? { id: row.owner.id, name: row.owner.fullName } : null,
     expectedValue: row.expectedValue,
     nextActionAt: row.nextActionAt?.toISOString() ?? null,
+    tags: row.tags,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -210,6 +211,7 @@ export class LeadService {
               ? [{ ownerId: query.ownerId }]
               : []),
           ...(query.source ? [{ source: query.source }] : []),
+          ...(query.tag ? [{ tags: { has: query.tag } }] : []),
         ],
       },
       include: leadInclude,
@@ -217,6 +219,22 @@ export class LeadService {
       take,
     });
     return rows.map(toLeadDto);
+  }
+
+  /** Tags on the leads this member can see, most used first. */
+  async tags(ctx: TenantContext): Promise<string[]> {
+    const rows = await this.prisma.lead.findMany({
+      where: { ...this.visible(ctx), NOT: { tags: { isEmpty: true } } },
+      select: { tags: true },
+      orderBy: { createdAt: 'desc' },
+      take: 2000,
+    });
+    const counts = new Map<string, number>();
+    for (const tag of rows.flatMap((r) => r.tags)) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    return [...counts]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'he'))
+      .map(([tag]) => tag)
+      .slice(0, 100);
   }
 
   async pipeline(ctx: TenantContext): Promise<PipelineStage[]> {
@@ -389,6 +407,10 @@ export class LeadService {
         data.message = input.message;
         changed.push('message');
       }
+      if (input.tags !== undefined && input.tags.join('\n') !== lead.tags.join('\n')) {
+        data.tags = input.tags;
+        changed.push('tags');
+      }
       if (changed.length) activities.push({ type: 'lead.updated', data: { fields: changed } });
       if (activities.length === 0) return lead;
 
@@ -438,6 +460,27 @@ export class LeadService {
       actor: { id: ctx.userId, name: actor?.fullName ?? '' },
       createdAt: row.createdAt.toISOString(),
     };
+  }
+
+  /**
+   * Deletes a lead with its history and form submission. Linked tasks stay, unlinked. The contact
+   * goes too when no other lead uses it, so a deletion request leaves no personal data behind.
+   */
+  async remove(ctx: TenantContext, leadId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const lead = await this.findVisible(ctx, leadId, tx);
+      await tx.lead.delete({ where: { id: lead.id } });
+      const contactRemoved = (await tx.lead.count({ where: { contactId: lead.contactId } })) === 0;
+      if (contactRemoved) await tx.contact.delete({ where: { id: lead.contactId } });
+      await recordAudit(tx, {
+        action: 'lead.deleted',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'lead',
+        entityId: lead.id,
+        metadata: { contactRemoved },
+      });
+    });
   }
 
   /**

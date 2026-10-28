@@ -132,6 +132,30 @@ describe('website lead form (F07)', () => {
     expect(ctx.email.sent[0]!.subject).toBe('פנייה חדשה מהאתר — מספרת שירן');
     expect(ctx.email.sent[0]!.text).toContain('052-7654321');
     expect(ctx.email.sent[0]!.text).toContain(`/b/${o.id}/leads`);
+    expect(ctx.email.sent[0]!.text).toContain(`/b/${o.id}/account`);
+  });
+
+  it('a member who turned new-lead emails off gets none; the others still do', async () => {
+    const o = await liveSite();
+    const manager = await newUser(ctx.app, 'mgr');
+    await addMember(ctx.prisma, o.id, manager.userId, 'MANAGER');
+    const prefsPath = apiPaths.businesses.notifications(o.id);
+    expect((await req(ctx.app, 'GET', prefsPath, manager.token)).json()).toEqual({
+      prefs: { newLeadEmail: true },
+    });
+    const off = await req(ctx.app, 'PUT', prefsPath, manager.token, { newLeadEmail: false });
+    expect(off.json()).toEqual({ prefs: { newLeadEmail: false } });
+    // Only the caller's own membership changed.
+    expect(
+      (await ctx.prisma.membership.findMany({ where: { notifyNewLeads: false } })).map(
+        (m) => m.userId,
+      ),
+    ).toEqual([manager.userId]);
+    ctx.email.clear();
+
+    await submit('salon', valid(o.contactId));
+    await expect.poll(() => ctx.email.sent.length).toBe(1);
+    expect(ctx.email.sent[0]!.to).not.toContain('mgr');
   });
 
   it('a double submit (same token) creates one lead; a returning phone reuses the contact', async () => {

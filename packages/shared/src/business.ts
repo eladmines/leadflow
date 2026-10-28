@@ -259,6 +259,15 @@ export type Member = z.infer<typeof memberSchema>;
 export const memberListResponseSchema = z.object({ members: z.array(memberSchema) });
 export type MemberListResponse = z.infer<typeof memberListResponseSchema>;
 
+/** The signed-in member's email preferences for this business. */
+export const notificationPrefsSchema = z.object({
+  /** Email on every new website lead (sent to owners and managers only). */
+  newLeadEmail: z.boolean(),
+});
+export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
+export const notificationPrefsResponseSchema = z.object({ prefs: notificationPrefsSchema });
+export type NotificationPrefsResponse = z.infer<typeof notificationPrefsResponseSchema>;
+
 export const businessAuditActions = [
   'business.created',
   'business.updated',
@@ -278,6 +287,7 @@ export const businessApiPaths = {
   completeOnboarding: (businessId: string) =>
     `/api/v1/businesses/${businessId}/onboarding/complete`,
   members: (businessId: string) => `/api/v1/businesses/${businessId}/members`,
+  notifications: (businessId: string) => `/api/v1/businesses/${businessId}/me/notifications`,
 } as const;
 
 export const businessWebPaths = {

@@ -101,6 +101,8 @@ export const leadSchema = z.object({
   /** Expected deal value in whole shekels. */
   expectedValue: z.number().int().nullable(),
   nextActionAt: z.string().datetime().nullable(),
+  /** Free labels chosen by the business, e.g. "VIP", "חוזר" (lowercased duplicates removed). */
+  tags: z.array(z.string()),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -120,7 +122,19 @@ export const crmMessages = {
   noteTooLong: 'ההערה ארוכה מדי (עד 2,000 תווים)',
   stageInvalid: 'השלב שנבחר אינו קיים',
   ownerInvalid: 'אפשר לשייך רק לחבר צוות פעיל בעסק',
+  tagTooLong: 'תגית יכולה להכיל עד 30 תווים',
+  tooManyTags: 'אפשר עד 10 תגיות לליד',
 } as const;
+
+export const MAX_LEAD_TAGS = 10;
+const tagSchema = z.string().trim().min(1).max(30, crmMessages.tagTooLong);
+/** Tags without duplicates (case-insensitive), in the order given. */
+export const leadTagsSchema = z
+  .array(tagSchema)
+  .max(MAX_LEAD_TAGS, crmMessages.tooManyTags)
+  .transform((tags) =>
+    tags.filter((t, i) => tags.findIndex((o) => o.toLowerCase() === t.toLowerCase()) === i),
+  );
 
 const uuid = z.string().uuid();
 const optionalUuidParam = z
@@ -135,6 +149,7 @@ export const leadListQuerySchema = z.object({
   stageId: optionalUuidParam,
   ownerId: z.union([z.literal('none'), uuid]).optional(),
   source: z.enum(LEAD_SOURCES).optional(),
+  tag: z.string().trim().max(30).optional(),
 });
 export type LeadListQuery = z.input<typeof leadListQuerySchema>;
 
@@ -176,6 +191,7 @@ export const updateLeadRequestSchema = z.object({
   expectedValue: shekels.nullable().optional(),
   nextActionAt: z.string().datetime().nullable().optional(),
   message: optionalText(1000, leadMessages.messageTooLong).optional(),
+  tags: leadTagsSchema.optional(),
 });
 export type UpdateLeadRequest = z.input<typeof updateLeadRequestSchema>;
 
@@ -241,6 +257,10 @@ export type DuplicateContact = z.infer<typeof duplicateContactSchema>;
 export const duplicatesResponseSchema = z.object({ contacts: z.array(duplicateContactSchema) });
 export type DuplicatesResponse = z.infer<typeof duplicatesResponseSchema>;
 
+/** Tags in use on the leads the member can see, most used first (for suggestions and filters). */
+export const leadTagsResponseSchema = z.object({ tags: z.array(z.string()) });
+export type LeadTagsResponse = z.infer<typeof leadTagsResponseSchema>;
+
 export const leadsApiPaths = {
   list: (businessId: string) => `/api/v1/businesses/${businessId}/leads`,
   detail: (businessId: string, leadId: string) =>
@@ -251,6 +271,7 @@ export const leadsApiPaths = {
   duplicates: (businessId: string) => `/api/v1/businesses/${businessId}/contacts/duplicates`,
   /** CSV download (same filters as the list). Plain GET so a link can trigger it. */
   exportCsv: (businessId: string) => `/api/v1/businesses/${businessId}/leads/export.csv`,
+  tags: (businessId: string) => `/api/v1/businesses/${businessId}/leads/tags`,
 } as const;
 
 export const leadAuditActions = ['lead.created', 'lead.assigned', 'leads.exported'] as const;

@@ -7,13 +7,23 @@ import {
   type Activity,
   type AddNoteRequest,
   type Lead,
+  MAX_LEAD_TAGS,
 } from '@leadflow/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, Mail, MessageSquareText, Phone } from 'lucide-react';
+import { ArrowRight, Mail, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
-import { Alert, Button, Card, EmptyState, Field, Spinner, Textarea } from '../../components/ui';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  Alert,
+  Button,
+  Card,
+  DialogShell,
+  EmptyState,
+  Field,
+  Spinner,
+  Textarea,
+} from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
 import { ApiError } from '../../lib/api';
@@ -25,6 +35,8 @@ import {
   shekel,
   timeAgo,
   useAddNote,
+  useDeleteLead,
+  useLeadTags,
   useLeadDetail,
   usePipeline,
   useUpdateLead,
@@ -38,6 +50,7 @@ const fieldLabels: Record<string, string> = {
   expectedValue: 'ערך משוער',
   nextActionAt: 'תאריך טיפול הבא',
   message: 'פרטי הפנייה',
+  tags: 'תגיות',
 };
 
 function activityText(a: Activity): string {
@@ -66,6 +79,74 @@ const toLocalInput = (iso: string | null) => {
   const d = new Date(iso);
   return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 };
+
+function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+  const business = useCurrentBusiness();
+  const suggestions = useLeadTags(business.id).data ?? [];
+  const [text, setText] = useState('');
+  const full = tags.length >= MAX_LEAD_TAGS;
+  const add = () => {
+    const tag = text.trim().slice(0, 30);
+    setText('');
+    if (tag && !tags.some((t) => t.toLowerCase() === tag.toLowerCase())) onChange([...tags, tag]);
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor="lead-tag" className="text-sm font-medium text-ink">
+        תגיות
+      </label>
+      {tags.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {tags.map((t) => (
+            <li
+              key={t}
+              className="inline-flex items-center gap-1 rounded-full bg-accent-50 py-0.5 pe-1 ps-2.5 text-sm text-accent-700"
+            >
+              {t}
+              <button
+                type="button"
+                aria-label={`הסרת התגית ${t}`}
+                onClick={() => onChange(tags.filter((o) => o !== t))}
+                className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-accent-100"
+              >
+                <X aria-hidden className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <input
+          id="lead-tag"
+          list="lead-tag-suggestions"
+          value={text}
+          maxLength={30}
+          disabled={full}
+          placeholder={full ? 'הגעת למספר התגיות המרבי' : 'למשל: VIP, חוזר, דחוף'}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              add();
+            }
+          }}
+          className={inputClasses(false)}
+        />
+        <Button type="button" variant="secondary" disabled={full || !text.trim()} onClick={add}>
+          הוספה
+        </Button>
+      </div>
+      <datalist id="lead-tag-suggestions">
+        {suggestions
+          .filter((t) => !tags.includes(t))
+          .map((t) => (
+            <option key={t} value={t} />
+          ))}
+      </datalist>
+    </div>
+  );
+}
 
 function Details({ lead }: { lead: Lead }) {
   const business = useCurrentBusiness();
@@ -123,6 +204,7 @@ function Details({ lead }: { lead: Lead }) {
           </p>
         )}
       </div>
+      <TagEditor tags={lead.tags} onChange={(tags) => save({ tags })} />
       <Field
         label="ערך משוער (₪)"
         ltr
@@ -328,6 +410,51 @@ export function LeadDetailPage() {
           <LeadTasks leadId={lead.id} />
         </div>
       </div>
+      {can(business.role, 'leads.delete') && <DeleteLead lead={lead} />}
+    </>
+  );
+}
+
+function DeleteLead({ lead }: { lead: Lead }) {
+  const business = useCurrentBusiness();
+  const remove = useDeleteLead(business.id);
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const confirm = async () => {
+    await remove.mutateAsync(lead.id);
+    navigate(businessWebPaths.section(business.id, 'leads'), { replace: true });
+  };
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="self-start text-danger-600"
+        onClick={() => setOpen(true)}
+      >
+        <Trash2 aria-hidden className="h-4 w-4" />
+        מחיקת הליד
+      </Button>
+      <DialogShell
+        open={open}
+        onOpenChange={setOpen}
+        title={`למחוק את הליד של ${lead.contact.name}?`}
+      >
+        <p className="text-sm text-ink-muted">
+          הפנייה, ההערות וההיסטוריה שלה יימחקו לצמיתות. משימות שקשורות לליד יישארו, בלי הקישור. אם
+          אין לאיש הקשר פניות נוספות, גם פרטיו יימחקו. אי אפשר לבטל את הפעולה.
+        </p>
+        {remove.isError && <Alert tone="danger">{errorMessage(remove.error)}</Alert>}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            ביטול
+          </Button>
+          <Button variant="danger" loading={remove.isPending} onClick={() => void confirm()}>
+            מחיקה לצמיתות
+          </Button>
+        </div>
+      </DialogShell>
     </>
   );
 }

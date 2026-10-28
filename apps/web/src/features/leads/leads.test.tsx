@@ -32,6 +32,7 @@ const lead = (over: Partial<Lead> = {}): Lead => ({
   owner: null,
   expectedValue: null,
   nextActionAt: null,
+  tags: [],
   createdAt: new Date(Date.now() - 5 * 60_000).toISOString(),
   updatedAt: new Date().toISOString(),
   ...over,

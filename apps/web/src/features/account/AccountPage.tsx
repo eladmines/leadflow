@@ -1,19 +1,23 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   apiPaths,
+  can,
   changePasswordRequestSchema,
+  type NotificationPrefs,
+  type NotificationPrefsResponse,
   updateProfileRequestSchema,
   type MeResponse,
   type UpdateProfileRequest,
 } from '@leadflow/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Alert, Button, Card, Field, PasswordField } from '../../components/ui';
+import { Alert, Button, Card, Checkbox, Field, PasswordField, Spinner } from '../../components/ui';
 import { apiFetch } from '../../lib/api';
 import { meQueryKey, useMe } from '../auth/api';
-import { applyServerErrors } from '../auth/serverErrors';
+import { applyServerErrors, errorMessage } from '../auth/serverErrors';
+import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 
 const passwordForm = changePasswordRequestSchema
@@ -142,16 +146,58 @@ function PasswordCard() {
 }
 
 /** `/b/:businessId/account`: the signed-in user's own settings. */
+/** Per-business email preferences. Only owners and managers get new-lead emails (D-043). */
+function NotificationsCard() {
+  const business = useCurrentBusiness();
+  const path = apiPaths.businesses.notifications(business.id);
+  const queryKey = ['businesses', business.id, 'notification-prefs'];
+  const queryClient = useQueryClient();
+  const prefs = useQuery({
+    queryKey,
+    queryFn: () => apiFetch<NotificationPrefsResponse>(path),
+    select: (d) => d.prefs,
+  });
+  const save = useMutation({
+    mutationFn: (body: NotificationPrefs) =>
+      apiFetch<NotificationPrefsResponse>(path, { method: 'PUT', body: JSON.stringify(body) }),
+    onSuccess: (data) => queryClient.setQueryData(queryKey, data),
+  });
+
+  return (
+    <Card className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-semibold text-ink">התראות במייל</h2>
+        <p className="text-sm text-ink-muted">חלות רק על העסק {business.name}.</p>
+      </div>
+      {prefs.isPending ? (
+        <Spinner size="sm" label="טוענים העדפות…" />
+      ) : prefs.isError ? (
+        <Alert tone="danger">{errorMessage(prefs.error)}</Alert>
+      ) : (
+        <Checkbox
+          label="מייל על כל פנייה חדשה מהאתר"
+          checked={prefs.data.newLeadEmail}
+          disabled={save.isPending}
+          onChange={(e) => save.mutate({ newLeadEmail: e.target.checked })}
+        />
+      )}
+      {save.isError && <Alert tone="danger">{errorMessage(save.error)}</Alert>}
+      <p role="status" className="text-sm text-success-600">
+        {save.isSuccess ? 'ההעדפה נשמרה' : ''}
+      </p>
+    </Card>
+  );
+}
+
 export function AccountPage() {
+  const business = useCurrentBusiness();
   return (
     <>
-      <PageHeader
-        title="החשבון שלי"
-        description="הפרטים והסיסמה שלך. ההגדרות כאן חלות על כל העסקים שלך."
-      />
+      <PageHeader title="החשבון שלי" description="הפרטים, הסיסמה וההתראות שלך." />
       <div className="grid gap-6 lg:grid-cols-2">
         <ProfileCard />
         <PasswordCard />
+        {can(business.role, 'leads.view.all') && <NotificationsCard />}
       </div>
     </>
   );

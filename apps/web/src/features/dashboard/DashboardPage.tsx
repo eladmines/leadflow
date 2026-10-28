@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 import { buttonClasses, Card, TextLink } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
+import { durationLabel, useReportSummary } from '../reports/api';
 import { timeAgo, useLeads } from '../leads/api';
 import { useSite } from '../site/api';
 import { groupTasks, useTasks } from '../tasks/api';
@@ -29,6 +30,54 @@ import { TaskItem } from '../tasks/TaskItem';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
 type ItemState = 'done' | 'todo' | 'soon';
+
+/** Owners/managers: the last 7 days at a glance, from the reports endpoint (F20 lite). */
+function WeekStats({ businessId }: { businessId: string }) {
+  const report = useReportSummary(businessId, 7).data;
+  if (!report) return null;
+  const delta = report.leads.current - report.leads.previous;
+  const stats = [
+    {
+      label: 'פניות ב־7 הימים האחרונים',
+      value: String(report.leads.current),
+      note:
+        delta === 0
+          ? 'כמו בשבוע שלפני'
+          : `${delta > 0 ? '+' : '−'}${Math.abs(delta)} לעומת השבוע שלפני`,
+    },
+    {
+      label: 'יחס סגירה',
+      value: report.closeRate === null ? '—' : `${Math.round(report.closeRate * 100)}%`,
+      note: report.closeRate === null ? 'עוד אין פניות שהוכרעו' : 'מהפניות של השבוע',
+    },
+    {
+      label: 'זמן תגובה ממוצע',
+      value: report.avgResponseMinutes === null ? '—' : durationLabel(report.avgResponseMinutes),
+      note: report.avgResponseMinutes === null ? 'עוד לא טופלו פניות' : 'עד הטיפול הראשון',
+    },
+  ];
+  return (
+    <section aria-labelledby="week-stats" className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="week-stats" className="text-lg font-semibold text-ink">
+          השבוע במספרים
+        </h2>
+        <TextLink to={businessWebPaths.section(businessId, 'reports')}>לכל הדוחות</TextLink>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {stats.map((s) => (
+          <Card key={s.label} className="flex flex-col gap-1">
+            <span className="text-sm text-ink-muted">{s.label}</span>
+            <span className="text-2xl font-semibold tabular-nums text-ink">
+              <bdi>{s.value}</bdi>
+            </span>
+            <span className="text-xs text-ink-muted">{s.note}</span>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /** Circular progress (decorative; the accessible value is on the parent progressbar). */
 function ProgressRing({ done, total }: { done: number; total: number }) {
@@ -211,6 +260,10 @@ export function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {can(business.role, 'reports.view') && leads.length > 0 && (
+        <WeekStats businessId={business.id} />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="flex flex-col gap-5 lg:col-span-3">
