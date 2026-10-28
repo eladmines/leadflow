@@ -169,14 +169,20 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
     },
     [draft.pages],
   );
-  const addPage = (preset: PagePresetKey) => {
-    const page = newPage(
-      preset,
-      newId(),
-      newId,
-      draft.pages.map((p) => p.slug),
-      draft.sections,
-    );
+  const addPage = (
+    preset: PagePresetKey,
+    opts: { title: string; slug: string; inMenu: boolean },
+  ) => {
+    const page = {
+      ...newPage(
+        preset,
+        newId(),
+        newId,
+        draft.pages.map((p) => p.slug),
+        draft.sections,
+      ),
+      ...opts,
+    };
     setDraft((d) => ({ ...d, pages: [...d.pages, page] }));
     goToPage(page.id);
     setOutOfMenu(page.inMenu ? null : page.id);

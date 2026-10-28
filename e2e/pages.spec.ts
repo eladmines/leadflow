@@ -31,10 +31,9 @@ test('add an "about" page, publish, and open it on the live site', async ({ page
   await expect(preview.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
 
   await page.getByRole('button', { name: 'עמוד חדש' }).click();
-  await page
-    .getByRole('dialog', { name: 'עמוד חדש' })
-    .getByRole('button', { name: /^אודות/ })
-    .click();
+  const add = page.getByRole('dialog', { name: 'עמוד חדש' });
+  await add.getByLabel('תוכן התחלתי (לא חובה)').selectOption('about');
+  await add.getByRole('button', { name: 'הוספת העמוד' }).click();
   await expect(page.getByRole('tab', { name: 'אודות' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText('כל השינויים נשמרו')).toBeVisible({ timeout: 10_000 });
 
