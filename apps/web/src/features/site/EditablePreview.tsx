@@ -366,18 +366,19 @@ export function EditablePreview({
             style={{ top: rects[selected].top, height: rects[selected].height }}
           />
         )}
-        {inspector && !frozen && (!selected || rects[selected]) && (
+        {inspector && !frozen && (
           <div
             role="dialog"
             aria-label={selected ? `הגדרות ${label(selected)}` : 'עיצוב האתר'}
             className="absolute end-3 z-20 hidden max-h-[calc(100%-1.5rem)] w-[22rem] overflow-y-auto rounded-xl border border-surface-border bg-surface p-4 shadow-lift lg:block"
             style={{
-              top: selected
-                ? Math.min(
-                    Math.max(rects[selected]!.top + 12, 12),
-                    Math.max(12, (frame.current?.clientHeight ?? 600) * 0.3),
-                  )
-                : 72,
+              top:
+                selected && rects[selected]
+                  ? Math.min(
+                      Math.max(rects[selected]!.top + 12, 12),
+                      Math.max(12, (frame.current?.clientHeight ?? 600) * 0.3),
+                    )
+                  : 72,
             }}
             onKeyDown={(e) => {
               // Ignore keys from dialogs opened inside it (they bubble through React portals).

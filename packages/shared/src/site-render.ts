@@ -276,7 +276,12 @@ function section(s: Section, c: Ctx, alt: boolean): string {
     }
     case 'gallery': {
       const pics = s.items.map((i, n) => ({ ...i, n })).filter((i) => media[i.assetId]);
-      if (pics.length === 0) return '';
+      if (pics.length === 0) {
+        // In the editor an empty gallery still shows, so it can be clicked and filled.
+        return c.editor
+          ? `<section id="${id}"${cls}><div class="wrap">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<p class="ed-empty">הגלריה ריקה: לחצו כאן ובחרו "הוספת תמונה".</p></div></section>`
+          : '';
+      }
       return `<section id="${id}"${cls}><div class="wrap">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<div class="gallery">${pics
         .map(
           (i) =>
@@ -553,6 +558,7 @@ const EDITOR_STYLE = `<style>
 [data-ph]:empty{min-height:1.5em;min-width:3em}[data-ph]:empty::before{content:attr(data-ph);color:#9aa3ad;font-weight:400}
 [data-biz]{cursor:pointer;border-radius:8px;outline:2px dashed transparent;outline-offset:4px}[data-biz]:hover{outline-color:rgba(224,165,38,.8)}
 [data-i]{position:relative}
+.ed-empty{border:2px dashed #b9c3c9;border-radius:18px;padding:40px 20px;text-align:center;color:#64748b;font:500 15px system-ui}
 .mark-empty{position:relative}.mark-empty:hover::after{content:"+ הוספת לוגו";position:absolute;top:calc(100% + 8px);inset-inline-start:0;white-space:nowrap;background:#18202a;color:#fff;font:600 12px/1 system-ui;padding:7px 10px;border-radius:8px;z-index:40}
 .ed-item{position:absolute;top:8px;inset-inline-end:8px;z-index:3;display:flex;gap:4px;opacity:0;pointer-events:none;transition:opacity .15s}
 [data-i]:hover>.ed-item,[data-i]:focus-within>.ed-item{opacity:1;pointer-events:auto}
