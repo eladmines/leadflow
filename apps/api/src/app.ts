@@ -29,6 +29,7 @@ import { PublishedSiteCache } from './public/cache';
 import { LocalDiskStorage, type StorageProvider } from './integrations/storage';
 import { mediaTenantRoutes } from './modules/media/routes';
 import { taskTenantRoutes } from './modules/tasks/routes';
+import { reportTenantRoutes } from './modules/reports/routes';
 import { registerMediaServing } from './modules/media/serve';
 
 declare module 'fastify' {
@@ -141,6 +142,7 @@ export async function buildApp({
       await scope.register(teamTenantRoutes);
       await scope.register(mediaTenantRoutes);
       await scope.register(taskTenantRoutes);
+      await scope.register(reportTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

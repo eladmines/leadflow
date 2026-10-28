@@ -12,6 +12,7 @@ import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { BusinessLayout } from '../features/shell/BusinessLayout';
 import { ComingSoonPage } from '../features/shell/ComingSoonPage';
+import { ReportsPage } from '../features/reports/ReportsPage';
 import { navItems } from '../features/shell/nav';
 import { LeadDetailPage } from '../features/leads/LeadDetailPage';
 import { LeadsPage } from '../features/leads/LeadsPage';
@@ -112,6 +113,7 @@ export function AppRoutes() {
         <Route path="leads" element={<LeadsPage />} />
         <Route path="leads/:leadId" element={<LeadDetailPage />} />
         <Route path="tasks" element={<TasksPage />} />
+        <Route path="reports" element={<ReportsPage />} />
         <Route path="team" element={<TeamPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route path="settings" element={<SettingsPage />} />
