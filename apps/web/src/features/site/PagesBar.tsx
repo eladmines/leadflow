@@ -7,7 +7,7 @@ import {
   type SitePage,
   type SiteSeo,
 } from '@leadflow/shared';
-import { FileText, Plus, Settings2 } from 'lucide-react';
+import { EyeOff, FileText, Plus, Settings2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button, Checkbox, DialogShell, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -51,37 +51,52 @@ export function PagesBar({
   const current = pages.find((p) => p.id === pageId);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <FileText aria-hidden className="h-4 w-4 text-ink-muted" />
-      <select
-        aria-label="העמוד שעורכים"
-        value={pageId}
-        onChange={(e) => onSelect(e.target.value)}
-        className="h-8 max-w-[14rem] rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
+    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <span className="inline-flex items-center gap-1 ps-1 text-xs font-medium text-ink-muted">
+        <FileText aria-hidden className="h-3.5 w-3.5" />
+        עמודים
+      </span>
+      <div
+        role="tablist"
+        aria-label="עמודי האתר"
+        className="flex max-w-[30rem] items-center gap-0.5 overflow-x-auto rounded-lg bg-surface-sunken p-0.5"
       >
-        <option value="">ראשי (/)</option>
-        {pages.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.title} (/{p.slug}){p.inMenu ? '' : ' · לא בתפריט'}
-          </option>
+        {[{ id: '', title: 'ראשי', inMenu: true }, ...pages].map((p) => (
+          <button
+            key={p.id || 'home'}
+            type="button"
+            role="tab"
+            aria-selected={pageId === p.id}
+            onClick={() => onSelect(p.id)}
+            title={p.inMenu ? undefined : 'לא מופיע בתפריט האתר'}
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-sm',
+              pageId === p.id
+                ? 'bg-surface font-medium text-ink shadow-card'
+                : 'text-ink-muted hover:text-ink',
+            )}
+          >
+            {p.title}
+            {!p.inMenu && <EyeOff aria-label="(לא בתפריט)" className="h-3 w-3" />}
+          </button>
         ))}
-      </select>
+      </div>
+      {editable && (
+        <button
+          type="button"
+          aria-label="עמוד חדש"
+          title={pages.length >= SITE_LIMITS.pages ? siteMessages.tooManyPages : 'עמוד חדש'}
+          disabled={pages.length >= SITE_LIMITS.pages}
+          onClick={() => setAddOpen(true)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-40"
+        >
+          <Plus aria-hidden className="h-4 w-4" />
+        </button>
+      )}
       {editable && (
         <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(true)}>
           <Settings2 aria-hidden className="h-4 w-4" />
           הגדרות העמוד
-        </Button>
-      )}
-      {editable && (
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={pages.length >= SITE_LIMITS.pages}
-          title={pages.length >= SITE_LIMITS.pages ? siteMessages.tooManyPages : undefined}
-          onClick={() => setAddOpen(true)}
-        >
-          <Plus aria-hidden className="h-4 w-4" />
-          עמוד חדש
         </Button>
       )}
 

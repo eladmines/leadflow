@@ -35,7 +35,7 @@ function Dropdown({
         aria-expanded={open}
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-surface-border bg-surface px-2.5 text-sm text-ink shadow-card hover:bg-surface-muted disabled:opacity-50"
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm text-ink hover:bg-surface-sunken disabled:opacity-50"
       >
         {icon}
         {label}
@@ -68,7 +68,7 @@ export function SectionsMenu({
   return (
     <div className="hidden items-center gap-2 lg:flex">
       <Dropdown
-        label="מקטע"
+        label="הוספת מקטע"
         icon={<Plus aria-hidden className="h-4 w-4" />}
         disabled={sections.length >= SITE_LIMITS.sections}
       >

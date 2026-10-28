@@ -803,67 +803,78 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
         )}
 
         <section aria-label="תצוגה מקדימה" className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              {editable && (
-                <SectionsMenu
-                  sections={sections}
-                  onAdd={(type) => {
-                    const added = newSection(type, newId());
-                    setSections((ss) => [...ss, added]);
-                    select(added.id);
-                  }}
-                  onShow={(id) => updateSection(id, { visible: true })}
-                />
-              )}
-              <p className="text-sm font-medium text-ink-muted">
-                {editable ? 'לחצו על טקסט או תמונה באתר כדי לשנות אותם' : 'תצוגה מקדימה'}
-              </p>
-            </div>
-            <PagesBar
-              pages={draft.pages}
-              pageId={pageId}
-              editable={editable}
-              onSelect={goToPage}
-              onAdd={addPage}
-              onUpdate={(id, patch) =>
-                setDraft((d) => ({
-                  ...d,
-                  pages: d.pages.map((p) => (p.id === id ? { ...p, ...patch } : p)),
-                }))
-              }
-              onDelete={(id) => {
-                setDraft((d) => ({ ...d, pages: d.pages.filter((p) => p.id !== id) }));
-                goToPage('');
-              }}
-              seo={seo}
-              onSeo={(next) => setSeo(next)}
-            />
+          <div className="flex flex-col gap-1.5">
+            {/* One clear editing toolbar: pages · sections · screen size (D-085). */}
             <div
               role="group"
-              aria-label="גודל מסך"
-              className="flex rounded-xl bg-surface-sunken p-1"
+              aria-label="כלי עריכה"
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-surface-border bg-surface p-1.5 shadow-card"
             >
-              {(['desktop', 'mobile'] as const).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  aria-pressed={device === d}
-                  onClick={() => setDevice(d)}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm',
-                    device === d ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
-                  )}
-                >
-                  {d === 'desktop' ? (
-                    <Monitor aria-hidden className="h-4 w-4" />
-                  ) : (
-                    <Smartphone aria-hidden className="h-4 w-4" />
-                  )}
-                  {d === 'desktop' ? 'מחשב' : 'נייד'}
-                </button>
-              ))}
+              <PagesBar
+                pages={draft.pages}
+                pageId={pageId}
+                editable={editable}
+                onSelect={goToPage}
+                onAdd={addPage}
+                onUpdate={(id, patch) =>
+                  setDraft((d) => ({
+                    ...d,
+                    pages: d.pages.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+                  }))
+                }
+                onDelete={(id) => {
+                  setDraft((d) => ({ ...d, pages: d.pages.filter((p) => p.id !== id) }));
+                  goToPage('');
+                }}
+                seo={seo}
+                onSeo={(next) => setSeo(next)}
+              />
+              {editable && (
+                <>
+                  <span aria-hidden className="hidden h-6 w-px bg-surface-border lg:block" />
+                  <SectionsMenu
+                    sections={sections}
+                    onAdd={(type) => {
+                      const added = newSection(type, newId());
+                      setSections((ss) => [...ss, added]);
+                      select(added.id);
+                    }}
+                    onShow={(id) => updateSection(id, { visible: true })}
+                  />
+                </>
+              )}
+              <div
+                role="group"
+                aria-label="גודל מסך"
+                className="ms-auto flex rounded-lg bg-surface-sunken p-0.5"
+              >
+                {(['desktop', 'mobile'] as const).map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    aria-pressed={device === d}
+                    onClick={() => setDevice(d)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm',
+                      device === d ? 'bg-surface text-ink shadow-card' : 'text-ink-muted',
+                    )}
+                  >
+                    {d === 'desktop' ? (
+                      <Monitor aria-hidden className="h-4 w-4" />
+                    ) : (
+                      <Smartphone aria-hidden className="h-4 w-4" />
+                    )}
+                    {d === 'desktop' ? 'מחשב' : 'נייד'}
+                  </button>
+                ))}
+              </div>
             </div>
+            {editable && (
+              <p className="px-1 text-xs text-ink-muted">
+                טיפ: לחצו על טקסט, תמונה או מקטע באתר כדי לערוך אותם. לחיצה על הלוגו פותחת את עיצוב
+                האתר.
+              </p>
+            )}
           </div>
           <div className="h-[70vh] min-h-[480px] lg:h-[calc(100vh-12rem)]">
             {editable ? (
