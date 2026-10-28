@@ -280,6 +280,7 @@ function Board({
 function exportParams(params: URLSearchParams) {
   const p = new URLSearchParams(params);
   p.delete('view');
+  p.delete('new');
   return p.toString();
 }
 
@@ -302,7 +303,21 @@ export function LeadsPage() {
   const stages = usePipeline(business.id);
   const members = useMembers(business.id, can(business.role, 'members.view'));
   const site = useSite(business.id);
-  const [newOpen, setNewOpen] = useState(false);
+  // `?new=1` (from quick search) opens the new-lead dialog.
+  const [newOpen, setNewOpenState] = useState(params.get('new') === '1');
+  const setNewOpen = (open: boolean) => {
+    setNewOpenState(open);
+    if (!open && params.has('new')) {
+      setParams(
+        (p) => {
+          const next = new URLSearchParams(p);
+          next.delete('new');
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  };
   const tags = useLeadTags(business.id).data ?? [];
   const filtered = Boolean(query.q || query.stageId || query.ownerId || query.source || query.tag);
 

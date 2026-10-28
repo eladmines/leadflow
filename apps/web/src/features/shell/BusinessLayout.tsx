@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { businessWebPaths } from '@leadflow/shared';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, Search, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { Navigate, Outlet, useMatch, useParams } from 'react-router-dom';
 import { Alert, Button, FullPageSpinner, Logo } from '../../components/ui';
 import { ApiError } from '../../lib/api';
@@ -11,6 +11,7 @@ import { UnverifiedEmailBanner } from '../auth/UnverifiedEmailBanner';
 import { useBusiness } from '../businesses/api';
 import { BusinessNotFound } from '../businesses/BusinessNotFound';
 import type { BusinessOutletContext } from './CurrentBusiness';
+import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { Sidebar } from './Sidebar';
 
 /**
@@ -21,6 +22,9 @@ export function BusinessLayout() {
   const { businessId = '' } = useParams();
   const business = useBusiness(businessId);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
+  useCommandPaletteShortcut(openPalette);
   // The site editor needs the full width for its live preview.
   const wide = useMatch('/b/:businessId/site') !== null;
 
@@ -58,8 +62,9 @@ export function BusinessLayout() {
       </a>
 
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-e border-surface-border bg-surface-muted lg:block">
-        <Sidebar business={b} />
+        <Sidebar business={b} onSearch={openPalette} />
       </aside>
+      <CommandPalette business={b} open={paletteOpen} onOpenChange={setPaletteOpen} />
 
       <div className="min-w-0 flex-1">
         <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
@@ -75,6 +80,14 @@ export function BusinessLayout() {
             </Dialog.Trigger>
             <Logo />
             <span className="ms-auto truncate text-sm font-medium text-ink-muted">{b.name}</span>
+            <button
+              type="button"
+              aria-label="חיפוש מהיר"
+              onClick={openPalette}
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-ink hover:bg-surface-muted"
+            >
+              <Search aria-hidden className="h-5 w-5" />
+            </button>
           </header>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm lg:hidden" />
@@ -92,7 +105,14 @@ export function BusinessLayout() {
                   <X aria-hidden className="h-5 w-5" />
                 </button>
               </Dialog.Close>
-              <Sidebar business={b} onNavigate={closeMenu} />
+              <Sidebar
+                business={b}
+                onNavigate={closeMenu}
+                onSearch={() => {
+                  closeMenu();
+                  openPalette();
+                }}
+              />
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>

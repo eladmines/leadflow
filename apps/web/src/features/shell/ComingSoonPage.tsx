@@ -7,7 +7,7 @@ export function ComingSoonPage({ item }: { item: NavItem }) {
   return (
     <>
       <PageHeader title={item.label} />
-      <section className="flex flex-col items-center gap-3 rounded-3xl border border-surface-border bg-gradient-to-b from-surface to-surface-muted px-6 py-16 text-center shadow-card">
+      <section className="flex flex-col items-center gap-3 rounded-3xl border border-surface-border bg-surface px-6 py-16 text-center shadow-card">
         <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
           <Construction aria-hidden className="h-7 w-7" />
           <span

@@ -1,15 +1,24 @@
 import { businessWebPaths, can, roleLabels, type Business } from '@leadflow/shared';
-import { LogOut } from 'lucide-react';
+import { LogOut, Search } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { Alert, Logo } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
 import { useSignOut } from '../auth/useSignOut';
 import { BusinessSwitcher } from './BusinessSwitcher';
+import { shortcutLabel } from './CommandPalette';
 import { navItems } from './nav';
 
 /** Sidebar content, shared by the desktop column and the mobile drawer. */
-export function Sidebar({ business, onNavigate }: { business: Business; onNavigate?: () => void }) {
+export function Sidebar({
+  business,
+  onNavigate,
+  onSearch,
+}: {
+  business: Business;
+  onNavigate?: () => void;
+  onSearch?: () => void;
+}) {
   const me = useMe();
   const { signOut, isPending, error } = useSignOut();
   const user = me.data?.user;
@@ -21,6 +30,22 @@ export function Sidebar({ business, onNavigate }: { business: Business; onNaviga
         <Logo />
       </div>
       <BusinessSwitcher business={business} onNavigate={onNavigate} />
+      {onSearch && (
+        <button
+          type="button"
+          onClick={onSearch}
+          className="flex h-9 items-center gap-2 rounded-lg border border-surface-border bg-surface px-2.5 text-sm text-ink-muted shadow-card hover:border-accent-300 hover:text-ink"
+        >
+          <Search aria-hidden className="h-4 w-4" />
+          <span className="flex-1 text-start">חיפוש מהיר</span>
+          <kbd
+            dir="ltr"
+            className="rounded border border-surface-border bg-surface-muted px-1.5 text-[11px] text-ink-subtle"
+          >
+            {shortcutLabel}
+          </kbd>
+        </button>
+      )}
 
       <nav aria-label="ניווט ראשי" className="flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-px">
