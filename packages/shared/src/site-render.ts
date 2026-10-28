@@ -46,6 +46,18 @@ const mapsHref = (address: string) =>
  * Plain HTML lead form (no JavaScript on customer sites). Browser-side checks via HTML attributes;
  * the server validates again. The token placeholder is replaced per page view by the public server.
  */
+/** F17: optional appointment request (confirmed by the business afterwards). */
+function appointmentFields(b: SiteBusinessInfo): string {
+  const services = b.services ?? [];
+  return `<fieldset class="slot"><legend>בקשה לתור (לא חובה)</legend>${
+    services.length
+      ? `<label>שירות<select name="serviceId"><option value="">בחירת שירות</option>${services
+          .map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`)
+          .join('')}</select></label>`
+      : ''
+  }<div class="slot-row"><label>תאריך מבוקש<input name="date" type="date"></label><label>שעה מבוקשת<input name="time" type="time" step="900"></label></div><p class="slot-note">נחזור אליכם לאישור התור.</p></fieldset>`;
+}
+
 function leadForm(s: Extract<Section, { type: 'contact' }>, b: SiteBusinessInfo): string {
   const f = s.form;
   return `<form class="lead-form" method="post" action="${LEAD_FORM_PATH}" aria-label="טופס יצירת קשר">
@@ -55,6 +67,7 @@ function leadForm(s: Extract<Section, { type: 'contact' }>, b: SiteBusinessInfo)
 <label>טלפון<input name="phone" type="tel" required inputmode="tel" dir="ltr" maxlength="20" pattern="[0-9+()\\s\\-]{9,20}" title="מספר טלפון ישראלי, לדוגמה 050-1234567" autocomplete="tel"></label>
 ${f.askEmail ? '<label>אימייל (לא חובה)<input name="email" type="email" dir="ltr" maxlength="254" autocomplete="email"></label>' : ''}
 ${f.askMessage ? '<label>איך נוכל לעזור? (לא חובה)<textarea name="message" rows="4" maxlength="1000"></textarea></label>' : ''}
+${f.askAppointment ? appointmentFields(b) : ''}
 <label class="consent"><input type="checkbox" name="consent" required> אני מאשר/ת ש${esc(b.name)} יחזרו אליי בנוגע לפנייה זו.</label>
 <button class="btn" type="submit">${esc(f.buttonLabel)}</button>
 </form>`;
@@ -442,6 +455,10 @@ details[open] summary::after{content:"−"}details p{margin:0 0 20px;color:var(-
 .lead-form label{display:flex;flex-direction:column;gap:7px;font-size:.95rem;font-weight:700}
 .lead-form input,.lead-form textarea{font:inherit;font-weight:400;padding:13px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fbfaf8;color:var(--ink);transition:border-color .15s,background .15s}
 .lead-form input:focus,.lead-form textarea:focus{outline:none;border-color:var(--p);background:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--p) 15%,transparent)}
+.lead-form select{font:inherit;font-weight:400;padding:13px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fbfaf8;color:var(--ink)}
+.slot{border:1.5px dashed var(--line);border-radius:18px;padding:14px 16px 6px;margin:0;display:flex;flex-direction:column;gap:12px}
+.slot legend{font-weight:700;font-size:.95rem;padding:0 6px}.slot-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.slot-note{margin:0 0 6px;font-size:.85rem;color:var(--muted)}
 .lead-form .consent{flex-direction:row;align-items:flex-start;gap:10px;font-weight:400;color:var(--muted);font-size:.9rem}
 .lead-form .consent input{margin-top:4px;width:18px;height:18px;accent-color:var(--p)}
 .lead-form .btn{cursor:pointer;font:inherit;font-weight:700;width:100%}

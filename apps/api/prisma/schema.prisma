@@ -46,6 +46,7 @@ model User {
   ownedLeads   Lead[]
   sentInvites  Invitation[]  @relation("InvitedBy")
   tasks        Task[]        @relation("TaskAssignee")
+  appointments Appointment[] @relation("AppointmentStaff")
 
   @@map("users")
 }
@@ -150,30 +151,32 @@ model Business {
   createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  memberships Membership[]
-  auditLogs   AuditLog[]
-  site        Site?
-  contacts    Contact[]
-  leads       Lead[]
-  stages      PipelineStage[]
-  invitations Invitation[]
-  assets      Asset[]
-  tasks       Task[]
+  memberships  Membership[]
+  auditLogs    AuditLog[]
+  site         Site?
+  contacts     Contact[]
+  leads        Lead[]
+  stages       PipelineStage[]
+  invitations  Invitation[]
+  assets       Asset[]
+  tasks        Task[]
+  services     Service[]
+  appointments Appointment[]
 
   @@map("businesses")
 }
 
 model Membership {
-  id         String           @id @default(uuid()) @db.Uuid
-  userId     String           @map("user_id") @db.Uuid
-  businessId String           @map("business_id") @db.Uuid
-  role       MembershipRole
-  status     MembershipStatus @default(ACTIVE)
-  invitedAt  DateTime?        @map("invited_at") @db.Timestamptz(3)
+  id             String           @id @default(uuid()) @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  businessId     String           @map("business_id") @db.Uuid
+  role           MembershipRole
+  status         MembershipStatus @default(ACTIVE)
+  invitedAt      DateTime?        @map("invited_at") @db.Timestamptz(3)
   /// Email on new website leads (owners/managers receive them; each can opt out).
-  notifyNewLeads Boolean      @default(true) @map("notify_new_leads")
-  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  notifyNewLeads Boolean          @default(true) @map("notify_new_leads")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -272,8 +275,9 @@ model Contact {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  leads    Lead[]
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  leads        Lead[]
+  appointments Appointment[]
 
   @@index([businessId, phone])
   @@index([businessId, email])
@@ -314,13 +318,14 @@ model Lead {
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business   Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  contact    Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  stage      PipelineStage   @relation(fields: [stageId], references: [id])
-  owner      User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  activities Activity[]
-  submission FormSubmission?
-  tasks      Task[]
+  business     Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact      Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  stage        PipelineStage   @relation(fields: [stageId], references: [id])
+  owner        User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  activities   Activity[]
+  submission   FormSubmission?
+  tasks        Task[]
+  appointments Appointment[]
 
   @@index([businessId, createdAt])
   @@index([businessId, stageId])
@@ -451,4 +456,65 @@ model Task {
   @@index([businessId, leadId])
   @@index([status, remind, reminderSentAt, dueAt])
   @@map("tasks")
+}
+
+// ---------------------------------------------------------------------------
+// F17 — Appointments
+// ---------------------------------------------------------------------------
+
+model Service {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @map("business_id") @db.Uuid
+  name        String   @db.VarChar(80)
+  durationMin Int      @map("duration_min")
+  /// Whole shekels; null = no price shown.
+  price       Int?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([businessId, active])
+  @@map("services")
+}
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
+model Appointment {
+  id          String            @id @default(uuid()) @db.Uuid
+  businessId  String            @map("business_id") @db.Uuid
+  contactId   String            @map("contact_id") @db.Uuid
+  leadId      String?           @map("lead_id") @db.Uuid
+  serviceId   String?           @map("service_id") @db.Uuid
+  /// Staff member; null only for website requests not yet assigned.
+  staffId     String?           @map("staff_id") @db.Uuid
+  startsAt    DateTime          @map("starts_at") @db.Timestamptz(3)
+  endsAt      DateTime          @map("ends_at") @db.Timestamptz(3)
+  status      AppointmentStatus @default(CONFIRMED)
+  notes       String?           @db.VarChar(1000)
+  /// 'manual' | 'website'
+  source      String            @default("manual") @db.VarChar(20)
+  createdById String?           @map("created_by_id") @db.Uuid
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  service  Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  staff    User?    @relation("AppointmentStaff", fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, startsAt])
+  @@index([businessId, staffId, startsAt])
+  @@index([businessId, status])
+  @@index([businessId, leadId])
+  @@map("appointments")
 }

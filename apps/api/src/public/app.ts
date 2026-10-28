@@ -21,6 +21,8 @@ import { createFormToken, verifyFormToken } from '../lib/form-token';
 import { loggerOptions, type LogStream } from '../lib/logger';
 import { newLeadTemplate, type EmailSender } from '../integrations/email';
 import { LeadService } from '../modules/leads/service';
+import { AppointmentService } from '../modules/appointments/service';
+import { zonedTimeToUtc } from '../lib/time';
 import { PublishedSiteCache, type PublishedPage } from './cache';
 import type { StorageProvider } from '../integrations/storage';
 import { registerMediaServing } from '../modules/media/serve';
@@ -75,6 +77,7 @@ export async function buildPublicApp({
   logStream,
 }: PublicAppDeps) {
   const leads = new LeadService(prisma);
+  const appointments = new AppointmentService(prisma);
   const app = Fastify({
     logger: loggerOptions(config, logStream),
     genReqId: () => randomUUID(),
@@ -256,6 +259,24 @@ export async function buildPublicApp({
         });
       }
 
+      // F17: a requested appointment slot, read in the business's time zone.
+      let slot: Date | null = null;
+      if (data.data.date && data.data.time) {
+        const { timezone } = await prisma.business.findUniqueOrThrow({
+          where: { id: site.businessId },
+          select: { timezone: true },
+        });
+        slot = zonedTimeToUtc(data.data.date, data.data.time, timezone);
+        const ahead = slot.getTime() - Date.now();
+        if (Number.isNaN(ahead) || ahead <= 0 || ahead > 120 * 86_400_000) {
+          return message(reply, 400, theme, business.name, {
+            title: 'כמעט — חסרים כמה פרטים',
+            text: 'יש לתקן את הפרטים הבאים ולשלוח שוב:',
+            items: [leadMessages.slotPast],
+          });
+        }
+      }
+
       const { lead, created } = await leads.createFromWebsite({
         businessId: site.businessId,
         siteId: site.id,
@@ -266,7 +287,23 @@ export async function buildPublicApp({
       });
       if (created) {
         req.log.info({ businessId: site.businessId, leadId: lead.id }, 'lead created from website');
-        void notifyTeam(site.businessId, business.name, data.data, req.log);
+        let requested: string | null = null;
+        if (slot) {
+          try {
+            await appointments.requestFromWebsite({
+              businessId: site.businessId,
+              leadId: lead.id,
+              contactId: lead.contact.id,
+              serviceId: data.data.serviceId,
+              startsAt: slot,
+            });
+            requested = `${data.data.date!.split('-').reverse().join('/')} ${data.data.time}`;
+          } catch (err) {
+            // The lead is saved either way; the request can be booked by hand from it.
+            req.log.error({ errName: (err as Error)?.name }, 'appointment request failed');
+          }
+        }
+        void notifyTeam(site.businessId, business.name, data.data, req.log, requested);
       }
       return message(reply, 200, theme, business.name, thanks);
     },
@@ -278,6 +315,7 @@ export async function buildPublicApp({
     businessName: string,
     d: z.output<typeof leadSubmissionSchema>,
     log: { error: (obj: object, msg: string) => void },
+    requested: string | null = null,
   ) {
     const team = await prisma.membership.findMany({
       where: {
@@ -293,7 +331,9 @@ export async function buildPublicApp({
       name: d.name,
       phone: formatIsraeliPhone(d.phone),
       email: d.email,
-      message: d.message,
+      message: requested
+        ? `בקשה לתור: ${requested}${d.message ? `\n\n${d.message}` : ''}`
+        : d.message,
       link: `${config.APP_URL}/b/${businessId}/leads`,
       settingsLink: `${config.APP_URL}/b/${businessId}/account`,
     });

@@ -30,7 +30,27 @@ describe('lead submission schema', () => {
       email: 'dana@x.com',
       message: null,
       consent: 'on',
+      serviceId: null,
+      date: null,
+      time: null,
     });
+  });
+
+  it('an appointment request needs both date and time (F17)', () => {
+    const base = { name: 'דנה', phone: '050-1234567', consent: 'on' };
+    const half = leadSubmissionSchema.safeParse({ ...base, date: '2030-01-06' });
+    expect(half.success).toBe(false);
+    expect(half.error?.issues[0]?.message).toMatch(/גם תאריך וגם שעה/);
+    expect(
+      leadSubmissionSchema.safeParse({ ...base, date: '2030-01-06', time: '25:00' }).success,
+    ).toBe(false);
+    const ok = leadSubmissionSchema.parse({
+      ...base,
+      date: '2030-01-06',
+      time: '09:30',
+      serviceId: 'nope',
+    });
+    expect(ok).toMatchObject({ date: '2030-01-06', time: '09:30', serviceId: null });
   });
 
   it.each([

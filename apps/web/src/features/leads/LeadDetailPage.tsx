@@ -8,6 +8,7 @@ import {
   type AddNoteRequest,
   type Lead,
   MAX_LEAD_TAGS,
+  appointmentStatusLabels,
 } from '@leadflow/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Mail, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
@@ -45,6 +46,8 @@ import { stageTone } from './LeadsPage';
 import { NewTaskForm } from '../tasks/NewTaskForm';
 import { TaskItem } from '../tasks/TaskItem';
 import { useTasks } from '../tasks/api';
+import { useAppointments } from '../appointments/api';
+import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 
 const fieldLabels: Record<string, string> = {
   expectedValue: 'ערך משוער',
@@ -52,6 +55,16 @@ const fieldLabels: Record<string, string> = {
   message: 'פרטי הפנייה',
   tags: 'תגיות',
 };
+
+const apptWhenFmt = new Intl.DateTimeFormat('he-IL', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+const apptWhen = (iso: unknown) =>
+  typeof iso === 'string' ? apptWhenFmt.format(new Date(iso)) : '';
 
 function activityText(a: Activity): string {
   const d = a.data as Record<string, unknown>;
@@ -70,6 +83,14 @@ function activityText(a: Activity): string {
       return `נוספה משימה: ${String(d.title)}${d.assignee ? ` (${String(d.assignee)})` : ''}`;
     case 'task.completed':
       return `בוצעה משימה: ${String(d.title)}`;
+    case 'appointment.created':
+      return `${d.requested ? 'התקבלה מהאתר בקשה לתור ל' : 'נקבע תור ל'}${apptWhen(d.startsAt)}${
+        d.service ? ` (${String(d.service)})` : ''
+      }`;
+    case 'appointment.updated':
+      return `התור עודכן: ${apptWhen(d.startsAt)} · ${
+        appointmentStatusLabels[d.status as keyof typeof appointmentStatusLabels] ?? ''
+      }`;
   }
 }
 
@@ -408,10 +429,49 @@ export function LeadDetailPage() {
         <div className="flex flex-col gap-6 lg:order-first">
           <Details key={lead.updatedAt} lead={lead} />
           <LeadTasks leadId={lead.id} />
+          <LeadAppointments lead={lead} />
         </div>
       </div>
       {can(business.role, 'leads.delete') && <DeleteLead lead={lead} />}
     </>
+  );
+}
+
+/** Appointments of this lead (last month to two months ahead) and a "book" button. */
+function LeadAppointments({ lead }: { lead: Lead }) {
+  const business = useCurrentBusiness();
+  const [open, setOpen] = useState(false);
+  const now = Date.now();
+  const appts = useAppointments(business.id, {
+    from: new Date(now - 30 * 86_400_000).toISOString(),
+    to: new Date(now + 31 * 86_400_000).toISOString(),
+    leadId: lead.id,
+  });
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-ink">תורים</h2>
+        <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
+          קביעת תור
+        </Button>
+      </div>
+      {appts.data && appts.data.length > 0 ? (
+        <ul className="flex flex-col gap-1.5">
+          {appts.data.map((a) => (
+            <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
+              <span className="text-ink">
+                {apptWhen(a.startsAt)}
+                {a.service && <span className="text-ink-muted"> · {a.service.name}</span>}
+              </span>
+              <span className="text-xs text-ink-muted">{appointmentStatusLabels[a.status]}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-ink-muted">אין תורים קרובים.</p>
+      )}
+      <NewAppointmentDialog open={open} onOpenChange={setOpen} lead={lead} />
+    </Card>
   );
 }
 

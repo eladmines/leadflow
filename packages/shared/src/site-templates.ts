@@ -15,6 +15,8 @@ export interface SiteBusinessInfo {
   address: string | null;
   serviceAreas: string[];
   openingHours: Record<string, { open: boolean; from: string; to: string }> | null;
+  /** Active services, offered in the appointment request (F17). */
+  services?: { id: string; name: string }[];
 }
 
 export interface SiteDraft {
@@ -113,7 +115,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
           showPhone: true,
           showAddress: true,
           showHours: true,
-          form: { ...DEFAULT_CONTACT_FORM },
+          form: { ...DEFAULT_CONTACT_FORM, askAppointment: true },
         },
       ],
     };
@@ -221,7 +223,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
           showPhone: true,
           showAddress: true,
           showHours: true,
-          form: { ...DEFAULT_CONTACT_FORM },
+          form: { ...DEFAULT_CONTACT_FORM, askAppointment: true },
         },
       ],
     };
@@ -309,7 +311,7 @@ export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo
           showPhone: true,
           showAddress: true,
           showHours: true,
-          form: { ...DEFAULT_CONTACT_FORM },
+          form: { ...DEFAULT_CONTACT_FORM, askAppointment: true },
         },
       ],
     };
