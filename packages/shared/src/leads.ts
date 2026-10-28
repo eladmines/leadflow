@@ -237,6 +237,10 @@ export const ACTIVITY_TYPES = [
   'task.completed',
   'appointment.created',
   'appointment.updated',
+  'quote.created',
+  'quote.sent',
+  'quote.accepted',
+  'quote.rejected',
 ] as const;
 
 export const activitySchema = z.object({

@@ -208,3 +208,51 @@ ${button(params.resetLink, 'איפוס סיסמה')}`,
   ].join('\n');
   return { subject, html, text };
 }
+
+/** F18: a quote sent to the customer (transactional, sent on the business's request). */
+export function quoteTemplate(params: {
+  businessName: string;
+  customerName: string;
+  number: number;
+  total: string;
+  validUntil: string | null;
+  link: string;
+}): RenderedEmail {
+  const subject = `הצעת מחיר מס׳ ${params.number} מ${params.businessName}`;
+  const html = layout(
+    subject,
+    `<h1 style="font-size:20px;margin:0 0 16px;">שלום ${escapeHtml(params.customerName)},</h1>
+<p style="margin:0 0 8px;">${escapeHtml(params.businessName)} שלחו לך הצעת מחיר על סך <strong>${escapeHtml(params.total)}</strong>.</p>
+${params.validUntil ? `<p style="margin:0 0 8px;color:#6b7280;">ההצעה בתוקף עד ${escapeHtml(params.validUntil)}.</p>` : ''}
+${button(params.link, 'לצפייה בהצעה ולאישור')}`,
+  );
+  const text = [
+    `שלום ${params.customerName},`,
+    `${params.businessName} שלחו לך הצעת מחיר על סך ${params.total}.`,
+    ...(params.validUntil ? [`ההצעה בתוקף עד ${params.validUntil}.`] : []),
+    '',
+    `לצפייה בהצעה ולאישור: ${params.link}`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
+/** F18: the customer accepted or rejected a quote (to owners and managers). */
+export function quoteDecisionTemplate(params: {
+  businessName: string;
+  customerName: string;
+  number: number;
+  accepted: boolean;
+  total: string;
+  link: string;
+}): RenderedEmail {
+  const verb = params.accepted ? 'אישר/ה' : 'דחה/תה';
+  const subject = `${params.customerName} ${verb} את הצעת המחיר מס׳ ${params.number}`;
+  const html = layout(
+    subject,
+    `<h1 style="font-size:20px;margin:0 0 16px;">${escapeHtml(subject)}</h1>
+<p style="margin:0 0 8px;">סכום ההצעה: ${escapeHtml(params.total)}</p>
+${button(params.link, 'לפתיחת ההצעה')}`,
+  );
+  const text = [subject, `סכום ההצעה: ${params.total}`, '', params.link].join('\n');
+  return { subject, html, text };
+}
