@@ -45,6 +45,7 @@ export function EditablePreview({
   onItem,
   onSettings,
   onBusiness,
+  onNavigate,
 }: {
   html: string;
   device: 'desktop' | 'mobile';
@@ -62,6 +63,8 @@ export function EditablePreview({
   onSettings: (id: string) => void;
   /** Phone, address, hours or areas were clicked: they live in the business profile (D-075). */
   onBusiness: () => void;
+  /** A link to another page of the site was clicked (`/about`, `/`): open it (D-081). */
+  onNavigate: (slug: string) => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const scrollY = useRef(0);
@@ -77,8 +80,8 @@ export function EditablePreview({
   const editing = useRef<{ el: HTMLElement; id: string; path: string; multi: boolean } | null>(
     null,
   );
-  const handlers = useRef({ onSelect, onText, onImage, onItem, onBusiness, sections });
-  handlers.current = { onSelect, onText, onImage, onItem, onBusiness, sections };
+  const handlers = useRef({ onSelect, onText, onImage, onItem, onBusiness, onNavigate, sections });
+  handlers.current = { onSelect, onText, onImage, onItem, onBusiness, onNavigate, sections };
   /** A field to start typing in after the next reload (a just-added list item). */
   const pendingFocus = useRef<string | null>(null);
 
@@ -154,6 +157,11 @@ export function EditablePreview({
           if (s && 'items' in s) pendingFocus.current = `${id}:items.${s.items.length}.`;
         }
         return handlers.current.onItem(id, action, n === undefined ? -1 : Number(n));
+      }
+      const link = element(e.target)?.closest('a[href^="/"]');
+      if (link && !element(e.target)?.closest('[data-edit],[data-img]')) {
+        const path = (link.getAttribute('href') ?? '/').split('#')[0]!;
+        return handlers.current.onNavigate(path.replace(/^\/|\/$/g, ''));
       }
       const img = field('data-img', e.target);
       if (img) return handlers.current.onImage(img.id, img.path);

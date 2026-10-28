@@ -255,6 +255,12 @@ describe('pages (D-081)', () => {
     });
     expect(clash.success).toBe(false);
     expect(newPage('about', 'p3', id, ['about']).slug).toBe('about-2');
+    // New pages start from the home page's content, with fresh ids.
+    const home = buildTemplateDraft('beauty', business).sections;
+    const services = newPage('services', 'p4', id, [], home);
+    const copied = services.sections.find((x) => x.type === 'services');
+    expect(copied?.type === 'services' && copied.items[0]?.name).toBe('תספורת ועיצוב');
+    expect(copied?.id).not.toBe('services');
   });
 
   it('renders the page menu, the current page, and links to the home contact form', () => {

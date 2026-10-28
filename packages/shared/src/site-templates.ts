@@ -689,12 +689,16 @@ export const PAGE_PRESETS = {
 >;
 export type PagePresetKey = keyof typeof PAGE_PRESETS;
 
-/** A new page from a preset; `newId` gives site-unique ids (forms post by section id). */
+/**
+ * A new page from a preset; `newId` gives site-unique ids (forms post by section id). Sections
+ * the home page already has (about text, services, prices…) start as copies of it.
+ */
 export function newPage(
   preset: PagePresetKey,
   id: string,
   newId: () => string,
   taken: string[] = [],
+  home: Section[] = [],
 ): SitePage {
   const p = PAGE_PRESETS[preset];
   let slug: string = p.slug;
@@ -705,6 +709,11 @@ export function newPage(
     title: p.label,
     inMenu: p.inMenu,
     seo: { title: '', description: '' },
-    sections: p.sections.map((type) => newSection(type, newId())),
+    sections: p.sections.map((type) => {
+      const source = type === 'hero' ? undefined : home.find((s) => s.type === type);
+      return source
+        ? ({ ...structuredClone(source), id: newId(), visible: true } as Section)
+        : newSection(type, newId());
+    }),
   };
 }

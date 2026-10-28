@@ -49,6 +49,7 @@ const liveSite: Site = {
     publishedAt: new Date().toISOString(),
   },
   ...buildTemplateDraft('beauty', siteBusinessInfo(testBusiness)),
+  pages: [],
   revision: 0,
   status: 'PUBLISHED',
   updatedAt: new Date().toISOString(),

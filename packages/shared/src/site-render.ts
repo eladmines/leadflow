@@ -388,7 +388,7 @@ a{color:var(--p)}
 .menu{display:flex;gap:4px;list-style:none;margin:0;padding:0}
 .menu a{display:block;padding:8px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:.95rem;font-weight:500}
 .mmenu{display:none;position:relative}.mmenu summary{list-style:none;cursor:pointer;display:flex;width:42px;height:42px;align-items:center;justify-content:center;border-radius:12px;border:1px solid var(--line)}
-.mmenu summary::-webkit-details-marker{display:none}
+.mmenu summary::-webkit-details-marker{display:none}.mmenu summary::after{display:none}
 .mmenu ul{position:absolute;inset-inline-end:0;top:calc(100% + 8px);list-style:none;margin:0;padding:8px;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);z-index:30}
 .mmenu a{display:block;padding:10px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:500}.mmenu a[aria-current=page]{background:var(--soft);color:var(--p)}
 .menu a[aria-current=page]{color:var(--p);background:var(--soft)}
