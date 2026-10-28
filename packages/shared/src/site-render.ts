@@ -615,22 +615,27 @@ export function renderSitePage(
   const menuPages = pages.filter((p) => p.inMenu);
   const pageLink = (href: string, label: string, current: boolean) =>
     `<li><a href="${href}"${current ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`;
+  // The home page's sections stay in the menu, and pages are added after them; a section with
+  // the same name as a page ("אודות") gives way to the page (D-086).
+  const pageTitles = new Set(menuPages.map((p) => p.title));
   const seen = new Set<string>();
-  const menu = menuPages.length
-    ? [
-        pageLink('/', 'ראשי', !page),
-        ...menuPages.map((p) => pageLink(`/${esc(p.slug)}`, p.title, p.slug === page?.slug)),
-      ]
-        .slice(0, 8)
-        .join('')
-    : visible
-        .filter((s) => NAV_LABELS[s.type] && !seen.has(s.type) && seen.add(s.type))
-        .filter((s) => s.type !== 'gallery' || s.items.some((i) => media[i.assetId]))
-        .slice(0, 6)
-        .map(
-          (s) => `<li><a href="#s-${esc(s.id)}">${et(ctx, s.id, 'navLabel', navLabel(s))}</a></li>`,
-        )
-        .join('');
+  const sectionLinks = draft.sections
+    .filter((s) => s.visible)
+    .filter((s) => NAV_LABELS[s.type] && !seen.has(s.type) && seen.add(s.type))
+    .filter((s) => s.type !== 'gallery' || s.items.some((i) => media[i.assetId]))
+    .filter((s) => !pageTitles.has(navLabel(s)))
+    .map((s) =>
+      page
+        ? `<li><a href="/#s-${esc(s.id)}">${esc(navLabel(s))}</a></li>`
+        : `<li><a href="#s-${esc(s.id)}">${et(ctx, s.id, 'navLabel', navLabel(s))}</a></li>`,
+    );
+  const menu = [
+    ...(page ? [pageLink('/', 'ראשי', false)] : []),
+    ...sectionLinks,
+    ...menuPages.map((p) => pageLink(`/${esc(p.slug)}`, p.title, p.slug === page?.slug)),
+  ]
+    .slice(0, 8)
+    .join('');
 
   // Alternate soft backgrounds between content sections (hero and CTA have their own look).
   let n = 0;
