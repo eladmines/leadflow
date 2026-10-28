@@ -211,7 +211,9 @@ function Board({
   return (
     <>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+      {/* relative: the cards' sr-only labels are positioned inside the scroller (and clipped by
+          it), so off-screen columns can't widen the page. */}
+      <div className="relative -mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
         <ol aria-label="לוח לידים" className="flex min-w-max gap-4">
           {stages.map((stage) => {
             const items = leads.filter((l) => l.stage.id === stage.id);
@@ -278,6 +280,7 @@ function Board({
 function exportParams(params: URLSearchParams) {
   const p = new URLSearchParams(params);
   p.delete('view');
+  p.delete('new');
   return p.toString();
 }
 
@@ -300,7 +303,21 @@ export function LeadsPage() {
   const stages = usePipeline(business.id);
   const members = useMembers(business.id, can(business.role, 'members.view'));
   const site = useSite(business.id);
-  const [newOpen, setNewOpen] = useState(false);
+  // `?new=1` (from quick search) opens the new-lead dialog.
+  const [newOpen, setNewOpenState] = useState(params.get('new') === '1');
+  const setNewOpen = (open: boolean) => {
+    setNewOpenState(open);
+    if (!open && params.has('new')) {
+      setParams(
+        (p) => {
+          const next = new URLSearchParams(p);
+          next.delete('new');
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  };
   const tags = useLeadTags(business.id).data ?? [];
   const filtered = Boolean(query.q || query.stageId || query.ownerId || query.source || query.tag);
 
@@ -326,7 +343,10 @@ export function LeadsPage() {
     () => LEAD_SOURCES.map((s) => ({ value: s, label: leadSourceLabels[s] })),
     [],
   );
-  const selectClass = cn(inputClasses(false), 'h-10 w-auto min-w-36 cursor-pointer');
+  const selectClass = cn(
+    inputClasses(false).replace('w-full', 'w-auto'),
+    'min-w-36 cursor-pointer',
+  );
 
   return (
     <>

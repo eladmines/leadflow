@@ -4,7 +4,7 @@
 
 @layer base {
   html {
-    @apply bg-surface-muted text-ink antialiased;
+    @apply bg-surface text-ink antialiased;
   }
   body {
     @apply min-h-screen font-sans;

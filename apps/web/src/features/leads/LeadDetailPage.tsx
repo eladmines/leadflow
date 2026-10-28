@@ -356,7 +356,7 @@ export function LeadDetailPage() {
         <ArrowRight aria-hidden className="h-4 w-4" />
         כל הלידים
       </Link>
-      <section className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-surface-border bg-gradient-to-br from-accent-50 via-surface to-brand-50 p-6 shadow-card">
+      <section className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-surface-border bg-surface p-6 shadow-card">
         <div className="flex items-center gap-4">
           <span
             aria-hidden

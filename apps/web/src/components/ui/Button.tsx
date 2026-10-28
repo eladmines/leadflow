@@ -7,24 +7,24 @@ type Size = 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand-600 text-white shadow-sm shadow-brand-900/10 hover:bg-brand-700 active:bg-brand-800 disabled:bg-brand-300 disabled:shadow-none',
+    'bg-brand-600 text-white shadow-sm shadow-ink/10 hover:bg-brand-700 active:bg-brand-800 disabled:bg-brand-300 disabled:shadow-none',
   secondary:
-    'bg-surface text-ink border border-surface-border hover:border-brand-200 hover:bg-brand-50/50 disabled:text-ink-subtle',
+    'bg-surface text-ink border border-surface-border shadow-card hover:bg-surface-muted hover:border-accent-300 disabled:text-ink-subtle',
   ghost:
     'bg-transparent text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:text-ink-subtle',
   danger: 'bg-danger-600 text-white hover:bg-danger-700 disabled:opacity-60',
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-9 px-3.5 text-sm',
-  md: 'h-11 px-5 text-sm',
-  lg: 'h-12 px-6 text-base',
+  sm: 'h-8 px-3 text-[13px]',
+  md: 'h-9 px-3.5 text-sm',
+  lg: 'h-11 px-5 text-[15px]',
 };
 
 /** Button look for elements that aren't buttons (e.g. a router Link that acts as a CTA). */
 export function buttonClasses(variant: Variant = 'primary', size: Size = 'md', className?: string) {
   return cn(
-    'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors disabled:cursor-not-allowed',
+    'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:cursor-not-allowed',
     variants[variant],
     sizes[size],
     className,

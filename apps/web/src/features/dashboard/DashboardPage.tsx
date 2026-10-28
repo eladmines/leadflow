@@ -215,11 +215,7 @@ export function DashboardPage() {
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-3xl border border-surface-border bg-gradient-to-br from-accent-50 via-surface to-brand-50 p-6 shadow-card sm:p-8">
-        <div
-          aria-hidden
-          className="absolute -end-16 -top-16 h-48 w-48 rounded-full bg-accent-200/40 blur-2xl"
-        />
+      <section className="relative overflow-hidden rounded-3xl border border-surface-border bg-surface p-6 shadow-card sm:p-8">
         <div className="relative flex flex-wrap items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-accent-700">
