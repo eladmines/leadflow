@@ -29,7 +29,6 @@ import {
   Loader2,
   Monitor,
   Plus,
-  SlidersHorizontal,
   Smartphone,
   X,
 } from 'lucide-react';
@@ -46,6 +45,7 @@ import { setSectionField } from './fieldPath';
 import { onAllPages, onPage, sectionsOf, type PageId } from './pages';
 import { PagesBar } from './PagesBar';
 import { CustomColors } from './CustomColors';
+import { SectionsMenu } from './SectionsMenu';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import {
   buttonStyleOptions,
@@ -560,7 +560,8 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
       />
 
       <div className={cn('grid gap-5', panelOpen && 'lg:grid-cols-[340px_minmax(0,1fr)]')}>
-        {editable && (
+        {/* Phones edit through this panel; on a computer everything is on the page (D-084). */}
+        {editable && (!isDesktop || panelOpen) && (
           <aside
             aria-label="הגדרות האתר"
             className={cn(
@@ -805,20 +806,15 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               {editable && (
-                <Button
-                  variant={panelOpen ? 'secondary' : 'primary'}
-                  size="sm"
-                  className="hidden lg:inline-flex"
-                  aria-expanded={panelOpen}
-                  onClick={() => {
-                    // Always opens on the overview (sections, design, Google), not a section.
-                    setSelected(null);
-                    setPanelOpen((o) => !o);
+                <SectionsMenu
+                  sections={sections}
+                  onAdd={(type) => {
+                    const added = newSection(type, newId());
+                    setSections((ss) => [...ss, added]);
+                    select(added.id);
                   }}
-                >
-                  <SlidersHorizontal aria-hidden className="h-4 w-4" />
-                  {panelOpen ? 'סגירת ההגדרות' : 'מקטעים, עיצוב וגוגל'}
-                </Button>
+                  onShow={(id) => updateSection(id, { visible: true })}
+                />
               )}
               <p className="text-sm font-medium text-ink-muted">
                 {editable ? 'לחצו על טקסט או תמונה באתר כדי לשנות אותם' : 'תצוגה מקדימה'}
@@ -840,6 +836,8 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 setDraft((d) => ({ ...d, pages: d.pages.filter((p) => p.id !== id) }));
                 goToPage('');
               }}
+              seo={seo}
+              onSeo={(next) => setSeo(next)}
             />
             <div
               role="group"

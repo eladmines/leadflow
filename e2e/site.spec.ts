@@ -65,16 +65,22 @@ test('owner builds the site: template → edit → autosave → reload', async (
   await expect(page.getByText('כל השינויים נשמרו')).toBeVisible({ timeout: 10_000 });
   await expect(preview(page).getByRole('heading', { level: 1 })).toHaveText('שירן — עיצוב שיער');
 
-  if (isMobile) await page.getByRole('button', { name: 'כל המקטעים' }).click();
-  else await page.getByRole('button', { name: 'מקטעים, עיצוב וגוגל' }).click();
   saved = nextSave(page);
-  await page.getByRole('button', { name: 'הסתרת המלצות' }).click();
+  if (isMobile) {
+    await page.getByRole('button', { name: 'כל המקטעים' }).click();
+    await page.getByRole('button', { name: 'הסתרת המלצות' }).click();
+  } else {
+    await preview(page).locator('#s-testimonials').hover();
+    await page.getByRole('toolbar').getByRole('button', { name: 'הסתרת המלצות' }).click();
+  }
   await saved;
 
   await page.reload();
   await expect(preview(page).getByRole('heading', { level: 1 })).toHaveText('שירן — עיצוב שיער');
   await expect(preview(page).getByText('מה הלקוחות מספרים')).toHaveCount(0);
-  if (!isMobile) await page.getByRole('button', { name: 'מקטעים, עיצוב וגוגל' }).click();
+  // Hidden sections can be shown again (desktop: the "מוסתרים" menu above the preview).
+  // (The template's FAQ starts hidden too.)
+  if (!isMobile) await page.getByRole('button', { name: 'מוסתרים (2)' }).click();
   await expect(page.getByRole('button', { name: 'הצגת המלצות' })).toBeVisible();
 
   if (isMobile) {
