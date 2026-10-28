@@ -24,6 +24,8 @@ export function testConfig(overrides: Partial<Record<string, string>> = {}): App
     AUTH_RATE_LIMIT_MAX: '10000',
     // Uploaded images go to a throwaway folder, never the dev media folder.
     MEDIA_DIR: path.join(os.tmpdir(), `leadflow-test-media-${process.pid}`),
+    // Copying sample photos into every new site would slow the suite; a dedicated test enables it.
+    SITE_STOCK_IMAGES: 'false',
     ...overrides,
   });
 }

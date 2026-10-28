@@ -136,10 +136,10 @@ function hero(s: Extract<Section, { type: 'hero' }>, id: string, c: Ctx): string
       : '',
   ].filter(Boolean);
   // Short form for the badge: "בעלי מקצוע (חשמל, ...)" → "בעלי מקצוע".
-  const industry = (industryLabels as Record<string, string>)[b.industry]?.replace(
-    /\s*\(.*\)\s*$/,
-    '',
-  );
+  const industry =
+    b.industry === 'other'
+      ? undefined
+      : (industryLabels as Record<string, string>)[b.industry]?.replace(/\s*\(.*\)\s*$/, '');
   const bg = s.imageAssetId ? c.media[s.imageAssetId] : undefined;
 
   const text = `<div class="hero-text">${industry ? `<span class="eyebrow">${esc(industry)}</span>` : ''}
@@ -373,7 +373,7 @@ details[open] summary::after{content:"−"}details p{margin:0 0 20px;color:var(-
 .about-grid{display:grid;gap:56px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:center}
 .about-text p,.about-body p{color:#3a4450;font-size:1.08rem}
 .about-media{position:relative}.about-media::after{content:"";position:absolute;inset:18px -18px -18px 18px;border-radius:28px;background:var(--soft);z-index:-1}
-.about-img{width:100%;height:auto;border-radius:28px;object-fit:cover;display:block;box-shadow:var(--sh)}
+.about-img{width:100%;height:auto;aspect-ratio:4/3;border-radius:28px;object-fit:cover;display:block;box-shadow:var(--sh)}
 .about-solo .head{text-align:center;margin-inline:auto}.about-body{border-inline-start:4px solid var(--a);padding-inline-start:24px}
 .gallery{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
 .gallery figure{margin:0;overflow:hidden;border-radius:20px;background:#fff;box-shadow:var(--sh)}

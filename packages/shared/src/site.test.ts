@@ -5,11 +5,18 @@ import {
   saveDraftRequestSchema,
   sectionSchema,
   SECTION_TYPES,
+  TEMPLATE_KEYS,
   templateForIndustry,
   type Section,
 } from './site';
 import { hoursSummary, renderSitePage } from './site-render';
-import { buildTemplateDraft, newSection, type SiteBusinessInfo } from './site-templates';
+import {
+  buildTemplateDraft,
+  newSection,
+  STOCK_PHOTOS,
+  templatePreview,
+  type SiteBusinessInfo,
+} from './site-templates';
 
 const business: SiteBusinessInfo = {
   name: 'מספרת שירן',
@@ -21,7 +28,7 @@ const business: SiteBusinessInfo = {
 };
 
 describe('templates', () => {
-  it.each(['beauty', 'trades'] as const)('%s draft is valid against the save schema', (key) => {
+  it.each(TEMPLATE_KEYS)('%s draft is valid against the save schema', (key) => {
     const draft = buildTemplateDraft(key, business);
     const parsed = saveDraftRequestSchema.safeParse({ revision: 0, ...draft });
     expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
@@ -37,7 +44,20 @@ describe('templates', () => {
   it('suggests a template from the industry', () => {
     expect(templateForIndustry('beauty')).toBe('beauty');
     expect(templateForIndustry('studio')).toBe('beauty');
-    expect(templateForIndustry('garage')).toBe('trades');
+    expect(templateForIndustry('garage')).toBe('garage');
+    expect(templateForIndustry('trades')).toBe('trades');
+    expect(templateForIndustry('other')).toBe('trades');
+  });
+
+  it.each(TEMPLATE_KEYS)('%s preview carries its sample photos on hero and about', (key) => {
+    const { draft, media } = templatePreview(key, business);
+    const hero = draft.sections.find((s) => s.type === 'hero');
+    const about = draft.sections.find((s) => s.type === 'about');
+    expect(hero?.type === 'hero' && media[hero.imageAssetId!]?.url).toBe(
+      `/media/stock/${STOCK_PHOTOS[key].hero.file}`,
+    );
+    expect(about?.type === 'about' && about.imageAlt).toBe(STOCK_PHOTOS[key].about.alt);
+    expect(renderSitePage(draft, business, media)).toContain('class="hero has-img"');
   });
 });
 

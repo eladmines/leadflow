@@ -76,6 +76,10 @@ const envSchema = z
       .int()
       .positive()
       .default(200 * 1024 * 1024),
+    /** New sites start with the template's sample photos (D-069). Tests turn it off. */
+    SITE_STOCK_IMAGES: booleanString.default('true'),
+    /** Folder with the bundled sample photos (relative to the API's working directory). */
+    SITE_STOCK_DIR: z.string().min(1).default('assets/stock'),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'production') return;

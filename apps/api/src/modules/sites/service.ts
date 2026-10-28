@@ -1,7 +1,11 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { Prisma, type PrismaClient, type Site as SiteRow, type SiteVersion } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   buildTemplateDraft,
+  STOCK_PHOTOS,
+  withTemplatePhotos,
   openingHoursSchema,
   referencedAssetIds,
   renderSitePage,
@@ -21,7 +25,7 @@ import type { AppConfig } from '../../config/env';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
-import { assertOwnAssets, mediaMapFor } from '../media/service';
+import { assertOwnAssets, mediaMapFor, type MediaService } from '../media/service';
 import type { PublishedSiteCache } from '../../public/cache';
 
 const storedSections = z.array(sectionSchema);
@@ -65,7 +69,27 @@ export class SiteService {
     private readonly config: AppConfig,
     private readonly log: FastifyBaseLogger,
     private readonly cache: PublishedSiteCache,
+    private readonly media?: MediaService,
   ) {}
+
+  /**
+   * Copies the template's sample photos into the business's media library (D-069), so the owner
+   * can replace or delete them like any upload. Best effort: a new site never fails over photos.
+   */
+  private async importStockPhotos(ctx: TenantContext, templateKey: TemplateKey) {
+    if (!this.media || !this.config.SITE_STOCK_IMAGES) return {};
+    const ids: { hero?: string; about?: string } = {};
+    for (const slot of ['hero', 'about'] as const) {
+      const photo = STOCK_PHOTOS[templateKey][slot];
+      try {
+        const file = await readFile(path.resolve(this.config.SITE_STOCK_DIR, photo.file));
+        ids[slot] = (await this.media.upload(ctx, file, `תמונה לדוגמה (${photo.file})`)).id;
+      } catch (err) {
+        this.log.warn({ errName: (err as Error)?.name, file: photo.file }, 'stock photo skipped');
+      }
+    }
+    return ids;
+  }
 
   private dto(row: SiteWithLive) {
     return toSiteDto(row, this.config);
@@ -93,7 +117,10 @@ export class SiteService {
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
     });
-    const draft = buildTemplateDraft(templateKey, {
+    if (await this.prisma.site.findUnique({ where: { businessId: ctx.businessId } })) {
+      throw new AppError('CONFLICT', siteMessages.siteExists);
+    }
+    const base = buildTemplateDraft(templateKey, {
       name: business.name,
       industry: business.industry,
       phone: business.phone,
@@ -101,6 +128,7 @@ export class SiteService {
       serviceAreas: business.serviceAreas,
       openingHours: null,
     });
+    const draft = withTemplatePhotos(base, await this.importStockPhotos(ctx, templateKey));
     try {
       const row = await this.prisma.$transaction(async (tx) => {
         const created = await tx.site.create({

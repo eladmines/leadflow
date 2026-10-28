@@ -9,6 +9,7 @@ import {
   siteVersionListResponseSchema,
 } from '@leadflow/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
+import { MediaService } from '../media/service';
 import { SiteService } from './service';
 
 const params = z.object({ businessId: z.string() });
@@ -16,7 +17,13 @@ const versionParams = z.object({ businessId: z.string(), versionId: z.string() }
 
 /** F04/F06 site routes; registered inside the tenant scope. */
 export const siteTenantRoutes: FastifyPluginAsyncZod = async (app) => {
-  const service = new SiteService(app.prisma, app.config, app.log, app.siteCache);
+  const service = new SiteService(
+    app.prisma,
+    app.config,
+    app.log,
+    app.siteCache,
+    new MediaService(app.prisma, app.storage, app.config),
+  );
   const ok = { 200: siteResponseSchema };
 
   app.get(

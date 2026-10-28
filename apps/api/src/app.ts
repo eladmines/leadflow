@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import path from 'node:path';
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -129,7 +130,7 @@ export async function buildApp({
   app.decorate('email', email);
 
   await app.register(healthRoutes);
-  registerMediaServing(app, app.storage);
+  registerMediaServing(app, app.storage, path.resolve(config.SITE_STOCK_DIR));
   await app.register(authRoutes, { email });
   await app.register(businessRoutes);
   await app.register(teamRoutes);

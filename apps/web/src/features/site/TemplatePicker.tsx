@@ -1,9 +1,9 @@
 import {
-  buildTemplateDraft,
   renderSitePage,
   TEMPLATE_KEYS,
   templateForIndustry,
   templateInfo,
+  templatePreview,
   type TemplateKey,
 } from '@leadflow/shared';
 import { useMemo, useState } from 'react';
@@ -25,7 +25,11 @@ export function TemplatePicker() {
   const previews = useMemo(
     () =>
       Object.fromEntries(
-        TEMPLATE_KEYS.map((k) => [k, renderSitePage(buildTemplateDraft(k, info), info)]),
+        TEMPLATE_KEYS.map((k) => {
+          // Shown with the sample photos the new site will start with (D-069).
+          const { draft, media } = templatePreview(k, info);
+          return [k, renderSitePage(draft, info, media)];
+        }),
       ) as Record<TemplateKey, string>,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [business.id],
@@ -40,10 +44,10 @@ export function TemplatePicker() {
     <>
       <PageHeader
         title="בואו נבנה את האתר שלך"
-        description="בחרו תבנית. נמלא אותה מראש בפרטי העסק, ואחר כך תוכלו לשנות כל טקסט, צבע וסדר מקטעים."
+        description="בחרו תבנית. נמלא אותה מראש בפרטי העסק ובתמונות לדוגמה, ואחר כך תוכלו לשנות כל טקסט, תמונה, צבע וסדר מקטעים."
       />
       {create.isError && <Alert tone="danger">{errorMessage(create.error)}</Alert>}
-      <ul className="grid gap-6 md:grid-cols-2">
+      <ul className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {[suggested, ...TEMPLATE_KEYS.filter((k) => k !== suggested)].map((key) => (
           <li key={key}>
             <article

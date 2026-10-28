@@ -271,8 +271,8 @@ export type SiteSeo = z.infer<typeof seoSchema>;
 // Templates
 // ---------------------------------------------------------------------------
 
-/** First templates (D-031 / O-002): beauty and trades. Other industries start from the closest. */
-export const TEMPLATE_KEYS = ['beauty', 'trades'] as const;
+/** Templates (D-031 / O-002, D-069). Other industries start from the closest one. */
+export const TEMPLATE_KEYS = ['beauty', 'trades', 'garage', 'clinic', 'food'] as const;
 export const templateKeySchema = z.enum(TEMPLATE_KEYS);
 export type TemplateKey = z.infer<typeof templateKeySchema>;
 
@@ -283,13 +283,28 @@ export const templateInfo: Record<TemplateKey, { label: string; description: str
   },
   trades: {
     label: 'בעלי מקצוע ושירות',
-    description: 'לחשמלאים, אינסטלטורים, שיפוצים ומוסכים: שירותים, אזורי שירות ו"התקשרו עכשיו".',
+    description: 'לחשמלאים, אינסטלטורים ושיפוצים: שירותים, אזורי שירות ו"התקשרו עכשיו".',
+  },
+  garage: {
+    label: 'מוסכים ורכב',
+    description: 'למוסכים, פחחות וחשמלאי רכב: שירותים, הכנה לטסט, שעות פתיחה וקביעת טיפול.',
+  },
+  clinic: {
+    label: 'קליניקה ומטפלים',
+    description:
+      'לפיזיותרפיה, טיפול רגשי, דיאטנים ורפואה משלימה: תהליך טיפול, שאלות נפוצות ופגישה.',
+  },
+  food: {
+    label: 'מסעדה ובית קפה',
+    description: 'למסעדות, בתי קפה וקייטרינג: מהתפריט, שעות פתיחה, הזמנת שולחן ואירועים.',
   },
 };
 
 /** Suggested template for an industry (owners can pick either). */
 export function templateForIndustry(industry: string): TemplateKey {
-  return industry === 'beauty' || industry === 'studio' ? 'beauty' : 'trades';
+  if (industry === 'beauty' || industry === 'studio') return 'beauty';
+  if (industry === 'garage') return 'garage';
+  return 'trades';
 }
 
 // ---------------------------------------------------------------------------
