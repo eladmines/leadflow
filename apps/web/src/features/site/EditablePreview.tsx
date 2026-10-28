@@ -44,6 +44,7 @@ export function EditablePreview({
   onImage,
   onItem,
   onSettings,
+  onBusiness,
 }: {
   html: string;
   device: 'desktop' | 'mobile';
@@ -59,6 +60,8 @@ export function EditablePreview({
   onItem: (id: string, action: 'add' | 'up' | 'down' | 'del', index: number) => void;
   /** Opens the section's settings panel. */
   onSettings: (id: string) => void;
+  /** Phone, address, hours or areas were clicked: they live in the business profile (D-075). */
+  onBusiness: () => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const scrollY = useRef(0);
@@ -74,8 +77,8 @@ export function EditablePreview({
   const editing = useRef<{ el: HTMLElement; id: string; path: string; multi: boolean } | null>(
     null,
   );
-  const handlers = useRef({ onSelect, onText, onImage, onItem, sections });
-  handlers.current = { onSelect, onText, onImage, onItem, sections };
+  const handlers = useRef({ onSelect, onText, onImage, onItem, onBusiness, sections });
+  handlers.current = { onSelect, onText, onImage, onItem, onBusiness, sections };
   /** A field to start typing in after the next reload (a just-added list item). */
   const pendingFocus = useRef<string | null>(null);
 
@@ -151,6 +154,7 @@ export function EditablePreview({
       }
       const img = field('data-img', e.target);
       if (img) return handlers.current.onImage(img.id, img.path);
+      if (element(e.target)?.closest('[data-biz]')) return handlers.current.onBusiness();
       const id = sectionId(e.target);
       if (id) handlers.current.onSelect(id);
     };

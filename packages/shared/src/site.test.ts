@@ -187,6 +187,41 @@ describe('editor markers (D-071)', () => {
   });
 });
 
+describe('custom labels (D-075)', () => {
+  it("menu, eyebrow, second button and mobile bar use the owner's wording", () => {
+    const draft = buildTemplateDraft('beauty', business);
+    draft.theme = { ...draft.theme, labels: { mobileCall: 'התקשרו', mobileContact: 'כתבו לנו' } };
+    draft.sections = draft.sections.map((s) =>
+      s.type === 'services'
+        ? { ...s, navLabel: 'טיפולים' }
+        : s.type === 'hero'
+          ? { ...s, buttonAction: 'call' as const, secondaryLabel: 'השאירו הודעה' }
+          : s,
+    );
+    const html = renderSitePage(draft, business);
+    expect(html).toContain('<a href="#s-services">טיפולים</a>');
+    expect(html).toContain('<span class="eyebrow"><span>טיפולים</span></span>');
+    expect(html).toContain('השאירו הודעה</a>');
+    expect(html).toMatch(/התקשרו<\/a>/);
+    expect(html).toContain('כתבו לנו</a>');
+    expect(html).not.toContain('data-biz');
+  });
+
+  it('marks labels and business details in the editor', () => {
+    const html = renderSitePage(
+      buildTemplateDraft('beauty', business),
+      business,
+      {},
+      { editor: true },
+    );
+    expect(html).toContain('data-edit="services:navLabel"');
+    expect(html).toContain('data-edit="$theme:labels.mobileCall"');
+    expect(html).toContain('data-biz="phone"');
+    expect(html).toContain('data-biz="hours"');
+    expect(html).toContain('data-biz="address"');
+  });
+});
+
 describe('hoursSummary', () => {
   it('groups consecutive days with the same hours and skips closed days', () => {
     expect(hoursSummary(defaultOpeningHours)).toEqual([

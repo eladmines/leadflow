@@ -74,7 +74,7 @@ export function SettingsPage() {
   );
 }
 
-function DetailsSection({ canEdit }: { canEdit: boolean }) {
+export function DetailsSection({ canEdit }: { canEdit: boolean }) {
   const business = useCurrentBusiness();
   const update = useUpdateBusiness(business.id);
   const [saved, setSaved] = useState(false);
@@ -138,7 +138,7 @@ function DetailsSection({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-function ServiceAreasSection({ canEdit }: { canEdit: boolean }) {
+export function ServiceAreasSection({ canEdit }: { canEdit: boolean }) {
   const business = useCurrentBusiness();
   const update = useUpdateBusiness(business.id);
   const [areas, setAreas] = useState(business.serviceAreas);
@@ -176,7 +176,7 @@ function ServiceAreasSection({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-function HoursSection({ canEdit }: { canEdit: boolean }) {
+export function HoursSection({ canEdit }: { canEdit: boolean }) {
   const business = useCurrentBusiness();
   const update = useUpdateBusiness(business.id);
   const [saved, setSaved] = useState(false);

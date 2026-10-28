@@ -6,7 +6,9 @@ import { SITE_LIMITS, type Section } from '@leadflow/shared';
  */
 export function setSectionField(section: Section, path: string, value: string): Section {
   const [key, index, field] = path.split('.');
-  if (!key || !(key in section)) return section;
+  // Optional wording fields (D-075) may be absent until first edited.
+  const optional = key === 'navLabel' || (key === 'secondaryLabel' && section.type === 'hero');
+  if (!key || !(key in section || optional)) return section;
   if (index === undefined) return { ...section, [key]: value } as Section;
   if (key !== 'items' || !('items' in section) || !field) return section;
   const n = Number(index);
@@ -30,7 +32,14 @@ export function fieldLimit(path: string): number {
       return SITE_LIMITS.title;
     case 'price':
     case 'buttonLabel':
+    case 'secondaryLabel':
       return SITE_LIMITS.price;
+    case 'navLabel':
+    case 'mobileCall':
+    case 'mobileContact':
+      return 30;
+    case 'cardLink':
+      return 60;
     case 'author':
       return 80;
     case 'caption':

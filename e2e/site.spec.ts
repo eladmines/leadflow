@@ -153,3 +153,36 @@ test('desktop editing happens on the page: sections, list items and settings', a
   await frame.locator('#s-contact a[href^="tel:"]').first().click();
   await expect(page).toHaveURL(new RegExp(`/b/${id}/site$`));
 });
+
+test('fixed labels are editable on the page; phone opens the business details', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'on-page editing is for mouse users');
+  const id = await ownerWithActiveBusiness(page);
+  await page.goto(`/b/${id}/site`);
+  await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
+  const frame = preview(page);
+  await expect(frame.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
+
+  // Rename the "שירותים" menu item: the label above the section follows.
+  const menuItem = frame.locator('.menu [data-edit="services:navLabel"]');
+  await menuItem.click();
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.type('טיפולים');
+  const saved = nextSave(page);
+  await page.keyboard.press('Enter');
+  await saved;
+  await previewReady(page);
+  await expect(frame.locator('#s-services .eyebrow')).toHaveText('טיפולים');
+
+  // The phone belongs to the business profile: it opens "פרטי העסק".
+  await frame.locator('.nav .call').click();
+  const dialog = page.getByRole('dialog', { name: 'פרטי העסק' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel('טלפון העסק').fill('052-9998877');
+  await dialog.getByRole('button', { name: 'שמירת הפרטים' }).click();
+  await expect(dialog.getByText('השינויים נשמרו').first()).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(frame.locator('.nav .call')).toContainText('052-9998877');
+});

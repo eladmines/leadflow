@@ -107,7 +107,16 @@ interface Ctx {
   testimonialCount: number;
   /** Editor preview: mark which draft field each text/image shows (D-071). */
   editor: boolean;
+  /** Wording of fixed buttons (D-075). */
+  labels: NonNullable<SiteTheme['labels']>;
 }
+
+/** Marks business details (phone, address, hours, areas) in the editor: they are edited in the
+ *  business profile, not in the site, so the editor opens a small dialog for them (D-075). */
+const eb = (c: Ctx, kind: 'phone' | 'address' | 'hours' | 'areas') =>
+  c.editor ? ` data-biz="${kind}" title="פרטי העסק: לחצו לעריכה"` : '';
+/** The section's short name: menu item and the label above its title. */
+const navLabel = (s: Section) => s.navLabel || NAV_LABELS[s.type] || '';
 
 /** Editor-only attribute naming the draft field an element shows. Never in published HTML. */
 const ea = (c: Ctx, sid: string, path: string, multi = false, ph = '') =>
@@ -137,8 +146,9 @@ const heading = (
   sub?: string,
   titleAttr = '',
   subAttr = '',
+  eyebrowAttr = '',
 ) =>
-  `<div class="head">${eyebrow ? `<span class="eyebrow">${esc(eyebrow)}</span>` : ''}<h2${titleAttr}>${esc(title)}</h2>${sub !== undefined ? `<p class="lead"${subAttr}>${esc(sub)}</p>` : ''}</div>`;
+  `<div class="head">${eyebrow ? `<span class="eyebrow"><span${eyebrowAttr}>${esc(eyebrow)}</span></span>` : ''}<h2${titleAttr}>${esc(title)}</h2>${sub !== undefined ? `<p class="lead"${subAttr}>${esc(sub)}</p>` : ''}</div>`;
 
 /** Hours line with times kept left-to-right. */
 const hoursHtml = (line: string) => {
@@ -154,15 +164,17 @@ function hero(s: Extract<Section, { type: 'hero' }>, id: string, c: Ctx): string
   // The second button offers the other way to reach the business.
   const secondary =
     primaryHref === call && toContact
-      ? `<a class="btn ghost" href="${toContact}">${icon('chat')}השארת פרטים</a>`
+      ? `<a class="btn ghost" href="${toContact}">${icon('chat')}${et(c, s.id, 'secondaryLabel', s.secondaryLabel || 'השארת פרטים')}</a>`
       : primaryHref !== call && call
-        ? `<a class="btn ghost" href="${call}">${icon('phone')}<bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></a>`
+        ? `<a class="btn ghost" href="${call}"${eb(c, 'phone')}>${icon('phone')}<bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></a>`
         : '';
   const chips = [
-    b.serviceAreas.length ? `${icon('pin')}${esc(b.serviceAreas.slice(0, 3).join(' · '))}` : '',
+    b.serviceAreas.length
+      ? `${icon('pin')}<span${eb(c, 'areas')}>${esc(b.serviceAreas.slice(0, 3).join(' · '))}</span>`
+      : '',
     c.testimonialCount >= 2 ? `${icon('chat')}${c.testimonialCount} לקוחות ממליצים` : '',
     hoursSummary(b.openingHours).length
-      ? `${icon('clock')}${hoursHtml(hoursSummary(b.openingHours)[0]!)}`
+      ? `${icon('clock')}<span${eb(c, 'hours')}>${hoursHtml(hoursSummary(b.openingHours)[0]!)}</span>`
       : '',
   ].filter(Boolean);
   // Short form for the badge: "בעלי מקצוע (חשמל, ...)" → "בעלי מקצוע".
@@ -183,13 +195,15 @@ ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')
   // No photo: a "business card" with the real contact details balances the layout.
   const rows = [
     b.phone
-      ? `<li>${icon('phone')}<div><span class="k">טלפון</span><a href="${call}"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone))}</bdi></a></div></li>`
+      ? `<li${eb(c, 'phone')}>${icon('phone')}<div><span class="k">טלפון</span><a href="${call}"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone))}</bdi></a></div></li>`
       : '',
     b.address
-      ? `<li>${icon('pin')}<div><span class="k">כתובת</span><span>${esc(b.address)}</span></div></li>`
+      ? `<li${eb(c, 'address')}>${icon('pin')}<div><span class="k">כתובת</span><span>${esc(b.address)}</span></div></li>`
       : '',
     hoursSummary(b.openingHours).length
-      ? `<li>${icon('clock')}<div><span class="k">שעות פעילות</span>${hoursSummary(b.openingHours)
+      ? `<li${eb(c, 'hours')}>${icon('clock')}<div><span class="k">שעות פעילות</span>${hoursSummary(
+          b.openingHours,
+        )
           .map((l) => `<span>${hoursHtml(l)}</span>`)
           .join('')}</div></li>`
       : '',
@@ -198,7 +212,7 @@ ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')
     rows.length
       ? `<aside class="biz-card" aria-label="פרטי העסק"><p class="biz-name">${esc(b.name)}</p><ul>${rows.join('')}</ul>${
           toContact
-            ? `<a class="card-link" href="${toContact}">השאירו פרטים ונחזור אליכם ${icon('arrow')}</a>`
+            ? `<a class="card-link" href="${toContact}">${et(c, '$theme', 'labels.cardLink', c.labels.cardLink || 'השאירו פרטים ונחזור אליכם')} ${icon('arrow')}</a>`
             : ''
         }</aside>`
       : ''
@@ -215,13 +229,13 @@ function section(s: Section, c: Ctx, alt: boolean): string {
     case 'about': {
       const pic = s.imageAssetId ? media[s.imageAssetId] : undefined;
       return pic
-        ? `<section id="${id}"${cls}><div class="wrap about-grid"><div class="about-text">${heading('אודות', s.title, undefined, ea(c, s.id, 'title'))}${c.editor ? `<div${ea(c, s.id, 'body', true)}>${paragraphs(s.body)}</div>` : paragraphs(s.body)}</div><div class="about-media">${img(pic, s.imageAlt, 'about-img', true, ei(c, s.id, 'imageAssetId'))}</div></div></section>`
-        : `<section id="${id}"${cls}><div class="wrap narrow about-solo">${heading('אודות', s.title, undefined, ea(c, s.id, 'title'))}<div class="about-body"${ea(c, s.id, 'body', true)}>${paragraphs(s.body)}</div></div></section>`;
+        ? `<section id="${id}"${cls}><div class="wrap about-grid"><div class="about-text">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}${c.editor ? `<div${ea(c, s.id, 'body', true)}>${paragraphs(s.body)}</div>` : paragraphs(s.body)}</div><div class="about-media">${img(pic, s.imageAlt, 'about-img', true, ei(c, s.id, 'imageAssetId'))}</div></div></section>`
+        : `<section id="${id}"${cls}><div class="wrap narrow about-solo">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<div class="about-body"${ea(c, s.id, 'body', true)}>${paragraphs(s.body)}</div></div></section>`;
     }
     case 'gallery': {
       const pics = s.items.map((i, n) => ({ ...i, n })).filter((i) => media[i.assetId]);
       if (pics.length === 0) return '';
-      return `<section id="${id}"${cls}><div class="wrap">${heading('גלריה', s.title, undefined, ea(c, s.id, 'title'))}<div class="gallery">${pics
+      return `<section id="${id}"${cls}><div class="wrap">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<div class="gallery">${pics
         .map(
           (i) =>
             `<figure>${img(media[i.assetId]!, i.caption, 'gallery-img', true, ei(c, s.id, `items.${i.n}.assetId`))}${i.caption ? `<figcaption${ea(c, s.id, `items.${i.n}.caption`)}>${esc(i.caption)}</figcaption>` : ''}</figure>`,
@@ -229,14 +243,14 @@ function section(s: Section, c: Ctx, alt: boolean): string {
         .join('')}</div></div></section>`;
     }
     case 'services':
-      return `<section id="${id}"${cls}><div class="wrap">${heading('שירותים', s.title, undefined, ea(c, s.id, 'title'))}<div class="grid services">${s.items
+      return `<section id="${id}"${cls}><div class="wrap">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<div class="grid services">${s.items
         .map(
           (i, n) =>
             `<article class="card service"${itemAttr(c)}>${itemTools(c, s.id, n, s.items.length)}<span class="tile">${icon('check')}</span><span class="num" aria-hidden="true">${String(n + 1).padStart(2, '0')}</span><h3${ea(c, s.id, `items.${n}.name`, false, 'שם השירות')}>${esc(i.name)}</h3>${i.description || c.editor ? `<p${ea(c, s.id, `items.${n}.description`, true, 'תיאור קצר')}>${esc(i.description)}</p>` : ''}</article>`,
         )
         .join('')}${addItem(c, s.id, s.items.length, 'הוספת שירות')}</div></div></section>`;
     case 'pricing':
-      return `<section id="${id}"${cls}><div class="wrap narrow">${heading('מחירון', s.title, undefined, ea(c, s.id, 'title'))}<div class="card price-card"><ul class="prices">${s.items
+      return `<section id="${id}"${cls}><div class="wrap narrow">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<div class="card price-card"><ul class="prices">${s.items
         .map(
           (i, n) =>
             `<li${itemAttr(c)}><span${ea(c, s.id, `items.${n}.name`, false, 'שירות')}>${esc(i.name)}</span><span class="dots"></span><bdi${ea(c, s.id, `items.${n}.price`, false, '₪')}>${esc(i.price)}</bdi>${itemTools(c, s.id, n, s.items.length)}</li>`,
@@ -247,7 +261,7 @@ function section(s: Section, c: Ctx, alt: boolean): string {
     case 'testimonials': {
       const items = s.items.map((i, n) => ({ ...i, n })).filter((i) => i.quote || c.editor);
       if (items.length === 0 && !c.editor) return '';
-      return `<section id="${id}"${cls}><div class="wrap">${heading('המלצות', s.title, undefined, ea(c, s.id, 'title'))}<div class="grid">${items
+      return `<section id="${id}"${cls}><div class="wrap">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<div class="grid">${items
         .map(
           (i) =>
             `<figure class="card quote"${itemAttr(c)}>${itemTools(c, s.id, i.n, s.items.length)}<span class="qmark" aria-hidden="true">”</span><blockquote${ea(c, s.id, `items.${i.n}.quote`, true, 'מה הלקוח/ה כתב/ה')}>${esc(i.quote)}</blockquote>${
@@ -259,7 +273,7 @@ function section(s: Section, c: Ctx, alt: boolean): string {
         .join('')}${addItem(c, s.id, s.items.length, 'הוספת המלצה')}</div></div></section>`;
     }
     case 'faq':
-      return `<section id="${id}"${cls}><div class="wrap narrow">${heading('שאלות נפוצות', s.title, undefined, ea(c, s.id, 'title'))}<div class="faq">${s.items
+      return `<section id="${id}"${cls}><div class="wrap narrow">${heading(navLabel(s), s.title, undefined, ea(c, s.id, 'title'), '', ea(c, s.id, 'navLabel'))}<div class="faq">${s.items
         .map((i, n) => ({ ...i, n }))
         .filter((i) => i.question || c.editor)
         .map(
@@ -271,28 +285,30 @@ function section(s: Section, c: Ctx, alt: boolean): string {
       const rows: string[] = [];
       if (s.showPhone && b.phone) {
         rows.push(
-          `<li>${icon('phone')}<div><span class="k">טלפון</span><a href="${telHref(b.phone)}"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone))}</bdi></a></div></li>`,
+          `<li${eb(c, 'phone')}>${icon('phone')}<div><span class="k">טלפון</span><a href="${telHref(b.phone)}"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone))}</bdi></a></div></li>`,
         );
       }
       if (s.showAddress && b.address) {
         rows.push(
-          `<li>${icon('pin')}<div><span class="k">כתובת</span><a href="${mapsHref(b.address)}" target="_blank" rel="noopener">${esc(b.address)}</a></div></li>`,
+          `<li${eb(c, 'address')}>${icon('pin')}<div><span class="k">כתובת</span><a href="${mapsHref(b.address)}" target="_blank" rel="noopener">${esc(b.address)}</a></div></li>`,
         );
       }
       if (b.serviceAreas.length) {
         rows.push(
-          `<li>${icon('check')}<div><span class="k">אזורי שירות</span><span>${esc(b.serviceAreas.join(', '))}</span></div></li>`,
+          `<li${eb(c, 'areas')}>${icon('check')}<div><span class="k">אזורי שירות</span><span>${esc(b.serviceAreas.join(', '))}</span></div></li>`,
         );
       }
       const hours =
         s.showHours && b.openingHours
-          ? `<table class="hours"><caption>שעות פעילות</caption>${WEEKDAYS.map((d) => {
-              const h = b.openingHours?.[d];
-              return `<tr><th scope="row">${weekdayLabels[d]}</th><td>${h?.open ? `<bdi dir="ltr">${esc(h.from)}–${esc(h.to)}</bdi>` : '<span class="closed">סגור</span>'}</td></tr>`;
-            }).join('')}</table>`
+          ? `<table class="hours"${eb(c, 'hours')}><caption>שעות פעילות</caption>${WEEKDAYS.map(
+              (d) => {
+                const h = b.openingHours?.[d];
+                return `<tr><th scope="row">${weekdayLabels[d]}</th><td>${h?.open ? `<bdi dir="ltr">${esc(h.from)}–${esc(h.to)}</bdi>` : '<span class="closed">סגור</span>'}</td></tr>`;
+              },
+            ).join('')}</table>`
           : '';
       const form = s.form.enabled ? `<div class="form-wrap">${leadForm(s, b)}</div>` : '';
-      return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading('צור קשר', s.title, c.editor ? s.subtitle : s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true, 'משפט פתיחה (לא חובה)'))}
+      return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading(navLabel(s), s.title, c.editor ? s.subtitle : s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true, 'משפט פתיחה (לא חובה)'), ea(c, s.id, 'navLabel'))}
 <div class="contact-grid"><div class="contact-info">${rows.length ? `<ul class="info">${rows.join('')}</ul>` : ''}${hours}</div>${form}</div></div></section>`;
     }
     case 'cta': {
@@ -462,6 +478,7 @@ const EDITOR_STYLE = `<style>
 [data-edit][contenteditable]{outline:2px solid #2c837d;background:rgba(44,131,125,.08)}
 [data-img]{cursor:pointer;transition:filter .15s}[data-img]:hover{filter:brightness(.85);outline:3px solid #2c837d;outline-offset:-3px}
 [data-ph]:empty{min-height:1.5em;min-width:3em}[data-ph]:empty::before{content:attr(data-ph);color:#9aa3ad;font-weight:400}
+[data-biz]{cursor:pointer;border-radius:8px;outline:2px dashed transparent;outline-offset:4px}[data-biz]:hover{outline-color:rgba(224,165,38,.8)}
 [data-i]{position:relative}
 .ed-item{position:absolute;top:8px;inset-inline-end:8px;z-index:3;display:flex;gap:4px;opacity:0;pointer-events:none;transition:opacity .15s}
 [data-i]:hover>.ed-item,[data-i]:focus-within>.ed-item{opacity:1;pointer-events:auto}
@@ -488,7 +505,14 @@ export function renderSitePage(
       (n, s) => n + (s.type === 'testimonials' ? s.items.filter((i) => i.quote).length : 0),
       0,
     );
-  const ctx: Ctx = { b, contactId, media, testimonialCount, editor: opts.editor ?? false };
+  const ctx: Ctx = {
+    b,
+    contactId,
+    media,
+    testimonialCount,
+    editor: opts.editor ?? false,
+    labels: draft.theme.labels ?? {},
+  };
 
   // Header menu: the first section of each type that has a short label.
   const seen = new Set<string>();
@@ -496,7 +520,7 @@ export function renderSitePage(
     .filter((s) => NAV_LABELS[s.type] && !seen.has(s.type) && seen.add(s.type))
     .filter((s) => s.type !== 'gallery' || s.items.some((i) => media[i.assetId]))
     .slice(0, 6)
-    .map((s) => `<li><a href="#s-${esc(s.id)}">${NAV_LABELS[s.type]}</a></li>`)
+    .map((s) => `<li><a href="#s-${esc(s.id)}">${et(ctx, s.id, 'navLabel', navLabel(s))}</a></li>`)
     .join('');
 
   // Alternate soft backgrounds between content sections (hero and CTA have their own look).
@@ -512,18 +536,18 @@ export function renderSitePage(
   const call = b.phone ? telHref(b.phone) : '';
   const mbar =
     call || contactId
-      ? `<div class="mbar">${call ? `<a href="${call}">${icon('phone')}חייגו עכשיו</a>` : ''}${contactId ? `<a${call ? ' class="alt"' : ''} href="#s-${esc(contactId)}">${icon('chat')}השארת פרטים</a>` : ''}</div>`
+      ? `<div class="mbar">${call ? `<a href="${call}">${icon('phone')}${et(ctx, '$theme', 'labels.mobileCall', ctx.labels.mobileCall || 'חייגו עכשיו')}</a>` : ''}${contactId ? `<a${call ? ' class="alt"' : ''} href="#s-${esc(contactId)}">${icon('chat')}${et(ctx, '$theme', 'labels.mobileContact', ctx.labels.mobileContact || 'השארת פרטים')}</a>` : ''}</div>`
       : '';
   const hours = hoursSummary(b.openingHours);
   const brand = `${logo ? img(logo, b.name, 'logo', false) : `<span class="mark" aria-hidden="true">${esc(b.name.trim().charAt(0))}</span>`}<span>${esc(b.name)}</span>`;
 
   return `${documentHead(draft.theme, draft.seo.title || b.name, draft.seo.description)}
 <body${mbar ? ' class="has-mbar"' : ''}>${opts.editor ? EDITOR_STYLE : ''}
-<nav class="nav" aria-label="ראשי"><div class="wrap"><a class="brand" href="#">${brand}</a>${menu ? `<ul class="menu">${menu}</ul>` : ''}${call ? `<a class="call" href="${call}">${icon('phone')}<span class="num-text"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></span></a>` : ''}</div></nav>
+<nav class="nav" aria-label="ראשי"><div class="wrap"><a class="brand" href="#">${brand}</a>${menu ? `<ul class="menu">${menu}</ul>` : ''}${call ? `<a class="call" href="${call}"${eb(ctx, 'phone')}>${icon('phone')}<span class="num-text"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></span></a>` : ''}</div></nav>
 <main>${html || '<div class="empty">אין מקטעים מוצגים באתר.</div>'}</main>
 <footer><div class="wrap foot"><div><a class="brand" href="#">${esc(b.name)}</a>${draft.seo.description ? `<p>${esc(draft.seo.description)}</p>` : ''}</div>
-${call || b.address ? `<div><h3>יצירת קשר</h3><ul>${call ? `<li><a href="${call}"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></a></li>` : ''}${b.address ? `<li><a href="${mapsHref(b.address)}" target="_blank" rel="noopener">${esc(b.address)}</a></li>` : ''}</ul></div>` : ''}
-${hours.length ? `<div><h3>שעות פעילות</h3><ul>${hours.map((l) => `<li>${hoursHtml(l)}</li>`).join('')}</ul></div>` : ''}</div>
+${call || b.address ? `<div><h3>יצירת קשר</h3><ul>${call ? `<li${eb(ctx, 'phone')}><a href="${call}"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></a></li>` : ''}${b.address ? `<li${eb(ctx, 'address')}><a href="${mapsHref(b.address)}" target="_blank" rel="noopener">${esc(b.address)}</a></li>` : ''}</ul></div>` : ''}
+${hours.length ? `<div${eb(ctx, 'hours')}><h3>שעות פעילות</h3><ul>${hours.map((l) => `<li>${hoursHtml(l)}</li>`).join('')}</ul></div>` : ''}</div>
 <div class="bottom"><div class="wrap">© ${esc(b.name)} · האתר נבנה ב-LeadFlow</div></div></footer>
 ${mbar}
 </body>
