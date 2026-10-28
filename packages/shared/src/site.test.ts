@@ -8,7 +8,7 @@ import {
   templateForIndustry,
   type Section,
 } from './site';
-import { renderSitePage } from './site-render';
+import { hoursSummary, renderSitePage } from './site-render';
 import { buildTemplateDraft, newSection, type SiteBusinessInfo } from './site-templates';
 
 const business: SiteBusinessInfo = {
@@ -126,6 +126,33 @@ describe('renderSitePage', () => {
     expect(html).not.toContain('מה הלקוחות מספרים');
     expect(html).toContain('href="#s-contact"');
     expect(html).not.toContain('tel:');
+    // Without a phone the mobile bar only offers the contact form.
+    expect(html).toContain('<div class="mbar"><a href="#s-contact">');
+  });
+
+  it('builds the header menu from visible sections, with a mobile call bar and a rich footer', () => {
+    const draft = buildTemplateDraft('beauty', business);
+    draft.sections = draft.sections.map((s) => (s.type === 'faq' ? { ...s, visible: false } : s));
+    const html = renderSitePage(draft, business);
+    const menu = html.match(/<ul class="menu">(.*?)<\/ul>/)?.[1] ?? '';
+    expect(menu).toContain('href="#s-services">שירותים<');
+    expect(menu).toContain('href="#s-contact">צור קשר<');
+    expect(menu).not.toContain('שאלות נפוצות');
+    expect(html).toContain('<body class="has-mbar">');
+    expect(html).toMatch(/<div class="mbar"><a href="tel:\+972501234567">/);
+    expect(html).toContain('<h3>שעות פעילות</h3>');
+    // The industry badge drops the explanation in brackets.
+    expect(html).toContain('<span class="eyebrow">מספרה וקוסמטיקה</span>');
+  });
+});
+
+describe('hoursSummary', () => {
+  it('groups consecutive days with the same hours and skips closed days', () => {
+    expect(hoursSummary(defaultOpeningHours)).toEqual([
+      'ראשון–חמישי 09:00–18:00',
+      'שישי 09:00–13:00',
+    ]);
+    expect(hoursSummary(null)).toEqual([]);
   });
 });
 
