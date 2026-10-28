@@ -1,7 +1,16 @@
-import { apiPaths, businessWebPaths, type Business } from '@leadflow/shared';
+import { apiPaths, businessWebPaths, type Business, type Lead } from '@leadflow/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { callsTo, json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
+import {
+  callsTo,
+  json,
+  me,
+  mockApi,
+  renderApp,
+  testBusiness,
+  testStages,
+  testUser,
+} from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -103,6 +112,65 @@ describe('dashboard', () => {
     mockApi({ [meKey]: me({ ...testUser, emailVerified: true }) });
     renderApp(home);
     expect(await screen.findByText('הושלמו 2 מתוך 5')).toBeInTheDocument();
+  });
+
+  const someLead: Lead = {
+    id: '5c000000-0000-4000-8000-000000000001',
+    contact: {
+      id: '5d000000-0000-4000-8000-000000000001',
+      name: 'רון',
+      phone: null,
+      email: 'r@example.com',
+    },
+    stage: { id: testStages[0]!.id, name: testStages[0]!.name, kind: 'OPEN' },
+    source: 'manual',
+    sourceUrl: null,
+    message: null,
+    owner: null,
+    expectedValue: null,
+    nextActionAt: null,
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  const weekReport = {
+    range: { from: '2026-10-21T00:00:00.000Z', to: '2026-10-28T00:00:00.000Z', days: 7 },
+    leads: { current: 4, previous: 6 },
+    closeRate: 0.5,
+    wonValue: 0,
+    openValue: 0,
+    avgResponseMinutes: 30,
+    respondedLeads: 3,
+    series: { unit: 'day', points: [] },
+    byStage: [],
+    bySource: [],
+  };
+
+  it('shows the week in numbers to owners and managers once there are leads', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [someLead] }),
+      [`GET ${apiPaths.reports.summary(testBusiness.id)}`]: () => json(200, weekReport),
+    });
+    renderApp(home);
+    const stats = await screen.findByRole('region', { name: 'השבוע במספרים' });
+    expect(within(stats).getByText('−2 לעומת השבוע שלפני')).toBeInTheDocument();
+    expect(within(stats).getByText('50%')).toBeInTheDocument();
+    expect(within(stats).getByText('30 דק׳')).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith('/reports/summary?days=7'))).toBe(
+      true,
+    );
+  });
+
+  it('employees do not get the week in numbers', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...asRole('EMPLOYEE'),
+      [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [someLead] }),
+    });
+    renderApp(home);
+    await screen.findByRole('list', { name: 'פניות אחרונות' });
+    expect(screen.queryByRole('region', { name: 'השבוע במספרים' })).not.toBeInTheDocument();
   });
 });
 

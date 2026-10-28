@@ -5,6 +5,7 @@ import {
   type AuthUser,
   type Business,
   type ErrorCode,
+  type ReportSummary,
 } from '@leadflow/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
@@ -85,6 +86,19 @@ type Handler = (body: unknown) => Response | Promise<Response>;
  * Stubs global fetch with a route table keyed by "METHOD /path".
  * Unknown routes fail the test loudly. Returns the mock for call assertions.
  */
+const emptyReport: ReportSummary = {
+  range: { from: '2026-10-21T00:00:00.000Z', to: '2026-10-28T00:00:00.000Z', days: 7 },
+  leads: { current: 0, previous: 0 },
+  closeRate: null,
+  wonValue: 0,
+  openValue: 0,
+  avgResponseMinutes: null,
+  respondedLeads: 0,
+  series: { unit: 'day', points: [] },
+  byStage: [],
+  bySource: [],
+};
+
 export function mockApi(routes: Record<string, Handler>) {
   // Signed-in flows end at /app, which loads the user's businesses; default to one active business.
   routes = {
@@ -95,6 +109,7 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [] }),
     [`GET ${apiPaths.businesses.notifications(testBusiness.id)}`]: () =>
       json(200, { prefs: { newLeadEmail: true } }),
+    [`GET ${apiPaths.reports.summary(testBusiness.id)}`]: () => json(200, emptyReport),
     [`GET ${apiPaths.leads.tags(testBusiness.id)}`]: () => json(200, { tags: [] }),
     [`GET ${apiPaths.leads.pipeline(testBusiness.id)}`]: () => json(200, { stages: testStages }),
     [`GET ${apiPaths.tasks.list(testBusiness.id)}`]: () => json(200, { tasks: [] }),

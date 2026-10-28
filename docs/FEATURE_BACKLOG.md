@@ -56,3 +56,4 @@ F06 ─► F11 (after spike)
 - 2026-10-27 — F10 complete: follow-up tasks (lead-linked or standalone), tasks page, lead + dashboard integration, email reminders via an in-process job. **Stage 1 complete.** 384 unit/integration tests + 35 e2e.
 - 2026-10-28 — Small features: lead export to Excel/CSV (owner-only, injection-safe), account settings (name, password change with session sign-out and notice email).
 - 2026-10-28 — F20 lite: reports page for owners/managers — new leads vs previous period, close rate, won/open value, average response time, leads over time (7/30/90 days), funnel by stage, sources. Full F20 (custom ranges, per-employee, exports) stays planned.
+- 2026-10-28 — Small features 2: delete a lead (owner only), lead tags (edit, filter, suggestions, CSV), per-business new-lead email opt-out, dashboard "this week in numbers".
