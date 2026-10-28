@@ -65,6 +65,7 @@ export function useLeadDetail(businessId: string, leadId: string) {
     queryKey: leadDetailKey(businessId, leadId),
     queryFn: () => apiFetch<LeadDetailResponse>(lp.detail(businessId, leadId)),
     retry: false,
+    enabled: Boolean(leadId),
   });
 }
 

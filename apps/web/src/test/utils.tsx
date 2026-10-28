@@ -117,6 +117,7 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.appointments.requests(testBusiness.id)}`]: () =>
       json(200, { appointments: [] }),
     [`GET ${apiPaths.appointments.services(testBusiness.id)}`]: () => json(200, { services: [] }),
+    [`GET ${apiPaths.quotes.list(testBusiness.id)}`]: () => json(200, { quotes: [] }),
     [`GET ${apiPaths.media.assets(testBusiness.id)}`]: () =>
       json(200, { assets: [], usedBytes: 0, quotaBytes: 200 * 1024 * 1024 }),
     ...routes,
