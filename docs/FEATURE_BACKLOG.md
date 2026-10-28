@@ -59,3 +59,4 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — Small features 2: delete a lead (owner only), lead tags (edit, filter, suggestions, CSV), per-business new-lead email opt-out, dashboard "this week in numbers".
 - 2026-10-28 — Site design v2: professional layout for both templates (menu, hero card/photo, service icons, accordion FAQ, CTA panel, footer, mobile call bar). No scripts; applies to live sites on next publish.
 - 2026-10-28 — Templates: garage, clinic and food added (5 total); new sites start with sample photos copied into the media library; picker previews show the photos.
+- 2026-10-28 — Visual editing step 1: click a section in the preview to edit it; hover toolbar to move/hide; "+" inserts a section in place; scroll position kept across edits.
