@@ -272,6 +272,55 @@ export class AppointmentService {
     return toDto(row);
   }
 
+  /**
+   * A website visitor's request (F17): REQUESTED, no staff member yet, linked to the new lead.
+   * An unknown or inactive service is ignored rather than failing the visitor's form.
+   */
+  async requestFromWebsite(input: {
+    businessId: string;
+    leadId: string;
+    contactId: string;
+    serviceId: string | null;
+    startsAt: Date;
+  }): Promise<void> {
+    const service = input.serviceId
+      ? await this.prisma.service.findFirst({
+          where: { id: input.serviceId, businessId: input.businessId, active: true },
+        })
+      : null;
+    const endsAt = new Date(
+      input.startsAt.getTime() + (service?.durationMin ?? DEFAULT_DURATION) * 60_000,
+    );
+    await this.prisma.$transaction(async (tx) => {
+      await tx.appointment.create({
+        data: {
+          businessId: input.businessId,
+          contactId: input.contactId,
+          leadId: input.leadId,
+          serviceId: service?.id ?? null,
+          staffId: null,
+          startsAt: input.startsAt,
+          endsAt,
+          status: 'REQUESTED',
+          source: 'website',
+        },
+      });
+      await tx.activity.create({
+        data: {
+          businessId: input.businessId,
+          leadId: input.leadId,
+          type: 'appointment.created',
+          data: {
+            startsAt: input.startsAt.toISOString(),
+            service: service?.name ?? null,
+            staff: null,
+            requested: true,
+          },
+        },
+      });
+    });
+  }
+
   async update(ctx: TenantContext, id: string, input: UpdateInput): Promise<Appointment> {
     const row = await this.prisma.$transaction(async (tx) => {
       const appt = await this.findVisible(ctx, id, tx);

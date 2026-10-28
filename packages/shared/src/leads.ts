@@ -25,6 +25,9 @@ export const leadMessages = {
   messageTooLong: 'ההודעה ארוכה מדי (עד 1,000 תווים)',
   consentRequired: 'יש לאשר את יצירת הקשר כדי לשלוח',
   formExpired: 'תוקף הטופס פג. רעננו את הדף ונסו שוב.',
+  slotIncomplete: 'לבקשת תור יש לבחור גם תאריך וגם שעה',
+  slotInvalid: 'המועד שנבחר לתור אינו תקין',
+  slotPast: 'אפשר לבקש תור רק למועד עתידי (עד 4 חודשים קדימה)',
 } as const;
 
 const optionalText = (max: number, message: string) =>
@@ -36,27 +39,47 @@ const optionalText = (max: number, message: string) =>
     .transform((v) => (v ? v : null));
 
 /** Public form fields (urlencoded strings). Unknown fields are ignored. */
-export const leadSubmissionSchema = z.object({
-  name: z
-    .string({ required_error: leadMessages.nameRequired })
-    .trim()
-    .min(2, leadMessages.nameRequired)
-    .max(80, leadMessages.nameTooLong),
-  phone: phoneSchema,
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .max(254, leadMessages.emailInvalid)
-    .optional()
-    .transform((v) => (v ? v : null))
-    .refine(
-      (v) => v === null || z.string().email().safeParse(v).success,
-      leadMessages.emailInvalid,
-    ),
-  message: optionalText(1000, leadMessages.messageTooLong),
-  consent: z.literal('on', { errorMap: () => ({ message: leadMessages.consentRequired }) }),
-});
+export const leadSubmissionSchema = z
+  .object({
+    name: z
+      .string({ required_error: leadMessages.nameRequired })
+      .trim()
+      .min(2, leadMessages.nameRequired)
+      .max(80, leadMessages.nameTooLong),
+    phone: phoneSchema,
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .max(254, leadMessages.emailInvalid)
+      .optional()
+      .transform((v) => (v ? v : null))
+      .refine(
+        (v) => v === null || z.string().email().safeParse(v).success,
+        leadMessages.emailInvalid,
+      ),
+    message: optionalText(1000, leadMessages.messageTooLong),
+    consent: z.literal('on', { errorMap: () => ({ message: leadMessages.consentRequired }) }),
+    // F17 appointment request (optional): service, local date and time in the business time zone.
+    serviceId: z
+      .string()
+      .optional()
+      .transform((v) => (v && /^[0-9a-f-]{36}$/i.test(v) ? v : null)),
+    date: z
+      .string()
+      .optional()
+      .transform((v) => v || null)
+      .refine((v) => v === null || /^\d{4}-\d{2}-\d{2}$/.test(v), leadMessages.slotInvalid),
+    time: z
+      .string()
+      .optional()
+      .transform((v) => v || null)
+      .refine((v) => v === null || /^([01]\d|2[0-3]):[0-5]\d$/.test(v), leadMessages.slotInvalid),
+  })
+  .refine((v) => (v.date === null) === (v.time === null), {
+    message: leadMessages.slotIncomplete,
+    path: ['date'],
+  });
 export type LeadSubmission = z.output<typeof leadSubmissionSchema>;
 
 // ---------------------------------------------------------------------------

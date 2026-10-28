@@ -248,6 +248,13 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
                   checked={s.form.askMessage}
                   onChange={(e) => onChange({ form: { ...s.form, askMessage: e.target.checked } })}
                 />
+                <Checkbox
+                  label="בקשת תור: שירות, תאריך ושעה (מגיע לאישור ביומן התורים)"
+                  checked={s.form.askAppointment}
+                  onChange={(e) =>
+                    onChange({ form: { ...s.form, askAppointment: e.target.checked } })
+                  }
+                />
                 <Field
                   label="טקסט כפתור השליחה"
                   maxLength={40}

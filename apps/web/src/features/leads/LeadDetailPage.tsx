@@ -84,7 +84,9 @@ function activityText(a: Activity): string {
     case 'task.completed':
       return `בוצעה משימה: ${String(d.title)}`;
     case 'appointment.created':
-      return `נקבע תור ל${apptWhen(d.startsAt)}${d.service ? ` (${String(d.service)})` : ''}`;
+      return `${d.requested ? 'התקבלה מהאתר בקשה לתור ל' : 'נקבע תור ל'}${apptWhen(d.startsAt)}${
+        d.service ? ` (${String(d.service)})` : ''
+      }`;
     case 'appointment.updated':
       return `התור עודכן: ${apptWhen(d.startsAt)} · ${
         appointmentStatusLabels[d.status as keyof typeof appointmentStatusLabels] ?? ''

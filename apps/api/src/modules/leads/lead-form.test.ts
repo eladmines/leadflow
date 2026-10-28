@@ -158,6 +158,46 @@ describe('website lead form (F07)', () => {
     expect(ctx.email.sent[0]!.to).not.toContain('mgr');
   });
 
+  it('an appointment request becomes a pending appointment in the business time zone (F17)', async () => {
+    const o = await liveSite();
+    const service = (
+      await req(ctx.app, 'POST', apiPaths.appointments.services(o.id), o.token, {
+        name: 'תספורת',
+        durationMin: 45,
+      })
+    ).json().service;
+    // Republish so the form offers the new service.
+    const rev = (await req(ctx.app, 'GET', sp.site(o.id), o.token)).json().site.revision;
+    await req(ctx.app, 'POST', sp.publish(o.id), o.token, { revision: rev });
+    const page = await pub.inject({ method: 'GET', url: '/', headers: { host: host('salon') } });
+    expect(page.body).toContain(`<option value="${service.id}">תספורת</option>`);
+    expect(page.body).toContain('name="date" type="date"');
+    ctx.email.clear();
+
+    const day = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const res = await submit(
+      'salon',
+      valid(o.contactId, 'salon', { serviceId: service.id, date: day, time: '09:30' }),
+    );
+    expect(res.statusCode).toBe(200);
+    const appt = await ctx.prisma.appointment.findFirstOrThrow({ include: { service: true } });
+    expect(appt).toMatchObject({ status: 'REQUESTED', source: 'website', staffId: null });
+    expect(appt.service?.name).toBe('תספורת');
+    expect(appt.endsAt.getTime() - appt.startsAt.getTime()).toBe(45 * 60_000);
+    // 09:30 in Israel is 06:30 or 07:30 UTC depending on daylight saving.
+    expect(['06:30', '07:30']).toContain(appt.startsAt.toISOString().slice(11, 16));
+    await expect.poll(() => ctx.email.sent.length).toBe(1);
+    expect(ctx.email.sent[0]!.text).toContain('בקשה לתור');
+
+    const past = await submit(
+      'salon',
+      valid(o.contactId, 'salon', { phone: '052-0000000', date: '2020-01-01', time: '09:00' }),
+    );
+    expect(past.statusCode).toBe(400);
+    expect(past.body).toContain('מועד עתידי');
+    expect(await ctx.prisma.appointment.count()).toBe(1);
+  });
+
   it('a double submit (same token) creates one lead; a returning phone reuses the contact', async () => {
     const o = await liveSite();
     const fields = valid(o.contactId);

@@ -239,6 +239,12 @@ export class SiteService {
       address: business.address,
       serviceAreas: business.serviceAreas,
       openingHours: hours.success ? hours.data : null,
+      // Offered in the appointment request (F17); a later change takes effect on republish.
+      services: await this.prisma.service.findMany({
+        where: { businessId: ctx.businessId, active: true },
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      }),
     };
     const draft = {
       theme: themeSchema.parse(site.theme),

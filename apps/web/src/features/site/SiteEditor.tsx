@@ -37,6 +37,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { ImageField } from '../media/ImageField';
 import { useMediaMap } from '../media/api';
 import { siteBusinessInfo } from './api';
+import { useServices } from '../appointments/api';
 import { EditablePreview } from './EditablePreview';
 import { setSectionField } from './fieldPath';
 import { BusinessDetailsDialog } from './BusinessDetailsDialog';
@@ -104,7 +105,15 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   const [adding, setAdding] = useState<SectionType>('services');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const info = useMemo(() => siteBusinessInfo(business), [business]);
+  const services = useServices(business.id).data;
+  const info = useMemo(
+    () => ({
+      ...siteBusinessInfo(business),
+      // The appointment request offers the active services (as on the published site).
+      services: (services ?? []).filter((x) => x.active).map(({ id, name }) => ({ id, name })),
+    }),
+    [business, services],
+  );
   const deferred = useDeferredValue(draft);
   const media = useMediaMap(business.id);
   const html = useMemo(

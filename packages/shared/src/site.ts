@@ -146,6 +146,7 @@ export const DEFAULT_CONTACT_FORM = {
   askMessage: true,
   buttonLabel: 'שליחה',
   successMessage: 'תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.',
+  askAppointment: false,
 };
 export const contactFormSchema = z.object({
   enabled: z.boolean(),
@@ -153,6 +154,8 @@ export const contactFormSchema = z.object({
   askMessage: z.boolean(),
   buttonLabel: z.string().trim().min(1, siteMessages.required).max(40, siteMessages.textTooLong),
   successMessage: short,
+  /** F17: let visitors request an appointment (service, date, time), confirmed manually. */
+  askAppointment: z.boolean().default(false),
 });
 export type ContactForm = z.infer<typeof contactFormSchema>;
 
