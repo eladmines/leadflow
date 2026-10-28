@@ -69,3 +69,46 @@ test('owner builds the site: template → edit → autosave → reload', async (
     expect(overflow).toBe(false);
   }
 });
+
+test('owner edits on the page itself: select, move and insert sections from the preview', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'hover tools are for mouse users; touch users use the section list');
+  const id = await ownerWithActiveBusiness(page);
+  await page.goto(`/b/${id}/site`);
+  await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
+  const frame = preview(page);
+  await expect(frame.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
+  const sectionList = () =>
+    page.getByRole('list', { name: 'מקטעי האתר' }).getByRole('listitem').allInnerTexts();
+
+  // Hover → toolbar; move "מחירון" above "שירותים".
+  await frame.locator('#s-pricing').hover();
+  let saved = nextSave(page);
+  await page.getByRole('toolbar').getByRole('button', { name: 'הזזת מחירון למעלה' }).click();
+  await saved;
+  expect((await sectionList())[1]).toContain('מחירון');
+
+  // Click a section on the page → its form opens.
+  await frame.locator('#s-about').click({ position: { x: 40, y: 40 } });
+  await expect(page.getByRole('heading', { name: 'אודות', level: 2 })).toBeVisible();
+  await page.getByRole('button', { name: 'כל המקטעים' }).click();
+
+  // "+" under a section inserts the new one right after it and opens it.
+  await frame.locator('#s-hero').hover();
+  await page.getByRole('button', { name: 'הוספת מקטע כאן' }).click();
+  saved = nextSave(page);
+  await page
+    .getByRole('list', { name: 'סוג המקטע להוספה' })
+    .getByRole('button', { name: 'שאלות נפוצות' })
+    .click();
+  await saved;
+  await expect(page.getByRole('heading', { name: 'שאלות נפוצות', level: 2 })).toBeVisible();
+  await page.getByRole('button', { name: 'כל המקטעים' }).click();
+  expect((await sectionList())[1]).toContain('שאלות נפוצות');
+
+  // Links in the preview don't navigate away from the editor.
+  await frame.locator('#s-contact a[href^="tel:"]').first().click();
+  await expect(page).toHaveURL(new RegExp(`/b/${id}/site$`));
+});

@@ -28,13 +28,14 @@ import {
   Plus,
   Smartphone,
 } from 'lucide-react';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { Alert, Button, Field, Select, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { ImageField } from '../media/ImageField';
 import { useMediaMap } from '../media/api';
 import { siteBusinessInfo } from './api';
+import { EditablePreview } from './EditablePreview';
 import { PreviewFrame } from './PreviewFrame';
 import { PublishDialog } from './PublishDialog';
 import { VersionsDialog } from './VersionsDialog';
@@ -113,6 +114,24 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
       return { ...d, sections };
     });
   const current = draft.sections.find((s) => s.id === selected);
+  const select = useCallback((id: string) => {
+    setSelected(id);
+    setConfirmDelete(false);
+  }, []);
+  const moveById = (id: string, dir: -1 | 1) => {
+    const i = draft.sections.findIndex((s) => s.id === id);
+    if (i + dir >= 0 && i + dir < draft.sections.length) move(i, dir);
+  };
+  const insertAfter = (afterId: string, type: SectionType) => {
+    const s = newSection(type, newId());
+    setDraft((d) => {
+      const i = d.sections.findIndex((x) => x.id === afterId);
+      const sections = [...d.sections];
+      sections.splice(i + 1, 0, s);
+      return { ...d, sections };
+    });
+    select(s.id);
+  };
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'sections', label: 'מקטעים' },
@@ -293,6 +312,9 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                   aria-labelledby="tab-sections"
                   className="flex flex-col gap-4"
                 >
+                  <p className="rounded-2xl bg-brand-50 px-3 py-2.5 text-sm text-brand-800">
+                    אפשר ללחוץ על כל חלק באתר שבתצוגה המקדימה כדי לערוך, להזיז או להסתיר אותו.
+                  </p>
                   <ol aria-label="מקטעי האתר" className="flex flex-col gap-2">
                     {draft.sections.map((s, i) => (
                       <li
@@ -494,7 +516,9 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
 
         <section aria-label="תצוגה מקדימה" className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-ink-muted">תצוגה מקדימה</p>
+            <p className="text-sm font-medium text-ink-muted">
+              {editable ? 'תצוגה מקדימה · לחצו על חלק כדי לערוך' : 'תצוגה מקדימה'}
+            </p>
             <div
               role="group"
               aria-label="גודל מסך"
@@ -522,7 +546,20 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
             </div>
           </div>
           <div className="h-[70vh] min-h-[480px] lg:h-[calc(100vh-12rem)]">
-            <PreviewFrame html={html} title="תצוגה מקדימה של האתר" device={device} />
+            {editable ? (
+              <EditablePreview
+                html={html}
+                device={device}
+                sections={draft.sections}
+                selected={selected}
+                onSelect={select}
+                onMove={moveById}
+                onHide={(id) => updateSection(id, { visible: false })}
+                onInsert={insertAfter}
+              />
+            ) : (
+              <PreviewFrame html={html} title="תצוגה מקדימה של האתר" device={device} />
+            )}
           </div>
         </section>
       </div>
