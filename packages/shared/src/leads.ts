@@ -212,6 +212,8 @@ export const ACTIVITY_TYPES = [
   'lead.note',
   'task.created',
   'task.completed',
+  'appointment.created',
+  'appointment.updated',
 ] as const;
 
 export const activitySchema = z.object({

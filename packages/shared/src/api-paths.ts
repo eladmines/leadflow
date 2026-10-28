@@ -6,6 +6,7 @@ import { teamApiPaths } from './team';
 import { mediaApiPaths } from './media';
 import { tasksApiPaths } from './tasks';
 import { reportsApiPaths } from './reports';
+import { appointmentsApiPaths } from './appointments';
 
 export const API_PREFIX = '/api/v1';
 
@@ -22,4 +23,5 @@ export const apiPaths = {
   media: mediaApiPaths,
   tasks: tasksApiPaths,
   reports: reportsApiPaths,
+  appointments: appointmentsApiPaths,
 } as const;

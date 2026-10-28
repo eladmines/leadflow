@@ -11,3 +11,4 @@ export * from './team';
 export * from './media';
 export * from './tasks';
 export * from './reports';
+export * from './appointments';
