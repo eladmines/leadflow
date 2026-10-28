@@ -5,7 +5,7 @@ import {
   type Section,
   type SectionType,
 } from '@leadflow/shared';
-import { ArrowDown, ArrowUp, EyeOff, ImageIcon, Pencil, Plus } from 'lucide-react';
+import { ArrowDown, ArrowUp, EyeOff, ImageIcon, Plus, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { fieldLimit } from './fieldPath';
@@ -42,6 +42,8 @@ export function EditablePreview({
   onInsert,
   onText,
   onImage,
+  onItem,
+  onSettings,
 }: {
   html: string;
   device: 'desktop' | 'mobile';
@@ -53,6 +55,10 @@ export function EditablePreview({
   onInsert: (afterId: string, type: SectionType) => void;
   onText: (id: string, path: string, value: string) => void;
   onImage: (id: string, path: string) => void;
+  /** On-page list controls: add an item, move one, or delete it. */
+  onItem: (id: string, action: 'add' | 'up' | 'down' | 'del', index: number) => void;
+  /** Opens the section's settings panel. */
+  onSettings: (id: string) => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const scrollY = useRef(0);
@@ -61,13 +67,17 @@ export function EditablePreview({
   const [rects, setRects] = useState<Record<string, Rect>>({});
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [frozen, setFrozen] = useState<string | null>(null);
+  /** The page the iframe has finished loading (to tell when a re-render is on screen). */
+  const [loaded, setLoaded] = useState<string | null>(null);
   const htmlRef = useRef(html);
   htmlRef.current = html;
   const editing = useRef<{ el: HTMLElement; id: string; path: string; multi: boolean } | null>(
     null,
   );
-  const handlers = useRef({ onSelect, onText, onImage });
-  handlers.current = { onSelect, onText, onImage };
+  const handlers = useRef({ onSelect, onText, onImage, onItem, sections });
+  handlers.current = { onSelect, onText, onImage, onItem, sections };
+  /** A field to start typing in after the next reload (a just-added list item). */
+  const pendingFocus = useRef<string | null>(null);
 
   const measure = useCallback(() => {
     const d = frame.current?.contentDocument;
@@ -84,6 +94,7 @@ export function EditablePreview({
   const onLoad = () => {
     const d = frame.current?.contentDocument;
     if (!d) return;
+    setLoaded(frame.current?.getAttribute('srcdoc') ?? null);
     d.defaultView?.scrollTo({ top: scrollY.current, behavior: 'instant' });
     setDoc(d);
     measure();
@@ -107,8 +118,8 @@ export function EditablePreview({
       multi ? el.innerText.replace(/\n{3,}/g, '\n\n') : (el.textContent ?? '').replace(/\s+/g, ' ');
 
     // Pressing on a text makes it editable before the browser places the caret there.
-    const onDown = (e: Event) => {
-      const f = field('data-edit', e.target);
+    const onDown = (e: Event) => begin(field('data-edit', e.target));
+    const begin = (f: { el: HTMLElement; id: string; path: string } | null) => {
       if (!f || editing.current?.el === f.el) return;
       // Moving straight to another text: finish the previous one without unfreezing in between.
       const prev = editing.current;
@@ -128,6 +139,16 @@ export function EditablePreview({
     };
     const onClick = (e: Event) => {
       e.preventDefault(); // links (tel:, anchors) and the lead form are inert in the editor
+      const act = element(e.target)?.closest<HTMLElement>('[data-act]');
+      if (act) {
+        const [id = '', n] = (act.getAttribute('data-at') ?? '').split(':');
+        const action = act.getAttribute('data-act') as 'add' | 'up' | 'down' | 'del';
+        if (action === 'add') {
+          const s = handlers.current.sections.find((x) => x.id === id);
+          if (s && 'items' in s) pendingFocus.current = `${id}:items.${s.items.length}.`;
+        }
+        return handlers.current.onItem(id, action, n === undefined ? -1 : Number(n));
+      }
       const img = field('data-img', e.target);
       if (img) return handlers.current.onImage(img.id, img.path);
       const id = sectionId(e.target);
@@ -190,6 +211,16 @@ export function EditablePreview({
     doc.addEventListener('submit', onSubmit, true);
     win?.addEventListener('scroll', onScroll, { passive: true });
     win?.addEventListener('resize', measure);
+    // A list item was just added: start typing in its first field.
+    if (pendingFocus.current) {
+      const el = doc.querySelector<HTMLElement>(`[data-edit^="${pendingFocus.current}"]`);
+      pendingFocus.current = null;
+      if (el) {
+        el.scrollIntoView({ block: 'center' });
+        begin(field('data-edit', el));
+        el.focus();
+      }
+    }
     return () => {
       doc.removeEventListener('mousedown', onDown, true);
       doc.removeEventListener('mouseover', onOver);
@@ -254,6 +285,7 @@ export function EditablePreview({
           // Same-origin lets this page attach listeners and measure sections; no scripts run inside.
           sandbox="allow-same-origin"
           onLoad={onLoad}
+          data-ready={loaded === (frozen ?? html)}
           className="h-full w-full border-0"
         />
         {selected && rects[selected] && (
@@ -283,10 +315,10 @@ export function EditablePreview({
               <button
                 type="button"
                 className={toolBtn}
-                aria-label={`עריכת ${label(active)}`}
-                onClick={() => onSelect(active)}
+                aria-label={`הגדרות ${label(active)}`}
+                onClick={() => onSettings(active)}
               >
-                <Pencil aria-hidden className="h-4 w-4" />
+                <Settings2 aria-hidden className="h-4 w-4" />
               </button>
               {hasImage(active) && (
                 <button

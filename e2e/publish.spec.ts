@@ -39,6 +39,7 @@ const nextSave = (page: Page) =>
 test('publish a site, see it live, and keep draft edits private until republishing', async ({
   page,
   context,
+  isMobile,
 }) => {
   const { id, subdomain } = await ownerWithActiveBusiness(page);
   await page.goto(`/b/${id}/site`);
@@ -64,9 +65,19 @@ test('publish a site, see it live, and keep draft edits private until republishi
   await expect(visitor.locator('html')).toHaveAttribute('dir', 'rtl');
 
   // Edit the draft: the live site must not change (AC-03).
-  await page.getByRole('button', { name: /^כותרת ראשית/ }).click();
   const saved = nextSave(page);
-  await page.getByLabel('כותרת', { exact: true }).fill('שירן — עיצוב שיער');
+  if (isMobile) {
+    await page.getByRole('button', { name: /^כותרת ראשית/ }).click();
+    await page.getByLabel('כותרת', { exact: true }).fill('שירן — עיצוב שיער');
+  } else {
+    await page
+      .frameLocator('iframe[title="תצוגה מקדימה של האתר"]')
+      .locator('h1[data-edit]')
+      .click();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type('שירן — עיצוב שיער');
+    await page.keyboard.press('Enter');
+  }
   await saved;
   await expect(page.getByText('באוויר · יש שינויים שלא פורסמו')).toBeVisible();
   await visitor.reload();

@@ -1,6 +1,6 @@
 import { formatIsraeliPhone, industryLabels, WEEKDAYS, weekdayLabels } from './business';
 import { FORM_TOKEN_PLACEHOLDER, HONEYPOT_FIELD, LEAD_FORM_PATH } from './leads';
-import { FONTS, PALETTES, type Section, type SiteTheme } from './site';
+import { FONTS, PALETTES, SITE_LIMITS, type Section, type SiteTheme } from './site';
 import type { SiteBusinessInfo, SiteDraft } from './site-templates';
 
 /** Resolved image for rendering (built by the server from the business's own assets). */
@@ -110,11 +110,24 @@ interface Ctx {
 }
 
 /** Editor-only attribute naming the draft field an element shows. Never in published HTML. */
-const ea = (c: Ctx, sid: string, path: string, multi = false) =>
-  c.editor ? ` data-edit="${esc(sid)}:${path}"${multi ? ' data-multi' : ''}` : '';
+const ea = (c: Ctx, sid: string, path: string, multi = false, ph = '') =>
+  c.editor
+    ? ` data-edit="${esc(sid)}:${path}"${multi ? ' data-multi' : ''}${ph ? ` data-ph="${esc(ph)}"` : ''}`
+    : '';
 /** Text that sits next to other content (button labels, names): wrapped only in the editor. */
-const et = (c: Ctx, sid: string, path: string, text: string) =>
-  c.editor ? `<span${ea(c, sid, path)}>${esc(text)}</span>` : esc(text);
+const et = (c: Ctx, sid: string, path: string, text: string, ph = '') =>
+  c.editor ? `<span${ea(c, sid, path, false, ph)}>${esc(text)}</span>` : esc(text);
+/** Editor-only controls for one list item: move and delete (handled by the editor page). */
+const itemTools = (c: Ctx, sid: string, n: number, count: number) =>
+  c.editor
+    ? `<span class="ed-item">${n > 0 ? `<button type="button" data-act="up" data-at="${esc(sid)}:${n}" title="הזזה אחורה">↑</button>` : ''}${n < count - 1 ? `<button type="button" data-act="down" data-at="${esc(sid)}:${n}" title="הזזה קדימה">↓</button>` : ''}<button type="button" data-act="del" data-at="${esc(sid)}:${n}" title="מחיקה">✕</button></span>`
+    : '';
+const itemAttr = (c: Ctx) => (c.editor ? ' data-i' : '');
+/** Editor-only "add an item" button at the end of a list. */
+const addItem = (c: Ctx, sid: string, count: number, label: string) =>
+  c.editor && count < SITE_LIMITS.items
+    ? `<button type="button" class="ed-add" data-act="add" data-at="${esc(sid)}">+ ${esc(label)}</button>`
+    : '';
 const ei = (c: Ctx, sid: string, path: string) =>
   c.editor ? ` data-img="${esc(sid)}:${path}"` : '';
 
@@ -125,7 +138,7 @@ const heading = (
   titleAttr = '',
   subAttr = '',
 ) =>
-  `<div class="head">${eyebrow ? `<span class="eyebrow">${esc(eyebrow)}</span>` : ''}<h2${titleAttr}>${esc(title)}</h2>${sub ? `<p class="lead"${subAttr}>${esc(sub)}</p>` : ''}</div>`;
+  `<div class="head">${eyebrow ? `<span class="eyebrow">${esc(eyebrow)}</span>` : ''}<h2${titleAttr}>${esc(title)}</h2>${sub !== undefined ? `<p class="lead"${subAttr}>${esc(sub)}</p>` : ''}</div>`;
 
 /** Hours line with times kept left-to-right. */
 const hoursHtml = (line: string) => {
@@ -160,7 +173,7 @@ function hero(s: Extract<Section, { type: 'hero' }>, id: string, c: Ctx): string
   const bg = s.imageAssetId ? c.media[s.imageAssetId] : undefined;
 
   const text = `<div class="hero-text">${industry ? `<span class="eyebrow">${esc(industry)}</span>` : ''}
-<h1${ea(c, s.id, 'title')}>${esc(s.title)}</h1>${s.subtitle ? `<p class="lead"${ea(c, s.id, 'subtitle', true)}>${esc(s.subtitle)}</p>` : ''}
+<h1${ea(c, s.id, 'title')}>${esc(s.title)}</h1>${s.subtitle || c.editor ? `<p class="lead"${ea(c, s.id, 'subtitle', true, 'משפט פתיחה')}>${esc(s.subtitle)}</p>` : ''}
 <div class="actions">${s.buttonLabel && primaryHref ? `<a class="btn" href="${primaryHref}">${et(c, s.id, 'buttonLabel', s.buttonLabel)}${icon('arrow')}</a>` : ''}${secondary}</div>
 ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`;
 
@@ -219,41 +232,41 @@ function section(s: Section, c: Ctx, alt: boolean): string {
       return `<section id="${id}"${cls}><div class="wrap">${heading('שירותים', s.title, undefined, ea(c, s.id, 'title'))}<div class="grid services">${s.items
         .map(
           (i, n) =>
-            `<article class="card service"><span class="tile">${icon('check')}</span><span class="num" aria-hidden="true">${String(n + 1).padStart(2, '0')}</span><h3${ea(c, s.id, `items.${n}.name`)}>${esc(i.name)}</h3>${i.description ? `<p${ea(c, s.id, `items.${n}.description`, true)}>${esc(i.description)}</p>` : ''}</article>`,
+            `<article class="card service"${itemAttr(c)}>${itemTools(c, s.id, n, s.items.length)}<span class="tile">${icon('check')}</span><span class="num" aria-hidden="true">${String(n + 1).padStart(2, '0')}</span><h3${ea(c, s.id, `items.${n}.name`, false, 'שם השירות')}>${esc(i.name)}</h3>${i.description || c.editor ? `<p${ea(c, s.id, `items.${n}.description`, true, 'תיאור קצר')}>${esc(i.description)}</p>` : ''}</article>`,
         )
-        .join('')}</div></div></section>`;
+        .join('')}${addItem(c, s.id, s.items.length, 'הוספת שירות')}</div></div></section>`;
     case 'pricing':
       return `<section id="${id}"${cls}><div class="wrap narrow">${heading('מחירון', s.title, undefined, ea(c, s.id, 'title'))}<div class="card price-card"><ul class="prices">${s.items
         .map(
           (i, n) =>
-            `<li><span${ea(c, s.id, `items.${n}.name`)}>${esc(i.name)}</span><span class="dots"></span><bdi${ea(c, s.id, `items.${n}.price`)}>${esc(i.price)}</bdi></li>`,
+            `<li${itemAttr(c)}><span${ea(c, s.id, `items.${n}.name`, false, 'שירות')}>${esc(i.name)}</span><span class="dots"></span><bdi${ea(c, s.id, `items.${n}.price`, false, '₪')}>${esc(i.price)}</bdi>${itemTools(c, s.id, n, s.items.length)}</li>`,
         )
         .join(
           '',
-        )}</ul>${s.note ? `<p class="note"${ea(c, s.id, 'note', true)}>${esc(s.note)}</p>` : ''}</div></div></section>`;
+        )}</ul>${addItem(c, s.id, s.items.length, 'הוספת שורה')}${s.note || c.editor ? `<p class="note"${ea(c, s.id, 'note', true, 'הערה מתחת למחירון (לא חובה)')}>${esc(s.note)}</p>` : ''}</div></div></section>`;
     case 'testimonials': {
-      const items = s.items.map((i, n) => ({ ...i, n })).filter((i) => i.quote);
-      if (items.length === 0) return '';
+      const items = s.items.map((i, n) => ({ ...i, n })).filter((i) => i.quote || c.editor);
+      if (items.length === 0 && !c.editor) return '';
       return `<section id="${id}"${cls}><div class="wrap">${heading('המלצות', s.title, undefined, ea(c, s.id, 'title'))}<div class="grid">${items
         .map(
           (i) =>
-            `<figure class="card quote"><span class="qmark" aria-hidden="true">”</span><blockquote${ea(c, s.id, `items.${i.n}.quote`, true)}>${esc(i.quote)}</blockquote>${
-              i.author
-                ? `<figcaption><span class="avatar" aria-hidden="true">${esc(i.author.trim().charAt(0))}</span>${et(c, s.id, `items.${i.n}.author`, i.author)}</figcaption>`
+            `<figure class="card quote"${itemAttr(c)}>${itemTools(c, s.id, i.n, s.items.length)}<span class="qmark" aria-hidden="true">”</span><blockquote${ea(c, s.id, `items.${i.n}.quote`, true, 'מה הלקוח/ה כתב/ה')}>${esc(i.quote)}</blockquote>${
+              i.author || c.editor
+                ? `<figcaption><span class="avatar" aria-hidden="true">${esc(i.author.trim().charAt(0))}</span>${et(c, s.id, `items.${i.n}.author`, i.author, 'שם')}</figcaption>`
                 : ''
             }</figure>`,
         )
-        .join('')}</div></div></section>`;
+        .join('')}${addItem(c, s.id, s.items.length, 'הוספת המלצה')}</div></div></section>`;
     }
     case 'faq':
       return `<section id="${id}"${cls}><div class="wrap narrow">${heading('שאלות נפוצות', s.title, undefined, ea(c, s.id, 'title'))}<div class="faq">${s.items
         .map((i, n) => ({ ...i, n }))
-        .filter((i) => i.question)
+        .filter((i) => i.question || c.editor)
         .map(
           (i, k) =>
-            `<details${k === 0 || c.editor ? ' open' : ''}><summary>${et(c, s.id, `items.${i.n}.question`, i.question)}</summary><p${ea(c, s.id, `items.${i.n}.answer`, true)}>${esc(i.answer)}</p></details>`,
+            `<details${k === 0 || c.editor ? ' open' : ''}${itemAttr(c)}>${itemTools(c, s.id, i.n, s.items.length)}<summary>${et(c, s.id, `items.${i.n}.question`, i.question, 'שאלה')}</summary><p${ea(c, s.id, `items.${i.n}.answer`, true, 'תשובה')}>${esc(i.answer)}</p></details>`,
         )
-        .join('')}</div></div></section>`;
+        .join('')}${addItem(c, s.id, s.items.length, 'הוספת שאלה')}</div></div></section>`;
     case 'contact': {
       const rows: string[] = [];
       if (s.showPhone && b.phone) {
@@ -279,12 +292,12 @@ function section(s: Section, c: Ctx, alt: boolean): string {
             }).join('')}</table>`
           : '';
       const form = s.form.enabled ? `<div class="form-wrap">${leadForm(s, b)}</div>` : '';
-      return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading('צור קשר', s.title, s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true))}
+      return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading('צור קשר', s.title, c.editor ? s.subtitle : s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true, 'משפט פתיחה (לא חובה)'))}
 <div class="contact-grid"><div class="contact-info">${rows.length ? `<ul class="info">${rows.join('')}</ul>` : ''}${hours}</div>${form}</div></div></section>`;
     }
     case 'cta': {
       const href = b.phone ? telHref(b.phone) : contactId ? `#s-${esc(contactId)}` : '';
-      return `<section id="${id}" class="cta-wrap"><div class="wrap"><div class="cta"><div><h2${ea(c, s.id, 'title')}>${esc(s.title)}</h2>${s.subtitle ? `<p${ea(c, s.id, 'subtitle', true)}>${esc(s.subtitle)}</p>` : ''}</div>${s.buttonLabel && href ? `<a class="btn light" href="${href}">${b.phone ? icon('phone') : ''}${et(c, s.id, 'buttonLabel', s.buttonLabel)}</a>` : ''}</div></div></section>`;
+      return `<section id="${id}" class="cta-wrap"><div class="wrap"><div class="cta"><div><h2${ea(c, s.id, 'title')}>${esc(s.title)}</h2>${s.subtitle || c.editor ? `<p${ea(c, s.id, 'subtitle', true, 'טקסט (לא חובה)')}>${esc(s.subtitle)}</p>` : ''}</div>${s.buttonLabel && href ? `<a class="btn light" href="${href}">${b.phone ? icon('phone') : ''}${et(c, s.id, 'buttonLabel', s.buttonLabel)}</a>` : ''}</div></div></section>`;
     }
   }
 }
@@ -448,6 +461,16 @@ const EDITOR_STYLE = `<style>
 [data-edit]:hover{outline-color:rgba(44,131,125,.6)}
 [data-edit][contenteditable]{outline:2px solid #2c837d;background:rgba(44,131,125,.08)}
 [data-img]{cursor:pointer;transition:filter .15s}[data-img]:hover{filter:brightness(.85);outline:3px solid #2c837d;outline-offset:-3px}
+[data-ph]:empty{min-height:1.5em;min-width:3em}[data-ph]:empty::before{content:attr(data-ph);color:#9aa3ad;font-weight:400}
+[data-i]{position:relative}
+.ed-item{position:absolute;top:8px;inset-inline-end:8px;z-index:3;display:flex;gap:4px;opacity:0;pointer-events:none;transition:opacity .15s}
+[data-i]:hover>.ed-item,[data-i]:focus-within>.ed-item{opacity:1;pointer-events:auto}
+.service:hover{transform:none}
+.ed-item button{width:28px;height:28px;border-radius:8px;border:0;background:#18202a;color:#fff;font:600 13px/1 system-ui;cursor:pointer;opacity:.85}
+.ed-item button:hover{opacity:1}.ed-item button[data-act=del]:hover{background:#c0392b}
+.prices li .ed-item{top:50%;transform:translateY(-50%);inset-inline-end:-40px}
+.ed-add{display:flex;align-items:center;justify-content:center;min-height:56px;width:100%;margin-top:12px;border:2px dashed #b9c3c9;border-radius:18px;background:transparent;color:#2c837d;font:600 15px system-ui;cursor:pointer}
+.grid>.ed-add{margin-top:0;min-height:120px}.ed-add:hover{background:rgba(44,131,125,.06);border-color:#2c837d}
 </style>`;
 
 export function renderSitePage(

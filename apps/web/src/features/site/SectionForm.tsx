@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { HERO_ACTIONS, heroActionLabels, SITE_LIMITS, type Section } from '@leadflow/shared';
 import { Checkbox, Field, Select, Textarea } from '../../components/ui';
 import { GalleryEditor } from '../media/GalleryEditor';
@@ -5,6 +6,20 @@ import { ImageField } from '../media/ImageField';
 import { ItemsEditor } from './ItemsEditor';
 
 type Patch = (patch: Partial<Section>) => void;
+
+/** Texts are typed directly on the page on desktop (D-072); phones keep them in the form. */
+function Txt({ children }: { children: ReactNode }) {
+  return <div className="contents lg:hidden">{children}</div>;
+}
+
+function OnPageNote() {
+  return (
+    <p className="hidden rounded-xl bg-brand-50 px-3 py-2.5 text-sm text-brand-800 lg:block">
+      את הטקסטים והפריטים עורכים ישירות על האתר: לחצו על טקסט כדי לשנות אותו, או על ״+ הוספה״ כדי
+      להוסיף פריט.
+    </p>
+  );
+}
 
 const titleField = (s: Section, update: Patch) => (
   <Field
@@ -21,19 +36,24 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
     case 'hero':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <Textarea
-            label="משפט פתיחה"
-            maxLength={SITE_LIMITS.shortText}
-            value={s.subtitle}
-            onChange={(e) => onChange({ subtitle: e.target.value })}
-          />
-          <Field
-            label="טקסט הכפתור"
-            maxLength={40}
-            value={s.buttonLabel}
-            onChange={(e) => onChange({ buttonLabel: e.target.value })}
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <Textarea
+              label="משפט פתיחה"
+              maxLength={SITE_LIMITS.shortText}
+              value={s.subtitle}
+              onChange={(e) => onChange({ subtitle: e.target.value })}
+            />
+          </Txt>
+          <Txt>
+            <Field
+              label="טקסט הכפתור"
+              maxLength={40}
+              value={s.buttonLabel}
+              onChange={(e) => onChange({ buttonLabel: e.target.value })}
+            />
+          </Txt>
           <Select
             label="מה קורה בלחיצה על הכפתור"
             options={HERO_ACTIONS.map((a) => ({ value: a, label: heroActionLabels[a] }))}
@@ -53,15 +73,18 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
     case 'about':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <Textarea
-            label="טקסט"
-            rows={8}
-            maxLength={SITE_LIMITS.body}
-            hint="שורה ריקה יוצרת פסקה חדשה"
-            value={s.body}
-            onChange={(e) => onChange({ body: e.target.value })}
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <Textarea
+              label="טקסט"
+              rows={8}
+              maxLength={SITE_LIMITS.body}
+              hint="שורה ריקה יוצרת פסקה חדשה"
+              value={s.body}
+              onChange={(e) => onChange({ body: e.target.value })}
+            />
+          </Txt>
           <ImageField
             label="תמונה"
             value={s.imageAssetId}
@@ -81,94 +104,112 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
     case 'gallery':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
           <GalleryEditor items={s.items} onChange={(items) => onChange({ items })} />
         </div>
       );
     case 'services':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <ItemsEditor
-            items={s.items}
-            fields={[
-              { key: 'name', label: 'שם השירות' },
-              { key: 'description', label: 'תיאור קצר', multiline: true },
-            ]}
-            onChange={(items) => onChange({ items } as Partial<Section>)}
-            newItem={() => ({ name: '', description: '' })}
-            itemName={(n) => `שירות ${n}`}
-            addLabel="הוספת שירות"
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <ItemsEditor
+              items={s.items}
+              fields={[
+                { key: 'name', label: 'שם השירות' },
+                { key: 'description', label: 'תיאור קצר', multiline: true },
+              ]}
+              onChange={(items) => onChange({ items } as Partial<Section>)}
+              newItem={() => ({ name: '', description: '' })}
+              itemName={(n) => `שירות ${n}`}
+              addLabel="הוספת שירות"
+            />
+          </Txt>
         </div>
       );
     case 'pricing':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <ItemsEditor
-            items={s.items}
-            fields={[
-              { key: 'name', label: 'שירות' },
-              { key: 'price', label: 'מחיר', placeholder: '₪150', maxLength: SITE_LIMITS.price },
-            ]}
-            onChange={(items) => onChange({ items } as Partial<Section>)}
-            newItem={() => ({ name: '', price: '' })}
-            itemName={(n) => `שורה ${n}`}
-            addLabel="הוספת שורה"
-          />
-          <Textarea
-            label="הערה מתחת למחירון"
-            maxLength={SITE_LIMITS.shortText}
-            value={s.note}
-            onChange={(e) => onChange({ note: e.target.value })}
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <ItemsEditor
+              items={s.items}
+              fields={[
+                { key: 'name', label: 'שירות' },
+                { key: 'price', label: 'מחיר', placeholder: '₪150', maxLength: SITE_LIMITS.price },
+              ]}
+              onChange={(items) => onChange({ items } as Partial<Section>)}
+              newItem={() => ({ name: '', price: '' })}
+              itemName={(n) => `שורה ${n}`}
+              addLabel="הוספת שורה"
+            />
+          </Txt>
+          <Txt>
+            <Textarea
+              label="הערה מתחת למחירון"
+              maxLength={SITE_LIMITS.shortText}
+              value={s.note}
+              onChange={(e) => onChange({ note: e.target.value })}
+            />
+          </Txt>
         </div>
       );
     case 'testimonials':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <ItemsEditor
-            items={s.items}
-            fields={[
-              { key: 'quote', label: 'ההמלצה', multiline: true },
-              { key: 'author', label: 'שם הממליץ/ה', maxLength: 80 },
-            ]}
-            onChange={(items) => onChange({ items } as Partial<Section>)}
-            newItem={() => ({ quote: '', author: '' })}
-            itemName={(n) => `המלצה ${n}`}
-            addLabel="הוספת המלצה"
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <ItemsEditor
+              items={s.items}
+              fields={[
+                { key: 'quote', label: 'ההמלצה', multiline: true },
+                { key: 'author', label: 'שם הממליץ/ה', maxLength: 80 },
+              ]}
+              onChange={(items) => onChange({ items } as Partial<Section>)}
+              newItem={() => ({ quote: '', author: '' })}
+              itemName={(n) => `המלצה ${n}`}
+              addLabel="הוספת המלצה"
+            />
+          </Txt>
         </div>
       );
     case 'faq':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <ItemsEditor
-            items={s.items}
-            fields={[
-              { key: 'question', label: 'שאלה' },
-              { key: 'answer', label: 'תשובה', multiline: true },
-            ]}
-            onChange={(items) => onChange({ items } as Partial<Section>)}
-            newItem={() => ({ question: '', answer: '' })}
-            itemName={(n) => `שאלה ${n}`}
-            addLabel="הוספת שאלה"
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <ItemsEditor
+              items={s.items}
+              fields={[
+                { key: 'question', label: 'שאלה' },
+                { key: 'answer', label: 'תשובה', multiline: true },
+              ]}
+              onChange={(items) => onChange({ items } as Partial<Section>)}
+              newItem={() => ({ question: '', answer: '' })}
+              itemName={(n) => `שאלה ${n}`}
+              addLabel="הוספת שאלה"
+            />
+          </Txt>
         </div>
       );
     case 'contact':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <Textarea
-            label="משפט פתיחה"
-            maxLength={SITE_LIMITS.shortText}
-            value={s.subtitle}
-            onChange={(e) => onChange({ subtitle: e.target.value })}
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <Textarea
+              label="משפט פתיחה"
+              maxLength={SITE_LIMITS.shortText}
+              value={s.subtitle}
+              onChange={(e) => onChange({ subtitle: e.target.value })}
+            />
+          </Txt>
           <p className="text-xs text-ink-muted">הפרטים נלקחים מהגדרות העסק ומתעדכנים אוטומטית.</p>
           <Checkbox
             label="הצגת טלפון"
@@ -230,20 +271,25 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
     case 'cta':
       return (
         <div className="flex flex-col gap-4">
-          {titleField(s, onChange)}
-          <Textarea
-            label="טקסט"
-            maxLength={SITE_LIMITS.shortText}
-            value={s.subtitle}
-            onChange={(e) => onChange({ subtitle: e.target.value })}
-          />
-          <Field
-            label="טקסט הכפתור"
-            maxLength={40}
-            value={s.buttonLabel}
-            hint="הכפתור מחייג לעסק"
-            onChange={(e) => onChange({ buttonLabel: e.target.value })}
-          />
+          <OnPageNote />
+          <Txt>{titleField(s, onChange)}</Txt>
+          <Txt>
+            <Textarea
+              label="טקסט"
+              maxLength={SITE_LIMITS.shortText}
+              value={s.subtitle}
+              onChange={(e) => onChange({ subtitle: e.target.value })}
+            />
+          </Txt>
+          <Txt>
+            <Field
+              label="טקסט הכפתור"
+              maxLength={40}
+              value={s.buttonLabel}
+              hint="הכפתור מחייג לעסק"
+              onChange={(e) => onChange({ buttonLabel: e.target.value })}
+            />
+          </Txt>
         </div>
       );
   }
