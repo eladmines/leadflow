@@ -132,6 +132,18 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => ({ lead: await service.update(tenantOf(req), req.params.leadId, req.body) }),
   );
 
+  app.delete(
+    '/leads/:leadId',
+    {
+      preValidation: requirePermission('leads.delete'),
+      schema: { params: leadParams },
+    },
+    async (req, reply) => {
+      await service.remove(tenantOf(req), req.params.leadId);
+      return reply.status(204).send();
+    },
+  );
+
   app.post(
     '/leads/:leadId/notes',
     {

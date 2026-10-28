@@ -7,6 +7,7 @@ import {
   json,
   me,
   mockApi,
+  noContent,
   renderApp,
   testBusiness,
   testStages,
@@ -257,6 +258,38 @@ describe('lead page', () => {
     renderApp(`${leadsPath}/${lead().id}`);
     expect(await screen.findByRole('heading', { name: 'דנה כהן', level: 1 })).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'אחראי' })).not.toBeInTheDocument();
+  });
+
+  it('the owner deletes a lead after confirming and returns to the list', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.detail(id, lead().id)}`]: () => json(200, detail),
+      [`DELETE ${lp.detail(id, lead().id)}`]: () => noContent(),
+    });
+    const { user } = renderApp(`${leadsPath}/${lead().id}`);
+    await user.click(await screen.findByRole('button', { name: 'מחיקת הליד' }));
+    const dialog = screen.getByRole('dialog', { name: 'למחוק את הליד של דנה כהן?' });
+    await user.click(within(dialog).getByRole('button', { name: 'ביטול' }));
+    expect(callsTo(fetchMock, 'DELETE', lp.detail(id, lead().id))).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'מחיקת הליד' }));
+    await user.click(screen.getByRole('button', { name: 'מחיקה לצמיתות' }));
+    expect(await screen.findByRole('button', { name: 'ליד חדש' })).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'DELETE', lp.detail(id, lead().id))).toHaveLength(1);
+  });
+
+  it('managers do not get a delete button', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${apiPaths.businesses.detail(id)}`]: () =>
+        json(200, { business: { ...testBusiness, role: 'MANAGER' } }),
+      [`GET ${lp.detail(id, lead().id)}`]: () => json(200, detail),
+    });
+    renderApp(`${leadsPath}/${lead().id}`);
+    await screen.findByRole('heading', { name: 'דנה כהן', level: 1 });
+    expect(screen.queryByRole('button', { name: 'מחיקת הליד' })).not.toBeInTheDocument();
   });
 
   it('shows "not found" for a lead outside the user\'s view (API 404)', async () => {

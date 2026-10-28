@@ -9,11 +9,20 @@ import {
   type Lead,
 } from '@leadflow/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, Mail, MessageSquareText, Phone } from 'lucide-react';
+import { ArrowRight, Mail, MessageSquareText, Phone, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
-import { Alert, Button, Card, EmptyState, Field, Spinner, Textarea } from '../../components/ui';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  Alert,
+  Button,
+  Card,
+  DialogShell,
+  EmptyState,
+  Field,
+  Spinner,
+  Textarea,
+} from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
 import { ApiError } from '../../lib/api';
@@ -25,6 +34,7 @@ import {
   shekel,
   timeAgo,
   useAddNote,
+  useDeleteLead,
   useLeadDetail,
   usePipeline,
   useUpdateLead,
@@ -328,6 +338,51 @@ export function LeadDetailPage() {
           <LeadTasks leadId={lead.id} />
         </div>
       </div>
+      {can(business.role, 'leads.delete') && <DeleteLead lead={lead} />}
+    </>
+  );
+}
+
+function DeleteLead({ lead }: { lead: Lead }) {
+  const business = useCurrentBusiness();
+  const remove = useDeleteLead(business.id);
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const confirm = async () => {
+    await remove.mutateAsync(lead.id);
+    navigate(businessWebPaths.section(business.id, 'leads'), { replace: true });
+  };
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="self-start text-danger-600"
+        onClick={() => setOpen(true)}
+      >
+        <Trash2 aria-hidden className="h-4 w-4" />
+        מחיקת הליד
+      </Button>
+      <DialogShell
+        open={open}
+        onOpenChange={setOpen}
+        title={`למחוק את הליד של ${lead.contact.name}?`}
+      >
+        <p className="text-sm text-ink-muted">
+          הפנייה, ההערות וההיסטוריה שלה יימחקו לצמיתות. משימות שקשורות לליד יישארו, בלי הקישור. אם
+          אין לאיש הקשר פניות נוספות, גם פרטיו יימחקו. אי אפשר לבטל את הפעולה.
+        </p>
+        {remove.isError && <Alert tone="danger">{errorMessage(remove.error)}</Alert>}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            ביטול
+          </Button>
+          <Button variant="danger" loading={remove.isPending} onClick={() => void confirm()}>
+            מחיקה לצמיתות
+          </Button>
+        </div>
+      </DialogShell>
     </>
   );
 }

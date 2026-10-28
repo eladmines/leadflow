@@ -441,6 +441,27 @@ export class LeadService {
   }
 
   /**
+   * Deletes a lead with its history and form submission. Linked tasks stay, unlinked. The contact
+   * goes too when no other lead uses it, so a deletion request leaves no personal data behind.
+   */
+  async remove(ctx: TenantContext, leadId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const lead = await this.findVisible(ctx, leadId, tx);
+      await tx.lead.delete({ where: { id: lead.id } });
+      const contactRemoved = (await tx.lead.count({ where: { contactId: lead.contactId } })) === 0;
+      if (contactRemoved) await tx.contact.delete({ where: { id: lead.contactId } });
+      await recordAudit(tx, {
+        action: 'lead.deleted',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'lead',
+        entityId: lead.id,
+        metadata: { contactRemoved },
+      });
+    });
+  }
+
+  /**
    * Existing contacts with this phone or email (duplicate warning before creating a lead).
    * Only for members who can see all leads; employees get an empty list (the server still reuses
    * the contact), so the check can't be used to discover other people's leads.

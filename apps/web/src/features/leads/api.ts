@@ -103,6 +103,20 @@ export function useUpdateLead(businessId: string) {
   });
 }
 
+/** Deletes a lead for good (owner only). Tasks linked to it lose the link, so refresh them too. */
+export function useDeleteLead(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (leadId: string) =>
+      apiFetch<void>(lp.detail(businessId, leadId), { method: 'DELETE' }),
+    onSuccess: (_data, leadId) => {
+      queryClient.removeQueries({ queryKey: leadDetailKey(businessId, leadId) });
+      void queryClient.invalidateQueries({ queryKey: leadsQueryKey(businessId) });
+      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'tasks'] });
+    },
+  });
+}
+
 export function useAddNote(businessId: string, leadId: string) {
   const queryClient = useQueryClient();
   return useMutation({
