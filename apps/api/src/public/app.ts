@@ -280,7 +280,12 @@ export async function buildPublicApp({
     log: { error: (obj: object, msg: string) => void },
   ) {
     const team = await prisma.membership.findMany({
-      where: { businessId, status: 'ACTIVE', role: { in: ['OWNER', 'MANAGER'] } },
+      where: {
+        businessId,
+        status: 'ACTIVE',
+        role: { in: ['OWNER', 'MANAGER'] },
+        notifyNewLeads: true,
+      },
       select: { user: { select: { email: true, status: true } } },
     });
     const mail = newLeadTemplate({
@@ -290,6 +295,7 @@ export async function buildPublicApp({
       email: d.email,
       message: d.message,
       link: `${config.APP_URL}/b/${businessId}/leads`,
+      settingsLink: `${config.APP_URL}/b/${businessId}/account`,
     });
     for (const { user } of team) {
       if (user.status !== 'ACTIVE') continue;

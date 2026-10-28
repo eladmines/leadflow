@@ -93,6 +93,8 @@ export function mockApi(routes: Record<string, Handler>) {
       json(200, { business: testBusiness }),
     [`GET ${apiPaths.site.site(testBusiness.id)}`]: () => json(200, { site: null }),
     [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [] }),
+    [`GET ${apiPaths.businesses.notifications(testBusiness.id)}`]: () =>
+      json(200, { prefs: { newLeadEmail: true } }),
     [`GET ${apiPaths.leads.tags(testBusiness.id)}`]: () => json(200, { tags: [] }),
     [`GET ${apiPaths.leads.pipeline(testBusiness.id)}`]: () => json(200, { stages: testStages }),
     [`GET ${apiPaths.tasks.list(testBusiness.id)}`]: () => json(200, { tasks: [] }),

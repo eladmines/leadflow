@@ -78,4 +78,30 @@ describe('account page', () => {
       }),
     );
   });
+
+  it('owners and managers can turn off new-lead emails', async () => {
+    const notif = apiPaths.businesses.notifications(testBusiness.id);
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`PUT ${notif}`]: () => json(200, { prefs: { newLeadEmail: false } }),
+    });
+    const { user } = renderApp(path);
+    const box = await screen.findByRole('checkbox', { name: 'מייל על כל פנייה חדשה מהאתר' });
+    expect(box).toBeChecked();
+    await user.click(box);
+    await waitFor(() => expect(box).not.toBeChecked());
+    expect(callsTo(fetchMock, 'PUT', notif)).toEqual([{ newLeadEmail: false }]);
+    expect(screen.getByText('ההעדפה נשמרה')).toBeInTheDocument();
+  });
+
+  it('employees do not see the new-lead email option', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+        json(200, { business: { ...testBusiness, role: 'EMPLOYEE' } }),
+    });
+    renderApp(path);
+    await screen.findByRole('heading', { name: 'פרטים אישיים' });
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
 });

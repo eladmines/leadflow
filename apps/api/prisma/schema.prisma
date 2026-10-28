@@ -170,6 +170,8 @@ model Membership {
   role       MembershipRole
   status     MembershipStatus @default(ACTIVE)
   invitedAt  DateTime?        @map("invited_at") @db.Timestamptz(3)
+  /// Email on new website leads (owners/managers receive them; each can opt out).
+  notifyNewLeads Boolean      @default(true) @map("notify_new_leads")
   createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
