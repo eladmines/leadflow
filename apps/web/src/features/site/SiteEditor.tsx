@@ -2,7 +2,9 @@ import {
   can,
   FONT_KEYS,
   FONTS,
+  newPage,
   newSection,
+  type PagePresetKey,
   PALETTE_KEYS,
   PALETTES,
   renderSitePage,
@@ -40,6 +42,8 @@ import { siteBusinessInfo } from './api';
 import { useServices } from '../appointments/api';
 import { EditablePreview } from './EditablePreview';
 import { setSectionField } from './fieldPath';
+import { onAllPages, onPage, sectionsOf, type PageId } from './pages';
+import { PagesBar } from './PagesBar';
 import { BusinessDetailsDialog } from './BusinessDetailsDialog';
 import { MediaPicker } from '../media/MediaPicker';
 import { PreviewFrame } from './PreviewFrame';
@@ -91,8 +95,11 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
       theme: site.theme,
       seo: site.seo,
       sections: site.sections,
+      pages: site.pages,
     },
   );
+  // The page being edited: '' = home, otherwise an extra page's id (D-081).
+  const [pageId, setPageId] = useState<PageId>('');
   const { state, retry, revision } = useDraftAutosave(business.id, site, draft);
   const live = site.published;
   const unpublishedChanges = live !== null && (live.revision !== revision() || state !== 'saved');
@@ -117,30 +124,73 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   const deferred = useDeferredValue(draft);
   const media = useMediaMap(business.id);
   const html = useMemo(
-    () => renderSitePage(deferred, info, media, { editor: editable }),
-    [deferred, info, media, editable],
+    () =>
+      renderSitePage(deferred, info, media, {
+        editor: editable,
+        page: deferred.pages.find((p) => p.id === pageId)?.slug,
+      }),
+    [deferred, info, media, editable, pageId],
   );
+  const sections = sectionsOf(draft, pageId);
+  const currentPage = draft.pages.find((p) => p.id === pageId);
+  /** Google title/description of the page being edited. */
+  const seo = currentPage ? currentPage.seo : draft.seo;
+  const setSeo = (patch: Partial<Draft['seo']>) =>
+    setDraft((d) =>
+      currentPage
+        ? {
+            ...d,
+            pages: d.pages.map((p) =>
+              p.id === pageId ? { ...p, seo: { ...p.seo, ...patch } } : p,
+            ),
+          }
+        : { ...d, seo: { ...d.seo, ...patch } },
+    );
+  const setSections = (fn: (s: Section[]) => Section[]) => setDraft((d) => onPage(d, pageId, fn));
+  const goToPage = (id: PageId) => {
+    setPageId(id);
+    setSelected(null);
+    setConfirmDelete(false);
+  };
+  /** Links clicked in the preview (`/about`, `/`) switch the page being edited. */
+  const navigate = useCallback(
+    (slug: string) => {
+      const target = draft.pages.find((p) => p.slug === slug);
+      goToPage(target?.id ?? '');
+    },
+    [draft.pages],
+  );
+  const addPage = (preset: PagePresetKey) => {
+    const page = newPage(
+      preset,
+      newId(),
+      newId,
+      draft.pages.map((p) => p.slug),
+      draft.sections,
+    );
+    setDraft((d) => ({ ...d, pages: [...d.pages, page] }));
+    goToPage(page.id);
+  };
 
   const update = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const updateSection = (id: string, patch: Partial<Section>) =>
-    setDraft((d) => ({
-      ...d,
-      sections: d.sections.map((s) => (s.id === id ? ({ ...s, ...patch } as Section) : s)),
-    }));
+    setDraft((d) =>
+      onAllPages(d, (ss) => ss.map((s) => (s.id === id ? ({ ...s, ...patch } as Section) : s))),
+    );
   const move = (i: number, dir: -1 | 1) =>
-    setDraft((d) => {
-      const sections = [...d.sections];
-      [sections[i], sections[i + dir]] = [sections[i + dir]!, sections[i]!];
-      return { ...d, sections };
+    setSections((ss) => {
+      const next = [...ss];
+      [next[i], next[i + dir]] = [next[i + dir]!, next[i]!];
+      return next;
     });
-  const current = draft.sections.find((s) => s.id === selected);
+  const current = sections.find((s) => s.id === selected);
   const select = useCallback((id: string) => {
     setSelected(id);
     setConfirmDelete(false);
   }, []);
   const moveById = (id: string, dir: -1 | 1) => {
-    const i = draft.sections.findIndex((s) => s.id === id);
-    if (i + dir >= 0 && i + dir < draft.sections.length) move(i, dir);
+    const i = sections.findIndex((s) => s.id === id);
+    if (i + dir >= 0 && i + dir < sections.length) move(i, dir);
   };
   const setField = useCallback(
     (id: string, path: string, value: string | null) =>
@@ -154,16 +204,15 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
           const key = path.slice('labels.'.length);
           return { ...d, theme: { ...d.theme, labels: { ...d.theme.labels, [key]: value ?? '' } } };
         }
-        return {
-          ...d,
-          sections: d.sections.map((s) =>
+        return onAllPages(d, (ss) =>
+          ss.map((s) =>
             s.id !== id
               ? s
               : value === null
                 ? ({ ...s, [path]: null } as Section)
                 : setSectionField(s, path, value),
           ),
-        };
+        );
       }),
     [],
   );
@@ -171,33 +220,34 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   const [imagePick, setImagePick] = useState<{ id: string; path: string } | null>(null);
   /** On-page list controls (D-072): add a blank item, move one, or delete it. */
   const itemAction = (id: string, action: 'add' | 'up' | 'down' | 'del', n: number) =>
-    setDraft((d) => ({
-      ...d,
-      sections: d.sections.map((s) => {
-        if (s.id !== id || !('items' in s)) return s;
-        const items = [...(s.items as Record<string, unknown>[])];
-        if (action === 'add') {
-          const template = (newSection(s.type, s.id) as { items?: Record<string, unknown>[] })
-            .items?.[0];
-          if (!template || items.length >= SITE_LIMITS.items) return s;
-          items.push(Object.fromEntries(Object.keys(template).map((k) => [k, ''])));
-        } else if (action === 'del') {
-          items.splice(n, 1);
-        } else {
-          const j = action === 'up' ? n - 1 : n + 1;
-          if (j < 0 || j >= items.length) return s;
-          [items[n], items[j]] = [items[j]!, items[n]!];
-        }
-        return { ...s, items } as Section;
-      }),
-    }));
+    setDraft((d) =>
+      onAllPages(d, (ss) =>
+        ss.map((s) => {
+          if (s.id !== id || !('items' in s)) return s;
+          const items = [...(s.items as Record<string, unknown>[])];
+          if (action === 'add') {
+            const template = (newSection(s.type, s.id) as { items?: Record<string, unknown>[] })
+              .items?.[0];
+            if (!template || items.length >= SITE_LIMITS.items) return s;
+            items.push(Object.fromEntries(Object.keys(template).map((k) => [k, ''])));
+          } else if (action === 'del') {
+            items.splice(n, 1);
+          } else {
+            const j = action === 'up' ? n - 1 : n + 1;
+            if (j < 0 || j >= items.length) return s;
+            [items[n], items[j]] = [items[j]!, items[n]!];
+          }
+          return { ...s, items } as Section;
+        }),
+      ),
+    );
   const insertAfter = (afterId: string, type: SectionType) => {
     const s = newSection(type, newId());
-    setDraft((d) => {
-      const i = d.sections.findIndex((x) => x.id === afterId);
-      const sections = [...d.sections];
-      sections.splice(i + 1, 0, s);
-      return { ...d, sections };
+    setSections((ss) => {
+      const i = ss.findIndex((x) => x.id === afterId);
+      const next = [...ss];
+      next.splice(i + 1, 0, s);
+      return next;
     });
     select(s.id);
   };
@@ -388,7 +438,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                           variant="danger"
                           size="sm"
                           onClick={() => {
-                            update({ sections: draft.sections.filter((s) => s.id !== current.id) });
+                            setSections((ss) => ss.filter((s) => s.id !== current.id));
                             setSelected(null);
                             setConfirmDelete(false);
                           }}
@@ -417,7 +467,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                     אפשר ללחוץ על כל חלק באתר שבתצוגה המקדימה כדי לערוך, להזיז או להסתיר אותו.
                   </p>
                   <ol aria-label="מקטעי האתר" className="flex flex-col gap-2">
-                    {draft.sections.map((s, i) => (
+                    {sections.map((s, i) => (
                       <li
                         key={s.id}
                         className={cn(
@@ -471,7 +521,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                         <button
                           type="button"
                           className={iconBtn}
-                          disabled={i === draft.sections.length - 1}
+                          disabled={i === sections.length - 1}
                           onClick={() => move(i, 1)}
                           aria-label={`הזזת ${sectionTypeLabels[s.type]} למטה`}
                         >
@@ -480,7 +530,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                       </li>
                     ))}
                   </ol>
-                  {draft.sections.length < SITE_LIMITS.sections && (
+                  {sections.length < SITE_LIMITS.sections && (
                     <div className="flex items-end gap-2 rounded-2xl bg-surface-muted p-3">
                       <div className="flex-1">
                         <Select
@@ -497,7 +547,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                         variant="secondary"
                         onClick={() => {
                           const s = newSection(adding, newId());
-                          update({ sections: [...draft.sections, s] });
+                          setSections((ss) => [...ss, s]);
                           setSelected(s.id);
                         }}
                       >
@@ -592,22 +642,22 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                   <Field
                     label="כותרת בגוגל"
                     maxLength={70}
-                    hint={`${draft.seo.title.length}/70`}
-                    value={draft.seo.title}
-                    onChange={(e) => update({ seo: { ...draft.seo, title: e.target.value } })}
+                    hint={`${seo.title.length}/70`}
+                    value={seo.title}
+                    onChange={(e) => setSeo({ title: e.target.value })}
                   />
                   <Textarea
                     label="תיאור בגוגל"
                     maxLength={160}
-                    hint={`${draft.seo.description.length}/160`}
-                    value={draft.seo.description}
-                    onChange={(e) => update({ seo: { ...draft.seo, description: e.target.value } })}
+                    hint={`${seo.description.length}/160`}
+                    value={seo.description}
+                    onChange={(e) => setSeo({ description: e.target.value })}
                   />
                   <div className="rounded-2xl border border-surface-border p-4">
                     <p className="truncate text-base text-[#1a0dab]">
-                      {draft.seo.title || business.name}
+                      {seo.title || business.name}
                     </p>
-                    <p className="line-clamp-2 text-sm text-ink-muted">{draft.seo.description}</p>
+                    <p className="line-clamp-2 text-sm text-ink-muted">{seo.description}</p>
                   </div>
                 </div>
               )}
@@ -638,6 +688,23 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 {editable ? 'לחצו על טקסט או תמונה באתר כדי לשנות אותם' : 'תצוגה מקדימה'}
               </p>
             </div>
+            <PagesBar
+              pages={draft.pages}
+              pageId={pageId}
+              editable={editable}
+              onSelect={goToPage}
+              onAdd={addPage}
+              onUpdate={(id, patch) =>
+                setDraft((d) => ({
+                  ...d,
+                  pages: d.pages.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+                }))
+              }
+              onDelete={(id) => {
+                setDraft((d) => ({ ...d, pages: d.pages.filter((p) => p.id !== id) }));
+                goToPage('');
+              }}
+            />
             <div
               role="group"
               aria-label="גודל מסך"
@@ -669,7 +736,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
               <EditablePreview
                 html={html}
                 device={device}
-                sections={draft.sections}
+                sections={sections}
                 selected={selected}
                 onSelect={select}
                 onMove={moveById}
@@ -677,6 +744,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 onInsert={insertAfter}
                 onItem={itemAction}
                 onBusiness={() => setBizOpen(true)}
+                onNavigate={navigate}
                 onSettings={(id) => {
                   select(id);
                   setPanelOpen(true);

@@ -27,7 +27,7 @@ afterEach(() => {
 const sp = apiPaths.site;
 const meKey = `GET ${apiPaths.auth.me}`;
 const sitePath = businessWebPaths.section(testBusiness.id, 'site');
-const draft = buildTemplateDraft('beauty', siteBusinessInfo(testBusiness));
+const draft = { ...buildTemplateDraft('beauty', siteBusinessInfo(testBusiness)), pages: [] };
 const site: Site = {
   id: '7e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b',
   subdomain: null,
@@ -85,6 +85,41 @@ describe('template picker', () => {
 });
 
 describe('site editor', () => {
+  it('adds a page from a preset, switches to it and autosaves it (D-081)', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: putOk,
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
+    const dialog = await screen.findByRole('dialog', { name: 'עמוד חדש' });
+    await user.click(within(dialog).getByRole('button', { name: /^אודות/ }));
+    const picker = screen.getByLabelText('העמוד שעורכים');
+    expect(picker).toHaveDisplayValue('אודות (/about)');
+    await waitFor(
+      () => expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).length).toBeGreaterThan(0),
+      { timeout: 3000 },
+    );
+    const saved = callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).at(-1);
+    expect(saved.pages).toEqual([
+      expect.objectContaining({ slug: 'about', title: 'אודות', inMenu: true }),
+    ]);
+    expect(saved.pages[0].sections.map((x: { type: string }) => x.type)).toEqual([
+      'about',
+      'testimonials',
+      'cta',
+    ]);
+
+    // Page settings: an invalid address can't be saved.
+    await user.click(screen.getByRole('button', { name: 'הגדרות העמוד' }));
+    const settings = await screen.findByRole('dialog', { name: 'הגדרות העמוד' });
+    await user.clear(within(settings).getByLabelText('כתובת העמוד'));
+    await user.type(within(settings).getByLabelText('כתובת העמוד'), 'media');
+    expect(within(settings).getByText(/שמורה למערכת/)).toBeInTheDocument();
+    expect(within(settings).getByRole('button', { name: 'שמירה' })).toBeDisabled();
+  });
+
   it('does not save anything just by opening the editor', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),

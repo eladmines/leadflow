@@ -206,6 +206,8 @@ model Site {
   theme              Json
   seo                Json
   sections           Json
+  /// Extra pages (D-081): [{ id, slug, title, inMenu, seo, sections }].
+  pages              Json       @default("[]")
   /// Optimistic-locking counter for the draft; incremented on every successful save.
   revision           Int        @default(0)
   status             SiteStatus @default(DRAFT)
@@ -235,6 +237,8 @@ model SiteVersion {
   draftRevision Int      @map("draft_revision")
   /// Rendered page (renderSitePage) — served as-is by the public site server.
   html          String
+  /// Extra pages' HTML by address (D-081).
+  pageHtml      Json     @default("{}") @map("page_html")
   /// The draft (theme, seo, sections) and business info used, for audit and future re-rendering.
   content       Json
   createdById   String?  @map("created_by_id") @db.Uuid

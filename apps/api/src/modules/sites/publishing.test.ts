@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths } from '@leadflow/shared';
+import { apiPaths, LEAD_FORM_PATH, newPage } from '@leadflow/shared';
+import { createFormToken } from '../../lib/form-token';
 import { createTestApp, resetDb } from '../../../test/helpers';
 import { addMember, newUser, ownerWithBusiness, req } from '../../../test/business-helpers';
 import { buildPublicApp } from '../../public/app';
@@ -56,6 +57,77 @@ describe('publishing (F06)', () => {
   }
   const publish = (o: { id: string; token: string }, revision: number) =>
     req(ctx.app, 'POST', sp.publish(o.id), o.token, { revision });
+
+  it('publishes extra pages: served by address, in the menu and sitemap; forms work from any page (D-081)', async () => {
+    const o = await ownerWithSite('pages');
+    await req(ctx.app, 'PUT', sp.subdomain(o.id), o.token, { subdomain: 'pages-salon' });
+    let n = 0;
+    const id = () => `pg${++n}`;
+    const about = newPage('about', 'p-about', id);
+    const offer = { ...newPage('landing', 'p-offer', id), slug: 'summer' };
+    const cur = (await req(ctx.app, 'GET', sp.site(o.id), o.token)).json().site;
+    const saved = await req(ctx.app, 'PUT', sp.draft(o.id), o.token, {
+      ...cur,
+      pages: [about, offer],
+    });
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json().site.pages.map((p: { slug: string }) => p.slug)).toEqual([
+      'about',
+      'summer',
+    ]);
+    expect((await publish(o, saved.json().site.revision)).statusCode).toBe(200);
+
+    const home = await visit('pages-salon');
+    expect(home.body).toContain('<a href="/about">אודות</a>');
+    const aboutPage = await visit('pages-salon', '/about/');
+    expect(aboutPage.statusCode).toBe(200);
+    expect(aboutPage.body).toContain('<title>אודות · ');
+    expect(aboutPage.headers['cache-control']).toBe('no-store');
+    expect((await visit('pages-salon', '/summer')).statusCode).toBe(200);
+    expect((await visit('pages-salon', '/nope')).statusCode).toBe(404);
+    const map = await visit('pages-salon', '/sitemap.xml');
+    expect(map.body).toContain('/about</loc>');
+    expect(map.body).toContain('/summer</loc>');
+
+    // A form on the landing page creates a lead that records the page.
+    const contact = offer.sections.find((s) => s.type === 'contact')!;
+    const token = createFormToken(
+      ctx.app.config.FORM_TOKEN_SECRET,
+      'pages-salon',
+      Date.now() - 10_000,
+    );
+    const sent = await pub.inject({
+      method: 'POST',
+      url: LEAD_FORM_PATH,
+      headers: {
+        host: `pages-salon.${ctx.app.config.PUBLIC_SITE_HOST}`,
+        'content-type': 'application/x-www-form-urlencoded',
+      },
+      payload: new URLSearchParams({
+        _t: token,
+        _s: contact.id,
+        _p: 'summer',
+        name: 'דנה כהן',
+        phone: '052-7654321',
+        consent: 'on',
+      }).toString(),
+    });
+    expect(sent.statusCode).toBe(200);
+    const lead = await ctx.prisma.lead.findFirstOrThrow();
+    expect(lead.sourceUrl).toMatch(/\/summer$/);
+  });
+
+  it('rejects duplicate page addresses', async () => {
+    const o = await ownerWithSite('dupes');
+    let n = 0;
+    const id = () => `d${++n}`;
+    const cur = (await req(ctx.app, 'GET', sp.site(o.id), o.token)).json().site;
+    const res = await req(ctx.app, 'PUT', sp.draft(o.id), o.token, {
+      ...cur,
+      pages: [newPage('about', 'a1', id), newPage('about', 'a2', id)],
+    });
+    expect(res.statusCode).toBe(400);
+  });
 
   it('requires a subdomain before publishing', async () => {
     const o = await ownerWithSite();

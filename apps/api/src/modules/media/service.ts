@@ -87,19 +87,30 @@ export class MediaService {
     if (!asset) throw new AppError('NOT_FOUND');
     const site = await this.prisma.site.findUnique({
       where: { businessId: ctx.businessId },
-      select: { theme: true, sections: true, publishedVersion: { select: { content: true } } },
+      select: {
+        theme: true,
+        sections: true,
+        pages: true,
+        publishedVersion: { select: { content: true } },
+      },
     });
     const inDraft = site
       ? referencedAssetIds({
           theme: site.theme as { logoAssetId?: string },
           sections: site.sections as unknown[],
+          pages: site.pages as { sections: unknown[] }[],
         })
       : [];
     const live = site?.publishedVersion?.content as
-      { theme?: { logoAssetId?: string }; sections?: unknown[] } | undefined;
+      | {
+          theme?: { logoAssetId?: string };
+          sections?: unknown[];
+          pages?: { sections: unknown[] }[];
+        }
+      | undefined;
     const inLive =
       live?.theme && live.sections
-        ? referencedAssetIds({ theme: live.theme, sections: live.sections })
+        ? referencedAssetIds({ theme: live.theme, sections: live.sections, pages: live.pages })
         : [];
     if (inDraft.includes(asset.id) || inLive.includes(asset.id)) {
       throw new AppError('CONFLICT', mediaMessages.inUse);

@@ -32,6 +32,7 @@ const base: Site = {
   publicDomain: 'lvh.me:4100',
   published: null,
   ...buildTemplateDraft('beauty', siteBusinessInfo(testBusiness)),
+  pages: [],
   revision: 3,
   status: 'DRAFT',
   updatedAt: '2026-10-27T10:00:00.000Z',

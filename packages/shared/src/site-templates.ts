@@ -3,6 +3,7 @@ import {
   DEFAULT_CONTACT_FORM,
   type Section,
   type SiteSeo,
+  type SitePage,
   type SiteTheme,
   type TemplateKey,
 } from './site';
@@ -23,7 +24,10 @@ export interface SiteDraft {
   templateKey: TemplateKey;
   theme: SiteTheme;
   seo: SiteSeo;
+  /** The home page's sections. */
   sections: Section[];
+  /** Extra pages (D-081). */
+  pages?: SitePage[];
 }
 
 /**
@@ -652,4 +656,64 @@ export function newSection(type: Section['type'], id: string): Section {
         buttonLabel: 'צרו קשר',
       };
   }
+}
+
+/** Ready-made page types for "new page" (D-081). */
+export const PAGE_PRESETS = {
+  about: {
+    label: 'אודות',
+    slug: 'about',
+    inMenu: true,
+    sections: ['about', 'testimonials', 'cta'],
+  },
+  services: {
+    label: 'שירותים',
+    slug: 'services',
+    inMenu: true,
+    sections: ['services', 'pricing', 'cta'],
+  },
+  gallery: { label: 'גלריה', slug: 'gallery', inMenu: true, sections: ['gallery', 'cta'] },
+  faq: { label: 'שאלות נפוצות', slug: 'faq', inMenu: true, sections: ['faq', 'contact'] },
+  contact: { label: 'צור קשר', slug: 'contact', inMenu: true, sections: ['contact'] },
+  /** A campaign page: not in the menu, one clear action. */
+  landing: {
+    label: 'דף נחיתה',
+    slug: 'offer',
+    inMenu: false,
+    sections: ['hero', 'services', 'contact'],
+  },
+  blank: { label: 'עמוד ריק', slug: 'page', inMenu: true, sections: [] },
+} as const satisfies Record<
+  string,
+  { label: string; slug: string; inMenu: boolean; sections: readonly Section['type'][] }
+>;
+export type PagePresetKey = keyof typeof PAGE_PRESETS;
+
+/**
+ * A new page from a preset; `newId` gives site-unique ids (forms post by section id). Sections
+ * the home page already has (about text, services, prices…) start as copies of it.
+ */
+export function newPage(
+  preset: PagePresetKey,
+  id: string,
+  newId: () => string,
+  taken: string[] = [],
+  home: Section[] = [],
+): SitePage {
+  const p = PAGE_PRESETS[preset];
+  let slug: string = p.slug;
+  for (let n = 2; taken.includes(slug); n++) slug = `${p.slug}-${n}`;
+  return {
+    id,
+    slug,
+    title: p.label,
+    inMenu: p.inMenu,
+    seo: { title: '', description: '' },
+    sections: p.sections.map((type) => {
+      const source = type === 'hero' ? undefined : home.find((s) => s.type === type);
+      return source
+        ? ({ ...structuredClone(source), id: newId(), visible: true } as Section)
+        : newSection(type, newId());
+    }),
+  };
 }

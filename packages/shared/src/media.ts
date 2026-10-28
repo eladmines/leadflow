@@ -49,10 +49,12 @@ export const mediaApiPaths = {
 export function referencedAssetIds(draft: {
   theme: { logoAssetId?: string | null };
   sections: unknown[];
+  pages?: { sections: unknown[] }[];
 }): string[] {
   const ids = new Set<string>();
   if (draft.theme.logoAssetId) ids.add(draft.theme.logoAssetId);
-  for (const s of draft.sections as Array<Record<string, unknown>>) {
+  const all = [...draft.sections, ...(draft.pages ?? []).flatMap((p) => p.sections)];
+  for (const s of all as Array<Record<string, unknown>>) {
     if (typeof s.imageAssetId === 'string') ids.add(s.imageAssetId);
     if (s.type === 'gallery' && Array.isArray(s.items)) {
       for (const i of s.items as Array<{ assetId?: unknown }>)

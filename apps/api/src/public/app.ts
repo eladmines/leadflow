@@ -65,6 +65,7 @@ export interface PublicAppDeps {
 const publishedContent = z.object({
   theme: themeSchema,
   sections: z.array(sectionSchema),
+  pages: z.array(z.object({ slug: z.string(), sections: z.array(sectionSchema) })).catch([]),
   business: z.object({ name: z.string() }),
 });
 
@@ -109,10 +110,17 @@ export async function buildPublicApp({
     if (hit) return hit;
     const site = await prisma.site.findUnique({
       where: { subdomain },
-      select: { publishedVersion: { select: { id: true, html: true, createdAt: true } } },
+      select: {
+        publishedVersion: { select: { id: true, html: true, pageHtml: true, createdAt: true } },
+      },
     });
+    const pageHtml = site?.publishedVersion?.pageHtml;
     const page: PublishedPage = {
       html: site?.publishedVersion?.html ?? null,
+      pages:
+        pageHtml && typeof pageHtml === 'object' && !Array.isArray(pageHtml)
+          ? (pageHtml as Record<string, string>)
+          : {},
       versionId: site?.publishedVersion?.id ?? null,
       updatedAt: site?.publishedVersion?.createdAt ?? null,
     };
@@ -151,12 +159,15 @@ export async function buildPublicApp({
     const site = await lookup(subdomain);
     if (!site.html) return siteNotFound(reply);
 
-    const path = req.url.split('?')[0];
+    const path = req.url.split('?')[0]!;
     const origin = `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}${suffix}`;
-    if (path === '/' || path === '/index.html') {
+    // `/about` and `/about/` → an extra page (D-081).
+    const slug = path.replace(/^\/|\/$/g, '').toLowerCase();
+    const pageHtml = path === '/' || path === '/index.html' ? site.html : site.pages[slug];
+    if (pageHtml && !slug.includes('/')) {
       // Never cached by browsers: every view gets a fresh form token (its nonce is the lead's
       // idempotency key), and a new publish shows immediately. The server-side cache stays.
-      const html = site.html.replaceAll(
+      const html = pageHtml.replaceAll(
         FORM_TOKEN_PLACEHOLDER,
         createFormToken(config.FORM_TOKEN_SECRET, subdomain),
       );
@@ -177,7 +188,12 @@ export async function buildPublicApp({
         reply,
         200,
         'application/xml',
-        `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc>${lastmod}</url></urlset>\n`,
+        `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${[
+          '',
+          ...Object.keys(site.pages),
+        ]
+          .map((p) => `<url><loc>${origin}/${p}</loc>${lastmod}</url>`)
+          .join('')}</urlset>\n`,
         'public, max-age=3600',
       );
     }
@@ -224,10 +240,12 @@ export async function buildPublicApp({
       });
       const parsed = publishedContent.safeParse(site?.publishedVersion?.content);
       if (!site || !parsed.success) return siteNotFound(reply);
-      const { theme, sections, business } = parsed.data;
+      const { theme, sections, pages, business } = parsed.data;
 
       const body = (req.body ?? {}) as Record<string, string>;
-      const section = sections.find(
+      // The form can be on any page; section ids are unique across the site (D-081).
+      const pageSlug = pages.some((p) => p.slug === body._p) ? body._p! : '';
+      const section = [...sections, ...pages.flatMap((p) => p.sections)].find(
         (s) => s.type === 'contact' && s.visible && s.form.enabled && s.id === body._s,
       );
       if (!section || section.type !== 'contact') return siteNotFound(reply);
@@ -282,7 +300,7 @@ export async function buildPublicApp({
         siteId: site.id,
         idempotencyKey: token.nonce,
         ipHash: sha256Hex(`${req.ip}|${config.FORM_TOKEN_SECRET}`),
-        sourceUrl: `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}${suffix}/`,
+        sourceUrl: `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}${suffix}/${pageSlug}`,
         data: data.data,
       });
       if (created) {
