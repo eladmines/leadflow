@@ -36,6 +36,8 @@ import { ImageField } from '../media/ImageField';
 import { useMediaMap } from '../media/api';
 import { siteBusinessInfo } from './api';
 import { EditablePreview } from './EditablePreview';
+import { setSectionField } from './fieldPath';
+import { MediaPicker } from '../media/MediaPicker';
 import { PreviewFrame } from './PreviewFrame';
 import { PublishDialog } from './PublishDialog';
 import { VersionsDialog } from './VersionsDialog';
@@ -99,7 +101,10 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   const info = useMemo(() => siteBusinessInfo(business), [business]);
   const deferred = useDeferredValue(draft);
   const media = useMediaMap(business.id);
-  const html = useMemo(() => renderSitePage(deferred, info, media), [deferred, info, media]);
+  const html = useMemo(
+    () => renderSitePage(deferred, info, media, { editor: editable }),
+    [deferred, info, media, editable],
+  );
 
   const update = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const updateSection = (id: string, patch: Partial<Section>) =>
@@ -122,6 +127,21 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
     const i = draft.sections.findIndex((s) => s.id === id);
     if (i + dir >= 0 && i + dir < draft.sections.length) move(i, dir);
   };
+  const setField = useCallback(
+    (id: string, path: string, value: string | null) =>
+      setDraft((d) => ({
+        ...d,
+        sections: d.sections.map((s) =>
+          s.id !== id
+            ? s
+            : value === null
+              ? ({ ...s, [path]: null } as Section)
+              : setSectionField(s, path, value),
+        ),
+      })),
+    [],
+  );
+  const [imagePick, setImagePick] = useState<{ id: string; path: string } | null>(null);
   const insertAfter = (afterId: string, type: SectionType) => {
     const s = newSection(type, newId());
     setDraft((d) => {
@@ -217,6 +237,17 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
           businessId={business.id}
           saveState={state}
           revision={revision}
+        />
+      )}
+      {editable && (
+        <MediaPicker
+          open={imagePick !== null}
+          onOpenChange={(open) => !open && setImagePick(null)}
+          title="בחירת תמונה"
+          onSelect={(asset) => {
+            if (imagePick) setField(imagePick.id, imagePick.path, asset.id);
+            setImagePick(null);
+          }}
         />
       )}
       <VersionsDialog
@@ -556,6 +587,8 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 onMove={moveById}
                 onHide={(id) => updateSection(id, { visible: false })}
                 onInsert={insertAfter}
+                onText={setField}
+                onImage={(id, path) => setImagePick({ id, path })}
               />
             ) : (
               <PreviewFrame html={html} title="תצוגה מקדימה של האתר" device={device} />

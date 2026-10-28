@@ -5,9 +5,10 @@ import {
   type Section,
   type SectionType,
 } from '@leadflow/shared';
-import { ArrowDown, ArrowUp, EyeOff, Pencil, Plus } from 'lucide-react';
+import { ArrowDown, ArrowUp, EyeOff, ImageIcon, Pencil, Plus } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
+import { fieldLimit } from './fieldPath';
 
 /** Sections are direct children of <main> with id `s-<sectionId>` (see renderSitePage). */
 const SECTION_SELECTOR = 'main > [id^="s-"]';
@@ -21,10 +22,14 @@ const toolBtn =
   'flex h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/20 disabled:opacity-40 disabled:hover:bg-transparent';
 
 /**
- * The editor preview with in-page editing (step 1 of visual editing): hover a section to see a
- * toolbar (edit, move, hide) and a "+" to insert a section after it; click a section to open its
- * form. The page itself still runs no scripts: the iframe allows same-origin access only, and all
- * listeners and the toolbar live in this (parent) document. Links and forms are inert here.
+ * The editor preview with in-page editing (D-070, D-071): hover a section to see a toolbar (edit,
+ * image, move, hide) and a "+" to insert a section after it; click a section to open its form;
+ * click a text to type in place; click a photo to replace it. The page itself still runs no
+ * scripts: the iframe allows same-origin access only, and all listeners and tools live in this
+ * (parent) document. Links and forms are inert here.
+ *
+ * While a text is being typed the preview is frozen (the iframe isn't reloaded with each
+ * keystroke, which would lose the caret); every change still goes straight into the draft.
  */
 export function EditablePreview({
   html,
@@ -35,6 +40,8 @@ export function EditablePreview({
   onMove,
   onHide,
   onInsert,
+  onText,
+  onImage,
 }: {
   html: string;
   device: 'desktop' | 'mobile';
@@ -44,6 +51,8 @@ export function EditablePreview({
   onMove: (id: string, dir: -1 | 1) => void;
   onHide: (id: string) => void;
   onInsert: (afterId: string, type: SectionType) => void;
+  onText: (id: string, path: string, value: string) => void;
+  onImage: (id: string, path: string) => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const scrollY = useRef(0);
@@ -51,6 +60,14 @@ export function EditablePreview({
   const [hovered, setHovered] = useState<string | null>(null);
   const [rects, setRects] = useState<Record<string, Rect>>({});
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [frozen, setFrozen] = useState<string | null>(null);
+  const htmlRef = useRef(html);
+  htmlRef.current = html;
+  const editing = useRef<{ el: HTMLElement; id: string; path: string; multi: boolean } | null>(
+    null,
+  );
+  const handlers = useRef({ onSelect, onText, onImage });
+  handlers.current = { onSelect, onText, onImage };
 
   const measure = useCallback(() => {
     const d = frame.current?.contentDocument;
@@ -75,14 +92,86 @@ export function EditablePreview({
   useEffect(() => {
     if (!doc) return;
     const win = doc.defaultView;
+    const element = (t: EventTarget | null) => (win && t instanceof win.Element ? t : null);
     const sectionId = (t: EventTarget | null) =>
-      (t instanceof doc.defaultView!.Element ? t.closest(SECTION_SELECTOR)?.id.slice(2) : null) ??
-      null;
-    const onOver = (e: Event) => setHovered(sectionId(e.target));
+      element(t)?.closest(SECTION_SELECTOR)?.id.slice(2) ?? null;
+    const field = (attr: string, t: EventTarget | null) => {
+      const el = element(t)?.closest<HTMLElement>(`[${attr}]`);
+      const value = el?.getAttribute(attr);
+      const at = value?.indexOf(':') ?? -1;
+      return el && value && at > 0
+        ? { el, id: value.slice(0, at), path: value.slice(at + 1) }
+        : null;
+    };
+    const read = (el: HTMLElement, multi: boolean) =>
+      multi ? el.innerText.replace(/\n{3,}/g, '\n\n') : (el.textContent ?? '').replace(/\s+/g, ' ');
+
+    // Pressing on a text makes it editable before the browser places the caret there.
+    const onDown = (e: Event) => {
+      const f = field('data-edit', e.target);
+      if (!f || editing.current?.el === f.el) return;
+      // Moving straight to another text: finish the previous one without unfreezing in between.
+      const prev = editing.current;
+      if (prev) {
+        handlers.current.onText(prev.id, prev.path, read(prev.el, prev.multi).trim());
+        prev.el.removeAttribute('contenteditable');
+      }
+      f.el.setAttribute('contenteditable', 'plaintext-only');
+      if (f.el.contentEditable !== 'plaintext-only') f.el.setAttribute('contenteditable', 'true');
+      editing.current = { ...f, multi: f.el.hasAttribute('data-multi') };
+      setFrozen((cur) => cur ?? htmlRef.current);
+      setHovered(null);
+      setMenuFor(null);
+    };
+    const onOver = (e: Event) => {
+      if (!editing.current) setHovered(sectionId(e.target));
+    };
     const onClick = (e: Event) => {
       e.preventDefault(); // links (tel:, anchors) and the lead form are inert in the editor
+      const img = field('data-img', e.target);
+      if (img) return handlers.current.onImage(img.id, img.path);
       const id = sectionId(e.target);
-      if (id) onSelect(id);
+      if (id) handlers.current.onSelect(id);
+    };
+    const onInput = () => {
+      const cur = editing.current;
+      if (cur) handlers.current.onText(cur.id, cur.path, read(cur.el, cur.multi));
+    };
+    const onBeforeInput = (e: Event) => {
+      const cur = editing.current;
+      const ie = e as InputEvent;
+      if (!cur || !ie.inputType.startsWith('insert')) return;
+      const room = fieldLimit(cur.path) - read(cur.el, cur.multi).length;
+      const adding = ie.data?.length ?? 1;
+      if (room < adding) e.preventDefault();
+    };
+    const onPaste = (e: Event) => {
+      if (!editing.current) return;
+      // Plain text only, whatever was copied.
+      e.preventDefault();
+      const text = (e as ClipboardEvent).clipboardData?.getData('text/plain') ?? '';
+      doc.execCommand(
+        'insertText',
+        false,
+        editing.current.multi ? text : text.replace(/\s+/g, ' '),
+      );
+    };
+    const onKey = (e: Event) => {
+      const cur = editing.current;
+      const k = (e as KeyboardEvent).key;
+      if (!cur) return;
+      if (k === 'Escape' || (k === 'Enter' && !cur.multi)) {
+        e.preventDefault();
+        cur.el.blur();
+      }
+    };
+    const onBlur = (e: Event) => {
+      const cur = editing.current;
+      if (!cur || e.target !== cur.el) return;
+      handlers.current.onText(cur.id, cur.path, read(cur.el, cur.multi).trim());
+      cur.el.removeAttribute('contenteditable');
+      editing.current = null;
+      setFrozen(null); // show the re-rendered page (scroll position is kept)
     };
     const onSubmit = (e: Event) => e.preventDefault();
     const onScroll = () => {
@@ -90,19 +179,31 @@ export function EditablePreview({
       setMenuFor(null);
       measure();
     };
+    doc.addEventListener('mousedown', onDown, true);
     doc.addEventListener('mouseover', onOver);
     doc.addEventListener('click', onClick, true);
+    doc.addEventListener('input', onInput);
+    doc.addEventListener('beforeinput', onBeforeInput);
+    doc.addEventListener('paste', onPaste);
+    doc.addEventListener('keydown', onKey);
+    doc.addEventListener('focusout', onBlur);
     doc.addEventListener('submit', onSubmit, true);
     win?.addEventListener('scroll', onScroll, { passive: true });
     win?.addEventListener('resize', measure);
     return () => {
+      doc.removeEventListener('mousedown', onDown, true);
       doc.removeEventListener('mouseover', onOver);
       doc.removeEventListener('click', onClick, true);
+      doc.removeEventListener('input', onInput);
+      doc.removeEventListener('beforeinput', onBeforeInput);
+      doc.removeEventListener('paste', onPaste);
+      doc.removeEventListener('keydown', onKey);
+      doc.removeEventListener('focusout', onBlur);
       doc.removeEventListener('submit', onSubmit, true);
       win?.removeEventListener('scroll', onScroll);
       win?.removeEventListener('resize', measure);
     };
-  }, [doc, measure, onSelect]);
+  }, [doc, measure]);
 
   // Selecting a section from the side list brings it into view.
   useEffect(() => {
@@ -118,7 +219,11 @@ export function EditablePreview({
     const s = sections.find((x) => x.id === id);
     return s ? sectionTypeLabels[s.type] : '';
   };
-  const active = hovered ?? menuFor;
+  const hasImage = (id: string) => {
+    const type = sections.find((x) => x.id === id)?.type;
+    return type === 'hero' || type === 'about';
+  };
+  const active = frozen ? null : (hovered ?? menuFor);
   // Near the bottom of the frame the section menu opens upwards so it isn't cut off.
   const menuUp =
     active && rects[active]
@@ -145,7 +250,7 @@ export function EditablePreview({
         <iframe
           ref={frame}
           title="תצוגה מקדימה של האתר"
-          srcDoc={html}
+          srcDoc={frozen ?? html}
           // Same-origin lets this page attach listeners and measure sections; no scripts run inside.
           sandbox="allow-same-origin"
           onLoad={onLoad}
@@ -183,6 +288,16 @@ export function EditablePreview({
               >
                 <Pencil aria-hidden className="h-4 w-4" />
               </button>
+              {hasImage(active) && (
+                <button
+                  type="button"
+                  className={toolBtn}
+                  aria-label={`תמונה ל${label(active)}`}
+                  onClick={() => onImage(active, 'imageAssetId')}
+                >
+                  <ImageIcon aria-hidden className="h-4 w-4" />
+                </button>
+              )}
               <button
                 type="button"
                 className={toolBtn}

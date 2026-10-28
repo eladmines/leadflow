@@ -166,6 +166,24 @@ describe('renderSitePage', () => {
   });
 });
 
+describe('editor markers (D-071)', () => {
+  it('mark editable fields only in the editor preview', () => {
+    const draft = buildTemplateDraft('beauty', business);
+    draft.sections = draft.sections.map((s) => (s.type === 'faq' ? { ...s, visible: true } : s));
+    const published = renderSitePage(draft, business);
+    expect(published).not.toMatch(/data-edit|data-img|contenteditable/);
+
+    const html = renderSitePage(draft, business, {}, { editor: true });
+    expect(html).toContain('<h1 data-edit="hero:title">');
+    expect(html).toContain('data-edit="hero:buttonLabel"');
+    expect(html).toContain('<h3 data-edit="services:items.1.name">');
+    expect(html).toContain('data-edit="about:body" data-multi');
+    expect(html).toContain('data-edit="faq:items.1.question"');
+    // Every FAQ answer is open in the editor so it can be edited.
+    expect(html.match(/<details open>/g)?.length).toBe(2);
+  });
+});
+
 describe('hoursSummary', () => {
   it('groups consecutive days with the same hours and skips closed days', () => {
     expect(hoursSummary(defaultOpeningHours)).toEqual([
