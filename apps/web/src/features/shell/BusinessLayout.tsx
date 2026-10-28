@@ -57,7 +57,7 @@ export function BusinessLayout() {
         דילוג לתוכן הראשי
       </a>
 
-      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-e border-surface-border bg-surface lg:block">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-e border-surface-border bg-surface-muted lg:block">
         <Sidebar business={b} />
       </aside>
 
@@ -102,7 +102,7 @@ export function BusinessLayout() {
           tabIndex={-1}
           className={cn(
             'mx-auto flex flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6',
-            wide ? 'max-w-[1600px] lg:px-8 lg:py-8' : 'max-w-5xl lg:px-12 lg:py-12',
+            wide ? 'max-w-[1600px] lg:px-8 lg:py-6' : 'max-w-6xl lg:px-10 lg:py-8',
           )}
         >
           <UnverifiedEmailBanner />

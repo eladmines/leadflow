@@ -211,7 +211,9 @@ function Board({
   return (
     <>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+      {/* relative: the cards' sr-only labels are positioned inside the scroller (and clipped by
+          it), so off-screen columns can't widen the page. */}
+      <div className="relative -mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
         <ol aria-label="לוח לידים" className="flex min-w-max gap-4">
           {stages.map((stage) => {
             const items = leads.filter((l) => l.stage.id === stage.id);
@@ -326,7 +328,10 @@ export function LeadsPage() {
     () => LEAD_SOURCES.map((s) => ({ value: s, label: leadSourceLabels[s] })),
     [],
   );
-  const selectClass = cn(inputClasses(false), 'h-10 w-auto min-w-36 cursor-pointer');
+  const selectClass = cn(
+    inputClasses(false).replace('w-full', 'w-auto'),
+    'min-w-36 cursor-pointer',
+  );
 
   return (
     <>

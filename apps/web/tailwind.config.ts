@@ -9,8 +9,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Rubik: rounded, friendly, full Hebrew support.
-        sans: ['Rubik', 'system-ui', 'Arial', 'sans-serif'],
+        // Heebo: clean, neutral, full Hebrew support (admin redesign, D-073).
+        sans: ['Heebo', 'system-ui', 'Arial', 'sans-serif'],
       },
       colors: {
         // Primary: a deep, slightly warm teal (trust, calm).
@@ -26,40 +26,40 @@ export default {
           800: '#194644',
           900: '#163b39',
         },
-        // Accent: warm coral for highlights, progress and friendly touches. Never for errors.
+        // Secondary tones are neutral slate: one accent colour (brand) carries the UI (D-073).
         accent: {
-          50: '#fff3ee',
-          100: '#ffe3d7',
-          200: '#ffc5ad',
-          300: '#fd9f7c',
-          400: '#f77f57',
-          500: '#ec6640',
-          600: '#d4502d',
-          700: '#b04024',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
         },
         ink: {
-          DEFAULT: '#1f2933',
-          muted: '#5f6b74',
-          subtle: '#929ca3',
+          DEFAULT: '#0f172a',
+          muted: '#64748b',
+          subtle: '#94a3b8',
         },
         surface: {
           DEFAULT: '#ffffff',
-          // Warm cream page background.
-          muted: '#f8f5f0',
-          sunken: '#f1ece4',
-          border: '#e9e2d7',
+          // Cool, near-white page and sidebar background.
+          muted: '#f8fafc',
+          sunken: '#f1f5f9',
+          border: '#e2e8f0',
         },
         /** Data mark color for single-series charts (passes the dataviz lightness, chroma and
          *  contrast checks on the light surface; the brand teal reads gray as a data color). */
-        chart: { DEFAULT: '#0f8f84', soft: '#0f8f841a', grid: '#ece6dc' },
+        chart: { DEFAULT: '#0f8f84', soft: '#0f8f841a', grid: '#e2e8f0' },
         danger: { 50: '#fdf0ee', 600: '#c0392b', 700: '#a32e22' },
         success: { 50: '#ecf7f0', 600: '#2e7d4f' },
         warning: { 50: '#fff7e6', 600: '#946200' },
       },
-      borderRadius: { xl: '0.875rem', '2xl': '1.25rem', '3xl': '1.75rem' },
+      borderRadius: { xl: '0.625rem', '2xl': '0.75rem', '3xl': '1rem' },
       boxShadow: {
-        card: '0 1px 2px rgba(60, 45, 25, 0.04), 0 4px 16px -6px rgba(60, 45, 25, 0.08)',
-        lift: '0 2px 4px rgba(60, 45, 25, 0.05), 0 12px 32px -10px rgba(60, 45, 25, 0.16)',
+        card: '0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+        lift: '0 12px 32px -12px rgba(15, 23, 42, 0.22), 0 2px 6px -2px rgba(15, 23, 42, 0.06)',
       },
     },
   },
