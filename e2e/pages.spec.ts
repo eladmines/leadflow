@@ -53,3 +53,21 @@ test('add an "about" page, publish, and open it on the live site', async ({ page
   await expect(visitor).toHaveTitle(/^אודות · מספרת שירן/);
   await expect(visitor.locator('.menu a[href="/about"]')).toHaveAttribute('aria-current', 'page');
 });
+
+test('an empty page offers its first section right on the page', async ({ page }) => {
+  const { id } = await owner(page);
+  await page.goto(`/b/${id}/site`);
+  await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
+  const preview = page.frameLocator('iframe[title="תצוגה מקדימה של האתר"]');
+  await expect(preview.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
+
+  await page.getByRole('button', { name: 'עמוד חדש' }).click();
+  const add = page.getByRole('dialog', { name: 'עמוד חדש' });
+  await add.getByLabel('שם העמוד').fill('המבצע שלנו');
+  await add.getByRole('button', { name: 'הוספת העמוד' }).click();
+
+  await expect(preview.getByRole('heading', { name: 'מה יהיה בעמוד הזה?' })).toBeVisible();
+  await preview.getByRole('button', { name: '+ שירותים' }).click();
+  await expect(preview.locator('main .services')).toBeVisible();
+  await expect(preview.getByRole('heading', { name: 'מה יהיה בעמוד הזה?' })).toHaveCount(0);
+});

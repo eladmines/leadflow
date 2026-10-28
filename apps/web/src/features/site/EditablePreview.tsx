@@ -43,6 +43,7 @@ export function EditablePreview({
   onText,
   onImage,
   onItem,
+  onAddSection,
   onSettings,
   onBusiness,
   onNavigate,
@@ -63,6 +64,8 @@ export function EditablePreview({
   onImage: (id: string, path: string) => void;
   /** On-page list controls: add an item, move one, or delete it. */
   onItem: (id: string, action: 'add' | 'up' | 'down' | 'del', index: number) => void;
+  /** Adds a section at the end of the page (the empty-page picker). */
+  onAddSection: (type: SectionType) => void;
   /** Opens the section's settings panel. */
   onSettings: (id: string) => void;
   /** Phone, address, hours or areas were clicked: they live in the business profile (D-075). */
@@ -98,6 +101,7 @@ export function EditablePreview({
     onText,
     onImage,
     onItem,
+    onAddSection,
     onBusiness,
     onNavigate,
     onDeselect,
@@ -109,6 +113,7 @@ export function EditablePreview({
     onText,
     onImage,
     onItem,
+    onAddSection,
     onBusiness,
     onNavigate,
     onDeselect,
@@ -192,6 +197,10 @@ export function EditablePreview({
     const onClick = (e: Event) => {
       e.preventDefault(); // links (tel:, anchors) and the lead form are inert in the editor
       const act = element(e.target)?.closest<HTMLElement>('[data-act]');
+      if (act?.getAttribute('data-act') === 'new') {
+        // The empty-page picker: add the first section of this page.
+        return handlers.current.onAddSection(act.getAttribute('data-at') as SectionType);
+      }
       if (act) {
         const [id = '', n] = (act.getAttribute('data-at') ?? '').split(':');
         const action = act.getAttribute('data-act') as 'add' | 'up' | 'down' | 'del';
