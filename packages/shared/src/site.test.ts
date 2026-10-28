@@ -268,14 +268,18 @@ describe('pages (D-081)', () => {
     draft.pages = [newPage('about', 'p1', id), { ...newPage('landing', 'p2', id), slug: 'sale' }];
     draft.pages[0]!.sections = draft.pages[0]!.sections.filter((s) => s.type !== 'contact');
     const home = renderSitePage(draft, business);
-    expect(home).toContain('<a href="/" aria-current="page">ראשי</a>');
+    // The home sections stay in the menu; the "אודות" page replaces the "אודות" section link.
+    expect(home).toContain('<a href="#s-services">שירותים</a>');
     expect(home).toContain('<a href="/about">אודות</a>');
+    expect(home).not.toContain('<a href="#s-about">');
     expect(home).not.toContain('href="/sale"'); // landing pages stay out of the menu
     expect(home).toContain('<details class="mmenu">');
 
     const about = renderSitePage(draft, business, {}, { page: 'about' });
     expect(about).toContain('<title>אודות · מספרת שירן</title>');
     expect(about).toContain('<a href="/about" aria-current="page">אודות</a>');
+    expect(about).toContain('<a href="/">ראשי</a>');
+    expect(about).toContain('<a href="/#s-services">שירותים</a>');
     // No form on this page: the call-to-action goes to the home page's form.
     expect(about).toContain('href="/#s-contact"');
 
