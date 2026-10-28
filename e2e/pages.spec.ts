@@ -35,7 +35,7 @@ test('add an "about" page, publish, and open it on the live site', async ({ page
     .getByRole('dialog', { name: 'עמוד חדש' })
     .getByRole('button', { name: /^אודות/ })
     .click();
-  await expect(page.getByLabel('העמוד שעורכים')).toHaveValue(/.+/);
+  await expect(page.getByRole('tab', { name: 'אודות' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText('כל השינויים נשמרו')).toBeVisible({ timeout: 10_000 });
 
   // Publish through the dialog (choosing the address first).

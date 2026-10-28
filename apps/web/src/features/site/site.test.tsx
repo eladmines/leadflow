@@ -95,8 +95,7 @@ describe('site editor', () => {
     await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
     const dialog = await screen.findByRole('dialog', { name: 'עמוד חדש' });
     await user.click(within(dialog).getByRole('button', { name: /^אודות/ }));
-    const picker = screen.getByLabelText('העמוד שעורכים');
-    expect(picker).toHaveDisplayValue('אודות (/about)');
+    expect(screen.getByRole('tab', { name: 'אודות' })).toHaveAttribute('aria-selected', 'true');
     await waitFor(
       () => expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).length).toBeGreaterThan(0),
       { timeout: 3000 },
@@ -230,7 +229,7 @@ describe('site editor', () => {
     mockApi({ [meKey]: me(testUser), ...asRole('MANAGER'), ...getSite(site) });
     renderApp(sitePath);
     expect(await screen.findByText(/רק בעל\/ת העסק יכול\/ה לערוך את האתר/)).toBeInTheDocument();
-    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tablist', { name: 'עריכת האתר' })).not.toBeInTheDocument();
     expect(previewHtml()).toContain('מספרת שירן');
   });
 });

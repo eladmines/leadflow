@@ -81,7 +81,7 @@ test('logo + gallery image upload, preview, publish, and load on the live site',
     await page.getByLabel('הוספת מקטע').selectOption('gallery');
     await page.getByRole('button', { name: 'הוספה', exact: true }).click();
   } else {
-    await page.getByRole('button', { name: 'מקטע', exact: true }).click();
+    await page.getByRole('button', { name: 'הוספת מקטע', exact: true }).click();
     await page
       .getByRole('list', { name: 'הוספת מקטע לעמוד' })
       .getByRole('button', { name: 'גלריה' })
