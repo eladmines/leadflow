@@ -176,6 +176,11 @@ test('fixed labels are editable on the page; phone opens the business details', 
   await previewReady(page);
   await expect(frame.locator('#s-services .eyebrow')).toHaveText('טיפולים');
 
+  // The logo placeholder opens the image library.
+  await frame.locator('.nav [data-img="$theme:logoAssetId"]').click();
+  await expect(page.getByRole('dialog', { name: 'בחירת תמונה' })).toBeVisible();
+  await page.keyboard.press('Escape');
+
   // The phone belongs to the business profile: it opens "פרטי העסק".
   await frame.locator('.nav .call').click();
   const dialog = page.getByRole('dialog', { name: 'פרטי העסק' });

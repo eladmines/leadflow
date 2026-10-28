@@ -136,6 +136,10 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   const setField = useCallback(
     (id: string, path: string, value: string | null) =>
       setDraft((d) => {
+        // The logo is chosen by clicking it on the page (D-076).
+        if (id === '$theme' && path === 'logoAssetId') {
+          return { ...d, theme: { ...d.theme, logoAssetId: value } };
+        }
         // Fixed button wording lives on the theme (D-075).
         if (id === '$theme' && path.startsWith('labels.')) {
           const key = path.slice('labels.'.length);

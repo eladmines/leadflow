@@ -219,6 +219,9 @@ describe('custom labels (D-075)', () => {
     expect(html).toContain('data-biz="phone"');
     expect(html).toContain('data-biz="hours"');
     expect(html).toContain('data-biz="address"');
+    expect(html).toContain(
+      'class="mark mark-empty" aria-hidden="true" data-img="$theme:logoAssetId"',
+    );
   });
 });
 
