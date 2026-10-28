@@ -179,7 +179,11 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
     );
     setDraft((d) => ({ ...d, pages: [...d.pages, page] }));
     goToPage(page.id);
+    setOutOfMenu(page.inMenu ? null : page.id);
   };
+  /** A just-added page that isn't in the site menu (e.g. a landing page), to say so (D-087). */
+  const [outOfMenu, setOutOfMenu] = useState<string | null>(null);
+  const outOfMenuPage = draft.pages.find((p) => p.id === outOfMenu && !p.inMenu);
 
   const update = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const updateSection = (id: string, patch: Partial<Section>) =>
@@ -869,6 +873,40 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 ))}
               </div>
             </div>
+            {outOfMenuPage && (
+              <div
+                role="status"
+                className="flex flex-wrap items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800"
+              >
+                <span className="flex-1">
+                  העמוד "{outOfMenuPage.title}" נוסף, אבל לא מופיע בתפריט האתר (מתאים למבצע או
+                  לפרסום: משתפים את הקישור <bdi dir="ltr">/{outOfMenuPage.slug}</bdi>).
+                </span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setDraft((d) => ({
+                      ...d,
+                      pages: d.pages.map((p) =>
+                        p.id === outOfMenuPage.id ? { ...p, inMenu: true } : p,
+                      ),
+                    }));
+                    setOutOfMenu(null);
+                  }}
+                >
+                  הוספה לתפריט
+                </Button>
+                <button
+                  type="button"
+                  aria-label="סגירת ההודעה"
+                  onClick={() => setOutOfMenu(null)}
+                  className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-brand-100"
+                >
+                  <X aria-hidden className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             {editable && (
               <p className="px-1 text-xs text-ink-muted">
                 טיפ: לחצו על טקסט, תמונה או מקטע באתר כדי לערוך אותם. לחיצה על הלוגו פותחת את עיצוב

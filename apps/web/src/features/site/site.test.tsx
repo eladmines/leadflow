@@ -85,6 +85,31 @@ describe('template picker', () => {
 });
 
 describe('site editor', () => {
+  it('a new landing page says it is not in the menu and can be added with one click', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: putOk,
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
+    await user.click(
+      within(await screen.findByRole('dialog', { name: 'עמוד חדש' })).getByRole('button', {
+        name: /^דף נחיתה/,
+      }),
+    );
+    expect(screen.getByText(/לא מופיע בתפריט האתר/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'הוספה לתפריט' }));
+    expect(screen.queryByText(/לא מופיע בתפריט האתר/)).not.toBeInTheDocument();
+    await waitFor(
+      () =>
+        expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).at(-1)?.pages[0]).toMatchObject(
+          { slug: 'offer', inMenu: true },
+        ),
+      { timeout: 3000 },
+    );
+  });
+
   it('adds a page from a preset, switches to it and autosaves it (D-081)', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
