@@ -283,6 +283,12 @@ describe('pages (D-081)', () => {
     // No form on this page: the call-to-action goes to the home page's form.
     expect(about).toContain('href="/#s-contact"');
 
+    // An empty page offers its first section in the editor only.
+    draft.pages.push({ ...newPage('blank', 'p9', id), slug: 'empty' });
+    expect(renderSitePage(draft, business, {}, { page: 'empty', editor: true })).toContain(
+      'data-act="new" data-at="services"',
+    );
+    expect(renderSitePage(draft, business, {}, { page: 'empty' })).not.toContain('data-act');
     const sale = renderSitePage(draft, business, {}, { page: 'sale' });
     expect(sale).toContain('<input type="hidden" name="_p" value="sale">');
   });

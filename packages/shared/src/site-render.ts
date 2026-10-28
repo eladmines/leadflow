@@ -1,6 +1,14 @@
 import { formatIsraeliPhone, industryLabels, WEEKDAYS, weekdayLabels } from './business';
 import { FORM_TOKEN_PLACEHOLDER, HONEYPOT_FIELD, LEAD_FORM_PATH } from './leads';
-import { FONTS, resolvePalette, SITE_LIMITS, type Section, type SiteTheme } from './site';
+import {
+  FONTS,
+  resolvePalette,
+  SECTION_TYPES,
+  sectionTypeLabels,
+  SITE_LIMITS,
+  type Section,
+  type SiteTheme,
+} from './site';
 import type { SiteBusinessInfo, SiteDraft } from './site-templates';
 
 /** Resolved image for rendering (built by the server from the business's own assets). */
@@ -549,6 +557,13 @@ body.has-mbar{padding-bottom:78px}
 `;
 }
 
+/** Editor-only: an empty page offers its first section right there (D-089). */
+const emptyPagePicker = () =>
+  `<section class="ed-start"><div class="wrap narrow"><h2>מה יהיה בעמוד הזה?</h2><p>בחרו מקטע ראשון. אחר כך אפשר להוסיף עוד, להזיז ולערוך הכול ישירות כאן.</p><div class="ed-start-grid">${SECTION_TYPES.map(
+    (t) =>
+      `<button type="button" data-act="new" data-at="${t}">+ ${esc(sectionTypeLabels[t])}</button>`,
+  ).join('')}</div></div></section>`;
+
 /** Hover/edit affordances for the editor preview only (published pages never include them). */
 const EDITOR_STYLE = `<style>
 [data-edit]{cursor:text;border-radius:6px;outline:2px dashed transparent;outline-offset:4px;transition:outline-color .15s}
@@ -558,6 +573,10 @@ const EDITOR_STYLE = `<style>
 [data-ph]:empty{min-height:1.5em;min-width:3em}[data-ph]:empty::before{content:attr(data-ph);color:#9aa3ad;font-weight:400}
 [data-biz]{cursor:pointer;border-radius:8px;outline:2px dashed transparent;outline-offset:4px}[data-biz]:hover{outline-color:rgba(224,165,38,.8)}
 [data-i]{position:relative}
+.ed-start{padding:72px 0;text-align:center}.ed-start h2{margin-bottom:.3em}.ed-start p{color:#64748b;margin-bottom:28px}
+.ed-start-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ed-start-grid button{padding:16px 12px;border:2px dashed #b9c3c9;border-radius:16px;background:#fff;color:#2c837d;font:600 15px system-ui;cursor:pointer}
+.ed-start-grid button:hover{border-color:#2c837d;background:rgba(44,131,125,.06)}
 .ed-empty{border:2px dashed #b9c3c9;border-radius:18px;padding:40px 20px;text-align:center;color:#64748b;font:500 15px system-ui}
 .mark-empty{position:relative}.mark-empty:hover::after{content:"+ הוספת לוגו";position:absolute;top:calc(100% + 8px);inset-inline-start:0;white-space:nowrap;background:#18202a;color:#fff;font:600 12px/1 system-ui;padding:7px 10px;border-radius:8px;z-index:40}
 .ed-item{position:absolute;top:8px;inset-inline-end:8px;z-index:3;display:flex;gap:4px;opacity:0;pointer-events:none;transition:opacity .15s}
@@ -665,7 +684,7 @@ export function renderSitePage(
       ? `<details class="mmenu"><summary aria-label="תפריט">${icon('menu')}</summary><ul>${menu}</ul></details>`
       : ''
   }${call ? `<a class="call" href="${call}"${eb(ctx, 'phone')}>${icon('phone')}<span class="num-text"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></span></a>` : ''}</div></nav>
-<main>${html || '<div class="empty">אין מקטעים מוצגים באתר.</div>'}</main>
+<main>${html || (opts.editor ? emptyPagePicker() : '<div class="empty">אין מקטעים מוצגים באתר.</div>')}</main>
 <footer><div class="wrap foot"><div><a class="brand" href="/">${esc(b.name)}</a>${draft.seo.description ? `<p>${esc(draft.seo.description)}</p>` : ''}${
     menuPages.length
       ? `<ul class="foot-pages">${menuPages.map((p) => `<li><a href="/${esc(p.slug)}">${esc(p.title)}</a></li>`).join('')}</ul>`

@@ -261,6 +261,12 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
         }),
       ),
     );
+  /** Adds a section at the end of the current page and opens it. */
+  const addSectionAtEnd = (type: SectionType) => {
+    const added = newSection(type, newId());
+    setSections((ss) => [...ss, added]);
+    select(added.id);
+  };
   /** A copy right after the original (fresh id), opened for editing. */
   const duplicate = (id: string) => {
     const copy = { ...structuredClone(sections.find((x) => x.id === id)!), id: newId() };
@@ -844,11 +850,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                   <span aria-hidden className="hidden h-6 w-px bg-surface-border lg:block" />
                   <SectionsMenu
                     sections={sections}
-                    onAdd={(type) => {
-                      const added = newSection(type, newId());
-                      setSections((ss) => [...ss, added]);
-                      select(added.id);
-                    }}
+                    onAdd={addSectionAtEnd}
                     onShow={(id) => updateSection(id, { visible: true })}
                   />
                 </>
@@ -932,6 +934,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 onHide={(id) => updateSection(id, { visible: false })}
                 onInsert={insertAfter}
                 onItem={itemAction}
+                onAddSection={addSectionAtEnd}
                 onBusiness={() => setBizOpen(true)}
                 onNavigate={navigate}
                 onDeselect={() => {
