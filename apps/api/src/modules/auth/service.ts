@@ -5,6 +5,7 @@ import {
   PASSWORD_RESET_TOKEN_TTL_MS,
   SESSION_ABSOLUTE_TTL_MS,
   SESSION_IDLE_TTL_MS,
+  accountMessages,
   authMessages,
   authWebPaths,
   type AuthAuditAction,
@@ -23,6 +24,7 @@ import {
   verifyPassword,
 } from '../../lib/crypto';
 import {
+  passwordChangedTemplate,
   passwordResetTemplate,
   verifyEmailTemplate,
   type EmailSender,
@@ -333,6 +335,75 @@ export class AuthService {
         }),
       );
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Account settings
+  // -------------------------------------------------------------------------
+
+  async updateProfile(auth: AuthState, fullName: string): Promise<User> {
+    if (fullName === auth.user.fullName) return auth.user;
+    return this.prisma.$transaction(async (tx) => {
+      const user = await repo.updateFullName(tx, auth.user.id, fullName);
+      await recordAudit(
+        tx,
+        audit('auth.profile.updated', {
+          actorUserId: auth.user.id,
+          entityType: 'user',
+          entityId: auth.user.id,
+        }),
+      );
+      return user;
+    });
+  }
+
+  /**
+   * Requires the current password. Other sessions are signed out (this one stays), and a notice
+   * goes to the account email in case it wasn't the owner (O-008).
+   */
+  async changePassword(
+    auth: AuthState,
+    currentPassword: string,
+    newPassword: string,
+    meta: RequestMeta,
+  ) {
+    if (!(await verifyPassword(auth.user.passwordHash, currentPassword))) {
+      throw new AppError('VALIDATION_ERROR', accountMessages.currentPasswordWrong, {
+        currentPassword: accountMessages.currentPasswordWrong,
+      });
+    }
+    if (currentPassword === newPassword) {
+      throw new AppError('VALIDATION_ERROR', accountMessages.samePassword, {
+        newPassword: accountMessages.samePassword,
+      });
+    }
+    const passwordHash = await hashPassword(newPassword);
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await repo.updatePasswordHash(tx, auth.user.id, passwordHash);
+      const revokedSessions = await repo.revokeOtherSessions(
+        tx,
+        auth.user.id,
+        auth.session.id,
+        now,
+      );
+      await recordAudit(
+        tx,
+        audit('auth.password.changed', {
+          actorUserId: auth.user.id,
+          entityType: 'user',
+          entityId: auth.user.id,
+          metadata: { ip: meta.ip, revokedSessions },
+        }),
+      );
+    });
+    const message = passwordChangedTemplate({
+      fullName: auth.user.fullName,
+      resetLink: `${this.deps.config.APP_URL}${authWebPaths.forgotPassword}`,
+    });
+    await this.deps.email
+      .send({ to: auth.user.email, ...message })
+      .catch((err: unknown) => logSendFailure(meta.log, 'password_changed', err));
   }
 
   // -------------------------------------------------------------------------

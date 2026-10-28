@@ -69,7 +69,14 @@ export function Sidebar({ business, onNavigate }: { business: Business; onNaviga
             {user?.fullName.trim().charAt(0)}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-ink">{user?.fullName}</p>
+            <NavLink
+              to={businessWebPaths.section(business.id, 'account')}
+              onClick={onNavigate}
+              className="block truncate text-sm font-medium text-ink hover:underline"
+              aria-label={`החשבון שלי: ${user?.fullName ?? ''}`}
+            >
+              {user?.fullName}
+            </NavLink>
             <p className="truncate text-xs text-ink-muted">{roleLabels[business.role]}</p>
           </div>
           <button

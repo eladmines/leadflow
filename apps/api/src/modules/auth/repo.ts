@@ -98,3 +98,21 @@ export function markEmailVerified(db: Db, userId: string, now: Date) {
 export function updatePasswordHash(db: Db, userId: string, passwordHash: string) {
   return db.user.update({ where: { id: userId }, data: { passwordHash } });
 }
+
+/** Revokes every active session of the user except `keepSessionId` (password change). */
+export async function revokeOtherSessions(
+  db: Db,
+  userId: string,
+  keepSessionId: string,
+  now: Date,
+) {
+  const res = await db.session.updateMany({
+    where: { userId, revokedAt: null, id: { not: keepSessionId } },
+    data: { revokedAt: now },
+  });
+  return res.count;
+}
+
+export function updateFullName(db: Db, userId: string, fullName: string) {
+  return db.user.update({ where: { id: userId }, data: { fullName } });
+}

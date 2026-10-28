@@ -9,6 +9,7 @@ export { SmtpEmailSender } from './smtp';
 export {
   inviteTemplate,
   newLeadTemplate,
+  passwordChangedTemplate,
   passwordResetTemplate,
   taskReminderTemplate,
   verifyEmailTemplate,

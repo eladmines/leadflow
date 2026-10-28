@@ -60,6 +60,8 @@ export const authApiPaths = {
   resendVerification: '/api/v1/auth/resend-verification',
   passwordResetRequest: '/api/v1/auth/password-reset/request',
   passwordResetConfirm: '/api/v1/auth/password-reset/confirm',
+  profile: '/api/v1/auth/profile',
+  password: '/api/v1/auth/password',
 } as const;
 
 /** Web routes that emails link to (APP_URL + path + `?token=`). */
@@ -215,5 +217,26 @@ export const authAuditActions = [
   'auth.email.verified',
   'auth.password_reset.requested',
   'auth.password_reset.completed',
+  'auth.profile.updated',
+  'auth.password.changed',
 ] as const;
 export type AuthAuditAction = (typeof authAuditActions)[number];
+
+// ---------------------------------------------------------------------------
+// Account settings
+// ---------------------------------------------------------------------------
+
+export const accountMessages = {
+  currentPasswordWrong: 'הסיסמה הנוכחית שגויה',
+  samePassword: 'הסיסמה החדשה זהה לנוכחית',
+} as const;
+
+export const updateProfileRequestSchema = z.object({ fullName: fullNameSchema });
+export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;
+
+/** Changing the password needs the current one; other sessions are signed out. */
+export const changePasswordRequestSchema = z.object({
+  currentPassword: loginPasswordSchema,
+  newPassword: newPasswordSchema,
+});
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;

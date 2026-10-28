@@ -54,3 +54,4 @@ F06 ─► F11 (after spike)
 - 2026-10-27 — F09 complete: email invitations (7-day single-use, email-bound), join from link incl. registration, role changes, removal, resend/cancel. 352 unit/integration tests + 30 e2e.
 - 2026-10-27 — F05 complete (MVP): image upload with server-side re-encoding (WebP, ≤1920px, EXIF stripped), storage interface, library with quota, logo/hero/about images and gallery, same-origin serving. 368 unit/integration tests + 32 e2e.
 - 2026-10-27 — F10 complete: follow-up tasks (lead-linked or standalone), tasks page, lead + dashboard integration, email reminders via an in-process job. **Stage 1 complete.** 384 unit/integration tests + 35 e2e.
+- 2026-10-28 — Small features: lead export to Excel/CSV (owner-only, injection-safe), account settings (name, password change with session sign-out and notice email).

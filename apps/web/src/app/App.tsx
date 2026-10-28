@@ -17,6 +17,7 @@ import { LeadDetailPage } from '../features/leads/LeadDetailPage';
 import { LeadsPage } from '../features/leads/LeadsPage';
 import { SitePage } from '../features/site/SitePage';
 import { AcceptInvitePage } from '../features/team/AcceptInvitePage';
+import { AccountPage } from '../features/account/AccountPage';
 import { TasksPage } from '../features/tasks/TasksPage';
 import { TeamPage } from '../features/team/TeamPage';
 import { ContinueOnboardingPage, NewBusinessPage } from '../features/onboarding/OnboardingPage';
@@ -112,6 +113,7 @@ export function AppRoutes() {
         <Route path="leads/:leadId" element={<LeadDetailPage />} />
         <Route path="tasks" element={<TasksPage />} />
         <Route path="team" element={<TeamPage />} />
+        <Route path="account" element={<AccountPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
