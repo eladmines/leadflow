@@ -6,7 +6,7 @@ import {
   type SectionType,
 } from '@leadflow/shared';
 import { ArrowDown, ArrowUp, EyeOff, ImageIcon, Plus, Settings2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { fieldLimit } from './fieldPath';
 
@@ -46,6 +46,10 @@ export function EditablePreview({
   onSettings,
   onBusiness,
   onNavigate,
+  onDeselect,
+  onDesign,
+  inspector,
+  textTools,
 }: {
   html: string;
   device: 'desktop' | 'mobile';
@@ -65,6 +69,15 @@ export function EditablePreview({
   onBusiness: () => void;
   /** A link to another page of the site was clicked (`/about`, `/`): open it (D-081). */
   onNavigate: (slug: string) => void;
+  /** A click outside any section closes the section window. */
+  onDeselect: () => void;
+  /** The logo or the header was clicked: open the site design window (D-082). */
+  onDesign: () => void;
+  /** The selected section's settings window, shown next to it (D-082, desktop). */
+  inspector?: ReactNode;
+  /** Small toolbar above the text being typed (title colour/size, button style); `done`
+   *  finishes the typing so the change shows. */
+  textTools?: (id: string, path: string, done: () => void) => ReactNode;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const scrollY = useRef(0);
@@ -80,8 +93,36 @@ export function EditablePreview({
   const editing = useRef<{ el: HTMLElement; id: string; path: string; multi: boolean } | null>(
     null,
   );
-  const handlers = useRef({ onSelect, onText, onImage, onItem, onBusiness, onNavigate, sections });
-  handlers.current = { onSelect, onText, onImage, onItem, onBusiness, onNavigate, sections };
+  const handlers = useRef({
+    onSelect,
+    onText,
+    onImage,
+    onItem,
+    onBusiness,
+    onNavigate,
+    onDeselect,
+    onDesign,
+    sections,
+  });
+  handlers.current = {
+    onSelect,
+    onText,
+    onImage,
+    onItem,
+    onBusiness,
+    onNavigate,
+    onDeselect,
+    onDesign,
+    sections,
+  };
+  /** The text being typed and where it is (for the text toolbar). */
+  const [typing, setTyping] = useState<{
+    id: string;
+    path: string;
+    top: number;
+    bottom: number;
+    left: number;
+  } | null>(null);
   /** A field to start typing in after the next reload (a just-added list item). */
   const pendingFocus = useRef<string | null>(null);
 
@@ -139,6 +180,8 @@ export function EditablePreview({
       f.el.setAttribute('contenteditable', 'plaintext-only');
       if (f.el.contentEditable !== 'plaintext-only') f.el.setAttribute('contenteditable', 'true');
       editing.current = { ...f, multi: f.el.hasAttribute('data-multi') };
+      const r = f.el.getBoundingClientRect();
+      setTyping({ id: f.id, path: f.path, top: r.top, bottom: r.bottom, left: r.left });
       setFrozen((cur) => cur ?? htmlRef.current);
       setHovered(null);
       setMenuFor(null);
@@ -164,10 +207,15 @@ export function EditablePreview({
         return handlers.current.onNavigate(path.replace(/^\/|\/$/g, ''));
       }
       const img = field('data-img', e.target);
+      if (img?.id === '$theme') return handlers.current.onDesign();
       if (img) return handlers.current.onImage(img.id, img.path);
       if (element(e.target)?.closest('[data-biz]')) return handlers.current.onBusiness();
+      // Clicking a text types in it (and shows the text toolbar); not the section window.
+      if (element(e.target)?.closest('[data-edit]')) return;
+      if (element(e.target)?.closest('nav.nav')) return handlers.current.onDesign();
       const id = sectionId(e.target);
       if (id) handlers.current.onSelect(id);
+      else handlers.current.onDeselect();
     };
     const onInput = () => {
       const cur = editing.current;
@@ -207,12 +255,18 @@ export function EditablePreview({
       handlers.current.onText(cur.id, cur.path, read(cur.el, cur.multi).trim());
       cur.el.removeAttribute('contenteditable');
       editing.current = null;
+      setTyping(null);
       setFrozen(null); // show the re-rendered page (scroll position is kept)
     };
     const onSubmit = (e: Event) => e.preventDefault();
     const onScroll = () => {
       scrollY.current = win?.scrollY ?? 0;
       setMenuFor(null);
+      const cur = editing.current;
+      if (cur) {
+        const r = cur.el.getBoundingClientRect();
+        setTyping({ id: cur.id, path: cur.path, top: r.top, bottom: r.bottom, left: r.left });
+      }
       measure();
     };
     doc.addEventListener('mousedown', onDown, true);
@@ -312,6 +366,44 @@ export function EditablePreview({
             style={{ top: rects[selected].top, height: rects[selected].height }}
           />
         )}
+        {inspector && !frozen && (!selected || rects[selected]) && (
+          <div
+            role="dialog"
+            aria-label={selected ? `הגדרות ${label(selected)}` : 'עיצוב האתר'}
+            className="absolute end-3 z-20 hidden max-h-[calc(100%-1.5rem)] w-[22rem] overflow-y-auto rounded-xl border border-surface-border bg-surface p-4 shadow-lift lg:block"
+            style={{
+              top: selected
+                ? Math.min(
+                    Math.max(rects[selected]!.top + 12, 12),
+                    Math.max(12, (frame.current?.clientHeight ?? 600) * 0.3),
+                  )
+                : 72,
+            }}
+            onKeyDown={(e) => {
+              // Ignore keys from dialogs opened inside it (they bubble through React portals).
+              if (e.key === 'Escape' && e.currentTarget.contains(e.target as Node)) {
+                handlers.current.onDeselect();
+              }
+            }}
+          >
+            {inspector}
+          </div>
+        )}
+        {typing && textTools && (
+          <div
+            role="toolbar"
+            aria-label="עיצוב הטקסט"
+            // Keep the focus (and the caret) in the text while using the toolbar.
+            onMouseDown={(e) => e.preventDefault()}
+            className="absolute z-30 flex items-center gap-1 rounded-xl bg-ink/95 p-1 text-white shadow-lift"
+            style={{
+              top: typing.top > 52 ? typing.top - 46 : typing.bottom + 8,
+              left: Math.max(typing.left, 8),
+            }}
+          >
+            {textTools(typing.id, typing.path, () => editing.current?.el.blur())}
+          </div>
+        )}
         {active && rects[active] && (
           <>
             {active !== selected && (
@@ -324,9 +416,14 @@ export function EditablePreview({
             <div
               role="toolbar"
               aria-label={`פעולות על ${label(active)}`}
+              hidden={Boolean(inspector) && active === selected}
               onMouseEnter={() => setHovered(active)}
-              className="absolute end-3 z-10 flex items-center gap-0.5 rounded-xl bg-ink/90 p-1 shadow-lift"
-              style={{ top: Math.max(rects[active].top, 0) + 10 }}
+              className="absolute z-10 flex items-center gap-0.5 rounded-xl bg-ink/90 p-1 shadow-lift"
+              style={{
+                top: Math.max(rects[active].top, 0) + 10,
+                // Beside the open settings window, never under it.
+                insetInlineEnd: inspector ? '24rem' : '0.75rem',
+              }}
             >
               <span className="px-2 text-xs font-medium text-white">{label(active)}</span>
               <button

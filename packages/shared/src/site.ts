@@ -109,6 +109,17 @@ const base = {
   visible: z.boolean(),
   /** Short name in the site menu and above the title; empty = the type's default (D-075). */
   navLabel: z.string().trim().max(30, siteMessages.textTooLong).optional(),
+  /** Look of this section, chosen from the site palette (D-082). All optional = defaults. */
+  style: z
+    .object({
+      bg: z.enum(['auto', 'white', 'soft', 'brand', 'dark']).optional(),
+      align: z.enum(['start', 'center']).optional(),
+      spacing: z.enum(['compact', 'normal', 'airy']).optional(),
+      titleColor: z.enum(['ink', 'brand', 'accent']).optional(),
+      titleSize: z.enum(['normal', 'large']).optional(),
+      button: z.enum(['solid', 'outline']).optional(),
+    })
+    .optional(),
 };
 
 // ---------------------------------------------------------------------------
@@ -244,6 +255,7 @@ export const sectionSchema = z.discriminatedUnion('type', [
 ]);
 export type Section = z.infer<typeof sectionSchema>;
 export type SectionOf<T extends SectionType> = Extract<Section, { type: T }>;
+export type SectionStyle = NonNullable<Section['style']>;
 
 // ---------------------------------------------------------------------------
 // Pages (D-081): the home page is the site's own sections; extra pages live in `pages`.

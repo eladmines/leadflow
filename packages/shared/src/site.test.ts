@@ -284,6 +284,24 @@ describe('pages (D-081)', () => {
   });
 });
 
+describe('section look (D-082)', () => {
+  it('renders the chosen background, alignment, spacing, title and button styles', () => {
+    const draft = buildTemplateDraft('beauty', business);
+    draft.sections = draft.sections.map((s) =>
+      s.type === 'services'
+        ? { ...s, style: { bg: 'dark', align: 'center', spacing: 'airy', titleSize: 'large' } }
+        : s.type === 'hero'
+          ? { ...s, style: { bg: 'brand', button: 'outline', titleColor: 'accent' } }
+          : s,
+    );
+    const html = renderSitePage(draft, business);
+    expect(html).toContain('<section id="s-services" class="sec-dark al-center sp-airy ts-large">');
+    expect(html).toContain('<header class="hero sec-brand tc-accent btn-outline" id="s-hero">');
+    // Untouched sections keep the automatic alternation.
+    expect(html).toMatch(/<section id="s-pricing" class="soft">/);
+  });
+});
+
 describe('hoursSummary', () => {
   it('groups consecutive days with the same hours and skips closed days', () => {
     expect(hoursSummary(defaultOpeningHours)).toEqual([

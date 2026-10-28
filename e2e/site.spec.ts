@@ -143,11 +143,19 @@ test('desktop editing happens on the page: sections, list items and settings', a
   await saved;
   await expect(frame.locator('main > [id^="s-"]').nth(1).locator('.faq')).toBeVisible();
 
-  // Section settings open in the panel (only settings; texts are on the page).
+  // Section settings open in a window next to the section (only settings; texts are on the page).
   await frame.locator('#s-contact').hover();
   await page.getByRole('toolbar').getByRole('button', { name: 'הגדרות יצירת קשר' }).click();
-  await expect(page.getByRole('checkbox', { name: 'הצגת טלפון' })).toBeVisible();
-  await expect(page.getByLabel('כותרת', { exact: true })).toBeHidden();
+  const inspector = page.getByRole('dialog', { name: 'הגדרות יצירת קשר' });
+  await expect(inspector.getByRole('checkbox', { name: 'הצגת טלפון' })).toBeVisible();
+  await expect(inspector.getByLabel('כותרת', { exact: true })).toBeHidden();
+  // A look from the palette: dark background.
+  saved = nextSave(page);
+  await inspector.getByRole('button', { name: 'כהה' }).click();
+  await saved;
+  await expect(frame.locator('#s-contact')).toHaveClass(/sec-dark/);
+  await inspector.getByRole('button', { name: 'סגירה' }).click();
+  await expect(inspector).toBeHidden();
 
   // Links in the preview don't navigate away from the editor.
   await frame.locator('#s-contact a[href^="tel:"]').first().click();
@@ -176,10 +184,14 @@ test('fixed labels are editable on the page; phone opens the business details', 
   await previewReady(page);
   await expect(frame.locator('#s-services .eyebrow')).toHaveText('טיפולים');
 
-  // The logo placeholder opens the image library.
+  // The logo opens the site design window; from there, the image library.
   await frame.locator('.nav [data-img="$theme:logoAssetId"]').click();
-  await expect(page.getByRole('dialog', { name: 'בחירת תמונה' })).toBeVisible();
+  const design = page.getByRole('dialog', { name: 'עיצוב האתר' });
+  await expect(design).toBeVisible();
+  await design.getByRole('button', { name: 'בחירת לוגו' }).click();
+  await expect(page.getByRole('dialog', { name: 'לוגו' })).toBeVisible();
   await page.keyboard.press('Escape');
+  await design.getByRole('button', { name: 'סגירה' }).click();
 
   // The phone belongs to the business profile: it opens "פרטי העסק".
   await frame.locator('.nav .call').click();
