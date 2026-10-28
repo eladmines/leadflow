@@ -85,6 +85,33 @@ describe('template picker', () => {
 });
 
 describe('site editor', () => {
+  it('a blank page needs only a name; the address can be edited', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`PUT ${sp.draft(testBusiness.id)}`]: putOk,
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
+    const dialog = await screen.findByRole('dialog', { name: 'עמוד חדש' });
+    expect(within(dialog).getByRole('button', { name: 'הוספת העמוד' })).toBeDisabled();
+    await user.type(within(dialog).getByLabelText('שם העמוד'), 'המבצע שלנו');
+    await user.clear(within(dialog).getByLabelText('כתובת העמוד'));
+    await user.type(within(dialog).getByLabelText('כתובת העמוד'), 'summer sale');
+    await user.click(within(dialog).getByRole('button', { name: 'הוספת העמוד' }));
+    expect(screen.getByRole('tab', { name: 'המבצע שלנו' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await waitFor(
+      () =>
+        expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).at(-1)?.pages[0]).toMatchObject(
+          { title: 'המבצע שלנו', slug: 'summer-sale', inMenu: true, sections: [] },
+        ),
+      { timeout: 3000 },
+    );
+  });
+
   it('a new landing page says it is not in the menu and can be added with one click', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
@@ -93,11 +120,12 @@ describe('site editor', () => {
     });
     const { user } = renderApp(sitePath);
     await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
-    await user.click(
-      within(await screen.findByRole('dialog', { name: 'עמוד חדש' })).getByRole('button', {
-        name: /^דף נחיתה/,
-      }),
-    );
+    const addDialog = await screen.findByRole('dialog', { name: 'עמוד חדש' });
+    await user.selectOptions(within(addDialog).getByLabelText('תוכן התחלתי (לא חובה)'), 'landing');
+    expect(
+      within(addDialog).getByRole('checkbox', { name: 'להציג בתפריט האתר' }),
+    ).not.toBeChecked();
+    await user.click(within(addDialog).getByRole('button', { name: 'הוספת העמוד' }));
     expect(screen.getByText(/לא מופיע בתפריט האתר/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'הוספה לתפריט' }));
     expect(screen.queryByText(/לא מופיע בתפריט האתר/)).not.toBeInTheDocument();
@@ -119,7 +147,10 @@ describe('site editor', () => {
     const { user } = renderApp(sitePath);
     await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
     const dialog = await screen.findByRole('dialog', { name: 'עמוד חדש' });
-    await user.click(within(dialog).getByRole('button', { name: /^אודות/ }));
+    await user.selectOptions(within(dialog).getByLabelText('תוכן התחלתי (לא חובה)'), 'about');
+    expect(within(dialog).getByLabelText('שם העמוד')).toHaveValue('אודות');
+    expect(within(dialog).getByLabelText('כתובת העמוד')).toHaveValue('about');
+    await user.click(within(dialog).getByRole('button', { name: 'הוספת העמוד' }));
     expect(screen.getByRole('tab', { name: 'אודות' })).toHaveAttribute('aria-selected', 'true');
     await waitFor(
       () => expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id)).length).toBeGreaterThan(0),

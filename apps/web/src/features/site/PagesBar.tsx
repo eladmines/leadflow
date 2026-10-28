@@ -39,7 +39,7 @@ export function PagesBar({
   pageId: PageId;
   editable: boolean;
   onSelect: (id: PageId) => void;
-  onAdd: (preset: PagePresetKey) => void;
+  onAdd: (preset: PagePresetKey, page: { title: string; slug: string; inMenu: boolean }) => void;
   onUpdate: (id: string, patch: Partial<SitePage>) => void;
   onDelete: (id: string) => void;
   /** Google title/description of the page being edited (the home page's too). */
@@ -100,28 +100,15 @@ export function PagesBar({
         </Button>
       )}
 
-      <DialogShell open={addOpen} onOpenChange={setAddOpen} title="עמוד חדש">
-        <p className="text-sm text-ink-muted">
-          בחרו סוג עמוד. אפשר לשנות כל טקסט, מקטע וכתובת אחר כך.
-        </p>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {(Object.keys(PAGE_PRESETS) as PagePresetKey[]).map((k) => (
-            <li key={k}>
-              <button
-                type="button"
-                onClick={() => {
-                  onAdd(k);
-                  setAddOpen(false);
-                }}
-                className="flex w-full flex-col items-start gap-0.5 rounded-xl border border-surface-border p-3 text-start hover:border-brand-300 hover:bg-brand-50/50"
-              >
-                <span className="text-sm font-semibold text-ink">{PAGE_PRESETS[k].label}</span>
-                <span className="text-xs text-ink-muted">{presetHints[k]}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </DialogShell>
+      <AddPage
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        taken={pages.map((p) => p.slug)}
+        onAdd={(preset, page) => {
+          onAdd(preset, page);
+          setAddOpen(false);
+        }}
+      />
 
       <PageSettings
         key={current?.id ?? 'home'}
@@ -137,6 +124,127 @@ export function PagesBar({
         onDelete={() => current && onDelete(current.id)}
       />
     </div>
+  );
+}
+
+/** "+": a plain new-page form; the starting content is optional (D-088). */
+function AddPage({
+  open,
+  onOpenChange,
+  taken,
+  onAdd,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  taken: string[];
+  onAdd: (preset: PagePresetKey, page: { title: string; slug: string; inMenu: boolean }) => void;
+}) {
+  const freeSlug = (base: string) => {
+    let slug = base;
+    for (let n = 2; taken.includes(slug); n++) slug = `${base}-${n}`;
+    return slug;
+  };
+  const [preset, setPreset] = useState<PagePresetKey>('blank');
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [inMenu, setInMenu] = useState(true);
+  // Typed fields win; until then a starting content suggests name, address and menu.
+  const [touched, setTouched] = useState({ title: false, slug: false });
+  useEffect(() => {
+    if (!open) return;
+    setPreset('blank');
+    setTitle('');
+    setSlug(freeSlug('page'));
+    setInMenu(true);
+    setTouched({ title: false, slug: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const choose = (k: PagePresetKey) => {
+    setPreset(k);
+    const p = PAGE_PRESETS[k];
+    if (!touched.title) setTitle(k === 'blank' ? '' : p.label);
+    if (!touched.slug) setSlug(freeSlug(p.slug));
+    setInMenu(p.inMenu);
+  };
+  const parsed = pageSlugSchema.safeParse(slug);
+  const slugError = !parsed.success
+    ? parsed.error.issues[0]?.message
+    : taken.includes(parsed.data)
+      ? siteMessages.pageSlugTaken
+      : undefined;
+  const titleError = title.trim() ? undefined : siteMessages.pageTitleRequired;
+
+  return (
+    <DialogShell open={open} onOpenChange={onOpenChange} title="עמוד חדש">
+      <form
+        noValidate
+        className="flex flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (slugError || titleError || !parsed.success) return;
+          onAdd(preset, { title: title.trim(), slug: parsed.data, inMenu });
+        }}
+      >
+        <Field
+          label="שם העמוד"
+          placeholder="למשל: המבצע שלנו"
+          maxLength={30}
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            setTouched((t) => ({ ...t, title: true }));
+          }}
+          error={touched.title ? titleError : undefined}
+        />
+        <Field
+          label="כתובת העמוד"
+          ltr
+          hint="אותיות באנגלית, ספרות ומקף. למשל: offer"
+          value={slug}
+          onChange={(e) => {
+            setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'));
+            setTouched((t) => ({ ...t, slug: true }));
+          }}
+          error={slugError}
+        />
+        <Checkbox
+          label="להציג בתפריט האתר"
+          checked={inMenu}
+          onChange={(e) => setInMenu(e.target.checked)}
+        />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="page-preset" className="text-sm font-medium text-ink">
+            תוכן התחלתי (לא חובה)
+          </label>
+          <select
+            id="page-preset"
+            value={preset}
+            onChange={(e) => choose(e.target.value as PagePresetKey)}
+            className="h-9 rounded-lg border border-surface-border bg-surface px-3 text-sm text-ink"
+          >
+            {(
+              [
+                'blank',
+                ...Object.keys(PAGE_PRESETS).filter((k) => k !== 'blank'),
+              ] as PagePresetKey[]
+            ).map((k) => (
+              <option key={k} value={k}>
+                {PAGE_PRESETS[k].label} · {presetHints[k]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
+            ביטול
+          </Button>
+          <Button type="submit" disabled={Boolean(slugError || titleError)}>
+            הוספת העמוד
+          </Button>
+        </div>
+      </form>
+    </DialogShell>
   );
 }
 
