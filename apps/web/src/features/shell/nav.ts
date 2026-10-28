@@ -41,15 +41,7 @@ export const navItems: NavItem[] = [
     },
   },
   { segment: 'tasks', label: 'משימות', icon: ListTodo },
-  {
-    segment: 'appointments',
-    label: 'תורים',
-    icon: CalendarDays,
-    comingSoon: {
-      title: 'יומן ותורים בדרך',
-      description: 'הגדרת שירותים וזמינות, יומן יומי ושבועי ובקשות תור מהאתר.',
-    },
-  },
+  { segment: 'appointments', label: 'תורים', icon: CalendarDays },
   {
     segment: 'quotes',
     label: 'הצעות מחיר',
