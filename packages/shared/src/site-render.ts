@@ -480,6 +480,7 @@ const EDITOR_STYLE = `<style>
 [data-ph]:empty{min-height:1.5em;min-width:3em}[data-ph]:empty::before{content:attr(data-ph);color:#9aa3ad;font-weight:400}
 [data-biz]{cursor:pointer;border-radius:8px;outline:2px dashed transparent;outline-offset:4px}[data-biz]:hover{outline-color:rgba(224,165,38,.8)}
 [data-i]{position:relative}
+.mark-empty{position:relative}.mark-empty:hover::after{content:"+ הוספת לוגו";position:absolute;top:calc(100% + 8px);inset-inline-start:0;white-space:nowrap;background:#18202a;color:#fff;font:600 12px/1 system-ui;padding:7px 10px;border-radius:8px;z-index:40}
 .ed-item{position:absolute;top:8px;inset-inline-end:8px;z-index:3;display:flex;gap:4px;opacity:0;pointer-events:none;transition:opacity .15s}
 [data-i]:hover>.ed-item,[data-i]:focus-within>.ed-item{opacity:1;pointer-events:auto}
 .service:hover{transform:none}
@@ -539,7 +540,9 @@ export function renderSitePage(
       ? `<div class="mbar">${call ? `<a href="${call}">${icon('phone')}${et(ctx, '$theme', 'labels.mobileCall', ctx.labels.mobileCall || 'חייגו עכשיו')}</a>` : ''}${contactId ? `<a${call ? ' class="alt"' : ''} href="#s-${esc(contactId)}">${icon('chat')}${et(ctx, '$theme', 'labels.mobileContact', ctx.labels.mobileContact || 'השארת פרטים')}</a>` : ''}</div>`
       : '';
   const hours = hoursSummary(b.openingHours);
-  const brand = `${logo ? img(logo, b.name, 'logo', false) : `<span class="mark" aria-hidden="true">${esc(b.name.trim().charAt(0))}</span>`}<span>${esc(b.name)}</span>`;
+  // In the editor the logo (or its placeholder) is clickable to choose an image (D-076).
+  const logoAttr = ei(ctx, '$theme', 'logoAssetId');
+  const brand = `${logo ? img(logo, b.name, 'logo', false, logoAttr) : `<span class="mark${opts.editor ? ' mark-empty' : ''}" aria-hidden="true"${logoAttr}>${esc(b.name.trim().charAt(0))}</span>`}<span>${esc(b.name)}</span>`;
 
   return `${documentHead(draft.theme, draft.seo.title || b.name, draft.seo.description)}
 <body${mbar ? ' class="has-mbar"' : ''}>${opts.editor ? EDITOR_STYLE : ''}
