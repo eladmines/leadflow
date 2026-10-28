@@ -7,6 +7,7 @@ import {
   type PagePresetKey,
   PALETTE_KEYS,
   PALETTES,
+  resolvePalette,
   renderSitePage,
   SECTION_TYPES,
   sectionTypeLabels,
@@ -44,6 +45,7 @@ import { EditablePreview } from './EditablePreview';
 import { setSectionField } from './fieldPath';
 import { onAllPages, onPage, sectionsOf, type PageId } from './pages';
 import { PagesBar } from './PagesBar';
+import { CustomColors } from './CustomColors';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import {
   buttonStyleOptions,
@@ -358,7 +360,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
               key={k}
               className={cn(
                 'flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-                draft.theme.palette === k
+                draft.theme.palette === k && !draft.theme.custom
                   ? 'border-brand-500 bg-brand-50'
                   : 'border-surface-border hover:bg-surface-muted',
               )}
@@ -367,8 +369,8 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 type="radio"
                 name={`${prefix}palette`}
                 value={k}
-                checked={draft.theme.palette === k}
-                onChange={() => update({ theme: { ...draft.theme, palette: k } })}
+                checked={draft.theme.palette === k && !draft.theme.custom}
+                onChange={() => update({ theme: { ...draft.theme, palette: k, custom: null } })}
                 className="sr-only"
               />
               <span aria-hidden className="flex">
@@ -384,7 +386,42 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
               {PALETTES[k].label}
             </label>
           ))}
+          <label
+            className={cn(
+              'flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
+              draft.theme.custom
+                ? 'border-brand-500 bg-brand-50'
+                : 'border-surface-border hover:bg-surface-muted',
+            )}
+          >
+            <input
+              type="radio"
+              name={`${prefix}palette`}
+              checked={Boolean(draft.theme.custom)}
+              onChange={() => {
+                const p = resolvePalette(draft.theme);
+                update({
+                  theme: { ...draft.theme, custom: { primary: p.primary, accent: p.accent } },
+                });
+              }}
+              className="sr-only"
+            />
+            <span
+              aria-hidden
+              className="h-5 w-5 rounded-full ring-2 ring-white"
+              style={{
+                background: 'conic-gradient(#ef4444,#f59e0b,#22c55e,#3b82f6,#a855f7,#ef4444)',
+              }}
+            />
+            מותאם אישית
+          </label>
         </div>
+        {draft.theme.custom && (
+          <CustomColors
+            value={draft.theme.custom}
+            onChange={(custom) => update({ theme: { ...draft.theme, custom } })}
+          />
+        )}
       </fieldset>
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-medium text-ink">גופן</legend>
@@ -874,7 +911,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                     current && (
                       <SectionInspector
                         section={current}
-                        palette={draft.theme.palette}
+                        palette={resolvePalette(draft.theme)}
                         index={sections.findIndex((x) => x.id === current.id)}
                         count={sections.length}
                         onChange={(p) => updateSection(current.id, p)}

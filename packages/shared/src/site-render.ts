@@ -1,6 +1,6 @@
 import { formatIsraeliPhone, industryLabels, WEEKDAYS, weekdayLabels } from './business';
 import { FORM_TOKEN_PLACEHOLDER, HONEYPOT_FIELD, LEAD_FORM_PATH } from './leads';
-import { FONTS, PALETTES, SITE_LIMITS, type Section, type SiteTheme } from './site';
+import { FONTS, resolvePalette, SITE_LIMITS, type Section, type SiteTheme } from './site';
 import type { SiteBusinessInfo, SiteDraft } from './site-templates';
 
 /** Resolved image for rendering (built by the server from the business's own assets). */
@@ -363,7 +363,7 @@ function section(s: Section, c: Ctx, alt: boolean): string {
 }
 
 function documentHead(theme: SiteTheme, title: string, description: string, noindex = false) {
-  const palette = PALETTES[theme.palette];
+  const palette = resolvePalette(theme);
   const font = FONTS[theme.font];
   const fontParam = encodeURIComponent(font.family).replace(/%20/g, '+');
   return `<!doctype html>
@@ -383,7 +383,7 @@ function documentHead(theme: SiteTheme, title: string, description: string, noin
 </head>`;
 }
 
-function css(palette: (typeof PALETTES)[keyof typeof PALETTES], family: string) {
+function css(palette: ReturnType<typeof resolvePalette>, family: string) {
   return `
 :root{--p:${palette.primary};--a:${palette.accent};--soft:${palette.soft};--pd:color-mix(in srgb,var(--p) 78%,#000);--ink:#18202a;--muted:#5b6672;--line:#e8e4de;--r:22px;--sh:0 1px 2px rgba(20,24,31,.04),0 12px 32px -14px rgba(20,24,31,.18)}
 *{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
