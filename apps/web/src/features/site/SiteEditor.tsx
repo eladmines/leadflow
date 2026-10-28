@@ -44,6 +44,13 @@ import { EditablePreview } from './EditablePreview';
 import { setSectionField } from './fieldPath';
 import { onAllPages, onPage, sectionsOf, type PageId } from './pages';
 import { PagesBar } from './PagesBar';
+import { useMediaQuery } from '../../lib/useMediaQuery';
+import {
+  buttonStyleOptions,
+  SectionInspector,
+  titleColorOptions,
+  titleSizeOptions,
+} from './SectionInspector';
 import { BusinessDetailsDialog } from './BusinessDetailsDialog';
 import { MediaPicker } from '../media/MediaPicker';
 import { PreviewFrame } from './PreviewFrame';
@@ -185,6 +192,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
     });
   const current = sections.find((s) => s.id === selected);
   const select = useCallback((id: string) => {
+    setDesignOpen(false);
     setSelected(id);
     setConfirmDelete(false);
   }, []);
@@ -241,6 +249,87 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
         }),
       ),
     );
+  /** A copy right after the original (fresh id), opened for editing. */
+  const duplicate = (id: string) => {
+    const copy = { ...structuredClone(sections.find((x) => x.id === id)!), id: newId() };
+    setSections((ss) => {
+      const i = ss.findIndex((x) => x.id === id);
+      const next = [...ss];
+      next.splice(i + 1, 0, copy);
+      return next;
+    });
+    select(copy.id);
+  };
+  const styleOf = (id: string) =>
+    [...draft.sections, ...draft.pages.flatMap((p) => p.sections)].find((x) => x.id === id);
+  const setStyle = (id: string, patch: NonNullable<Section['style']>) => {
+    const s = styleOf(id);
+    if (s) updateSection(id, { style: { ...s.style, ...patch } } as Partial<Section>);
+  };
+  /** The small toolbar above a title or button being typed (D-082). */
+  const textTools = (id: string, path: string, done: () => void) => {
+    const s = styleOf(id);
+    if (!s) return null;
+    const pick = (fn: () => void) => () => {
+      fn();
+      done();
+    };
+    const chip = (pressed: boolean, label: string, onClick: () => void) => (
+      <button
+        key={label}
+        type="button"
+        aria-pressed={pressed}
+        onClick={pick(onClick)}
+        className={cn(
+          'rounded-lg px-2 py-1 text-xs',
+          pressed ? 'bg-white text-ink' : 'text-white/85 hover:bg-white/15',
+        )}
+      >
+        {label}
+      </button>
+    );
+    const sep = <span aria-hidden className="mx-0.5 h-4 w-px bg-white/25" />;
+    if (path === 'title') {
+      return (
+        <>
+          {titleColorOptions.map((o) =>
+            chip((s.style?.titleColor ?? 'ink') === o.value, o.label, () =>
+              setStyle(id, { titleColor: o.value }),
+            ),
+          )}
+          {sep}
+          {titleSizeOptions.map((o) =>
+            chip((s.style?.titleSize ?? 'normal') === o.value, `כותרת ${o.label}`, () =>
+              setStyle(id, { titleSize: o.value }),
+            ),
+          )}
+        </>
+      );
+    }
+    if (path === 'buttonLabel') {
+      return (
+        <>
+          {buttonStyleOptions.map((o) =>
+            chip((s.style?.button ?? 'solid') === o.value, `כפתור ${o.label}`, () =>
+              setStyle(id, { button: o.value }),
+            ),
+          )}
+          {s.type === 'hero' && (
+            <>
+              {sep}
+              {chip(s.buttonAction === 'call', 'חיוג לעסק', () =>
+                updateSection(id, { buttonAction: 'call' } as Partial<Section>),
+              )}
+              {chip(s.buttonAction === 'contact', 'מעבר לטופס', () =>
+                updateSection(id, { buttonAction: 'contact' } as Partial<Section>),
+              )}
+            </>
+          )}
+        </>
+      );
+    }
+    return null;
+  };
   const insertAfter = (afterId: string, type: SectionType) => {
     const s = newSection(type, newId());
     setSections((ss) => {
@@ -251,6 +340,81 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
     });
     select(s.id);
   };
+
+  /** Site-wide design: logo, palette and font (the panel tab and the window from the logo). */
+  const renderDesign = (prefix: string) => (
+    <>
+      <ImageField
+        label="לוגו"
+        hint="מוצג בראש האתר ליד שם העסק. עדיף לוגו על רקע שקוף או לבן."
+        value={draft.theme.logoAssetId}
+        onChange={(logoAssetId) => update({ theme: { ...draft.theme, logoAssetId } })}
+      />
+      <fieldset className="flex flex-col gap-3">
+        <legend className="mb-2 text-sm font-medium text-ink">צבעים</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {PALETTE_KEYS.map((k) => (
+            <label
+              key={k}
+              className={cn(
+                'flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
+                draft.theme.palette === k
+                  ? 'border-brand-500 bg-brand-50'
+                  : 'border-surface-border hover:bg-surface-muted',
+              )}
+            >
+              <input
+                type="radio"
+                name={`${prefix}palette`}
+                value={k}
+                checked={draft.theme.palette === k}
+                onChange={() => update({ theme: { ...draft.theme, palette: k } })}
+                className="sr-only"
+              />
+              <span aria-hidden className="flex">
+                <span
+                  className="h-5 w-5 rounded-full ring-2 ring-white"
+                  style={{ background: PALETTES[k].primary }}
+                />
+                <span
+                  className="-ms-1.5 h-5 w-5 rounded-full ring-2 ring-white"
+                  style={{ background: PALETTES[k].accent }}
+                />
+              </span>
+              {PALETTES[k].label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-sm font-medium text-ink">גופן</legend>
+        {FONT_KEYS.map((k) => (
+          <label
+            key={k}
+            className={cn(
+              'flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
+              draft.theme.font === k
+                ? 'border-brand-500 bg-brand-50'
+                : 'border-surface-border hover:bg-surface-muted',
+            )}
+          >
+            <input
+              type="radio"
+              name={`${prefix}font`}
+              value={k}
+              checked={draft.theme.font === k}
+              onChange={() => update({ theme: { ...draft.theme, font: k } })}
+              className="accent-brand-600"
+            />
+            {FONTS[k].label}
+          </label>
+        ))}
+      </fieldset>
+    </>
+  );
+  const [designOpen, setDesignOpen] = useState(false);
+  // The section/design window is desktop-only; phones keep using the panel (one form at a time).
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'sections', label: 'מקטעים' },
@@ -564,72 +728,7 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                   aria-labelledby="tab-design"
                   className="flex flex-col gap-6"
                 >
-                  <ImageField
-                    label="לוגו"
-                    hint="מוצג בראש האתר ליד שם העסק. עדיף לוגו על רקע שקוף או לבן."
-                    value={draft.theme.logoAssetId}
-                    onChange={(logoAssetId) => update({ theme: { ...draft.theme, logoAssetId } })}
-                  />
-                  <fieldset className="flex flex-col gap-3">
-                    <legend className="mb-2 text-sm font-medium text-ink">צבעים</legend>
-                    <div className="grid grid-cols-2 gap-2">
-                      {PALETTE_KEYS.map((k) => (
-                        <label
-                          key={k}
-                          className={cn(
-                            'flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-                            draft.theme.palette === k
-                              ? 'border-brand-500 bg-brand-50'
-                              : 'border-surface-border hover:bg-surface-muted',
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="palette"
-                            value={k}
-                            checked={draft.theme.palette === k}
-                            onChange={() => update({ theme: { ...draft.theme, palette: k } })}
-                            className="sr-only"
-                          />
-                          <span aria-hidden className="flex">
-                            <span
-                              className="h-5 w-5 rounded-full ring-2 ring-white"
-                              style={{ background: PALETTES[k].primary }}
-                            />
-                            <span
-                              className="-ms-1.5 h-5 w-5 rounded-full ring-2 ring-white"
-                              style={{ background: PALETTES[k].accent }}
-                            />
-                          </span>
-                          {PALETTES[k].label}
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <fieldset className="flex flex-col gap-2">
-                    <legend className="mb-2 text-sm font-medium text-ink">גופן</legend>
-                    {FONT_KEYS.map((k) => (
-                      <label
-                        key={k}
-                        className={cn(
-                          'flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-                          draft.theme.font === k
-                            ? 'border-brand-500 bg-brand-50'
-                            : 'border-surface-border hover:bg-surface-muted',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="font"
-                          value={k}
-                          checked={draft.theme.font === k}
-                          onChange={() => update({ theme: { ...draft.theme, font: k } })}
-                          className="accent-brand-600"
-                        />
-                        {FONTS[k].label}
-                      </label>
-                    ))}
-                  </fieldset>
+                  {renderDesign('panel-')}
                 </div>
               ) : (
                 <div
@@ -745,10 +844,57 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 onItem={itemAction}
                 onBusiness={() => setBizOpen(true)}
                 onNavigate={navigate}
-                onSettings={(id) => {
-                  select(id);
-                  setPanelOpen(true);
+                onDeselect={() => {
+                  setSelected(null);
+                  setDesignOpen(false);
                 }}
+                textTools={textTools}
+                onDesign={() => {
+                  setSelected(null);
+                  setDesignOpen(true);
+                }}
+                inspector={
+                  // One place at a time: when the side panel is open, it shows the section.
+                  !isDesktop || panelOpen ? null : designOpen ? (
+                    <div className="flex flex-col gap-5">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold text-ink">עיצוב האתר</h2>
+                        <button
+                          type="button"
+                          aria-label="סגירה"
+                          onClick={() => setDesignOpen(false)}
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken"
+                        >
+                          <X aria-hidden className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {renderDesign('window-')}
+                    </div>
+                  ) : (
+                    current && (
+                      <SectionInspector
+                        section={current}
+                        palette={draft.theme.palette}
+                        index={sections.findIndex((x) => x.id === current.id)}
+                        count={sections.length}
+                        onChange={(p) => updateSection(current.id, p)}
+                        onMove={(dir) => moveById(current.id, dir)}
+                        onHide={() => {
+                          updateSection(current.id, { visible: false });
+                          setSelected(null);
+                        }}
+                        onDuplicate={() => duplicate(current.id)}
+                        onDelete={() => {
+                          setSections((ss) => ss.filter((x) => x.id !== current.id));
+                          setSelected(null);
+                        }}
+                        onClose={() => setSelected(null)}
+                      />
+                    )
+                  )
+                }
+                // Desktop: the section window opens next to the section (D-082); phones use the panel.
+                onSettings={select}
                 onText={setField}
                 onImage={(id, path) => setImagePick({ id, path })}
               />

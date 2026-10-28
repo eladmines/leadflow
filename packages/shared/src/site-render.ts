@@ -177,7 +177,27 @@ const hoursHtml = (line: string) => {
   return i < 0 ? esc(line) : `${esc(line.slice(0, i))}<bdi dir="ltr">${esc(line.slice(i))}</bdi>`;
 };
 
+/** Classes for a section's chosen look (D-082); `alt` = the automatic soft alternation. */
+function styleClasses(s: Section, alt: boolean): string {
+  const st = s.style ?? {};
+  const bg = st.bg ?? 'auto';
+  return [
+    bg === 'soft' || (bg === 'auto' && alt) ? 'soft' : '',
+    bg === 'brand' ? 'sec-brand' : '',
+    bg === 'dark' ? 'sec-dark' : '',
+    st.align === 'center' ? 'al-center' : '',
+    st.spacing === 'compact' ? 'sp-compact' : st.spacing === 'airy' ? 'sp-airy' : '',
+    st.titleColor === 'brand' ? 'tc-brand' : st.titleColor === 'accent' ? 'tc-accent' : '',
+    st.titleSize === 'large' ? 'ts-large' : '',
+    st.button === 'outline' ? 'btn-outline' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+const withClasses = (base: string, extra: string) => [base, extra].filter(Boolean).join(' ');
+
 function hero(s: Extract<Section, { type: 'hero' }>, id: string, c: Ctx): string {
+  const k = styleClasses(s, false);
   const { b } = c;
   const call = b.phone ? telHref(b.phone) : '';
   const toContact = c.contactHref;
@@ -211,7 +231,7 @@ function hero(s: Extract<Section, { type: 'hero' }>, id: string, c: Ctx): string
 ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`;
 
   if (bg) {
-    return `<header class="hero has-img" id="${id}">${img(bg, '', 'hero-bg', false)}<div class="wrap">${text}</div></header>`;
+    return `<header class="${withClasses('hero has-img', k)}" id="${id}">${img(bg, '', 'hero-bg', false)}<div class="wrap">${text}</div></header>`;
   }
   // No photo: a "business card" with the real contact details balances the layout.
   const rows = [
@@ -229,7 +249,7 @@ ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')
           .join('')}</div></li>`
       : '',
   ].filter(Boolean);
-  return `<header class="hero" id="${id}"><div class="wrap hero-grid">${text}${
+  return `<header class="${withClasses('hero', k)}" id="${id}"><div class="wrap hero-grid">${text}${
     rows.length
       ? `<aside class="biz-card" aria-label="פרטי העסק"><p class="biz-name">${esc(b.name)}</p><ul>${rows.join('')}</ul>${
           toContact
@@ -243,7 +263,8 @@ ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')
 function section(s: Section, c: Ctx, alt: boolean): string {
   const { b, media } = c;
   const id = `s-${esc(s.id)}`;
-  const cls = alt ? ' class="soft"' : '';
+  const k = styleClasses(s, alt);
+  const cls = k ? ` class="${k}"` : '';
   switch (s.type) {
     case 'hero':
       return hero(s, id, c);
@@ -331,12 +352,12 @@ function section(s: Section, c: Ctx, alt: boolean): string {
       const form = s.form.enabled
         ? `<div class="form-wrap">${leadForm(s, b, c.pageSlug)}</div>`
         : '';
-      return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading(navLabel(s), s.title, c.editor ? s.subtitle : s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true, 'משפט פתיחה (לא חובה)'), ea(c, s.id, 'navLabel'))}
+      return `<section id="${id}" class="${withClasses('contact', k)}"><div class="wrap">${heading(navLabel(s), s.title, c.editor ? s.subtitle : s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true, 'משפט פתיחה (לא חובה)'), ea(c, s.id, 'navLabel'))}
 <div class="contact-grid"><div class="contact-info">${rows.length ? `<ul class="info">${rows.join('')}</ul>` : ''}${hours}</div>${form}</div></div></section>`;
     }
     case 'cta': {
       const href = b.phone ? telHref(b.phone) : c.contactHref;
-      return `<section id="${id}" class="cta-wrap"><div class="wrap"><div class="cta"><div><h2${ea(c, s.id, 'title')}>${esc(s.title)}</h2>${s.subtitle || c.editor ? `<p${ea(c, s.id, 'subtitle', true, 'טקסט (לא חובה)')}>${esc(s.subtitle)}</p>` : ''}</div>${s.buttonLabel && href ? `<a class="btn light" href="${href}">${b.phone ? icon('phone') : ''}${et(c, s.id, 'buttonLabel', s.buttonLabel)}</a>` : ''}</div></div></section>`;
+      return `<section id="${id}" class="${withClasses('cta-wrap', k.replace(/\bsoft\b/, ''))}"><div class="wrap"><div class="cta"><div><h2${ea(c, s.id, 'title')}>${esc(s.title)}</h2>${s.subtitle || c.editor ? `<p${ea(c, s.id, 'subtitle', true, 'טקסט (לא חובה)')}>${esc(s.subtitle)}</p>` : ''}</div>${s.buttonLabel && href ? `<a class="btn light" href="${href}">${b.phone ? icon('phone') : ''}${et(c, s.id, 'buttonLabel', s.buttonLabel)}</a>` : ''}</div></div></section>`;
     }
   }
 }
@@ -485,6 +506,25 @@ footer h3{color:#fff;font-size:1rem;margin:0 0 14px}footer .brand{color:#fff;mar
 footer .foot-pages{flex-direction:row;flex-wrap:wrap;gap:6px 16px;margin-top:14px}
 footer ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}footer a{color:#fff;text-decoration:none}footer a:hover{text-decoration:underline}
 .bottom{border-top:1px solid rgba(255,255,255,.1);padding:18px 0;font-size:.85rem;color:rgba(255,255,255,.5)}
+/* Section looks (D-082) */
+section.sp-compact,.hero.sp-compact{padding-top:48px;padding-bottom:48px}section.sp-airy,.hero.sp-airy{padding-top:132px;padding-bottom:132px}
+.al-center .head,.al-center .hero-text{text-align:center;margin-inline:auto}.al-center .hero-text .lead{margin-inline:auto}.al-center .actions,.al-center .chips{justify-content:center}
+.al-center .about-body{border:0;padding:0;text-align:center}.al-center .hero-grid{grid-template-columns:1fr}.al-center .biz-card{display:none}
+.tc-brand h1,.tc-brand .head h2,.tc-brand .cta h2{color:var(--p)}.tc-accent h1,.tc-accent .head h2,.tc-accent .cta h2{color:var(--a)}
+.ts-large h1{font-size:clamp(2.6rem,6.5vw,4.8rem)}.ts-large .head h2,.ts-large .cta h2{font-size:clamp(2rem,4.6vw,3.2rem)}
+.btn-outline .btn:not(.ghost):not(.light){background:transparent;color:var(--p);border-color:var(--p);box-shadow:none}
+.btn-outline .btn.light{background:transparent;color:#fff;border-color:#fff}
+section.sec-brand,.hero.sec-brand{background:linear-gradient(135deg,var(--p),var(--pd));color:#fff}
+section.sec-dark,.hero.sec-dark{background:#14181f;color:#fff}
+:is(.sec-brand,.sec-dark) :is(h1,.head h2,.head .lead,.about-body p,.about-text p,.note,.slot-note){color:#fff}
+:is(.sec-brand,.sec-dark) .head .lead,:is(.sec-brand,.sec-dark) .hero-text .lead,:is(.sec-brand,.sec-dark) .chips{color:rgba(255,255,255,.85)}
+:is(.sec-brand,.sec-dark) .eyebrow{background:rgba(255,255,255,.14);color:#fff}
+:is(.sec-brand,.sec-dark) .chips .ic{color:#fff}
+.hero.sec-brand .btn:not(.ghost),.hero.sec-dark .btn:not(.ghost){background:#fff;color:var(--p);border-color:#fff}
+.hero.sec-brand .btn.ghost,.hero.sec-dark .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
+:is(.sec-brand,.sec-dark) .card,:is(.sec-brand,.sec-dark) details,:is(.sec-brand,.sec-dark) .hours,:is(.sec-brand,.sec-dark) .lead-form{color:var(--ink)}
+:is(.sec-brand,.sec-dark) .info a,:is(.sec-brand,.sec-dark) .info span,:is(.sec-brand,.sec-dark) .hours caption{color:#fff}
+:is(.sec-brand,.sec-dark) .tc-brand h2{color:#fff}
 /* Mobile call bar */
 .mbar{display:none}
 .empty{padding:120px 20px;text-align:center;color:var(--muted)}

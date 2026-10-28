@@ -67,3 +67,4 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — F17 appointments (first version): services, week/day calendar, booking with clash prevention, website appointment requests (manual approval), lead card and history.
 - 2026-10-28 — F18 quotes (first version): from a lead, items/discount/VAT, numbered drafts, private link + email + WhatsApp, customer accept/reject with print-to-PDF, lead card and history. Fixed a leads-page search race that could undo a navigation.
 - 2026-10-28 — Site pages: add pages (about, services, gallery, FAQ, contact, landing, blank), page switcher and settings in the editor, per-page Google details, live at /address with menu, phone menu and sitemap.
+- 2026-10-28 — Editor: section settings window on click (look from the palette, settings, actions), text/button toolbar, site design window from the logo.
