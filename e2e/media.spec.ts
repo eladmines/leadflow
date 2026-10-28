@@ -34,6 +34,7 @@ const nextSave = (page: Page) =>
 test('logo + gallery image upload, preview, publish, and load on the live site', async ({
   page,
   context,
+  isMobile,
 }) => {
   const { id, liveUrl } = await ownerWithSite(page);
   const png = await sharp({
@@ -48,6 +49,8 @@ test('logo + gallery image upload, preview, publish, and load on the live site',
     .toBuffer();
 
   await page.goto(`/b/${id}/site`);
+  // On desktop the settings panel opens on demand.
+  if (!isMobile) await page.getByRole('button', { name: 'מקטעים, עיצוב וגוגל' }).click();
   await page.getByRole('tab', { name: 'עיצוב' }).click();
   await page.getByRole('button', { name: 'בחירת לוגו' }).click();
   let saved = nextSave(page);

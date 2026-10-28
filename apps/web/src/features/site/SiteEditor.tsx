@@ -26,7 +26,9 @@ import {
   Loader2,
   Monitor,
   Plus,
+  SlidersHorizontal,
   Smartphone,
+  X,
 } from 'lucide-react';
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { Alert, Button, Field, Select, Textarea } from '../../components/ui';
@@ -93,6 +95,9 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
   const live = site.published;
   const unpublishedChanges = live !== null && (live.revision !== revision() || state !== 'saved');
   const [tab, setTab] = useState<Tab>('sections');
+  // Desktop: the page gets the full width; the settings panel opens on demand (D-072).
+  // Below `lg` the panel is always shown (it's the main way to edit on a phone).
+  const [panelOpen, setPanelOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [adding, setAdding] = useState<SectionType>('services');
@@ -142,6 +147,28 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
     [],
   );
   const [imagePick, setImagePick] = useState<{ id: string; path: string } | null>(null);
+  /** On-page list controls (D-072): add a blank item, move one, or delete it. */
+  const itemAction = (id: string, action: 'add' | 'up' | 'down' | 'del', n: number) =>
+    setDraft((d) => ({
+      ...d,
+      sections: d.sections.map((s) => {
+        if (s.id !== id || !('items' in s)) return s;
+        const items = [...(s.items as Record<string, unknown>[])];
+        if (action === 'add') {
+          const template = (newSection(s.type, s.id) as { items?: Record<string, unknown>[] })
+            .items?.[0];
+          if (!template || items.length >= SITE_LIMITS.items) return s;
+          items.push(Object.fromEntries(Object.keys(template).map((k) => [k, ''])));
+        } else if (action === 'del') {
+          items.splice(n, 1);
+        } else {
+          const j = action === 'up' ? n - 1 : n + 1;
+          if (j < 0 || j >= items.length) return s;
+          [items[n], items[j]] = [items[j]!, items[n]!];
+        }
+        return { ...s, items } as Section;
+      }),
+    }));
   const insertAfter = (afterId: string, type: SectionType) => {
     const s = newSection(type, newId());
     setDraft((d) => {
@@ -258,9 +285,29 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
         canPublish={canPublish}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className={cn('grid gap-5', panelOpen && 'lg:grid-cols-[340px_minmax(0,1fr)]')}>
         {editable && (
-          <aside className="flex max-h-none flex-col rounded-3xl border border-surface-border bg-surface shadow-card lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]">
+          <aside
+            aria-label="הגדרות האתר"
+            className={cn(
+              'flex max-h-none flex-col rounded-3xl border border-surface-border bg-surface shadow-card lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]',
+              !panelOpen && 'lg:hidden',
+            )}
+          >
+            <div className="hidden items-center justify-between border-b border-surface-border px-4 py-2.5 lg:flex">
+              <span className="text-sm font-semibold text-ink">הגדרות</span>
+              <button
+                type="button"
+                aria-label="סגירת ההגדרות"
+                onClick={() => {
+                  setPanelOpen(false);
+                  setSelected(null);
+                }}
+                className={iconBtn}
+              >
+                <X aria-hidden className="h-4 w-4" />
+              </button>
+            </div>
             {!current && (
               <div
                 role="tablist"
@@ -547,9 +594,27 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
 
         <section aria-label="תצוגה מקדימה" className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-ink-muted">
-              {editable ? 'תצוגה מקדימה · לחצו על חלק כדי לערוך' : 'תצוגה מקדימה'}
-            </p>
+            <div className="flex items-center gap-3">
+              {editable && (
+                <Button
+                  variant={panelOpen ? 'secondary' : 'primary'}
+                  size="sm"
+                  className="hidden lg:inline-flex"
+                  aria-expanded={panelOpen}
+                  onClick={() => {
+                    // Always opens on the overview (sections, design, Google), not a section.
+                    setSelected(null);
+                    setPanelOpen((o) => !o);
+                  }}
+                >
+                  <SlidersHorizontal aria-hidden className="h-4 w-4" />
+                  {panelOpen ? 'סגירת ההגדרות' : 'מקטעים, עיצוב וגוגל'}
+                </Button>
+              )}
+              <p className="text-sm font-medium text-ink-muted">
+                {editable ? 'לחצו על טקסט או תמונה באתר כדי לשנות אותם' : 'תצוגה מקדימה'}
+              </p>
+            </div>
             <div
               role="group"
               aria-label="גודל מסך"
@@ -587,6 +652,11 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
                 onMove={moveById}
                 onHide={(id) => updateSection(id, { visible: false })}
                 onInsert={insertAfter}
+                onItem={itemAction}
+                onSettings={(id) => {
+                  select(id);
+                  setPanelOpen(true);
+                }}
                 onText={setField}
                 onImage={(id, path) => setImagePick({ id, path })}
               />

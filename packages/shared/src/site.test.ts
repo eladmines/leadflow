@@ -176,11 +176,14 @@ describe('editor markers (D-071)', () => {
     const html = renderSitePage(draft, business, {}, { editor: true });
     expect(html).toContain('<h1 data-edit="hero:title">');
     expect(html).toContain('data-edit="hero:buttonLabel"');
-    expect(html).toContain('<h3 data-edit="services:items.1.name">');
+    expect(html).toContain('<h3 data-edit="services:items.1.name" data-ph="שם השירות">');
+    expect(html).toContain('data-act="add" data-at="services"');
+    expect(html).toContain('data-act="del" data-at="faq:1"');
+    expect(published).not.toMatch(/data-act|ed-add/);
     expect(html).toContain('data-edit="about:body" data-multi');
     expect(html).toContain('data-edit="faq:items.1.question"');
     // Every FAQ answer is open in the editor so it can be edited.
-    expect(html.match(/<details open>/g)?.length).toBe(2);
+    expect(html.match(/<details open data-i>/g)?.length).toBe(2);
   });
 });
 

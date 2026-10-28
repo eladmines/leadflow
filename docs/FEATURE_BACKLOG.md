@@ -61,3 +61,4 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — Templates: garage, clinic and food added (5 total); new sites start with sample photos copied into the media library; picker previews show the photos.
 - 2026-10-28 — Visual editing step 1: click a section in the preview to edit it; hover toolbar to move/hide; "+" inserts a section in place; scroll position kept across edits.
 - 2026-10-28 — Visual editing step 2: type directly on the page (titles, texts, services, prices, reviews, FAQ, buttons) and click photos to replace them.
+- 2026-10-28 — Page-first editor: full-width preview, settings panel on demand (settings only on desktop), add/move/delete list items on the page, placeholders for empty fields.
