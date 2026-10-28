@@ -112,3 +112,27 @@ test('owner edits on the page itself: select, move and insert sections from the 
   await frame.locator('#s-contact a[href^="tel:"]').first().click();
   await expect(page).toHaveURL(new RegExp(`/b/${id}/site$`));
 });
+
+test('owner types directly on the page; the text is saved and survives a reload', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'typing on the page is tested with a mouse and keyboard');
+  const id = await ownerWithActiveBusiness(page);
+  await page.goto(`/b/${id}/site`);
+  await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
+  const frame = preview(page);
+  const h1 = frame.locator('h1[data-edit]');
+  await expect(h1).toHaveText('מספרת שירן');
+
+  await h1.click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' בחיפה');
+  const saved = nextSave(page);
+  await page.keyboard.press('Enter');
+  await saved;
+  await expect(page.getByLabel('כותרת', { exact: true })).toHaveValue('מספרת שירן בחיפה');
+
+  await page.reload();
+  await expect(preview(page).getByRole('heading', { level: 1 })).toHaveText('מספרת שירן בחיפה');
+});

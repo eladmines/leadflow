@@ -11,8 +11,8 @@ export interface MediaRef {
 }
 export type MediaMap = Record<string, MediaRef>;
 
-const img = (m: MediaRef, alt: string, cls: string, lazy = true) =>
-  `<img class="${cls}" src="${esc(m.url)}" alt="${esc(alt)}" width="${m.width}" height="${m.height}"${lazy ? ' loading="lazy" decoding="async"' : ''}>`;
+const img = (m: MediaRef, alt: string, cls: string, lazy = true, extra = '') =>
+  `<img class="${cls}" src="${esc(m.url)}" alt="${esc(alt)}" width="${m.width}" height="${m.height}"${lazy ? ' loading="lazy" decoding="async"' : ''}${extra}>`;
 
 /**
  * Renders a site draft to a complete, static, RTL HTML document.
@@ -105,10 +105,27 @@ interface Ctx {
   contactId: string | undefined;
   media: MediaMap;
   testimonialCount: number;
+  /** Editor preview: mark which draft field each text/image shows (D-071). */
+  editor: boolean;
 }
 
-const heading = (eyebrow: string | undefined, title: string, sub?: string) =>
-  `<div class="head">${eyebrow ? `<span class="eyebrow">${esc(eyebrow)}</span>` : ''}<h2>${esc(title)}</h2>${sub ? `<p class="lead">${esc(sub)}</p>` : ''}</div>`;
+/** Editor-only attribute naming the draft field an element shows. Never in published HTML. */
+const ea = (c: Ctx, sid: string, path: string, multi = false) =>
+  c.editor ? ` data-edit="${esc(sid)}:${path}"${multi ? ' data-multi' : ''}` : '';
+/** Text that sits next to other content (button labels, names): wrapped only in the editor. */
+const et = (c: Ctx, sid: string, path: string, text: string) =>
+  c.editor ? `<span${ea(c, sid, path)}>${esc(text)}</span>` : esc(text);
+const ei = (c: Ctx, sid: string, path: string) =>
+  c.editor ? ` data-img="${esc(sid)}:${path}"` : '';
+
+const heading = (
+  eyebrow: string | undefined,
+  title: string,
+  sub?: string,
+  titleAttr = '',
+  subAttr = '',
+) =>
+  `<div class="head">${eyebrow ? `<span class="eyebrow">${esc(eyebrow)}</span>` : ''}<h2${titleAttr}>${esc(title)}</h2>${sub ? `<p class="lead"${subAttr}>${esc(sub)}</p>` : ''}</div>`;
 
 /** Hours line with times kept left-to-right. */
 const hoursHtml = (line: string) => {
@@ -143,8 +160,8 @@ function hero(s: Extract<Section, { type: 'hero' }>, id: string, c: Ctx): string
   const bg = s.imageAssetId ? c.media[s.imageAssetId] : undefined;
 
   const text = `<div class="hero-text">${industry ? `<span class="eyebrow">${esc(industry)}</span>` : ''}
-<h1>${esc(s.title)}</h1>${s.subtitle ? `<p class="lead">${esc(s.subtitle)}</p>` : ''}
-<div class="actions">${s.buttonLabel && primaryHref ? `<a class="btn" href="${primaryHref}">${esc(s.buttonLabel)}${icon('arrow')}</a>` : ''}${secondary}</div>
+<h1${ea(c, s.id, 'title')}>${esc(s.title)}</h1>${s.subtitle ? `<p class="lead"${ea(c, s.id, 'subtitle', true)}>${esc(s.subtitle)}</p>` : ''}
+<div class="actions">${s.buttonLabel && primaryHref ? `<a class="btn" href="${primaryHref}">${et(c, s.id, 'buttonLabel', s.buttonLabel)}${icon('arrow')}</a>` : ''}${secondary}</div>
 ${chips.length ? `<ul class="chips">${chips.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`;
 
   if (bg) {
@@ -185,53 +202,56 @@ function section(s: Section, c: Ctx, alt: boolean): string {
     case 'about': {
       const pic = s.imageAssetId ? media[s.imageAssetId] : undefined;
       return pic
-        ? `<section id="${id}"${cls}><div class="wrap about-grid"><div class="about-text">${heading('אודות', s.title)}${paragraphs(s.body)}</div><div class="about-media">${img(pic, s.imageAlt, 'about-img')}</div></div></section>`
-        : `<section id="${id}"${cls}><div class="wrap narrow about-solo">${heading('אודות', s.title)}<div class="about-body">${paragraphs(s.body)}</div></div></section>`;
+        ? `<section id="${id}"${cls}><div class="wrap about-grid"><div class="about-text">${heading('אודות', s.title, undefined, ea(c, s.id, 'title'))}${c.editor ? `<div${ea(c, s.id, 'body', true)}>${paragraphs(s.body)}</div>` : paragraphs(s.body)}</div><div class="about-media">${img(pic, s.imageAlt, 'about-img', true, ei(c, s.id, 'imageAssetId'))}</div></div></section>`
+        : `<section id="${id}"${cls}><div class="wrap narrow about-solo">${heading('אודות', s.title, undefined, ea(c, s.id, 'title'))}<div class="about-body"${ea(c, s.id, 'body', true)}>${paragraphs(s.body)}</div></div></section>`;
     }
     case 'gallery': {
-      const pics = s.items.filter((i) => media[i.assetId]);
+      const pics = s.items.map((i, n) => ({ ...i, n })).filter((i) => media[i.assetId]);
       if (pics.length === 0) return '';
-      return `<section id="${id}"${cls}><div class="wrap">${heading('גלריה', s.title)}<div class="gallery">${pics
+      return `<section id="${id}"${cls}><div class="wrap">${heading('גלריה', s.title, undefined, ea(c, s.id, 'title'))}<div class="gallery">${pics
         .map(
           (i) =>
-            `<figure>${img(media[i.assetId]!, i.caption, 'gallery-img')}${i.caption ? `<figcaption>${esc(i.caption)}</figcaption>` : ''}</figure>`,
+            `<figure>${img(media[i.assetId]!, i.caption, 'gallery-img', true, ei(c, s.id, `items.${i.n}.assetId`))}${i.caption ? `<figcaption${ea(c, s.id, `items.${i.n}.caption`)}>${esc(i.caption)}</figcaption>` : ''}</figure>`,
         )
         .join('')}</div></div></section>`;
     }
     case 'services':
-      return `<section id="${id}"${cls}><div class="wrap">${heading('שירותים', s.title)}<div class="grid services">${s.items
+      return `<section id="${id}"${cls}><div class="wrap">${heading('שירותים', s.title, undefined, ea(c, s.id, 'title'))}<div class="grid services">${s.items
         .map(
           (i, n) =>
-            `<article class="card service"><span class="tile">${icon('check')}</span><span class="num" aria-hidden="true">${String(n + 1).padStart(2, '0')}</span><h3>${esc(i.name)}</h3>${i.description ? `<p>${esc(i.description)}</p>` : ''}</article>`,
+            `<article class="card service"><span class="tile">${icon('check')}</span><span class="num" aria-hidden="true">${String(n + 1).padStart(2, '0')}</span><h3${ea(c, s.id, `items.${n}.name`)}>${esc(i.name)}</h3>${i.description ? `<p${ea(c, s.id, `items.${n}.description`, true)}>${esc(i.description)}</p>` : ''}</article>`,
         )
         .join('')}</div></div></section>`;
     case 'pricing':
-      return `<section id="${id}"${cls}><div class="wrap narrow">${heading('מחירון', s.title)}<div class="card price-card"><ul class="prices">${s.items
+      return `<section id="${id}"${cls}><div class="wrap narrow">${heading('מחירון', s.title, undefined, ea(c, s.id, 'title'))}<div class="card price-card"><ul class="prices">${s.items
         .map(
-          (i) =>
-            `<li><span>${esc(i.name)}</span><span class="dots"></span><bdi>${esc(i.price)}</bdi></li>`,
+          (i, n) =>
+            `<li><span${ea(c, s.id, `items.${n}.name`)}>${esc(i.name)}</span><span class="dots"></span><bdi${ea(c, s.id, `items.${n}.price`)}>${esc(i.price)}</bdi></li>`,
         )
-        .join('')}</ul>${s.note ? `<p class="note">${esc(s.note)}</p>` : ''}</div></div></section>`;
+        .join(
+          '',
+        )}</ul>${s.note ? `<p class="note"${ea(c, s.id, 'note', true)}>${esc(s.note)}</p>` : ''}</div></div></section>`;
     case 'testimonials': {
-      const items = s.items.filter((i) => i.quote);
+      const items = s.items.map((i, n) => ({ ...i, n })).filter((i) => i.quote);
       if (items.length === 0) return '';
-      return `<section id="${id}"${cls}><div class="wrap">${heading('המלצות', s.title)}<div class="grid">${items
+      return `<section id="${id}"${cls}><div class="wrap">${heading('המלצות', s.title, undefined, ea(c, s.id, 'title'))}<div class="grid">${items
         .map(
           (i) =>
-            `<figure class="card quote"><span class="qmark" aria-hidden="true">”</span><blockquote>${esc(i.quote)}</blockquote>${
+            `<figure class="card quote"><span class="qmark" aria-hidden="true">”</span><blockquote${ea(c, s.id, `items.${i.n}.quote`, true)}>${esc(i.quote)}</blockquote>${
               i.author
-                ? `<figcaption><span class="avatar" aria-hidden="true">${esc(i.author.trim().charAt(0))}</span>${esc(i.author)}</figcaption>`
+                ? `<figcaption><span class="avatar" aria-hidden="true">${esc(i.author.trim().charAt(0))}</span>${et(c, s.id, `items.${i.n}.author`, i.author)}</figcaption>`
                 : ''
             }</figure>`,
         )
         .join('')}</div></div></section>`;
     }
     case 'faq':
-      return `<section id="${id}"${cls}><div class="wrap narrow">${heading('שאלות נפוצות', s.title)}<div class="faq">${s.items
+      return `<section id="${id}"${cls}><div class="wrap narrow">${heading('שאלות נפוצות', s.title, undefined, ea(c, s.id, 'title'))}<div class="faq">${s.items
+        .map((i, n) => ({ ...i, n }))
         .filter((i) => i.question)
         .map(
-          (i, n) =>
-            `<details${n === 0 ? ' open' : ''}><summary>${esc(i.question)}</summary><p>${esc(i.answer)}</p></details>`,
+          (i, k) =>
+            `<details${k === 0 || c.editor ? ' open' : ''}><summary>${et(c, s.id, `items.${i.n}.question`, i.question)}</summary><p${ea(c, s.id, `items.${i.n}.answer`, true)}>${esc(i.answer)}</p></details>`,
         )
         .join('')}</div></div></section>`;
     case 'contact': {
@@ -259,12 +279,12 @@ function section(s: Section, c: Ctx, alt: boolean): string {
             }).join('')}</table>`
           : '';
       const form = s.form.enabled ? `<div class="form-wrap">${leadForm(s, b)}</div>` : '';
-      return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading('צור קשר', s.title, s.subtitle || undefined)}
+      return `<section id="${id}" class="contact${alt ? ' soft' : ''}"><div class="wrap">${heading('צור קשר', s.title, s.subtitle || undefined, ea(c, s.id, 'title'), ea(c, s.id, 'subtitle', true))}
 <div class="contact-grid"><div class="contact-info">${rows.length ? `<ul class="info">${rows.join('')}</ul>` : ''}${hours}</div>${form}</div></div></section>`;
     }
     case 'cta': {
       const href = b.phone ? telHref(b.phone) : contactId ? `#s-${esc(contactId)}` : '';
-      return `<section id="${id}" class="cta-wrap"><div class="wrap"><div class="cta"><div><h2>${esc(s.title)}</h2>${s.subtitle ? `<p>${esc(s.subtitle)}</p>` : ''}</div>${s.buttonLabel && href ? `<a class="btn light" href="${href}">${b.phone ? icon('phone') : ''}${esc(s.buttonLabel)}</a>` : ''}</div></div></section>`;
+      return `<section id="${id}" class="cta-wrap"><div class="wrap"><div class="cta"><div><h2${ea(c, s.id, 'title')}>${esc(s.title)}</h2>${s.subtitle ? `<p${ea(c, s.id, 'subtitle', true)}>${esc(s.subtitle)}</p>` : ''}</div>${s.buttonLabel && href ? `<a class="btn light" href="${href}">${b.phone ? icon('phone') : ''}${et(c, s.id, 'buttonLabel', s.buttonLabel)}</a>` : ''}</div></div></section>`;
     }
   }
 }
@@ -422,10 +442,19 @@ body.has-mbar{padding-bottom:78px}
 `;
 }
 
+/** Hover/edit affordances for the editor preview only (published pages never include them). */
+const EDITOR_STYLE = `<style>
+[data-edit]{cursor:text;border-radius:6px;outline:2px dashed transparent;outline-offset:4px;transition:outline-color .15s}
+[data-edit]:hover{outline-color:rgba(44,131,125,.6)}
+[data-edit][contenteditable]{outline:2px solid #2c837d;background:rgba(44,131,125,.08)}
+[data-img]{cursor:pointer;transition:filter .15s}[data-img]:hover{filter:brightness(.85);outline:3px solid #2c837d;outline-offset:-3px}
+</style>`;
+
 export function renderSitePage(
   draft: Omit<SiteDraft, 'templateKey'>,
   b: SiteBusinessInfo,
   media: MediaMap = {},
+  opts: { editor?: boolean } = {},
 ): string {
   const logo = draft.theme.logoAssetId ? media[draft.theme.logoAssetId] : undefined;
   const visible = draft.sections.filter((s) => s.visible);
@@ -436,7 +465,7 @@ export function renderSitePage(
       (n, s) => n + (s.type === 'testimonials' ? s.items.filter((i) => i.quote).length : 0),
       0,
     );
-  const ctx: Ctx = { b, contactId, media, testimonialCount };
+  const ctx: Ctx = { b, contactId, media, testimonialCount, editor: opts.editor ?? false };
 
   // Header menu: the first section of each type that has a short label.
   const seen = new Set<string>();
@@ -466,7 +495,7 @@ export function renderSitePage(
   const brand = `${logo ? img(logo, b.name, 'logo', false) : `<span class="mark" aria-hidden="true">${esc(b.name.trim().charAt(0))}</span>`}<span>${esc(b.name)}</span>`;
 
   return `${documentHead(draft.theme, draft.seo.title || b.name, draft.seo.description)}
-<body${mbar ? ' class="has-mbar"' : ''}>
+<body${mbar ? ' class="has-mbar"' : ''}>${opts.editor ? EDITOR_STYLE : ''}
 <nav class="nav" aria-label="ראשי"><div class="wrap"><a class="brand" href="#">${brand}</a>${menu ? `<ul class="menu">${menu}</ul>` : ''}${call ? `<a class="call" href="${call}">${icon('phone')}<span class="num-text"><bdi dir="ltr">${esc(formatIsraeliPhone(b.phone!))}</bdi></span></a>` : ''}</div></nav>
 <main>${html || '<div class="empty">אין מקטעים מוצגים באתר.</div>'}</main>
 <footer><div class="wrap foot"><div><a class="brand" href="#">${esc(b.name)}</a>${draft.seo.description ? `<p>${esc(draft.seo.description)}</p>` : ''}</div>
