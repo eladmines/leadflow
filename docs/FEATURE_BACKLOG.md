@@ -25,7 +25,7 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F15 | Ops hardening: monitoring, backups, audit views         | Beta-required      | F00               | any           | Backend → QA                        | Planned  |
 | F16 | AI agent (suggestions first) + hard budget              | Medium             | F12, F13          | F17–F19       | Full pipeline                       | Planned  |
 | F17 | Appointments / calendar                                 | Medium             | F08               | F16           | Full pipeline                       | **Done** |
-| F18 | Quotes                                                  | Medium             | F08               | F16           | Full pipeline                       | Planned  |
+| F18 | Quotes                                                  | Medium             | F08               | F16           | Full pipeline                       | **Done** |
 | F19 | Preset automations                                      | Medium             | F08, F10          | F16           | Full pipeline                       | Planned  |
 | F20 | Reports & analytics                                     | Medium             | F08               | F16           | Full pipeline                       | **Lite** |
 | F21 | Platform admin console (audited support access)         | Medium             | F02, F15          | any           | Full pipeline                       | Planned  |
@@ -65,3 +65,4 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — Admin redesign: modern neutral look (tokens, UI kit, compact sidebar), Ctrl+K quick search, flat headers; fixed lead board labels widening the page.
 - 2026-10-28 — Editable menu labels, second hero button and mobile-bar buttons on the page; business details (phone, address, hours, areas) editable from the editor in a dialog.
 - 2026-10-28 — F17 appointments (first version): services, week/day calendar, booking with clash prevention, website appointment requests (manual approval), lead card and history.
+- 2026-10-28 — F18 quotes (first version): from a lead, items/discount/VAT, numbered drafts, private link + email + WhatsApp, customer accept/reject with print-to-PDF, lead card and history. Fixed a leads-page search race that could undo a navigation.

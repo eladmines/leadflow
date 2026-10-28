@@ -44,6 +44,8 @@ export const PERMISSIONS = {
   'appointments.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'appointments.view.all': ['OWNER', 'MANAGER'],
   'services.manage': ['OWNER', 'MANAGER'],
+  /** F18: quotes follow lead visibility (employees: quotes on leads assigned to them). */
+  'quotes.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   /** PRD §17.1: managers get access to inquiries and reports; employees don't. */
   'reports.view': ['OWNER', 'MANAGER'],
 } as const satisfies Record<string, readonly Role[]>;

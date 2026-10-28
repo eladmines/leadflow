@@ -9,6 +9,8 @@ import {
   type Lead,
   MAX_LEAD_TAGS,
   appointmentStatusLabels,
+  formatAgorot,
+  quoteStatusLabels,
 } from '@leadflow/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Mail, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
@@ -18,6 +20,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   Button,
+  buttonClasses,
   Card,
   DialogShell,
   EmptyState,
@@ -48,6 +51,7 @@ import { TaskItem } from '../tasks/TaskItem';
 import { useTasks } from '../tasks/api';
 import { useAppointments } from '../appointments/api';
 import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
+import { displayStatus, useQuotes } from '../quotes/api';
 
 const fieldLabels: Record<string, string> = {
   expectedValue: 'ערך משוער',
@@ -83,6 +87,14 @@ function activityText(a: Activity): string {
       return `נוספה משימה: ${String(d.title)}${d.assignee ? ` (${String(d.assignee)})` : ''}`;
     case 'task.completed':
       return `בוצעה משימה: ${String(d.title)}`;
+    case 'quote.created':
+      return `נוצרה הצעת מחיר מס׳ ${String(d.number)} (${formatAgorot(Number(d.total))})`;
+    case 'quote.sent':
+      return `הצעת מחיר מס׳ ${String(d.number)} נשלחה ללקוח`;
+    case 'quote.accepted':
+      return `הצעת מחיר מס׳ ${String(d.number)} אושרה${a.actor ? '' : ' על ידי הלקוח'}`;
+    case 'quote.rejected':
+      return `הצעת מחיר מס׳ ${String(d.number)} נדחתה${a.actor ? '' : ' על ידי הלקוח'}`;
     case 'appointment.created':
       return `${d.requested ? 'התקבלה מהאתר בקשה לתור ל' : 'נקבע תור ל'}${apptWhen(d.startsAt)}${
         d.service ? ` (${String(d.service)})` : ''
@@ -430,6 +442,7 @@ export function LeadDetailPage() {
           <Details key={lead.updatedAt} lead={lead} />
           <LeadTasks leadId={lead.id} />
           <LeadAppointments lead={lead} />
+          <LeadQuotes leadId={lead.id} />
         </div>
       </div>
       {can(business.role, 'leads.delete') && <DeleteLead lead={lead} />}
@@ -471,6 +484,37 @@ function LeadAppointments({ lead }: { lead: Lead }) {
         <p className="text-sm text-ink-muted">אין תורים קרובים.</p>
       )}
       <NewAppointmentDialog open={open} onOpenChange={setOpen} lead={lead} />
+    </Card>
+  );
+}
+
+/** Quotes for this lead and "new quote" (F18). */
+function LeadQuotes({ leadId }: { leadId: string }) {
+  const business = useCurrentBusiness();
+  const quotes = useQuotes(business.id, { leadId });
+  const base = businessWebPaths.section(business.id, 'quotes');
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-ink">הצעות מחיר</h2>
+        <Link to={`${base}/new?leadId=${leadId}`} className={buttonClasses('secondary', 'sm')}>
+          הצעת מחיר חדשה
+        </Link>
+      </div>
+      {quotes.data && quotes.data.length > 0 ? (
+        <ul className="flex flex-col gap-1.5">
+          {quotes.data.map((q) => (
+            <li key={q.id} className="flex items-center justify-between gap-2 text-sm">
+              <Link to={`${base}/${q.id}`} className="text-brand-700 hover:underline">
+                מס׳ {q.number} · {formatAgorot(q.totals.total)}
+              </Link>
+              <span className="text-xs text-ink-muted">{quoteStatusLabels[displayStatus(q)]}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-ink-muted">אין עדיין הצעות.</p>
+      )}
     </Card>
   );
 }

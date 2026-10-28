@@ -1,4 +1,4 @@
-import { authWebPaths, businessWebPaths, INVITE_WEB_PATH } from '@leadflow/shared';
+import { authWebPaths, businessWebPaths, INVITE_WEB_PATH, QUOTE_WEB_PATH } from '@leadflow/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage';
@@ -14,6 +14,9 @@ import { BusinessLayout } from '../features/shell/BusinessLayout';
 import { ComingSoonPage } from '../features/shell/ComingSoonPage';
 import { ReportsPage } from '../features/reports/ReportsPage';
 import { AppointmentsPage } from '../features/appointments/AppointmentsPage';
+import { QuotesPage } from '../features/quotes/QuotesPage';
+import { QuoteEditorPage } from '../features/quotes/QuoteEditorPage';
+import { PublicQuotePage } from '../features/quotes/PublicQuotePage';
 import { navItems } from '../features/shell/nav';
 import { LeadDetailPage } from '../features/leads/LeadDetailPage';
 import { LeadsPage } from '../features/leads/LeadsPage';
@@ -68,6 +71,7 @@ export function AppRoutes() {
       <Route path={authWebPaths.resetPassword} element={<ResetPasswordPage />} />
       <Route path={authWebPaths.verifyEmail} element={<VerifyEmailPage />} />
       <Route path={INVITE_WEB_PATH} element={<AcceptInvitePage />} />
+      <Route path={`${QUOTE_WEB_PATH}/:token`} element={<PublicQuotePage />} />
       <Route
         path={authWebPaths.appHome}
         element={
@@ -116,6 +120,8 @@ export function AppRoutes() {
         <Route path="tasks" element={<TasksPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="appointments" element={<AppointmentsPage />} />
+        <Route path="quotes" element={<QuotesPage />} />
+        <Route path="quotes/:quoteId" element={<QuoteEditorPage />} />
         <Route path="team" element={<TeamPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route path="settings" element={<SettingsPage />} />

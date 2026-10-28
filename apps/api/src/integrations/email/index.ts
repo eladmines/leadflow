@@ -11,6 +11,8 @@ export {
   newLeadTemplate,
   passwordChangedTemplate,
   passwordResetTemplate,
+  quoteDecisionTemplate,
+  quoteTemplate,
   taskReminderTemplate,
   verifyEmailTemplate,
 } from './templates';

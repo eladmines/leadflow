@@ -332,9 +332,12 @@ export function LeadsPage() {
       { replace: true },
     );
 
-  // Debounced search into the URL.
+  // Debounced search into the URL. Only when the text changed: a no-op update still navigates,
+  // and a late timer could pull the user back here after they had already left the page.
   useEffect(() => {
-    const t = setTimeout(() => setParam('q', q.trim() || undefined), 300);
+    const next = q.trim() || undefined;
+    if (next === (params.get('q') ?? undefined)) return;
+    const t = setTimeout(() => setParam('q', next), 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);

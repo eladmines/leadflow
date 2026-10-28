@@ -31,6 +31,7 @@ import { LocalDiskStorage, type StorageProvider } from './integrations/storage';
 import { mediaTenantRoutes } from './modules/media/routes';
 import { taskTenantRoutes } from './modules/tasks/routes';
 import { appointmentTenantRoutes } from './modules/appointments/routes';
+import { quotePublicRoutes, quoteTenantRoutes } from './modules/quotes/routes';
 import { reportTenantRoutes } from './modules/reports/routes';
 import { registerMediaServing } from './modules/media/serve';
 
@@ -135,6 +136,7 @@ export async function buildApp({
   await app.register(authRoutes, { email });
   await app.register(businessRoutes);
   await app.register(teamRoutes);
+  await app.register(quotePublicRoutes);
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(
     tenantScope(async (scope) => {
@@ -145,6 +147,7 @@ export async function buildApp({
       await scope.register(mediaTenantRoutes);
       await scope.register(taskTenantRoutes);
       await scope.register(appointmentTenantRoutes);
+      await scope.register(quoteTenantRoutes);
       await scope.register(reportTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },

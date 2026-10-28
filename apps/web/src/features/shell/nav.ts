@@ -42,15 +42,7 @@ export const navItems: NavItem[] = [
   },
   { segment: 'tasks', label: 'משימות', icon: ListTodo },
   { segment: 'appointments', label: 'תורים', icon: CalendarDays },
-  {
-    segment: 'quotes',
-    label: 'הצעות מחיר',
-    icon: FileText,
-    comingSoon: {
-      title: 'הצעות מחיר בדרך',
-      description: 'יצירת הצעת מחיר מתוך ליד, שליחה בקישור או PDF ומעקב אחרי הסטטוס.',
-    },
-  },
+  { segment: 'quotes', label: 'הצעות מחיר', icon: FileText },
   {
     segment: 'automations',
     label: 'אוטומציות',
