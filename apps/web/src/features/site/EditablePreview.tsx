@@ -121,7 +121,10 @@ export function EditablePreview({
       multi ? el.innerText.replace(/\n{3,}/g, '\n\n') : (el.textContent ?? '').replace(/\s+/g, ' ');
 
     // Pressing on a text makes it editable before the browser places the caret there.
-    const onDown = (e: Event) => begin(field('data-edit', e.target));
+    const onDown = (e: Event) => {
+      setMenuFor(null);
+      begin(field('data-edit', e.target));
+    };
     const begin = (f: { el: HTMLElement; id: string; path: string } | null) => {
       if (!f || editing.current?.el === f.el) return;
       // Moving straight to another text: finish the previous one without unfreezing in between.
@@ -258,7 +261,9 @@ export function EditablePreview({
     const type = sections.find((x) => x.id === id)?.type;
     return type === 'hero' || type === 'about';
   };
-  const active = frozen ? null : (hovered ?? menuFor);
+  // An open insert menu wins over hover, so moving the mouse across the page to reach it
+  // doesn't switch to another section and close it.
+  const active = frozen ? null : (menuFor ?? hovered);
   // Near the bottom of the frame the section menu opens upwards so it isn't cut off.
   const menuUp =
     active && rects[active]
@@ -370,7 +375,12 @@ export function EditablePreview({
                 style={{ top: rects[active].top + rects[active].height - 18 }}
                 onMouseEnter={() => setHovered(active)}
               >
-                <div className="relative">
+                <div
+                  className="relative"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setMenuFor(null);
+                  }}
+                >
                   <button
                     type="button"
                     aria-expanded={menuFor === active}
