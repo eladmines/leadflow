@@ -69,15 +69,7 @@ export const navItems: NavItem[] = [
         'תהליכים מוכנים עם הפעלה וכיבוי, למשל התראה על פנייה חדשה או משימת מעקב אחרי הצעה.',
     },
   },
-  {
-    segment: 'reports',
-    label: 'דוחות',
-    icon: ChartColumn,
-    comingSoon: {
-      title: 'דוחות בדרך',
-      description: 'משפך לידים, מקורות הגעה, זמני תגובה ויחס סגירה.',
-    },
-  },
+  { segment: 'reports', label: 'דוחות', icon: ChartColumn, permission: 'reports.view' },
   { segment: 'team', label: 'צוות', icon: UsersRound, permission: 'members.view' },
   { segment: 'settings', label: 'הגדרות וחיוב', icon: Settings },
 ];

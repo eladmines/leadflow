@@ -49,6 +49,9 @@ export default {
           sunken: '#f1ece4',
           border: '#e9e2d7',
         },
+        /** Data mark color for single-series charts (passes the dataviz lightness, chroma and
+         *  contrast checks on the light surface; the brand teal reads gray as a data color). */
+        chart: { DEFAULT: '#0f8f84', soft: '#0f8f841a', grid: '#ece6dc' },
         danger: { 50: '#fdf0ee', 600: '#c0392b', 700: '#a32e22' },
         success: { 50: '#ecf7f0', 600: '#2e7d4f' },
         warning: { 50: '#fff7e6', 600: '#946200' },

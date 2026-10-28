@@ -18,16 +18,16 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F08 | [CRM core](features/F08.md)                             | Core (journey end) | F07               | —             | Full pipeline                       | **Done** |
 | F09 | [Team invitations & member management](features/F09.md) | High               | F02               | F04–F08       | Backend ∥ Frontend → QA             | **Done** |
 | F10 | [Tasks / follow-ups](features/F10.md)                   | High               | F08               | F11 spike     | Full pipeline                       | **Done** |
-| F11 | Custom domains + HTTPS                                  | High               | F06 + POC spike   | F12           | Spike → full pipeline               | **Done** |
-| F12 | WhatsApp connection & inbox                             | High               | F08 + POC spike   | F11           | Spike → full pipeline               | **Done** |
+| F11 | Custom domains + HTTPS                                  | High               | F06 + POC spike   | F12           | Spike → full pipeline               | Planned  |
+| F12 | WhatsApp connection & inbox                             | High               | F08 + POC spike   | F11           | Spike → full pipeline               | Planned  |
 | F13 | Plans, trial, billing & quotas                          | High               | F02, O-004        | F14           | Full pipeline                       | Planned  |
 | F14 | Data export, deletion & retention                       | Beta-required      | F08, O-007        | F13           | Full pipeline                       | Planned  |
 | F15 | Ops hardening: monitoring, backups, audit views         | Beta-required      | F00               | any           | Backend → QA                        | Planned  |
 | F16 | AI agent (suggestions first) + hard budget              | Medium             | F12, F13          | F17–F19       | Full pipeline                       | Planned  |
-| F17 | Appointments / calendar                                 | Medium             | F08               | F16           | Full pipeline                       | **Done** |
-| F18 | Quotes                                                  | Medium             | F08               | F16           | Full pipeline                       | **Done** |
+| F17 | Appointments / calendar                                 | Medium             | F08               | F16           | Full pipeline                       | Planned  |
+| F18 | Quotes                                                  | Medium             | F08               | F16           | Full pipeline                       | Planned  |
 | F19 | Preset automations                                      | Medium             | F08, F10          | F16           | Full pipeline                       | Planned  |
-| F20 | Reports & analytics                                     | Medium             | F08               | F16           | Full pipeline                       | **Done** |
+| F20 | Reports & analytics                                     | Medium             | F08               | F16           | Full pipeline                       | **Lite** |
 | F21 | Platform admin console (audited support access)         | Medium             | F02, F15          | any           | Full pipeline                       | Planned  |
 
 ## Dependency graph (core journey)
@@ -55,3 +55,4 @@ F06 ─► F11 (after spike)
 - 2026-10-27 — F05 complete (MVP): image upload with server-side re-encoding (WebP, ≤1920px, EXIF stripped), storage interface, library with quota, logo/hero/about images and gallery, same-origin serving. 368 unit/integration tests + 32 e2e.
 - 2026-10-27 — F10 complete: follow-up tasks (lead-linked or standalone), tasks page, lead + dashboard integration, email reminders via an in-process job. **Stage 1 complete.** 384 unit/integration tests + 35 e2e.
 - 2026-10-28 — Small features: lead export to Excel/CSV (owner-only, injection-safe), account settings (name, password change with session sign-out and notice email).
+- 2026-10-28 — F20 lite: reports page for owners/managers — new leads vs previous period, close rate, won/open value, average response time, leads over time (7/30/90 days), funnel by stage, sources. Full F20 (custom ranges, per-employee, exports) stays planned.

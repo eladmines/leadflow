@@ -38,6 +38,8 @@ export const PERMISSIONS = {
   /** Everyone has tasks; employees see and manage only tasks assigned to them. */
   'tasks.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'tasks.view.all': ['OWNER', 'MANAGER'],
+  /** PRD §17.1: managers get access to inquiries and reports; employees don't. */
+  'reports.view': ['OWNER', 'MANAGER'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;
