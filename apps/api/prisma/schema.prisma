@@ -44,9 +44,10 @@ model User {
   memberships  Membership[]
   siteVersions SiteVersion[]
   ownedLeads   Lead[]
-  sentInvites  Invitation[]  @relation("InvitedBy")
-  tasks        Task[]        @relation("TaskAssignee")
-  appointments Appointment[] @relation("AppointmentStaff")
+  sentInvites  Invitation[]      @relation("InvitedBy")
+  tasks        Task[]            @relation("TaskAssignee")
+  appointments Appointment[]     @relation("AppointmentStaff")
+  whatsappSent WhatsAppMessage[]
 
   @@map("users")
 }
@@ -163,6 +164,7 @@ model Business {
   services     Service[]
   quotes       Quote[]
   appointments Appointment[]
+  whatsapp     WhatsAppMessage[]
 
   @@map("businesses")
 }
@@ -280,9 +282,10 @@ model Contact {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
   leads        Lead[]
   appointments Appointment[]
+  whatsapp     WhatsAppMessage[]
 
   @@index([businessId, phone])
   @@index([businessId, email])
@@ -323,15 +326,16 @@ model Lead {
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business     Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  contact      Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  stage        PipelineStage   @relation(fields: [stageId], references: [id])
-  owner        User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact      Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  stage        PipelineStage     @relation(fields: [stageId], references: [id])
+  owner        User?             @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   activities   Activity[]
   submission   FormSubmission?
   tasks        Task[]
   appointments Appointment[]
   quotes       Quote[]
+  whatsapp     WhatsAppMessage[]
 
   @@index([businessId, createdAt])
   @@index([businessId, stageId])
@@ -566,4 +570,38 @@ model Quote {
   @@index([businessId, status])
   @@index([businessId, leadId])
   @@map("quotes")
+}
+
+// ---------------------------------------------------------------------------
+// F12 POC — WhatsApp (Meta Cloud API, D-091)
+// ---------------------------------------------------------------------------
+
+enum WhatsAppDirection {
+  IN
+  OUT
+}
+
+/// One WhatsApp message with a contact. Meta's message id makes webhook retries idempotent.
+model WhatsAppMessage {
+  id          String            @id @default(uuid()) @db.Uuid
+  businessId  String            @map("business_id") @db.Uuid
+  contactId   String            @map("contact_id") @db.Uuid
+  /// Lead the message arrived on (or was sent from); kept null if that lead is deleted.
+  leadId      String?           @map("lead_id") @db.Uuid
+  direction   WhatsAppDirection
+  /// Meta's message id (wamid.*).
+  waMessageId String            @unique @map("wa_message_id") @db.VarChar(128)
+  body        String            @db.VarChar(4096)
+  /// received | sent | delivered | read | failed (shared WHATSAPP_STATUSES).
+  status      String            @db.VarChar(20)
+  senderId    String?           @map("sender_id") @db.Uuid
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  sender   User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, contactId, createdAt])
+  @@map("whatsapp_messages")
 }

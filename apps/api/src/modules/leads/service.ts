@@ -170,7 +170,8 @@ export class LeadService {
     };
   }
 
-  private async findVisible(ctx: TenantContext, leadId: string, db: Db = this.prisma) {
+  /** A lead this member may see, or 404. Also used by features attached to a lead (WhatsApp). */
+  async findVisible(ctx: TenantContext, leadId: string, db: Db = this.prisma) {
     const lead = /^[0-9a-f-]{36}$/i.test(leadId)
       ? await db.lead.findFirst({
           where: { id: leadId, ...this.visible(ctx) },

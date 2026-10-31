@@ -13,3 +13,4 @@ export * from './tasks';
 export * from './reports';
 export * from './appointments';
 export * from './quotes';
+export * from './whatsapp';

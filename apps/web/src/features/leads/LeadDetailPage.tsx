@@ -52,6 +52,7 @@ import { useTasks } from '../tasks/api';
 import { useAppointments } from '../appointments/api';
 import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
+import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
 
 const fieldLabels: Record<string, string> = {
   expectedValue: 'ערך משוער',
@@ -74,7 +75,11 @@ function activityText(a: Activity): string {
   const d = a.data as Record<string, unknown>;
   switch (a.type) {
     case 'lead.created':
-      return d.source === 'manual' ? 'הליד נוצר ידנית' : 'הליד נוצר מטופס באתר';
+      return d.source === 'manual'
+        ? 'הליד נוצר ידנית'
+        : d.source === 'whatsapp'
+          ? 'הליד נוצר מהודעת וואטסאפ'
+          : 'הליד נוצר מטופס באתר';
     case 'lead.stage_changed':
       return `השלב שונה מ"${String(d.from)}" ל"${String(d.to)}"`;
     case 'lead.assigned':
@@ -437,7 +442,10 @@ export function LeadDetailPage() {
         )}
       </section>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Notes leadId={lead.id} activities={activities} />
+        <div className="flex flex-col gap-6">
+          <WhatsAppThread leadId={lead.id} />
+          <Notes leadId={lead.id} activities={activities} />
+        </div>
         <div className="flex flex-col gap-6 lg:order-first">
           <Details key={lead.updatedAt} lead={lead} />
           <LeadTasks leadId={lead.id} />

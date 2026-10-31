@@ -126,7 +126,13 @@ export function mockApi(routes: Record<string, Handler>) {
     const method = (init.method ?? 'GET').toUpperCase();
     const key = `${method} ${String(input)}`;
     // An exact match wins; a route registered without a query string also matches with one.
-    const handler = routes[key] ?? routes[`${method} ${String(input).split('?')[0]}`];
+    const handler =
+      routes[key] ??
+      routes[`${method} ${String(input).split('?')[0]}`] ??
+      // Every lead page asks for its WhatsApp thread; default to "not connected".
+      (method === 'GET' && /\/leads\/[^/]+\/whatsapp$/.test(String(input))
+        ? () => json(200, { connected: false, messages: [], replyUntil: null })
+        : undefined);
     if (!handler) throw new Error(`Unmocked request: ${key}`);
     const body = typeof init.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined;
     return handler(body);
