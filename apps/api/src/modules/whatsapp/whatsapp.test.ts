@@ -172,6 +172,7 @@ describe('WhatsApp (F12 POC)', () => {
       message: 'היי, אפשר לקבוע תספורת לשבוע הבא?',
       contact: { name: 'דנה כהן', phone: '+972501112233' },
       stage: { name: 'חדש' },
+      lastWhatsApp: { direction: 'IN', body: 'היי, אפשר לקבוע תספורת לשבוע הבא?' },
     });
     const thread = (await req(ctx.app, 'GET', wp.thread(BUSINESS_ID, lead.id), owner.token)).json();
     expect(thread.connected).toBe(true);
@@ -260,6 +261,11 @@ describe('WhatsApp (F12 POC)', () => {
     await post(statusEvent(sentId, 'delivered')); // late receipt must not move it back
     const thread = (await req(ctx.app, 'GET', wp.thread(BUSINESS_ID, lead.id), owner.token)).json();
     expect(thread.messages.map((m: { status: string }) => m.status)).toEqual(['received', 'read']);
+    // The list preview follows the conversation.
+    expect((await leadsOf(owner.token))[0].lastWhatsApp).toMatchObject({
+      direction: 'OUT',
+      body: 'היי דנה! יש מקום ביום שלישי ב-10:00',
+    });
   });
 
   it('refuses free-form replies once the window has closed', async () => {

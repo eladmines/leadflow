@@ -21,16 +21,30 @@ import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
 
 const leadInclude = {
-  contact: { select: { id: true, name: true, phone: true, email: true } },
+  contact: {
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      whatsapp: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { body: true, direction: true, createdAt: true },
+      },
+    },
+  },
   stage: { select: { id: true, name: true, kind: true } },
   owner: { select: { id: true, fullName: true } },
 } as const;
 type LeadRow = Prisma.LeadGetPayload<{ include: typeof leadInclude }>;
 
 export function toLeadDto(row: LeadRow): Lead {
+  const { whatsapp, ...contact } = row.contact;
+  const last = whatsapp[0];
   return {
     id: row.id,
-    contact: row.contact,
+    contact,
     stage: row.stage,
     source: row.source,
     sourceUrl: row.sourceUrl,
@@ -39,6 +53,9 @@ export function toLeadDto(row: LeadRow): Lead {
     expectedValue: row.expectedValue,
     nextActionAt: row.nextActionAt?.toISOString() ?? null,
     tags: row.tags,
+    lastWhatsApp: last
+      ? { body: last.body, direction: last.direction, createdAt: last.createdAt.toISOString() }
+      : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

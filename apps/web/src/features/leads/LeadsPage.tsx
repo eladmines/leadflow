@@ -15,6 +15,7 @@ import {
   Inbox,
   List,
   Mail,
+  MessageCircle,
   Phone,
   Plus,
   Search,
@@ -41,6 +42,39 @@ export const stageTone: Record<Lead['stage']['kind'], string> = {
 
 const leadPath = (businessId: string, leadId: string) =>
   `${businessWebPaths.section(businessId, 'leads')}/${leadId}`;
+
+/**
+ * What the lead said: the latest WhatsApp message when there is one (who wrote it and when),
+ * otherwise the original enquiry.
+ */
+function LeadPreview({ lead, compact = false }: { lead: Lead; compact?: boolean }) {
+  const last = lead.lastWhatsApp;
+  if (!last) {
+    if (!lead.message) return null;
+    return compact ? (
+      <p className="line-clamp-2 text-xs text-ink-muted">{lead.message}</p>
+    ) : (
+      <p className="line-clamp-3 whitespace-pre-line text-sm text-ink">{lead.message}</p>
+    );
+  }
+  return (
+    <div className={cn('flex flex-col gap-0.5', compact ? 'text-xs' : 'text-sm')}>
+      <p className="flex items-center gap-1 text-xs text-ink-muted">
+        <MessageCircle aria-hidden className="h-3.5 w-3.5 text-success-600" />
+        {last.direction === 'IN' ? 'הודעה אחרונה מהלקוח' : 'התשובה האחרונה שלכם'} ·{' '}
+        <time dateTime={last.createdAt}>{timeAgo(last.createdAt)}</time>
+      </p>
+      <p
+        className={cn(
+          'whitespace-pre-line',
+          compact ? 'line-clamp-2 text-ink-muted' : 'line-clamp-3 text-ink',
+        )}
+      >
+        {last.body}
+      </p>
+    </div>
+  );
+}
 
 /** List view card. */
 export function TagChips({ tags }: { tags: string[] }) {
@@ -92,9 +126,7 @@ export function LeadCard({ lead, businessId }: { lead: Lead; businessId: string 
           {lead.stage.name}
         </span>
       </header>
-      {lead.message && (
-        <p className="line-clamp-3 whitespace-pre-line text-sm text-ink">{lead.message}</p>
-      )}
+      <LeadPreview lead={lead} />
       <TagChips tags={lead.tags} />
       <div className="flex flex-wrap gap-2">
         {phone && (
@@ -146,7 +178,7 @@ function BoardCard({
           {lead.contact.name}
         </Link>
       </h3>
-      {lead.message && <p className="line-clamp-2 text-xs text-ink-muted">{lead.message}</p>}
+      <LeadPreview lead={lead} compact />
       <TagChips tags={lead.tags} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
         <time dateTime={lead.createdAt}>{timeAgo(lead.createdAt)}</time>
