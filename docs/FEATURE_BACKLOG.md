@@ -73,3 +73,4 @@ F06 ─► F11 (after spike)
 - 2026-10-31 — Site design v3: cleaner, more professional customer-site look for all 5 templates (D-090). Applies to live sites on next publish.
 - 2026-10-31 — F12 POC: WhatsApp via Meta Cloud API (D-091, proposed) — signed webhook, WhatsApp leads, conversation and replies on the lead page (24-hour window), delivery status, local simulator. See docs/features/F12.md.
 - 2026-10-31 — WhatsApp number classification (D-092): known customers go straight to their lead, new numbers wait in the "שיחות" inbox, one click marks business (lead) or personal (deleted, ignored from then on); remembered; leads page points to waiting numbers.
+- 2026-11-01 — Product tour (D-093): first-entry walkthrough of the main menu with spotlight bubbles (centred on phones), per-role steps, keyboard support, replay from "סיור במערכת".

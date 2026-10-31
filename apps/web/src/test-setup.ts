@@ -6,4 +6,8 @@ afterEach(() => cleanup());
 
 // Editors may flush a last save on unmount; once a test's mocked API is gone that save fails and
 // leaves a local draft backup. Start every test with clean storage.
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  // The product tour opens on first entry; tests that cover it remove this flag.
+  localStorage.setItem('leadflow.tour.off', '1');
+});

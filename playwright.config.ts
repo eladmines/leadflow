@@ -9,6 +9,17 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
     locale: 'he-IL',
     trace: 'retain-on-failure',
+    // The product tour (D-093) opens on first entry and would cover the screens under test;
+    // e2e/tour.spec.ts turns it back on.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: 'http://localhost:5173',
+          localStorage: [{ name: 'leadflow.tour.off', value: '1' }],
+        },
+      ],
+    },
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
