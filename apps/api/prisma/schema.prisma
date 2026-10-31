@@ -352,7 +352,8 @@ model Lead {
 model FormSubmission {
   id             String   @id @default(uuid()) @db.Uuid
   businessId     String   @map("business_id") @db.Uuid
-  siteId         String   @map("site_id") @db.Uuid
+  /// Null once the site is deleted (D-095): the submission stays as the lead's consent record.
+  siteId         String?  @map("site_id") @db.Uuid
   idempotencyKey String   @map("idempotency_key") @db.VarChar(64)
   /// The validated fields (name, phone, email, message) — personal data; never logged.
   payload        Json
@@ -362,8 +363,8 @@ model FormSubmission {
   leadId         String   @unique @map("lead_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  site Site? @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  lead Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@unique([siteId, idempotencyKey])
   @@index([businessId, createdAt])

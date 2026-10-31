@@ -355,6 +355,61 @@ describe('site editor', () => {
     expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id))).toHaveLength(2);
   });
 
+  it('switches to another template after confirming, and reloads the editor (D-095)', async () => {
+    const garage = {
+      ...site,
+      ...buildTemplateDraft('garage', siteBusinessInfo(testBusiness)),
+      pages: [],
+      revision: 1,
+    };
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(site),
+      [`POST ${sp.template(testBusiness.id)}`]: () => json(200, { site: garage }),
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'אפשרויות' }));
+    const dialog = await screen.findByRole('dialog', { name: 'אפשרויות האתר' });
+    expect(within(dialog).getByText('התבנית הנוכחית')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: /מוסכים ורכב/ }));
+    expect(within(dialog).getByText(/עמוד הבית יוחלף בתבנית "מוסכים ורכב"/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'החלפת התבנית' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'POST', sp.template(testBusiness.id))).toEqual([
+        { templateKey: 'garage', revision: 0 },
+      ]),
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    // The editor now shows the garage content.
+    await waitFor(() => expect(previewHtml()).toContain('הכנה לטסט'));
+  });
+
+  it('deletes the site after an explicit confirmation and falls back to the existing website (D-095)', async () => {
+    let deleted = false;
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+        json(200, { business: { ...testBusiness, websiteUrl: 'https://www.shiran.co.il' } }),
+      [`GET ${sp.site(testBusiness.id)}`]: () => json(200, { site: deleted ? null : site }),
+      [`DELETE ${sp.site(testBusiness.id)}`]: () => {
+        deleted = true;
+        return new Response(null, { status: 204 });
+      },
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'אפשרויות' }));
+    const dialog = await screen.findByRole('dialog', { name: 'אפשרויות האתר' });
+    await user.click(within(dialog).getByRole('button', { name: 'מחיקת האתר…' }));
+    const confirm = within(dialog).getByRole('button', { name: 'מחיקה סופית' });
+    expect(confirm).toBeDisabled();
+    await user.click(within(dialog).getByLabelText('הבנתי שאי אפשר לשחזר את האתר אחרי המחיקה'));
+    await user.click(confirm);
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'DELETE', sp.site(testBusiness.id))).toHaveLength(1),
+    );
+    expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
+  });
+
   it('is read-only for non-owners (preview only)', async () => {
     mockApi({ [meKey]: me(testUser), ...asRole('MANAGER'), ...getSite(site) });
     renderApp(sitePath);

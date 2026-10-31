@@ -29,6 +29,7 @@ import {
   Loader2,
   Monitor,
   Plus,
+  Settings2,
   Smartphone,
   X,
 } from 'lucide-react';
@@ -58,6 +59,7 @@ import { MediaPicker } from '../media/MediaPicker';
 import { PreviewFrame } from './PreviewFrame';
 import { PublishDialog } from './PublishDialog';
 import { VersionsDialog } from './VersionsDialog';
+import { SiteOptionsDialog } from './SiteOptionsDialog';
 import { SectionForm } from './SectionForm';
 import { useDraftAutosave, type Draft, type SaveState } from './useDraftAutosave';
 
@@ -92,12 +94,22 @@ function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => vo
   );
 }
 
-export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: Draft }) {
+export function SiteEditor({
+  site,
+  initialDraft,
+  onReplaced,
+}: {
+  site: Site;
+  initialDraft?: Draft;
+  /** The server replaced the draft (template change, D-095): reload the editor from it. */
+  onReplaced?: () => void;
+}) {
   const business = useCurrentBusiness();
   const editable = can(business.role, 'site.edit');
   const canPublish = can(business.role, 'site.publish');
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(
     initialDraft ?? {
       templateKey: site.templateKey,
@@ -521,6 +533,12 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
               היסטוריה
             </Button>
           ) : null}
+          {editable && canPublish && (
+            <Button variant="ghost" onClick={() => setOptionsOpen(true)}>
+              <Settings2 aria-hidden className="h-4 w-4" />
+              אפשרויות
+            </Button>
+          )}
           {canPublish && (
             <Button onClick={() => setPublishOpen(true)}>
               {live ? 'פרסום השינויים' : 'פרסום האתר'}
@@ -565,6 +583,17 @@ export function SiteEditor({ site, initialDraft }: { site: Site; initialDraft?: 
             if (imagePick) setField(imagePick.id, imagePick.path, asset.id);
             setImagePick(null);
           }}
+        />
+      )}
+      {editable && canPublish && (
+        <SiteOptionsDialog
+          open={optionsOpen}
+          onOpenChange={setOptionsOpen}
+          site={site}
+          businessId={business.id}
+          saving={state !== 'saved'}
+          revision={revision}
+          onReplaced={() => onReplaced?.()}
         />
       )}
       <VersionsDialog
