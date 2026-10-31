@@ -1,11 +1,12 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { businessWebPaths } from '@leadflow/shared';
 import { Menu, Search, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Outlet, useMatch, useParams } from 'react-router-dom';
 import { Alert, Button, FullPageSpinner, Logo } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { cn } from '../../lib/cn';
+import { useMe } from '../auth/api';
 import { errorMessage } from '../auth/serverErrors';
 import { UnverifiedEmailBanner } from '../auth/UnverifiedEmailBanner';
 import { useBusiness } from '../businesses/api';
@@ -13,6 +14,7 @@ import { BusinessNotFound } from '../businesses/BusinessNotFound';
 import type { BusinessOutletContext } from './CurrentBusiness';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { Sidebar } from './Sidebar';
+import { markTourSeen, ProductTour, tourSeen } from '../tour/ProductTour';
 
 /**
  * App shell for `/b/:businessId/*`: right-side sidebar on desktop, a drawer on mobile.
@@ -25,6 +27,17 @@ export function BusinessLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   useCommandPaletteShortcut(openPalette);
+  const userId = useMe().data?.user?.id;
+  const [tourOpen, setTourOpen] = useState(false);
+  const ready = business.data?.status === 'ACTIVE';
+  // First entry to a working business: show the tour once (D-093).
+  useEffect(() => {
+    if (ready && userId && !tourSeen(userId)) setTourOpen(true);
+  }, [ready, userId]);
+  const closeTour = () => {
+    setTourOpen(false);
+    if (userId) markTourSeen(userId);
+  };
   // The site editor needs the full width for its live preview.
   const wide = useMatch('/b/:businessId/site') !== null;
 
@@ -62,9 +75,10 @@ export function BusinessLayout() {
       </a>
 
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-e border-surface-border bg-surface-muted lg:block">
-        <Sidebar business={b} onSearch={openPalette} />
+        <Sidebar business={b} onSearch={openPalette} onTour={() => setTourOpen(true)} />
       </aside>
       <CommandPalette business={b} open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ProductTour role={b.role} open={tourOpen} onClose={closeTour} />
 
       <div className="min-w-0 flex-1">
         <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
@@ -111,6 +125,10 @@ export function BusinessLayout() {
                 onSearch={() => {
                   closeMenu();
                   openPalette();
+                }}
+                onTour={() => {
+                  closeMenu();
+                  setTourOpen(true);
                 }}
               />
             </Dialog.Content>

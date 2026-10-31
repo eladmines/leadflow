@@ -1,5 +1,5 @@
 import { businessWebPaths, can, roleLabels, type Business } from '@leadflow/shared';
-import { LogOut, Search } from 'lucide-react';
+import { Compass, LogOut, Search } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { Alert, Logo } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -14,10 +14,13 @@ export function Sidebar({
   business,
   onNavigate,
   onSearch,
+  onTour,
 }: {
   business: Business;
   onNavigate?: () => void;
   onSearch?: () => void;
+  /** Replays the product tour (D-093). */
+  onTour?: () => void;
 }) {
   const me = useMe();
   const { signOut, isPending, error } = useSignOut();
@@ -34,6 +37,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onSearch}
+          data-tour="search"
           className="flex h-9 items-center gap-2 rounded-lg border border-surface-border bg-surface px-2.5 text-sm text-ink-muted shadow-card hover:border-accent-300 hover:text-ink"
         >
           <Search aria-hidden className="h-4 w-4" />
@@ -59,6 +63,7 @@ export function Sidebar({
                 }
                 end={segment === ''}
                 onClick={onNavigate}
+                data-tour={segment || 'dashboard'}
                 className={({ isActive }) =>
                   cn(
                     'group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors',
@@ -98,6 +103,16 @@ export function Sidebar({
 
       <div className="flex flex-col gap-3 border-t border-surface-border pt-3">
         {error && <Alert tone="danger">{error}</Alert>}
+        {onTour && (
+          <button
+            type="button"
+            onClick={onTour}
+            className="flex h-8 items-center gap-2 rounded-lg px-2.5 text-sm text-ink-muted hover:bg-surface-sunken hover:text-ink"
+          >
+            <Compass aria-hidden className="h-4 w-4" />
+            סיור במערכת
+          </button>
+        )}
         <div className="flex items-center gap-2.5 px-1">
           <span
             aria-hidden
