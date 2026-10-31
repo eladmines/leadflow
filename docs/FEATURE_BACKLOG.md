@@ -70,3 +70,4 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — Editor: section settings window on click (look from the palette, settings, actions), text/button toolbar, site design window from the logo.
 - 2026-10-28 — Custom site colours (main + accent) with a readability check and one-click darker fix.
 - 2026-10-28 — Desktop editor without the side panel: page settings include Google, "+ מקטע" and hidden-sections menu above the preview.
+- 2026-10-31 — Site design v3: cleaner, more professional customer-site look for all 5 templates (D-090). Applies to live sites on next publish.
