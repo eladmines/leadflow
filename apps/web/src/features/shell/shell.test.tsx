@@ -51,11 +51,9 @@ describe('app shell', () => {
 
   it('renders a "coming soon" page for sections that are not built yet', async () => {
     mockApi({ [meKey]: me(testUser) });
-    renderApp(section('conversations'));
-    expect(
-      await screen.findByRole('heading', { name: 'תיבת שיחות WhatsApp בדרך' }),
-    ).toBeInTheDocument();
-    expect(within(mainNav()).getByRole('link', { name: /שיחות/ })).toHaveAttribute(
+    renderApp(section('automations'));
+    expect(await screen.findByRole('heading', { name: 'אוטומציות בדרך' })).toBeInTheDocument();
+    expect(within(mainNav()).getByRole('link', { name: /אוטומציות/ })).toHaveAttribute(
       'aria-current',
       'page',
     );

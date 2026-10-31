@@ -33,6 +33,7 @@ import { PageHeader } from '../shell/PageHeader';
 import { useSite } from '../site/api';
 import { shekel, timeAgo, useLeads, useLeadTags, usePipeline, useUpdateLead } from './api';
 import { NewLeadDialog } from './NewLeadDialog';
+import { useWhatsAppInbox } from '../whatsapp/api';
 
 export const stageTone: Record<Lead['stage']['kind'], string> = {
   OPEN: 'bg-brand-50 text-brand-800',
@@ -73,6 +74,28 @@ function LeadPreview({ lead, compact = false }: { lead: Lead; compact?: boolean 
         {last.body}
       </p>
     </div>
+  );
+}
+
+/** Points owners/managers to WhatsApp numbers waiting to be classified (D-092). */
+function InboxNotice({ businessId }: { businessId: string }) {
+  const inbox = useWhatsAppInbox(businessId);
+  const count = inbox.data?.numbers.length ?? 0;
+  if (count === 0) return null;
+  return (
+    <Alert tone="info">
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <MessageCircle aria-hidden className="h-4 w-4 text-success-600" />
+        {count === 1 ? 'מספר חדש כתב בוואטסאפ' : `${count} מספרים חדשים כתבו בוואטסאפ`} ומחכים
+        לסיווג (לקוח או פרטי).
+        <Link
+          to={businessWebPaths.section(businessId, 'conversations')}
+          className="font-medium underline"
+        >
+          לשיחות
+        </Link>
+      </span>
+    </Alert>
   );
 }
 
@@ -409,6 +432,7 @@ export function LeadsPage() {
         }
       />
       <NewLeadDialog open={newOpen} onOpenChange={setNewOpen} />
+      {can(business.role, 'whatsapp.inbox') && <InboxNotice businessId={business.id} />}
 
       <div role="search" className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-60 flex-1">

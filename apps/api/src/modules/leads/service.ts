@@ -489,7 +489,15 @@ export class LeadService {
       const lead = await this.findVisible(ctx, leadId, tx);
       await tx.lead.delete({ where: { id: lead.id } });
       const contactRemoved = (await tx.lead.count({ where: { contactId: lead.contactId } })) === 0;
-      if (contactRemoved) await tx.contact.delete({ where: { id: lead.contactId } });
+      if (contactRemoved) {
+        await tx.contact.delete({ where: { id: lead.contactId } });
+        // Its WhatsApp number goes too (with any messages), so the phone isn't kept (D-092).
+        if (lead.contact.phone) {
+          await tx.whatsAppNumber.deleteMany({
+            where: { businessId: ctx.businessId, phone: lead.contact.phone, status: 'BUSINESS' },
+          });
+        }
+      }
       await recordAudit(tx, {
         action: 'lead.deleted',
         businessId: ctx.businessId,

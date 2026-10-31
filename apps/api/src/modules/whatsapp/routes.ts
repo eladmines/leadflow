@@ -2,8 +2,12 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
   apiPaths,
+  classifyNumberRequestSchema,
+  classifyNumberResponseSchema,
+  personalNumbersResponseSchema,
   sendWhatsAppRequestSchema,
   sendWhatsAppResponseSchema,
+  whatsappInboxResponseSchema,
   whatsappThreadResponseSchema,
 } from '@leadflow/shared';
 import { verifyWebhookSignature, type WhatsAppSender } from '../../integrations/whatsapp';
@@ -176,8 +180,13 @@ export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyn
 }
 
 const leadParams = z.object({ businessId: z.string(), leadId: z.string() });
+const params = z.object({ businessId: z.string() });
+const numberParams = z.object({ businessId: z.string(), numberId: z.string() });
 
-/** The conversation on a lead and replies. Registered inside the tenant scope. */
+/**
+ * The conversation on a lead and replies; the inbox of unclassified numbers and their
+ * classification (D-092). Registered inside the tenant scope.
+ */
 export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsyncZod {
   return async (app) => {
     const service = new WhatsAppService(app.prisma, app.config, sender, app.log);
@@ -205,6 +214,46 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
         reply.code(201).send({
           message: await service.send(tenantOf(req), req.params.leadId, req.body.text),
         }),
+    );
+
+    app.get(
+      '/whatsapp/inbox',
+      {
+        preValidation: requirePermission('whatsapp.inbox'),
+        schema: { params, response: { 200: whatsappInboxResponseSchema } },
+      },
+      async (req) => service.inbox(tenantOf(req)),
+    );
+
+    app.get(
+      '/whatsapp/personal',
+      {
+        preValidation: requirePermission('whatsapp.inbox'),
+        schema: { params, response: { 200: personalNumbersResponseSchema } },
+      },
+      async (req) => service.personalNumbers(tenantOf(req)),
+    );
+
+    app.post(
+      '/whatsapp/numbers/:numberId/classify',
+      {
+        preValidation: requirePermission('whatsapp.inbox'),
+        schema: {
+          params: numberParams,
+          body: classifyNumberRequestSchema,
+          response: { 200: classifyNumberResponseSchema },
+        },
+      },
+      async (req) => service.classify(tenantOf(req), req.params.numberId, req.body.as),
+    );
+
+    app.delete(
+      '/whatsapp/numbers/:numberId',
+      { preValidation: requirePermission('whatsapp.inbox'), schema: { params: numberParams } },
+      async (req, reply) => {
+        await service.forgetPersonal(tenantOf(req), req.params.numberId);
+        return reply.code(204).send();
+      },
     );
   };
 }

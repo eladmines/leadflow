@@ -38,16 +38,17 @@ model User {
   createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions     Session[]
-  authTokens   AuthToken[]
-  auditLogs    AuditLog[]
-  memberships  Membership[]
-  siteVersions SiteVersion[]
-  ownedLeads   Lead[]
-  sentInvites  Invitation[]      @relation("InvitedBy")
-  tasks        Task[]            @relation("TaskAssignee")
-  appointments Appointment[]     @relation("AppointmentStaff")
-  whatsappSent WhatsAppMessage[]
+  sessions           Session[]
+  authTokens         AuthToken[]
+  auditLogs          AuditLog[]
+  memberships        Membership[]
+  siteVersions       SiteVersion[]
+  ownedLeads         Lead[]
+  sentInvites        Invitation[]      @relation("InvitedBy")
+  tasks              Task[]            @relation("TaskAssignee")
+  appointments       Appointment[]     @relation("AppointmentStaff")
+  whatsappSent       WhatsAppMessage[]
+  whatsappClassified WhatsAppNumber[]  @relation("WhatsAppClassifiedBy")
 
   @@map("users")
 }
@@ -152,19 +153,20 @@ model Business {
   createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  memberships  Membership[]
-  auditLogs    AuditLog[]
-  site         Site?
-  contacts     Contact[]
-  leads        Lead[]
-  stages       PipelineStage[]
-  invitations  Invitation[]
-  assets       Asset[]
-  tasks        Task[]
-  services     Service[]
-  quotes       Quote[]
-  appointments Appointment[]
-  whatsapp     WhatsAppMessage[]
+  memberships     Membership[]
+  auditLogs       AuditLog[]
+  site            Site?
+  contacts        Contact[]
+  leads           Lead[]
+  stages          PipelineStage[]
+  invitations     Invitation[]
+  assets          Asset[]
+  tasks           Task[]
+  services        Service[]
+  quotes          Quote[]
+  appointments    Appointment[]
+  whatsapp        WhatsAppMessage[]
+  whatsappNumbers WhatsAppNumber[]
 
   @@map("businesses")
 }
@@ -581,11 +583,46 @@ enum WhatsAppDirection {
   OUT
 }
 
-/// One WhatsApp message with a contact. Meta's message id makes webhook retries idempotent.
+enum WhatsAppNumberStatus {
+  /// New number: its messages wait in the inbox until the owner classifies it.
+  UNCLASSIFIED
+  /// Customer: messages go to the CRM (contact + lead).
+  BUSINESS
+  /// Private contact: messages are not stored; only the number is kept so it stays ignored.
+  PERSONAL
+}
+
+/// What a business decided about a WhatsApp number (D-092). Remembered for future conversations.
+model WhatsAppNumber {
+  id             String               @id @default(uuid()) @db.Uuid
+  businessId     String               @map("business_id") @db.Uuid
+  /// E.164.
+  phone          String               @db.VarChar(20)
+  status         WhatsAppNumberStatus
+  /// WhatsApp profile name while unclassified (cleared when marked personal).
+  profileName    String?              @map("profile_name") @db.VarChar(80)
+  /// Null when classified automatically (an existing contact).
+  classifiedById String?              @map("classified_by_id") @db.Uuid
+  classifiedAt   DateTime?            @map("classified_at") @db.Timestamptz(3)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  classifiedBy User?             @relation("WhatsAppClassifiedBy", fields: [classifiedById], references: [id], onDelete: SetNull)
+  messages     WhatsAppMessage[]
+
+  @@unique([businessId, phone])
+  @@index([businessId, status])
+  @@map("whatsapp_numbers")
+}
+
+/// One WhatsApp message. Meta's message id makes webhook retries idempotent.
 model WhatsAppMessage {
   id          String            @id @default(uuid()) @db.Uuid
   businessId  String            @map("business_id") @db.Uuid
-  contactId   String            @map("contact_id") @db.Uuid
+  numberId    String            @map("number_id") @db.Uuid
+  /// Set once the number is a customer; null while it waits in the inbox.
+  contactId   String?           @map("contact_id") @db.Uuid
   /// Lead the message arrived on (or was sent from); kept null if that lead is deleted.
   leadId      String?           @map("lead_id") @db.Uuid
   direction   WhatsAppDirection
@@ -597,11 +634,13 @@ model WhatsAppMessage {
   senderId    String?           @map("sender_id") @db.Uuid
   createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  sender   User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  business Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  number   WhatsAppNumber @relation(fields: [numberId], references: [id], onDelete: Cascade)
+  contact  Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  lead     Lead?          @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  sender   User?          @relation(fields: [senderId], references: [id], onDelete: SetNull)
 
   @@index([businessId, contactId, createdAt])
+  @@index([numberId, createdAt])
   @@map("whatsapp_messages")
 }

@@ -121,6 +121,12 @@ describe('WhatsApp (F12 POC)', () => {
     return owner;
   }
 
+  /** Marks the test customer's number as a business number (as if classified earlier). */
+  const customer = (phone = '+972501112233') =>
+    ctx.prisma.whatsAppNumber.create({
+      data: { businessId: BUSINESS_ID, phone, status: 'BUSINESS' },
+    });
+
   const post = (payload: object, signature?: string | null) => {
     const raw = JSON.stringify(payload);
     return ctx.app.inject({
@@ -161,8 +167,9 @@ describe('WhatsApp (F12 POC)', () => {
     expect(await ctx.prisma.lead.count()).toBe(0);
   });
 
-  it('turns an incoming message into a WhatsApp lead with the conversation', async () => {
+  it('messages from a business number become a WhatsApp lead with the conversation', async () => {
     const owner = await connected();
+    await customer();
     const res = await post(textEvent('972501112233', 'היי, אפשר לקבוע תספורת לשבוע הבא?'));
     expect(res.statusCode).toBe(200);
 
@@ -188,6 +195,7 @@ describe('WhatsApp (F12 POC)', () => {
 
   it('ignores Meta retries of the same message', async () => {
     const owner = await connected();
+    await customer();
     const event = textEvent('972501112233', 'שלום', { id: 'wamid.same' });
     await post(event);
     await post(event);
@@ -197,6 +205,7 @@ describe('WhatsApp (F12 POC)', () => {
 
   it('keeps a contact on its open lead, and opens a new one after it is closed', async () => {
     const owner = await connected();
+    await customer();
     await post(textEvent('972501112233', 'היי'));
     await post(textEvent('972501112233', 'עוד שאלה'));
     const leads = await leadsOf(owner.token);
@@ -240,6 +249,7 @@ describe('WhatsApp (F12 POC)', () => {
 
   it('replies inside the 24-hour window and tracks delivery', async () => {
     const owner = await connected();
+    await customer();
     await post(textEvent('972501112233', 'היי'));
     const [lead] = await leadsOf(owner.token);
 
@@ -270,6 +280,7 @@ describe('WhatsApp (F12 POC)', () => {
 
   it('refuses free-form replies once the window has closed', async () => {
     const owner = await connected();
+    await customer();
     await post(textEvent('972501112233', 'היי', { at: new Date(Date.now() - 25 * 3600_000) }));
     const [lead] = await leadsOf(owner.token);
     const thread = (await req(ctx.app, 'GET', wp.thread(BUSINESS_ID, lead.id), owner.token)).json();
@@ -284,6 +295,7 @@ describe('WhatsApp (F12 POC)', () => {
 
   it('reports a failed send without storing it or leaking provider details', async () => {
     const owner = await connected();
+    await customer();
     await post(textEvent('972501112233', 'היי'));
     const [lead] = await leadsOf(owner.token);
     whatsapp.failWith = new WhatsAppSendError(400, 131047);
@@ -298,6 +310,7 @@ describe('WhatsApp (F12 POC)', () => {
 
   it('validates the reply text', async () => {
     const owner = await connected();
+    await customer();
     await post(textEvent('972501112233', 'היי'));
     const [lead] = await leadsOf(owner.token);
     const res = await req(ctx.app, 'POST', wp.thread(BUSINESS_ID, lead.id), owner.token, {
@@ -315,6 +328,7 @@ describe('WhatsApp (F12 POC)', () => {
 
   it('employees only see conversations on leads assigned to them', async () => {
     const owner = await connected();
+    await customer();
     const employee = await newUser(ctx.app, 'wa-emp');
     await addMember(ctx.prisma, BUSINESS_ID, employee.userId, 'EMPLOYEE');
     await post(textEvent('972501112233', 'היי'));
@@ -328,6 +342,153 @@ describe('WhatsApp (F12 POC)', () => {
     });
     expect((await req(ctx.app, 'GET', url, employee.token)).statusCode).toBe(200);
     expect((await req(ctx.app, 'POST', url, employee.token, { text: 'היי' })).statusCode).toBe(201);
+  });
+
+  describe('number classification (D-092)', () => {
+    const inboxOf = async (token: string) =>
+      (await req(ctx.app, 'GET', wp.inbox(BUSINESS_ID), token)).json();
+    const classify = (token: string, numberId: string, as: 'BUSINESS' | 'PERSONAL') =>
+      req(ctx.app, 'POST', wp.classify(BUSINESS_ID, numberId), token, { as });
+
+    it('a new number waits in the inbox: no contact, no lead', async () => {
+      const owner = await connected();
+      await post(textEvent('972541234567', 'היי, יש תור מחר?', { name: 'נועה' }));
+      await post(textEvent('972541234567', 'בבוקר אם אפשר', { name: 'נועה' }));
+
+      expect(await leadsOf(owner.token)).toHaveLength(0);
+      expect(await ctx.prisma.contact.count()).toBe(0);
+      const inbox = await inboxOf(owner.token);
+      expect(inbox.connected).toBe(true);
+      expect(inbox.numbers).toEqual([
+        expect.objectContaining({
+          phone: '+972541234567',
+          profileName: 'נועה',
+          messages: [
+            expect.objectContaining({ body: 'היי, יש תור מחר?' }),
+            expect.objectContaining({ body: 'בבוקר אם אפשר' }),
+          ],
+        }),
+      ]);
+    });
+
+    it('marking a number business creates the contact and lead, and remembers it', async () => {
+      const owner = await connected();
+      await post(textEvent('972541234567', 'היי, יש תור מחר?', { name: 'נועה' }));
+      await post(textEvent('972541234567', 'בבוקר אם אפשר', { name: 'נועה' }));
+      const [number] = (await inboxOf(owner.token)).numbers;
+
+      const res = await classify(owner.token, number.id, 'BUSINESS');
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toMatchObject({ status: 'BUSINESS', leadId: expect.any(String) });
+      const [lead] = await leadsOf(owner.token);
+      expect(lead).toMatchObject({
+        id: res.json().leadId,
+        source: 'whatsapp',
+        message: 'היי, יש תור מחר?\nבבוקר אם אפשר',
+        contact: { name: 'נועה', phone: '+972541234567' },
+      });
+      const thread = (
+        await req(ctx.app, 'GET', wp.thread(BUSINESS_ID, lead.id), owner.token)
+      ).json();
+      expect(thread.messages).toHaveLength(2);
+      expect((await inboxOf(owner.token)).numbers).toHaveLength(0);
+
+      // Remembered: the next message goes straight to the same lead.
+      await post(textEvent('972541234567', 'תודה!'));
+      expect(await leadsOf(owner.token)).toHaveLength(1);
+      expect((await inboxOf(owner.token)).numbers).toHaveLength(0);
+      expect(await ctx.prisma.whatsAppMessage.count({ where: { leadId: lead.id } })).toBe(3);
+    });
+
+    it('marking a number personal deletes its messages and ignores it from then on', async () => {
+      const owner = await connected();
+      await post(textEvent('972541234567', 'מה נשמע אחי?', { name: 'אמא' }));
+      const [number] = (await inboxOf(owner.token)).numbers;
+
+      const res = await classify(owner.token, number.id, 'PERSONAL');
+      expect(res.json()).toMatchObject({ status: 'PERSONAL', leadId: null });
+      expect(await ctx.prisma.whatsAppMessage.count()).toBe(0);
+      const row = await ctx.prisma.whatsAppNumber.findUniqueOrThrow({ where: { id: number.id } });
+      expect(row).toMatchObject({
+        status: 'PERSONAL',
+        profileName: null,
+        classifiedById: owner.userId,
+      });
+
+      await post(textEvent('972541234567', 'מתי אתה בא לארוחה?'));
+      expect(await ctx.prisma.whatsAppMessage.count()).toBe(0);
+      expect((await inboxOf(owner.token)).numbers).toHaveLength(0);
+      expect(await leadsOf(owner.token)).toHaveLength(0);
+
+      const personal = (await req(ctx.app, 'GET', wp.personal(BUSINESS_ID), owner.token)).json();
+      expect(personal.numbers).toEqual([
+        expect.objectContaining({ id: number.id, phone: '+972541234567' }),
+      ]);
+    });
+
+    it('a personal marking can be undone; the next message waits in the inbox again', async () => {
+      const owner = await connected();
+      await post(textEvent('972541234567', 'היי'));
+      const [number] = (await inboxOf(owner.token)).numbers;
+      await classify(owner.token, number.id, 'PERSONAL');
+
+      const del = await req(ctx.app, 'DELETE', wp.number(BUSINESS_ID, number.id), owner.token);
+      expect(del.statusCode).toBe(204);
+      await post(textEvent('972541234567', 'עכשיו אני רוצה תור'));
+      expect((await inboxOf(owner.token)).numbers).toEqual([
+        expect.objectContaining({ phone: '+972541234567' }),
+      ]);
+    });
+
+    it('a customer cannot be marked personal, and only personal markings can be undone', async () => {
+      const owner = await connected();
+      const number = await customer();
+      const res = await classify(owner.token, number.id, 'PERSONAL');
+      expect(res.statusCode).toBe(409);
+      expect(res.json().error.message).toBe(whatsappMessages.alreadyCustomer);
+      const del = await req(ctx.app, 'DELETE', wp.number(BUSINESS_ID, number.id), owner.token);
+      expect(del.statusCode).toBe(409);
+      expect(del.json().error.message).toBe(whatsappMessages.notPersonal);
+    });
+
+    it('deleting a lead forgets its WhatsApp number and messages', async () => {
+      const owner = await connected();
+      await customer();
+      await post(textEvent('972501112233', 'היי'));
+      const [lead] = await leadsOf(owner.token);
+      await req(ctx.app, 'DELETE', lp.detail(BUSINESS_ID, lead.id), owner.token);
+      expect(await ctx.prisma.whatsAppNumber.count()).toBe(0);
+      expect(await ctx.prisma.whatsAppMessage.count()).toBe(0);
+    });
+
+    it('only owners and managers see and classify the inbox; other businesses get 404', async () => {
+      const owner = await connected();
+      const manager = await newUser(ctx.app, 'wa-mgr');
+      const employee = await newUser(ctx.app, 'wa-emp2');
+      await addMember(ctx.prisma, BUSINESS_ID, manager.userId, 'MANAGER');
+      await addMember(ctx.prisma, BUSINESS_ID, employee.userId, 'EMPLOYEE');
+      await post(textEvent('972541234567', 'היי'));
+      const [number] = (await inboxOf(owner.token)).numbers;
+
+      expect((await req(ctx.app, 'GET', wp.inbox(BUSINESS_ID), employee.token)).statusCode).toBe(
+        403,
+      );
+      expect((await classify(employee.token, number.id, 'BUSINESS')).statusCode).toBe(403);
+      expect((await req(ctx.app, 'GET', wp.inbox(BUSINESS_ID), manager.token)).statusCode).toBe(
+        200,
+      );
+
+      const other = await ownerWithBusiness(ctx.app, 'wa-other');
+      const foreign = await req(
+        ctx.app,
+        'POST',
+        wp.classify(other.business.id, number.id),
+        other.token,
+        { as: 'PERSONAL' },
+      );
+      expect(foreign.statusCode).toBe(404);
+      expect(await ctx.prisma.whatsAppMessage.count()).toBe(1);
+    });
   });
 
   it('a business without WhatsApp sees it as not connected and cannot send', async () => {
