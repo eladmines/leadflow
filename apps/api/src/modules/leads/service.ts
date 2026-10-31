@@ -21,16 +21,30 @@ import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
 
 const leadInclude = {
-  contact: { select: { id: true, name: true, phone: true, email: true } },
+  contact: {
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      whatsapp: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { body: true, direction: true, createdAt: true },
+      },
+    },
+  },
   stage: { select: { id: true, name: true, kind: true } },
   owner: { select: { id: true, fullName: true } },
 } as const;
 type LeadRow = Prisma.LeadGetPayload<{ include: typeof leadInclude }>;
 
 export function toLeadDto(row: LeadRow): Lead {
+  const { whatsapp, ...contact } = row.contact;
+  const last = whatsapp[0];
   return {
     id: row.id,
-    contact: row.contact,
+    contact,
     stage: row.stage,
     source: row.source,
     sourceUrl: row.sourceUrl,
@@ -39,6 +53,9 @@ export function toLeadDto(row: LeadRow): Lead {
     expectedValue: row.expectedValue,
     nextActionAt: row.nextActionAt?.toISOString() ?? null,
     tags: row.tags,
+    lastWhatsApp: last
+      ? { body: last.body, direction: last.direction, createdAt: last.createdAt.toISOString() }
+      : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -170,7 +187,8 @@ export class LeadService {
     };
   }
 
-  private async findVisible(ctx: TenantContext, leadId: string, db: Db = this.prisma) {
+  /** A lead this member may see, or 404. Also used by features attached to a lead (WhatsApp). */
+  async findVisible(ctx: TenantContext, leadId: string, db: Db = this.prisma) {
     const lead = /^[0-9a-f-]{36}$/i.test(leadId)
       ? await db.lead.findFirst({
           where: { id: leadId, ...this.visible(ctx) },
@@ -471,7 +489,15 @@ export class LeadService {
       const lead = await this.findVisible(ctx, leadId, tx);
       await tx.lead.delete({ where: { id: lead.id } });
       const contactRemoved = (await tx.lead.count({ where: { contactId: lead.contactId } })) === 0;
-      if (contactRemoved) await tx.contact.delete({ where: { id: lead.contactId } });
+      if (contactRemoved) {
+        await tx.contact.delete({ where: { id: lead.contactId } });
+        // Its WhatsApp number goes too (with any messages), so the phone isn't kept (D-092).
+        if (lead.contact.phone) {
+          await tx.whatsAppNumber.deleteMany({
+            where: { businessId: ctx.businessId, phone: lead.contact.phone, status: 'BUSINESS' },
+          });
+        }
+      }
       await recordAudit(tx, {
         action: 'lead.deleted',
         businessId: ctx.businessId,

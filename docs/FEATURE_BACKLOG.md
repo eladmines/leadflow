@@ -19,7 +19,7 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F09 | [Team invitations & member management](features/F09.md) | High               | F02               | F04–F08       | Backend ∥ Frontend → QA             | **Done** |
 | F10 | [Tasks / follow-ups](features/F10.md)                   | High               | F08               | F11 spike     | Full pipeline                       | **Done** |
 | F11 | Custom domains + HTTPS                                  | High               | F06 + POC spike   | F12           | Spike → full pipeline               | Planned  |
-| F12 | WhatsApp connection & inbox                             | High               | F08 + POC spike   | F11           | Spike → full pipeline               | Planned  |
+| F12 | WhatsApp connection & inbox                             | High               | F08 + POC spike   | F11           | Spike → full pipeline               | POC      |
 | F13 | Plans, trial, billing & quotas                          | High               | F02, O-004        | F14           | Full pipeline                       | Planned  |
 | F14 | Data export, deletion & retention                       | Beta-required      | F08, O-007        | F13           | Full pipeline                       | Planned  |
 | F15 | Ops hardening: monitoring, backups, audit views         | Beta-required      | F00               | any           | Backend → QA                        | Planned  |
@@ -71,3 +71,5 @@ F06 ─► F11 (after spike)
 - 2026-10-28 — Custom site colours (main + accent) with a readability check and one-click darker fix.
 - 2026-10-28 — Desktop editor without the side panel: page settings include Google, "+ מקטע" and hidden-sections menu above the preview.
 - 2026-10-31 — Site design v3: cleaner, more professional customer-site look for all 5 templates (D-090). Applies to live sites on next publish.
+- 2026-10-31 — F12 POC: WhatsApp via Meta Cloud API (D-091, proposed) — signed webhook, WhatsApp leads, conversation and replies on the lead page (24-hour window), delivery status, local simulator. See docs/features/F12.md.
+- 2026-10-31 — WhatsApp number classification (D-092): known customers go straight to their lead, new numbers wait in the "שיחות" inbox, one click marks business (lead) or personal (deleted, ignored from then on); remembered; leads page points to waiting numbers.

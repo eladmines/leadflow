@@ -9,6 +9,10 @@ const booleanString = z
   .enum(['true', 'false'], { message: "must be 'true' or 'false'" })
   .transform((v) => v === 'true');
 
+/** Optional setting where an empty value (`KEY=` in .env) means "not set". */
+const optionalSetting = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -80,8 +84,38 @@ const envSchema = z
     SITE_STOCK_IMAGES: booleanString.default('true'),
     /** Folder with the bundled sample photos (relative to the API's working directory). */
     SITE_STOCK_DIR: z.string().min(1).default('assets/stock'),
+
+    // F12 POC — WhatsApp (D-091). One number, connected to one business, from the environment.
+    /** `local` records outgoing messages without calling Meta; `cloud` uses the Graph API. */
+    WHATSAPP_PROVIDER: z.enum(['local', 'cloud']).default('local'),
+    /** LeadFlow business the WhatsApp number belongs to; unset = WhatsApp off. */
+    WHATSAPP_BUSINESS_ID: optionalSetting(z.string().uuid()),
+    /** Meta "Phone number ID" (not the phone number itself). */
+    WHATSAPP_PHONE_NUMBER_ID: optionalSetting(z.string().min(1)),
+    WHATSAPP_ACCESS_TOKEN: optionalSetting(z.string().min(1)),
+    /** Meta app secret: verifies the X-Hub-Signature-256 of every webhook call. */
+    WHATSAPP_APP_SECRET: optionalSetting(z.string().min(16)),
+    /** Word Meta echoes back when the webhook is registered. */
+    WHATSAPP_VERIFY_TOKEN: optionalSetting(z.string().min(8)),
+    WHATSAPP_GRAPH_VERSION: z
+      .string()
+      .regex(/^v\d+\.\d+$/)
+      .default('v21.0'),
   })
   .superRefine((env, ctx) => {
+    if (env.WHATSAPP_BUSINESS_ID) {
+      const required = ['WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN'] as const;
+      const cloud = ['WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_ACCESS_TOKEN'] as const;
+      for (const key of [...required, ...(env.WHATSAPP_PROVIDER === 'cloud' ? cloud : [])]) {
+        if (!env[key]) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: 'is required when WHATSAPP_BUSINESS_ID is set',
+          });
+        }
+      }
+    }
     if (env.NODE_ENV !== 'production') return;
     if (!env.APP_URL) {
       ctx.addIssue({

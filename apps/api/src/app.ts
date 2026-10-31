@@ -34,6 +34,8 @@ import { appointmentTenantRoutes } from './modules/appointments/routes';
 import { quotePublicRoutes, quoteTenantRoutes } from './modules/quotes/routes';
 import { reportTenantRoutes } from './modules/reports/routes';
 import { registerMediaServing } from './modules/media/serve';
+import { createWhatsAppSender, type WhatsAppSender } from './integrations/whatsapp';
+import { whatsappTenantRoutes, whatsappWebhookRoutes } from './modules/whatsapp/routes';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -59,6 +61,8 @@ export interface AppDeps {
   storage?: StorageProvider;
   /** Captures log lines (tests). */
   logStream?: LogStream;
+  /** Defaults to the adapter chosen by `WHATSAPP_PROVIDER`. Tests inject a MemoryWhatsAppSender. */
+  whatsappSender?: WhatsAppSender;
 }
 
 /** Builds the Fastify app. Used by the server and by tests (via `app.inject`). */
@@ -69,6 +73,7 @@ export async function buildApp({
   logStream,
   siteCache,
   storage,
+  whatsappSender,
 }: AppDeps) {
   const app = Fastify({
     logger: loggerOptions(config, logStream),
@@ -137,6 +142,8 @@ export async function buildApp({
   await app.register(businessRoutes);
   await app.register(teamRoutes);
   await app.register(quotePublicRoutes);
+  const whatsapp = whatsappSender ?? createWhatsAppSender(config);
+  await app.register(whatsappWebhookRoutes(whatsapp));
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(
     tenantScope(async (scope) => {
@@ -149,6 +156,7 @@ export async function buildApp({
       await scope.register(appointmentTenantRoutes);
       await scope.register(quoteTenantRoutes);
       await scope.register(reportTenantRoutes);
+      await scope.register(whatsappTenantRoutes(whatsapp));
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

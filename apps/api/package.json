@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx --env-file=.env prisma/seed.ts",
+    "wa:simulate": "tsx --env-file=.env scripts/whatsapp-simulate.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

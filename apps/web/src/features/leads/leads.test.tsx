@@ -82,6 +82,37 @@ describe('leads page', () => {
     expect(within(cards[1]!).queryByRole('link', { name: /@/ })).not.toBeInTheDocument();
   });
 
+  it('previews the latest WhatsApp message instead of the first one', async () => {
+    const lastWhatsApp = {
+      body: 'שלום, אני רוצה לקבוע תור דחוף',
+      direction: 'IN' as const,
+      createdAt: new Date(Date.now() - 2 * 60_000).toISOString(),
+    };
+    mockApi({
+      [meKey]: me(testUser),
+      [leadsKey]: () =>
+        json(200, {
+          leads: [
+            lead({ source: 'whatsapp', message: 'בדיקה', lastWhatsApp }),
+            lead({
+              source: 'whatsapp',
+              message: 'היי',
+              lastWhatsApp: { ...lastWhatsApp, direction: 'OUT', body: 'בטח, מחר ב-10?' },
+            }),
+          ],
+        }),
+    });
+    renderApp(`${businessWebPaths.section(id, 'leads')}?view=list`);
+    const cards = within(await screen.findByRole('list', { name: 'פניות' })).getAllByRole(
+      'article',
+    );
+    expect(within(cards[0]!).getByText('שלום, אני רוצה לקבוע תור דחוף')).toBeInTheDocument();
+    expect(within(cards[0]!).getByText(/הודעה אחרונה מהלקוח/)).toHaveTextContent('לפני 2 דקות');
+    expect(within(cards[0]!).queryByText('בדיקה')).not.toBeInTheDocument();
+    expect(within(cards[1]!).getByText(/התשובה האחרונה שלכם/)).toBeInTheDocument();
+    expect(within(cards[1]!).getByText('בטח, מחר ב-10?')).toBeInTheDocument();
+  });
+
   it('empty state points to the live address when the site is published', async () => {
     mockApi({
       [meKey]: me(testUser),

@@ -48,6 +48,11 @@ export const PERMISSIONS = {
   'quotes.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   /** PRD §17.1: managers get access to inquiries and reports; employees don't. */
   'reports.view': ['OWNER', 'MANAGER'],
+  /**
+   * D-092: the WhatsApp inbox holds messages from numbers nobody has classified yet, which may be
+   * private, so only owners and managers see and classify them.
+   */
+  'whatsapp.inbox': ['OWNER', 'MANAGER'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

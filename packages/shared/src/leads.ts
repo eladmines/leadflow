@@ -126,6 +126,15 @@ export const leadSchema = z.object({
   nextActionAt: z.string().datetime().nullable(),
   /** Free labels chosen by the business, e.g. "VIP", "חוזר" (lowercased duplicates removed). */
   tags: z.array(z.string()),
+  /** Latest WhatsApp message with this contact (F12), for list previews; absent = none. */
+  lastWhatsApp: z
+    .object({
+      body: z.string(),
+      direction: z.enum(['IN', 'OUT']),
+      createdAt: z.string().datetime(),
+    })
+    .nullable()
+    .optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

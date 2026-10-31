@@ -30,16 +30,8 @@ export const navItems: NavItem[] = [
   { segment: '', label: 'דשבורד', icon: LayoutDashboard },
   { segment: 'site', label: 'האתר שלי', icon: Globe },
   { segment: 'leads', label: 'לקוחות ולידים', icon: Users },
-  {
-    segment: 'conversations',
-    label: 'שיחות',
-    icon: MessageCircle,
-    comingSoon: {
-      title: 'תיבת שיחות WhatsApp בדרך',
-      description:
-        'חיבור מספר WhatsApp עסקי רשמי, תיבת שיחות משותפת לצוות, שיוך לעובד ומענה מתוך המערכת.',
-    },
-  },
+  // WhatsApp inbox of unclassified numbers (D-092); conversations with customers live on the lead.
+  { segment: 'conversations', label: 'שיחות', icon: MessageCircle, permission: 'whatsapp.inbox' },
   { segment: 'tasks', label: 'משימות', icon: ListTodo },
   { segment: 'appointments', label: 'תורים', icon: CalendarDays },
   { segment: 'quotes', label: 'הצעות מחיר', icon: FileText },
