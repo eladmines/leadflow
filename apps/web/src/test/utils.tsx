@@ -37,6 +37,7 @@ export const testBusiness: Business = {
   address: 'הרצל 10, חיפה',
   serviceAreas: ['חיפה', 'יקנעם'],
   openingHours: defaultOpeningHours,
+  websiteUrl: null,
   timezone: 'Asia/Jerusalem',
   status: 'ACTIVE',
   onboardingStep: 4,

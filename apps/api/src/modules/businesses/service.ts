@@ -30,6 +30,7 @@ export function toBusinessDto(business: Business, role: Role): BusinessDto {
     address: business.address,
     serviceAreas: business.serviceAreas,
     openingHours: hours.success ? hours.data : null,
+    websiteUrl: business.websiteUrl,
     timezone: business.timezone,
     status: business.status,
     onboardingStep: business.onboardingStep,
@@ -83,6 +84,7 @@ export class BusinessService {
     if (input.phone !== undefined) data.phone = input.phone;
     if (input.address !== undefined) data.address = input.address;
     if (input.serviceAreas !== undefined) data.serviceAreas = input.serviceAreas;
+    if (input.websiteUrl !== undefined) data.websiteUrl = input.websiteUrl;
     if (input.openingHours !== undefined) {
       data.openingHours = input.openingHours ?? Prisma.DbNull;
     }

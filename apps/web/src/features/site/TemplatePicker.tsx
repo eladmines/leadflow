@@ -6,7 +6,7 @@ import {
   templatePreview,
   type TemplateKey,
 } from '@leadflow/shared';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Alert, Button } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
@@ -15,8 +15,15 @@ import { PageHeader } from '../shell/PageHeader';
 import { siteBusinessInfo, useCreateSite } from './api';
 import { PreviewFrame } from './PreviewFrame';
 
-/** First visit to "My site": choose a template; it's pre-filled with the business profile. */
-export function TemplatePicker() {
+/**
+ * First visit to "My site": choose a template; it's pre-filled with the business profile.
+ * `intro` sits under the page header; `secondary` shows the picker below an existing website
+ * (D-094) with a section heading in place of the page header.
+ */
+export function TemplatePicker({
+  intro,
+  secondary = false,
+}: { intro?: ReactNode; secondary?: boolean } = {}) {
   const business = useCurrentBusiness();
   const create = useCreateSite(business.id);
   const [chosen, setChosen] = useState<TemplateKey | null>(null);
@@ -42,10 +49,21 @@ export function TemplatePicker() {
 
   return (
     <>
-      <PageHeader
-        title="בואו נבנה את האתר שלך"
-        description="בחרו תבנית. נמלא אותה מראש בפרטי העסק ובתמונות לדוגמה, ואחר כך תוכלו לשנות כל טקסט, תמונה, צבע וסדר מקטעים."
-      />
+      {secondary ? (
+        <div className="flex flex-col gap-1 pt-2">
+          <h2 className="text-lg font-semibold text-ink">רוצים אתר חדש ב-LeadFlow?</h2>
+          <p className="text-sm text-ink-muted">
+            אתר שמנוהל כאן: פניות נכנסות ישר למערכת, ועורכים הכול לבד. בחרו תבנית כדי להתחיל. האתר
+            הקיים לא ישתנה.
+          </p>
+        </div>
+      ) : (
+        <PageHeader
+          title="בואו נבנה את האתר שלך"
+          description="בחרו תבנית. נמלא אותה מראש בפרטי העסק ובתמונות לדוגמה, ואחר כך תוכלו לשנות כל טקסט, תמונה, צבע וסדר מקטעים."
+        />
+      )}
+      {intro}
       {create.isError && <Alert tone="danger">{errorMessage(create.error)}</Alert>}
       <ul className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {[suggested, ...TEMPLATE_KEYS.filter((k) => k !== suggested)].map((key) => (
