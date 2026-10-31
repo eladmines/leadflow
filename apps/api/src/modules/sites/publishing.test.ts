@@ -117,6 +117,120 @@ describe('publishing (F06)', () => {
     expect(lead.sourceUrl).toMatch(/\/summer$/);
   });
 
+  describe('change template and delete (D-095)', () => {
+    it('switches the home page to another template, keeping logo, pages and the live version', async () => {
+      const o = await ownerWithSite('switch');
+      await req(ctx.app, 'PUT', sp.subdomain(o.id), o.token, { subdomain: 'switch-salon' });
+      let n = 0;
+      const about = newPage('about', 'p-about', () => `s${++n}`);
+      const cur = (await req(ctx.app, 'GET', sp.site(o.id), o.token)).json().site;
+      const logo = '0e000000-0000-4000-8000-000000000001';
+      await ctx.prisma.asset.create({
+        data: {
+          id: logo,
+          businessId: o.id,
+          key: `${o.id}/${logo}.webp`,
+          mime: 'image/webp',
+          sizeBytes: 10,
+          width: 10,
+          height: 10,
+        },
+      });
+      const saved = (
+        await req(ctx.app, 'PUT', sp.draft(o.id), o.token, {
+          ...cur,
+          theme: { ...cur.theme, logoAssetId: logo },
+          pages: [about],
+        })
+      ).json().site;
+      expect((await publish(o, saved.revision)).statusCode).toBe(200);
+      // Each view carries a fresh form token; compare the page without it.
+      const livePage = async () =>
+        (await visit('switch-salon')).body.replace(/name="_t" value="[^"]*"/g, '');
+      const liveBefore = await livePage();
+
+      const res = await req(ctx.app, 'POST', sp.template(o.id), o.token, {
+        templateKey: 'garage',
+        revision: saved.revision,
+      });
+      expect(res.statusCode).toBe(200);
+      const site = res.json().site;
+      expect(site).toMatchObject({ templateKey: 'garage', revision: saved.revision + 1 });
+      expect(site.theme.logoAssetId).toBe(logo);
+      expect(site.pages.map((p: { slug: string }) => p.slug)).toEqual(['about']);
+      expect(site.sections).not.toEqual(saved.sections);
+      expect(site.published).not.toBeNull();
+      // Nothing changes on the live site until the owner publishes.
+      expect(await livePage()).toBe(liveBefore);
+    });
+
+    it('refuses a stale revision and non-owners', async () => {
+      const o = await ownerWithSite('stale');
+      const stale = await req(ctx.app, 'POST', sp.template(o.id), o.token, {
+        templateKey: 'garage',
+        revision: o.site.revision + 5,
+      });
+      expect(stale.statusCode).toBe(409);
+      const manager = await newUser(ctx.app, 'switch-mgr');
+      await addMember(ctx.prisma, o.id, manager.userId, 'MANAGER');
+      const body = { templateKey: 'garage', revision: o.site.revision };
+      expect((await req(ctx.app, 'POST', sp.template(o.id), manager.token, body)).statusCode).toBe(
+        403,
+      );
+      expect((await req(ctx.app, 'DELETE', sp.site(o.id), manager.token)).statusCode).toBe(403);
+    });
+
+    it('deletes the site: offline, address freed, leads and consent records kept', async () => {
+      const o = await ownerWithSite('delete');
+      await req(ctx.app, 'PUT', sp.subdomain(o.id), o.token, { subdomain: 'delete-salon' });
+      const cur = (await req(ctx.app, 'GET', sp.site(o.id), o.token)).json().site;
+      expect((await publish(o, cur.revision)).statusCode).toBe(200);
+      expect((await visit('delete-salon')).statusCode).toBe(200);
+
+      const contact = cur.sections.find((s: { type: string }) => s.type === 'contact');
+      const token = createFormToken(
+        ctx.app.config.FORM_TOKEN_SECRET,
+        'delete-salon',
+        Date.now() - 10_000,
+      );
+      const sent = await pub.inject({
+        method: 'POST',
+        url: LEAD_FORM_PATH,
+        headers: {
+          host: `delete-salon.${ctx.app.config.PUBLIC_SITE_HOST}`,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        payload: new URLSearchParams({
+          _t: token,
+          _s: contact.id,
+          name: 'דנה כהן',
+          phone: '052-7654321',
+          consent: 'on',
+        }).toString(),
+      });
+      expect(sent.statusCode).toBe(200);
+
+      const res = await req(ctx.app, 'DELETE', sp.site(o.id), o.token);
+      expect(res.statusCode).toBe(204);
+      expect((await req(ctx.app, 'GET', sp.site(o.id), o.token)).json().site).toBeNull();
+      expect((await visit('delete-salon')).statusCode).toBe(404);
+      expect(await ctx.prisma.siteVersion.count()).toBe(0);
+      expect(await ctx.prisma.lead.count()).toBe(1);
+      const submission = await ctx.prisma.formSubmission.findFirstOrThrow();
+      expect(submission.siteId).toBeNull();
+      expect(submission.consentAt).toBeInstanceOf(Date);
+
+      // The address is free again, and a new site can be built.
+      const other = await ownerWithSite('reuse');
+      const take = await req(ctx.app, 'PUT', sp.subdomain(other.id), other.token, {
+        subdomain: 'delete-salon',
+      });
+      expect(take.statusCode).toBe(200);
+      const again = await req(ctx.app, 'POST', sp.site(o.id), o.token, { templateKey: 'beauty' });
+      expect(again.statusCode).toBe(201);
+    });
+  });
+
   it('rejects duplicate page addresses', async () => {
     const o = await ownerWithSite('dupes');
     let n = 0;

@@ -16,6 +16,8 @@ export function SitePage() {
   const business = useCurrentBusiness();
   const site = useSite(business.id);
   const [restored, setRestored] = useState<Draft | 'dismissed' | null>(null);
+  // Bumped when the server replaces the draft (template change), so the editor starts over.
+  const [reloads, setReloads] = useState(0);
 
   if (site.isPending) return <Spinner label="טוענים את האתר…" />;
   if (site.isError) {
@@ -84,9 +86,10 @@ export function SitePage() {
 
   return (
     <SiteEditor
-      key={site.data.id}
+      key={`${site.data.id}:${reloads}`}
       site={site.data}
       initialDraft={restored && restored !== 'dismissed' ? restored : undefined}
+      onReplaced={() => setReloads((n) => n + 1)}
     />
   );
 }

@@ -1,6 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
+  changeTemplateRequestSchema,
   createSiteRequestSchema,
   publishRequestSchema,
   saveDraftRequestSchema,
@@ -75,6 +76,28 @@ export const siteTenantRoutes: FastifyPluginAsyncZod = async (app) => {
     '/site/unpublish',
     { preValidation: requirePermission('site.publish'), schema: { params, response: ok } },
     async (req) => ({ site: await service.unpublish(tenantOf(req)) }),
+  );
+
+  // D-095: switch template / delete the LeadFlow site.
+  app.post(
+    '/site/template',
+    {
+      preValidation: requirePermission('site.edit'),
+      schema: { params, body: changeTemplateRequestSchema, response: ok },
+    },
+    async (req) => ({
+      site: await service.changeTemplate(tenantOf(req), req.body.templateKey, req.body.revision),
+    }),
+  );
+
+  app.delete(
+    '/site',
+    // Deleting takes a live site offline, so it needs the publish permission (owner).
+    { preValidation: requirePermission('site.publish'), schema: { params } },
+    async (req, reply) => {
+      await service.remove(tenantOf(req));
+      return reply.status(204).send();
+    },
   );
 
   app.get(

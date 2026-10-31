@@ -369,6 +369,75 @@ export class SiteService {
     return this.dto(row);
   }
 
+  /**
+   * D-095: rebuilds the home page from another template, like a new site (content, palette, font,
+   * Google details and sample photos). Keeps the logo, extra pages and address; the published
+   * version is untouched until the owner publishes. Guarded by the revision the client last saw.
+   */
+  async changeTemplate(ctx: TenantContext, templateKey: TemplateKey, revision: number) {
+    const site = await this.requireSite(ctx);
+    if (site.revision !== revision) throw new AppError('CONFLICT', siteMessages.revisionConflict);
+    const business = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+    });
+    const base = buildTemplateDraft(templateKey, {
+      name: business.name,
+      industry: business.industry,
+      phone: business.phone,
+      address: business.address,
+      serviceAreas: business.serviceAreas,
+      openingHours: null,
+    });
+    const draft = withTemplatePhotos(base, await this.importStockPhotos(ctx, templateKey));
+    const logoAssetId = (site.theme as { logoAssetId?: string | null } | null)?.logoAssetId ?? null;
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.site.updateMany({
+        where: { id: site.id, revision },
+        data: {
+          templateKey,
+          theme: { ...draft.theme, logoAssetId },
+          seo: draft.seo,
+          sections: draft.sections as unknown as Prisma.InputJsonArray,
+          revision: { increment: 1 },
+        },
+      });
+      if (result.count === 0) throw new AppError('CONFLICT', siteMessages.revisionConflict);
+      await recordAudit(tx, {
+        action: 'site.template_changed',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'site',
+        entityId: site.id,
+        metadata: { from: site.templateKey, to: templateKey },
+      });
+      return tx.site.findUniqueOrThrow({ where: { id: site.id }, include: withLive });
+    });
+    return this.dto(row);
+  }
+
+  /**
+   * D-095: deletes the LeadFlow site: offline at once, the address is freed, the draft and versions
+   * are gone. Leads and their form submissions stay (consent record), and so do the images.
+   */
+  async remove(ctx: TenantContext): Promise<void> {
+    const site = await this.requireSite(ctx);
+    await this.prisma.$transaction(async (tx) => {
+      // Unlink the live version first so the versions can be deleted with the site.
+      await tx.site.update({ where: { id: site.id }, data: { publishedVersionId: null } });
+      await tx.site.delete({ where: { id: site.id } });
+      await recordAudit(tx, {
+        action: 'site.deleted',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'site',
+        entityId: site.id,
+        metadata: { wasPublished: site.publishedVersionId !== null },
+      });
+    });
+    this.cache.invalidate(site.subdomain);
+  }
+
   /** Takes the site offline. Versions are kept; publishing again brings it back. */
   async unpublish(ctx: TenantContext): Promise<Site> {
     const site = await this.requireSite(ctx);

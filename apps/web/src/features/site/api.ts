@@ -1,6 +1,7 @@
 import {
   apiPaths,
   type Business,
+  type ChangeTemplateRequest,
   type CreateSiteRequest,
   type PublishRequest,
   type SaveDraftRequest,
@@ -35,6 +36,31 @@ export function useCreateSite(businessId: string) {
         body: JSON.stringify(body),
       }),
     onSuccess: (data) => queryClient.setQueryData(siteQueryKey(businessId), data),
+  });
+}
+
+/** D-095: rebuilds the home page from another template; the editor reloads from the result. */
+export function useChangeTemplate(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ChangeTemplateRequest) =>
+      apiFetch<SiteResponse>(paths.template(businessId), {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data) => queryClient.setQueryData(siteQueryKey(businessId), data),
+  });
+}
+
+/** D-095: deletes the LeadFlow site (offline, address freed); the page falls back to the picker. */
+export function useDeleteSite(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch<void>(paths.site(businessId), { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.setQueryData(siteQueryKey(businessId), { site: null });
+      void queryClient.invalidateQueries({ queryKey: versionsQueryKey(businessId) });
+    },
   });
 }
 

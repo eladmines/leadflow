@@ -519,6 +519,16 @@ export type SetSubdomainRequest = z.infer<typeof setSubdomainRequestSchema>;
 export const publishRequestSchema = z.object({ revision: z.number().int().min(0) });
 export type PublishRequest = z.infer<typeof publishRequestSchema>;
 
+/**
+ * D-095: rebuilds the home page from another template (content, design and sample photos). The
+ * logo, extra pages and address are kept; the live site changes only when the owner publishes.
+ */
+export const changeTemplateRequestSchema = z.object({
+  templateKey: templateKeySchema,
+  revision: z.number().int().min(0),
+});
+export type ChangeTemplateRequest = z.infer<typeof changeTemplateRequestSchema>;
+
 export const siteVersionSchema = z.object({
   id: z.string().uuid(),
   number: z.number().int(),
@@ -547,4 +557,6 @@ export const siteApiPaths = {
   versions: (businessId: string) => `/api/v1/businesses/${businessId}/site/versions`,
   rollback: (businessId: string, versionId: string) =>
     `/api/v1/businesses/${businessId}/site/versions/${versionId}/rollback`,
+  /** POST: switch the home page to another template (D-095). */
+  template: (businessId: string) => `/api/v1/businesses/${businessId}/site/template`,
 } as const;
