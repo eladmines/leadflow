@@ -6,7 +6,30 @@ import {
   normalizeIsraeliPhone,
   openingHoursSchema,
   updateBusinessRequestSchema,
+  websiteUrlSchema,
 } from './business';
+
+describe('websiteUrlSchema (D-094)', () => {
+  it('adds https:// when missing, keeps http(s), and turns blank into null', () => {
+    expect(websiteUrlSchema.parse('www.shiran.co.il')).toBe('https://www.shiran.co.il');
+    expect(websiteUrlSchema.parse(' http://shiran.co.il/about ')).toBe('http://shiran.co.il/about');
+    expect(websiteUrlSchema.parse('')).toBeNull();
+    expect(websiteUrlSchema.parse(null)).toBeNull();
+  });
+
+  it('rejects other schemes and addresses without a real host name, in Hebrew', () => {
+    for (const bad of [
+      'javascript:alert(1)',
+      'ftp://shiran.co.il',
+      'shiran',
+      'https://localhost',
+    ]) {
+      const res = websiteUrlSchema.safeParse(bad);
+      expect(res.success, bad).toBe(false);
+      if (!res.success) expect(res.error.issues[0]!.message).toMatch(/כתובת האתר אינה תקינה/);
+    }
+  });
+});
 import { can } from './permissions';
 
 describe('normalizeIsraeliPhone', () => {

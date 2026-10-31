@@ -146,6 +146,8 @@ model Business {
   serviceAreas   String[]       @default([]) @map("service_areas")
   /// Shape: shared openingHoursSchema (sun..sat → { open, from, to }).
   openingHours   Json?          @map("opening_hours")
+  /// Existing website outside LeadFlow (D-094); shown in "האתר שלי", never managed by LeadFlow.
+  websiteUrl     String?        @map("website_url") @db.VarChar(300)
   timezone       String         @default("Asia/Jerusalem") @db.VarChar(64)
   status         BusinessStatus @default(ONBOARDING)
   /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.

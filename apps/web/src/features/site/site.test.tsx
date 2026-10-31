@@ -84,6 +84,80 @@ describe('template picker', () => {
   });
 });
 
+describe('existing website (D-094)', () => {
+  const withWebsite = (role: Business['role'] = 'OWNER') => ({
+    [`GET ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+      json(200, { business: { ...testBusiness, role, websiteUrl: 'https://www.shiran.co.il' } }),
+  });
+
+  it('the owner adds the address from the picker page', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...getSite(null),
+      [`PATCH ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+        json(200, { business: { ...testBusiness, websiteUrl: 'https://www.shiran.co.il' } }),
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'הוספת האתר הקיים' }));
+    await user.type(screen.getByLabelText('כתובת האתר הקיים'), 'shiran');
+    await user.click(screen.getByRole('button', { name: 'שמירה' }));
+    expect(await screen.findByText(/כתובת האתר אינה תקינה/)).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('כתובת האתר הקיים'));
+    await user.type(screen.getByLabelText('כתובת האתר הקיים'), 'www.shiran.co.il');
+    await user.click(screen.getByRole('button', { name: 'שמירה' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PATCH', apiPaths.businesses.detail(testBusiness.id))).toEqual([
+        { websiteUrl: 'https://www.shiran.co.il' },
+      ]),
+    );
+    expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
+  });
+
+  it('shows the site with a "not managed by LeadFlow" note, and still offers templates', async () => {
+    mockApi({ [meKey]: me(testUser), ...withWebsite(), ...getSite(null) });
+    renderApp(sitePath);
+    expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
+    expect(screen.getByText('לא מנוהל ב-LeadFlow')).toBeInTheDocument();
+    expect(screen.getByText(/לא נבנה ב-LeadFlow ולא מנוהל כאן/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /www\.shiran\.co\.il/ })).toHaveAttribute(
+      'href',
+      'https://www.shiran.co.il',
+    );
+    expect(screen.getByTitle('תצוגה של האתר הקיים')).toHaveAttribute(
+      'src',
+      'https://www.shiran.co.il',
+    );
+    expect(screen.getByRole('heading', { name: 'רוצים אתר חדש ב-LeadFlow?' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'בחירת התבנית' }).length).toBeGreaterThan(0);
+  });
+
+  it('the owner removes the address', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      ...withWebsite(),
+      ...getSite(null),
+      [`PATCH ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+        json(200, { business: testBusiness }),
+    });
+    const { user } = renderApp(sitePath);
+    await user.click(await screen.findByRole('button', { name: 'הסרת האתר מהמערכת' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PATCH', apiPaths.businesses.detail(testBusiness.id))).toEqual([
+        { websiteUrl: null },
+      ]),
+    );
+  });
+
+  it('non-owners can view it but not change it', async () => {
+    mockApi({ [meKey]: me(testUser), ...withWebsite('EMPLOYEE'), ...getSite(null) });
+    renderApp(sitePath);
+    expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'שינוי הכתובת' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'בחירת התבנית' })).not.toBeInTheDocument();
+  });
+});
+
 describe('site editor', () => {
   it('a blank page needs only a name; the address can be edited', async () => {
     const fetchMock = mockApi({

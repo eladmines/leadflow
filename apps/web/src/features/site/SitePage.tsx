@@ -6,6 +6,7 @@ import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { useSite } from './api';
+import { AddExistingWebsite, ExistingWebsite } from './ExistingWebsite';
 import { SiteEditor } from './SiteEditor';
 import { TemplatePicker } from './TemplatePicker';
 import { clearBackup, readBackup, type Draft } from './useDraftAutosave';
@@ -25,7 +26,21 @@ export function SitePage() {
     );
   }
   if (!site.data) {
-    if (can(business.role, 'site.edit')) return <TemplatePicker />;
+    const canEdit = can(business.role, 'site.edit');
+    // The business already has a website elsewhere (D-094): show it, and keep the option open.
+    if (business.websiteUrl) {
+      return (
+        <>
+          <PageHeader
+            title="האתר שלי"
+            description="האתר הקיים של העסק, לצפייה בלבד. אפשר גם לבנות אתר חדש ב-LeadFlow."
+          />
+          <ExistingWebsite business={business} canEdit={canEdit} />
+          {canEdit && <TemplatePicker secondary />}
+        </>
+      );
+    }
+    if (canEdit) return <TemplatePicker intro={<AddExistingWebsite business={business} />} />;
     return (
       <>
         <PageHeader title="האתר שלי" />

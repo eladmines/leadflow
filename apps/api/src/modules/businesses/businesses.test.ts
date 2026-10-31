@@ -167,6 +167,21 @@ describe('businesses', () => {
       expect(JSON.stringify(audit?.metadata)).not.toContain('הנביאים');
     });
 
+    it('saves, validates and clears an existing website address (D-094)', async () => {
+      const { token, business } = await ownerWithBusiness(ctx.app);
+      const url = bpaths.detail(business.id);
+      let res = await req(ctx.app, 'PATCH', url, token, { websiteUrl: 'www.shiran.co.il' });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().business.websiteUrl).toBe('https://www.shiran.co.il');
+
+      res = await req(ctx.app, 'PATCH', url, token, { websiteUrl: 'javascript:alert(1)' });
+      expect(res.statusCode).toBe(400);
+      expect(res.json().error.fields.websiteUrl).toMatch(/כתובת האתר אינה תקינה/);
+
+      res = await req(ctx.app, 'PATCH', url, token, { websiteUrl: null });
+      expect(res.json().business.websiteUrl).toBeNull();
+    });
+
     it('a businessId in the body cannot redirect a write to another business', async () => {
       const a = await ownerWithBusiness(ctx.app, 'a');
       const b = await ownerWithBusiness(ctx.app, 'b');

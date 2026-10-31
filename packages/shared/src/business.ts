@@ -57,6 +57,8 @@ export const businessMessages = {
   phoneRequired: 'יש להזין מספר טלפון',
   phoneInvalid: 'מספר הטלפון אינו תקין. לדוגמה: 050-1234567',
   addressTooLong: `הכתובת יכולה להכיל עד ${ADDRESS_MAX_LENGTH} תווים`,
+  websiteInvalid: 'כתובת האתר אינה תקינה. לדוגמה: www.my-business.co.il',
+  websiteTooLong: 'כתובת האתר ארוכה מדי',
   serviceAreaTooLong: `כל אזור שירות יכול להכיל עד ${SERVICE_AREA_MAX_LENGTH} תווים`,
   serviceAreasTooMany: `אפשר להוסיף עד ${SERVICE_AREAS_MAX} אזורי שירות`,
   timeInvalid: 'יש להזין שעה בפורמט 09:00',
@@ -127,6 +129,27 @@ export const addressSchema = z
   .max(ADDRESS_MAX_LENGTH, businessMessages.addressTooLong)
   .nullable()
   .transform((v) => (v ? v : null));
+
+/**
+ * The business's own website outside LeadFlow (D-094), shown in "האתר שלי" but never managed by
+ * LeadFlow. Optional: blank becomes null; "www.x.co.il" gets https://; only http(s) addresses with a
+ * real host name are accepted.
+ */
+export const websiteUrlSchema = z
+  .string()
+  .trim()
+  .max(300, businessMessages.websiteTooLong)
+  .nullable()
+  .transform((v) => (v ? (/^https?:\/\//i.test(v) ? v : `https://${v}`) : null))
+  .refine((v) => {
+    if (v === null) return true;
+    try {
+      const url = new URL(v);
+      return /^https?:$/.test(url.protocol) && /\.[a-z]{2,}$/i.test(url.hostname);
+    } catch {
+      return false;
+    }
+  }, businessMessages.websiteInvalid);
 
 export const serviceAreasSchema = z
   .array(z.string().trim().min(1).max(SERVICE_AREA_MAX_LENGTH, businessMessages.serviceAreaTooLong))
@@ -207,6 +230,7 @@ export const updateBusinessRequestSchema = z.object({
   address: addressSchema.optional(),
   serviceAreas: serviceAreasSchema.optional(),
   openingHours: openingHoursSchema.nullable().optional(),
+  websiteUrl: websiteUrlSchema.optional(),
   onboardingStep: onboardingStepSchema.optional(),
 });
 export type UpdateBusinessRequest = z.input<typeof updateBusinessRequestSchema>;
@@ -223,6 +247,8 @@ export const businessSchema = z.object({
   address: z.string().nullable(),
   serviceAreas: z.array(z.string()),
   openingHours: openingHoursSchema.nullable(),
+  /** Existing website outside LeadFlow (D-094); null = none. */
+  websiteUrl: z.string().nullable(),
   timezone: z.string(),
   status: businessStatusSchema,
   onboardingStep: z.number().int(),
