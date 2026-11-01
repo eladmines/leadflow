@@ -17,8 +17,10 @@ describe('page tours (D-096)', () => {
     expect(pageKeyFor(`/b/${id}/leads/123`)).toBe('lead');
     expect(pageKeyFor(`/b/${id}/site`)).toBe('site');
     expect(pageKeyFor(`/b/${id}/quotes`)).toBe('quotes');
-    expect(pageKeyFor(`/b/${id}/quotes/123`)).toBeNull();
-    expect(pageKeyFor(`/b/${id}/settings`)).toBeNull();
+    expect(pageKeyFor(`/b/${id}/quotes/123`)).toBe('quote');
+    expect(pageKeyFor(`/b/${id}/settings`)).toBe('settings');
+    expect(pageKeyFor(`/b/${id}/account`)).toBe('account');
+    expect(pageKeyFor(`/b/${id}/automations`)).toBeNull();
   });
 
   it('runs the leads page tour from "סיור בעמוד"', async () => {
@@ -57,10 +59,27 @@ describe('page tours (D-096)', () => {
     expect(await screen.findByRole('dialog', { name: 'הדשבורד' })).toBeInTheDocument();
   });
 
+  it('runs the settings tour over its sections', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    const { user } = renderApp(section('settings'));
+    await user.click(await screen.findByRole('button', { name: 'סיור בעמוד' }));
+    const first = await screen.findByRole('dialog', { name: 'פרטי העסק' });
+    expect(within(first).getByText('1 מתוך 4')).toBeInTheDocument();
+  });
+
   it('screens without a tour show no button', async () => {
     mockApi({ [meKey]: me(testUser) });
-    renderApp(section('settings'));
+    renderApp(section('automations'));
     await screen.findByRole('heading', { level: 1 });
     expect(screen.queryByRole('button', { name: 'סיור בעמוד' })).not.toBeInTheDocument();
+  });
+
+  it('the dashboard marks WhatsApp as connected when it is', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.whatsapp.inbox(id)}`]: () => json(200, { connected: true, numbers: [] }),
+    });
+    renderApp(businessWebPaths.home(id));
+    expect(await screen.findByText('מחובר: הודעות מוואטסאפ נכנסות כלידים')).toBeInTheDocument();
   });
 });
