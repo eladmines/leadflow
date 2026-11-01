@@ -29,6 +29,7 @@ import { groupTasks, useTasks } from '../tasks/api';
 import { TaskItem } from '../tasks/TaskItem';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageTourButton } from '../tour/TourContext';
+import { useWhatsAppInbox } from '../whatsapp/api';
 
 type ItemState = 'done' | 'todo' | 'soon';
 
@@ -195,6 +196,9 @@ export function DashboardPage() {
   );
   const urgent = [...myTasks.overdue, ...myTasks.today];
   const firstName = user?.fullName.trim().split(/\s+/)[0] ?? '';
+  // Only owners/managers can ask about the WhatsApp connection (D-092).
+  const whatsappConnected =
+    useWhatsAppInbox(business.id, can(business.role, 'whatsapp.inbox')).data?.connected ?? false;
 
   const checklist: { label: string; hint: string; state: ItemState }[] = [
     {
@@ -217,7 +221,18 @@ export function DashboardPage() {
       hint: 'בחירת כתובת והעלאה לאוויר',
       state: site?.published ? 'done' : 'todo',
     },
-    { label: 'חיבור WhatsApp עסקי', hint: 'מענה ללקוחות מתוך המערכת', state: 'soon' },
+    // Connected numbers are set up with LeadFlow for now (D-091); a self-service screen comes later.
+    whatsappConnected
+      ? {
+          label: 'חיבור WhatsApp עסקי',
+          hint: 'מחובר: הודעות מוואטסאפ נכנסות כלידים',
+          state: 'done',
+        }
+      : {
+          label: 'חיבור WhatsApp עסקי',
+          hint: 'מענה ללקוחות מתוך המערכת. חיבור עצמי יגיע בקרוב',
+          state: 'soon',
+        },
   ];
   const done = checklist.filter((i) => i.state === 'done').length;
   const next = checklist.find((i) => i.state !== 'done');

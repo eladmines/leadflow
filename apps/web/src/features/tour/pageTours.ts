@@ -17,15 +17,27 @@ export type PageKey =
   | 'appointments'
   | 'quotes'
   | 'reports'
-  | 'team';
+  | 'team'
+  | 'quote'
+  | 'settings'
+  | 'account';
 
 /** The page under `/b/:businessId/…`, or null for screens without a tour. */
 export function pageKeyFor(pathname: string): PageKey | null {
   const [, , , section = '', sub] = pathname.split('/');
   if (section === '') return 'dashboard';
   if (section === 'leads') return sub ? 'lead' : 'leads';
-  const known: PageKey[] = ['site', 'conversations', 'tasks', 'appointments', 'reports', 'team'];
-  if (section === 'quotes' && !sub) return 'quotes';
+  if (section === 'quotes') return sub ? 'quote' : 'quotes';
+  const known: PageKey[] = [
+    'site',
+    'conversations',
+    'tasks',
+    'appointments',
+    'reports',
+    'team',
+    'settings',
+    'account',
+  ];
   return (known as string[]).includes(section) ? (section as PageKey) : null;
 }
 
@@ -65,6 +77,12 @@ const button =
         return exact ? t === text : t.includes(text);
       }),
     );
+
+/** The card that contains an element (e.g. the table of quote lines). */
+const cardOf = (css: string) => () => {
+  const el = pick([...document.querySelectorAll<HTMLElement>(css)]);
+  return el?.closest<HTMLElement>('.shadow-card') ?? el;
+};
 
 /** The header section around the page's main title. */
 const pageTop = () => {
@@ -326,6 +344,72 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       target: '[aria-label="הזמנות ממתינות"]',
       title: 'הזמנות ממתינות',
       body: 'הזמנות שעוד לא אושרו. אפשר לשלוח שוב או לבטל.',
+    },
+  ],
+  quote: [
+    {
+      target: pageTop,
+      title: 'הצעת המחיר',
+      body: 'המספר, הלקוח והסטטוס של ההצעה. טיוטה אפשר לערוך עד שהיא נשלחת.',
+    },
+    {
+      target: cardOf('main table'),
+      title: 'שורות ההצעה',
+      body: 'מה כלול: תיאור, כמות ומחיר ליחידה. "הוספת שורה" מוסיפה פריט, והסכומים מחושבים לבד.',
+    },
+    {
+      target: '[aria-label="סיכום"]',
+      title: 'סיכום',
+      body: 'סכום ביניים, הנחה, מע"מ וסה"כ לתשלום.',
+    },
+    {
+      target: button('שליחה ללקוח'),
+      title: 'שליחה ללקוח',
+      body: 'שולחים קישור להצעה באימייל או בוואטסאפ. הלקוח מאשר או דוחה אונליין, ואתם רואים את זה בליד.',
+    },
+    {
+      target: button('פתיחת עמוד ההצעה'),
+      title: 'עמוד ההצעה',
+      body: 'כך הלקוח רואה את ההצעה. משם אפשר גם להדפיס או לשמור כ-PDF.',
+    },
+  ],
+  settings: [
+    {
+      target: card('פרטי העסק'),
+      title: 'פרטי העסק',
+      body: 'השם, התחום, הטלפון והכתובת. הם מופיעים באתר, בכפתור החיוג ובמיילים.',
+    },
+    {
+      target: card('אזורי שירות'),
+      title: 'אזורי שירות',
+      body: 'הערים והאזורים שבהם העסק עובד. מופיעים באתר.',
+    },
+    {
+      target: card('שעות פעילות'),
+      title: 'שעות פעילות',
+      body: 'השעות מופיעות באתר, וקובעות מתי אפשר לבקש תור.',
+    },
+    {
+      target: card('מנוי וחיוב'),
+      title: 'מנוי וחיוב',
+      body: 'המסלול ואמצעי התשלום של החשבון.',
+    },
+  ],
+  account: [
+    {
+      target: card('פרטים אישיים'),
+      title: 'פרטים אישיים',
+      body: 'השם שלכם כפי שהצוות רואה אותו.',
+    },
+    {
+      target: card('שינוי סיסמה'),
+      title: 'שינוי סיסמה',
+      body: 'אחרי שינוי סיסמה, החיבור במכשירים האחרים מתנתק ונשלח אליכם מייל.',
+    },
+    {
+      target: card('התראות במייל'),
+      title: 'התראות במייל',
+      body: 'בוחרים אם לקבל מייל על כל פנייה חדשה.',
     },
   ],
 };

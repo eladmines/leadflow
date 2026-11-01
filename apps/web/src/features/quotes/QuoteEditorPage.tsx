@@ -26,6 +26,7 @@ import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useLeadDetail } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
+import { PageTourButton } from '../tour/TourContext';
 import {
   dateFmt,
   displayStatus,
@@ -149,13 +150,16 @@ export function QuoteEditorPage() {
 
   return (
     <>
-      <Link
-        to={businessWebPaths.section(business.id, 'quotes')}
-        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
-      >
-        <ArrowRight aria-hidden className="h-4 w-4" />
-        כל ההצעות
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          to={businessWebPaths.section(business.id, 'quotes')}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+        >
+          <ArrowRight aria-hidden className="h-4 w-4" />
+          כל ההצעות
+        </Link>
+        <PageTourButton />
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border pb-5">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
