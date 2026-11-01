@@ -8,6 +8,7 @@ export { Field } from './Field';
 export { FullPageSpinner } from './FullPageSpinner';
 export { Logo } from './Logo';
 export { PasswordField } from './PasswordField';
+export { RefreshButton } from './RefreshButton';
 export { Spinner } from './Spinner';
 export { TextLink, textLinkClasses } from './TextLink';
 export { Select } from './Select';

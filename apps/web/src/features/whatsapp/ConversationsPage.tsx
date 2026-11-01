@@ -2,7 +2,8 @@ import { businessWebPaths, can, formatIsraeliPhone, type InboxNumber } from '@le
 import { Briefcase, UserX } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, Button, Card, EmptyState, Spinner } from '../../components/ui';
+import { useQueryClient } from '@tanstack/react-query';
+import { Alert, Button, Card, EmptyState, RefreshButton, Spinner } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -22,6 +23,7 @@ export function ConversationsPage() {
 
 function Inbox({ businessId }: { businessId: string }) {
   const inbox = useWhatsAppInbox(businessId);
+  const queryClient = useQueryClient();
   const [done, setDone] = useState<{ name: string; leadId: string | null } | null>(null);
 
   return (
@@ -29,6 +31,13 @@ function Inbox({ businessId }: { businessId: string }) {
       <PageHeader
         title="שיחות WhatsApp"
         description="הודעות ממספרים חדשים מחכות כאן עד שתחליטו: לקוח או פרטי. ההחלטה נשמרת, וההודעות הבאות מאותו מספר יגיעו למקום הנכון לבד."
+        actions={
+          <RefreshButton
+            onRefresh={() =>
+              queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'whatsapp'] })
+            }
+          />
+        }
       />
       {done && (
         <Alert tone="success">
