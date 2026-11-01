@@ -8,6 +8,7 @@ import { useSignOut } from '../auth/useSignOut';
 import { BusinessSwitcher } from './BusinessSwitcher';
 import { shortcutLabel } from './CommandPalette';
 import { navItems } from './nav';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 /** Sidebar content, shared by the desktop column and the mobile drawer. */
 export function Sidebar({
@@ -29,8 +30,9 @@ export function Sidebar({
 
   return (
     <div className="flex h-full flex-col gap-4 px-3 py-4">
-      <div className="px-2 pt-1">
+      <div className="flex items-center justify-between gap-2 ps-2 pt-1">
         <Logo />
+        <NotificationBell businessId={business.id} onNavigate={onNavigate} />
       </div>
       <BusinessSwitcher business={business} onNavigate={onNavigate} />
       {onSearch && (

@@ -36,6 +36,7 @@ import { reportTenantRoutes } from './modules/reports/routes';
 import { registerMediaServing } from './modules/media/serve';
 import { createWhatsAppSender, type WhatsAppSender } from './integrations/whatsapp';
 import { whatsappTenantRoutes, whatsappWebhookRoutes } from './modules/whatsapp/routes';
+import { notificationTenantRoutes } from './modules/notifications/routes';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -157,6 +158,7 @@ export async function buildApp({
       await scope.register(quoteTenantRoutes);
       await scope.register(reportTenantRoutes);
       await scope.register(whatsappTenantRoutes(whatsapp));
+      await scope.register(notificationTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

@@ -77,3 +77,4 @@ F06 ─► F11 (after spike)
 - 2026-11-01 — Existing website (D-094): save the address of a site built elsewhere; "האתר שלי" shows it with a live preview and a "לא מנוהל ב-LeadFlow" note, and still offers LeadFlow templates.
 - 2026-11-01 — Site options (D-095): change template after creating the site (logo, pages and address kept; live site unchanged until publish) and delete the LeadFlow site (offline, address freed, leads and consent records kept) to go back to an existing website.
 - 2026-11-01 — Page tours (D-096): "סיור בעמוד" on every main screen, with steps that adapt to what the page shows.
+- 2026-11-01 — Notifications (D-097): bell with unread count and list, pop-ups for new leads and WhatsApp, events from the site form, WhatsApp, quotes and task reminders.

@@ -18,6 +18,8 @@ import { markTourSeen, ProductTour, tourSeen } from '../tour/ProductTour';
 import { pageTours, type PageKey } from '../tour/pageTours';
 import { Tour } from '../tour/Tour';
 import { ToursProvider } from '../tour/TourContext';
+import { NotificationBell } from '../notifications/NotificationBell';
+import { NotificationToasts } from '../notifications/NotificationToasts';
 
 /**
  * App shell for `/b/:businessId/*`: right-side sidebar on desktop, a drawer on mobile.
@@ -88,6 +90,7 @@ export function BusinessLayout() {
       </aside>
       <CommandPalette business={b} open={paletteOpen} onOpenChange={setPaletteOpen} />
       <ProductTour role={b.role} open={tourOpen} onClose={closeTour} />
+      <NotificationToasts businessId={b.id} userId={userId} />
       {pageTour && <Tour steps={pageTours[pageTour]} open onClose={() => setPageTour(null)} />}
 
       <div className="min-w-0 flex-1">
@@ -104,6 +107,7 @@ export function BusinessLayout() {
             </Dialog.Trigger>
             <Logo />
             <span className="ms-auto truncate text-sm font-medium text-ink-muted">{b.name}</span>
+            <NotificationBell businessId={b.id} />
             <button
               type="button"
               aria-label="חיפוש מהיר"

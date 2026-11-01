@@ -17,6 +17,7 @@ import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
 import { ensureStages, LeadService } from '../leads/service';
+import { MANAGERS, notifySafe } from '../notifications/service';
 
 type Status = (typeof WHATSAPP_STATUSES)[number];
 
@@ -34,7 +35,7 @@ export interface InboundMessage {
 /** What happened to an incoming message. */
 export type ReceiveResult =
   | { kind: 'lead'; leadId: string; created: boolean }
-  | { kind: 'inbox'; numberId: string }
+  | { kind: 'inbox'; numberId: string; isNew: boolean }
   | { kind: 'ignored' };
 
 interface Log {
@@ -107,11 +108,12 @@ export class WhatsAppService {
     if (seen) return null;
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx) => {
         let number = await tx.whatsAppNumber.findUnique({
           where: { businessId_phone: { businessId, phone: msg.from } },
         });
         if (number?.status === 'PERSONAL') return { kind: 'ignored' } as const;
+        const firstMessage = !number;
 
         if (!number) {
           const known = await tx.contact.findFirst({
@@ -146,7 +148,7 @@ export class WhatsAppService {
               createdAt: msg.receivedAt,
             },
           });
-          return { kind: 'inbox', numberId: number.id } as const;
+          return { kind: 'inbox', numberId: number.id, isNew: firstMessage } as const;
         }
 
         const { contactId, leadId, created } = await this.attachToLead(tx, businessId, {
@@ -169,12 +171,56 @@ export class WhatsAppService {
         });
         return { kind: 'lead', leadId, created } as const;
       });
+      await this.notifyReceived(businessId, result, msg);
+      return result;
     } catch (err) {
       // The same message (or two first messages from a new number) delivered at once: the unique
       // keys stop the second copy.
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') return null;
       throw err;
     }
+  }
+
+  /**
+   * Bell and pop-up for an incoming message (D-097): a new lead or a message on a lead goes to
+   * owners/managers and the lead's assignee; a new number in the inbox only on its first message.
+   */
+  private async notifyReceived(businessId: string, result: ReceiveResult, msg: InboundMessage) {
+    if (result.kind === 'ignored') return;
+    if (result.kind === 'inbox') {
+      if (!result.isNew) return;
+      return notifySafe(this.prisma, this.log, {
+        businessId,
+        type: 'whatsapp.new_number',
+        data: {
+          numberId: result.numberId,
+          name: msg.profileName?.trim() || formatIsraeliPhone(msg.from),
+        },
+        to: { roles: MANAGERS },
+      });
+    }
+    const lead = await this.prisma.lead.findUnique({
+      where: { id: result.leadId },
+      select: { ownerId: true, contact: { select: { name: true } } },
+    });
+    if (!lead) return;
+    await notifySafe(this.prisma, this.log, {
+      businessId,
+      ...(result.created
+        ? {
+            type: 'lead.new' as const,
+            data: { leadId: result.leadId, name: lead.contact.name, source: 'whatsapp' },
+          }
+        : {
+            type: 'whatsapp.message' as const,
+            data: {
+              leadId: result.leadId,
+              name: lead.contact.name,
+              preview: msg.body.slice(0, 120),
+            },
+          }),
+      to: { roles: MANAGERS, userIds: [lead.ownerId] },
+    });
   }
 
   /**

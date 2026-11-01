@@ -210,6 +210,10 @@ describe('WhatsApp (F12 POC)', () => {
     await post(textEvent('972501112233', 'עוד שאלה'));
     const leads = await leadsOf(owner.token);
     expect(leads).toHaveLength(1);
+    // A new lead, then a message on it (D-097).
+    const notes = await ctx.prisma.notification.findMany({ orderBy: { createdAt: 'asc' } });
+    expect(notes.map((n) => n.type)).toEqual(['lead.new', 'whatsapp.message']);
+    expect(notes[1]!.data).toMatchObject({ leadId: leads[0].id, preview: 'עוד שאלה' });
 
     const won = await ctx.prisma.pipelineStage.findFirstOrThrow({
       where: { businessId: BUSINESS_ID, kind: 'WON' },
@@ -357,6 +361,10 @@ describe('WhatsApp (F12 POC)', () => {
 
       expect(await leadsOf(owner.token)).toHaveLength(0);
       expect(await ctx.prisma.contact.count()).toBe(0);
+      // One notification for the new number, not one per message (D-097).
+      const notes = await ctx.prisma.notification.findMany();
+      expect(notes).toHaveLength(1);
+      expect(notes[0]).toMatchObject({ type: 'whatsapp.new_number', userId: owner.userId });
       const inbox = await inboxOf(owner.token);
       expect(inbox.connected).toBe(true);
       expect(inbox.numbers).toEqual([

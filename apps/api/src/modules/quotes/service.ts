@@ -22,6 +22,7 @@ import { generateToken } from '../../lib/crypto';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
+import { MANAGERS, notifySafe } from '../notifications/service';
 
 const include = {
   lead: { select: { id: true, contact: { select: { name: true, phone: true, email: true } } } },
@@ -341,8 +342,23 @@ export class QuoteService {
       );
       return tx.quote.findUniqueOrThrow({ where: { id: q.id }, include });
     });
+    await this.notifyInApp(row, status === 'ACCEPTED');
     void this.notifyTeam(row, status === 'ACCEPTED', total);
     return this.publicDto(row);
+  }
+
+  /** In-app (D-097): owners/managers and whoever the lead is assigned to. */
+  private async notifyInApp(q: Row, accepted: boolean) {
+    const lead = await this.prisma.lead.findUnique({
+      where: { id: q.leadId },
+      select: { ownerId: true },
+    });
+    await notifySafe(this.prisma, this.log, {
+      businessId: q.businessId,
+      type: accepted ? 'quote.accepted' : 'quote.rejected',
+      data: { quoteId: q.id, leadId: q.leadId, number: q.number, name: q.lead.contact.name },
+      to: { roles: MANAGERS, userIds: [lead?.ownerId] },
+    });
   }
 
   private async notifyTeam(q: Row, accepted: boolean, total: number) {
