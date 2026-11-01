@@ -90,7 +90,9 @@ describe('LoginPage', () => {
     await fill(user, '  Dana@Example.com ', 'correct-horse');
     await user.click(screen.getByRole('button', { name: 'כניסה' }));
 
-    expect(await screen.findByRole('heading', { name: /שלום, דנה/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ }),
+    ).toBeInTheDocument();
     expect(location()).toBe(testBusinessHome);
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.login)).toEqual([
       { email: 'dana@example.com', password: 'correct-horse' },
@@ -122,6 +124,8 @@ describe('LoginPage', () => {
     await user.click(busy);
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.login)).toHaveLength(1);
     pending.resolve(json(200, { user: testUser }));
-    expect(await screen.findByRole('heading', { name: /שלום/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /בוקר טוב|צהריים טובים|ערב טוב/ }),
+    ).toBeInTheDocument();
   });
 });

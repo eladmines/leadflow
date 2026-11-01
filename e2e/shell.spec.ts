@@ -28,7 +28,9 @@ async function ownerWithActiveBusiness(page: Page) {
     headers: API_HEADERS,
   });
   await page.goto(`/b/${business.id}`);
-  await expect(page.getByRole('heading', { name: 'שלום, נועה' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), נועה/ }),
+  ).toBeVisible();
   return business.id;
 }
 

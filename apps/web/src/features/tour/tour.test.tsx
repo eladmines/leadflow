@@ -47,7 +47,7 @@ describe('product tour', () => {
     cleanup();
 
     const again = renderApp(home);
-    await screen.findByRole('heading', { name: 'שלום, דנה' });
+    await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await again.user.click(screen.getAllByRole('button', { name: 'סיור במערכת' })[0]!);
     expect(await tourDialog()).toBeInTheDocument();
@@ -71,7 +71,7 @@ describe('product tour', () => {
         json(200, { business: { ...testBusiness, status: 'ONBOARDING', role: 'MANAGER' } }),
     });
     renderApp(home);
-    await screen.findByRole('heading', { name: /שלום/ });
+    await screen.findByRole('heading', { name: /בוקר טוב|צהריים טובים|ערב טוב/ });
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
