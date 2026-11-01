@@ -113,6 +113,22 @@ describe('leads page', () => {
     expect(within(cards[1]!).getByText('בטח, מחר ב-10?')).toBeInTheDocument();
   });
 
+  it('"רענון" reloads the leads now', async () => {
+    let calls = 0;
+    mockApi({
+      [meKey]: me(testUser),
+      [leadsKey]: () => {
+        calls += 1;
+        return json(200, { leads: calls > 1 ? [lead({ message: 'פנייה שהגיעה עכשיו' })] : [] });
+      },
+    });
+    const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}?view=list`);
+    await screen.findByRole('heading', { name: 'עדיין אין פניות' });
+    await user.click(screen.getByRole('button', { name: 'רענון' }));
+    expect(await screen.findByText('פנייה שהגיעה עכשיו')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: '' })).toHaveTextContent('עודכן');
+  });
+
   it('empty state points to the live address when the site is published', async () => {
     mockApi({
       [meKey]: me(testUser),

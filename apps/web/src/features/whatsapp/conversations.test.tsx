@@ -116,6 +116,21 @@ describe('WhatsApp conversations inbox', () => {
     );
   });
 
+  it('"רענון" loads numbers that wrote since the page opened', async () => {
+    let calls = 0;
+    mockApi({
+      ...routes({ connected: true, numbers: [] }),
+      [`GET ${wp.inbox(id)}`]: () => {
+        calls += 1;
+        return json(200, { connected: true, numbers: calls > 1 ? [number] : [] });
+      },
+    });
+    const { user } = renderApp(page);
+    await screen.findByText('אין הודעות שמחכות לסיווג');
+    await user.click(screen.getByRole('button', { name: 'רענון' }));
+    expect(await screen.findByRole('heading', { name: 'נועה' })).toBeInTheDocument();
+  });
+
   it('explains when WhatsApp is not connected', async () => {
     mockApi(routes({ connected: false, numbers: [] }));
     renderApp(page);

@@ -23,7 +23,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Alert, Button, buttonClasses, Spinner } from '../../components/ui';
+import { useQueryClient } from '@tanstack/react-query';
+import { Alert, Button, buttonClasses, RefreshButton, Spinner } from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
@@ -31,7 +32,15 @@ import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { useSite } from '../site/api';
-import { shekel, timeAgo, useLeads, useLeadTags, usePipeline, useUpdateLead } from './api';
+import {
+  leadsQueryKey,
+  shekel,
+  timeAgo,
+  useLeads,
+  useLeadTags,
+  usePipeline,
+  useUpdateLead,
+} from './api';
 import { NewLeadDialog } from './NewLeadDialog';
 import { useWhatsAppInbox } from '../whatsapp/api';
 
@@ -355,6 +364,7 @@ export function LeadsPage() {
     tag: params.get('tag') ?? undefined,
   };
   const leads = useLeads(business.id, query);
+  const queryClient = useQueryClient();
   const stages = usePipeline(business.id);
   const members = useMembers(business.id, can(business.role, 'members.view'));
   const site = useSite(business.id);
@@ -413,6 +423,17 @@ export function LeadsPage() {
         description={seesAll ? 'כל הפניות של העסק, לפי שלב בתהליך המכירה.' : 'הפניות שהוקצו לך.'}
         actions={
           <div className="flex flex-wrap gap-2">
+            <RefreshButton
+              onRefresh={() =>
+                Promise.all([
+                  // Leads, tags and the WhatsApp notice (new numbers waiting).
+                  queryClient.invalidateQueries({ queryKey: leadsQueryKey(business.id) }),
+                  queryClient.invalidateQueries({
+                    queryKey: ['businesses', business.id, 'whatsapp'],
+                  }),
+                ])
+              }
+            />
             {can(business.role, 'leads.export') && (
               <a
                 // Plain link: the browser downloads the CSV with the session cookie.
