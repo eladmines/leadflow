@@ -172,6 +172,17 @@ function ProfileRow({
   );
 }
 
+/**
+ * Greeting by the viewer's local time. Late at night stays "ערב טוב": in Hebrew "לילה טוב" is said
+ * when leaving, not when arriving.
+ */
+export function greeting(now = new Date()): string {
+  const hour = now.getHours();
+  if (hour >= 5 && hour < 12) return 'בוקר טוב';
+  if (hour >= 12 && hour < 17) return 'צהריים טובים';
+  return 'ערב טוב';
+}
+
 /** Business home: welcome + setup progress (real state only), recent leads (empty until F07), profile. */
 export function DashboardPage() {
   const business = useCurrentBusiness();
@@ -222,7 +233,7 @@ export function DashboardPage() {
               {business.name} · {roleLabels[business.role]}
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-              שלום, {firstName}
+              {greeting()}, {firstName}
             </h1>
             <p className="max-w-md text-base text-ink-muted">
               {next

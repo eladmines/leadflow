@@ -87,7 +87,9 @@ describe('RegisterPage', () => {
     await fillValid(user);
     await user.click(screen.getByRole('button', { name: submitName }));
 
-    expect(await screen.findByRole('heading', { name: /שלום, דנה/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ }),
+    ).toBeInTheDocument();
     expect(location()).toBe(testBusinessHome);
     expect(screen.getByRole('heading', { name: 'כדאי לאמת את כתובת האימייל' })).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.register)).toEqual([
@@ -114,6 +116,8 @@ describe('RegisterPage', () => {
     await user.click(busy);
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.register)).toHaveLength(1);
     pending.resolve(json(201, { user: testUser }));
-    expect(await screen.findByRole('heading', { name: /שלום/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /בוקר טוב|צהריים טובים|ערב טוב/ }),
+    ).toBeInTheDocument();
   });
 });

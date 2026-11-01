@@ -31,7 +31,7 @@ describe('quick search (Ctrl+K)', () => {
   it('opens with the shortcut and jumps to a page with the keyboard', async () => {
     mockApi({ [meKey]: me(testUser) });
     const { user, location } = renderApp(businessWebPaths.home(id));
-    await screen.findByRole('heading', { name: 'שלום, דנה' });
+    await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ });
     await user.keyboard('{Control>}k{/Control}');
     const input = await screen.findByRole('combobox', { name: 'חיפוש עמודים, פעולות ולידים' });
     await user.type(input, 'משימות');

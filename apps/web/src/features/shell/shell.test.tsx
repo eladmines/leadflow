@@ -28,7 +28,7 @@ describe('app shell', () => {
   it('shows the full navigation in the UX-spec order and marks the current page', async () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(home);
-    await screen.findByRole('heading', { name: 'שלום, דנה' });
+    await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ });
     const links = within(mainNav()).getAllByRole('link');
     expect(links.map((l) => l.textContent?.replace(/\(?בקרוב\)?/g, '').trim())).toEqual([
       'דשבורד',

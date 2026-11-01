@@ -43,7 +43,9 @@ test('the tour walks through the menu once and replays from the sidebar', async 
     await tour.getByRole('button', { name: 'דילוג' }).click();
     await expect(tour).toBeHidden();
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'שלום, סיגלית' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), סיגלית/ }),
+    ).toBeVisible();
     await expect(page.getByRole('dialog')).toBeHidden();
     return;
   }
@@ -63,7 +65,9 @@ test('the tour walks through the menu once and replays from the sidebar', async 
 
   // Seen: not shown again on the next visit, but available from the menu.
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'שלום, סיגלית' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), סיגלית/ }),
+  ).toBeVisible();
   await expect(page.getByRole('dialog')).toBeHidden();
   await page.getByRole('button', { name: 'סיור במערכת' }).click();
   await expect(
