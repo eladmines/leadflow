@@ -118,6 +118,10 @@ describe('quotes (F18)', () => {
     expect(accept.json().quote.status).toBe('ACCEPTED');
     await expect.poll(() => ctx.email.sent.length).toBe(1);
     expect(ctx.email.sent[0]!.subject).toContain('אישר/ה');
+    // And in the app (D-097).
+    const note = await ctx.prisma.notification.findFirstOrThrow({ where: { userId: o.userId } });
+    expect(note).toMatchObject({ type: 'quote.accepted' });
+    expect(note.data).toMatchObject({ quoteId: expect.any(String), number: expect.anything() });
     // A second answer is refused.
     expect((await pub('POST', qp.publicDecision(token), { decision: 'reject' })).statusCode).toBe(
       409,

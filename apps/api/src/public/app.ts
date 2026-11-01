@@ -22,6 +22,7 @@ import { loggerOptions, type LogStream } from '../lib/logger';
 import { newLeadTemplate, type EmailSender } from '../integrations/email';
 import { LeadService } from '../modules/leads/service';
 import { AppointmentService } from '../modules/appointments/service';
+import { MANAGERS, notifySafe } from '../modules/notifications/service';
 import { zonedTimeToUtc } from '../lib/time';
 import { PublishedSiteCache, type PublishedPage } from './cache';
 import type { StorageProvider } from '../integrations/storage';
@@ -322,6 +323,18 @@ export async function buildPublicApp({
           }
         }
         void notifyTeam(site.businessId, business.name, data.data, req.log, requested);
+        // In-app: the bell and a pop-up for everyone who sees all leads (D-097).
+        await notifySafe(prisma, req.log, {
+          businessId: site.businessId,
+          type: 'lead.new',
+          data: {
+            leadId: lead.id,
+            name: lead.contact.name,
+            source: 'website_form',
+            ...(requested ? { appointment: requested } : {}),
+          },
+          to: { roles: MANAGERS },
+        });
       }
       return message(reply, 200, theme, business.name, thanks);
     },

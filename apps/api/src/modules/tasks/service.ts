@@ -14,6 +14,7 @@ import { taskReminderTemplate, type EmailSender } from '../../integrations/email
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
+import { notifySafe } from '../notifications/service';
 
 const include = {
   assignee: { select: { id: true, fullName: true } },
@@ -222,6 +223,13 @@ export class TaskService {
         where: { businessId: t.businessId, userId: t.assigneeId, status: 'ACTIVE' },
       });
       if (!member) continue;
+      // In-app (D-097): the bell for the assignee, next to the email.
+      await notifySafe(this.prisma, log, {
+        businessId: t.businessId,
+        type: 'task.due',
+        data: { taskId: t.id, title: t.title, leadId: t.leadId },
+        to: { userIds: [t.assigneeId] },
+      });
       const dueText = new Intl.DateTimeFormat('he-IL', {
         dateStyle: 'full',
         timeStyle: 'short',

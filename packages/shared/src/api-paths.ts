@@ -9,6 +9,7 @@ import { reportsApiPaths } from './reports';
 import { appointmentsApiPaths } from './appointments';
 import { quotesApiPaths } from './quotes';
 import { whatsappApiPaths } from './whatsapp';
+import { notificationsApiPaths } from './notifications';
 
 export const API_PREFIX = '/api/v1';
 
@@ -28,4 +29,5 @@ export const apiPaths = {
   appointments: appointmentsApiPaths,
   quotes: quotesApiPaths,
   whatsapp: whatsappApiPaths,
+  notifications: notificationsApiPaths,
 } as const;

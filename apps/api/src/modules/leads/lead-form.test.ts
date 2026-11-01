@@ -90,6 +90,43 @@ describe('website lead form (F07)', () => {
     ...overrides,
   });
 
+  it('notifies owner and manager in the app; each reads and marks only their own (D-097)', async () => {
+    const o = await liveSite();
+    const manager = await newUser(ctx.app, 'n-mgr');
+    const employee = await newUser(ctx.app, 'n-emp');
+    await addMember(ctx.prisma, o.id, manager.userId, 'MANAGER');
+    await addMember(ctx.prisma, o.id, employee.userId, 'EMPLOYEE');
+    await submit('salon', valid(o.contactId));
+
+    const np = apiPaths.notifications;
+    const ownerList = (await req(ctx.app, 'GET', np.list(o.id), o.token)).json();
+    expect(ownerList.unreadCount).toBe(1);
+    expect(ownerList.notifications[0]).toMatchObject({
+      type: 'lead.new',
+      readAt: null,
+      data: { name: 'דנה כהן', source: 'website_form', leadId: expect.any(String) },
+    });
+    expect((await req(ctx.app, 'GET', np.list(o.id), manager.token)).json().unreadCount).toBe(1);
+    expect((await req(ctx.app, 'GET', np.list(o.id), employee.token)).json().unreadCount).toBe(0);
+
+    // Marking read is per user.
+    const read = await req(ctx.app, 'POST', np.read(o.id), o.token, {
+      ids: [ownerList.notifications[0].id],
+    });
+    expect(read.statusCode).toBe(204);
+    expect((await req(ctx.app, 'GET', np.list(o.id), o.token)).json().unreadCount).toBe(0);
+    expect((await req(ctx.app, 'GET', np.list(o.id), manager.token)).json().unreadCount).toBe(1);
+    await req(ctx.app, 'POST', np.read(o.id), manager.token, {});
+    expect((await req(ctx.app, 'GET', np.list(o.id), manager.token)).json().unreadCount).toBe(0);
+
+    // Another business never sees them.
+    const other = await ownerWithBusiness(ctx.app, 'n-other');
+    expect((await req(ctx.app, 'GET', np.list(o.id), other.token)).statusCode).toBe(404);
+    expect(
+      (await req(ctx.app, 'GET', np.list(other.business.id), other.token)).json().notifications,
+    ).toEqual([]);
+  });
+
   it('the published page carries a real form with a fresh token', async () => {
     await liveSite();
     const page = await pub.inject({ method: 'GET', url: '/', headers: { host: host('salon') } });

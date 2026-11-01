@@ -197,6 +197,11 @@ describe('tasks (F10)', () => {
       await req(ctx.app, 'PATCH', tp.task(t.id, done.id), t.owner.token, { status: 'DONE' });
 
       expect(await send()).toBe(1);
+      // The assignee also gets it in the app (D-097), and only once.
+      const notes = await ctx.prisma.notification.findMany({ where: { type: 'task.due' } });
+      expect(notes).toHaveLength(1);
+      expect(notes[0]).toMatchObject({ userId: t.emp.userId });
+      expect(notes[0]!.data).toMatchObject({ title: 'להתקשר לרון', leadId: l.id });
       expect(ctx.email.sent).toHaveLength(1);
       const mail = ctx.email.sent[0]!;
       expect(mail.subject).toBe('תזכורת: להתקשר לרון');

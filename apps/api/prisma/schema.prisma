@@ -49,6 +49,7 @@ model User {
   appointments       Appointment[]     @relation("AppointmentStaff")
   whatsappSent       WhatsAppMessage[]
   whatsappClassified WhatsAppNumber[]  @relation("WhatsAppClassifiedBy")
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -169,6 +170,7 @@ model Business {
   appointments    Appointment[]
   whatsapp        WhatsAppMessage[]
   whatsappNumbers WhatsAppNumber[]
+  notifications   Notification[]
 
   @@map("businesses")
 }
@@ -646,4 +648,27 @@ model WhatsAppMessage {
   @@index([businessId, contactId, createdAt])
   @@index([numberId, createdAt])
   @@map("whatsapp_messages")
+}
+
+// ---------------------------------------------------------------------------
+// In-app notifications (D-097)
+// ---------------------------------------------------------------------------
+
+/// One notification for one user in one business (bell + pop-ups).
+model Notification {
+  id         String    @id @default(uuid()) @db.Uuid
+  businessId String    @map("business_id") @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  /// shared NOTIFICATION_TYPES, e.g. lead.new.
+  type       String    @db.VarChar(40)
+  /// Type-specific details (ids for the link, a name, a short preview).
+  data       Json      @default("{}")
+  readAt     DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, businessId, createdAt])
+  @@map("notifications")
 }
