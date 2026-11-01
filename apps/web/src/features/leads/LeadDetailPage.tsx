@@ -53,6 +53,7 @@ import { useAppointments } from '../appointments/api';
 import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
+import { PageTourButton } from '../tour/TourContext';
 
 const fieldLabels: Record<string, string> = {
   expectedValue: 'ערך משוער',
@@ -387,13 +388,16 @@ export function LeadDetailPage() {
 
   return (
     <>
-      <Link
-        to={back}
-        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
-      >
-        <ArrowRight aria-hidden className="h-4 w-4" />
-        כל הלידים
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          to={back}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+        >
+          <ArrowRight aria-hidden className="h-4 w-4" />
+          כל הלידים
+        </Link>
+        <PageTourButton />
+      </div>
       <section className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-surface-border bg-surface p-6 shadow-card">
         <div className="flex items-center gap-4">
           <span

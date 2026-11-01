@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { PageTourButton } from '../tour/TourContext';
 
 export function PageHeader({
   title,
@@ -15,7 +16,10 @@ export function PageHeader({
         <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">{title}</h1>
         {description && <p className="text-sm text-ink-muted">{description}</p>}
       </div>
-      {actions}
+      <div className="flex flex-wrap items-center gap-2">
+        <PageTourButton />
+        {actions}
+      </div>
     </div>
   );
 }

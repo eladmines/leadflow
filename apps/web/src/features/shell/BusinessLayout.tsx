@@ -15,6 +15,9 @@ import type { BusinessOutletContext } from './CurrentBusiness';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { Sidebar } from './Sidebar';
 import { markTourSeen, ProductTour, tourSeen } from '../tour/ProductTour';
+import { pageTours, type PageKey } from '../tour/pageTours';
+import { Tour } from '../tour/Tour';
+import { ToursProvider } from '../tour/TourContext';
 
 /**
  * App shell for `/b/:businessId/*`: right-side sidebar on desktop, a drawer on mobile.
@@ -37,6 +40,12 @@ export function BusinessLayout() {
   const closeTour = () => {
     setTourOpen(false);
     if (userId) markTourSeen(userId);
+  };
+  // The page tour that is running (D-096), started from "סיור בעמוד".
+  const [pageTour, setPageTour] = useState<PageKey | null>(null);
+  const tours = {
+    startMainTour: () => setTourOpen(true),
+    startPageTour: (page: PageKey) => setPageTour(page),
   };
   // The site editor needs the full width for its live preview.
   const wide = useMatch('/b/:businessId/site') !== null;
@@ -79,6 +88,7 @@ export function BusinessLayout() {
       </aside>
       <CommandPalette business={b} open={paletteOpen} onOpenChange={setPaletteOpen} />
       <ProductTour role={b.role} open={tourOpen} onClose={closeTour} />
+      {pageTour && <Tour steps={pageTours[pageTour]} open onClose={() => setPageTour(null)} />}
 
       <div className="min-w-0 flex-1">
         <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
@@ -144,7 +154,9 @@ export function BusinessLayout() {
           )}
         >
           <UnverifiedEmailBanner />
-          <Outlet context={context} />
+          <ToursProvider value={tours}>
+            <Outlet context={context} />
+          </ToursProvider>
         </main>
       </div>
     </div>

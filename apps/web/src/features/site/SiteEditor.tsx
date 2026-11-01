@@ -62,6 +62,7 @@ import { VersionsDialog } from './VersionsDialog';
 import { SiteOptionsDialog } from './SiteOptionsDialog';
 import { SectionForm } from './SectionForm';
 import { useDraftAutosave, type Draft, type SaveState } from './useDraftAutosave';
+import { PageTourButton } from '../tour/TourContext';
 
 type Tab = 'sections' | 'design' | 'seo';
 
@@ -527,6 +528,7 @@ export function SiteEditor({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {editable && <SaveIndicator state={state} onRetry={retry} />}
+          <PageTourButton />
           {live !== null || canPublish ? (
             <Button variant="ghost" onClick={() => setHistoryOpen(true)}>
               <History aria-hidden className="h-4 w-4" />

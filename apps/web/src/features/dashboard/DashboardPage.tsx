@@ -28,6 +28,7 @@ import { useSite } from '../site/api';
 import { groupTasks, useTasks } from '../tasks/api';
 import { TaskItem } from '../tasks/TaskItem';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
+import { PageTourButton } from '../tour/TourContext';
 
 type ItemState = 'done' | 'todo' | 'soon';
 
@@ -227,6 +228,9 @@ export function DashboardPage() {
   return (
     <>
       <section className="relative overflow-hidden rounded-3xl border border-surface-border bg-surface p-6 shadow-card sm:p-8">
+        <div className="absolute end-3 top-3 z-10">
+          <PageTourButton />
+        </div>
         <div className="relative flex flex-wrap items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-accent-700">
