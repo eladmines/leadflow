@@ -98,6 +98,7 @@ export function AppointmentDialog({
           {a.service?.name ?? tr('ללא שירות')} · {a.staff?.name ?? tr('לא שובץ איש צוות')} ·{' '}
           <span className="font-medium text-ink">{tr(appointmentStatusLabels[a.status])}</span>
           {a.source === 'website' && tr(' · בקשה מהאתר')}
+          {a.source === 'whatsapp' && tr(' · נקבע בוואטסאפ')}
         </p>
         <p className="flex flex-wrap gap-3">
           {a.customer.phone && (

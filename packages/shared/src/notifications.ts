@@ -10,6 +10,7 @@ export const NOTIFICATION_TYPES = [
   'lead.new',
   'whatsapp.message',
   'whatsapp.new_number',
+  'appointment.booked',
   'quote.accepted',
   'quote.rejected',
   'task.due',
@@ -21,6 +22,7 @@ export const URGENT_NOTIFICATION_TYPES: readonly NotificationType[] = [
   'lead.new',
   'whatsapp.message',
   'whatsapp.new_number',
+  'appointment.booked',
 ];
 
 export const notificationSchema = z.object({
@@ -66,6 +68,11 @@ export function notificationText(n: Pick<Notification, 'type' | 'data'>): {
       return { title: `הודעה מ${str(d.name)}`, body: str(d.preview) };
     case 'whatsapp.new_number':
       return { title: 'מספר חדש כתב בוואטסאפ', body: `${str(d.name)} · מחכה לסיווג` };
+    case 'appointment.booked':
+      return {
+        title: d.pending ? 'בקשה לתור מוואטסאפ' : 'תור חדש מוואטסאפ',
+        body: `${str(d.name)} · ${str(d.when)}`,
+      };
     case 'quote.accepted':
       return { title: 'הצעת מחיר אושרה', body: `${str(d.name)} · הצעה מס׳ ${str(d.number)}` };
     case 'quote.rejected':

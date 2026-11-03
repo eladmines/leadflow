@@ -110,9 +110,15 @@ function activityText(a: Activity): string {
     case 'quote.rejected':
       return tr('הצעת מחיר מס׳ {0} נדחתה{1}', String(d.number), a.actor ? '' : tr(' על ידי הלקוח'));
     case 'appointment.created':
-      return `${d.requested ? tr('התקבלה מהאתר בקשה לתור ל') : tr('נקבע תור ל')}${apptWhen(d.startsAt)}${
-        d.service ? ` (${String(d.service)})` : ''
-      }`;
+      return `${
+        d.source === 'whatsapp'
+          ? d.requested
+            ? tr('הלקוח ביקש בוואטסאפ תור ל')
+            : tr('הלקוח קבע בוואטסאפ תור ל')
+          : d.requested
+            ? tr('התקבלה מהאתר בקשה לתור ל')
+            : tr('נקבע תור ל')
+      }${apptWhen(d.startsAt)}${d.service ? ` (${String(d.service)})` : ''}`;
     case 'appointment.updated':
       return tr(
         'התור עודכן: {0} · {1}',

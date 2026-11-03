@@ -123,6 +123,28 @@ export const classifyNumberResponseSchema = z.object({
 });
 export type ClassifyNumberResponse = z.infer<typeof classifyNumberResponseSchema>;
 
+// ---------------------------------------------------------------------------
+// Booking bot (D-102)
+// ---------------------------------------------------------------------------
+
+/**
+ * A button bot on the business's WhatsApp number: a customer who asks for an appointment (or writes
+ * for the first time) picks a service, a day and a free time from WhatsApp lists, and the
+ * appointment is booked. Off by default; never answers personal numbers or a chat the team took over.
+ */
+export const whatsappBotSettingsSchema = z.object({
+  enabled: z.boolean(),
+  /** true: booked as confirmed; false: booked as "waiting for approval" (holds the time). */
+  autoConfirm: z.boolean(),
+});
+export type WhatsAppBotSettings = z.infer<typeof whatsappBotSettingsSchema>;
+
+export const whatsappBotResponseSchema = z.object({
+  connected: z.boolean(),
+  settings: whatsappBotSettingsSchema,
+});
+export type WhatsAppBotResponse = z.infer<typeof whatsappBotResponseSchema>;
+
 export const whatsappApiPaths = {
   /** Meta's webhook (verification GET + signed event POST). Public, not tenant-scoped. */
   webhook: '/api/v1/integrations/whatsapp/webhook',
@@ -135,4 +157,6 @@ export const whatsappApiPaths = {
   /** DELETE: forget a personal marking (the next message lands in the inbox again). */
   number: (businessId: string, numberId: string) =>
     `/api/v1/businesses/${businessId}/whatsapp/numbers/${numberId}`,
+  /** GET / PUT the booking bot settings (D-102). */
+  bot: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/bot`,
 } as const;

@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Card, EmptyState, RefreshButton, Spinner } from '../../components/ui';
+import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { useClassifyNumber, useForgetPersonal, usePersonalNumbers, useWhatsAppInbox } from './api';
+import { BookingBotCard } from './BookingBotCard';
 import { tr } from '../../i18n';
 
 /** Phone in local form when it is Israeli, otherwise as received. */
@@ -87,6 +89,7 @@ function Inbox({ businessId }: { businessId: string }) {
           ))}
         </ul>
       )}
+      <BookingBotCard businessId={businessId} />
       <PersonalNumbers businessId={businessId} />
     </>
   );
@@ -130,7 +133,18 @@ function NumberCard({
         className="flex max-h-60 flex-col gap-2 overflow-y-auto rounded-xl bg-surface-muted p-3"
       >
         {number.messages.map((m) => (
-          <li key={m.id} className="flex flex-col gap-0.5">
+          <li
+            key={m.id}
+            className={cn(
+              'flex flex-col gap-0.5',
+              m.direction === 'OUT' && 'border-s-2 border-success-600/40 ps-2',
+            )}
+          >
+            {m.direction === 'OUT' && (
+              <span className="text-xs font-medium text-success-600">
+                {m.sender ? tr('נשלחה על ידי {0}', m.sender.name) : tr('תשובה אוטומטית')}
+              </span>
+            )}
             <p className="whitespace-pre-line break-words text-sm text-ink">{m.body}</p>
             <time dateTime={m.createdAt} className="text-xs text-ink-muted">
               {timeAgo(m.createdAt)}

@@ -137,40 +137,44 @@ enum MembershipStatus {
 
 /// The tenant. Every tenant-owned table references it through business_id.
 model Business {
-  id             String         @id @default(uuid()) @db.Uuid
-  name           String         @db.VarChar(80)
+  id                     String         @id @default(uuid()) @db.Uuid
+  name                   String         @db.VarChar(80)
   /// Code from the shared INDUSTRIES list (validated in the app, not a DB enum).
-  industry       String         @db.VarChar(40)
+  industry               String         @db.VarChar(40)
   /// E.164, e.g. +972501234567.
-  phone          String?        @db.VarChar(20)
-  address        String?        @db.VarChar(200)
-  serviceAreas   String[]       @default([]) @map("service_areas")
+  phone                  String?        @db.VarChar(20)
+  address                String?        @db.VarChar(200)
+  serviceAreas           String[]       @default([]) @map("service_areas")
   /// Shape: shared openingHoursSchema (sun..sat → { open, from, to }).
-  openingHours   Json?          @map("opening_hours")
+  openingHours           Json?          @map("opening_hours")
   /// Existing website outside LeadFlow (D-094); shown in "האתר שלי", never managed by LeadFlow.
-  websiteUrl     String?        @map("website_url") @db.VarChar(300)
-  timezone       String         @default("Asia/Jerusalem") @db.VarChar(64)
-  status         BusinessStatus @default(ONBOARDING)
+  websiteUrl             String?        @map("website_url") @db.VarChar(300)
+  timezone               String         @default("Asia/Jerusalem") @db.VarChar(64)
+  /// WhatsApp booking bot (D-102): off by default; confirmed bookings unless autoConfirm is off.
+  whatsappBotEnabled     Boolean        @default(false) @map("whatsapp_bot_enabled")
+  whatsappBotAutoConfirm Boolean        @default(true) @map("whatsapp_bot_auto_confirm")
+  status                 BusinessStatus @default(ONBOARDING)
   /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.
-  onboardingStep Int            @default(1) @map("onboarding_step")
-  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  onboardingStep         Int            @default(1) @map("onboarding_step")
+  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  memberships     Membership[]
-  auditLogs       AuditLog[]
-  site            Site?
-  contacts        Contact[]
-  leads           Lead[]
-  stages          PipelineStage[]
-  invitations     Invitation[]
-  assets          Asset[]
-  tasks           Task[]
-  services        Service[]
-  quotes          Quote[]
-  appointments    Appointment[]
-  whatsapp        WhatsAppMessage[]
-  whatsappNumbers WhatsAppNumber[]
-  notifications   Notification[]
+  memberships         Membership[]
+  auditLogs           AuditLog[]
+  site                Site?
+  contacts            Contact[]
+  leads               Lead[]
+  stages              PipelineStage[]
+  invitations         Invitation[]
+  assets              Asset[]
+  tasks               Task[]
+  services            Service[]
+  quotes              Quote[]
+  appointments        Appointment[]
+  whatsapp            WhatsAppMessage[]
+  whatsappNumbers     WhatsAppNumber[]
+  whatsappBotSessions WhatsAppBotSession[]
+  notifications       Notification[]
 
   @@map("businesses")
 }
@@ -612,13 +616,37 @@ model WhatsAppNumber {
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  classifiedBy User?             @relation("WhatsAppClassifiedBy", fields: [classifiedById], references: [id], onDelete: SetNull)
+  business     Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  classifiedBy User?               @relation("WhatsAppClassifiedBy", fields: [classifiedById], references: [id], onDelete: SetNull)
   messages     WhatsAppMessage[]
+  botSession   WhatsAppBotSession?
 
   @@unique([businessId, phone])
   @@index([businessId, status])
   @@map("whatsapp_numbers")
+}
+
+/// Where one WhatsApp chat is in the booking bot (D-102). One per number; expires when idle.
+model WhatsAppBotSession {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  numberId   String   @unique @map("number_id") @db.Uuid
+  /// service | day | time | confirm | handoff
+  step       String   @db.VarChar(20)
+  serviceId  String?  @map("service_id") @db.Uuid
+  /// YYYY-MM-DD in the business's time zone.
+  date       String?  @db.VarChar(10)
+  /// HH:MM.
+  time       String?  @db.VarChar(5)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  number   WhatsAppNumber @relation(fields: [numberId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("whatsapp_bot_sessions")
 }
 
 /// One WhatsApp message. Meta's message id makes webhook retries idempotent.

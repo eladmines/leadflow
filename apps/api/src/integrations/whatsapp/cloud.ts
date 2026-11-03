@@ -1,4 +1,4 @@
-import type { WhatsAppSender } from './types';
+import type { WhatsAppChoice, WhatsAppSender } from './types';
 
 export interface CloudApiOptions {
   phoneNumberId: string;
@@ -23,7 +23,49 @@ export class WhatsAppSendError extends Error {
 export class CloudWhatsAppSender implements WhatsAppSender {
   constructor(private readonly opts: CloudApiOptions) {}
 
-  async sendText(to: string, text: string): Promise<{ id: string }> {
+  sendText(to: string, text: string): Promise<{ id: string }> {
+    return this.post(to, { type: 'text', text: { body: text, preview_url: false } });
+  }
+
+  sendButtons(to: string, body: string, buttons: WhatsAppChoice[]): Promise<{ id: string }> {
+    return this.post(to, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: { text: body },
+        action: {
+          buttons: buttons.slice(0, 3).map((b) => ({
+            type: 'reply',
+            reply: { id: b.id, title: b.title.slice(0, 20) },
+          })),
+        },
+      },
+    });
+  }
+
+  sendList(to: string, body: string, button: string, rows: WhatsAppChoice[]) {
+    return this.post(to, {
+      type: 'interactive',
+      interactive: {
+        type: 'list',
+        body: { text: body },
+        action: {
+          button: button.slice(0, 20),
+          sections: [
+            {
+              rows: rows.slice(0, 10).map((r) => ({
+                id: r.id,
+                title: r.title.slice(0, 24),
+                ...(r.description ? { description: r.description.slice(0, 72) } : {}),
+              })),
+            },
+          ],
+        },
+      },
+    });
+  }
+
+  private async post(to: string, message: object): Promise<{ id: string }> {
     const doFetch = this.opts.fetch ?? fetch;
     const res = await doFetch(
       `https://graph.facebook.com/${this.opts.graphVersion}/${this.opts.phoneNumberId}/messages`,
@@ -37,8 +79,7 @@ export class CloudWhatsAppSender implements WhatsAppSender {
           messaging_product: 'whatsapp',
           // Meta wants the number without "+".
           to: to.replace(/^\+/, ''),
-          type: 'text',
-          text: { body: text, preview_url: false },
+          ...message,
         }),
         signal: AbortSignal.timeout(10_000),
       },
