@@ -28,6 +28,7 @@ import {
 import { AppointmentDialog } from './AppointmentDialog';
 import { NewAppointmentDialog } from './NewAppointmentDialog';
 import { ServicesPanel } from './ServicesPanel';
+import { tr } from '../../i18n';
 
 /** Status tone + text (colour is never the only signal). */
 export const statusTone: Record<AppointmentStatus, string> = {
@@ -56,7 +57,7 @@ function AppointmentChip({ a, onOpen }: { a: Appointment; onOpen: (a: Appointmen
         {[a.service?.name, a.staff?.name].filter(Boolean).join(' · ')}
       </span>
       {a.status !== 'CONFIRMED' && (
-        <span className="font-medium">{appointmentStatusLabels[a.status]}</span>
+        <span className="font-medium">{tr(appointmentStatusLabels[a.status])}</span>
       )}
     </button>
   );
@@ -119,8 +120,8 @@ export function AppointmentsPage() {
   return (
     <>
       <PageHeader
-        title="תורים"
-        description="היומן של העסק: תורים, בקשות מהאתר ושירותים."
+        title={tr('תורים')}
+        description={tr('היומן של העסק: תורים, בקשות מהאתר ושירותים.')}
         actions={
           <div className="flex flex-wrap gap-2">
             {manager && (
@@ -130,12 +131,12 @@ export function AppointmentsPage() {
                 onClick={() => setServicesOpen((o) => !o)}
               >
                 <Settings2 aria-hidden className="h-4 w-4" />
-                שירותים
+                {tr('שירותים')}
               </Button>
             )}
             <Button onClick={() => setNewOpen(true)}>
               <Plus aria-hidden className="h-4 w-4" />
-              תור חדש
+              {tr('תור חדש')}
             </Button>
           </div>
         }
@@ -145,7 +146,8 @@ export function AppointmentsPage() {
       {pending.length > 0 && (
         <Card className="flex flex-col gap-3 border-warning-600/30 bg-warning-50/60">
           <h2 className="text-sm font-semibold text-ink">
-            בקשות ממתינות לאישור ({pending.length})
+            {tr('בקשות ממתינות לאישור (')}
+            {pending.length})
           </h2>
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {pending.map((r) => (
@@ -159,24 +161,24 @@ export function AppointmentsPage() {
 
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="secondary" size="sm" onClick={() => set({ date: undefined })}>
-          היום
+          {tr('היום')}
         </Button>
         <div className="flex">
           <button
             type="button"
-            aria-label={view === 'day' ? 'היום הקודם' : 'השבוע הקודם'}
+            aria-label={view === 'day' ? tr('היום הקודם') : tr('השבוע הקודם')}
             onClick={() => shift(-1)}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken"
           >
-            <ChevronRight aria-hidden className="h-4 w-4" />
+            <ChevronRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
           </button>
           <button
             type="button"
-            aria-label={view === 'day' ? 'היום הבא' : 'השבוע הבא'}
+            aria-label={view === 'day' ? tr('היום הבא') : tr('השבוע הבא')}
             onClick={() => shift(1)}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken"
           >
-            <ChevronLeft aria-hidden className="h-4 w-4" />
+            <ChevronLeft aria-hidden className="h-4 w-4 ltr:rotate-180" />
           </button>
         </div>
         <h2 aria-live="polite" className="text-base font-semibold text-ink">
@@ -185,12 +187,12 @@ export function AppointmentsPage() {
         <div className="ms-auto flex flex-wrap items-center gap-2">
           {manager && (
             <select
-              aria-label="סינון לפי איש צוות"
+              aria-label={tr('סינון לפי איש צוות')}
               value={staff}
               onChange={(e) => set({ staff: e.target.value || undefined })}
               className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
             >
-              <option value="">כל הצוות</option>
+              <option value="">{tr('כל הצוות')}</option>
               {(members.data ?? []).map((m) => (
                 <option key={m.userId} value={m.userId}>
                   {m.fullName}
@@ -198,7 +200,11 @@ export function AppointmentsPage() {
               ))}
             </select>
           )}
-          <div role="group" aria-label="תצוגה" className="flex rounded-lg bg-surface-sunken p-0.5">
+          <div
+            role="group"
+            aria-label={tr('תצוגה')}
+            className="flex rounded-lg bg-surface-sunken p-0.5"
+          >
             {(['day', 'week'] as const).map((v) => (
               <button
                 key={v}
@@ -210,7 +216,7 @@ export function AppointmentsPage() {
                   view === v ? 'bg-surface text-ink shadow-card' : 'text-ink-muted',
                 )}
               >
-                {v === 'day' ? 'יום' : 'שבוע'}
+                {v === 'day' ? tr('יום') : tr('שבוע')}
               </button>
             ))}
           </div>
@@ -218,7 +224,7 @@ export function AppointmentsPage() {
       </div>
 
       {list.isPending ? (
-        <Spinner label="טוענים את היומן…" />
+        <Spinner label={tr('טוענים את היומן…')} />
       ) : list.isError ? (
         <Alert tone="danger">{errorMessage(list.error)}</Alert>
       ) : (
@@ -252,7 +258,7 @@ export function AppointmentsPage() {
                 )}
               </header>
               {items.length === 0 ? (
-                <p className="px-1 text-xs text-ink-subtle">אין תורים</p>
+                <p className="px-1 text-xs text-ink-subtle">{tr('אין תורים')}</p>
               ) : (
                 <ul className="flex flex-col gap-1.5">
                   {items.map((a) => (
@@ -271,8 +277,8 @@ export function AppointmentsPage() {
         <p className="flex items-center gap-2 text-sm text-ink-muted">
           <CalendarDays aria-hidden className="h-4 w-4" />
           {manager
-            ? 'אין תורים בתקופה הזו. כדאי להתחיל בהגדרת השירותים שלכם, ואז לקבוע תור ראשון.'
-            : 'אין לך תורים בתקופה הזו.'}
+            ? tr('אין תורים בתקופה הזו. כדאי להתחיל בהגדרת השירותים שלכם, ואז לקבוע תור ראשון.')
+            : tr('אין לך תורים בתקופה הזו.')}
         </p>
       )}
 

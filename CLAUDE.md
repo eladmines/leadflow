@@ -37,8 +37,12 @@ pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` 
    `AppError` for expected errors. Never leak stack traces, SQL or provider errors to clients.
 5. **Secrets and PII.** Never hardcode secrets, never log them. Logger redaction lives in
    `apps/api/src/lib/logger.ts`; extend it when adding sensitive fields. Store only hashes of tokens.
-6. **RTL.** Hebrew UI copy, `dir="rtl"`. Use logical Tailwind utilities only (`ms-/me-/ps-/pe-/start-/end-/text-start/text-end`).
-   Never `ml-/mr-/pl-/pr-/left-/right-/text-left/text-right`. Emails, phones and URLs get `dir="ltr"`.
+6. **Bilingual app, RTL and LTR (D-100).** The web app defaults to English (LTR) with Hebrew (RTL) as an
+   option. Write copy in Hebrew wrapped in `tr('…')` (`apps/web/src/i18n`) and add its English to
+   `apps/web/src/i18n/en.*.ts`; shared labels/messages are wrapped where they're shown. `dir` follows the
+   language, so use logical Tailwind utilities only (`ms-/me-/ps-/pe-/start-/end-/text-start/text-end`),
+   never `ml-/mr-/pl-/pr-/left-/right-/text-left/text-right`; directional icons flip with `ltr:`/`rtl:`.
+   Emails, phones and URLs get `dir="ltr"`. Customer websites and emails are still Hebrew-only.
 7. **Accessibility.** Labeled inputs, visible focus, keyboard reachable, colour never the only signal.
    Every screen has loading, empty, error and no-permission states.
 8. **External integrations** sit behind an interface in `apps/api/src/integrations/*`, with a

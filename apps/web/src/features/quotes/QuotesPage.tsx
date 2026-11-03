@@ -13,6 +13,7 @@ import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { dateFmt, displayStatus, quoteStatusTone, useQuotes } from './api';
+import { tr } from '../../i18n';
 
 /** F18: all quotes, newest first, filterable by status. New quotes start from a lead. */
 export function QuotesPage() {
@@ -27,13 +28,13 @@ export function QuotesPage() {
   return (
     <>
       <PageHeader
-        title="הצעות מחיר"
-        description="כל ההצעות של העסק. הצעה חדשה נפתחת מתוך כרטיס הליד."
+        title={tr('הצעות מחיר')}
+        description={tr('כל ההצעות של העסק. הצעה חדשה נפתחת מתוך כרטיס הליד.')}
       />
       <div className="flex flex-wrap items-center gap-3">
         <div
           role="group"
-          aria-label="סינון לפי סטטוס"
+          aria-label={tr('סינון לפי סטטוס')}
           className="flex flex-wrap rounded-lg bg-surface-sunken p-0.5"
         >
           {[undefined, ...QUOTE_STATUSES].map((s) => (
@@ -47,19 +48,19 @@ export function QuotesPage() {
                 status === s ? 'bg-surface text-ink shadow-card' : 'text-ink-muted',
               )}
             >
-              {s ? quoteStatusLabels[s] : 'הכול'}
+              {s ? tr(quoteStatusLabels[s]) : tr('הכול')}
             </button>
           ))}
         </div>
         {!status && open.length > 0 && (
           <p className="text-sm text-ink-muted">
-            {open.length} הצעות ממתינות לתשובה · {formatAgorot(openTotal)}
+            {open.length} {tr('הצעות ממתינות לתשובה ·')} {formatAgorot(openTotal)}
           </p>
         )}
       </div>
 
       {quotes.isPending ? (
-        <Spinner label="טוענים הצעות…" />
+        <Spinner label={tr('טוענים הצעות…')} />
       ) : quotes.isError ? (
         <Alert tone="danger">{errorMessage(quotes.error)}</Alert>
       ) : quotes.data.length === 0 ? (
@@ -68,10 +69,10 @@ export function QuotesPage() {
             <FileText aria-hidden className="h-6 w-6" />
           </span>
           <h2 className="text-base font-semibold text-ink">
-            {status ? 'אין הצעות בסטטוס הזה' : 'עדיין אין הצעות מחיר'}
+            {status ? tr('אין הצעות בסטטוס הזה') : tr('עדיין אין הצעות מחיר')}
           </h2>
           <p className="max-w-md text-sm text-ink-muted">
-            פתחו ליד מ"לקוחות ולידים" ובחרו "הצעת מחיר חדשה".
+            {tr('פתחו ליד מ"לקוחות ולידים" ובחרו "הצעת מחיר חדשה".')}
           </p>
         </section>
       ) : (
@@ -79,12 +80,12 @@ export function QuotesPage() {
           <table className="w-full min-w-[40rem] text-sm">
             <thead className="bg-surface-muted text-xs text-ink-muted">
               <tr>
-                <th className="px-4 py-2.5 text-start font-medium">מס׳</th>
-                <th className="px-4 py-2.5 text-start font-medium">לקוח</th>
-                <th className="px-4 py-2.5 text-start font-medium">כותרת</th>
-                <th className="px-4 py-2.5 text-start font-medium">סטטוס</th>
-                <th className="px-4 py-2.5 text-end font-medium">סה״כ</th>
-                <th className="px-4 py-2.5 text-end font-medium">תאריך</th>
+                <th className="px-4 py-2.5 text-start font-medium">{tr('מס׳')}</th>
+                <th className="px-4 py-2.5 text-start font-medium">{tr('לקוח')}</th>
+                <th className="px-4 py-2.5 text-start font-medium">{tr('כותרת')}</th>
+                <th className="px-4 py-2.5 text-start font-medium">{tr('סטטוס')}</th>
+                <th className="px-4 py-2.5 text-end font-medium">{tr('סה״כ')}</th>
+                <th className="px-4 py-2.5 text-end font-medium">{tr('תאריך')}</th>
               </tr>
             </thead>
             <tbody>
@@ -112,7 +113,7 @@ export function QuotesPage() {
                           quoteStatusTone[s],
                         )}
                       >
-                        {quoteStatusLabels[s]}
+                        {tr(quoteStatusLabels[s])}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-end tabular-nums text-ink">

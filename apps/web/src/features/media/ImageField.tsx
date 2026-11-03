@@ -4,6 +4,7 @@ import { Button } from '../../components/ui';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useAssets } from './api';
 import { MediaPicker } from './MediaPicker';
+import { tr } from '../../i18n';
 
 /** Thumbnail + choose/replace/remove for one image reference (logo, hero, about). */
 export function ImageField({
@@ -38,18 +39,18 @@ export function ImageField({
             variant="secondary"
             size="sm"
             onClick={() => setOpen(true)}
-            aria-label={`${current ? 'החלפת' : 'בחירת'} ${label}`}
+            aria-label={`${current ? tr('החלפת') : tr('בחירת')} ${label}`}
           >
-            {current ? 'החלפה' : 'בחירת תמונה'}
+            {current ? tr('החלפה') : tr('בחירת תמונה')}
           </Button>
           {value && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onChange(null)}
-              aria-label={`הסרת ${label}`}
+              aria-label={tr('הסרת {0}', label)}
             >
-              הסרה
+              {tr('הסרה')}
             </Button>
           )}
         </div>

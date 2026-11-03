@@ -12,15 +12,16 @@ import { useEffect, useState } from 'react';
 import { Button, Checkbox, DialogShell, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import type { PageId } from './pages';
+import { tr } from '../../i18n';
 
 const presetHints: Record<PagePresetKey, string> = {
-  about: 'סיפור העסק, המלצות וקריאה לפעולה',
-  services: 'שירותים ומחירון',
-  gallery: 'תמונות מהעבודה',
-  faq: 'שאלות נפוצות וטופס',
-  contact: 'פרטי התקשרות וטופס',
-  landing: 'לפרסום או מבצע: לא מופיע בתפריט',
-  blank: 'מתחילים מאפס',
+  about: tr('סיפור העסק, המלצות וקריאה לפעולה'),
+  services: tr('שירותים ומחירון'),
+  gallery: tr('תמונות מהעבודה'),
+  faq: tr('שאלות נפוצות וטופס'),
+  contact: tr('פרטי התקשרות וטופס'),
+  landing: tr('לפרסום או מבצע: לא מופיע בתפריט'),
+  blank: tr('מתחילים מאפס'),
 };
 
 /** Page switcher, "new page" and page settings for the site editor (D-081). */
@@ -54,21 +55,21 @@ export function PagesBar({
     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
       <span className="inline-flex items-center gap-1 ps-1 text-xs font-medium text-ink-muted">
         <FileText aria-hidden className="h-3.5 w-3.5" />
-        עמודים
+        {tr('עמודים')}
       </span>
       <div
         role="tablist"
-        aria-label="עמודי האתר"
+        aria-label={tr('עמודי האתר')}
         className="flex max-w-[30rem] items-center gap-0.5 overflow-x-auto rounded-lg bg-surface-sunken p-0.5"
       >
-        {[{ id: '', title: 'ראשי', inMenu: true }, ...pages].map((p) => (
+        {[{ id: '', title: tr('ראשי'), inMenu: true }, ...pages].map((p) => (
           <button
             key={p.id || 'home'}
             type="button"
             role="tab"
             aria-selected={pageId === p.id}
             onClick={() => onSelect(p.id)}
-            title={p.inMenu ? undefined : 'לא מופיע בתפריט האתר'}
+            title={p.inMenu ? undefined : tr('לא מופיע בתפריט האתר')}
             className={cn(
               'inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-sm',
               pageId === p.id
@@ -77,15 +78,15 @@ export function PagesBar({
             )}
           >
             {p.title}
-            {!p.inMenu && <EyeOff aria-label="(לא בתפריט)" className="h-3 w-3" />}
+            {!p.inMenu && <EyeOff aria-label={tr('(לא בתפריט)')} className="h-3 w-3" />}
           </button>
         ))}
       </div>
       {editable && (
         <button
           type="button"
-          aria-label="עמוד חדש"
-          title={pages.length >= SITE_LIMITS.pages ? siteMessages.tooManyPages : 'עמוד חדש'}
+          aria-label={tr('עמוד חדש')}
+          title={pages.length >= SITE_LIMITS.pages ? siteMessages.tooManyPages : tr('עמוד חדש')}
           disabled={pages.length >= SITE_LIMITS.pages}
           onClick={() => setAddOpen(true)}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-40"
@@ -96,7 +97,7 @@ export function PagesBar({
       {editable && (
         <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(true)}>
           <Settings2 aria-hidden className="h-4 w-4" />
-          הגדרות העמוד
+          {tr('הגדרות העמוד')}
         </Button>
       )}
 
@@ -176,7 +177,7 @@ function AddPage({
   const titleError = title.trim() ? undefined : siteMessages.pageTitleRequired;
 
   return (
-    <DialogShell open={open} onOpenChange={onOpenChange} title="עמוד חדש">
+    <DialogShell open={open} onOpenChange={onOpenChange} title={tr('עמוד חדש')}>
       <form
         noValidate
         className="flex flex-col gap-4"
@@ -187,8 +188,8 @@ function AddPage({
         }}
       >
         <Field
-          label="שם העמוד"
-          placeholder="למשל: המבצע שלנו"
+          label={tr('שם העמוד')}
+          placeholder={tr('למשל: המבצע שלנו')}
           maxLength={30}
           value={title}
           onChange={(e) => {
@@ -198,9 +199,9 @@ function AddPage({
           error={touched.title ? titleError : undefined}
         />
         <Field
-          label="כתובת העמוד"
+          label={tr('כתובת העמוד')}
           ltr
-          hint="אותיות באנגלית, ספרות ומקף. למשל: offer"
+          hint={tr('אותיות באנגלית, ספרות ומקף. למשל: offer')}
           value={slug}
           onChange={(e) => {
             setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'));
@@ -209,13 +210,13 @@ function AddPage({
           error={slugError}
         />
         <Checkbox
-          label="להציג בתפריט האתר"
+          label={tr('להציג בתפריט האתר')}
           checked={inMenu}
           onChange={(e) => setInMenu(e.target.checked)}
         />
         <div className="flex flex-col gap-1.5">
           <label htmlFor="page-preset" className="text-sm font-medium text-ink">
-            תוכן התחלתי (לא חובה)
+            {tr('תוכן התחלתי (לא חובה)')}
           </label>
           <select
             id="page-preset"
@@ -230,17 +231,17 @@ function AddPage({
               ] as PagePresetKey[]
             ).map((k) => (
               <option key={k} value={k}>
-                {PAGE_PRESETS[k].label} · {presetHints[k]}
+                {tr(PAGE_PRESETS[k].label)} · {presetHints[k]}
               </option>
             ))}
           </select>
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            ביטול
+            {tr('ביטול')}
           </Button>
           <Button type="submit" disabled={Boolean(slugError || titleError)}>
-            הוספת העמוד
+            {tr('הוספת העמוד')}
           </Button>
         </div>
       </form>
@@ -296,43 +297,43 @@ function PageSettings({
     <DialogShell
       open={open}
       onOpenChange={onOpenChange}
-      title={page ? 'הגדרות העמוד' : 'הגדרות עמוד הבית'}
+      title={page ? tr('הגדרות העמוד') : tr('הגדרות עמוד הבית')}
     >
       {page && (
         <>
           <Field
-            label="שם העמוד (בתפריט)"
+            label={tr('שם העמוד (בתפריט)')}
             maxLength={30}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             error={titleError}
           />
           <Field
-            label="כתובת העמוד"
+            label={tr('כתובת העמוד')}
             ltr
-            hint="אותיות באנגלית, ספרות ומקף. למשל: about"
+            hint={tr('אותיות באנגלית, ספרות ומקף. למשל: about')}
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
             error={slugError}
           />
           <Checkbox
-            label="להציג בתפריט האתר"
+            label={tr('להציג בתפריט האתר')}
             checked={inMenu}
             onChange={(e) => setInMenu(e.target.checked)}
           />
         </>
       )}
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-sm font-medium text-ink">איך העמוד יופיע בגוגל</legend>
+        <legend className="mb-1 text-sm font-medium text-ink">{tr('איך העמוד יופיע בגוגל')}</legend>
         <Field
-          label="כותרת בגוגל"
+          label={tr('כותרת בגוגל')}
           maxLength={70}
           hint={`${seoTitle.length}/70`}
           value={seoTitle}
           onChange={(e) => setSeoTitle(e.target.value)}
         />
         <Textarea
-          label="תיאור בגוגל"
+          label={tr('תיאור בגוגל')}
           maxLength={160}
           rows={2}
           hint={`${seoDescription.length}/160`}
@@ -344,8 +345,12 @@ function PageSettings({
         {!page ? (
           <span />
         ) : confirmDelete ? (
-          <span role="group" aria-label="אישור מחיקת העמוד" className="flex items-center gap-2">
-            <span className="text-sm text-ink">למחוק את העמוד וכל המקטעים שבו?</span>
+          <span
+            role="group"
+            aria-label={tr('אישור מחיקת העמוד')}
+            className="flex items-center gap-2"
+          >
+            <span className="text-sm text-ink">{tr('למחוק את העמוד וכל המקטעים שבו?')}</span>
             <Button
               size="sm"
               variant="danger"
@@ -354,10 +359,10 @@ function PageSettings({
                 onOpenChange(false);
               }}
             >
-              מחיקה
+              {tr('מחיקה')}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
-              ביטול
+              {tr('ביטול')}
             </Button>
           </span>
         ) : (
@@ -367,7 +372,7 @@ function PageSettings({
             className={cn('text-danger-600')}
             onClick={() => setConfirmDelete(true)}
           >
-            מחיקת העמוד
+            {tr('מחיקת העמוד')}
           </Button>
         )}
         <Button
@@ -382,7 +387,7 @@ function PageSettings({
             onOpenChange(false);
           }}
         >
-          שמירה
+          {tr('שמירה')}
         </Button>
       </div>
     </DialogShell>

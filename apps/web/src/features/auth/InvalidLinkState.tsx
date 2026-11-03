@@ -1,11 +1,12 @@
 import { authMessages } from '@leadflow/shared';
 import type { ReactNode } from 'react';
 import { AuthLayout } from '../../components/ui';
+import { tr } from '../../i18n';
 
 /** Missing, malformed, used or expired email link, with a way forward. */
 export function InvalidLinkState({ children }: { children: ReactNode }) {
   return (
-    <AuthLayout title="הקישור אינו תקף">
+    <AuthLayout title={tr('הקישור אינו תקף')}>
       <div className="flex flex-col gap-5">
         <div role="alert" className="flex flex-col items-center gap-3 text-center">
           <span

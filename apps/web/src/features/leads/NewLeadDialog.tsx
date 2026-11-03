@@ -15,6 +15,7 @@ import { applyServerErrors } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useCreateLead, useDuplicates, usePipeline } from './api';
+import { tr } from '../../i18n';
 
 /** Manual lead with a duplicate warning (same phone/email) before saving. */
 export function NewLeadDialog({
@@ -74,11 +75,11 @@ export function NewLeadDialog({
   });
 
   return (
-    <DialogShell open={open} onOpenChange={close} title="ליד חדש">
+    <DialogShell open={open} onOpenChange={close} title={tr('ליד חדש')}>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         {formError && <Alert tone="danger">{formError}</Alert>}
         <Field
-          label="שם"
+          label={tr('שם')}
           required
           autoComplete="off"
           error={errors.name?.message}
@@ -86,7 +87,7 @@ export function NewLeadDialog({
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field
-            label="טלפון"
+            label={tr('טלפון')}
             ltr
             type="tel"
             inputMode="tel"
@@ -94,7 +95,7 @@ export function NewLeadDialog({
             {...form.register('phone')}
           />
           <Field
-            label="אימייל"
+            label={tr('אימייל')}
             ltr
             type="email"
             error={errors.email?.message}
@@ -102,7 +103,7 @@ export function NewLeadDialog({
           />
         </div>
         {duplicates.data && duplicates.data.length > 0 && (
-          <Alert tone="warning" title="כבר קיים איש קשר עם הפרטים האלה">
+          <Alert tone="warning" title={tr('כבר קיים איש קשר עם הפרטים האלה')}>
             <ul className="mt-1 list-disc ps-5">
               {duplicates.data.map((c) => (
                 <li key={c.id}>
@@ -113,24 +114,26 @@ export function NewLeadDialog({
                       <bdi dir="ltr">{formatIsraeliPhone(c.phone)}</bdi>
                     </>
                   )}{' '}
-                  ({c.leadCount} פניות)
+                  ({c.leadCount} {tr('פניות)')}
                 </li>
               ))}
             </ul>
-            <p className="mt-1">אפשר להמשיך: הליד החדש יתווסף לאותו איש קשר, וההיסטוריה תישמר.</p>
+            <p className="mt-1">
+              {tr('אפשר להמשיך: הליד החדש יתווסף לאותו איש קשר, וההיסטוריה תישמר.')}
+            </p>
           </Alert>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
           <Select
-            label="שלב"
+            label={tr('שלב')}
             options={(stages.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
             {...form.register('stageId', { setValueAs: (v: string) => v || undefined })}
           />
           {canAssign && (
             <Select
-              label="אחראי"
+              label={tr('אחראי')}
               options={[
-                { value: '', label: 'ללא אחראי' },
+                { value: '', label: tr('ללא אחראי') },
                 ...(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName })),
               ]}
               error={errors.ownerId?.message}
@@ -139,17 +142,17 @@ export function NewLeadDialog({
           )}
         </div>
         <Textarea
-          label="פרטי הפנייה"
+          label={tr('פרטי הפנייה')}
           rows={3}
           error={errors.message?.message}
           {...form.register('message')}
         />
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => close(false)}>
-            ביטול
+            {tr('ביטול')}
           </Button>
           <Button type="submit" loading={isSubmitting}>
-            יצירת ליד
+            {tr('יצירת ליד')}
           </Button>
         </div>
       </form>

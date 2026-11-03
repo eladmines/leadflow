@@ -9,11 +9,12 @@ import { useOneTimeToken } from '../auth/useOneTimeToken';
 import { useSignOut } from '../auth/useSignOut';
 import { Link } from 'react-router-dom';
 import { useAcceptInvite, useInvitePreview } from './api';
+import { tr } from '../../i18n';
 
 const statusText = {
-  expired: 'תוקף ההזמנה פג. בקשו מבעל/ת העסק לשלוח הזמנה חדשה.',
-  used: 'ההזמנה כבר נוצלה. אם הצטרפתם, אפשר פשוט להתחבר.',
-  revoked: 'ההזמנה בוטלה. בקשו מבעל/ת העסק לשלוח הזמנה חדשה.',
+  expired: tr('תוקף ההזמנה פג. בקשו מבעל/ת העסק לשלוח הזמנה חדשה.'),
+  used: tr('ההזמנה כבר נוצלה. אם הצטרפתם, אפשר פשוט להתחבר.'),
+  revoked: tr('ההזמנה בוטלה. בקשו מבעל/ת העסק לשלוח הזמנה חדשה.'),
 } as const;
 
 /**
@@ -33,18 +34,18 @@ export function AcceptInvitePage() {
 
   if (!token) {
     return (
-      <AuthLayout title="ההזמנה אינה תקפה">
-        <Alert tone="danger">הקישור חסר או שגוי. בקשו מבעל/ת העסק לשלוח הזמנה חדשה.</Alert>
+      <AuthLayout title={tr('ההזמנה אינה תקפה')}>
+        <Alert tone="danger">{tr('הקישור חסר או שגוי. בקשו מבעל/ת העסק לשלוח הזמנה חדשה.')}</Alert>
       </AuthLayout>
     );
   }
-  if (preview.isPending || me.isPending) return <FullPageSpinner label="בודקים את ההזמנה…" />;
+  if (preview.isPending || me.isPending) return <FullPageSpinner label={tr('בודקים את ההזמנה…')} />;
   if (preview.isError) {
     return (
-      <AuthLayout title="ההזמנה אינה תקפה">
+      <AuthLayout title={tr('ההזמנה אינה תקפה')}>
         <Alert tone="danger">
           {preview.error instanceof ApiError && preview.error.status === 404
-            ? 'ההזמנה לא נמצאה. ייתכן שנשלחה הזמנה חדשה יותר — בדקו את תיבת הדואר.'
+            ? tr('ההזמנה לא נמצאה. ייתכן שנשלחה הזמנה חדשה יותר — בדקו את תיבת הדואר.')
             : errorMessage(preview.error)}
         </Alert>
       </AuthLayout>
@@ -57,11 +58,11 @@ export function AcceptInvitePage() {
 
   return (
     <AuthLayout
-      title={`הוזמנת להצטרף ל${invite.businessName}`}
+      title={tr('הוזמנת להצטרף ל{0}', invite.businessName)}
       description={
         <>
-          {invite.invitedBy ? `${invite.invitedBy} הזמין/ה אותך` : 'הוזמנת'} לצוות בתפקיד{' '}
-          <strong className="text-ink">{roleLabels[invite.role]}</strong>.
+          {invite.invitedBy ? tr('{0} הזמין/ה אותך', invite.invitedBy) : tr('הוזמנת')}{' '}
+          {tr('לצוות בתפקיד')} <strong className="text-ink">{tr(roleLabels[invite.role])}</strong>.
         </>
       }
     >
@@ -71,7 +72,7 @@ export function AcceptInvitePage() {
             <Users aria-hidden className="h-5 w-5" />
           </span>
           <div className="flex flex-col text-sm">
-            <span className="text-ink-muted">ההזמנה נשלחה אל</span>
+            <span className="text-ink-muted">{tr('ההזמנה נשלחה אל')}</span>
             <bdi dir="ltr" className="font-medium text-ink">
               {invite.email}
             </bdi>
@@ -82,28 +83,31 @@ export function AcceptInvitePage() {
           <Alert tone="warning">{statusText[invite.status]}</Alert>
         ) : !user ? (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-ink-muted">כדי להצטרף צריך חשבון LeadFlow עם הכתובת הזו.</p>
+            <p className="text-sm text-ink-muted">
+              {tr('כדי להצטרף צריך חשבון LeadFlow עם הכתובת הזו.')}
+            </p>
             <Link
               to={`${authWebPaths.register}?next=${next}&email=${encodeURIComponent(invite.email)}`}
               className={buttonClasses('primary', 'lg')}
             >
-              יצירת חשבון והצטרפות
+              {tr('יצירת חשבון והצטרפות')}
             </Link>
             <Link
               to={`${authWebPaths.login}?next=${next}`}
               className={buttonClasses('secondary', 'lg')}
             >
-              כבר יש לי חשבון — התחברות
+              {tr('כבר יש לי חשבון — התחברות')}
             </Link>
           </div>
         ) : user.email !== invite.email ? (
           <div className="flex flex-col gap-3">
-            <Alert tone="warning" title="מחובר/ת עם חשבון אחר">
-              את/ה מחובר/ת כ־<bdi dir="ltr">{user.email}</bdi>, וההזמנה נשלחה אל{' '}
-              <bdi dir="ltr">{invite.email}</bdi>.
+            <Alert tone="warning" title={tr('מחובר/ת עם חשבון אחר')}>
+              {tr('את/ה מחובר/ת כ־')}
+              <bdi dir="ltr">{user.email}</bdi>
+              {tr(', וההזמנה נשלחה אל')} <bdi dir="ltr">{invite.email}</bdi>.
             </Alert>
             <Button variant="secondary" loading={signingOut} onClick={() => void signOut()}>
-              התנתקות והתחברות עם החשבון הנכון
+              {tr('התנתקות והתחברות עם החשבון הנכון')}
             </Button>
           </div>
         ) : (
@@ -117,7 +121,7 @@ export function AcceptInvitePage() {
                 navigate(businessWebPaths.home(businessId), { replace: true });
               }}
             >
-              הצטרפות לצוות
+              {tr('הצטרפות לצוות')}
             </Button>
           </div>
         )}

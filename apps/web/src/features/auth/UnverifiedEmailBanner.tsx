@@ -2,6 +2,7 @@ import { MailCheck } from 'lucide-react';
 import { useId } from 'react';
 import { useMe } from './api';
 import { ResendVerification } from './ResendVerification';
+import { tr } from '../../i18n';
 
 /**
  * Soft email verification (D-002): a banner, not a gate. Renders nothing unless the
@@ -28,14 +29,14 @@ export function UnverifiedEmailBanner() {
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex flex-col gap-1">
             <h2 id={titleId} className="text-sm font-semibold text-ink">
-              כדאי לאמת את כתובת האימייל
+              {tr('כדאי לאמת את כתובת האימייל')}
             </h2>
             <p className="text-sm text-ink-muted">
-              שלחנו קישור אימות אל{' '}
+              {tr('שלחנו קישור אימות אל')}{' '}
               <span dir="ltr" className="break-all font-medium text-ink">
                 {user.email}
               </span>
-              . לא מצאתם את ההודעה? בדקו בתיקיית הספאם או שלחו אותה שוב.
+              {tr('. לא מצאתם את ההודעה? בדקו בתיקיית הספאם או שלחו אותה שוב.')}
             </p>
           </div>
           <ResendVerification email={user.email} />

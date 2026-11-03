@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
 import { cn } from '../../lib/cn';
 import { navItems } from './nav';
+import { tr } from '../../i18n';
 
 interface Command {
   id: string;
@@ -89,16 +90,16 @@ export function CommandPalette({
     if (can(business.role, 'leads.create')) {
       actions.push({
         id: 'new-lead',
-        group: 'פעולות',
-        label: 'ליד חדש',
+        group: tr('פעולות'),
+        label: tr('ליד חדש'),
         icon: Plus,
         to: `${section('leads')}?new=1`,
       });
     }
     actions.push({
       id: 'new-task',
-      group: 'פעולות',
-      label: 'משימה חדשה',
+      group: tr('פעולות'),
+      label: tr('משימה חדשה'),
       icon: Plus,
       to: section('tasks'),
     });
@@ -106,15 +107,15 @@ export function CommandPalette({
       .filter((i) => !i.comingSoon && (!i.permission || can(business.role, i.permission)))
       .map((i) => ({
         id: `page-${i.segment || 'home'}`,
-        group: 'מעבר לעמוד',
+        group: tr('מעבר לעמוד'),
         label: i.label,
         icon: i.icon,
         to: section(i.segment),
       }));
     pages.push({
       id: 'page-account',
-      group: 'מעבר לעמוד',
-      label: 'החשבון שלי',
+      group: tr('מעבר לעמוד'),
+      label: tr('החשבון שלי'),
       icon: UserRound,
       to: section('account'),
     });
@@ -122,7 +123,7 @@ export function CommandPalette({
     const match = (c: Command) => !term || c.label.includes(term);
     const found: Command[] = (term.length >= 2 ? (leads.data ?? []) : []).map((l) => ({
       id: `lead-${l.id}`,
-      group: 'לידים',
+      group: tr('לידים'),
       label: l.contact.name,
       hint: l.contact.phone ? formatIsraeliPhone(l.contact.phone) : (l.contact.email ?? ''),
       icon: UserRound,
@@ -153,7 +154,7 @@ export function CommandPalette({
           aria-describedby={undefined}
           className="fixed start-1/2 top-[12vh] z-50 flex max-h-[70vh] w-[calc(100vw-2rem)] max-w-xl flex-col overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lift focus:outline-none rtl:translate-x-1/2 ltr:-translate-x-1/2"
         >
-          <Dialog.Title className="sr-only">חיפוש מהיר</Dialog.Title>
+          <Dialog.Title className="sr-only">{tr('חיפוש מהיר')}</Dialog.Title>
           <div className="flex items-center gap-2.5 border-b border-surface-border px-4">
             <Search aria-hidden className="h-4 w-4 shrink-0 text-ink-subtle" />
             <input
@@ -161,8 +162,8 @@ export function CommandPalette({
               aria-expanded
               aria-controls={listId}
               aria-activedescendant={commands[active] ? optionId(active) : undefined}
-              aria-label="חיפוש עמודים, פעולות ולידים"
-              placeholder="חיפוש עמוד, פעולה או ליד (שם, טלפון, אימייל)…"
+              aria-label={tr('חיפוש עמודים, פעולות ולידים')}
+              placeholder={tr('חיפוש עמוד, פעולה או ליד (שם, טלפון, אימייל)…')}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => {
@@ -183,10 +184,10 @@ export function CommandPalette({
               Esc
             </kbd>
           </div>
-          <div id={listId} role="listbox" aria-label="תוצאות" className="overflow-y-auto p-2">
+          <div id={listId} role="listbox" aria-label={tr('תוצאות')} className="overflow-y-auto p-2">
             {commands.length === 0 && (
               <p className="px-3 py-8 text-center text-sm text-ink-muted">
-                {leads.isFetching ? 'מחפשים…' : 'לא נמצאו תוצאות'}
+                {leads.isFetching ? tr('מחפשים…') : tr('לא נמצאו תוצאות')}
               </p>
             )}
             {Object.entries(groups).map(([group, items]) => (

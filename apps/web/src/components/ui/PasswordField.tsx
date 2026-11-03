@@ -1,6 +1,7 @@
 import { forwardRef, useId, useState, type InputHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 import { inputClasses } from './Field';
+import { isRtl, tr } from '../../i18n';
 
 export interface PasswordFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label: string;
@@ -64,13 +65,18 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
             spellCheck={false}
             aria-invalid={error ? true : undefined}
             aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
-            className={cn(inputClasses(Boolean(error)), 'ps-11 text-end', className)}
+            // The input is always LTR; leave room for the eye button on the page's end side.
+            className={cn(
+              inputClasses(Boolean(error)),
+              isRtl() ? 'ps-11 text-end' : 'pe-11',
+              className,
+            )}
             {...rest}
           />
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}
-            aria-label={visible ? 'הסתרת הסיסמה' : 'הצגת הסיסמה'}
+            aria-label={visible ? tr('הסתרת הסיסמה') : tr('הצגת הסיסמה')}
             aria-pressed={visible}
             aria-controls={inputId}
             className="absolute inset-y-0 end-0 flex w-11 items-center justify-center rounded-lg text-ink-muted hover:text-ink"
@@ -85,7 +91,7 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
         )}
         {error && (
           <p id={errorId} className="text-xs text-danger-600">
-            {error}
+            {tr(error)}
           </p>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { weekdayLabels, WEEKDAYS, type OpeningHours } from '@leadflow/shared';
 import type { UseFormReturn } from 'react-hook-form';
 import { cn } from '../../lib/cn';
+import { tr } from '../../i18n';
 
 const timeInput =
   'h-10 w-28 rounded-lg border bg-surface px-2 text-center text-base text-ink disabled:bg-surface-muted disabled:text-ink-subtle sm:text-sm';
@@ -21,7 +22,7 @@ export function HoursFields({
       disabled={disabled}
       className="flex flex-col divide-y divide-surface-border rounded-xl border border-surface-border"
     >
-      <legend className="sr-only">שעות פעילות לפי ימים</legend>
+      <legend className="sr-only">{tr('שעות פעילות לפי ימים')}</legend>
       {WEEKDAYS.map((day) => {
         const open = values[day]?.open;
         const err = errors[day]?.to?.message ?? errors[day]?.from?.message;
@@ -35,7 +36,7 @@ export function HoursFields({
                   className="h-5 w-5 accent-brand-600"
                   {...form.register(`${day}.open`)}
                 />
-                {weekdayLabels[day]}
+                {tr(weekdayLabels[day])}
               </label>
               {open ? (
                 <div className="flex items-center gap-2" dir="ltr">
@@ -48,7 +49,11 @@ export function HoursFields({
                       )}
                       <input
                         type="time"
-                        aria-label={`${edge === 'from' ? 'שעת פתיחה' : 'שעת סגירה'} ביום ${weekdayLabels[day]}`}
+                        aria-label={tr(
+                          '{0} ביום {1}',
+                          edge === 'from' ? tr('שעת פתיחה') : tr('שעת סגירה'),
+                          tr(weekdayLabels[day]),
+                        )}
                         aria-invalid={err ? true : undefined}
                         aria-describedby={err ? errId : undefined}
                         className={cn(
@@ -61,7 +66,7 @@ export function HoursFields({
                   ))}
                 </div>
               ) : (
-                <span className="text-sm text-ink-muted">סגור</span>
+                <span className="text-sm text-ink-muted">{tr('סגור')}</span>
               )}
             </div>
             {open && err && (

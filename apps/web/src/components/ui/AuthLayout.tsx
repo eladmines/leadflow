@@ -1,6 +1,8 @@
 import { Globe, MessageCircle, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Logo } from './Logo';
+import { tr } from '../../i18n';
+import { LanguageSwitch } from '../../i18n/LanguageSwitch';
 
 interface AuthLayoutProps {
   title: string;
@@ -13,11 +15,19 @@ interface AuthLayoutProps {
 const benefits = [
   {
     icon: Globe,
-    title: 'אתר לעסק בכמה דקות',
-    text: 'בוחרים תבנית, מעדכנים טקסטים ותמונות ומפרסמים.',
+    title: tr('אתר לעסק בכמה דקות'),
+    text: tr('בוחרים תבנית, מעדכנים טקסטים ותמונות ומפרסמים.'),
   },
-  { icon: Users, title: 'כל הפניות במקום אחד', text: 'כל השארת פרטים באתר נכנסת אוטומטית כליד.' },
-  { icon: MessageCircle, title: 'עונים ללקוחות ב־WhatsApp', text: 'תיבת שיחות משותפת לכל הצוות.' },
+  {
+    icon: Users,
+    title: tr('כל הפניות במקום אחד'),
+    text: tr('כל השארת פרטים באתר נכנסת אוטומטית כליד.'),
+  },
+  {
+    icon: MessageCircle,
+    title: tr('עונים ללקוחות ב־WhatsApp'),
+    text: tr('תיבת שיחות משותפת לכל הצוות.'),
+  },
 ];
 
 /** Signed-out screens: the form on one side, a warm brand panel on the other (desktop only). */
@@ -25,8 +35,9 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
   return (
     <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       <div className="flex flex-col px-5 py-8 sm:px-10">
-        <header>
+        <header className="flex items-center justify-between gap-4">
           <Logo />
+          <LanguageSwitch />
         </header>
         <main className="flex flex-1 flex-col justify-center py-10">
           <div className="mx-auto w-full max-w-sm">
@@ -48,9 +59,9 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
         <div className="absolute -bottom-32 -start-20 h-80 w-80 rounded-full bg-brand-400/25 blur-3xl" />
         <div className="relative mx-auto flex max-w-md flex-col gap-10">
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-accent-200">לעסקים קטנים בישראל</p>
+            <p className="text-sm font-medium text-accent-200">{tr('לעסקים קטנים בישראל')}</p>
             <p className="text-4xl font-semibold leading-tight">
-              האתר, הלידים והשיחות של העסק — במקום אחד.
+              {tr('האתר, הלידים והשיחות של העסק — במקום אחד.')}
             </p>
           </div>
           <ul className="flex flex-col gap-5">
@@ -69,14 +80,14 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
           <div className="rounded-2xl bg-white p-4 text-ink shadow-lift">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-100 font-semibold text-accent-700">
-                ד
+                {tr('ד')}
               </span>
               <div className="flex-1">
-                <p className="text-sm font-medium">פנייה חדשה מהאתר</p>
-                <p className="text-xs text-ink-muted">דנה · מעוניינת בתור ליום חמישי</p>
+                <p className="text-sm font-medium">{tr('פנייה חדשה מהאתר')}</p>
+                <p className="text-xs text-ink-muted">{tr('דנה · מעוניינת בתור ליום חמישי')}</p>
               </div>
               <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
-                חדש
+                {tr('חדש')}
               </span>
             </div>
           </div>

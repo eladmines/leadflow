@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert, Button, Field } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
+import { tr } from '../../i18n';
 
 interface Props {
   business: Business;
@@ -41,12 +42,14 @@ export function StepContact({ business, onSubmit, onBack }: Props) {
   return (
     <form noValidate onSubmit={submit} className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">איך לקוחות יכולים להגיע אליך?</h1>
-        <p className="text-sm text-ink-muted">הטלפון יופיע באתר ובפניות. הכתובת אינה חובה.</p>
+        <h1 className="text-2xl font-bold text-ink">{tr('איך לקוחות יכולים להגיע אליך?')}</h1>
+        <p className="text-sm text-ink-muted">
+          {tr('הטלפון יופיע באתר ובפניות. הכתובת אינה חובה.')}
+        </p>
       </header>
       {formError && <Alert tone="danger">{formError}</Alert>}
       <Field
-        label="טלפון העסק"
+        label={tr('טלפון העסק')}
         required
         ltr
         type="tel"
@@ -57,19 +60,19 @@ export function StepContact({ business, onSubmit, onBack }: Props) {
         {...form.register('phone')}
       />
       <Field
-        label="כתובת"
+        label={tr('כתובת')}
         autoComplete="street-address"
-        placeholder="רחוב, מספר ועיר"
-        hint="לעסקים שמקבלים לקוחות במקום"
+        placeholder={tr('רחוב, מספר ועיר')}
+        hint={tr('לעסקים שמקבלים לקוחות במקום')}
         error={errors.address?.message}
         {...form.register('address')}
       />
       <div className="flex justify-between gap-3">
         <Button variant="ghost" onClick={onBack} disabled={isSubmitting}>
-          חזרה
+          {tr('חזרה')}
         </Button>
         <Button type="submit" loading={isSubmitting}>
-          המשך
+          {tr('המשך')}
         </Button>
       </div>
     </form>

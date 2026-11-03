@@ -8,6 +8,7 @@ import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
 import { formatDateTime, timeAgo } from '../leads/api';
 import { useMarkRead, useNotifications, usePopupsEnabled } from './api';
+import { tr } from '../../i18n';
 
 const PANEL_WIDTH = 340;
 
@@ -78,7 +79,7 @@ export function NotificationBell({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={unread ? `התראות, ${unread} חדשות` : 'התראות'}
+        aria-label={unread ? tr('התראות, {0} חדשות', unread) : tr('התראות')}
         className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken hover:text-ink"
       >
         <Bell aria-hidden className="h-5 w-5" />
@@ -98,7 +99,7 @@ export function NotificationBell({
           <div
             ref={panelRef}
             role="dialog"
-            aria-label="התראות"
+            aria-label={tr('התראות')}
             className="fixed z-50 flex max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-lift"
             style={{
               top: pos.top,
@@ -107,32 +108,34 @@ export function NotificationBell({
             }}
           >
             <div className="flex items-center justify-between gap-2 border-b border-surface-border px-4 py-3">
-              <h2 className="text-base font-semibold text-ink">התראות</h2>
+              <h2 className="text-base font-semibold text-ink">{tr('התראות')}</h2>
               {unread > 0 && (
                 <button
                   type="button"
                   onClick={() => markRead.mutate({})}
                   className="text-sm font-medium text-brand-700 hover:underline"
                 >
-                  סימון הכול כנקרא
+                  {tr('סימון הכול כנקרא')}
                 </button>
               )}
             </div>
             <div className="flex-1 overflow-y-auto">
               {list.isPending ? (
                 <div className="p-4">
-                  <Spinner size="sm" label="טוענים התראות…" />
+                  <Spinner size="sm" label={tr('טוענים התראות…')} />
                 </div>
               ) : list.isError ? (
-                <p className="p-4 text-sm text-danger-700">לא הצלחנו לטעון את ההתראות.</p>
+                <p className="p-4 text-sm text-danger-700">{tr('לא הצלחנו לטעון את ההתראות.')}</p>
               ) : list.data.notifications.length === 0 ? (
                 <p className="p-6 text-center text-sm text-ink-muted">
-                  אין התראות עדיין. כשתגיע פנייה חדשה, היא תופיע כאן.
+                  {tr('אין התראות עדיין. כשתגיע פנייה חדשה, היא תופיע כאן.')}
                 </p>
               ) : (
-                <ul aria-label="רשימת התראות" className="divide-y divide-surface-border">
+                <ul aria-label={tr('רשימת התראות')} className="divide-y divide-surface-border">
                   {list.data.notifications.map((n) => {
-                    const { title, body } = notificationText(n);
+                    const text = notificationText(n);
+                    const title = tr(text.title);
+                    const body = tr(text.body);
                     return (
                       <li key={n.id}>
                         <button
@@ -153,7 +156,7 @@ export function NotificationBell({
                           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <span className="text-sm font-medium text-ink">
                               {title}
-                              {!n.readAt && <span className="sr-only"> (חדשה)</span>}
+                              {!n.readAt && <span className="sr-only"> {tr('(חדשה)')}</span>}
                             </span>
                             {body && (
                               <span className="truncate text-sm text-ink-muted">{body}</span>
@@ -180,7 +183,7 @@ export function NotificationBell({
                 onChange={(e) => setPopups(e.target.checked)}
                 className="h-4 w-4 accent-brand-600"
               />
-              הקפצת התראות על פניות והודעות חדשות
+              {tr('הקפצת התראות על פניות והודעות חדשות')}
             </label>
           </div>,
           document.body,

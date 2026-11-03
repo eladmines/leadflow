@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
 import { useBusinesses } from '../businesses/api';
+import { tr } from '../../i18n';
 
 /** Shows the current business; with more than one, a native select switches between them. */
 export function BusinessSwitcher({
@@ -24,7 +25,7 @@ export function BusinessSwitcher({
       {list.length > 1 ? (
         <>
           <label htmlFor={id} className="text-xs font-medium text-ink-muted">
-            העסק הנוכחי
+            {tr('העסק הנוכחי')}
           </label>
           <select
             id={id}
@@ -58,7 +59,7 @@ export function BusinessSwitcher({
           </span>
           <div className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-sm font-semibold text-ink">{business.name}</span>
-            <span className="text-xs text-ink-muted">העסק הנוכחי</span>
+            <span className="text-xs text-ink-muted">{tr('העסק הנוכחי')}</span>
           </div>
         </div>
       )}
@@ -68,7 +69,7 @@ export function BusinessSwitcher({
         className="inline-flex items-center gap-1 self-start px-1 text-xs font-medium text-brand-700 hover:underline"
       >
         <Plus aria-hidden className="h-3.5 w-3.5" />
-        הוספת עסק
+        {tr('הוספת עסק')}
       </Link>
     </div>
   );

@@ -1,6 +1,7 @@
 import { SERVICE_AREA_MAX_LENGTH, SERVICE_AREAS_MAX, businessMessages } from '@leadflow/shared';
 import { useState, type KeyboardEvent } from 'react';
 import { Button, Field } from '../../components/ui';
+import { tr } from '../../i18n';
 
 interface Props {
   value: string[];
@@ -37,8 +38,8 @@ export function ServiceAreasEditor({ value, onChange }: Props) {
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <Field
-            label="הוספת אזור שירות"
-            placeholder="הקלידו שם עיר ולחצו Enter"
+            label={tr('הוספת אזור שירות')}
+            placeholder={tr('הקלידו שם עיר ולחצו Enter')}
             value={draft}
             error={error}
             onChange={(e) => setDraft(e.target.value)}
@@ -47,11 +48,11 @@ export function ServiceAreasEditor({ value, onChange }: Props) {
           />
         </div>
         <Button variant="secondary" onClick={add} className={error ? 'mb-6' : undefined}>
-          הוספה
+          {tr('הוספה')}
         </Button>
       </div>
       {value.length > 0 && (
-        <ul aria-label="אזורי השירות שנבחרו" className="flex flex-wrap gap-2">
+        <ul aria-label={tr('אזורי השירות שנבחרו')} className="flex flex-wrap gap-2">
           {value.map((area) => (
             <li
               key={area}
@@ -61,7 +62,7 @@ export function ServiceAreasEditor({ value, onChange }: Props) {
               <button
                 type="button"
                 onClick={() => onChange(value.filter((a) => a !== area))}
-                aria-label={`הסרת ${area}`}
+                aria-label={tr('הסרת {0}', area)}
                 className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-brand-100"
               >
                 <span aria-hidden>×</span>

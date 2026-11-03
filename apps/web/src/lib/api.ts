@@ -1,4 +1,5 @@
 import { apiErrorBodySchema, defaultErrorMessages, type ErrorCode } from '@leadflow/shared';
+import { tr } from '../i18n';
 
 export class ApiError extends Error {
   constructor(
@@ -27,7 +28,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   try {
     res = await fetch(path, { ...init, headers, credentials: 'include' });
   } catch {
-    throw new ApiError(0, 'INTERNAL_ERROR', 'אין חיבור לשרת. בדקו את החיבור לאינטרנט ונסו שוב');
+    throw new ApiError(0, 'INTERNAL_ERROR', tr('אין חיבור לשרת. בדקו את החיבור לאינטרנט ונסו שוב'));
   }
 
   if (res.status === 204) return undefined as T;

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useSignOut } from '../features/auth/useSignOut';
 import { Alert, Button, Logo } from './ui';
+import { tr } from '../i18n';
 
 /** Minimal top bar for signed-in pages until the app shell (F03) replaces it. */
 export function SignedInHeader({ children }: { children?: ReactNode }) {
@@ -13,12 +14,12 @@ export function SignedInHeader({ children }: { children?: ReactNode }) {
           {children}
         </div>
         <Button variant="secondary" size="sm" loading={isPending} onClick={() => void signOut()}>
-          התנתקות
+          {tr('התנתקות')}
         </Button>
       </div>
       {error && (
         <div className="mx-auto max-w-3xl px-4 pb-3">
-          <Alert tone="danger" title="ההתנתקות נכשלה">
+          <Alert tone="danger" title={tr('ההתנתקות נכשלה')}>
             {error}
           </Alert>
         </div>

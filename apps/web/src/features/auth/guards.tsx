@@ -5,16 +5,17 @@ import { Alert, Button, FullPageSpinner } from '../../components/ui';
 import { loginPathWithNext, sanitizeNext } from '../../lib/safeNext';
 import { useMe } from './api';
 import { errorMessage } from './serverErrors';
+import { tr } from '../../i18n';
 
 /** `/me` failed with something other than 401 (server down, network). */
 function SessionCheckError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4">
-      <Alert tone="danger" title="לא הצלחנו לבדוק את פרטי ההתחברות">
+      <Alert tone="danger" title={tr('לא הצלחנו לבדוק את פרטי ההתחברות')}>
         {errorMessage(error)}
       </Alert>
       <Button variant="secondary" onClick={onRetry}>
-        נסו שוב
+        {tr('נסו שוב')}
       </Button>
     </main>
   );
@@ -25,7 +26,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const me = useMe();
   const location = useLocation();
 
-  if (me.isPending) return <FullPageSpinner label="בודקים את פרטי ההתחברות…" />;
+  if (me.isPending) return <FullPageSpinner label={tr('בודקים את פרטי ההתחברות…')} />;
   if (me.isError) return <SessionCheckError error={me.error} onRetry={() => void me.refetch()} />;
   if (!me.data) {
     return <Navigate to={loginPathWithNext(location.pathname + location.search)} replace />;

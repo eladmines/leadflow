@@ -1,14 +1,15 @@
 import { defaultErrorMessages } from '@leadflow/shared';
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form';
 import { ApiError } from '../../lib/api';
+import { tr } from '../../i18n';
 
-/** Hebrew text for any error that isn't mapped onto a field. */
+/** Text for any error that isn't mapped onto a field, in the app's language (D-100). */
 export function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
-    if (err.code === 'RATE_LIMITED') return defaultErrorMessages.RATE_LIMITED;
-    return err.message || defaultErrorMessages[err.code];
+    if (err.code === 'RATE_LIMITED') return tr(defaultErrorMessages.RATE_LIMITED);
+    return tr(err.message || defaultErrorMessages[err.code]);
   }
-  return defaultErrorMessages.INTERNAL_ERROR;
+  return tr(defaultErrorMessages.INTERNAL_ERROR);
 }
 
 /**

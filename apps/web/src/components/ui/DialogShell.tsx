@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { tr } from '../../i18n';
 
 /** Centered modal with a title and close button (focus trap, Escape, focus return via Radix). */
 export function DialogShell({
@@ -27,7 +28,7 @@ export function DialogShell({
             <Dialog.Close asChild>
               <button
                 type="button"
-                aria-label="סגירה"
+                aria-label={tr('סגירה')}
                 className="-me-2 -mt-1 flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken"
               >
                 <X aria-hidden className="h-5 w-5" />

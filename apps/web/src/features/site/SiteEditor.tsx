@@ -63,6 +63,7 @@ import { SiteOptionsDialog } from './SiteOptionsDialog';
 import { SectionForm } from './SectionForm';
 import { useDraftAutosave, type Draft, type SaveState } from './useDraftAutosave';
 import { PageTourButton } from '../tour/TourContext';
+import { tr } from '../../i18n';
 
 type Tab = 'sections' | 'design' | 'seo';
 
@@ -72,11 +73,11 @@ const iconBtn =
 
 function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
   const map: Record<SaveState, { icon: typeof Cloud; text: string; className: string }> = {
-    saved: { icon: Cloud, text: 'כל השינויים נשמרו', className: 'text-ink-muted' },
-    pending: { icon: Loader2, text: 'שומר…', className: 'text-ink-muted' },
-    saving: { icon: Loader2, text: 'שומר…', className: 'text-ink-muted' },
-    error: { icon: CircleAlert, text: 'השמירה נכשלה', className: 'text-danger-600' },
-    conflict: { icon: CircleAlert, text: 'נערך בחלון אחר', className: 'text-danger-600' },
+    saved: { icon: Cloud, text: tr('כל השינויים נשמרו'), className: 'text-ink-muted' },
+    pending: { icon: Loader2, text: tr('שומר…'), className: 'text-ink-muted' },
+    saving: { icon: Loader2, text: tr('שומר…'), className: 'text-ink-muted' },
+    error: { icon: CircleAlert, text: tr('השמירה נכשלה'), className: 'text-danger-600' },
+    conflict: { icon: CircleAlert, text: tr('נערך בחלון אחר'), className: 'text-danger-600' },
   };
   const { icon: Icon, text, className } = map[state];
   return (
@@ -88,7 +89,7 @@ function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => vo
       {text}
       {state === 'error' && (
         <button type="button" onClick={onRetry} className="font-medium underline">
-          נסו שוב
+          {tr('נסו שוב')}
         </button>
       )}
     </span>
@@ -330,7 +331,7 @@ export function SiteEditor({
           )}
           {sep}
           {titleSizeOptions.map((o) =>
-            chip((s.style?.titleSize ?? 'normal') === o.value, `כותרת ${o.label}`, () =>
+            chip((s.style?.titleSize ?? 'normal') === o.value, tr('כותרת {0}', o.label), () =>
               setStyle(id, { titleSize: o.value }),
             ),
           )}
@@ -341,17 +342,17 @@ export function SiteEditor({
       return (
         <>
           {buttonStyleOptions.map((o) =>
-            chip((s.style?.button ?? 'solid') === o.value, `כפתור ${o.label}`, () =>
+            chip((s.style?.button ?? 'solid') === o.value, tr('כפתור {0}', o.label), () =>
               setStyle(id, { button: o.value }),
             ),
           )}
           {s.type === 'hero' && (
             <>
               {sep}
-              {chip(s.buttonAction === 'call', 'חיוג לעסק', () =>
+              {chip(s.buttonAction === 'call', tr('חיוג לעסק'), () =>
                 updateSection(id, { buttonAction: 'call' } as Partial<Section>),
               )}
-              {chip(s.buttonAction === 'contact', 'מעבר לטופס', () =>
+              {chip(s.buttonAction === 'contact', tr('מעבר לטופס'), () =>
                 updateSection(id, { buttonAction: 'contact' } as Partial<Section>),
               )}
             </>
@@ -376,13 +377,13 @@ export function SiteEditor({
   const renderDesign = (prefix: string) => (
     <>
       <ImageField
-        label="לוגו"
-        hint="מוצג בראש האתר ליד שם העסק. עדיף לוגו על רקע שקוף או לבן."
+        label={tr('לוגו')}
+        hint={tr('מוצג בראש האתר ליד שם העסק. עדיף לוגו על רקע שקוף או לבן.')}
         value={draft.theme.logoAssetId}
         onChange={(logoAssetId) => update({ theme: { ...draft.theme, logoAssetId } })}
       />
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-2 text-sm font-medium text-ink">צבעים</legend>
+        <legend className="mb-2 text-sm font-medium text-ink">{tr('צבעים')}</legend>
         <div className="grid grid-cols-2 gap-2">
           {PALETTE_KEYS.map((k) => (
             <label
@@ -412,7 +413,7 @@ export function SiteEditor({
                   style={{ background: PALETTES[k].accent }}
                 />
               </span>
-              {PALETTES[k].label}
+              {tr(PALETTES[k].label)}
             </label>
           ))}
           <label
@@ -442,7 +443,7 @@ export function SiteEditor({
                 background: 'conic-gradient(#ef4444,#f59e0b,#22c55e,#3b82f6,#a855f7,#ef4444)',
               }}
             />
-            מותאם אישית
+            {tr('מותאם אישית')}
           </label>
         </div>
         {draft.theme.custom && (
@@ -453,7 +454,7 @@ export function SiteEditor({
         )}
       </fieldset>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-sm font-medium text-ink">גופן</legend>
+        <legend className="mb-2 text-sm font-medium text-ink">{tr('גופן')}</legend>
         {FONT_KEYS.map((k) => (
           <label
             key={k}
@@ -472,7 +473,7 @@ export function SiteEditor({
               onChange={() => update({ theme: { ...draft.theme, font: k } })}
               className="accent-brand-600"
             />
-            {FONTS[k].label}
+            {tr(FONTS[k].label)}
           </label>
         ))}
       </fieldset>
@@ -483,9 +484,9 @@ export function SiteEditor({
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'sections', label: 'מקטעים' },
-    { key: 'design', label: 'עיצוב' },
-    { key: 'seo', label: 'גוגל' },
+    { key: 'sections', label: tr('מקטעים') },
+    { key: 'design', label: tr('עיצוב') },
+    { key: 'seo', label: tr('גוגל') },
   ];
 
   return (
@@ -493,7 +494,9 @@ export function SiteEditor({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">האתר שלי</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              {tr('האתר שלי')}
+            </h1>
             <span
               className={cn(
                 'rounded-full px-2.5 py-1 text-xs font-medium',
@@ -503,10 +506,10 @@ export function SiteEditor({
               )}
             >
               {!live
-                ? 'טיוטה · לא פורסם'
+                ? tr('טיוטה · לא פורסם')
                 : unpublishedChanges
-                  ? 'באוויר · יש שינויים שלא פורסמו'
-                  : 'באוויר'}
+                  ? tr('באוויר · יש שינויים שלא פורסמו')
+                  : tr('באוויר')}
             </span>
           </div>
           {live && site.publicUrl ? (
@@ -518,11 +521,11 @@ export function SiteEditor({
             >
               <bdi dir="ltr">{site.publicUrl.replace(/^https?:\/\//, '')}</bdi>
               <ExternalLink aria-hidden className="h-3.5 w-3.5" />
-              <span className="sr-only">(נפתח בחלון חדש)</span>
+              <span className="sr-only">{tr('(נפתח בחלון חדש)')}</span>
             </a>
           ) : (
             <p className="text-sm text-ink-muted">
-              עורכים את הטיוטה. האתר יעלה לאוויר רק אחרי פרסום.
+              {tr('עורכים את הטיוטה. האתר יעלה לאוויר רק אחרי פרסום.')}
             </p>
           )}
         </div>
@@ -532,37 +535,39 @@ export function SiteEditor({
           {live !== null || canPublish ? (
             <Button variant="ghost" onClick={() => setHistoryOpen(true)}>
               <History aria-hidden className="h-4 w-4" />
-              היסטוריה
+              {tr('היסטוריה')}
             </Button>
           ) : null}
           {editable && canPublish && (
             <Button variant="ghost" onClick={() => setOptionsOpen(true)}>
               <Settings2 aria-hidden className="h-4 w-4" />
-              אפשרויות
+              {tr('אפשרויות')}
             </Button>
           )}
           {canPublish && (
             <Button onClick={() => setPublishOpen(true)}>
-              {live ? 'פרסום השינויים' : 'פרסום האתר'}
+              {live ? tr('פרסום השינויים') : tr('פרסום האתר')}
             </Button>
           )}
         </div>
       </div>
 
       {state === 'conflict' && (
-        <Alert tone="danger" title="האתר נערך בחלון אחר">
-          כדי לא לדרוס שינויים, השמירה האוטומטית הופסקה.{' '}
+        <Alert tone="danger" title={tr('האתר נערך בחלון אחר')}>
+          {tr('כדי לא לדרוס שינויים, השמירה האוטומטית הופסקה.')}{' '}
           <button
             type="button"
             className="font-medium underline"
             onClick={() => window.location.reload()}
           >
-            טעינה מחדש
+            {tr('טעינה מחדש')}
           </button>
         </Alert>
       )}
       {!editable && (
-        <Alert tone="info">רק בעל/ת העסק יכול/ה לערוך את האתר. כאן אפשר לצפות בטיוטה.</Alert>
+        <Alert tone="info">
+          {tr('רק בעל/ת העסק יכול/ה לערוך את האתר. כאן אפשר לצפות בטיוטה.')}
+        </Alert>
       )}
 
       {canPublish && (
@@ -580,7 +585,7 @@ export function SiteEditor({
         <MediaPicker
           open={imagePick !== null}
           onOpenChange={(open) => !open && setImagePick(null)}
-          title="בחירת תמונה"
+          title={tr('בחירת תמונה')}
           onSelect={(asset) => {
             if (imagePick) setField(imagePick.id, imagePick.path, asset.id);
             setImagePick(null);
@@ -610,17 +615,17 @@ export function SiteEditor({
         {/* Phones edit through this panel; on a computer everything is on the page (D-084). */}
         {editable && (!isDesktop || panelOpen) && (
           <aside
-            aria-label="הגדרות האתר"
+            aria-label={tr('הגדרות האתר')}
             className={cn(
               'flex max-h-none flex-col rounded-3xl border border-surface-border bg-surface shadow-card lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]',
               !panelOpen && 'lg:hidden',
             )}
           >
             <div className="hidden items-center justify-between border-b border-surface-border px-4 py-2.5 lg:flex">
-              <span className="text-sm font-semibold text-ink">הגדרות</span>
+              <span className="text-sm font-semibold text-ink">{tr('הגדרות')}</span>
               <button
                 type="button"
-                aria-label="סגירת ההגדרות"
+                aria-label={tr('סגירת ההגדרות')}
                 onClick={() => {
                   setPanelOpen(false);
                   setSelected(null);
@@ -633,7 +638,7 @@ export function SiteEditor({
             {!current && (
               <div
                 role="tablist"
-                aria-label="עריכת האתר"
+                aria-label={tr('עריכת האתר')}
                 className="flex gap-1 border-b border-surface-border p-2"
               >
                 {tabs.map((t) => (
@@ -668,11 +673,11 @@ export function SiteEditor({
                     }}
                     className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
                   >
-                    <ArrowRight aria-hidden className="h-4 w-4" />
-                    כל המקטעים
+                    <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
+                    {tr('כל המקטעים')}
                   </button>
                   <h2 className="text-lg font-semibold text-ink">
-                    {sectionTypeLabels[current.type]}
+                    {tr(sectionTypeLabels[current.type])}
                   </h2>
                   <SectionForm section={current} onChange={(p) => updateSection(current.id, p)} />
                   <div className="border-t border-surface-border pt-4">
@@ -680,9 +685,9 @@ export function SiteEditor({
                       <div
                         className="flex flex-wrap items-center gap-2"
                         role="group"
-                        aria-label="אישור מחיקה"
+                        aria-label={tr('אישור מחיקה')}
                       >
-                        <span className="text-sm text-ink">למחוק את המקטע?</span>
+                        <span className="text-sm text-ink">{tr('למחוק את המקטע?')}</span>
                         <Button
                           variant="danger"
                           size="sm"
@@ -692,15 +697,15 @@ export function SiteEditor({
                             setConfirmDelete(false);
                           }}
                         >
-                          מחיקה
+                          {tr('מחיקה')}
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
-                          ביטול
+                          {tr('ביטול')}
                         </Button>
                       </div>
                     ) : (
                       <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(true)}>
-                        מחיקת המקטע
+                        {tr('מחיקת המקטע')}
                       </Button>
                     )}
                   </div>
@@ -713,9 +718,11 @@ export function SiteEditor({
                   className="flex flex-col gap-4"
                 >
                   <p className="rounded-2xl bg-brand-50 px-3 py-2.5 text-sm text-brand-800">
-                    אפשר ללחוץ על כל חלק באתר שבתצוגה המקדימה כדי לערוך, להזיז או להסתיר אותו.
+                    {tr(
+                      'אפשר ללחוץ על כל חלק באתר שבתצוגה המקדימה כדי לערוך, להזיז או להסתיר אותו.',
+                    )}
                   </p>
-                  <ol aria-label="מקטעי האתר" className="flex flex-col gap-2">
+                  <ol aria-label={tr('מקטעי האתר')} className="flex flex-col gap-2">
                     {sections.map((s, i) => (
                       <li
                         key={s.id}
@@ -735,10 +742,10 @@ export function SiteEditor({
                               s.visible ? 'text-ink' : 'text-ink-subtle',
                             )}
                           >
-                            {sectionTypeLabels[s.type]}
+                            {tr(sectionTypeLabels[s.type])}
                           </span>
                           <span className="w-full truncate text-xs text-ink-muted">
-                            {s.title || 'ללא כותרת'}
+                            {s.title || tr('ללא כותרת')}
                           </span>
                         </button>
                         <button
@@ -747,8 +754,8 @@ export function SiteEditor({
                           aria-pressed={!s.visible}
                           aria-label={
                             s.visible
-                              ? `הסתרת ${sectionTypeLabels[s.type]}`
-                              : `הצגת ${sectionTypeLabels[s.type]}`
+                              ? tr('הסתרת {0}', tr(sectionTypeLabels[s.type]))
+                              : tr('הצגת {0}', tr(sectionTypeLabels[s.type]))
                           }
                           onClick={() => updateSection(s.id, { visible: !s.visible })}
                         >
@@ -763,7 +770,7 @@ export function SiteEditor({
                           className={iconBtn}
                           disabled={i === 0}
                           onClick={() => move(i, -1)}
-                          aria-label={`הזזת ${sectionTypeLabels[s.type]} למעלה`}
+                          aria-label={tr('הזזת {0} למעלה', tr(sectionTypeLabels[s.type]))}
                         >
                           <ArrowUp aria-hidden className="h-4 w-4" />
                         </button>
@@ -772,7 +779,7 @@ export function SiteEditor({
                           className={iconBtn}
                           disabled={i === sections.length - 1}
                           onClick={() => move(i, 1)}
-                          aria-label={`הזזת ${sectionTypeLabels[s.type]} למטה`}
+                          aria-label={tr('הזזת {0} למטה', tr(sectionTypeLabels[s.type]))}
                         >
                           <ArrowDown aria-hidden className="h-4 w-4" />
                         </button>
@@ -783,10 +790,10 @@ export function SiteEditor({
                     <div className="flex items-end gap-2 rounded-2xl bg-surface-muted p-3">
                       <div className="flex-1">
                         <Select
-                          label="הוספת מקטע"
+                          label={tr('הוספת מקטע')}
                           options={SECTION_TYPES.map((t) => ({
                             value: t,
-                            label: sectionTypeLabels[t],
+                            label: tr(sectionTypeLabels[t]),
                           }))}
                           value={adding}
                           onChange={(e) => setAdding(e.target.value as SectionType)}
@@ -801,7 +808,7 @@ export function SiteEditor({
                         }}
                       >
                         <Plus aria-hidden className="h-4 w-4" />
-                        הוספה
+                        {tr('הוספה')}
                       </Button>
                     </div>
                   )}
@@ -822,16 +829,18 @@ export function SiteEditor({
                   aria-labelledby="tab-seo"
                   className="flex flex-col gap-4"
                 >
-                  <p className="text-sm text-ink-muted">כך האתר יופיע בתוצאות החיפוש בגוגל.</p>
+                  <p className="text-sm text-ink-muted">
+                    {tr('כך האתר יופיע בתוצאות החיפוש בגוגל.')}
+                  </p>
                   <Field
-                    label="כותרת בגוגל"
+                    label={tr('כותרת בגוגל')}
                     maxLength={70}
                     hint={`${seo.title.length}/70`}
                     value={seo.title}
                     onChange={(e) => setSeo({ title: e.target.value })}
                   />
                   <Textarea
-                    label="תיאור בגוגל"
+                    label={tr('תיאור בגוגל')}
                     maxLength={160}
                     hint={`${seo.description.length}/160`}
                     value={seo.description}
@@ -849,12 +858,12 @@ export function SiteEditor({
           </aside>
         )}
 
-        <section aria-label="תצוגה מקדימה" className="flex flex-col gap-3">
+        <section aria-label={tr('תצוגה מקדימה')} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             {/* One clear editing toolbar: pages · sections · screen size (D-085). */}
             <div
               role="group"
-              aria-label="כלי עריכה"
+              aria-label={tr('כלי עריכה')}
               className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-surface-border bg-surface p-1.5 shadow-card"
             >
               <PagesBar
@@ -888,7 +897,7 @@ export function SiteEditor({
               )}
               <div
                 role="group"
-                aria-label="גודל מסך"
+                aria-label={tr('גודל מסך')}
                 className="ms-auto flex rounded-lg bg-surface-sunken p-0.5"
               >
                 {(['desktop', 'mobile'] as const).map((d) => (
@@ -907,7 +916,7 @@ export function SiteEditor({
                     ) : (
                       <Smartphone aria-hidden className="h-4 w-4" />
                     )}
-                    {d === 'desktop' ? 'מחשב' : 'נייד'}
+                    {d === 'desktop' ? tr('מחשב') : tr('נייד')}
                   </button>
                 ))}
               </div>
@@ -918,8 +927,12 @@ export function SiteEditor({
                 className="flex flex-wrap items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800"
               >
                 <span className="flex-1">
-                  העמוד "{outOfMenuPage.title}" נוסף, אבל לא מופיע בתפריט האתר (מתאים למבצע או
-                  לפרסום: משתפים את הקישור <bdi dir="ltr">/{outOfMenuPage.slug}</bdi>).
+                  {tr('העמוד "')}
+                  {outOfMenuPage.title}
+                  {tr(
+                    '" נוסף, אבל לא מופיע בתפריט האתר (מתאים למבצע או לפרסום: משתפים את הקישור',
+                  )}{' '}
+                  <bdi dir="ltr">/{outOfMenuPage.slug}</bdi>).
                 </span>
                 <Button
                   size="sm"
@@ -934,11 +947,11 @@ export function SiteEditor({
                     setOutOfMenu(null);
                   }}
                 >
-                  הוספה לתפריט
+                  {tr('הוספה לתפריט')}
                 </Button>
                 <button
                   type="button"
-                  aria-label="סגירת ההודעה"
+                  aria-label={tr('סגירת ההודעה')}
                   onClick={() => setOutOfMenu(null)}
                   className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-brand-100"
                 >
@@ -948,8 +961,9 @@ export function SiteEditor({
             )}
             {editable && (
               <p className="px-1 text-xs text-ink-muted">
-                טיפ: לחצו על טקסט, תמונה או מקטע באתר כדי לערוך אותם. לחיצה על הלוגו פותחת את עיצוב
-                האתר.
+                {tr(
+                  'טיפ: לחצו על טקסט, תמונה או מקטע באתר כדי לערוך אותם. לחיצה על הלוגו פותחת את עיצוב האתר.',
+                )}
               </p>
             )}
           </div>
@@ -982,10 +996,10 @@ export function SiteEditor({
                   !isDesktop || panelOpen ? null : designOpen ? (
                     <div className="flex flex-col gap-5">
                       <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-ink">עיצוב האתר</h2>
+                        <h2 className="text-sm font-semibold text-ink">{tr('עיצוב האתר')}</h2>
                         <button
                           type="button"
-                          aria-label="סגירה"
+                          aria-label={tr('סגירה')}
                           onClick={() => setDesignOpen(false)}
                           className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken"
                         >
@@ -1023,7 +1037,7 @@ export function SiteEditor({
                 onImage={(id, path) => setImagePick({ id, path })}
               />
             ) : (
-              <PreviewFrame html={html} title="תצוגה מקדימה של האתר" device={device} />
+              <PreviewFrame html={html} title={tr('תצוגה מקדימה של האתר')} device={device} />
             )}
           </div>
         </section>

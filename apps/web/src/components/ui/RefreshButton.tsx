@@ -2,6 +2,7 @@ import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from './Button';
+import { tr } from '../../i18n';
 
 /**
  * "רענון": reloads a screen's data now instead of waiting for the background refresh. The icon
@@ -32,10 +33,10 @@ export function RefreshButton({ onRefresh }: { onRefresh: () => Promise<unknown>
             state === 'loading' && 'animate-spin motion-reduce:animate-none',
           )}
         />
-        רענון
+        {tr('רענון')}
       </Button>
       <span role="status" className="sr-only">
-        {state === 'done' ? 'עודכן' : ''}
+        {state === 'done' ? tr('עודכן') : ''}
       </span>
     </>
   );

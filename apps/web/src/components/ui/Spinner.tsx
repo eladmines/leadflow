@@ -1,4 +1,5 @@
 import { cn } from '../../lib/cn';
+import { tr } from '../../i18n';
 
 interface SpinnerProps {
   size?: 'sm' | 'md';
@@ -6,7 +7,7 @@ interface SpinnerProps {
   label?: string;
 }
 
-export function Spinner({ size = 'md', label = 'טוען…' }: SpinnerProps) {
+export function Spinner({ size = 'md', label = tr('טוען…') }: SpinnerProps) {
   return (
     <span role={label ? 'status' : undefined} className="inline-flex items-center gap-2">
       <span

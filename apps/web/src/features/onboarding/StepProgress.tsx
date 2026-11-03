@@ -1,15 +1,21 @@
 import { ONBOARDING_STEPS } from '@leadflow/shared';
 import { Check } from 'lucide-react';
 import { cn } from '../../lib/cn';
+import { tr } from '../../i18n';
 
-export const stepTitles = ['פרטי העסק', 'יצירת קשר', 'אזורי שירות', 'שעות פעילות'] as const;
+export const stepTitles = [
+  tr('פרטי העסק'),
+  tr('יצירת קשר'),
+  tr('אזורי שירות'),
+  tr('שעות פעילות'),
+] as const;
 
 /** Numbered steps with connecting lines. The current step is announced to screen readers. */
 export function StepProgress({ step }: { step: number }) {
   return (
-    <nav aria-label="שלבי הקמת העסק" className="flex flex-col gap-3">
+    <nav aria-label={tr('שלבי הקמת העסק')} className="flex flex-col gap-3">
       <p className="text-sm font-medium text-accent-700">
-        שלב {step} מתוך {ONBOARDING_STEPS}
+        {tr('שלב {0} מתוך {1}', step, ONBOARDING_STEPS)}
       </p>
       <ol className="flex items-start">
         {stepTitles.map((title, i) => {
@@ -60,7 +66,7 @@ export function StepProgress({ step }: { step: number }) {
                 )}
               >
                 {title}
-                {done && <span className="sr-only"> (הושלם)</span>}
+                {done && <span className="sr-only"> {tr('(הושלם)')}</span>}
               </span>
             </li>
           );

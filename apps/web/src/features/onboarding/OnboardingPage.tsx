@@ -18,6 +18,7 @@ import { StepContact } from './StepContact';
 import { StepHours } from './StepHours';
 import { StepProgress } from './StepProgress';
 import { StepServiceAreas } from './StepServiceAreas';
+import { tr } from '../../i18n';
 
 function WizardFrame({ step, children }: { step: number; children: React.ReactNode }) {
   return (
@@ -28,7 +29,7 @@ function WizardFrame({ step, children }: { step: number; children: React.ReactNo
         <StepProgress step={step} />
         <Card className="p-6 sm:p-8">{children}</Card>
         <p className="text-center text-xs text-ink-muted">
-          ההתקדמות נשמרת בכל מעבר שלב — אפשר לצאת ולחזור בכל זמן.
+          {tr('ההתקדמות נשמרת בכל מעבר שלב — אפשר לצאת ולחזור בכל זמן.')}
         </p>
       </main>
     </div>
@@ -56,14 +57,14 @@ export function ContinueOnboardingPage() {
   const { businessId = '' } = useParams();
   const business = useBusiness(businessId);
 
-  if (business.isPending) return <FullPageSpinner label="טוענים את פרטי העסק…" />;
+  if (business.isPending) return <FullPageSpinner label={tr('טוענים את פרטי העסק…')} />;
   if (business.isError) {
     if (business.error instanceof ApiError && business.error.status === 404) {
       return <BusinessNotFound />;
     }
     return (
       <main className="mx-auto max-w-md px-4 py-16">
-        <Alert tone="danger" title="לא הצלחנו לטעון את פרטי העסק">
+        <Alert tone="danger" title={tr('לא הצלחנו לטעון את פרטי העסק')}>
           {errorMessage(business.error)}
         </Alert>
       </main>
@@ -75,8 +76,8 @@ export function ContinueOnboardingPage() {
   if (business.data.role !== 'OWNER') {
     return (
       <main className="mx-auto max-w-md px-4 py-16">
-        <Alert tone="info" title="העסק עדיין בהקמה">
-          רק בעל/ת העסק יכול/ה להשלים את שלבי ההקמה. נסו שוב מאוחר יותר.
+        <Alert tone="info" title={tr('העסק עדיין בהקמה')}>
+          {tr('רק בעל/ת העסק יכול/ה להשלים את שלבי ההקמה. נסו שוב מאוחר יותר.')}
         </Alert>
       </main>
     );

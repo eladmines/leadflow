@@ -1,5 +1,6 @@
 import { forwardRef, useId, type InputHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
+import { isRtl, tr } from '../../i18n';
 
 export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -46,7 +47,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         dir={ltr ? 'ltr' : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
-        className={cn(inputClasses(Boolean(error)), ltr && 'text-end', className)}
+        // LTR values (phones, emails) line up with the page: right in Hebrew, left in English.
+        className={cn(inputClasses(Boolean(error)), ltr && isRtl() && 'text-end', className)}
         {...rest}
       />
       {hint && !error && (
@@ -56,7 +58,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
       )}
       {error && (
         <p id={errorId} className="text-xs text-danger-600">
-          {error}
+          {tr(error)}
         </p>
       )}
     </div>

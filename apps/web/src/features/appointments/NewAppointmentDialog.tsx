@@ -7,6 +7,7 @@ import { useMembers } from '../businesses/api';
 import { useLeads } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { fromInputs, toDateInput, useCreateAppointment, useServices } from './api';
+import { tr } from '../../i18n';
 
 /** Book an appointment for an existing lead or a new customer (name + phone). */
 export function NewAppointmentDialog({
@@ -80,7 +81,7 @@ export function NewAppointmentDialog({
   };
 
   return (
-    <DialogShell open={open} onOpenChange={onOpenChange} title="תור חדש">
+    <DialogShell open={open} onOpenChange={onOpenChange} title={tr('תור חדש')}>
       <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
         {create.isError && !(create.error instanceof ApiError && create.error.fields) && (
           <Alert tone="danger">{errorMessage(create.error)}</Alert>
@@ -88,11 +89,11 @@ export function NewAppointmentDialog({
 
         {lead ? (
           <p className="rounded-lg bg-surface-muted px-3 py-2 text-sm text-ink">
-            לקוח: <strong>{lead.contact.name}</strong>
+            {tr('לקוח:')} <strong>{lead.contact.name}</strong>
           </p>
         ) : (
           <fieldset className="flex flex-col gap-3">
-            <legend className="mb-2 text-sm font-medium text-ink">לקוח</legend>
+            <legend className="mb-2 text-sm font-medium text-ink">{tr('לקוח')}</legend>
             <div role="radiogroup" className="flex gap-2">
               {(['new', 'lead'] as const).map((m) => (
                 <label
@@ -106,20 +107,20 @@ export function NewAppointmentDialog({
                     onChange={() => setMode(m)}
                     className="accent-brand-600"
                   />
-                  {m === 'new' ? 'לקוח חדש' : 'ליד קיים'}
+                  {m === 'new' ? tr('לקוח חדש') : tr('ליד קיים')}
                 </label>
               ))}
             </div>
             {mode === 'new' ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field
-                  label="שם הלקוח"
+                  label={tr('שם הלקוח')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   error={errors['customer.name']}
                 />
                 <Field
-                  label="טלפון"
+                  label={tr('טלפון')}
                   ltr
                   inputMode="tel"
                   value={phone}
@@ -130,14 +131,14 @@ export function NewAppointmentDialog({
             ) : (
               <>
                 <Field
-                  label="חיפוש ליד"
-                  placeholder="שם, טלפון או אימייל"
+                  label={tr('חיפוש ליד')}
+                  placeholder={tr('שם, טלפון או אימייל')}
                   value={leadQuery}
                   onChange={(e) => setLeadQuery(e.target.value)}
                 />
                 <Select
-                  label="ליד"
-                  placeholder="בחירת ליד"
+                  label={tr('ליד')}
+                  placeholder={tr('בחירת ליד')}
                   options={(found.data ?? [])
                     .slice(0, 30)
                     .map((l) => ({ value: l.id, label: l.contact.name }))}
@@ -151,11 +152,13 @@ export function NewAppointmentDialog({
         )}
 
         <Select
-          label="שירות"
-          placeholder={activeServices.length ? 'בחירת שירות (לא חובה)' : 'אין עדיין שירותים'}
+          label={tr('שירות')}
+          placeholder={
+            activeServices.length ? tr('בחירת שירות (לא חובה)') : tr('אין עדיין שירותים')
+          }
           options={activeServices.map((s) => ({
             value: s.id,
-            label: `${s.name} · ${s.durationMin} דק׳`,
+            label: tr('{0} · {1} דק׳', s.name, s.durationMin),
           }))}
           value={serviceId}
           onChange={(e) => pickService(e.target.value)}
@@ -163,9 +166,9 @@ export function NewAppointmentDialog({
         />
         {manager && (
           <Select
-            label="איש צוות"
+            label={tr('איש צוות')}
             options={[
-              { value: '', label: 'אני' },
+              { value: '', label: tr('אני') },
               ...(members.data ?? [])
                 .filter((m) => m.userId !== undefined)
                 .map((m) => ({ value: m.userId, label: m.fullName })),
@@ -176,10 +179,20 @@ export function NewAppointmentDialog({
           />
         )}
         <div className="grid grid-cols-3 gap-3">
-          <Field label="תאריך" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          <Field label="שעה" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           <Field
-            label="משך (דק׳)"
+            label={tr('תאריך')}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+          <Field
+            label={tr('שעה')}
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+          />
+          <Field
+            label={tr('משך (דק׳)')}
             inputMode="numeric"
             ltr
             value={duration}
@@ -188,7 +201,7 @@ export function NewAppointmentDialog({
           />
         </div>
         <Textarea
-          label="הערות"
+          label={tr('הערות')}
           rows={2}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -196,10 +209,10 @@ export function NewAppointmentDialog({
         />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            ביטול
+            {tr('ביטול')}
           </Button>
           <Button type="submit" loading={create.isPending}>
-            קביעת התור
+            {tr('קביעת התור')}
           </Button>
         </div>
       </form>

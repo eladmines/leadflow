@@ -54,15 +54,16 @@ import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { PageTourButton } from '../tour/TourContext';
+import { tr, intlLocale } from '../../i18n';
 
 const fieldLabels: Record<string, string> = {
-  expectedValue: 'ערך משוער',
-  nextActionAt: 'תאריך טיפול הבא',
-  message: 'פרטי הפנייה',
-  tags: 'תגיות',
+  expectedValue: tr('ערך משוער'),
+  nextActionAt: tr('תאריך טיפול הבא'),
+  message: tr('פרטי הפנייה'),
+  tags: tr('תגיות'),
 };
 
-const apptWhenFmt = new Intl.DateTimeFormat('he-IL', {
+const apptWhenFmt = new Intl.DateTimeFormat(intlLocale(), {
   weekday: 'short',
   day: 'numeric',
   month: 'numeric',
@@ -77,38 +78,47 @@ function activityText(a: Activity): string {
   switch (a.type) {
     case 'lead.created':
       return d.source === 'manual'
-        ? 'הליד נוצר ידנית'
+        ? tr('הליד נוצר ידנית')
         : d.source === 'whatsapp'
-          ? 'הליד נוצר מהודעת וואטסאפ'
-          : 'הליד נוצר מטופס באתר';
+          ? tr('הליד נוצר מהודעת וואטסאפ')
+          : tr('הליד נוצר מטופס באתר');
     case 'lead.stage_changed':
-      return `השלב שונה מ"${String(d.from)}" ל"${String(d.to)}"`;
+      return tr('השלב שונה מ"{0}" ל"{1}"', String(d.from), String(d.to));
     case 'lead.assigned':
-      return d.to ? `הליד שויך ל${String(d.to)}` : 'השיוך הוסר';
+      return d.to ? tr('הליד שויך ל{0}', String(d.to)) : tr('השיוך הוסר');
     case 'lead.updated':
-      return `עודכנו: ${((d.fields as string[]) ?? []).map((f) => fieldLabels[f] ?? f).join(', ')}`;
+      return tr(
+        'עודכנו: {0}',
+        ((d.fields as string[]) ?? []).map((f) => fieldLabels[f] ?? f).join(', '),
+      );
     case 'lead.note':
       return String(d.text ?? '');
     case 'task.created':
-      return `נוספה משימה: ${String(d.title)}${d.assignee ? ` (${String(d.assignee)})` : ''}`;
+      return tr(
+        'נוספה משימה: {0}{1}',
+        String(d.title),
+        d.assignee ? ` (${String(d.assignee)})` : '',
+      );
     case 'task.completed':
-      return `בוצעה משימה: ${String(d.title)}`;
+      return tr('בוצעה משימה: {0}', String(d.title));
     case 'quote.created':
-      return `נוצרה הצעת מחיר מס׳ ${String(d.number)} (${formatAgorot(Number(d.total))})`;
+      return tr('נוצרה הצעת מחיר מס׳ {0} ({1})', String(d.number), formatAgorot(Number(d.total)));
     case 'quote.sent':
-      return `הצעת מחיר מס׳ ${String(d.number)} נשלחה ללקוח`;
+      return tr('הצעת מחיר מס׳ {0} נשלחה ללקוח', String(d.number));
     case 'quote.accepted':
-      return `הצעת מחיר מס׳ ${String(d.number)} אושרה${a.actor ? '' : ' על ידי הלקוח'}`;
+      return tr('הצעת מחיר מס׳ {0} אושרה{1}', String(d.number), a.actor ? '' : tr(' על ידי הלקוח'));
     case 'quote.rejected':
-      return `הצעת מחיר מס׳ ${String(d.number)} נדחתה${a.actor ? '' : ' על ידי הלקוח'}`;
+      return tr('הצעת מחיר מס׳ {0} נדחתה{1}', String(d.number), a.actor ? '' : tr(' על ידי הלקוח'));
     case 'appointment.created':
-      return `${d.requested ? 'התקבלה מהאתר בקשה לתור ל' : 'נקבע תור ל'}${apptWhen(d.startsAt)}${
+      return `${d.requested ? tr('התקבלה מהאתר בקשה לתור ל') : tr('נקבע תור ל')}${apptWhen(d.startsAt)}${
         d.service ? ` (${String(d.service)})` : ''
       }`;
     case 'appointment.updated':
-      return `התור עודכן: ${apptWhen(d.startsAt)} · ${
-        appointmentStatusLabels[d.status as keyof typeof appointmentStatusLabels] ?? ''
-      }`;
+      return tr(
+        'התור עודכן: {0} · {1}',
+        apptWhen(d.startsAt),
+        tr(appointmentStatusLabels[d.status as keyof typeof appointmentStatusLabels]) ?? '',
+      );
   }
 }
 
@@ -133,7 +143,7 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor="lead-tag" className="text-sm font-medium text-ink">
-        תגיות
+        {tr('תגיות')}
       </label>
       {tags.length > 0 && (
         <ul className="flex flex-wrap gap-1.5">
@@ -145,7 +155,7 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
               {t}
               <button
                 type="button"
-                aria-label={`הסרת התגית ${t}`}
+                aria-label={tr('הסרת התגית {0}', t)}
                 onClick={() => onChange(tags.filter((o) => o !== t))}
                 className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-accent-100"
               >
@@ -162,7 +172,7 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
           value={text}
           maxLength={30}
           disabled={full}
-          placeholder={full ? 'הגעת למספר התגיות המרבי' : 'למשל: VIP, חוזר, דחוף'}
+          placeholder={full ? tr('הגעת למספר התגיות המרבי') : tr('למשל: VIP, חוזר, דחוף')}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -173,7 +183,7 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
           className={inputClasses(false)}
         />
         <Button type="button" variant="secondary" disabled={full || !text.trim()} onClick={add}>
-          הוספה
+          {tr('הוספה')}
         </Button>
       </div>
       <datalist id="lead-tag-suggestions">
@@ -200,11 +210,11 @@ function Details({ lead }: { lead: Lead }) {
 
   return (
     <Card className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold text-ink">פרטי הטיפול</h2>
+      <h2 className="text-lg font-semibold text-ink">{tr('פרטי הטיפול')}</h2>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="lead-stage" className="text-sm font-medium text-ink">
-          שלב
+          {tr('שלב')}
         </label>
         <select
           id="lead-stage"
@@ -221,7 +231,7 @@ function Details({ lead }: { lead: Lead }) {
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="lead-owner" className="text-sm font-medium text-ink">
-          אחראי
+          {tr('אחראי')}
         </label>
         {canAssign ? (
           <select
@@ -230,7 +240,7 @@ function Details({ lead }: { lead: Lead }) {
             onChange={(e) => save({ ownerId: e.target.value || null })}
             className={cn(inputClasses(false), 'cursor-pointer')}
           >
-            <option value="">ללא אחראי</option>
+            <option value="">{tr('ללא אחראי')}</option>
             {members.data?.map((m) => (
               <option key={m.userId} value={m.userId}>
                 {m.fullName}
@@ -239,13 +249,13 @@ function Details({ lead }: { lead: Lead }) {
           </select>
         ) : (
           <p id="lead-owner" className="text-sm text-ink">
-            {lead.owner?.name ?? 'ללא אחראי'}
+            {lead.owner?.name ?? tr('ללא אחראי')}
           </p>
         )}
       </div>
       <TagEditor tags={lead.tags} onChange={(tags) => save({ tags })} />
       <Field
-        label="ערך משוער (₪)"
+        label={tr('ערך משוער (₪)')}
         ltr
         inputMode="numeric"
         value={value}
@@ -256,7 +266,7 @@ function Details({ lead }: { lead: Lead }) {
         }}
       />
       <Field
-        label="תאריך טיפול הבא"
+        label={tr('תאריך טיפול הבא')}
         type="datetime-local"
         value={next}
         onChange={(e) => setNext(e.target.value)}
@@ -267,7 +277,7 @@ function Details({ lead }: { lead: Lead }) {
       />
       {update.isPending && (
         <p role="status" className="text-xs text-ink-muted">
-          שומר…
+          {tr('שומר…')}
         </p>
       )}
     </Card>
@@ -288,21 +298,21 @@ function Notes({ leadId, activities }: { leadId: string; activities: Activity[] 
 
   return (
     <Card className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold text-ink">הערות והיסטוריה</h2>
+      <h2 className="text-lg font-semibold text-ink">{tr('הערות והיסטוריה')}</h2>
       <form noValidate onSubmit={submit} className="flex flex-col gap-2">
         <Textarea
-          label="הוספת הערה"
+          label={tr('הוספת הערה')}
           rows={3}
-          placeholder="למשל: דיברנו בטלפון, מחכה להצעת מחיר"
+          placeholder={tr('למשל: דיברנו בטלפון, מחכה להצעת מחיר')}
           error={form.formState.errors.text?.message}
           {...form.register('text')}
         />
         {addNote.isError && <Alert tone="danger">{errorMessage(addNote.error)}</Alert>}
         <Button type="submit" size="sm" loading={addNote.isPending} className="self-end">
-          שמירת הערה
+          {tr('שמירת הערה')}
         </Button>
       </form>
-      <ol aria-label="היסטוריית הליד" className="flex flex-col">
+      <ol aria-label={tr('היסטוריית הליד')} className="flex flex-col">
         {activities.map((a) => (
           <li key={a.id} className="relative flex gap-3 pb-5 last:pb-0">
             <span
@@ -344,15 +354,15 @@ function LeadTasks({ leadId }: { leadId: string }) {
   const open = (tasks.data ?? []).filter((t) => t.status === 'OPEN');
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold text-ink">משימות</h2>
+      <h2 className="text-lg font-semibold text-ink">{tr('משימות')}</h2>
       {open.length > 0 ? (
-        <ul aria-label="משימות הליד" className="divide-y divide-surface-border">
+        <ul aria-label={tr('משימות הליד')} className="divide-y divide-surface-border">
           {open.map((t) => (
             <TaskItem key={t.id} task={t} businessId={business.id} showLead={false} />
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-ink-muted">אין משימות פתוחות לליד הזה.</p>
+        <p className="text-sm text-ink-muted">{tr('אין משימות פתוחות לליד הזה.')}</p>
       )}
       <NewTaskForm leadId={leadId} compact />
     </Card>
@@ -366,16 +376,16 @@ export function LeadDetailPage() {
   const detail = useLeadDetail(business.id, leadId);
   const back = businessWebPaths.section(business.id, 'leads');
 
-  if (detail.isPending) return <Spinner label="טוענים את הליד…" />;
+  if (detail.isPending) return <Spinner label={tr('טוענים את הליד…')} />;
   if (detail.isError) {
     if (detail.error instanceof ApiError && detail.error.status === 404) {
       return (
         <EmptyState
-          title="הליד לא נמצא"
-          description="ייתכן שהקישור שגוי, או שהליד לא משויך אליך."
+          title={tr('הליד לא נמצא')}
+          description={tr('ייתכן שהקישור שגוי, או שהליד לא משויך אליך.')}
           action={
             <Link to={back} className="text-sm font-medium text-brand-700 underline">
-              חזרה לכל הלידים
+              {tr('חזרה לכל הלידים')}
             </Link>
           }
         />
@@ -393,8 +403,8 @@ export function LeadDetailPage() {
           to={back}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
         >
-          <ArrowRight aria-hidden className="h-4 w-4" />
-          כל הלידים
+          <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
+          {tr('כל הלידים')}
         </Link>
         <PageTourButton />
       </div>
@@ -409,7 +419,7 @@ export function LeadDetailPage() {
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-ink">{lead.contact.name}</h1>
             <p className="text-sm text-ink-muted">
-              {leadSourceLabels[lead.source]} · {formatDateTime(lead.createdAt)}
+              {tr(leadSourceLabels[lead.source])} · {formatDateTime(lead.createdAt)}
               {lead.expectedValue !== null && ` · ${shekel.format(lead.expectedValue)}`}
             </p>
           </div>
@@ -417,7 +427,7 @@ export function LeadDetailPage() {
         <span
           className={cn('rounded-full px-3 py-1 text-sm font-medium', stageTone[lead.stage.kind])}
         >
-          {lead.stage.name}
+          {tr(lead.stage.name)}
         </span>
         <div className="flex w-full flex-wrap gap-2">
           {phone && (
@@ -475,9 +485,9 @@ function LeadAppointments({ lead }: { lead: Lead }) {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-ink">תורים</h2>
+        <h2 className="text-base font-semibold text-ink">{tr('תורים')}</h2>
         <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
-          קביעת תור
+          {tr('קביעת תור')}
         </Button>
       </div>
       {appts.data && appts.data.length > 0 ? (
@@ -488,12 +498,14 @@ function LeadAppointments({ lead }: { lead: Lead }) {
                 {apptWhen(a.startsAt)}
                 {a.service && <span className="text-ink-muted"> · {a.service.name}</span>}
               </span>
-              <span className="text-xs text-ink-muted">{appointmentStatusLabels[a.status]}</span>
+              <span className="text-xs text-ink-muted">
+                {tr(appointmentStatusLabels[a.status])}
+              </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-ink-muted">אין תורים קרובים.</p>
+        <p className="text-sm text-ink-muted">{tr('אין תורים קרובים.')}</p>
       )}
       <NewAppointmentDialog open={open} onOpenChange={setOpen} lead={lead} />
     </Card>
@@ -508,9 +520,9 @@ function LeadQuotes({ leadId }: { leadId: string }) {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-ink">הצעות מחיר</h2>
+        <h2 className="text-base font-semibold text-ink">{tr('הצעות מחיר')}</h2>
         <Link to={`${base}/new?leadId=${leadId}`} className={buttonClasses('secondary', 'sm')}>
-          הצעת מחיר חדשה
+          {tr('הצעת מחיר חדשה')}
         </Link>
       </div>
       {quotes.data && quotes.data.length > 0 ? (
@@ -518,14 +530,16 @@ function LeadQuotes({ leadId }: { leadId: string }) {
           {quotes.data.map((q) => (
             <li key={q.id} className="flex items-center justify-between gap-2 text-sm">
               <Link to={`${base}/${q.id}`} className="text-brand-700 hover:underline">
-                מס׳ {q.number} · {formatAgorot(q.totals.total)}
+                {tr('מס׳')} {q.number} · {formatAgorot(q.totals.total)}
               </Link>
-              <span className="text-xs text-ink-muted">{quoteStatusLabels[displayStatus(q)]}</span>
+              <span className="text-xs text-ink-muted">
+                {tr(quoteStatusLabels[displayStatus(q)])}
+              </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-ink-muted">אין עדיין הצעות.</p>
+        <p className="text-sm text-ink-muted">{tr('אין עדיין הצעות.')}</p>
       )}
     </Card>
   );
@@ -550,24 +564,25 @@ function DeleteLead({ lead }: { lead: Lead }) {
         onClick={() => setOpen(true)}
       >
         <Trash2 aria-hidden className="h-4 w-4" />
-        מחיקת הליד
+        {tr('מחיקת הליד')}
       </Button>
       <DialogShell
         open={open}
         onOpenChange={setOpen}
-        title={`למחוק את הליד של ${lead.contact.name}?`}
+        title={tr('למחוק את הליד של {0}?', lead.contact.name)}
       >
         <p className="text-sm text-ink-muted">
-          הפנייה, ההערות וההיסטוריה שלה יימחקו לצמיתות. משימות שקשורות לליד יישארו, בלי הקישור. אם
-          אין לאיש הקשר פניות נוספות, גם פרטיו יימחקו. אי אפשר לבטל את הפעולה.
+          {tr(
+            'הפנייה, ההערות וההיסטוריה שלה יימחקו לצמיתות. משימות שקשורות לליד יישארו, בלי הקישור. אם אין לאיש הקשר פניות נוספות, גם פרטיו יימחקו. אי אפשר לבטל את הפעולה.',
+          )}
         </p>
         {remove.isError && <Alert tone="danger">{errorMessage(remove.error)}</Alert>}
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={() => setOpen(false)}>
-            ביטול
+            {tr('ביטול')}
           </Button>
           <Button variant="danger" loading={remove.isPending} onClick={() => void confirm()}>
-            מחיקה לצמיתות
+            {tr('מחיקה לצמיתות')}
           </Button>
         </div>
       </DialogShell>

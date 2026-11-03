@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { Alert, Button } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';
 import { ServiceAreasEditor } from '../businesses/ServiceAreasEditor';
+import { tr } from '../../i18n';
 
 interface Props {
   business: Business;
@@ -37,16 +38,16 @@ export function StepServiceAreas({ business, onSubmit, onSkip, onBack }: Props) 
   return (
     <form noValidate onSubmit={submit} className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">באילו אזורים אתם נותנים שירות?</h1>
+        <h1 className="text-2xl font-bold text-ink">{tr('באילו אזורים אתם נותנים שירות?')}</h1>
         <p className="text-sm text-ink-muted">
-          ערים או אזורים, למשל &quot;חיפה&quot; או &quot;השרון&quot;. אפשר לדלג ולהוסיף בהמשך.
+          {tr('ערים או אזורים, למשל "חיפה" או "השרון". אפשר לדלג ולהוסיף בהמשך.')}
         </p>
       </header>
       {formError && <Alert tone="danger">{formError}</Alert>}
       <ServiceAreasEditor value={areas} onChange={setAreas} />
       <div className="flex flex-wrap justify-between gap-3">
         <Button variant="ghost" onClick={onBack} disabled={pending !== null}>
-          חזרה
+          {tr('חזרה')}
         </Button>
         <div className="flex gap-3">
           <Button
@@ -55,10 +56,10 @@ export function StepServiceAreas({ business, onSubmit, onSkip, onBack }: Props) 
             disabled={pending !== null}
             onClick={() => void run('skip', onSkip)}
           >
-            דילוג
+            {tr('דילוג')}
           </Button>
           <Button type="submit" loading={pending === 'save'} disabled={pending !== null}>
-            המשך
+            {tr('המשך')}
           </Button>
         </div>
       </div>

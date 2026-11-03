@@ -21,20 +21,21 @@ import {
   toTimeInput,
   useUpdateAppointment,
 } from './api';
+import { tr } from '../../i18n';
 
 /** Status actions offered for each status. */
 const actions: Partial<Record<AppointmentStatus, { to: AppointmentStatus; label: string }[]>> = {
   REQUESTED: [
-    { to: 'CONFIRMED', label: 'אישור התור' },
-    { to: 'CANCELLED', label: 'דחייה' },
+    { to: 'CONFIRMED', label: tr('אישור התור') },
+    { to: 'CANCELLED', label: tr('דחייה') },
   ],
   CONFIRMED: [
-    { to: 'COMPLETED', label: 'סימון כבוצע' },
-    { to: 'NO_SHOW', label: 'לא הגיע/ה' },
-    { to: 'CANCELLED', label: 'ביטול התור' },
+    { to: 'COMPLETED', label: tr('סימון כבוצע') },
+    { to: 'NO_SHOW', label: tr('לא הגיע/ה') },
+    { to: 'CANCELLED', label: tr('ביטול התור') },
   ],
-  CANCELLED: [{ to: 'CONFIRMED', label: 'החזרה לתור מאושר' }],
-  NO_SHOW: [{ to: 'COMPLETED', label: 'סימון כבוצע' }],
+  CANCELLED: [{ to: 'CONFIRMED', label: tr('החזרה לתור מאושר') }],
+  NO_SHOW: [{ to: 'COMPLETED', label: tr('סימון כבוצע') }],
 };
 
 export function AppointmentDialog({
@@ -94,9 +95,9 @@ export function AppointmentDialog({
           </bdi>
         </p>
         <p>
-          {a.service?.name ?? 'ללא שירות'} · {a.staff?.name ?? 'לא שובץ איש צוות'} ·{' '}
-          <span className="font-medium text-ink">{appointmentStatusLabels[a.status]}</span>
-          {a.source === 'website' && ' · בקשה מהאתר'}
+          {a.service?.name ?? tr('ללא שירות')} · {a.staff?.name ?? tr('לא שובץ איש צוות')} ·{' '}
+          <span className="font-medium text-ink">{tr(appointmentStatusLabels[a.status])}</span>
+          {a.source === 'website' && tr(' · בקשה מהאתר')}
         </p>
         <p className="flex flex-wrap gap-3">
           {a.customer.phone && (
@@ -109,7 +110,7 @@ export function AppointmentDialog({
               to={`${businessWebPaths.section(business.id, 'leads')}/${a.lead.id}`}
               className="text-brand-700 hover:underline"
             >
-              לכרטיס הליד
+              {tr('לכרטיס הליד')}
             </Link>
           )}
         </p>
@@ -143,12 +144,22 @@ export function AppointmentDialog({
       )}
 
       <fieldset className="flex flex-col gap-3 border-t border-surface-border pt-4">
-        <legend className="sr-only">שינוי פרטי התור</legend>
+        <legend className="sr-only">{tr('שינוי פרטי התור')}</legend>
         <div className="grid grid-cols-3 gap-3">
-          <Field label="תאריך" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          <Field label="שעה" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           <Field
-            label="משך (דק׳)"
+            label={tr('תאריך')}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+          <Field
+            label={tr('שעה')}
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+          />
+          <Field
+            label={tr('משך (דק׳)')}
             ltr
             inputMode="numeric"
             value={duration}
@@ -157,14 +168,19 @@ export function AppointmentDialog({
         </div>
         {manager && (
           <Select
-            label="איש צוות"
-            placeholder="לא שובץ"
+            label={tr('איש צוות')}
+            placeholder={tr('לא שובץ')}
             options={(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName }))}
             value={staffId}
             onChange={(e) => setStaffId(e.target.value)}
           />
         )}
-        <Textarea label="הערות" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Textarea
+          label={tr('הערות')}
+          rows={2}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
         <div className="flex justify-end">
           <Button
             variant="secondary"
@@ -180,7 +196,7 @@ export function AppointmentDialog({
               })
             }
           >
-            שמירת השינויים
+            {tr('שמירת השינויים')}
           </Button>
         </div>
       </fieldset>

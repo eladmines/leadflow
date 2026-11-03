@@ -1,5 +1,6 @@
 import { DialogShell } from '../../components/ui';
 import { DetailsSection, HoursSection, ServiceAreasSection } from '../settings/SettingsPage';
+import { tr } from '../../i18n';
 
 /**
  * Phone, address, opening hours and service areas belong to the business profile, so the site,
@@ -14,9 +15,9 @@ export function BusinessDetailsDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   return (
-    <DialogShell open={open} onOpenChange={onOpenChange} title="פרטי העסק">
+    <DialogShell open={open} onOpenChange={onOpenChange} title={tr('פרטי העסק')}>
       <p className="rounded-lg bg-warning-50 px-3 py-2.5 text-sm text-warning-600">
-        הפרטים האלה משותפים לכל המערכת: שינוי כאן יתעדכן באתר, בכפתור החיוג ובהתראות במייל.
+        {tr('הפרטים האלה משותפים לכל המערכת: שינוי כאן יתעדכן באתר, בכפתור החיוג ובהתראות במייל.')}
       </p>
       <DetailsSection canEdit />
       <ServiceAreasSection canEdit />

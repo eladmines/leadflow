@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Button } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { SectionForm } from './SectionForm';
+import { tr } from '../../i18n';
 
 type Option<T extends string> = { value: T; label: string };
 
@@ -43,17 +44,17 @@ function Segmented<T extends string>({
 
 /** Title colour and size: shared by the section window and the text toolbar (D-082). */
 export const titleColorOptions: Option<NonNullable<SectionStyle['titleColor']>>[] = [
-  { value: 'ink', label: 'רגיל' },
-  { value: 'brand', label: 'צבע המותג' },
-  { value: 'accent', label: 'הדגשה' },
+  { value: 'ink', label: tr('רגיל') },
+  { value: 'brand', label: tr('צבע המותג') },
+  { value: 'accent', label: tr('הדגשה') },
 ];
 export const titleSizeOptions: Option<NonNullable<SectionStyle['titleSize']>>[] = [
-  { value: 'normal', label: 'רגילה' },
-  { value: 'large', label: 'גדולה' },
+  { value: 'normal', label: tr('רגילה') },
+  { value: 'large', label: tr('גדולה') },
 ];
 export const buttonStyleOptions: Option<NonNullable<SectionStyle['button']>>[] = [
-  { value: 'solid', label: 'מלא' },
-  { value: 'outline', label: 'מתאר' },
+  { value: 'solid', label: tr('מלא') },
+  { value: 'outline', label: tr('מתאר') },
 ];
 
 /**
@@ -93,22 +94,22 @@ export function SectionInspector({
   const swatches: { value: NonNullable<SectionStyle['bg']>; label: string; color: string }[] = [
     {
       value: 'auto',
-      label: 'אוטומטי',
+      label: tr('אוטומטי'),
       color: 'linear-gradient(135deg,#fff 50%,' + p.soft + ' 50%)',
     },
-    { value: 'white', label: 'לבן', color: '#fff' },
-    { value: 'soft', label: 'רך', color: p.soft },
-    { value: 'brand', label: 'צבע המותג', color: p.primary },
-    { value: 'dark', label: 'כהה', color: '#14181f' },
+    { value: 'white', label: tr('לבן'), color: '#fff' },
+    { value: 'soft', label: tr('רך'), color: p.soft },
+    { value: 'brand', label: tr('צבע המותג'), color: p.primary },
+    { value: 'dark', label: tr('כהה'), color: '#14181f' },
   ];
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-ink">{sectionTypeLabels[s.type]}</h2>
+        <h2 className="text-sm font-semibold text-ink">{tr(sectionTypeLabels[s.type])}</h2>
         <button
           type="button"
-          aria-label="סגירה"
+          aria-label={tr('סגירה')}
           onClick={onClose}
           className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken"
         >
@@ -116,10 +117,10 @@ export function SectionInspector({
         </button>
       </div>
 
-      <Group title="מראה">
+      <Group title={tr('מראה')}>
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-ink-muted">רקע</span>
-          <div role="group" aria-label="רקע" className="flex gap-1.5">
+          <span className="text-xs font-medium text-ink-muted">{tr('רקע')}</span>
+          <div role="group" aria-label={tr('רקע')} className="flex gap-1.5">
             {swatches.map((w) => (
               <button
                 key={w.value}
@@ -138,39 +139,39 @@ export function SectionInspector({
           </div>
         </div>
         <Segmented
-          label="יישור"
+          label={tr('יישור')}
           value={st.align ?? 'start'}
           options={[
-            { value: 'start', label: 'לימין' },
-            { value: 'center', label: 'למרכז' },
+            { value: 'start', label: tr('לימין') },
+            { value: 'center', label: tr('למרכז') },
           ]}
           onChange={(align) => setStyle({ align })}
         />
         <Segmented
-          label="מרווחים"
+          label={tr('מרווחים')}
           value={st.spacing ?? 'normal'}
           options={[
-            { value: 'compact', label: 'צפוף' },
-            { value: 'normal', label: 'רגיל' },
-            { value: 'airy', label: 'מרווח' },
+            { value: 'compact', label: tr('צפוף') },
+            { value: 'normal', label: tr('רגיל') },
+            { value: 'airy', label: tr('מרווח') },
           ]}
           onChange={(spacing) => setStyle({ spacing })}
         />
         <Segmented
-          label="צבע הכותרת"
+          label={tr('צבע הכותרת')}
           value={st.titleColor ?? 'ink'}
           options={titleColorOptions}
           onChange={(titleColor) => setStyle({ titleColor })}
         />
         <Segmented
-          label="גודל הכותרת"
+          label={tr('גודל הכותרת')}
           value={st.titleSize ?? 'normal'}
           options={titleSizeOptions}
           onChange={(titleSize) => setStyle({ titleSize })}
         />
         {hasButton && (
           <Segmented
-            label="סגנון הכפתור"
+            label={tr('סגנון הכפתור')}
             value={st.button ?? 'solid'}
             options={buttonStyleOptions}
             onChange={(button) => setStyle({ button })}
@@ -178,35 +179,35 @@ export function SectionInspector({
         )}
       </Group>
 
-      <Group title="הגדרות">
+      <Group title={tr('הגדרות')}>
         <SectionForm section={s} onChange={onChange} />
       </Group>
 
       <div className="flex flex-wrap items-center gap-1 border-t border-surface-border pt-3">
-        <IconAction label="הזזה למעלה" disabled={index <= 0} onClick={() => onMove(-1)}>
+        <IconAction label={tr('הזזה למעלה')} disabled={index <= 0} onClick={() => onMove(-1)}>
           <ArrowUp aria-hidden className="h-4 w-4" />
         </IconAction>
-        <IconAction label="הזזה למטה" disabled={index >= count - 1} onClick={() => onMove(1)}>
+        <IconAction label={tr('הזזה למטה')} disabled={index >= count - 1} onClick={() => onMove(1)}>
           <ArrowDown aria-hidden className="h-4 w-4" />
         </IconAction>
-        <IconAction label="הסתרה" onClick={onHide}>
+        <IconAction label={tr('הסתרה')} onClick={onHide}>
           <EyeOff aria-hidden className="h-4 w-4" />
         </IconAction>
-        <IconAction label="שכפול" onClick={onDuplicate}>
+        <IconAction label={tr('שכפול')} onClick={onDuplicate}>
           <Copy aria-hidden className="h-4 w-4" />
         </IconAction>
         <span className="ms-auto">
           {confirm ? (
             <span className="flex items-center gap-1.5">
               <Button size="sm" variant="danger" onClick={onDelete}>
-                מחיקה
+                {tr('מחיקה')}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setConfirm(false)}>
-                ביטול
+                {tr('ביטול')}
               </Button>
             </span>
           ) : (
-            <IconAction label="מחיקת המקטע" onClick={() => setConfirm(true)}>
+            <IconAction label={tr('מחיקת המקטע')} onClick={() => setConfirm(true)}>
               <Trash2 aria-hidden className="h-4 w-4 text-danger-600" />
             </IconAction>
           )}

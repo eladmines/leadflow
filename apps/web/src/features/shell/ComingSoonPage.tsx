@@ -1,6 +1,7 @@
 import { Construction } from 'lucide-react';
 import type { NavItem } from './nav';
 import { PageHeader } from './PageHeader';
+import { tr } from '../../i18n';
 
 /** Placeholder for sections that aren't built yet. Describes what's coming; never shows fake data. */
 export function ComingSoonPage({ item }: { item: NavItem }) {
@@ -18,7 +19,7 @@ export function ComingSoonPage({ item }: { item: NavItem }) {
         <h2 className="text-lg font-semibold text-ink">{item.comingSoon?.title}</h2>
         <p className="max-w-md text-sm text-ink-muted">{item.comingSoon?.description}</p>
         <p className="rounded-full bg-accent-50 px-3 py-1 text-xs font-medium text-accent-700">
-          בפיתוח — יתווסף בקרוב
+          {tr('בפיתוח — יתווסף בקרוב')}
         </p>
       </section>
     </>

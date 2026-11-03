@@ -18,10 +18,11 @@ import { InvalidLinkState } from './InvalidLinkState';
 import type { LoginLocationState } from './LoginPage';
 import { applyServerErrors } from './serverErrors';
 import { useOneTimeToken } from './useOneTimeToken';
+import { tr } from '../../i18n';
 
 export const resetFormMessages = {
-  confirmRequired: 'יש להזין שוב את הסיסמה',
-  confirmMismatch: 'הסיסמאות אינן תואמות',
+  confirmRequired: tr('יש להזין שוב את הסיסמה'),
+  confirmMismatch: tr('הסיסמאות אינן תואמות'),
 } as const;
 
 interface ResetPasswordForm {
@@ -99,10 +100,10 @@ export function ResetPasswordPage() {
     return (
       <InvalidLinkState>
         <Link to={authWebPaths.forgotPassword} className={buttonClasses('primary', 'lg', 'w-full')}>
-          בקשת קישור חדש לאיפוס
+          {tr('בקשת קישור חדש לאיפוס')}
         </Link>
         <p className="text-center text-sm text-ink-muted">
-          נזכרתם בסיסמה? <TextLink to={authWebPaths.login}>לכניסה</TextLink>
+          {tr('נזכרתם בסיסמה?')} <TextLink to={authWebPaths.login}>{tr('לכניסה')}</TextLink>
         </p>
       </InvalidLinkState>
     );
@@ -110,29 +111,29 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout
-      title="בחירת סיסמה חדשה"
-      description="אחרי השמירה ננתק את החשבון מכל המכשירים, ותוכלו להתחבר עם הסיסמה החדשה."
-      footer={<TextLink to={authWebPaths.login}>חזרה לכניסה</TextLink>}
+      title={tr('בחירת סיסמה חדשה')}
+      description={tr('אחרי השמירה ננתק את החשבון מכל המכשירים, ותוכלו להתחבר עם הסיסמה החדשה.')}
+      footer={<TextLink to={authWebPaths.login}>{tr('חזרה לכניסה')}</TextLink>}
     >
       <form noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
         {formError && <Alert tone="danger">{formError}</Alert>}
         <PasswordField
-          label="סיסמה חדשה"
+          label={tr('סיסמה חדשה')}
           autoComplete="new-password"
           required
-          hint={`לפחות ${PASSWORD_MIN_LENGTH} תווים`}
+          hint={tr('לפחות {0} תווים', PASSWORD_MIN_LENGTH)}
           error={errors.newPassword?.message}
           {...register('newPassword')}
         />
         <PasswordField
-          label="אימות הסיסמה החדשה"
+          label={tr('אימות הסיסמה החדשה')}
           autoComplete="new-password"
           required
           error={errors.confirmPassword?.message}
           {...register('confirmPassword')}
         />
         <Button type="submit" size="lg" className="mt-2 w-full" loading={isSubmitting}>
-          {isSubmitting ? 'שומרים…' : 'שמירת הסיסמה'}
+          {isSubmitting ? tr('שומרים…') : tr('שמירת הסיסמה')}
         </Button>
       </form>
     </AuthLayout>

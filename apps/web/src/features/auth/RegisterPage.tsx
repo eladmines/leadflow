@@ -21,6 +21,7 @@ import {
 import { sanitizeNext } from '../../lib/safeNext';
 import { useRegister } from './api';
 import { applyServerErrors } from './serverErrors';
+import { tr } from '../../i18n';
 
 /**
  * TODO(legal): the terms of use and privacy policy documents don't exist yet.
@@ -69,11 +70,11 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
-      title="יצירת חשבון חדש"
-      description="כמה פרטים קצרים, ומתחילים לקבל לידים."
+      title={tr('יצירת חשבון חדש')}
+      description={tr('כמה פרטים קצרים, ומתחילים לקבל לידים.')}
       footer={
         <>
-          כבר יש לכם חשבון? <TextLink to={authWebPaths.login}>לכניסה</TextLink>
+          {tr('כבר יש לכם חשבון?')} <TextLink to={authWebPaths.login}>{tr('לכניסה')}</TextLink>
         </>
       }
     >
@@ -81,14 +82,14 @@ export function RegisterPage() {
         {formError && <Alert tone="danger">{formError}</Alert>}
 
         <Field
-          label="שם מלא"
+          label={tr('שם מלא')}
           autoComplete="name"
           required
           error={errors.fullName?.message}
           {...register('fullName')}
         />
         <Field
-          label="אימייל"
+          label={tr('אימייל')}
           type="email"
           autoComplete="email"
           inputMode="email"
@@ -98,10 +99,10 @@ export function RegisterPage() {
           {...register('email')}
         />
         <PasswordField
-          label="סיסמה"
+          label={tr('סיסמה')}
           autoComplete="new-password"
           required
-          hint={`לפחות ${PASSWORD_MIN_LENGTH} תווים`}
+          hint={tr('לפחות {0} תווים', PASSWORD_MIN_LENGTH)}
           error={errors.password?.message}
           {...register('password')}
         />
@@ -109,23 +110,23 @@ export function RegisterPage() {
           error={errors.acceptTerms?.message}
           label={
             <>
-              קראתי ואני מסכים/ה ל
+              {tr('קראתי ואני מסכים/ה ל')}
               <a
                 href={LEGAL_PLACEHOLDER_LINKS.terms}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={textLinkClasses}
               >
-                תנאי השימוש
+                {tr('תנאי השימוש')}
               </a>{' '}
-              ול
+              {tr('ול')}
               <a
                 href={LEGAL_PLACEHOLDER_LINKS.privacy}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={textLinkClasses}
               >
-                מדיניות הפרטיות
+                {tr('מדיניות הפרטיות')}
               </a>
             </>
           }
@@ -133,7 +134,7 @@ export function RegisterPage() {
         />
 
         <Button type="submit" size="lg" className="mt-2 w-full" loading={isSubmitting}>
-          {isSubmitting ? 'יוצרים את החשבון…' : 'יצירת חשבון'}
+          {isSubmitting ? tr('יוצרים את החשבון…') : tr('יצירת חשבון')}
         </Button>
       </form>
     </AuthLayout>

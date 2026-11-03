@@ -13,8 +13,9 @@ import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useSendWhatsApp, useWhatsAppThread } from './api';
+import { tr, intlLocale } from '../../i18n';
 
-const timeFmt = new Intl.DateTimeFormat('he-IL', { hour: '2-digit', minute: '2-digit' });
+const timeFmt = new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute: '2-digit' });
 
 /**
  * WhatsApp conversation with the lead's contact (F12 POC). Hidden for businesses without a
@@ -33,7 +34,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
   if (thread.isPending) {
     return (
       <Card>
-        <Spinner size="sm" label="טוענים את שיחת הוואטסאפ…" />
+        <Spinner size="sm" label={tr('טוענים את שיחת הוואטסאפ…')} />
       </Card>
     );
   }
@@ -56,10 +57,13 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
       </h2>
       {messages.length === 0 ? (
         <p className="text-sm text-ink-muted">
-          עדיין אין הודעות. כשהלקוח יכתוב לעסק בוואטסאפ, השיחה תופיע כאן.
+          {tr('עדיין אין הודעות. כשהלקוח יכתוב לעסק בוואטסאפ, השיחה תופיע כאן.')}
         </p>
       ) : (
-        <ol aria-label="שיחת וואטסאפ" className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto">
+        <ol
+          aria-label={tr('שיחת וואטסאפ')}
+          className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto"
+        >
           {messages.map((m) => {
             const out = m.direction === 'OUT';
             return (
@@ -73,7 +77,9 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
                   )}
                 >
                   <span className="sr-only">
-                    {out ? `נשלחה${m.sender ? ` על ידי ${m.sender.name}` : ''}:` : 'הלקוח כתב:'}
+                    {out
+                      ? tr('נשלחה{0}:', m.sender ? tr(' על ידי {0}', m.sender.name) : '')
+                      : tr('הלקוח כתב:')}
                   </span>
                   <p className="whitespace-pre-line break-words">{m.body}</p>
                   <p className="flex items-center gap-1.5 text-xs text-ink-muted">
@@ -82,7 +88,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
                     </time>
                     {out && (
                       <span className={cn(m.status === 'failed' && 'font-medium text-danger-700')}>
-                        · {whatsappStatusLabels[m.status]}
+                        · {tr(whatsappStatusLabels[m.status])}
                       </span>
                     )}
                   </p>
@@ -96,15 +102,18 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         (replyUntil ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
-              label="תשובה בוואטסאפ"
+              label={tr('תשובה בוואטסאפ')}
               rows={2}
-              hint={`אפשר לענות עד ${timeFmt.format(new Date(replyUntil))} (24 שעות מההודעה האחרונה של הלקוח).`}
+              hint={tr(
+                'אפשר לענות עד {0} (24 שעות מההודעה האחרונה של הלקוח).',
+                timeFmt.format(new Date(replyUntil)),
+              )}
               error={form.formState.errors.text?.message}
               {...form.register('text')}
             />
             {send.isError && <Alert tone="danger">{errorMessage(send.error)}</Alert>}
             <Button type="submit" size="sm" loading={send.isPending} className="self-end">
-              שליחה בוואטסאפ
+              {tr('שליחה בוואטסאפ')}
             </Button>
           </form>
         ) : (

@@ -43,6 +43,7 @@ import {
 } from './api';
 import { NewLeadDialog } from './NewLeadDialog';
 import { useWhatsAppInbox } from '../whatsapp/api';
+import { tr, intlLocale } from '../../i18n';
 
 export const stageTone: Record<Lead['stage']['kind'], string> = {
   OPEN: 'bg-brand-50 text-brand-800',
@@ -71,7 +72,7 @@ function LeadPreview({ lead, compact = false }: { lead: Lead; compact?: boolean 
     <div className={cn('flex flex-col gap-0.5', compact ? 'text-xs' : 'text-sm')}>
       <p className="flex items-center gap-1 text-xs text-ink-muted">
         <MessageCircle aria-hidden className="h-3.5 w-3.5 text-success-600" />
-        {last.direction === 'IN' ? 'הודעה אחרונה מהלקוח' : 'התשובה האחרונה שלכם'} ·{' '}
+        {last.direction === 'IN' ? tr('הודעה אחרונה מהלקוח') : tr('התשובה האחרונה שלכם')} ·{' '}
         <time dateTime={last.createdAt}>{timeAgo(last.createdAt)}</time>
       </p>
       <p
@@ -95,13 +96,15 @@ function InboxNotice({ businessId }: { businessId: string }) {
     <Alert tone="info">
       <span className="inline-flex flex-wrap items-center gap-1.5">
         <MessageCircle aria-hidden className="h-4 w-4 text-success-600" />
-        {count === 1 ? 'מספר חדש כתב בוואטסאפ' : `${count} מספרים חדשים כתבו בוואטסאפ`} ומחכים
-        לסיווג (לקוח או פרטי).
+        {count === 1
+          ? tr('מספר חדש כתב בוואטסאפ')
+          : tr('{0} מספרים חדשים כתבו בוואטסאפ', count)}{' '}
+        {tr('ומחכים לסיווג (לקוח או פרטי).')}
         <Link
           to={businessWebPaths.section(businessId, 'conversations')}
           className="font-medium underline"
         >
-          לשיחות
+          {tr('לשיחות')}
         </Link>
       </span>
     </Alert>
@@ -112,7 +115,7 @@ function InboxNotice({ businessId }: { businessId: string }) {
 export function TagChips({ tags }: { tags: string[] }) {
   if (tags.length === 0) return null;
   return (
-    <ul aria-label="תגיות" className="flex flex-wrap gap-1">
+    <ul aria-label={tr('תגיות')} className="flex flex-wrap gap-1">
       {tags.map((t) => (
         <li key={t} className="rounded-full bg-accent-50 px-2 py-0.5 text-xs text-accent-700">
           {t}
@@ -141,10 +144,10 @@ export function LeadCard({ lead, businessId }: { lead: Lead; businessId: string 
               </Link>
             </h2>
             <p className="text-xs text-ink-muted">
-              {leadSourceLabels[lead.source]} ·{' '}
+              {tr(leadSourceLabels[lead.source])} ·{' '}
               <time
                 dateTime={lead.createdAt}
-                title={new Date(lead.createdAt).toLocaleString('he-IL')}
+                title={new Date(lead.createdAt).toLocaleString(intlLocale())}
               >
                 {timeAgo(lead.createdAt)}
               </time>
@@ -155,7 +158,7 @@ export function LeadCard({ lead, businessId }: { lead: Lead; businessId: string 
         <span
           className={cn('rounded-full px-2.5 py-1 text-xs font-medium', stageTone[lead.stage.kind])}
         >
-          {lead.stage.name}
+          {tr(lead.stage.name)}
         </span>
       </header>
       <LeadPreview lead={lead} />
@@ -225,7 +228,7 @@ function BoardCard({
         )}
       </div>
       <label className="sr-only" htmlFor={`move-${lead.id}`}>
-        העברת {lead.contact.name} לשלב
+        {tr('העברת')} {lead.contact.name} {tr('לשלב')}
       </label>
       <select
         id={`move-${lead.id}`}
@@ -262,7 +265,7 @@ function Board({
     update.mutate({
       leadId: lead.id,
       body: { stageId: stage.id },
-      stage: { id: stage.id, name: stage.name, kind: stage.kind },
+      stage: { id: stage.id, name: tr(stage.name), kind: stage.kind },
     });
   };
   const onDrop = (e: DragEvent, stage: PipelineStage) => {
@@ -278,14 +281,14 @@ function Board({
       {/* relative: the cards' sr-only labels are positioned inside the scroller (and clipped by
           it), so off-screen columns can't widen the page. */}
       <div className="relative -mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
-        <ol aria-label="לוח לידים" className="flex min-w-max gap-4">
+        <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4">
           {stages.map((stage) => {
             const items = leads.filter((l) => l.stage.id === stage.id);
             const total = items.reduce((sum, l) => sum + (l.expectedValue ?? 0), 0);
             return (
               <li
                 key={stage.id}
-                aria-label={`${stage.name}: ${items.length} לידים`}
+                aria-label={tr('{0}: {1} לידים', tr(stage.name), items.length)}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setOver(stage.id);
@@ -310,7 +313,7 @@ function Board({
                             : 'bg-brand-500',
                       )}
                     />
-                    {stage.name}
+                    {tr(stage.name)}
                     <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-ink-muted">
                       {items.length}
                     </span>
@@ -408,7 +411,7 @@ export function LeadsPage() {
   }, [q]);
 
   const sourceOptions = useMemo(
-    () => LEAD_SOURCES.map((s) => ({ value: s, label: leadSourceLabels[s] })),
+    () => LEAD_SOURCES.map((s) => ({ value: s, label: tr(leadSourceLabels[s]) })),
     [],
   );
   const selectClass = cn(
@@ -419,8 +422,10 @@ export function LeadsPage() {
   return (
     <>
       <PageHeader
-        title="לקוחות ולידים"
-        description={seesAll ? 'כל הפניות של העסק, לפי שלב בתהליך המכירה.' : 'הפניות שהוקצו לך.'}
+        title={tr('לקוחות ולידים')}
+        description={
+          seesAll ? tr('כל הפניות של העסק, לפי שלב בתהליך המכירה.') : tr('הפניות שהוקצו לך.')
+        }
         actions={
           <div className="flex flex-wrap gap-2">
             <RefreshButton
@@ -442,12 +447,12 @@ export function LeadsPage() {
                 className={buttonClasses('secondary', 'md')}
               >
                 <Download aria-hidden className="h-4 w-4" />
-                ייצוא לאקסל
+                {tr('ייצוא לאקסל')}
               </a>
             )}
             <Button onClick={() => setNewOpen(true)}>
               <Plus aria-hidden className="h-4 w-4" />
-              ליד חדש
+              {tr('ליד חדש')}
             </Button>
           </div>
         }
@@ -462,25 +467,25 @@ export function LeadsPage() {
             className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle"
           />
           <label htmlFor="lead-search" className="sr-only">
-            חיפוש לידים
+            {tr('חיפוש לידים')}
           </label>
           <input
             id="lead-search"
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="חיפוש לפי שם, טלפון או אימייל"
+            placeholder={tr('חיפוש לפי שם, טלפון או אימייל')}
             className={cn(inputClasses(false), 'ps-9')}
           />
         </div>
         {view === 'list' && (
           <select
-            aria-label="סינון לפי שלב"
+            aria-label={tr('סינון לפי שלב')}
             value={query.stageId ?? ''}
             onChange={(e) => setParam('stageId', e.target.value || undefined)}
             className={selectClass}
           >
-            <option value="">כל השלבים</option>
+            <option value="">{tr('כל השלבים')}</option>
             {stages.data?.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -490,13 +495,13 @@ export function LeadsPage() {
         )}
         {seesAll && (
           <select
-            aria-label="סינון לפי אחראי"
+            aria-label={tr('סינון לפי אחראי')}
             value={query.ownerId ?? ''}
             onChange={(e) => setParam('ownerId', e.target.value || undefined)}
             className={selectClass}
           >
-            <option value="">כל האחראים</option>
-            <option value="none">ללא אחראי</option>
+            <option value="">{tr('כל האחראים')}</option>
+            <option value="none">{tr('ללא אחראי')}</option>
             {members.data?.map((m) => (
               <option key={m.userId} value={m.userId}>
                 {m.fullName}
@@ -505,12 +510,12 @@ export function LeadsPage() {
           </select>
         )}
         <select
-          aria-label="סינון לפי מקור"
+          aria-label={tr('סינון לפי מקור')}
           value={query.source ?? ''}
           onChange={(e) => setParam('source', e.target.value || undefined)}
           className={selectClass}
         >
-          <option value="">כל המקורות</option>
+          <option value="">{tr('כל המקורות')}</option>
           {sourceOptions.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -519,12 +524,12 @@ export function LeadsPage() {
         </select>
         {(tags.length > 0 || query.tag) && (
           <select
-            aria-label="סינון לפי תגית"
+            aria-label={tr('סינון לפי תגית')}
             value={query.tag ?? ''}
             onChange={(e) => setParam('tag', e.target.value || undefined)}
             className={selectClass}
           >
-            <option value="">כל התגיות</option>
+            <option value="">{tr('כל התגיות')}</option>
             {query.tag && !tags.includes(query.tag) && (
               <option value={query.tag}>{query.tag}</option>
             )}
@@ -535,7 +540,11 @@ export function LeadsPage() {
             ))}
           </select>
         )}
-        <div role="group" aria-label="תצוגה" className="flex rounded-xl bg-surface-sunken p-1">
+        <div
+          role="group"
+          aria-label={tr('תצוגה')}
+          className="flex rounded-xl bg-surface-sunken p-1"
+        >
           {(['board', 'list'] as const).map((v) => (
             <button
               key={v}
@@ -552,16 +561,16 @@ export function LeadsPage() {
               ) : (
                 <List aria-hidden className="h-4 w-4" />
               )}
-              {v === 'board' ? 'לוח' : 'רשימה'}
+              {v === 'board' ? tr('לוח') : tr('רשימה')}
             </button>
           ))}
         </div>
       </div>
 
       {leads.isPending || stages.isPending ? (
-        <Spinner label="טוענים פניות…" />
+        <Spinner label={tr('טוענים פניות…')} />
       ) : leads.isError || stages.isError ? (
-        <Alert tone="danger" title="לא הצלחנו לטעון את הפניות">
+        <Alert tone="danger" title={tr('לא הצלחנו לטעון את הפניות')}>
           {errorMessage(leads.error ?? stages.error)}
         </Alert>
       ) : leads.data.length === 0 && !filtered ? (
@@ -569,29 +578,32 @@ export function LeadsPage() {
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
             <Inbox aria-hidden className="h-7 w-7" />
           </span>
-          <h2 className="text-lg font-semibold text-ink">עדיין אין פניות</h2>
+          <h2 className="text-lg font-semibold text-ink">{tr('עדיין אין פניות')}</h2>
           {!seesAll ? (
-            <p className="max-w-md text-sm text-ink-muted">כשיוקצו לך פניות, הן יופיעו כאן.</p>
+            <p className="max-w-md text-sm text-ink-muted">
+              {tr('כשיוקצו לך פניות, הן יופיעו כאן.')}
+            </p>
           ) : site.data?.published ? (
             <p className="max-w-md text-sm text-ink-muted">
-              האתר באוויר עם טופס פנייה. שתפו את הכתובת{' '}
+              {tr('האתר באוויר עם טופס פנייה. שתפו את הכתובת')}{' '}
               <bdi dir="ltr" className="font-medium text-ink">
                 {site.data.publicUrl?.replace(/^https?:\/\//, '')}
               </bdi>{' '}
-              — כל פנייה תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.
+              {tr('— כל פנייה תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.')}
             </p>
           ) : (
             <>
               <p className="max-w-md text-sm text-ink-muted">
-                אחרי שהאתר יפורסם, כל פנייה מהטופס באתר תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף
-                ליד ידנית.
+                {tr(
+                  'אחרי שהאתר יפורסם, כל פנייה מהטופס באתר תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.',
+                )}
               </p>
               {can(business.role, 'site.edit') && (
                 <Link
                   to={businessWebPaths.section(business.id, 'site')}
                   className={buttonClasses('secondary', 'md')}
                 >
-                  לבניית האתר
+                  {tr('לבניית האתר')}
                 </Link>
               )}
             </>
@@ -600,13 +612,15 @@ export function LeadsPage() {
       ) : view === 'board' ? (
         <Board leads={leads.data} stages={stages.data} businessId={business.id} />
       ) : leads.data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-ink-muted">לא נמצאו לידים שמתאימים לחיפוש.</p>
+        <p className="py-10 text-center text-sm text-ink-muted">
+          {tr('לא נמצאו לידים שמתאימים לחיפוש.')}
+        </p>
       ) : (
         <>
           <p className="text-sm text-ink-muted" aria-live="polite">
-            {leads.data.length} פניות
+            {leads.data.length} {tr('פניות')}
           </p>
-          <ul aria-label="פניות" className="grid gap-4 lg:grid-cols-2">
+          <ul aria-label={tr('פניות')} className="grid gap-4 lg:grid-cols-2">
             {leads.data.map((lead) => (
               <li key={lead.id}>
                 <LeadCard lead={lead} businessId={business.id} />
