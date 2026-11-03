@@ -338,6 +338,25 @@ export const enPart1: Record<string, string> = {
   'לא להציג שוב': "Don't show again",
   'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
   'במה אפשר לעזור?': 'How can I help?',
+  'בינתיים, הצצה לעבודות שלנו': 'Meanwhile, a look at our work',
+  פעיל: 'On',
+  כבוי: 'Off',
+  'לקוח שלא קבע תור — ביטל, ביקש לדבר עם הצוות, לא מצא זמן פנוי או הפסיק לענות חצי שעה — מקבל את ההצצה הזו, לכל היותר פעם ביום, ואחריה כפתור לקביעת תור. בנוסף מופיעה ברשימה של הבוט האפשרות "📸 העבודות שלנו".':
+    'A customer who didn\'t book — cancelled, asked for the team, found no free time or stopped answering for half an hour — gets this, at most once a day, followed by a "book" button. The bot\'s list also offers "📸 Our work".',
+  'שליחת הצצה ללקוחות שלא קבעו': "Send a look at our work to customers who didn't book",
+  ההודעה: 'Message',
+  'קישור (לא חובה)': 'Link (optional)',
+  'אינסטגרם, יוטיוב, טיקטוק או האתר שלכם. בקישור לסרטון, וואטסאפ מציג תצוגה מקדימה.':
+    'Instagram, YouTube, TikTok or your website. For a video link, WhatsApp shows a preview.',
+  'תמונות (עד {0})': 'Photos (up to {0})',
+  'תמונות בהצצה': 'Photos in the showcase',
+  'הסרת תמונה {0}': 'Remove photo {0}',
+  'ההצצה נשמרה.': 'Saved.',
+  'בחירת תמונה להצצה': 'Choose a photo for the showcase',
+  'יש להזין קישור מלא שמתחיל ב־https://': 'Enter a full link starting with https://',
+  'אפשר לבחור עד 3 תמונות': 'You can choose up to 3 photos',
+  'אחת התמונות כבר לא קיימת בספריית התמונות. בחרו תמונה אחרת.':
+    'One of the photos is no longer in the media library. Choose another one.',
   'עריכת ההודעות של הבוט': "Edit the bot's messages",
   'הלקוחות מקבלים את ההודעות בעברית. פרטים בסוגריים, כמו [שם העסק], מתמלאים אוטומטית בפרטים האמיתיים. מוסיפים אותם בכפתורים שמתחת לכל הודעה. הכפתורים והרשימות בוואטסאפ נשארים קבועים.':
     'Customers get these messages in Hebrew. Details in brackets, like [Business name], are filled in automatically with the real details. Add them with the buttons under each message. WhatsApp buttons and lists stay fixed.',

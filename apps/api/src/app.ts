@@ -48,6 +48,8 @@ declare module 'fastify' {
     email: EmailSender;
     /** Uploaded media (F05). */
     storage: StorageProvider;
+    /** Outbound WhatsApp (F12), also used by the booking bot's background job. */
+    whatsappSender: WhatsAppSender;
   }
 }
 
@@ -144,6 +146,7 @@ export async function buildApp({
   await app.register(teamRoutes);
   await app.register(quotePublicRoutes);
   const whatsapp = whatsappSender ?? createWhatsAppSender(config);
+  app.decorate('whatsappSender', whatsapp);
   await app.register(whatsappWebhookRoutes(whatsapp));
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(

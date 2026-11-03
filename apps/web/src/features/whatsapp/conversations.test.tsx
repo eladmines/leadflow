@@ -33,14 +33,45 @@ const number: InboxNumber = {
   lastMessageAt: new Date().toISOString(),
 };
 const leadId = '5c000000-0000-4000-8000-0000000000aa';
+const DEFAULT_SHOWCASE = 'בינתיים, הנה הצצה לעבודות שלנו ✂️';
+const noShowcase = { enabled: false, text: null, link: null, assetIds: [] };
+const botSettings = () => ({
+  enabled: false,
+  autoConfirm: true,
+  texts: {},
+  showcase: { enabled: false, defaultText: DEFAULT_SHOWCASE, link: null, assetIds: [] },
+});
+/** The API answers a PUT with what it saved (plus the industry default). */
+const echoBot = (body: unknown) => {
+  const b = body as { showcase: { text: string | null } };
+  return json(200, {
+    connected: true,
+    settings: {
+      ...b,
+      showcase: {
+        ...b.showcase,
+        text: b.showcase.text ?? undefined,
+        defaultText: DEFAULT_SHOWCASE,
+      },
+    },
+  });
+};
+const photo = {
+  id: '7a000000-0000-4000-8000-000000000001',
+  url: '/media/x/photo.webp',
+  width: 800,
+  height: 600,
+  sizeBytes: 1000,
+  originalName: 'cut.jpg',
+  createdAt: new Date().toISOString(),
+};
 
 function routes(inbox: WhatsAppInboxResponse, extra = {}) {
   return {
     [meKey]: me(testUser),
     [`GET ${wp.inbox(id)}`]: () => json(200, inbox),
     [`GET ${wp.personal(id)}`]: () => json(200, { numbers: [] }),
-    [`GET ${wp.bot(id)}`]: () =>
-      json(200, { connected: true, settings: { enabled: false, autoConfirm: true, texts: {} } }),
+    [`GET ${wp.bot(id)}`]: () => json(200, { connected: true, settings: botSettings() }),
     ...extra,
   };
 }
@@ -51,7 +82,7 @@ describe('WhatsApp conversations inbox', () => {
       routes(
         { connected: true, numbers: [] },
         {
-          [`PUT ${wp.bot(id)}`]: (body: unknown) => json(200, { connected: true, settings: body }),
+          [`PUT ${wp.bot(id)}`]: echoBot,
         },
       ),
     );
@@ -64,8 +95,8 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(pending);
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
-        { enabled: true, autoConfirm: true, texts: {} },
-        { enabled: true, autoConfirm: false, texts: {} },
+        { enabled: true, autoConfirm: true, texts: {}, showcase: noShowcase },
+        { enabled: true, autoConfirm: false, texts: {}, showcase: noShowcase },
       ]),
     );
   });
@@ -75,7 +106,7 @@ describe('WhatsApp conversations inbox', () => {
       routes(
         { connected: true, numbers: [] },
         {
-          [`PUT ${wp.bot(id)}`]: (body: unknown) => json(200, { connected: true, settings: body }),
+          [`PUT ${wp.bot(id)}`]: echoBot,
         },
       ),
     );
@@ -101,7 +132,58 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
     expect(await screen.findByText('ההודעות נשמרו.')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
-      { enabled: false, autoConfirm: true, texts: { confirmed: 'נתראה ב{business}!' } },
+      {
+        enabled: false,
+        autoConfirm: true,
+        texts: { confirmed: 'נתראה ב{business}!' },
+        showcase: noShowcase,
+      },
+    ]);
+  });
+
+  it('sets up the "in the meantime" showcase with a link and a photo (D-106)', async () => {
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`PUT ${wp.bot(id)}`]: echoBot,
+          [`GET ${apiPaths.media.assets(id)}`]: () =>
+            json(200, { assets: [photo], usedBytes: 1000, quotaBytes: 100_000_000 }),
+        },
+      ),
+    );
+    const { user } = renderApp(page);
+    await user.click(await screen.findByText('בינתיים, הצצה לעבודות שלנו'));
+    // The industry's default message, ready to edit.
+    expect(screen.getByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
+    await user.click(screen.getByRole('checkbox', { name: 'שליחת הצצה ללקוחות שלא קבעו' }));
+    await user.type(screen.getByLabelText('קישור (לא חובה)'), 'instagram.com/sigalit');
+    await user.click(screen.getByRole('button', { name: 'שמירה' }));
+    expect(await screen.findByText('יש להזין קישור מלא שמתחיל ב־https://')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
+
+    await user.clear(screen.getByLabelText('קישור (לא חובה)'));
+    await user.type(screen.getByLabelText('קישור (לא חובה)'), 'https://instagram.com/sigalit');
+    await user.click(screen.getByRole('button', { name: 'הוספת תמונה' }));
+    const picker = await screen.findByRole('dialog', { name: 'בחירת תמונה להצצה' });
+    await user.click(await within(picker).findByRole('button', { name: 'בחירת cut.jpg' }));
+    expect(
+      within(screen.getByRole('list', { name: 'תמונות בהצצה' })).getAllByRole('listitem'),
+    ).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'שמירה' }));
+    expect(await screen.findByText('ההצצה נשמרה.')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
+      {
+        enabled: false,
+        autoConfirm: true,
+        texts: {},
+        showcase: {
+          enabled: true,
+          text: null,
+          link: 'https://instagram.com/sigalit',
+          assetIds: [photo.id],
+        },
+      },
     ]);
   });
 

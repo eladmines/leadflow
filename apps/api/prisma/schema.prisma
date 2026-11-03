@@ -155,6 +155,8 @@ model Business {
   whatsappBotAutoConfirm Boolean        @default(true) @map("whatsapp_bot_auto_confirm")
   /// The business's own bot messages (shared botTextsSchema); missing keys use the defaults.
   whatsappBotTexts       Json?          @map("whatsapp_bot_texts")
+  /// "In the meantime" showcase (D-106; shared botShowcaseSchema).
+  whatsappBotShowcase    Json?          @map("whatsapp_bot_showcase")
   status                 BusinessStatus @default(ONBOARDING)
   /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.
   onboardingStep         Int            @default(1) @map("onboarding_step")
@@ -615,6 +617,8 @@ model WhatsAppNumber {
   /// Null when classified automatically (an existing contact).
   classifiedById String?              @map("classified_by_id") @db.Uuid
   classifiedAt   DateTime?            @map("classified_at") @db.Timestamptz(3)
+  /// Last time the booking bot sent this number the showcase (at most once a day, D-106).
+  botShowcaseAt  DateTime?            @map("bot_showcase_at") @db.Timestamptz(3)
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
 

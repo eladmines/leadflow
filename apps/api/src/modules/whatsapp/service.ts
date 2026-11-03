@@ -1,6 +1,9 @@
 import { Prisma, type PrismaClient, type WhatsAppMessage as MessageRow } from '@prisma/client';
 import {
+  botShowcaseSchema,
   botTextsSchema,
+  showcaseDefaultText,
+  showcaseMessages,
   formatIsraeliPhone,
   WHATSAPP_STATUSES,
   WHATSAPP_WINDOW_MS,
@@ -15,6 +18,7 @@ import {
 } from '@leadflow/shared';
 import type { z } from 'zod';
 import type { AppConfig } from '../../config/env';
+import type { StorageProvider } from '../../integrations/storage';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -91,11 +95,17 @@ export class WhatsAppService {
     private readonly config: AppConfig,
     private readonly sender: WhatsAppSender,
     private readonly log: Log,
+    storage: StorageProvider,
   ) {
     this.leads = new LeadService(prisma);
-    this.bot = new BookingBot(prisma, sender, log, (tx, businessId, numberId) =>
+    this.bot = new BookingBot(prisma, sender, log, storage, (tx, businessId, numberId) =>
       this.ensureCustomer(tx, businessId, numberId),
     );
+  }
+
+  /** Showcase for booking conversations that stopped in the middle (D-106; background job). */
+  nudgeAbandonedBookings(now = new Date()) {
+    return this.businessId ? this.bot.nudgeAbandoned(now) : Promise.resolve(0);
   }
 
   /** The business the number is connected to, or null when WhatsApp is off. */
@@ -471,15 +481,30 @@ export class WhatsAppService {
   async botSettings(ctx: TenantContext): Promise<WhatsAppBotResponse> {
     const b = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
-      select: { whatsappBotEnabled: true, whatsappBotAutoConfirm: true, whatsappBotTexts: true },
+      select: {
+        industry: true,
+        whatsappBotEnabled: true,
+        whatsappBotAutoConfirm: true,
+        whatsappBotTexts: true,
+        whatsappBotShowcase: true,
+      },
     });
     const texts = botTextsSchema.safeParse(b.whatsappBotTexts ?? {});
+    const sc = botShowcaseSchema.safeParse(b.whatsappBotShowcase ?? { enabled: false });
+    const showcase = sc.success ? sc.data : { enabled: false, link: null, assetIds: [] };
     return {
       connected: this.businessId === ctx.businessId,
       settings: {
         enabled: b.whatsappBotEnabled,
         autoConfirm: b.whatsappBotAutoConfirm,
         texts: texts.success ? texts.data : {},
+        showcase: {
+          enabled: showcase.enabled,
+          ...('text' in showcase && showcase.text ? { text: showcase.text } : {}),
+          defaultText: showcaseDefaultText(b.industry),
+          link: showcase.link,
+          assetIds: showcase.assetIds,
+        },
       },
     };
   }
@@ -495,11 +520,23 @@ export class WhatsAppService {
           whatsappBotEnabled: input.enabled,
           whatsappBotAutoConfirm: input.autoConfirm,
           whatsappBotTexts: input.texts,
+          whatsappBotShowcase: input.showcase,
         },
       });
       // Switching off ends conversations in progress.
       if (!input.enabled) {
         await tx.whatsAppBotSession.deleteMany({ where: { businessId: ctx.businessId } });
+      }
+      // Only the business's own photos can go into the showcase.
+      if (input.showcase.assetIds.length) {
+        const owned = await tx.asset.count({
+          where: { id: { in: input.showcase.assetIds }, businessId: ctx.businessId },
+        });
+        if (owned !== new Set(input.showcase.assetIds).size) {
+          throw new AppError('VALIDATION_ERROR', showcaseMessages.imageMissing, {
+            'showcase.assetIds': showcaseMessages.imageMissing,
+          });
+        }
       }
       await recordAudit(tx, {
         action: 'whatsapp.bot_updated',
@@ -512,6 +549,7 @@ export class WhatsAppService {
           enabled: input.enabled,
           autoConfirm: input.autoConfirm,
           customTexts: Object.keys(input.texts),
+          showcase: input.showcase.enabled,
         },
       });
     });
