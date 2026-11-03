@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient, type WhatsAppMessage as MessageRow } from '@prisma/client';
 import {
+  botTextsSchema,
   formatIsraeliPhone,
   WHATSAPP_STATUSES,
   WHATSAPP_WINDOW_MS,
@@ -9,9 +10,10 @@ import {
   type WhatsAppInboxResponse,
   type WhatsAppMessage,
   type WhatsAppBotResponse,
-  type WhatsAppBotSettings,
+  whatsappBotSettingsSchema,
   type WhatsAppThreadResponse,
 } from '@leadflow/shared';
+import type { z } from 'zod';
 import type { AppConfig } from '../../config/env';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
@@ -469,22 +471,31 @@ export class WhatsAppService {
   async botSettings(ctx: TenantContext): Promise<WhatsAppBotResponse> {
     const b = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
-      select: { whatsappBotEnabled: true, whatsappBotAutoConfirm: true },
+      select: { whatsappBotEnabled: true, whatsappBotAutoConfirm: true, whatsappBotTexts: true },
     });
+    const texts = botTextsSchema.safeParse(b.whatsappBotTexts ?? {});
     return {
       connected: this.businessId === ctx.businessId,
-      settings: { enabled: b.whatsappBotEnabled, autoConfirm: b.whatsappBotAutoConfirm },
+      settings: {
+        enabled: b.whatsappBotEnabled,
+        autoConfirm: b.whatsappBotAutoConfirm,
+        texts: texts.success ? texts.data : {},
+      },
     };
   }
 
   async updateBotSettings(
     ctx: TenantContext,
-    input: WhatsAppBotSettings,
+    input: z.output<typeof whatsappBotSettingsSchema>,
   ): Promise<WhatsAppBotResponse> {
     await this.prisma.$transaction(async (tx) => {
       await tx.business.update({
         where: { id: ctx.businessId },
-        data: { whatsappBotEnabled: input.enabled, whatsappBotAutoConfirm: input.autoConfirm },
+        data: {
+          whatsappBotEnabled: input.enabled,
+          whatsappBotAutoConfirm: input.autoConfirm,
+          whatsappBotTexts: input.texts,
+        },
       });
       // Switching off ends conversations in progress.
       if (!input.enabled) {
@@ -496,7 +507,12 @@ export class WhatsAppService {
         actorUserId: ctx.userId,
         entityType: 'business',
         entityId: ctx.businessId,
-        metadata: input,
+        // Which messages are custom, not their wording.
+        metadata: {
+          enabled: input.enabled,
+          autoConfirm: input.autoConfirm,
+          customTexts: Object.keys(input.texts),
+        },
       });
     });
     return this.botSettings(ctx);
