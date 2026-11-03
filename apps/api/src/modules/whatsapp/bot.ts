@@ -1,4 +1,11 @@
 import type { PrismaClient, WhatsAppBotSession } from '@prisma/client';
+import {
+  botDefaultTexts,
+  botTextsSchema,
+  fillBotText,
+  type BotTextKey,
+  type BotTexts,
+} from '@leadflow/shared';
 import type { WhatsAppChoice, WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -48,6 +55,7 @@ type Business = {
   timezone: string;
   openingHours: unknown;
   whatsappBotAutoConfirm: boolean;
+  texts: BotTexts;
 };
 interface Chat {
   business: Business;
@@ -110,9 +118,11 @@ export class BookingBot {
         openingHours: true,
         whatsappBotEnabled: true,
         whatsappBotAutoConfirm: true,
+        whatsappBotTexts: true,
       },
     });
     if (!business?.whatsappBotEnabled) return 'none';
+    const custom = botTextsSchema.safeParse(business.whatsappBotTexts ?? {});
     const number = await this.prisma.whatsAppNumber.findUnique({
       where: { businessId_phone: { businessId, phone: msg.from } },
     });
@@ -128,7 +138,7 @@ export class BookingBot {
     if (session?.step === 'handoff') return 'none';
 
     const chat: Chat = {
-      business,
+      business: { ...business, texts: custom.success ? custom.data : {} },
       numberId: number.id,
       phone: number.phone,
       link: await this.linkOf(businessId, number.status, number.phone),
@@ -148,7 +158,7 @@ export class BookingBot {
     }
 
     if (choice === 'human' || (!choice && HUMAN_TEXT.test(msg.body))) {
-      return this.handoff(chat, now, 'בסדר! העברנו את השיחה לצוות, נחזור אליכם כאן בהקדם 🙂');
+      return this.handoff(chat, now, this.text(chat, 'handoff'));
     }
     if (choice === 'cancel' || (!choice && CANCEL_TEXT.test(msg.body))) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
@@ -180,23 +190,19 @@ export class BookingBot {
   private async askService(chat: Chat, prefix = ''): Promise<BotOutcome> {
     const services = await this.activeServices(chat.business.id);
     await this.setSession(chat, { step: 'service', serviceId: null, date: null, time: null });
-    await this.say(
-      chat,
-      `${prefix}שלום! כאן ${chat.business.name} 👋\nרוצים לקבוע תור? בחרו שירות:`,
-      {
-        button: 'בחירת שירות',
-        rows: [
-          ...services.slice(0, MAX_ROWS).map((s) => ({
-            id: `svc:${s.id}`,
-            title: s.name,
-            description: [`${s.durationMin} דק׳`, s.price != null ? `₪${s.price}` : null]
-              .filter(Boolean)
-              .join(' · '),
-          })),
-          human,
-        ],
-      },
-    );
+    await this.say(chat, `${prefix}${this.text(chat, 'greeting')}`, {
+      button: 'בחירת שירות',
+      rows: [
+        ...services.slice(0, MAX_ROWS).map((s) => ({
+          id: `svc:${s.id}`,
+          title: s.name,
+          description: [`${s.durationMin} דק׳`, s.price != null ? `₪${s.price}` : null]
+            .filter(Boolean)
+            .join(' · '),
+        })),
+        human,
+      ],
+    });
     return 'handled';
   }
 
@@ -223,11 +229,7 @@ export class BookingBot {
     );
     const days = dates.filter((d) => free.get(d)!.length > 0).slice(0, MAX_ROWS);
     if (!days.length) {
-      return this.handoff(
-        chat,
-        now,
-        'מצטערים, אין כרגע זמנים פנויים בשבועיים הקרובים. העברנו את הפנייה לצוות ונחזור אליכם כאן 🙏',
-      );
+      return this.handoff(chat, now, this.text(chat, 'noTimes'));
     }
     await this.setSession(chat, { step: 'day', serviceId, date: null, time: null });
     const tomorrow = addDaysTo(today, 1);
@@ -319,12 +321,12 @@ export class BookingBot {
     chat.session = null;
 
     const at = when(date, time);
-    const what = service ? `${service.name} ` : '';
     await this.say(
       chat,
-      business.whatsappBotAutoConfirm
-        ? `מעולה! קבענו לכם ${what}ל${at} ✅\nנתראה ב${business.name}! לשינוי או ביטול, פשוט כתבו לנו כאן.`
-        : `קיבלנו את הבקשה ל${what}${at} 🙏\nנאשר לכם כאן בהקדם.`,
+      this.text(chat, business.whatsappBotAutoConfirm ? 'confirmed' : 'pending', {
+        service: service?.name,
+        when: at,
+      }),
     );
     const contact = await this.prisma.contact.findUnique({
       where: { id: booked.contactId },
@@ -373,6 +375,15 @@ export class BookingBot {
   }
 
   // ---------------------------------------------------------------- helpers
+
+  /** The business's wording for a message, or the default, with the placeholders filled in. */
+  private text(chat: Chat, key: BotTextKey, values: { service?: string; when?: string } = {}) {
+    return fillBotText(chat.business.texts[key] ?? botDefaultTexts[key], {
+      business: chat.business.name,
+      service: values.service ?? 'תור',
+      when: values.when ?? '',
+    });
+  }
 
   private async setSession(
     chat: Chat,

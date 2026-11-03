@@ -153,6 +153,8 @@ model Business {
   /// WhatsApp booking bot (D-102): off by default; confirmed bookings unless autoConfirm is off.
   whatsappBotEnabled     Boolean        @default(false) @map("whatsapp_bot_enabled")
   whatsappBotAutoConfirm Boolean        @default(true) @map("whatsapp_bot_auto_confirm")
+  /// The business's own bot messages (shared botTextsSchema); missing keys use the defaults.
+  whatsappBotTexts       Json?          @map("whatsapp_bot_texts")
   status                 BusinessStatus @default(ONBOARDING)
   /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.
   onboardingStep         Int            @default(1) @map("onboarding_step")

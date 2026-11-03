@@ -293,18 +293,55 @@ describe('WhatsApp booking bot (D-102)', () => {
     expect(whatsapp.sent).toHaveLength(0);
   });
 
+  it("uses the business's own messages with the placeholders filled in", async () => {
+    const { owner } = await setup({ services: 1 });
+    const put = await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
+      enabled: true,
+      autoConfirm: true,
+      texts: {
+        greeting: 'היי מ{business}! בחרו שירות:',
+        confirmed: '  נקבע: {service}, {time}. החניה מאחורי הבניין 🚗  ',
+        handoff: '',
+      },
+    });
+    expect(put.statusCode).toBe(200);
+    expect(put.json().settings.texts).toEqual({
+      greeting: 'היי מ{business}! בחרו שירות:',
+      confirmed: 'נקבע: {service}, {time}. החניה מאחורי הבניין 🚗',
+    });
+
+    await post(text('תור'));
+    await post(tap(last().choices![0]!.id));
+    await post(tap(last().choices![0]!.id));
+    await post(tap('ok'));
+    expect(last().text).toMatch(
+      /^נקבע: תספורת נשים, יום .* בשעה \d{2}:\d{2}\. החניה מאחורי הבניין 🚗$/,
+    );
+
+    const bad = await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
+      enabled: true,
+      autoConfirm: true,
+      texts: { greeting: 'שלום {name}', pending: 'א'.repeat(601) },
+    });
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json().error.fields).toMatchObject({
+      'texts.greeting': 'אפשר להשתמש רק ב־{business}, {service} ו־{time}',
+      'texts.pending': 'ההודעה ארוכה מדי (עד 600 תווים)',
+    });
+  });
+
   it('settings: owners and managers can read and change them, employees cannot', async () => {
     const { owner } = await setup({ enabled: false });
     const get = await req(ctx.app, 'GET', wp.bot(BUSINESS_ID), owner.token);
     expect(get.json()).toEqual({
       connected: true,
-      settings: { enabled: false, autoConfirm: true },
+      settings: { enabled: false, autoConfirm: true, texts: {} },
     });
     const put = await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
       enabled: true,
       autoConfirm: false,
     });
-    expect(put.json().settings).toEqual({ enabled: true, autoConfirm: false });
+    expect(put.json().settings).toEqual({ enabled: true, autoConfirm: false, texts: {} });
 
     const employee = await newUser(ctx.app, 'bot-employee');
     await addMember(ctx.prisma, BUSINESS_ID, employee.userId, 'EMPLOYEE');

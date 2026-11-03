@@ -40,7 +40,7 @@ function routes(inbox: WhatsAppInboxResponse, extra = {}) {
     [`GET ${wp.inbox(id)}`]: () => json(200, inbox),
     [`GET ${wp.personal(id)}`]: () => json(200, { numbers: [] }),
     [`GET ${wp.bot(id)}`]: () =>
-      json(200, { connected: true, settings: { enabled: false, autoConfirm: true } }),
+      json(200, { connected: true, settings: { enabled: false, autoConfirm: true, texts: {} } }),
     ...extra,
   };
 }
@@ -64,10 +64,42 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(pending);
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
-        { enabled: true, autoConfirm: true },
-        { enabled: true, autoConfirm: false },
+        { enabled: true, autoConfirm: true, texts: {} },
+        { enabled: true, autoConfirm: false, texts: {} },
       ]),
     );
+  });
+
+  it('edits the bot messages with a live preview, and keeps unchanged ones as defaults', async () => {
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`PUT ${wp.bot(id)}`]: (body: unknown) => json(200, { connected: true, settings: body }),
+        },
+      ),
+    );
+    const { user } = renderApp(page);
+    await user.click(await screen.findByText('עריכת ההודעות של הבוט'));
+    const confirmed = screen.getByLabelText('אישור תור');
+    await user.clear(confirmed);
+    await user.type(confirmed, 'נתראה ב{{business}, {{name}');
+    await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
+    expect(
+      await screen.findByText('אפשר להשתמש רק ב־{business}, {service} ו־{time}'),
+    ).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
+
+    await user.clear(confirmed);
+    await user.type(confirmed, 'נתראה ב!');
+    await user.keyboard('{ArrowLeft}');
+    await user.click(screen.getByRole('button', { name: 'הוספה: שם העסק (אישור תור)' }));
+    expect(screen.getByText(`נתראה ב${testBusiness.name}!`)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
+    expect(await screen.findByText('ההודעות נשמרו.')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
+      { enabled: false, autoConfirm: true, texts: { confirmed: 'נתראה ב{business}!' } },
+    ]);
   });
 
   it("shows the bot's replies as automatic", async () => {

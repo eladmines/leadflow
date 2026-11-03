@@ -132,16 +132,98 @@ export type ClassifyNumberResponse = z.infer<typeof classifyNumberResponseSchema
  * for the first time) picks a service, a day and a free time from WhatsApp lists, and the
  * appointment is booked. Off by default; never answers personal numbers or a chat the team took over.
  */
+/** Bot messages the business can rewrite (buttons, list labels and the steps stay fixed). */
+export const BOT_TEXT_KEYS = ['greeting', 'confirmed', 'pending', 'handoff', 'noTimes'] as const;
+export type BotTextKey = (typeof BOT_TEXT_KEYS)[number];
+export const BOT_TEXT_MAX = 600;
+/** Filled in when the message is sent: business name, chosen service, chosen date and time. */
+export const BOT_PLACEHOLDERS = ['{business}', '{service}', '{time}'] as const;
+export const botPlaceholderLabels: Record<(typeof BOT_PLACEHOLDERS)[number], string> = {
+  '{business}': 'שם העסק',
+  '{service}': 'שירות',
+  '{time}': 'מועד התור',
+};
+
+export const botTextLabels: Record<BotTextKey, string> = {
+  greeting: 'הודעת פתיחה',
+  confirmed: 'אישור תור',
+  pending: 'בקשה שממתינה לאישור',
+  handoff: 'מעבר לצוות',
+  noTimes: 'אין זמנים פנויים',
+};
+
+export const botDefaultTexts: Record<BotTextKey, string> = {
+  greeting: 'שלום! כאן {business} 👋\nרוצים לקבוע תור? בחרו שירות:',
+  confirmed:
+    'מעולה! קבענו לכם {service} ל{time} ✅\nנתראה ב{business}! לשינוי או ביטול, פשוט כתבו לנו כאן.',
+  pending: 'קיבלנו את הבקשה ל{service} ב{time} 🙏\nנאשר לכם כאן בהקדם.',
+  handoff: 'בסדר! העברנו את השיחה לצוות, נחזור אליכם כאן בהקדם 🙂',
+  noTimes:
+    'מצטערים, אין כרגע זמנים פנויים בשבועיים הקרובים. העברנו את הפנייה לצוות ונחזור אליכם כאן 🙏',
+};
+
+export const botTextMessages = {
+  tooLong: `ההודעה ארוכה מדי (עד ${BOT_TEXT_MAX} תווים)`,
+  unknownPlaceholder: 'אפשר להשתמש רק ב־{business}, {service} ו־{time}',
+} as const;
+
+/** A bot message with its placeholders filled in. */
+export function fillBotText(
+  template: string,
+  values: { business: string; service: string; when: string },
+): string {
+  return template
+    .replaceAll('{business}', values.business)
+    .replaceAll('{service}', values.service)
+    .replaceAll('{time}', values.when);
+}
+
+/** A custom message; empty means "use the default". */
+const botTextSchema = z
+  .string()
+  .trim()
+  .max(BOT_TEXT_MAX, botTextMessages.tooLong)
+  .refine(
+    (t) =>
+      (t.match(/\{[^}]*\}/g) ?? []).every((p) =>
+        (BOT_PLACEHOLDERS as readonly string[]).includes(p),
+      ),
+    botTextMessages.unknownPlaceholder,
+  )
+  .nullable()
+  .optional()
+  .transform((t) => t || undefined);
+
+export const botTextsSchema = z.object(
+  Object.fromEntries(BOT_TEXT_KEYS.map((k) => [k, botTextSchema])) as Record<
+    BotTextKey,
+    typeof botTextSchema
+  >,
+);
+export type BotTexts = Partial<Record<BotTextKey, string>>;
+
 export const whatsappBotSettingsSchema = z.object({
   enabled: z.boolean(),
   /** true: booked as confirmed; false: booked as "waiting for approval" (holds the time). */
   autoConfirm: z.boolean(),
+  /** The business's own wording; missing keys use `botDefaultTexts`. */
+  texts: botTextsSchema.default({}),
 });
-export type WhatsAppBotSettings = z.infer<typeof whatsappBotSettingsSchema>;
+export type WhatsAppBotSettings = z.input<typeof whatsappBotSettingsSchema>;
 
 export const whatsappBotResponseSchema = z.object({
   connected: z.boolean(),
-  settings: whatsappBotSettingsSchema,
+  settings: z.object({
+    enabled: z.boolean(),
+    autoConfirm: z.boolean(),
+    /** Only the messages the business rewrote. */
+    texts: z.object(
+      Object.fromEntries(BOT_TEXT_KEYS.map((k) => [k, z.string().optional()])) as Record<
+        BotTextKey,
+        z.ZodOptional<z.ZodString>
+      >,
+    ),
+  }),
 });
 export type WhatsAppBotResponse = z.infer<typeof whatsappBotResponseSchema>;
 
