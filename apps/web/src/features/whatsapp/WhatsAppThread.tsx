@@ -86,6 +86,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
                     <time dateTime={m.createdAt} title={formatDateTime(m.createdAt)}>
                       {timeAgo(m.createdAt)}
                     </time>
+                    {out && !m.sender && <span>· {tr('תשובה אוטומטית')}</span>}
                     {out && (
                       <span className={cn(m.status === 'failed' && 'font-medium text-danger-700')}>
                         · {tr(whatsappStatusLabels[m.status])}

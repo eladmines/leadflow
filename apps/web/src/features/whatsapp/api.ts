@@ -5,6 +5,8 @@ import {
   type PersonalNumbersResponse,
   type SendWhatsAppRequest,
   type SendWhatsAppResponse,
+  type WhatsAppBotResponse,
+  type WhatsAppBotSettings,
   type WhatsAppInboxResponse,
   type WhatsAppThreadResponse,
 } from '@leadflow/shared';
@@ -16,6 +18,7 @@ const threadKey = (businessId: string, leadId: string) =>
   [...whatsappKey(businessId), leadId] as const;
 const inboxKey = (businessId: string) => [...whatsappKey(businessId), 'inbox'] as const;
 const personalKey = (businessId: string) => [...whatsappKey(businessId), 'personal'] as const;
+const botKey = (businessId: string) => [...whatsappKey(businessId), 'bot'] as const;
 
 /** The WhatsApp conversation on a lead. Customer replies arrive by webhook, so poll while open. */
 export function useWhatsAppThread(businessId: string, leadId: string) {
@@ -80,5 +83,25 @@ export function useForgetPersonal(businessId: string) {
     mutationFn: (numberId: string) =>
       apiFetch<void>(apiPaths.whatsapp.number(businessId, numberId), { method: 'DELETE' }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: whatsappKey(businessId) }),
+  });
+}
+
+/** Booking bot settings (D-102). */
+export function useBotSettings(businessId: string) {
+  return useQuery({
+    queryKey: botKey(businessId),
+    queryFn: () => apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.bot(businessId)),
+  });
+}
+
+export function useUpdateBotSettings(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: WhatsAppBotSettings) =>
+      apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.bot(businessId), {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data) => queryClient.setQueryData(botKey(businessId), data),
   });
 }

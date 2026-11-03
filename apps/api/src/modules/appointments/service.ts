@@ -28,7 +28,7 @@ const toDto = (r: Row): Appointment => ({
   endsAt: r.endsAt.toISOString(),
   status: r.status,
   notes: r.notes,
-  source: r.source === 'website' ? 'website' : 'manual',
+  source: r.source === 'website' || r.source === 'whatsapp' ? r.source : 'manual',
   service: r.service,
   staff: r.staff ? { id: r.staff.id, name: r.staff.fullName } : null,
   customer: r.contact,
@@ -319,6 +319,58 @@ export class AppointmentService {
         },
       });
     });
+  }
+
+  /**
+   * Booked by the customer through the WhatsApp bot (D-102): on a free staff member, CONFIRMED or
+   * (when the business approves bookings itself) REQUESTED, which holds the time either way.
+   * Throws CONFLICT when the time was taken in the meantime.
+   */
+  async bookFromWhatsApp(
+    db: Db,
+    input: {
+      businessId: string;
+      contactId: string;
+      leadId: string;
+      serviceId: string | null;
+      serviceName: string | null;
+      staffId: string;
+      startsAt: Date;
+      durationMin: number;
+      confirmed: boolean;
+    },
+  ): Promise<{ id: string }> {
+    const endsAt = new Date(input.startsAt.getTime() + input.durationMin * 60_000);
+    await this.assertFree(db, input.businessId, input.staffId, input.startsAt, endsAt);
+    const created = await db.appointment.create({
+      data: {
+        businessId: input.businessId,
+        contactId: input.contactId,
+        leadId: input.leadId,
+        serviceId: input.serviceId,
+        staffId: input.staffId,
+        startsAt: input.startsAt,
+        endsAt,
+        status: input.confirmed ? 'CONFIRMED' : 'REQUESTED',
+        source: 'whatsapp',
+      },
+      select: { id: true },
+    });
+    await db.activity.create({
+      data: {
+        businessId: input.businessId,
+        leadId: input.leadId,
+        type: 'appointment.created',
+        data: {
+          startsAt: input.startsAt.toISOString(),
+          service: input.serviceName,
+          staff: null,
+          source: 'whatsapp',
+          ...(input.confirmed ? {} : { requested: true }),
+        },
+      },
+    });
+    return created;
   }
 
   async update(ctx: TenantContext, id: string, input: UpdateInput): Promise<Appointment> {

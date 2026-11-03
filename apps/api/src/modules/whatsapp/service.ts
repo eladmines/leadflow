@@ -8,6 +8,8 @@ import {
   type PersonalNumbersResponse,
   type WhatsAppInboxResponse,
   type WhatsAppMessage,
+  type WhatsAppBotResponse,
+  type WhatsAppBotSettings,
   type WhatsAppThreadResponse,
 } from '@leadflow/shared';
 import type { AppConfig } from '../../config/env';
@@ -18,6 +20,7 @@ import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
 import { ensureStages, LeadService } from '../leads/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
+import { BookingBot, type BotOutcome } from './bot';
 
 type Status = (typeof WHATSAPP_STATUSES)[number];
 
@@ -29,6 +32,8 @@ export interface InboundMessage {
   /** WhatsApp profile name, if Meta sent one. */
   profileName: string | null;
   body: string;
+  /** Id of the tapped button or list row (interactive replies). */
+  replyId?: string | null;
   receivedAt: Date;
 }
 
@@ -77,6 +82,7 @@ const INBOX_MESSAGES = 20;
  */
 export class WhatsAppService {
   private readonly leads: LeadService;
+  private readonly bot: BookingBot;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -85,6 +91,9 @@ export class WhatsAppService {
     private readonly log: Log,
   ) {
     this.leads = new LeadService(prisma);
+    this.bot = new BookingBot(prisma, sender, log, (tx, businessId, numberId) =>
+      this.ensureCustomer(tx, businessId, numberId),
+    );
   }
 
   /** The business the number is connected to, or null when WhatsApp is off. */
@@ -171,7 +180,8 @@ export class WhatsAppService {
         });
         return { kind: 'lead', leadId, created } as const;
       });
-      await this.notifyReceived(businessId, result, msg);
+      const bot = result.kind === 'ignored' ? 'none' : await this.runBot(businessId, msg);
+      await this.notifyReceived(businessId, result, msg, bot);
       return result;
     } catch (err) {
       // The same message (or two first messages from a new number) delivered at once: the unique
@@ -181,12 +191,33 @@ export class WhatsAppService {
     }
   }
 
+  /** The booking bot's turn (D-102); a bot failure never loses the customer's message. */
+  private async runBot(businessId: string, msg: InboundMessage): Promise<BotOutcome> {
+    try {
+      return await this.bot.handle(businessId, {
+        from: msg.from,
+        body: msg.body,
+        replyId: msg.replyId ?? null,
+      });
+    } catch (err) {
+      this.log.error({ errName: (err as Error)?.name }, 'whatsapp bot failed');
+      return 'none';
+    }
+  }
+
   /**
    * Bell and pop-up for an incoming message (D-097): a new lead or a message on a lead goes to
    * owners/managers and the lead's assignee; a new number in the inbox only on its first message.
    */
-  private async notifyReceived(businessId: string, result: ReceiveResult, msg: InboundMessage) {
+  private async notifyReceived(
+    businessId: string,
+    result: ReceiveResult,
+    msg: InboundMessage,
+    bot: BotOutcome,
+  ) {
     if (result.kind === 'ignored') return;
+    // Taps in a bot conversation aren't news; the booking itself notifies.
+    if (bot === 'handled' && result.kind === 'lead' && !result.created) return;
     if (result.kind === 'inbox') {
       if (!result.isNew) return;
       return notifySafe(this.prisma, this.log, {
@@ -371,35 +402,104 @@ export class WhatsAppService {
         return { status: 'PERSONAL' as const, leadId: null };
       }
 
-      const waiting = await tx.whatsAppMessage.findMany({
-        where: { numberId: number.id },
-        orderBy: { createdAt: 'asc' },
-        select: { body: true },
-      });
-      const { contactId, leadId } = await this.attachToLead(tx, ctx.businessId, {
-        phone: number.phone,
-        name: number.profileName,
-        firstMessage: waiting.map((m) => m.body).join('\n'),
-        actorId: ctx.userId,
-      });
-      await tx.whatsAppMessage.updateMany({
-        where: { numberId: number.id },
-        data: { contactId, leadId },
-      });
-      await tx.whatsAppNumber.update({
-        where: { id: number.id },
-        data: { status: 'BUSINESS', profileName: null, ...classified },
-      });
-      await recordAudit(tx, {
-        action: 'whatsapp.number_classified',
-        businessId: ctx.businessId,
-        actorUserId: ctx.userId,
-        entityType: 'whatsapp_number',
-        entityId: number.id,
-        metadata: { as: 'BUSINESS' },
-      });
+      const { leadId } = await this.promote(tx, ctx.businessId, number, ctx.userId);
       return { status: 'BUSINESS' as const, leadId };
     });
+  }
+
+  /**
+   * An unclassified number becomes a business number: its waiting messages move to the contact's
+   * lead (created if needed). `actorId` null = the booking bot did it.
+   */
+  private async promote(
+    tx: Db,
+    businessId: string,
+    number: { id: string; phone: string; profileName: string | null },
+    actorId: string | null,
+  ) {
+    const waiting = await tx.whatsAppMessage.findMany({
+      where: { numberId: number.id, direction: 'IN' },
+      orderBy: { createdAt: 'asc' },
+      select: { body: true },
+    });
+    const { contactId, leadId } = await this.attachToLead(tx, businessId, {
+      phone: number.phone,
+      name: number.profileName,
+      firstMessage: waiting.map((m) => m.body).join('\n'),
+      actorId: actorId ?? undefined,
+    });
+    await tx.whatsAppMessage.updateMany({
+      where: { numberId: number.id },
+      data: { contactId, leadId },
+    });
+    await tx.whatsAppNumber.update({
+      where: { id: number.id },
+      data: {
+        status: 'BUSINESS',
+        profileName: null,
+        classifiedById: actorId,
+        classifiedAt: new Date(),
+      },
+    });
+    await recordAudit(tx, {
+      action: 'whatsapp.number_classified',
+      businessId,
+      actorUserId: actorId,
+      entityType: 'whatsapp_number',
+      entityId: number.id,
+      metadata: { as: 'BUSINESS', ...(actorId ? {} : { by: 'booking_bot' }) },
+    });
+    return { contactId, leadId };
+  }
+
+  /** The contact and open lead for a number (used by the booking bot when it books). */
+  async ensureCustomer(tx: Db, businessId: string, numberId: string) {
+    const number = await tx.whatsAppNumber.findFirst({ where: { id: numberId, businessId } });
+    if (!number || number.status === 'PERSONAL') throw new AppError('NOT_FOUND');
+    if (number.status === 'UNCLASSIFIED') return this.promote(tx, businessId, number, null);
+    const { contactId, leadId } = await this.attachToLead(tx, businessId, {
+      phone: number.phone,
+      name: null,
+      firstMessage: '',
+    });
+    return { contactId, leadId };
+  }
+
+  /** Booking bot settings (D-102). */
+  async botSettings(ctx: TenantContext): Promise<WhatsAppBotResponse> {
+    const b = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+      select: { whatsappBotEnabled: true, whatsappBotAutoConfirm: true },
+    });
+    return {
+      connected: this.businessId === ctx.businessId,
+      settings: { enabled: b.whatsappBotEnabled, autoConfirm: b.whatsappBotAutoConfirm },
+    };
+  }
+
+  async updateBotSettings(
+    ctx: TenantContext,
+    input: WhatsAppBotSettings,
+  ): Promise<WhatsAppBotResponse> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.business.update({
+        where: { id: ctx.businessId },
+        data: { whatsappBotEnabled: input.enabled, whatsappBotAutoConfirm: input.autoConfirm },
+      });
+      // Switching off ends conversations in progress.
+      if (!input.enabled) {
+        await tx.whatsAppBotSession.deleteMany({ where: { businessId: ctx.businessId } });
+      }
+      await recordAudit(tx, {
+        action: 'whatsapp.bot_updated',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'business',
+        entityId: ctx.businessId,
+        metadata: input,
+      });
+    });
+    return this.botSettings(ctx);
   }
 
   /** Forgets a personal marking; the number's next message lands in the inbox again. */

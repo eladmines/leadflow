@@ -7,6 +7,8 @@ import {
   personalNumbersResponseSchema,
   sendWhatsAppRequestSchema,
   sendWhatsAppResponseSchema,
+  whatsappBotResponseSchema,
+  whatsappBotSettingsSchema,
   whatsappInboxResponseSchema,
   whatsappThreadResponseSchema,
 } from '@leadflow/shared';
@@ -82,6 +84,14 @@ function messageText(m: Record<string, unknown>): string {
   if (!label) return '[הודעה מסוג שעדיין לא נתמך]';
   const caption = typeof part.caption === 'string' ? part.caption : '';
   return caption ? `[${label}] ${caption}` : `[${label}]`;
+}
+
+/** Id of the tapped button or list row (the booking bot's choices). */
+function replyId(m: Record<string, unknown>): string | null {
+  if (m.type !== 'interactive') return null;
+  const part = (m.interactive ?? {}) as Record<string, unknown>;
+  const reply = (part.button_reply ?? part.list_reply) as { id?: unknown } | undefined;
+  return typeof reply?.id === 'string' ? reply.id.slice(0, 200) : null;
 }
 
 const STATUSES = ['sent', 'delivered', 'read', 'failed'] as const;
@@ -163,6 +173,7 @@ export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyn
             from: `+${from}`,
             profileName: names.get(from) ?? null,
             body: messageText(m),
+            replyId: replyId(m),
             receivedAt:
               Number.isFinite(seconds) && seconds > 0 ? new Date(seconds * 1000) : new Date(),
           };
@@ -232,6 +243,28 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
         schema: { params, response: { 200: personalNumbersResponseSchema } },
       },
       async (req) => service.personalNumbers(tenantOf(req)),
+    );
+
+    app.get(
+      '/whatsapp/bot',
+      {
+        preValidation: requirePermission('whatsapp.inbox'),
+        schema: { params, response: { 200: whatsappBotResponseSchema } },
+      },
+      async (req) => service.botSettings(tenantOf(req)),
+    );
+
+    app.put(
+      '/whatsapp/bot',
+      {
+        preValidation: requirePermission('whatsapp.inbox'),
+        schema: {
+          params,
+          body: whatsappBotSettingsSchema,
+          response: { 200: whatsappBotResponseSchema },
+        },
+      },
+      async (req) => service.updateBotSettings(tenantOf(req), req.body),
     );
 
     app.post(

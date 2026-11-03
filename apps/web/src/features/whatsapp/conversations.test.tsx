@@ -39,11 +39,53 @@ function routes(inbox: WhatsAppInboxResponse, extra = {}) {
     [meKey]: me(testUser),
     [`GET ${wp.inbox(id)}`]: () => json(200, inbox),
     [`GET ${wp.personal(id)}`]: () => json(200, { numbers: [] }),
+    [`GET ${wp.bot(id)}`]: () =>
+      json(200, { connected: true, settings: { enabled: false, autoConfirm: true } }),
     ...extra,
   };
 }
 
 describe('WhatsApp conversations inbox', () => {
+  it('switches the booking bot on and chooses how its bookings are approved (D-102)', async () => {
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`PUT ${wp.bot(id)}`]: (body: unknown) => json(200, { connected: true, settings: body }),
+        },
+      ),
+    );
+    const { user } = renderApp(page);
+    const on = await screen.findByRole('checkbox', { name: 'הבוט פעיל' });
+    const pending = screen.getByRole('radio', { name: /ממתינים לאישור שלכם/ });
+    expect(pending).toBeDisabled();
+    await user.click(on);
+    await waitFor(() => expect(on).toBeChecked());
+    await user.click(pending);
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
+        { enabled: true, autoConfirm: true },
+        { enabled: true, autoConfirm: false },
+      ]),
+    );
+  });
+
+  it("shows the bot's replies as automatic", async () => {
+    const bot = {
+      ...number.messages[0]!,
+      id: '8b000000-0000-4000-8000-000000000002',
+      direction: 'OUT' as const,
+      body: 'באיזה יום נוח לכם?',
+      status: 'sent' as const,
+    };
+    mockApi(
+      routes({ connected: true, numbers: [{ ...number, messages: [...number.messages, bot] }] }),
+    );
+    renderApp(page);
+    expect(await screen.findByText('באיזה יום נוח לכם?')).toBeInTheDocument();
+    expect(screen.getByText('תשובה אוטומטית')).toBeInTheDocument();
+  });
+
   it('lists unclassified numbers with their messages', async () => {
     mockApi(routes({ connected: true, numbers: [number] }));
     renderApp(page);

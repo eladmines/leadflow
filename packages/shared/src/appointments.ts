@@ -92,7 +92,7 @@ export const appointmentSchema = z.object({
   endsAt: z.string().datetime(),
   status: z.enum(APPOINTMENT_STATUSES),
   notes: z.string().nullable(),
-  source: z.enum(['manual', 'website']),
+  source: z.enum(['manual', 'website', 'whatsapp']),
   service: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
   staff: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
   customer: z.object({

@@ -4,7 +4,7 @@ import { CloudWhatsAppSender } from './cloud';
 import { MemoryWhatsAppSender } from './memory';
 import type { WhatsAppSender } from './types';
 
-export type { WhatsAppSender } from './types';
+export type { WhatsAppChoice, WhatsAppSender } from './types';
 export { MemoryWhatsAppSender } from './memory';
 export { CloudWhatsAppSender, WhatsAppSendError } from './cloud';
 
