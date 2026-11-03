@@ -343,7 +343,10 @@ export class QuoteService {
       return tx.quote.findUniqueOrThrow({ where: { id: q.id }, include });
     });
     await this.notifyInApp(row, status === 'ACCEPTED');
-    void this.notifyTeam(row, status === 'ACCEPTED', total);
+    // In the background; a failure is logged, never left unhandled.
+    this.notifyTeam(row, status === 'ACCEPTED', total).catch((err) =>
+      this.log.error({ errName: (err as Error)?.name }, 'quote notification failed'),
+    );
     return this.publicDto(row);
   }
 

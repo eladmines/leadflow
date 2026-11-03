@@ -322,7 +322,10 @@ export async function buildPublicApp({
             req.log.error({ errName: (err as Error)?.name }, 'appointment request failed');
           }
         }
-        void notifyTeam(site.businessId, business.name, data.data, req.log, requested);
+        // In the background; a failure is logged, never left unhandled (it could stop the server).
+        notifyTeam(site.businessId, business.name, data.data, req.log, requested).catch((err) =>
+          req.log.error({ errName: (err as Error)?.name }, 'lead notification failed'),
+        );
         // In-app: the bell and a pop-up for everyone who sees all leads (D-097).
         await notifySafe(prisma, req.log, {
           businessId: site.businessId,

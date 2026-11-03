@@ -164,7 +164,8 @@ export const botDefaultTexts: Record<BotTextKey, string> = {
 
 export const botTextMessages = {
   tooLong: `ההודעה ארוכה מדי (עד ${BOT_TEXT_MAX} תווים)`,
-  unknownPlaceholder: 'אפשר להשתמש רק ב־{business}, {service} ו־{time}',
+  unknownPlaceholder:
+    'אי אפשר להשתמש בסוגריים מסולסלים { }. כדי להוסיף פרטים, השתמשו בכפתורי ההוספה.',
 } as const;
 
 /** A bot message with its placeholders filled in. */

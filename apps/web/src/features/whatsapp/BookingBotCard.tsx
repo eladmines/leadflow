@@ -100,11 +100,24 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
 }
 
 type Saved = WhatsAppBotResponse['settings'];
+
+/**
+ * In the editor, placeholders read as tags in the owner's language — "[שם העסק]" or
+ * "[Business name]" — instead of codes; they become `{business}` etc. again when saved. Either
+ * language's tag is understood, so switching the app language never breaks a message.
+ */
+const tagOf = (p: (typeof BOT_PLACEHOLDERS)[number]) => `[${tr(botPlaceholderLabels[p])}]`;
+const toTags = (text: string) => BOT_PLACEHOLDERS.reduce((t, p) => t.replaceAll(p, tagOf(p)), text);
+const toCodes = (text: string) =>
+  BOT_PLACEHOLDERS.reduce(
+    (t, p) => t.replaceAll(tagOf(p), p).replaceAll(`[${botPlaceholderLabels[p]}]`, p),
+    text,
+  );
+
 const initialTexts = (saved: Saved) =>
-  Object.fromEntries(BOT_TEXT_KEYS.map((k) => [k, saved.texts[k] ?? botDefaultTexts[k]])) as Record<
-    BotTextKey,
-    string
-  >;
+  Object.fromEntries(
+    BOT_TEXT_KEYS.map((k) => [k, toTags(saved.texts[k] ?? botDefaultTexts[k])]),
+  ) as Record<BotTextKey, string>;
 
 /** An example date for the preview: next week at 10:00. */
 function exampleWhen() {
@@ -151,7 +164,10 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
     setSaved(false);
     // Unchanged defaults aren't stored, so later improvements to the defaults still reach them.
     const custom = Object.fromEntries(
-      BOT_TEXT_KEYS.map((k) => [k, texts[k].trim() === botDefaultTexts[k] ? null : texts[k]]),
+      BOT_TEXT_KEYS.map((k) => {
+        const text = toCodes(texts[k]);
+        return [k, text.trim() === botDefaultTexts[k] ? null : text];
+      }),
     );
     const parsed = botTextsSchema.safeParse(custom);
     if (!parsed.success) {
@@ -169,7 +185,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-5">
       <p className="text-xs text-ink-muted">
         {tr(
-          'הלקוחות מקבלים את ההודעות בעברית. {business}, {service} ו־{time} יוחלפו בשם העסק, בשירות ובמועד שנבחרו. הכפתורים והרשימות נשארים קבועים.',
+          'הלקוחות מקבלים את ההודעות בעברית. פרטים בסוגריים, כמו [שם העסק], מתמלאים אוטומטית בפרטים האמיתיים. מוסיפים אותם בכפתורים שמתחת לכל הודעה. הכפתורים והרשימות בוואטסאפ נשארים קבועים.',
         )}
       </p>
       {BOT_TEXT_KEYS.map((k) => (
@@ -192,7 +208,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
               <button
                 key={p}
                 type="button"
-                onClick={() => insert(k, p)}
+                onClick={() => insert(k, tagOf(p))}
                 aria-label={`${tr('הוספה:')} ${tr(botPlaceholderLabels[p])} (${tr(botTextLabels[k])})`}
                 className="rounded-full border border-surface-border px-2 py-0.5 text-ink hover:bg-surface-sunken"
               >
@@ -208,15 +224,15 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
                 lang="he"
                 className="max-w-md whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20"
               >
-                {fillBotText(texts[k], values) || '—'}
+                {fillBotText(toCodes(texts[k]), values) || '—'}
               </p>
             </div>
-            {texts[k] !== botDefaultTexts[k] && (
+            {toCodes(texts[k]) !== botDefaultTexts[k] && (
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => edit(k, botDefaultTexts[k])}
+                onClick={() => edit(k, toTags(botDefaultTexts[k]))}
                 aria-label={tr('החזרת ברירת המחדל: {0}', tr(botTextLabels[k]))}
               >
                 <RotateCcw aria-hidden className="h-4 w-4" />
