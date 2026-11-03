@@ -17,7 +17,6 @@ import { Sidebar } from './Sidebar';
 import { markTourSeen, ProductTour, tourSeen } from '../tour/ProductTour';
 import { pageTours, type PageKey } from '../tour/pageTours';
 import { Tour } from '../tour/Tour';
-import { ToursProvider } from '../tour/TourContext';
 import { HelpMenu } from '../tour/HelpMenu';
 import { usePageKey } from '../tour/pageTours';
 import { NotificationBell } from '../notifications/NotificationBell';
@@ -46,13 +45,9 @@ export function BusinessLayout() {
     setTourOpen(false);
     if (userId) markTourSeen(userId);
   };
-  // The page tour that is running (D-096), started from "סיור בעמוד".
+  // The page tour that is running (D-096), started from the help button (D-104).
   const [pageTour, setPageTour] = useState<PageKey | null>(null);
-  const tours = {
-    startMainTour: () => setTourOpen(true),
-    startPageTour: (page: PageKey) => setPageTour(page),
-  };
-  // The site editor needs the full width for its live preview (and has its own tour button).
+  // The site editor needs the full width for its live preview.
   const wide = useMatch('/b/:businessId/site') !== null;
   const page = usePageKey();
 
@@ -96,13 +91,11 @@ export function BusinessLayout() {
       <ProductTour role={b.role} open={tourOpen} onClose={closeTour} />
       <NotificationToasts businessId={b.id} userId={userId} />
       {pageTour && <Tour steps={pageTours[pageTour]} open onClose={() => setPageTour(null)} />}
-      {!wide && (
-        <HelpMenu
-          onPageTour={page && pageTours[page].length > 0 ? () => setPageTour(page) : null}
-          onProductTour={() => setTourOpen(true)}
-          onSearch={openPalette}
-        />
-      )}
+      <HelpMenu
+        onPageTour={page && pageTours[page].length > 0 ? () => setPageTour(page) : null}
+        onProductTour={() => setTourOpen(true)}
+        onSearch={openPalette}
+      />
 
       <div className="min-w-0 flex-1">
         <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
@@ -162,13 +155,13 @@ export function BusinessLayout() {
           className={cn(
             'mx-auto flex flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6',
             // Room at the bottom so the help button never covers the last item.
-            wide ? 'max-w-[1600px] lg:px-8 lg:py-6' : 'max-w-6xl pb-20 lg:px-10 lg:pb-20 lg:pt-8',
+            wide
+              ? 'max-w-[1600px] pb-20 lg:px-8 lg:pb-20 lg:pt-6'
+              : 'max-w-6xl pb-20 lg:px-10 lg:pb-20 lg:pt-8',
           )}
         >
           <UnverifiedEmailBanner />
-          <ToursProvider value={tours}>
-            <Outlet context={context} />
-          </ToursProvider>
+          <Outlet context={context} />
         </main>
       </div>
     </div>

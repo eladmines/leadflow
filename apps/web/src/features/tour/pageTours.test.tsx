@@ -120,10 +120,10 @@ describe('help button (D-104)', () => {
     expect(help).toHaveFocus();
   });
 
-  it('is not shown in the site editor (it has its own tour button)', async () => {
+  it('is on the site editor too, with its page tour', async () => {
     mockApi({ [meKey]: me(testUser) });
-    renderApp(section('site'));
-    await screen.findByRole('heading', { level: 1 });
-    expect(screen.queryByRole('button', { name: 'עזרה' })).not.toBeInTheDocument();
+    const { user } = renderApp(section('site'));
+    await user.click(await screen.findByRole('button', { name: 'עזרה' }));
+    expect(screen.getByRole('menuitem', { name: 'סיור בעמוד' })).toBeInTheDocument();
   });
 });
