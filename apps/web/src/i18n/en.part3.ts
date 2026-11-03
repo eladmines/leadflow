@@ -458,4 +458,49 @@ export const enPart3: Record<string, string> = {
     'Choose how to see the calendar, and move between days or weeks with the arrows. "Today" jumps back to today.',
   'רואים את היומן של כל הצוות או של אדם אחד. השעות הפנויות מתעדכנות בהתאם.':
     "See the whole team's calendar or one person's. The free times update to match.",
+  'רשימת ההקמה: מה כבר הושלם ומה נשאר. כל צעד מסומן לבד כשמסיימים אותו, והצעד הבא מופיע למעלה עם כפתור ישיר.':
+    "The setup list: what's done and what's left. Each step ticks itself when you finish it, and the next step shows at the top with a direct button.",
+  'מה צריך לעשות היום ומה באיחור, כדי ששום לקוח לא ייפול בין הכיסאות. "לכל המשימות" פותח את הרשימה המלאה.':
+    'What\'s due today and what\'s overdue, so no customer falls through the cracks. "All tasks" opens the full list.',
+  'טלפון, כתובת, שעות ואזורי שירות. הפרטים האלה מופיעים באתר, ו"עריכה" פותח אותם בהגדרות.':
+    'Phone, address, hours and service areas. These show on your website, and "Edit" opens them in Settings.',
+  'הפעמון מראה כמה דברים חדשים מחכים: פנייה, הודעה בוואטסאפ, תור שנקבע בבוט או הצעה שאושרה. לחיצה על התראה לוקחת אליה.':
+    'The bell shows how many new things are waiting: an inquiry, a WhatsApp message, a booking from the bot or an accepted quote. Click a notification to go to it.',
+  שפה: 'Language',
+  'מחליפים בין אנגלית לעברית. ההחלפה נשמרת בדפדפן הזה.':
+    'Switch between English and Hebrew. The choice is saved in this browser.',
+  'העוזר של LeadFlow': 'The LeadFlow helper',
+  'בכל עמוד אפשר ללחוץ עליי: סיור בעמוד שמסביר מה יש בו, סיור במערכת כולה, וחיפוש מהיר.':
+    "Click me on any page: a page tour that explains what's on it, the full product tour, and quick search.",
+  'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט התורים או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.':
+    "Everyone who contacted the business: from the website form, WhatsApp, the booking bot or added by you. Each lead moves through stages until it's closed.",
+  'פניות חדשות מופיעות לבד. הכפתור מביא אותן מיד.':
+    'New inquiries appear on their own. This button fetches them right away.',
+  'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות. כל שינוי נשמר ונרשם בהיסטוריה.':
+    "The stage, who's responsible, estimated value, when to get back to the customer, and tags. Every change is saved and recorded in the history.",
+  'השיחה עם הלקוח בוואטסאפ, כולל התשובות האוטומטיות של הבוט. אפשר לענות מכאן עד 24 שעות מההודעה האחרונה שלו; כשאתם כותבים, הבוט שותק.':
+    "The WhatsApp conversation with the customer, including the bot's automatic replies. You can reply from here for 24 hours after their last message; once you write, the bot stays quiet.",
+  'כותבים הערות לצוות, ורואים כל מה שקרה בליד: שינויי שלב, שיוכים, משימות, תורים שנקבעו בבוט והצעות.':
+    'Write notes for the team, and see everything that happened on the lead: stage changes, assignments, tasks, bot bookings and quotes.',
+  'התורים והבקשות של הלקוח, כולל בקשות לאירוע מהבוט, וקביעת תור חדש.':
+    "The customer's appointments and requests, including event requests from the bot, and booking a new one.",
+  'יוצרים הצעת מחיר מתוך הליד ושולחים ללקוח בקישור — למשל אחרי בקשה לאירוע. הלקוח מאשר אונליין.':
+    'Create a quote from the lead and send the customer a link — for example after an event request. The customer accepts online.',
+  'כותבים מה צריך לעשות ומתי, ולוחצים "הוספה". אפשר לשייך לעובד, ומקבלים מייל ופעמון כשמגיע הזמן.':
+    'Write what needs doing and when, then click "Add". You can assign it to a teammate, and you get an email and a bell notification when it\'s due.',
+  '"שלי" מראה רק את המשימות שלכם; "של כל הצוות" את כולן.': `"Mine" shows only your tasks; "Everyone's" shows all of them.`,
+  'באיחור, היום והלאה. מסמנים משימה כבוצעה בלחיצה; משימה של ליד מקשרת אליו.':
+    'Overdue, today and later. Tick a task to mark it done; a task on a lead links to it.',
+  'כל ההצעות של העסק. הצעה חדשה נוצרת מתוך ליד, בכפתור "הצעת מחיר חדשה" בכרטיס הליד, כך שהיא כבר מכירה את הלקוח.':
+    'All the business\'s quotes. A new quote starts from a lead, with "New quote" on the lead card, so it already knows the customer.',
+  'טיוטה: עוד לא נשלחה. נשלחה: מחכה ללקוח. אושרה או נדחתה: הלקוח החליט, וקיבלתם על זה התראה.':
+    'Draft: not sent yet. Sent: waiting for the customer. Accepted or rejected: the customer decided, and you were notified.',
+  'כמה פניות הגיעו בכל יום. כל עמודה היא יום אחד.':
+    'How many inquiries arrived each day. Each bar is one day.',
+  'אותם נתונים כטבלה של מספרים, לקריאה נוחה או להעתקה.':
+    'The same data as a table of numbers, easier to read or copy.',
+  'השם, התחום, הטלפון והכתובת. הם מופיעים באתר, בכפתור החיוג ובמיילים. התחום קובע גם את ההודעות המוכנות של בוט הוואטסאפ ואת אופן ההזמנה (תורים או בקשות לאירוע).':
+    "Name, industry, phone and address. They show on the website, the call button and emails. The industry also sets the WhatsApp bot's ready-made messages and how customers book (appointments or event requests).",
+  'השעות מופיעות באתר, וקובעות אילו שעות פנויות מוצעות לתורים: ביומן, בבקשה מהאתר ובבוט בוואטסאפ. סמנו יום כסגור כדי שלא יוצעו בו תורים.':
+    'Hours show on the website and decide which free times are offered for appointments: in the calendar, the website request and the WhatsApp bot. Mark a day as closed so no times are offered on it.',
 };
