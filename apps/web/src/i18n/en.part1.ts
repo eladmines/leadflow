@@ -331,6 +331,8 @@ export const enPart1: Record<string, string> = {
   'נשלחה על ידי {0}': 'Sent by {0}',
   'תשובה אוטומטית': 'Automatic reply',
   עזרה: 'Help',
+  'היי! צריכים עזרה? כאן יש סיור לכל עמוד וחיפוש מהיר.':
+    'Hi! Need a hand? Tours for every page and quick search are here.',
   'עריכת ההודעות של הבוט': "Edit the bot's messages",
   'הלקוחות מקבלים את ההודעות בעברית. {business}, {service} ו־{time} יוחלפו בשם העסק, בשירות ובמועד שנבחרו. הכפתורים והרשימות נשארים קבועים.':
     'Customers get these messages in Hebrew. {business}, {service} and {time} are replaced with the business name and the chosen service, date and time. Buttons and lists stay fixed.',
@@ -347,7 +349,8 @@ export const enPart1: Record<string, string> = {
   'מעבר לצוות': 'Handing over to the team',
   'אין זמנים פנויים': 'No free times',
   'ההודעה ארוכה מדי (עד 600 תווים)': 'The message is too long (up to 600 characters)',
-  'אפשר להשתמש רק ב־{business}, {service} ו־{time}': 'Only {business}, {service} and {time} can be used',
+  'אפשר להשתמש רק ב־{business}, {service} ו־{time}':
+    'Only {business}, {service} and {time} can be used',
   'בקשה לתור מוואטסאפ': 'Appointment request from WhatsApp',
   '{0} מספרים חדשים כתבו בוואטסאפ': '{0} new numbers wrote on WhatsApp',
   'ומחכים לסיווג (לקוח או פרטי).': 'and are waiting to be classified (customer or personal).',

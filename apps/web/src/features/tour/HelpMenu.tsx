@@ -1,8 +1,27 @@
-import { CircleHelp, Compass, Map, Search } from 'lucide-react';
+import { Compass, Map, Search } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';
 import { shortcutLabel } from '../shell/CommandPalette';
+import { HelpCharacter } from './HelpCharacter';
+
+const GREETED = 'leadflow.helper.greeted';
+
+/** The hello bubble shows once per browser (a per-viewer convenience). */
+function greetedBefore(): boolean {
+  try {
+    return localStorage.getItem(GREETED) === '1';
+  } catch {
+    return true;
+  }
+}
+function markGreeted() {
+  try {
+    localStorage.setItem(GREETED, '1');
+  } catch {
+    // Private mode: the bubble may show again next time.
+  }
+}
 
 interface Item {
   label: string;
@@ -13,7 +32,8 @@ interface Item {
 
 /**
  * Floating help button (D-104) in the bottom corner on the end side (right in English, left in
- * Hebrew): this page's tour, the product tour and quick search in one place. A menu button with
+ * Hebrew): this page's tour, the product tour and quick search in one place. The button is the
+ * animated help character (D-105), which says hello once and waves on hover or focus. A menu button with
  * arrow-key navigation; Escape or a click outside closes it and returns focus to the button.
  */
 export function HelpMenu({
@@ -27,6 +47,8 @@ export function HelpMenu({
   onSearch: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(false);
+  const [hello, setHello] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const items = useRef<(HTMLButtonElement | null)[]>([]);
@@ -42,6 +64,20 @@ export function HelpMenu({
     setOpen(false);
     if (refocus) trigger.current?.focus();
   };
+
+  // First visit in this browser: a short hello after the page settles.
+  useEffect(() => {
+    if (greetedBefore()) return;
+    const show = setTimeout(() => setHello(true), 1500);
+    const hide = setTimeout(() => {
+      setHello(false);
+      markGreeted();
+    }, 8500);
+    return () => {
+      clearTimeout(show);
+      clearTimeout(hide);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -71,13 +107,21 @@ export function HelpMenu({
 
   return (
     <div ref={root} className="fixed bottom-4 end-4 z-30 print:hidden">
+      {hello && !open && (
+        <p
+          role="status"
+          className="absolute bottom-full end-0 mb-2 w-56 rounded-2xl rounded-ee-sm border border-surface-border bg-surface px-3.5 py-2.5 text-sm text-ink shadow-lift motion-safe:animate-helper-pop"
+        >
+          {tr('היי! צריכים עזרה? כאן יש סיור לכל עמוד וחיפוש מהיר.')}
+        </p>
+      )}
       {open && (
         <div
           id={menuId}
           role="menu"
           aria-label={tr('עזרה')}
           onKeyDown={onMenuKey}
-          className="absolute bottom-full end-0 mb-2 flex w-60 flex-col rounded-xl border border-surface-border bg-surface p-1.5 shadow-lift"
+          className="absolute bottom-full end-0 mb-2 flex w-60 flex-col rounded-xl border border-surface-border bg-surface p-1.5 shadow-lift motion-safe:animate-helper-pop"
         >
           {list.map((item, i) => (
             <button
@@ -112,7 +156,17 @@ export function HelpMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (hello) {
+            setHello(false);
+            markGreeted();
+          }
+          setOpen((o) => !o);
+        }}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onFocus={() => setHover(true)}
+        onBlur={() => setHover(false)}
         onKeyDown={(e) => {
           if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
             e.preventDefault();
@@ -120,11 +174,11 @@ export function HelpMenu({
           }
         }}
         className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-full border border-surface-border bg-surface text-ink-muted shadow-lift transition-colors hover:text-ink',
-          open && 'text-ink',
+          'flex h-14 w-14 items-center justify-center rounded-full border border-surface-border bg-surface shadow-lift transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 motion-reduce:transition-none',
+          open && 'scale-105',
         )}
       >
-        <CircleHelp aria-hidden className="h-5 w-5" />
+        <HelpCharacter happy={open} waving={hover || hello} className="h-11 w-11" />
       </button>
     </div>
   );

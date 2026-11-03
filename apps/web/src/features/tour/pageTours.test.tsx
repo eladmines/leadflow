@@ -1,5 +1,5 @@
 import { apiPaths, businessWebPaths } from '@leadflow/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
 import { pageKeyFor } from './pageTours';
@@ -125,5 +125,23 @@ describe('help button (D-104)', () => {
     const { user } = renderApp(section('site'));
     await user.click(await screen.findByRole('button', { name: 'עזרה' }));
     expect(screen.getByRole('menuitem', { name: 'סיור בעמוד' })).toBeInTheDocument();
+  });
+});
+
+describe('help character (D-105)', () => {
+  it('says hello once per browser', async () => {
+    localStorage.removeItem('leadflow.helper.greeted');
+    mockApi({ [meKey]: me(testUser) });
+    renderApp(section('leads'));
+    expect(
+      await screen.findByText(/צריכים עזרה\?/, undefined, { timeout: 3000 }),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem('leadflow.helper.greeted')).toBeNull();
+    cleanup();
+    localStorage.setItem('leadflow.helper.greeted', '1');
+    renderApp(section('leads'));
+    await screen.findByRole('button', { name: 'עזרה' });
+    await new Promise((r) => setTimeout(r, 1700));
+    expect(screen.queryByText(/צריכים עזרה\?/)).not.toBeInTheDocument();
   });
 });

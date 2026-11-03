@@ -74,7 +74,7 @@ export function NotificationToasts({
     <div
       aria-live="polite"
       aria-label={tr('התראות חדשות')}
-      className="pointer-events-none fixed bottom-16 end-4 z-50 flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2"
+      className="pointer-events-none fixed bottom-20 end-4 z-50 flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2"
     >
       {toasts.map((n) => {
         const text = notificationText(n);
