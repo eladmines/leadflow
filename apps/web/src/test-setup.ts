@@ -15,4 +15,7 @@ beforeEach(() => {
   localStorage.clear();
   // The product tour opens on first entry; tests that cover it remove this flag.
   localStorage.setItem('leadflow.tour.off', '1');
+  // Likewise the helper's hello (D-105); its own test turns it back on.
+  localStorage.setItem('leadflow.helper.quiet', '1');
+  sessionStorage.clear();
 });
