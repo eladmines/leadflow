@@ -413,4 +413,49 @@ export const enPart3: Record<string, string> = {
   'שליחה בוואטסאפ': 'Send on WhatsApp',
   'אין חיבור לשרת. בדקו את החיבור לאינטרנט ונסו שוב':
     "Can't reach the server. Check your internet connection and try again",
+  מקרא: 'Legend',
+  'כאן מנהלים את הוואטסאפ של העסק: מספרים חדשים שכתבו לכם, והבוט שעונה ללקוחות בשמכם. לקוחות מוכרים לא מגיעים לכאן — ההודעות שלהם נכנסות ישר לליד שלהם, ב"לקוחות ולידים".':
+    'Your business\'s WhatsApp: new numbers that wrote to you, and the bot that answers customers for you. Known customers don\'t land here — their messages go straight to their lead, under "Customers & leads".',
+  'הודעות חדשות מגיעות לבד כל כמה שניות. הכפתור מביא אותן מיד.':
+    'New messages arrive on their own every few seconds. This button fetches them right away.',
+  'מספר שכותב בפעם הראשונה מחכה כאן עם ההודעות שלו, עד שתחליטו מי זה. תשובות של הבוט מסומנות "תשובה אוטומטית".':
+    'A number writing for the first time waits here with its messages until you decide who it is. The bot\'s replies are marked "Automatic reply".',
+  'יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו, ושם גם עונים לו.':
+    'Creates a lead from the messages. From now on every message from this number goes to its lead, where you also reply.',
+  'בוט קביעת התורים': 'The booking bot',
+  'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. הוא לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
+    "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
+  'הדלקה וכיבוי': 'On and off',
+  'כשהתיבה מסומנת, הבוט עונה. כיבוי עוצר אותו מיד, גם באמצע שיחה.':
+    'When this is ticked, the bot answers. Turning it off stops it at once, even mid-conversation.',
+  'איך לקוחות מזמינים': 'How customers book',
+  '"תורים בשעות פנויות": הלקוח בוחר שירות, יום ושעה. "בקשות לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
+    '"Free time slots": the customer picks a service, a day and a time. "Event requests": the customer types a date and tells you about the event, and you confirm. The option that suits your industry is marked.',
+  'אישור התורים': 'Confirming bookings',
+  '"מאושרים מיד": התור נכנס ליומן כמאושר. "ממתינים לאישור": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד התורים.':
+    '"Confirmed straight away": the booking goes into the calendar as confirmed. "Wait for approval": the time is held, and the booking waits for you in "Pending requests" on the Appointments page.',
+  'ההודעות של הבוט': "The bot's messages",
+  'פתחו כדי לכתוב את ההודעות במילים שלכם. פרטים בסוגריים, כמו [שם העסק], מתמלאים לבד, ומתחת לכל הודעה רואים בדיוק מה הלקוח יקבל. "ברירת מחדל" מחזיר את הנוסח המקורי.':
+    'Open this to write the messages in your own words. Details in brackets, like [Business name], fill in by themselves, and under each message you see exactly what the customer gets. "Default" restores the original wording.',
+  'לקוח שלא קבע — ביטל, לא מצא זמן או הפסיק לענות — מקבל הודעה עם קישור ועד 3 תמונות מהעבודות שלכם, וכפתור לקביעת תור. לכל היותר פעם ביום ללקוח.':
+    "A customer who didn't book — cancelled, found no time or stopped answering — gets a message with a link and up to 3 photos of your work, plus a book button. At most once a day per customer.",
+  היומן: 'The calendar',
+  'כל עמודה היא יום וכל שורה חצי שעה. תור מופיע כבלוק בגודל הזמן שהוא תופס; לחיצה עליו פותחת אותו לשינוי, לשיבוץ איש צוות או לביטול.':
+    'Each column is a day and each row half an hour. An appointment shows as a block the size of the time it takes; click it to change it, assign a staff member or cancel.',
+  'שעה פנויה': 'A free time',
+  'השעות הירוקות פנויות. לחיצה על שעה פנויה פותחת תור חדש עם התאריך והשעה כבר ממולאים.':
+    'Green times are free. Clicking a free time opens a new appointment with the date and time already filled in.',
+  'מה כל צבע אומר': 'What the colours mean',
+  'ירוק: פנוי. מקווקו: מחוץ לשעות הפעילות. הסטטוס של כל תור כתוב עליו.':
+    'Green: free. Hatched: outside opening hours. Each appointment shows its status in text.',
+  'בקשות ממתינות לאישור': 'Pending requests',
+  'בקשות ממתינות': 'Pending requests',
+  'בקשות מהאתר ומהבוט בוואטסאפ, כולל בקשות לאירוע. לוחצים על בקשה, משבצים איש צוות ומאשרים.':
+    'Requests from the website and the WhatsApp bot, event requests included. Click one, assign a staff member and confirm.',
+  'השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת התור באתר וברשימה של הבוט בוואטסאפ.':
+    "The services the business offers, with length and price. They appear in the website's booking request and in the WhatsApp bot's list.",
+  'בוחרים איך לראות את היומן, ועוברים בין ימים או שבועות בחיצים. "היום" חוזר להיום.':
+    'Choose how to see the calendar, and move between days or weeks with the arrows. "Today" jumps back to today.',
+  'רואים את היומן של כל הצוות או של אדם אחד. השעות הפנויות מתעדכנות בהתאם.':
+    "See the whole team's calendar or one person's. The free times update to match.",
 };

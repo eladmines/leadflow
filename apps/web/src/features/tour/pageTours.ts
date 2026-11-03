@@ -85,6 +85,40 @@ const cardOf = (css: string) => () => {
   return el?.closest<HTMLElement>('.shadow-card') ?? el;
 };
 
+/** A collapsible section (`<details>`) by the text of its summary. */
+const section = (text: string) => () =>
+  pick(
+    [...document.querySelectorAll<HTMLElement>('main details')].filter((d) =>
+      d.querySelector('summary')?.textContent?.includes(text),
+    ),
+  );
+
+/** A checkbox or radio with its label, by the label's text. */
+const labelled = (text: string) => () =>
+  pick(
+    [...document.querySelectorAll<HTMLElement>('main label')].filter((l) =>
+      l.textContent?.trim().startsWith(text),
+    ),
+  );
+
+/** A group of options by its legend. */
+const group = (legend: string) => () =>
+  pick(
+    [...document.querySelectorAll<HTMLElement>('main fieldset')].filter(
+      (f) => f.querySelector('legend')?.textContent?.trim() === legend,
+    ),
+  );
+
+/** The card whose heading starts with a text (headings that end with a count). */
+const cardStarting = (title: string) => () => {
+  const heading = pick(
+    [...document.querySelectorAll<HTMLElement>('main h2, main h3')].filter((h) =>
+      h.textContent?.trim().startsWith(title),
+    ),
+  );
+  return heading?.closest<HTMLElement>('.shadow-card, section, article') ?? heading;
+};
+
 /** The header section around the page's main title. */
 const pageTop = () => {
   const h1 = pick([...document.querySelectorAll<HTMLElement>('main h1')]);
@@ -232,19 +266,26 @@ export const pageTours: Record<PageKey, TourStep[]> = {
   conversations: [
     {
       title: tr('שיחות WhatsApp'),
-      body: tr('מספרים חדשים שכתבו לעסק בוואטסאפ מחכים כאן, עד שתחליטו אם זה לקוח או מישהו פרטי.'),
+      body: tr(
+        'כאן מנהלים את הוואטסאפ של העסק: מספרים חדשים שכתבו לכם, והבוט שעונה ללקוחות בשמכם. לקוחות מוכרים לא מגיעים לכאן — ההודעות שלהם נכנסות ישר לליד שלהם, ב"לקוחות ולידים".',
+      ),
+    },
+    {
+      target: button(tr('רענון')),
+      title: tr('רענון'),
+      body: tr('הודעות חדשות מגיעות לבד כל כמה שניות. הכפתור מביא אותן מיד.'),
     },
     {
       target: `[aria-label="${tr('מספרים שמחכים לסיווג')}"]`,
       title: tr('מחכים לסיווג'),
       body: tr(
-        'כל מספר עם ההודעות שלו. לקוחות מוכרים לא מגיעים לכאן: ההודעות שלהם נכנסות ישר לליד.',
+        'מספר שכותב בפעם הראשונה מחכה כאן עם ההודעות שלו, עד שתחליטו מי זה. תשובות של הבוט מסומנות "תשובה אוטומטית".',
       ),
     },
     {
       target: button(tr('עסקי: יצירת ליד')),
       title: tr('עסקי'),
-      body: tr('יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו.'),
+      body: tr('יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו, ושם גם עונים לו.'),
     },
     {
       target: button(tr('פרטי'), true),
@@ -252,7 +293,47 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       body: tr('ההודעות נמחקות, והמספר לא ייכנס למערכת גם בהמשך. מתאים לבני משפחה וחברים.'),
     },
     {
-      target: 'main details',
+      target: card(tr('בוט קביעת תורים')),
+      title: tr('בוט קביעת התורים'),
+      body: tr(
+        'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. הוא לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.',
+      ),
+    },
+    {
+      target: labelled(tr('הבוט פעיל')),
+      title: tr('הדלקה וכיבוי'),
+      body: tr('כשהתיבה מסומנת, הבוט עונה. כיבוי עוצר אותו מיד, גם באמצע שיחה.'),
+    },
+    {
+      target: group(tr('איך לקוחות מזמינים:')),
+      title: tr('איך לקוחות מזמינים'),
+      body: tr(
+        '"תורים בשעות פנויות": הלקוח בוחר שירות, יום ושעה. "בקשות לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.',
+      ),
+    },
+    {
+      target: group(tr('תורים שנקבעים בבוט:')),
+      title: tr('אישור התורים'),
+      body: tr(
+        '"מאושרים מיד": התור נכנס ליומן כמאושר. "ממתינים לאישור": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד התורים.',
+      ),
+    },
+    {
+      target: section(tr('עריכת ההודעות של הבוט')),
+      title: tr('ההודעות של הבוט'),
+      body: tr(
+        'פתחו כדי לכתוב את ההודעות במילים שלכם. פרטים בסוגריים, כמו [שם העסק], מתמלאים לבד, ומתחת לכל הודעה רואים בדיוק מה הלקוח יקבל. "ברירת מחדל" מחזיר את הנוסח המקורי.',
+      ),
+    },
+    {
+      target: section(tr('בינתיים, הצצה לעבודות שלנו')),
+      title: tr('בינתיים, הצצה לעבודות שלנו'),
+      body: tr(
+        'לקוח שלא קבע — ביטל, לא מצא זמן או הפסיק לענות — מקבל הודעה עם קישור ועד 3 תמונות מהעבודות שלכם, וכפתור לקביעת תור. לכל היותר פעם ביום ללקוח.',
+      ),
+    },
+    {
+      target: section(tr('מספרים פרטיים (')),
       title: tr('מספרים פרטיים'),
       body: tr('המספרים שסימנתם כפרטיים. אפשר לבטל סימון אם טעיתם.'),
     },
@@ -276,6 +357,37 @@ export const pageTours: Record<PageKey, TourStep[]> = {
   ],
   appointments: [
     {
+      target: '[role="grid"]',
+      title: tr('היומן'),
+      body: tr(
+        'כל עמודה היא יום וכל שורה חצי שעה. תור מופיע כבלוק בגודל הזמן שהוא תופס; לחיצה עליו פותחת אותו לשינוי, לשיבוץ איש צוות או לביטול.',
+      ),
+    },
+    {
+      target: () =>
+        pick([
+          ...document.querySelectorAll<HTMLElement>(
+            `main [aria-label^="${tr('פנוי: קביעת תור ב{0}', '')}"]`,
+          ),
+        ]),
+      title: tr('שעה פנויה'),
+      body: tr(
+        'השעות הירוקות פנויות. לחיצה על שעה פנויה פותחת תור חדש עם התאריך והשעה כבר ממולאים.',
+      ),
+    },
+    {
+      target: `[aria-label="${tr('מקרא')}"]`,
+      title: tr('מה כל צבע אומר'),
+      body: tr('ירוק: פנוי. מקווקו: מחוץ לשעות הפעילות. הסטטוס של כל תור כתוב עליו.'),
+    },
+    {
+      target: cardStarting(tr('בקשות ממתינות לאישור')),
+      title: tr('בקשות ממתינות'),
+      body: tr(
+        'בקשות מהאתר ומהבוט בוואטסאפ, כולל בקשות לאירוע. לוחצים על בקשה, משבצים איש צוות ומאשרים.',
+      ),
+    },
+    {
       target: button(tr('תור חדש')),
       title: tr('תור חדש'),
       body: tr('קובעים תור ללקוח: שירות, איש צוות ושעה. המערכת לא תאפשר שני תורים באותה שעה.'),
@@ -283,17 +395,19 @@ export const pageTours: Record<PageKey, TourStep[]> = {
     {
       target: button(tr('שירותים')),
       title: tr('שירותים'),
-      body: tr('השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים גם בבקשת התור באתר.'),
+      body: tr(
+        'השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת התור באתר וברשימה של הבוט בוואטסאפ.',
+      ),
     },
     {
       target: `[aria-label="${tr('תצוגה')}"]`,
       title: tr('יום או שבוע'),
-      body: tr('בוחרים איך לראות את היומן, ועוברים בין ימים או שבועות בחיצים.'),
+      body: tr('בוחרים איך לראות את היומן, ועוברים בין ימים או שבועות בחיצים. "היום" חוזר להיום.'),
     },
     {
       target: `[aria-label="${tr('סינון לפי איש צוות')}"]`,
       title: tr('לפי איש צוות'),
-      body: tr('רואים את היומן של כל הצוות או של אדם אחד.'),
+      body: tr('רואים את היומן של כל הצוות או של אדם אחד. השעות הפנויות מתעדכנות בהתאם.'),
     },
   ],
   quotes: [
