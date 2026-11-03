@@ -292,7 +292,10 @@ export function TimeGrid({
 /** What the colours and patterns mean (text, so colour is never the only signal). */
 export function TimeGridLegend() {
   return (
-    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
+    <ul
+      aria-label={tr('מקרא')}
+      className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted"
+    >
       <li className="flex items-center gap-1.5">
         <span
           aria-hidden

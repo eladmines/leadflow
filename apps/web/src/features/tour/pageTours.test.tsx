@@ -1,4 +1,4 @@
-import { apiPaths, businessWebPaths } from '@leadflow/shared';
+import { apiPaths, botDefaultTextsFor, businessWebPaths } from '@leadflow/shared';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
@@ -42,20 +42,62 @@ describe('page tours (D-096)', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it("skips steps for things that aren't on the page", async () => {
+  it("explains every part of the conversations page, skipping what isn't there", async () => {
     mockApi({
       [meKey]: me(testUser),
       [`GET ${apiPaths.whatsapp.inbox(id)}`]: () => json(200, { connected: false, numbers: [] }),
       [`GET ${apiPaths.whatsapp.personal(id)}`]: () => json(200, { numbers: [] }),
+      [`GET ${apiPaths.whatsapp.bot(id)}`]: () =>
+        json(200, {
+          connected: false,
+          settings: {
+            enabled: false,
+            autoConfirm: true,
+            flow: 'appointment',
+            flowIsDefault: true,
+            defaults: botDefaultTextsFor('beauty'),
+            texts: {},
+            showcase: { enabled: false, defaultText: 'x', link: null, assetIds: [] },
+          },
+        }),
     });
     const { user } = renderApp(section('conversations'));
     await screen.findByText('WhatsApp עדיין לא מחובר');
+    await screen.findByRole('heading', { name: 'בוט קביעת תורים' });
     await openPageTour(user);
-    // Nothing to classify and no personal numbers: only the introduction is left.
-    const only = await screen.findByRole('dialog', { name: 'שיחות WhatsApp' });
-    expect(within(only).getByText('1 מתוך 1')).toBeInTheDocument();
-    await user.click(within(only).getByRole('button', { name: 'סיום' }));
+    // Nothing to classify and no personal numbers: those steps are skipped.
+    const titles: string[] = [];
+    for (;;) {
+      const step = await screen.findByRole('dialog');
+      titles.push(within(step).getByRole('heading').textContent ?? '');
+      const next = within(step).queryByRole('button', { name: 'הבא' });
+      if (!next) break;
+      await user.click(next);
+    }
+    expect(titles).toEqual([
+      'שיחות WhatsApp',
+      'רענון',
+      'בוט קביעת התורים',
+      'הדלקה וכיבוי',
+      'איך לקוחות מזמינים',
+      'אישור התורים',
+      'ההודעות של הבוט',
+      'בינתיים, הצצה לעבודות שלנו',
+    ]);
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'סיום' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('the appointments tour starts with the calendar and its free times', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    const { user } = renderApp(`${section('appointments')}?date=2030-01-06`);
+    await screen.findByRole('grid');
+    await openPageTour(user);
+    expect(await screen.findByRole('dialog', { name: 'היומן' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'הבא' }));
+    expect(await screen.findByRole('dialog', { name: 'שעה פנויה' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'הבא' }));
+    expect(await screen.findByRole('dialog', { name: 'מה כל צבע אומר' })).toBeInTheDocument();
   });
 
   it('the dashboard has its own tour', async () => {
