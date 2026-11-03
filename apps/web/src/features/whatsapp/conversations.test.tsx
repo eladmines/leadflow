@@ -1,5 +1,6 @@
 import {
   apiPaths,
+  botDefaultTextsFor,
   businessWebPaths,
   type Business,
   type InboxNumber,
@@ -38,16 +39,22 @@ const noShowcase = { enabled: false, text: null, link: null, assetIds: [] };
 const botSettings = () => ({
   enabled: false,
   autoConfirm: true,
+  flow: 'appointment',
+  flowIsDefault: true,
+  defaults: botDefaultTextsFor('beauty'),
   texts: {},
   showcase: { enabled: false, defaultText: DEFAULT_SHOWCASE, link: null, assetIds: [] },
 });
 /** The API answers a PUT with what it saved (plus the industry default). */
 const echoBot = (body: unknown) => {
-  const b = body as { showcase: { text: string | null } };
+  const b = body as { showcase: { text: string | null }; flow: string | null };
   return json(200, {
     connected: true,
     settings: {
       ...b,
+      flow: b.flow ?? 'appointment',
+      flowIsDefault: b.flow === null,
+      defaults: botDefaultTextsFor('beauty'),
       showcase: {
         ...b.showcase,
         text: b.showcase.text ?? undefined,
@@ -95,8 +102,8 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(pending);
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
-        { enabled: true, autoConfirm: true, texts: {}, showcase: noShowcase },
-        { enabled: true, autoConfirm: false, texts: {}, showcase: noShowcase },
+        { enabled: true, autoConfirm: true, flow: null, texts: {}, showcase: noShowcase },
+        { enabled: true, autoConfirm: false, flow: null, texts: {}, showcase: noShowcase },
       ]),
     );
   });
@@ -135,6 +142,7 @@ describe('WhatsApp conversations inbox', () => {
       {
         enabled: false,
         autoConfirm: true,
+        flow: null,
         texts: { confirmed: 'נתראה ב{business}!' },
         showcase: noShowcase,
       },
@@ -176,6 +184,7 @@ describe('WhatsApp conversations inbox', () => {
       {
         enabled: false,
         autoConfirm: true,
+        flow: null,
         texts: {},
         showcase: {
           enabled: true,
@@ -185,6 +194,26 @@ describe('WhatsApp conversations inbox', () => {
         },
       },
     ]);
+  });
+
+  it('switches to event requests, which changes the messages to edit (D-107)', async () => {
+    const fetchMock = mockApi(
+      routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
+    );
+    const { user } = renderApp(page);
+    const events = await screen.findByRole('radio', { name: /בקשות לאירוע/ });
+    expect(screen.getByRole('radio', { name: /תורים בשעות פנויות/ })).toBeChecked();
+    expect(screen.getByText('(מתאים לתחום שלכם)')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'הבוט פעיל' }));
+    await user.click(events);
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
+    );
+    expect(await screen.findByText(/הבקשה נכנסת ל"בקשות ממתינות לאישור"/)).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'מאושרים מיד' })).not.toBeInTheDocument();
+    await user.click(screen.getByText('עריכת ההודעות של הבוט'));
+    expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();
+    expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();
   });
 
   it("shows the bot's replies as automatic", async () => {

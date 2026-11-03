@@ -1,7 +1,13 @@
-import type { PrismaClient, WhatsAppBotSession } from '@prisma/client';
+import type { Prisma, PrismaClient, WhatsAppBotSession } from '@prisma/client';
 import {
-  botDefaultTexts,
+  asksGuests,
+  BLOCKING_STATUSES,
+  BOT_FLOWS,
+  botDefaultTextsFor,
+  botFlowFor,
   botShowcaseSchema,
+  eventTypesFor,
+  type BotFlow,
   botTextsSchema,
   fillBotText,
   showcaseDefaultText,
@@ -14,6 +20,7 @@ import type { StorageProvider } from '../../integrations/storage';
 import type { WhatsAppChoice, WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
+import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
 import { AppointmentService } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
@@ -24,6 +31,8 @@ import { MANAGERS, notifySafe } from '../notifications/service';
  * personal number, and stays quiet once a team member has written in the chat or the customer
  * asked for a person. Texts to customers are Hebrew (customer-facing copy stays Hebrew, D-100).
  * A customer who doesn't book gets the business's showcase ("in the meantime, take a look", D-106).
+ * Event businesses (DJ, catering, photography) use the event-request flow instead (D-107):
+ * event type → date (typed) → part of day → guests → area → a request the team confirms.
  */
 
 const SESSION_MS = 30 * 60_000;
@@ -38,9 +47,37 @@ const SHOWCASE_EVERY_MS = 24 * 60 * 60_000;
 const ABANDONED_AFTER_MS = 30 * 60_000;
 const ABANDONED_UNTIL_MS = 20 * 60 * 60_000;
 
-const TRIGGER = /תור|לקבוע|פנוי|זמינ|appointment|book/i;
+const TRIGGER = /תור|לקבוע|פנוי|זמינ|אירוע|הזמנ|פגישה|שיעור|חתונה|appointment|book|event/i;
 const CHOICE =
-  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|ok|other_time|other_day|cancel|human|showcase|book)$/;
+  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|ok|other_time|other_day|other_date|ev_send|ev_edit|cancel|human|showcase|book)$/;
+/** Steps of a booking in progress (a conversation that stops in one of them gets the showcase). */
+const OPEN_STEPS = [
+  'service',
+  'day',
+  'time',
+  'confirm',
+  'ev_type',
+  'ev_date',
+  'ev_part',
+  'ev_guests',
+  'ev_area',
+  'ev_confirm',
+];
+
+const GUESTS = ['עד 50', '50–150', '150–300', '300+', 'עוד לא יודעים'];
+const PARTS = {
+  day: { label: 'צהריים', from: '12:00', to: '16:00' },
+  evening: { label: 'ערב', from: '19:00', to: '23:00' },
+  unknown: { label: 'עוד לא יודעים', from: '19:00', to: '23:00' },
+} as const;
+type Part = keyof typeof PARTS;
+/** What an event request has collected so far (kept on the session). */
+interface EventData {
+  type?: string;
+  part?: Part;
+  guests?: string;
+  area?: string;
+}
 const CANCEL_TEXT = /^\s*(ביטול|לבטל|cancel)\s*$/i;
 const HUMAN_TEXT = /נציג|לדבר עם|human|agent/i;
 
@@ -70,6 +107,7 @@ type Business = {
   whatsappBotAutoConfirm: boolean;
   texts: BotTexts;
   showcase: z.output<typeof botShowcaseSchema>;
+  flow: BotFlow;
 };
 interface Chat {
   business: Business;
@@ -97,6 +135,37 @@ const longDay = new Intl.DateTimeFormat('he-IL', {
   timeZone: 'UTC',
 });
 const when = (date: string, time: string) => `${longDay.format(noon(date))} בשעה ${time}`;
+const longDate = new Intl.DateTimeFormat('he-IL', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+const eventDay = (date: string) => longDate.format(noon(date));
+
+/**
+ * A date the customer typed — "14.2.2027", "14/2/27", "14-02" (the next 14 February) — as
+ * YYYY-MM-DD, from today up to two years ahead; null if it isn't one.
+ */
+export function parseEventDate(text: string, today: string): string | null {
+  const m = /(\d{1,2})\s*[./-]\s*(\d{1,2})(?:\s*[./-]\s*(\d{2,4}))?/.exec(text);
+  if (!m) return null;
+  const d = Number(m[1]);
+  const mo = Number(m[2]);
+  const [ty] = today.split('-').map(Number) as [number];
+  let y = m[3] ? Number(m[3]) : ty;
+  if (y < 100) y += 2000;
+  const iso = (yy: number) => {
+    const t = new Date(Date.UTC(yy, mo - 1, d));
+    if (t.getUTCMonth() !== mo - 1 || t.getUTCDate() !== d) return null;
+    return t.toISOString().slice(0, 10);
+  };
+  let date = iso(y);
+  if (date && !m[3] && date < today) date = iso(y + 1);
+  if (!date || date < today || date > addDaysTo(today, 730)) return null;
+  return date;
+}
 
 /** Up to `max` items spread evenly over the list (first and last kept). */
 function spread<T>(items: T[], max: number): T[] {
@@ -166,10 +235,16 @@ export class BookingBot {
     }
     if (choice === 'cancel' || (!choice && CANCEL_TEXT.test(msg.body))) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
-      await this.say(chat, 'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂');
+      await this.say(
+        chat,
+        chat.business.flow === 'event'
+          ? 'בוטל. כשתרצו, פשוט כתבו לנו כאן 🙂'
+          : 'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂',
+      );
       await this.showcase(chat, { offerBooking: true });
       return 'handled';
     }
+    if (chat.business.flow === 'event') return this.onEvent(chat, choice, msg.body, now);
     if (choice?.startsWith('svc:')) return this.pickService(chat, choice.slice(4), now);
     if (choice?.startsWith('day:')) return this.askTime(chat, choice.slice(4), now);
     if (choice?.startsWith('time:') && session.date) {
@@ -186,6 +261,7 @@ export class BookingBot {
   // ------------------------------------------------------------------ steps
 
   private async start(chat: Chat, now: Date): Promise<BotOutcome> {
+    if (chat.business.flow === 'event') return this.askEventType(chat);
     const services = await this.activeServices(chat.business.id);
     if (services.length === 1) return this.askDay(chat, services[0]!.id, now);
     if (!services.length) return this.askDay(chat, null, now);
@@ -397,7 +473,7 @@ export class BookingBot {
   async nudgeAbandoned(now = new Date()): Promise<number> {
     const stale = await this.prisma.whatsAppBotSession.findMany({
       where: {
-        step: { in: ['service', 'day', 'time', 'confirm'] },
+        step: { in: OPEN_STEPS },
         updatedAt: {
           lt: new Date(now.getTime() - ABANDONED_AFTER_MS),
           gt: new Date(now.getTime() - ABANDONED_UNTIL_MS),
@@ -420,6 +496,268 @@ export class BookingBot {
       if (await this.showcase(chat, { offerBooking: true })) sent += 1;
     }
     return sent;
+  }
+
+  // ---------------------------------------------------------- event requests
+
+  private eventData(chat: Chat): EventData {
+    return (chat.session?.data ?? {}) as EventData;
+  }
+
+  private async onEvent(
+    chat: Chat,
+    choice: string | null,
+    body: string,
+    now: Date,
+  ): Promise<BotOutcome> {
+    const s = chat.session!;
+    if (choice?.startsWith('evt:')) return this.pickEventType(chat, choice.slice(4));
+    if (choice === 'ev_edit') return this.askEventType(chat);
+    if (choice === 'other_date') return this.askEventDate(chat);
+    if (choice?.startsWith('part:') && s.date) return this.pickPart(chat, choice.slice(5) as Part);
+    if (choice?.startsWith('guests:')) {
+      const guests = GUESTS[Number(choice.slice(7))];
+      if (guests) return this.askArea(chat, { ...this.eventData(chat), guests });
+    }
+    if (choice === 'ev_send' && s.step === 'ev_confirm' && s.date) {
+      return this.sendEvent(chat, s.date);
+    }
+    // Typed answers: the date and the area.
+    if (!choice && s.step === 'ev_date') return this.onEventDate(chat, body, now);
+    if (!choice && s.step === 'ev_area') {
+      const area = body.trim().replace(/\s+/g, ' ').slice(0, 80);
+      if (area.length >= 2) return this.askEventConfirm(chat, { ...this.eventData(chat), area });
+      await this.say(chat, 'באיזה אזור או עיר יהיה האירוע?');
+      return 'handled';
+    }
+    return this.repeatEvent(chat);
+  }
+
+  private async askEventType(chat: Chat, prefix = ''): Promise<BotOutcome> {
+    const services = await this.activeServices(chat.business.id);
+    const extra = this.hasShowcase(chat) ? [seeOurWork] : [];
+    const options: WhatsAppChoice[] = services.length
+      ? services.map((sv) => ({
+          id: `evt:svc:${sv.id}`,
+          title: sv.name,
+          ...(sv.price != null ? { description: `החל מ־₪${sv.price}` } : {}),
+        }))
+      : eventTypesFor(chat.business.industry).map((t, i) => ({ id: `evt:t${i}`, title: t }));
+    await this.setSession(chat, {
+      step: 'ev_type',
+      serviceId: null,
+      date: null,
+      time: null,
+      data: {},
+    });
+    await this.say(chat, `${prefix}${this.text(chat, 'greeting')}`, {
+      button: 'בחירת סוג',
+      rows: [...options.slice(0, MAX_ROWS - extra.length), ...extra, human],
+    });
+    return 'handled';
+  }
+
+  private async pickEventType(chat: Chat, id: string): Promise<BotOutcome> {
+    let type: string | undefined;
+    let serviceId: string | null = null;
+    if (id.startsWith('svc:')) {
+      const sv = (await this.activeServices(chat.business.id)).find((x) => x.id === id.slice(4));
+      type = sv?.name;
+      serviceId = sv?.id ?? null;
+    } else {
+      type = eventTypesFor(chat.business.industry)[Number(id.slice(1))];
+    }
+    if (!type) return this.askEventType(chat, 'האפשרות הזו כבר לא זמינה. ');
+    await this.setSession(chat, {
+      step: 'ev_date',
+      serviceId,
+      date: null,
+      time: null,
+      data: { type },
+    });
+    return this.askEventDate(chat, `${type}, מעולה! 🎉\n`);
+  }
+
+  private async askEventDate(chat: Chat, prefix = ''): Promise<BotOutcome> {
+    const s = chat.session!;
+    await this.setSession(chat, {
+      step: 'ev_date',
+      serviceId: s.serviceId,
+      date: null,
+      time: null,
+      data: this.eventData(chat) as Prisma.InputJsonValue,
+    });
+    await this.say(chat, `${prefix}לאיזה תאריך? כתבו אותו כאן, למשל 14.2.2027`, {
+      buttons: [human],
+    });
+    return 'handled';
+  }
+
+  private async onEventDate(chat: Chat, body: string, now: Date): Promise<BotOutcome> {
+    const date = parseEventDate(body, todayIn(chat.business.timezone, now));
+    if (!date) {
+      await this.say(chat, 'לא הצלחתי להבין את התאריך 🙂 כתבו אותו כך: 14.2.2027');
+      return 'handled';
+    }
+    if (await this.dateTaken(chat, date)) {
+      await this.say(chat, this.text(chat, 'dateTaken'), {
+        buttons: [{ id: 'other_date', title: 'תאריך אחר' }, human],
+      });
+      return 'handled';
+    }
+    await this.setSession(chat, {
+      step: 'ev_part',
+      serviceId: chat.session!.serviceId,
+      date,
+      time: null,
+      data: this.eventData(chat) as Prisma.InputJsonValue,
+    });
+    await this.say(chat, `${eventDay(date)} — התאריך פנוי 👍\nבאיזה חלק של היום?`, {
+      buttons: (Object.keys(PARTS) as Part[]).map((k) => ({
+        id: `part:${k}`,
+        title: PARTS[k].label,
+      })),
+    });
+    return 'handled';
+  }
+
+  private async pickPart(chat: Chat, part: Part): Promise<BotOutcome> {
+    if (!(part in PARTS)) return this.repeatEvent(chat);
+    const data: EventData = { ...this.eventData(chat), part };
+    if (!asksGuests(chat.business.industry)) return this.askArea(chat, data);
+    await this.setSession(chat, {
+      step: 'ev_guests',
+      serviceId: chat.session!.serviceId,
+      date: chat.session!.date,
+      time: null,
+      data: data as Prisma.InputJsonValue,
+    });
+    await this.say(chat, 'כמה אורחים בערך?', {
+      button: 'מספר אורחים',
+      rows: GUESTS.map((g, i) => ({ id: `guests:${i}`, title: g })),
+    });
+    return 'handled';
+  }
+
+  private async askArea(chat: Chat, data: EventData): Promise<BotOutcome> {
+    await this.setSession(chat, {
+      step: 'ev_area',
+      serviceId: chat.session!.serviceId,
+      date: chat.session!.date,
+      time: null,
+      data: data as Prisma.InputJsonValue,
+    });
+    await this.say(chat, 'ובאיזה אזור או עיר?');
+    return 'handled';
+  }
+
+  private eventSummary(date: string, d: EventData): string[] {
+    return [
+      d.type ?? '',
+      `${eventDay(date)}${d.part && d.part !== 'unknown' ? `, ${PARTS[d.part].label}` : ''}`,
+      ...(d.guests ? [`אורחים: ${d.guests}`] : []),
+      ...(d.area ? [`אזור: ${d.area}`] : []),
+    ].filter(Boolean);
+  }
+
+  private async askEventConfirm(chat: Chat, data: EventData): Promise<BotOutcome> {
+    const date = chat.session!.date!;
+    await this.setSession(chat, {
+      step: 'ev_confirm',
+      serviceId: chat.session!.serviceId,
+      date,
+      time: null,
+      data: data as Prisma.InputJsonValue,
+    });
+    const lines = this.eventSummary(date, data).map((l) => `• ${l}`);
+    await this.say(chat, `לסיכום:\n${lines.join('\n')}\n\nלשלוח את הבקשה?`, {
+      buttons: [
+        { id: 'ev_send', title: 'כן, לשלוח' },
+        { id: 'ev_edit', title: 'לשנות' },
+        { id: 'cancel', title: 'ביטול' },
+      ],
+    });
+    return 'handled';
+  }
+
+  /** A date is taken when it already has as many held events as there are team members. */
+  private async dateTaken(chat: Chat, date: string): Promise<boolean> {
+    const tz = chat.business.timezone;
+    const [held, team] = await Promise.all([
+      this.prisma.appointment.count({
+        where: {
+          businessId: chat.business.id,
+          status: { in: BLOCKING_STATUSES },
+          startsAt: { lt: zonedTimeToUtc(addDaysTo(date, 1), '00:00', tz) },
+          endsAt: { gt: zonedTimeToUtc(date, '00:00', tz) },
+        },
+      }),
+      this.prisma.membership.count({ where: { businessId: chat.business.id, status: 'ACTIVE' } }),
+    ]);
+    return held >= Math.max(1, team);
+  }
+
+  private async sendEvent(chat: Chat, date: string): Promise<BotOutcome> {
+    const { business } = chat;
+    const data = this.eventData(chat);
+    if (await this.dateTaken(chat, date)) {
+      await this.say(chat, this.text(chat, 'dateTaken'), {
+        buttons: [{ id: 'other_date', title: 'תאריך אחר' }, human],
+      });
+      return 'handled';
+    }
+    const part = PARTS[data.part ?? 'unknown'];
+    const booked = await this.prisma.$transaction(async (tx) => {
+      const customer = await this.ensureCustomer(tx, business.id, chat.numberId);
+      await this.appointments.requestEventFromWhatsApp(tx, {
+        businessId: business.id,
+        ...customer,
+        serviceId: chat.session?.serviceId ?? null,
+        startsAt: zonedTimeToUtc(date, part.from, business.timezone),
+        endsAt: zonedTimeToUtc(date, part.to, business.timezone),
+        notes: ['בקשה מוואטסאפ', ...this.eventSummary(date, data)].join(' · '),
+        eventType: data.type ?? 'אירוע',
+      });
+      await tx.whatsAppBotSession.deleteMany({ where: { numberId: chat.numberId } });
+      return customer;
+    });
+    chat.link = booked;
+    chat.session = null;
+    await this.say(
+      chat,
+      this.text(chat, 'eventReceived', { service: data.type ?? 'האירוע', when: eventDay(date) }),
+    );
+    const contact = await this.prisma.contact.findUnique({
+      where: { id: booked.contactId },
+      select: { name: true },
+    });
+    await notifySafe(this.prisma, this.log, {
+      businessId: business.id,
+      type: 'appointment.booked',
+      data: {
+        leadId: booked.leadId,
+        name: contact?.name ?? chat.phone,
+        when: `${data.type ?? 'אירוע'} · ${eventDay(date)}`,
+        pending: true,
+      },
+      to: { roles: MANAGERS },
+    });
+    return 'handled';
+  }
+
+  /** Not one of the choices: ask the current question of the event request again. */
+  private async repeatEvent(chat: Chat): Promise<BotOutcome> {
+    const s = chat.session!;
+    const prefix = 'לא הבנתי 🙂 בחרו מהאפשרויות, או כתבו "נציג" כדי לדבר עם הצוות.\n\n';
+    const data = this.eventData(chat);
+    if (s.step === 'ev_part' && s.date) {
+      await this.say(chat, prefix.trim());
+      chat.session = { ...s, step: 'ev_date' };
+      return this.onEventDate(chat, s.date.split('-').reverse().join('.'), chat.now);
+    }
+    if (s.step === 'ev_guests') return this.pickPart(chat, data.part ?? 'unknown');
+    if (s.step === 'ev_confirm') return this.askEventConfirm(chat, data);
+    return this.askEventType(chat, prefix);
   }
 
   // -------------------------------------------------------------- showcase
@@ -509,9 +847,13 @@ export class BookingBot {
         whatsappBotAutoConfirm: true,
         whatsappBotTexts: true,
         whatsappBotShowcase: true,
+        whatsappBotFlow: true,
       },
     });
     if (!business?.whatsappBotEnabled) return null;
+    const flow = (BOT_FLOWS as readonly string[]).includes(business.whatsappBotFlow ?? '')
+      ? (business.whatsappBotFlow as BotFlow)
+      : botFlowFor(business.industry);
     const texts = botTextsSchema.safeParse(business.whatsappBotTexts ?? {});
     const showcase = botShowcaseSchema.safeParse(
       business.whatsappBotShowcase ?? { enabled: false },
@@ -519,6 +861,7 @@ export class BookingBot {
     return {
       business: {
         ...business,
+        flow,
         texts: texts.success ? texts.data : {},
         showcase: showcase.success
           ? showcase.data
@@ -537,16 +880,21 @@ export class BookingBot {
 
   /** The business's wording for a message, or the default, with the placeholders filled in. */
   private text(chat: Chat, key: BotTextKey, values: { service?: string; when?: string } = {}) {
-    return fillBotText(chat.business.texts[key] ?? botDefaultTexts[key], {
-      business: chat.business.name,
-      service: values.service ?? 'תור',
-      when: values.when ?? '',
-    });
+    return fillBotText(
+      chat.business.texts[key] ?? botDefaultTextsFor(chat.business.industry)[key],
+      {
+        business: chat.business.name,
+        service: values.service ?? 'תור',
+        when: values.when ?? '',
+      },
+    );
   }
 
   private async setSession(
     chat: Chat,
-    data: Pick<WhatsAppBotSession, 'step' | 'serviceId' | 'date' | 'time'>,
+    data: Pick<WhatsAppBotSession, 'step' | 'serviceId' | 'date' | 'time'> & {
+      data?: Prisma.InputJsonValue;
+    },
   ) {
     const expiresAt = new Date(chat.now.getTime() + SESSION_MS);
     chat.session = await this.prisma.whatsAppBotSession.upsert({

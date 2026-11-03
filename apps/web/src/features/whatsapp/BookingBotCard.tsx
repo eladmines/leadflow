@@ -3,8 +3,11 @@ import {
   botShowcaseSchema,
   SHOWCASE_MAX_IMAGES,
   botPlaceholderLabels,
+  BOT_FLOWS,
   BOT_TEXT_KEYS,
-  botDefaultTexts,
+  botFlowLabels,
+  botTextKeysFor,
+  type BotFlow,
   botTextLabels,
   botTextsSchema,
   fillBotText,
@@ -30,22 +33,34 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   const bot = useBotSettings(businessId);
   const update = useUpdateBotSettings(businessId);
   // Shown at once; back to the saved settings if saving fails.
-  const [draft, setDraft] = useState<Pick<WhatsAppBotSettings, 'enabled' | 'autoConfirm'> | null>(
-    null,
-  );
+  const [draft, setDraft] = useState<{
+    enabled: boolean;
+    autoConfirm: boolean;
+    flow: BotFlow;
+  } | null>(null);
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   const settings = { ...bot.data.settings, ...draft };
-  const save = (
-    patch: Pick<WhatsAppBotSettings, 'enabled'> | Pick<WhatsAppBotSettings, 'autoConfirm'>,
-  ) => {
-    const next = { enabled: settings.enabled, autoConfirm: settings.autoConfirm, ...patch };
+  const save = (patch: { enabled: boolean } | { autoConfirm: boolean } | { flow: BotFlow }) => {
+    const next = {
+      enabled: settings.enabled,
+      autoConfirm: settings.autoConfirm,
+      flow: settings.flow,
+      ...patch,
+    };
     setDraft(next);
     update.mutate(
-      { ...toRequest(bot.data.settings), ...next },
+      {
+        ...toRequest(bot.data.settings),
+        enabled: next.enabled,
+        autoConfirm: next.autoConfirm,
+        // The flow is stored only when chosen; otherwise it keeps following the industry.
+        flow: 'flow' in patch ? patch.flow : toRequest(bot.data.settings).flow,
+      },
       { onSettled: () => setDraft(null) },
     );
   };
+  const industryFlow = bot.data.settings.flowIsDefault ? bot.data.settings.flow : null;
 
   return (
     <Card className="flex flex-col gap-3">
@@ -56,9 +71,13 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-semibold text-ink">{tr('בוט קביעת תורים')}</h2>
           <p className="text-sm text-ink-muted">
-            {tr(
-              'לקוח שמבקש תור בוואטסאפ (או מספר חדש שכותב בפעם הראשונה) בוחר שירות, יום ושעה פנויה מתוך רשימה, והתור נקבע ביומן. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.',
-            )}
+            {settings.flow === 'event'
+              ? tr(
+                  'לקוח שכותב בוואטסאפ על אירוע (או מספר חדש שכותב בפעם הראשונה) עונה על כמה שאלות קצרות, והבקשה נכנסת למערכת. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.',
+                )
+              : tr(
+                  'לקוח שמבקש תור בוואטסאפ (או מספר חדש שכותב בפעם הראשונה) בוחר שירות, יום ושעה פנויה מתוך רשימה, והתור נקבע ביומן. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.',
+                )}
           </p>
         </div>
       </div>
@@ -77,34 +96,64 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         {tr('הבוט פעיל')}
       </label>
       <fieldset disabled={!settings.enabled} className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm text-ink-muted">{tr('תורים שנקבעים בבוט:')}</legend>
-        <label className="flex items-center gap-2 text-sm text-ink">
-          <input
-            type="radio"
-            name="bot-confirm"
-            checked={settings.autoConfirm}
-            onChange={() => save({ autoConfirm: true })}
-            className="h-4 w-4 accent-brand-600"
-          />
-          {tr('מאושרים מיד')}
-        </label>
-        <label className="flex items-center gap-2 text-sm text-ink">
-          <input
-            type="radio"
-            name="bot-confirm"
-            checked={!settings.autoConfirm}
-            onChange={() => save({ autoConfirm: false })}
-            className="h-4 w-4 accent-brand-600"
-          />
-          {tr('ממתינים לאישור שלכם (הזמן נשמר בינתיים)')}
-        </label>
+        <legend className="mb-1 text-sm text-ink-muted">{tr('איך לקוחות מזמינים:')}</legend>
+        {BOT_FLOWS.map((f) => (
+          <label key={f} className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="radio"
+              name="bot-flow"
+              checked={settings.flow === f}
+              onChange={() => save({ flow: f })}
+              className="h-4 w-4 accent-brand-600"
+            />
+            {tr(botFlowLabels[f])}
+            {industryFlow === f && (
+              <span className="text-xs text-ink-muted">{tr('(מתאים לתחום שלכם)')}</span>
+            )}
+          </label>
+        ))}
       </fieldset>
+      {settings.flow === 'event' ? (
+        <p className="text-sm text-ink-muted">
+          {tr(
+            'הלקוח בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, והתאריך נשמר עד שתאשרו. משם אפשר להכין לו הצעת מחיר.',
+          )}
+        </p>
+      ) : (
+        <fieldset disabled={!settings.enabled} className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm text-ink-muted">{tr('תורים שנקבעים בבוט:')}</legend>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="radio"
+              name="bot-confirm"
+              checked={settings.autoConfirm}
+              onChange={() => save({ autoConfirm: true })}
+              className="h-4 w-4 accent-brand-600"
+            />
+            {tr('מאושרים מיד')}
+          </label>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="radio"
+              name="bot-confirm"
+              checked={!settings.autoConfirm}
+              onChange={() => save({ autoConfirm: false })}
+              className="h-4 w-4 accent-brand-600"
+            />
+            {tr('ממתינים לאישור שלכם (הזמן נשמר בינתיים)')}
+          </label>
+        </fieldset>
+      )}
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       <details className="rounded-lg border border-surface-border p-3">
         <summary className="cursor-pointer text-sm font-medium text-ink">
           {tr('עריכת ההודעות של הבוט')}
         </summary>
-        <BotTextsForm businessId={businessId} settings={bot.data.settings} />
+        <BotTextsForm
+          key={bot.data.settings.flow}
+          businessId={businessId}
+          settings={bot.data.settings}
+        />
       </details>
       <details className="rounded-lg border border-surface-border p-3">
         <summary className="cursor-pointer text-sm font-medium text-ink">
@@ -125,6 +174,7 @@ type Saved = WhatsAppBotResponse['settings'];
 const toRequest = (saved: Saved): WhatsAppBotSettings => ({
   enabled: saved.enabled,
   autoConfirm: saved.autoConfirm,
+  flow: saved.flowIsDefault ? null : saved.flow,
   texts: saved.texts,
   showcase: {
     enabled: saved.showcase.enabled,
@@ -134,22 +184,37 @@ const toRequest = (saved: Saved): WhatsAppBotSettings => ({
   },
 });
 
+type Placeholder = (typeof BOT_PLACEHOLDERS)[number];
+/** Hebrew names of the placeholders; in event requests the service is the event type. */
+const placeholderName = (flow: BotFlow, p: Placeholder) =>
+  flow === 'event' && p === '{service}'
+    ? 'סוג האירוע'
+    : flow === 'event' && p === '{time}'
+      ? 'תאריך האירוע'
+      : botPlaceholderLabels[p];
+const chipLabel = (flow: BotFlow, p: Placeholder) => tr(placeholderName(flow, p));
+
 /**
  * In the editor, placeholders read as tags in the owner's language — "[שם העסק]" or
- * "[Business name]" — instead of codes; they become `{business}` etc. again when saved. Either
- * language's tag is understood, so switching the app language never breaks a message.
+ * "[Business name]" — instead of codes; they become `{business}` etc. again when saved. Every
+ * variant (either language, either flow) is understood, so switching never breaks a message.
  */
-const tagOf = (p: (typeof BOT_PLACEHOLDERS)[number]) => `[${tr(botPlaceholderLabels[p])}]`;
-const toTags = (text: string) => BOT_PLACEHOLDERS.reduce((t, p) => t.replaceAll(p, tagOf(p)), text);
+const tagOf = (flow: BotFlow, p: Placeholder) => `[${chipLabel(flow, p)}]`;
+const toTags = (text: string, flow: BotFlow) =>
+  BOT_PLACEHOLDERS.reduce((t, p) => t.replaceAll(p, tagOf(flow, p)), text);
 const toCodes = (text: string) =>
   BOT_PLACEHOLDERS.reduce(
-    (t, p) => t.replaceAll(tagOf(p), p).replaceAll(`[${botPlaceholderLabels[p]}]`, p),
+    (t, p) =>
+      BOT_FLOWS.reduce(
+        (u, f) => u.replaceAll(tagOf(f, p), p).replaceAll(`[${placeholderName(f, p)}]`, p),
+        t,
+      ),
     text,
   );
 
 const initialTexts = (saved: Saved) =>
   Object.fromEntries(
-    BOT_TEXT_KEYS.map((k) => [k, toTags(saved.texts[k] ?? botDefaultTexts[k])]),
+    BOT_TEXT_KEYS.map((k) => [k, toTags(saved.texts[k] ?? saved.defaults[k], saved.flow)]),
   ) as Record<BotTextKey, string>;
 
 /** An example date for the preview: next week at 10:00. */
@@ -199,7 +264,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
     const custom = Object.fromEntries(
       BOT_TEXT_KEYS.map((k) => {
         const text = toCodes(texts[k]);
-        return [k, text.trim() === botDefaultTexts[k] ? null : text];
+        return [k, text.trim() === settings.defaults[k] ? null : text];
       }),
     );
     const parsed = botTextsSchema.safeParse(custom);
@@ -221,7 +286,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
           'הלקוחות מקבלים את ההודעות בעברית. פרטים בסוגריים, כמו [שם העסק], מתמלאים אוטומטית בפרטים האמיתיים. מוסיפים אותם בכפתורים שמתחת לכל הודעה. הכפתורים והרשימות בוואטסאפ נשארים קבועים.',
         )}
       </p>
-      {BOT_TEXT_KEYS.map((k) => (
+      {botTextKeysFor(settings.flow).map((k) => (
         <div key={k} className="flex flex-col gap-2">
           <Textarea
             label={tr(botTextLabels[k])}
@@ -241,11 +306,11 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
               <button
                 key={p}
                 type="button"
-                onClick={() => insert(k, tagOf(p))}
-                aria-label={`${tr('הוספה:')} ${tr(botPlaceholderLabels[p])} (${tr(botTextLabels[k])})`}
+                onClick={() => insert(k, tagOf(settings.flow, p))}
+                aria-label={`${tr('הוספה:')} ${chipLabel(settings.flow, p)} (${tr(botTextLabels[k])})`}
                 className="rounded-full border border-surface-border px-2 py-0.5 text-ink hover:bg-surface-sunken"
               >
-                + {tr(botPlaceholderLabels[p])}
+                + {chipLabel(settings.flow, p)}
               </button>
             ))}
           </div>
@@ -260,12 +325,12 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
                 {fillBotText(toCodes(texts[k]), values) || '—'}
               </p>
             </div>
-            {toCodes(texts[k]) !== botDefaultTexts[k] && (
+            {toCodes(texts[k]) !== settings.defaults[k] && (
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => edit(k, toTags(botDefaultTexts[k]))}
+                onClick={() => edit(k, toTags(settings.defaults[k], settings.flow))}
                 aria-label={tr('החזרת ברירת המחדל: {0}', tr(botTextLabels[k]))}
               >
                 <RotateCcw aria-hidden className="h-4 w-4" />
@@ -296,7 +361,7 @@ function ShowcaseForm({ businessId, settings }: { businessId: string; settings: 
   const assets = useAssets(businessId);
   const saved = settings.showcase;
   const [enabled, setEnabled] = useState(saved.enabled);
-  const [text, setText] = useState(toTags(saved.text ?? saved.defaultText));
+  const [text, setText] = useState(toTags(saved.text ?? saved.defaultText, settings.flow));
   const [link, setLink] = useState(saved.link ?? '');
   const [assetIds, setAssetIds] = useState(saved.assetIds);
   const [picking, setPicking] = useState(false);

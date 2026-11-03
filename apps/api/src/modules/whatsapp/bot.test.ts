@@ -6,6 +6,7 @@ import { MemoryWhatsAppSender, signWebhookBody } from '../../integrations/whatsa
 import { MemoryEmailSender } from '../../integrations/email';
 import { buildApp } from '../../app';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
+import { parseEventDate } from './bot';
 import { WhatsAppService } from './service';
 import { zonedTimeToUtc } from '../../lib/time';
 import { randomUUID } from 'node:crypto';
@@ -96,13 +97,19 @@ describe('WhatsApp booking bot (D-102)', () => {
     whatsapp.clear();
   });
 
-  async function setup({ enabled = true, autoConfirm = true, services = 2 } = {}) {
+  async function setup({
+    enabled = true,
+    autoConfirm = true,
+    services = 2,
+    industry = 'beauty',
+    name = 'עיצוב שיער סיגלית',
+  } = {}) {
     const owner = await newUser(ctx.app, 'bot-owner');
     await ctx.prisma.business.create({
       data: {
         id: BUSINESS_ID,
-        name: 'עיצוב שיער סיגלית',
-        industry: 'beauty',
+        name,
+        industry,
         status: 'ACTIVE',
         timezone: TZ,
         openingHours: allDay,
@@ -220,7 +227,10 @@ describe('WhatsApp booking bot (D-102)', () => {
   it('offers other times when the chosen one was taken in the meantime', async () => {
     const { owner } = await setup({ services: 1 });
     await post(text('אפשר תור?'));
-    const date = last().choices![0]!.id.slice(4);
+    // Not today: late in the day it may have a single free time left.
+    const date = last()
+      .choices!.find((c) => c.id.startsWith('day:') && !c.title.startsWith('היום'))!
+      .id.slice(4);
     await post(tap(`day:${date}`));
     const time = last().choices![0]!.title;
     await post(tap(`time:${time}`));
@@ -504,6 +514,137 @@ describe('WhatsApp booking bot (D-102)', () => {
       expect(img.statusCode).toBe(400);
       expect(img.json().error.fields['showcase.assetIds']).toMatch(/כבר לא קיימת/);
     });
+  });
+
+  describe('event requests (D-107)', () => {
+    const inMonths = (n: number) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() + n);
+      return d;
+    };
+    const typed = (d: Date) => `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+    const ymd = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    it('a DJ: event type, typed date, part of day, guests, area → a request the team confirms', async () => {
+      const { owner } = await setup({ industry: 'events', services: 0, name: 'DJ רון' });
+      await post(text('היי, אפשר לבדוק תאריך לחתונה?'));
+      expect(last().text).toBe('היי! כאן DJ רון 🎧\nמתכננים אירוע? בחרו את סוג האירוע:');
+      expect(last().choices!.map((c) => c.title)).toEqual([
+        'חתונה',
+        'בר/בת מצווה',
+        'יום הולדת',
+        'אירוע חברה',
+        'מסיבה פרטית',
+        'אחר',
+        'דברו עם הצוות',
+      ]);
+      await post(tap('evt:t0'));
+      expect(last().text).toMatch(/^חתונה, מעולה! 🎉\nלאיזה תאריך\?/);
+
+      await post(text('מתי שנוח'));
+      expect(last().text).toMatch(/^לא הצלחתי להבין את התאריך/);
+      const day = inMonths(4);
+      await post(text(`בתאריך ${typed(day)} בערב`));
+      expect(last().text).toMatch(/התאריך פנוי 👍\nבאיזה חלק של היום\?$/);
+      expect(last().choices!.map((c) => c.id)).toEqual([
+        'part:day',
+        'part:evening',
+        'part:unknown',
+      ]);
+      await post(tap('part:evening'));
+      expect(last().text).toBe('כמה אורחים בערך?');
+      await post(tap('guests:2'));
+      expect(last().text).toBe('ובאיזה אזור או עיר?');
+      await post(text('  ראשון   לציון '));
+      expect(last().text).toMatch(
+        /^לסיכום:\n• חתונה\n• .*, ערב\n• אורחים: 150–300\n• אזור: ראשון לציון\n\nלשלוח את הבקשה\?$/,
+      );
+      await post(tap('ev_send'));
+      expect(last().text).toMatch(
+        /^תודה! קיבלנו את הפרטים לחתונה ב.* 🙏\nנחזור אליכם בהקדם עם הצעה מסודרת\.$/,
+      );
+
+      const appt = await ctx.prisma.appointment.findFirstOrThrow();
+      expect(appt).toMatchObject({ status: 'REQUESTED', source: 'whatsapp', staffId: null });
+      expect(appt.startsAt).toEqual(zonedTimeToUtc(ymd(day), '19:00', TZ));
+      expect(appt.notes).toMatch(/^בקשה מוואטסאפ · חתונה · /);
+      expect(appt.notes).toContain('אורחים: 150–300 · אזור: ראשון לציון');
+      // It waits for the team in the pending requests.
+      const requests = await req(
+        ctx.app,
+        'GET',
+        apiPaths.appointments.requests(BUSINESS_ID),
+        owner.token,
+      );
+      expect(requests.json().appointments).toHaveLength(1);
+      const lead = await ctx.prisma.lead.findFirstOrThrow();
+      expect(appt.leadId).toBe(lead.id);
+    });
+
+    it('a taken date offers another one', async () => {
+      const { owner } = await setup({ industry: 'events', services: 0 });
+      const day = inMonths(3);
+      const contact = await ctx.prisma.contact.create({
+        data: { businessId: BUSINESS_ID, name: 'אחר', phone: '+972509999999' },
+      });
+      await ctx.prisma.appointment.create({
+        data: {
+          businessId: BUSINESS_ID,
+          contactId: contact.id,
+          staffId: owner.userId,
+          startsAt: zonedTimeToUtc(ymd(day), '19:00', TZ),
+          endsAt: zonedTimeToUtc(ymd(day), '23:00', TZ),
+        },
+      });
+      await post(text('אירוע'));
+      await post(tap('evt:t3'));
+      await post(text(typed(day)));
+      expect(last().text).toBe('התאריך הזה כבר תפוס אצלנו 😕 רוצים לבדוק תאריך אחר?');
+      expect(last().choices!.map((c) => c.id)).toEqual(['other_date', 'human']);
+      await post(text(typed(inMonths(5))));
+      expect(last().text).toMatch(/התאריך פנוי/);
+    });
+
+    it("a photographer uses its services and doesn't ask for guests", async () => {
+      await setup({ industry: 'photo', services: 2, name: 'סטודיו אור' });
+      await post(text('הזמנה לצילום'));
+      expect(last().text).toBe('היי! כאן סטודיו אור 📸\nמה מצלמים? בחרו:');
+      await post(tap(last().choices![0]!.id));
+      await post(text(typed(inMonths(2))));
+      await post(tap('part:day'));
+      expect(last().text).toBe('ובאיזה אזור או עיר?');
+    });
+
+    it('the business can switch the flow either way', async () => {
+      const { owner } = await setup({ industry: 'beauty' });
+      const get = (await req(ctx.app, 'GET', wp.bot(BUSINESS_ID), owner.token)).json();
+      expect(get.settings).toMatchObject({ flow: 'appointment', flowIsDefault: true });
+      expect(get.settings.defaults.greeting).toBe(
+        'שלום! כאן {business} 👋\nרוצים לקבוע תור? בחרו שירות:',
+      );
+      const put = await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
+        enabled: true,
+        autoConfirm: true,
+        flow: 'event',
+      });
+      expect(put.json().settings).toMatchObject({ flow: 'event', flowIsDefault: false });
+      await post(text('תור'));
+      expect(last().choices!.map((c) => c.id)).toContain(
+        'evt:svc:' + (await ctx.prisma.service.findFirstOrThrow({ orderBy: { name: 'asc' } })).id,
+      );
+    });
+  });
+
+  it('reads typed dates in the forms people use', () => {
+    expect(parseEventDate('14.2.2027', '2026-11-03')).toBe('2027-02-14');
+    expect(parseEventDate('ב-14/2/27 בערב', '2026-11-03')).toBe('2027-02-14');
+    expect(parseEventDate('14-02', '2026-11-03')).toBe('2027-02-14');
+    expect(parseEventDate('20.11', '2026-11-03')).toBe('2026-11-20');
+    expect(parseEventDate('31.2.2027', '2026-11-03')).toBeNull();
+    expect(parseEventDate('1.1.2026', '2026-11-03')).toBeNull();
+    expect(parseEventDate('1.1.2030', '2026-11-03')).toBeNull();
+    expect(parseEventDate('מחר', '2026-11-03')).toBeNull();
   });
 
   it('settings: owners and managers can read and change them, employees cannot', async () => {
