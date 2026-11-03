@@ -33,7 +33,8 @@ interface Item {
 /**
  * Floating help button (D-104) in the bottom corner on the end side (right in English, left in
  * Hebrew): this page's tour, the product tour and quick search in one place. The button is the
- * animated help character (D-105), which says hello once and waves on hover or focus. A menu button with
+ * animated help character (D-105), which says hello once and waves on hover or focus. Opening it
+ * shows the helper introducing himself, with the options under that. A menu button with
  * arrow-key navigation; Escape or a click outside closes it and returns focus to the button.
  */
 export function HelpMenu({
@@ -112,41 +113,53 @@ export function HelpMenu({
           role="status"
           className="absolute bottom-full end-0 mb-2 w-56 rounded-2xl rounded-ee-sm border border-surface-border bg-surface px-3.5 py-2.5 text-sm text-ink shadow-lift motion-safe:animate-helper-pop"
         >
-          {tr('היי! צריכים עזרה? כאן יש סיור לכל עמוד וחיפוש מהיר.')}
+          {tr('היי! אני העוזר של LeadFlow 👋 לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.')}
         </p>
       )}
       {open && (
-        <div
-          id={menuId}
-          role="menu"
-          aria-label={tr('עזרה')}
-          onKeyDown={onMenuKey}
-          className="absolute bottom-full end-0 mb-2 flex w-60 flex-col rounded-xl border border-surface-border bg-surface p-1.5 shadow-lift motion-safe:animate-helper-pop"
-        >
-          {list.map((item, i) => (
-            <button
-              key={item.label}
-              ref={(el) => {
-                items.current[i] = el;
-              }}
-              type="button"
-              role="menuitem"
-              tabIndex={-1}
-              onClick={() => {
-                close(false);
-                item.run();
-              }}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm text-ink hover:bg-surface-sunken focus:bg-surface-sunken focus:outline-none"
-            >
-              <item.icon aria-hidden className="h-4 w-4 text-ink-muted" />
-              <span className="flex-1">{item.label}</span>
-              {item.hint && (
-                <kbd dir="ltr" className="text-xs text-ink-subtle">
-                  {item.hint}
-                </kbd>
-              )}
-            </button>
-          ))}
+        <div className="absolute bottom-full end-0 mb-2 flex w-64 flex-col rounded-2xl border border-surface-border bg-surface p-1.5 shadow-lift motion-safe:animate-helper-pop">
+          {/* The helper introduces himself; the options follow. */}
+          <div className="flex items-center gap-2.5 px-2.5 pb-2.5 pt-2">
+            <HelpCharacter happy className="h-9 w-9 shrink-0" />
+            <div className="flex flex-col">
+              <p id={`${menuId}-title`} className="text-sm font-semibold text-ink">
+                {tr('היי, אני העוזר של LeadFlow')}
+              </p>
+              <p className="text-xs text-ink-muted">{tr('במה אפשר לעזור?')}</p>
+            </div>
+          </div>
+          <div
+            id={menuId}
+            role="menu"
+            aria-labelledby={`${menuId}-title`}
+            onKeyDown={onMenuKey}
+            className="flex flex-col border-t border-surface-border pt-1.5"
+          >
+            {list.map((item, i) => (
+              <button
+                key={item.label}
+                ref={(el) => {
+                  items.current[i] = el;
+                }}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                onClick={() => {
+                  close(false);
+                  item.run();
+                }}
+                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm text-ink hover:bg-surface-sunken focus:bg-surface-sunken focus:outline-none"
+              >
+                <item.icon aria-hidden className="h-4 w-4 text-ink-muted" />
+                <span className="flex-1">{item.label}</span>
+                {item.hint && (
+                  <kbd dir="ltr" className="text-xs text-ink-subtle">
+                    {item.hint}
+                  </kbd>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <button

@@ -78,7 +78,7 @@ describe('page tours (D-096)', () => {
     const { user } = renderApp(section('automations'));
     await screen.findByRole('heading', { level: 1 });
     await user.click(screen.getByRole('button', { name: 'עזרה' }));
-    const menu = screen.getByRole('menu', { name: 'עזרה' });
+    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של LeadFlow' });
     expect(within(menu).queryByRole('menuitem', { name: 'סיור בעמוד' })).not.toBeInTheDocument();
     expect(within(menu).getByRole('menuitem', { name: 'סיור במערכת' })).toBeInTheDocument();
   });
@@ -100,7 +100,7 @@ describe('help button (D-104)', () => {
     const help = await screen.findByRole('button', { name: 'עזרה' });
     help.focus();
     await user.keyboard('{ArrowDown}');
-    const menu = screen.getByRole('menu', { name: 'עזרה' });
+    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של LeadFlow' });
     const items = within(menu).getAllByRole('menuitem');
     expect(items.map((i) => i.textContent)).toEqual([
       'סיור בעמוד',
@@ -134,7 +134,7 @@ describe('help character (D-105)', () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(section('leads'));
     expect(
-      await screen.findByText(/צריכים עזרה\?/, undefined, { timeout: 3000 }),
+      await screen.findByText(/אני העוזר של LeadFlow 👋/, undefined, { timeout: 3000 }),
     ).toBeInTheDocument();
     expect(localStorage.getItem('leadflow.helper.greeted')).toBeNull();
     cleanup();
@@ -142,6 +142,6 @@ describe('help character (D-105)', () => {
     renderApp(section('leads'));
     await screen.findByRole('button', { name: 'עזרה' });
     await new Promise((r) => setTimeout(r, 1700));
-    expect(screen.queryByText(/צריכים עזרה\?/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/אני העוזר של LeadFlow 👋/)).not.toBeInTheDocument();
   });
 });

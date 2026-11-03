@@ -331,8 +331,10 @@ export const enPart1: Record<string, string> = {
   'נשלחה על ידי {0}': 'Sent by {0}',
   'תשובה אוטומטית': 'Automatic reply',
   עזרה: 'Help',
-  'היי! צריכים עזרה? כאן יש סיור לכל עמוד וחיפוש מהיר.':
-    'Hi! Need a hand? Tours for every page and quick search are here.',
+  'היי! אני העוזר של LeadFlow 👋 לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.':
+    "Hi! I'm the LeadFlow helper 👋 Click me for a page tour, the product tour or quick search.",
+  'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
+  'במה אפשר לעזור?': 'How can I help?',
   'עריכת ההודעות של הבוט': "Edit the bot's messages",
   'הלקוחות מקבלים את ההודעות בעברית. {business}, {service} ו־{time} יוחלפו בשם העסק, בשירות ובמועד שנבחרו. הכפתורים והרשימות נשארים קבועים.':
     'Customers get these messages in Hebrew. {business}, {service} and {time} are replaced with the business name and the chosen service, date and time. Buttons and lists stay fixed.',
