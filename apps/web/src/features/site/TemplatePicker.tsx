@@ -14,6 +14,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { siteBusinessInfo, useCreateSite } from './api';
 import { PreviewFrame } from './PreviewFrame';
+import { tr } from '../../i18n';
 
 /**
  * First visit to "My site": choose a template; it's pre-filled with the business profile.
@@ -51,16 +52,19 @@ export function TemplatePicker({
     <>
       {secondary ? (
         <div className="flex flex-col gap-1 pt-2">
-          <h2 className="text-lg font-semibold text-ink">רוצים אתר חדש ב-LeadFlow?</h2>
+          <h2 className="text-lg font-semibold text-ink">{tr('רוצים אתר חדש ב-LeadFlow?')}</h2>
           <p className="text-sm text-ink-muted">
-            אתר שמנוהל כאן: פניות נכנסות ישר למערכת, ועורכים הכול לבד. בחרו תבנית כדי להתחיל. האתר
-            הקיים לא ישתנה.
+            {tr(
+              'אתר שמנוהל כאן: פניות נכנסות ישר למערכת, ועורכים הכול לבד. בחרו תבנית כדי להתחיל. האתר הקיים לא ישתנה.',
+            )}
           </p>
         </div>
       ) : (
         <PageHeader
-          title="בואו נבנה את האתר שלך"
-          description="בחרו תבנית. נמלא אותה מראש בפרטי העסק ובתמונות לדוגמה, ואחר כך תוכלו לשנות כל טקסט, תמונה, צבע וסדר מקטעים."
+          title={tr('בואו נבנה את האתר שלך')}
+          description={tr(
+            'בחרו תבנית. נמלא אותה מראש בפרטי העסק ובתמונות לדוגמה, ואחר כך תוכלו לשנות כל טקסט, תמונה, צבע וסדר מקטעים.',
+          )}
         />
       )}
       {intro}
@@ -76,27 +80,27 @@ export function TemplatePicker({
             >
               <PreviewFrame
                 html={previews[key]}
-                title={`תצוגה מקדימה של תבנית ${templateInfo[key].label}`}
+                title={tr('תצוגה מקדימה של תבנית {0}', tr(templateInfo[key].label))}
                 scale={0.32}
                 className="h-64 border-b border-surface-border"
               />
               <div className="flex flex-1 flex-col gap-3 p-6">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold text-ink">{templateInfo[key].label}</h2>
+                  <h2 className="text-lg font-semibold text-ink">{tr(templateInfo[key].label)}</h2>
                   {key === suggested && (
                     <span className="rounded-full bg-accent-100 px-2.5 py-0.5 text-xs font-medium text-accent-700">
-                      מומלץ לעסק שלך
+                      {tr('מומלץ לעסק שלך')}
                     </span>
                   )}
                 </div>
-                <p className="flex-1 text-sm text-ink-muted">{templateInfo[key].description}</p>
+                <p className="flex-1 text-sm text-ink-muted">{tr(templateInfo[key].description)}</p>
                 <Button
                   variant={key === suggested ? 'primary' : 'secondary'}
                   loading={create.isPending && chosen === key}
                   disabled={create.isPending}
                   onClick={() => choose(key)}
                 >
-                  בחירת התבנית
+                  {tr('בחירת התבנית')}
                 </Button>
               </div>
             </article>

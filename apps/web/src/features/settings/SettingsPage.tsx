@@ -19,8 +19,9 @@ import { HoursFields } from '../businesses/HoursFields';
 import { ServiceAreasEditor } from '../businesses/ServiceAreasEditor';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
+import { tr } from '../../i18n';
 
-const industryOptions = INDUSTRIES.map((value) => ({ value, label: industryLabels[value] }));
+const industryOptions = INDUSTRIES.map((value) => ({ value, label: tr(industryLabels[value]) }));
 
 function Section({
   title,
@@ -47,7 +48,7 @@ function SaveStatus({ saved, error }: { saved: boolean; error: string | null }) 
   if (error) return <Alert tone="danger">{error}</Alert>;
   return (
     <p role="status" className="text-sm text-success-600">
-      {saved ? 'השינויים נשמרו' : ''}
+      {saved ? tr('השינויים נשמרו') : ''}
     </p>
   );
 }
@@ -58,16 +59,21 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="הגדרות וחיוב" description="פרטי העסק כפי שיוצגו ללקוחות באתר ובפניות." />
+      <PageHeader
+        title={tr('הגדרות וחיוב')}
+        description={tr('פרטי העסק כפי שיוצגו ללקוחות באתר ובפניות.')}
+      />
       {!canEdit && (
-        <Alert tone="info">רק בעל/ת העסק יכול/ה לשנות את ההגדרות. אפשר לצפות בפרטים.</Alert>
+        <Alert tone="info">{tr('רק בעל/ת העסק יכול/ה לשנות את ההגדרות. אפשר לצפות בפרטים.')}</Alert>
       )}
       <DetailsSection canEdit={canEdit} />
       <ServiceAreasSection canEdit={canEdit} />
       <HoursSection canEdit={canEdit} />
-      <Section title="מנוי וחיוב">
+      <Section title={tr('מנוי וחיוב')}>
         <p className="text-sm text-ink-muted">
-          בחירת מסלול, אמצעי תשלום וחשבוניות יתווספו בהמשך. בינתיים החשבון פעיל בתקופת ניסיון.
+          {tr(
+            'בחירת מסלול, אמצעי תשלום וחשבוניות יתווספו בהמשך. בינתיים החשבון פעיל בתקופת ניסיון.',
+          )}
         </p>
       </Section>
     </>
@@ -103,19 +109,24 @@ export function DetailsSection({ canEdit }: { canEdit: boolean }) {
   });
 
   return (
-    <Section title="פרטי העסק">
+    <Section title={tr('פרטי העסק')}>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         <fieldset disabled={!canEdit} className="grid gap-4 sm:grid-cols-2">
-          <Field label="שם העסק" required error={errors.name?.message} {...form.register('name')} />
+          <Field
+            label={tr('שם העסק')}
+            required
+            error={errors.name?.message}
+            {...form.register('name')}
+          />
           <Select
-            label="תחום פעילות"
+            label={tr('תחום פעילות')}
             required
             options={industryOptions}
             error={errors.industry?.message}
             {...form.register('industry')}
           />
           <Field
-            label="טלפון העסק"
+            label={tr('טלפון העסק')}
             required
             ltr
             type="tel"
@@ -123,13 +134,17 @@ export function DetailsSection({ canEdit }: { canEdit: boolean }) {
             error={errors.phone?.message}
             {...form.register('phone')}
           />
-          <Field label="כתובת" error={errors.address?.message} {...form.register('address')} />
+          <Field
+            label={tr('כתובת')}
+            error={errors.address?.message}
+            {...form.register('address')}
+          />
         </fieldset>
         {canEdit && (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SaveStatus saved={saved} error={formError} />
             <Button type="submit" loading={isSubmitting}>
-              שמירת הפרטים
+              {tr('שמירת הפרטים')}
             </Button>
           </div>
         )}
@@ -158,19 +173,19 @@ export function ServiceAreasSection({ canEdit }: { canEdit: boolean }) {
   };
 
   return (
-    <Section title="אזורי שירות" description="הערים או האזורים שבהם העסק נותן שירות.">
+    <Section title={tr('אזורי שירות')} description={tr('הערים או האזורים שבהם העסק נותן שירות.')}>
       {canEdit ? (
         <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
           <ServiceAreasEditor value={areas} onChange={setAreas} />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SaveStatus saved={saved} error={error} />
             <Button type="submit" loading={update.isPending}>
-              שמירת האזורים
+              {tr('שמירת האזורים')}
             </Button>
           </div>
         </form>
       ) : (
-        <p className="text-sm text-ink">{areas.length ? areas.join(', ') : 'לא הוגדרו'}</p>
+        <p className="text-sm text-ink">{areas.length ? areas.join(', ') : tr('לא הוגדרו')}</p>
       )}
     </Section>
   );
@@ -199,14 +214,14 @@ export function HoursSection({ canEdit }: { canEdit: boolean }) {
   });
 
   return (
-    <Section title="שעות פעילות">
+    <Section title={tr('שעות פעילות')}>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         <HoursFields form={form} disabled={!canEdit} />
         {canEdit && (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SaveStatus saved={saved} error={error} />
             <Button type="submit" loading={form.formState.isSubmitting}>
-              שמירת השעות
+              {tr('שמירת השעות')}
             </Button>
           </div>
         )}

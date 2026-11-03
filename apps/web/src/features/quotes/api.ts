@@ -11,6 +11,7 @@ import {
 } from '@leadflow/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { intlLocale } from '../../i18n';
 
 const qp = apiPaths.quotes;
 export const quotesKey = (businessId: string) => ['businesses', businessId, 'quotes'] as const;
@@ -112,4 +113,4 @@ export const toAgorot = (shekels: string) => {
   return Number.isFinite(n) ? Math.round(n * 100) : null;
 };
 export const fromAgorot = (a: number) => (a % 100 === 0 ? String(a / 100) : (a / 100).toFixed(2));
-export const dateFmt = new Intl.DateTimeFormat('he-IL', { dateStyle: 'short' });
+export const dateFmt = new Intl.DateTimeFormat(intlLocale(), { dateStyle: 'short' });

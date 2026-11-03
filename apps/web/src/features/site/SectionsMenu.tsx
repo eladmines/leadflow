@@ -8,6 +8,7 @@ import {
 import { EyeOff, Plus } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
+import { tr } from '../../i18n';
 
 /** A small dropdown above the preview (closes on outside click or Escape). */
 function Dropdown({
@@ -68,12 +69,12 @@ export function SectionsMenu({
   return (
     <div className="hidden items-center gap-2 lg:flex">
       <Dropdown
-        label="הוספת מקטע"
+        label={tr('הוספת מקטע')}
         icon={<Plus aria-hidden className="h-4 w-4" />}
         disabled={sections.length >= SITE_LIMITS.sections}
       >
         {(close) => (
-          <ul aria-label="הוספת מקטע לעמוד" className="grid grid-cols-2 gap-0.5">
+          <ul aria-label={tr('הוספת מקטע לעמוד')} className="grid grid-cols-2 gap-0.5">
             {SECTION_TYPES.map((t) => (
               <li key={t}>
                 <button
@@ -84,7 +85,7 @@ export function SectionsMenu({
                     close();
                   }}
                 >
-                  {sectionTypeLabels[t]}
+                  {tr(sectionTypeLabels[t])}
                 </button>
               </li>
             ))}
@@ -93,27 +94,27 @@ export function SectionsMenu({
       </Dropdown>
       {hidden.length > 0 && (
         <Dropdown
-          label={`מוסתרים (${hidden.length})`}
+          label={tr('מוסתרים ({0})', hidden.length)}
           icon={<EyeOff aria-hidden className="h-4 w-4" />}
         >
           {(close) => (
-            <ul aria-label="מקטעים מוסתרים" className="flex flex-col gap-0.5">
+            <ul aria-label={tr('מקטעים מוסתרים')} className="flex flex-col gap-0.5">
               {hidden.map((s) => (
                 <li key={s.id}>
                   <button
                     type="button"
                     className={cn(item)}
-                    aria-label={`הצגת ${sectionTypeLabels[s.type]}`}
+                    aria-label={tr('הצגת {0}', tr(sectionTypeLabels[s.type]))}
                     onClick={() => {
                       onShow(s.id);
                       if (hidden.length === 1) close();
                     }}
                   >
                     <span className="truncate">
-                      {sectionTypeLabels[s.type]}
-                      <span className="text-ink-muted"> · {s.title || 'ללא כותרת'}</span>
+                      {tr(sectionTypeLabels[s.type])}
+                      <span className="text-ink-muted"> · {s.title || tr('ללא כותרת')}</span>
                     </span>
-                    <span className="text-xs text-brand-700">הצגה</span>
+                    <span className="text-xs text-brand-700">{tr('הצגה')}</span>
                   </button>
                 </li>
               ))}

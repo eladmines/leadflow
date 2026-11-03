@@ -4,7 +4,14 @@ import { expect, test, type Page } from '@playwright/test';
 const PASSWORD = 'Sup3r-secret-pass!';
 
 // This spec covers the tour itself, so start without the "tour off" flag the config sets.
-test.use({ storageState: { cookies: [], origins: [] } });
+test.use({
+  storageState: {
+    cookies: [],
+    origins: [
+      { origin: 'http://localhost:5173', localStorage: [{ name: 'leadflow.locale', value: 'he' }] },
+    ],
+  },
+});
 
 async function ownerWithBusiness(page: Page) {
   await page.goto('/register');

@@ -10,8 +10,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert, Button, Field, Select } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
+import { tr } from '../../i18n';
 
-const industryOptions = INDUSTRIES.map((value) => ({ value, label: industryLabels[value] }));
+const industryOptions = INDUSTRIES.map((value) => ({ value, label: tr(industryLabels[value]) }));
 
 interface Props {
   /** Existing business when returning to step 1; undefined on first creation. */
@@ -44,32 +45,32 @@ export function StepBusiness({ business, onSubmit }: Props) {
   return (
     <form noValidate onSubmit={submit} className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">בואו נכיר את העסק שלך</h1>
+        <h1 className="text-2xl font-bold text-ink">{tr('בואו נכיר את העסק שלך')}</h1>
         <p className="text-sm text-ink-muted">
-          השם והתחום יעזרו לנו להציע לך תבנית אתר מתאימה. אפשר לשנות אותם בכל שלב.
+          {tr('השם והתחום יעזרו לנו להציע לך תבנית אתר מתאימה. אפשר לשנות אותם בכל שלב.')}
         </p>
       </header>
       {formError && <Alert tone="danger">{formError}</Alert>}
       <Field
-        label="שם העסק"
+        label={tr('שם העסק')}
         required
         autoComplete="organization"
-        placeholder="לדוגמה: מספרת שירן"
-        hint="כפי שהלקוחות מכירים אותו"
+        placeholder={tr('לדוגמה: מספרת שירן')}
+        hint={tr('כפי שהלקוחות מכירים אותו')}
         error={errors.name?.message}
         {...form.register('name')}
       />
       <Select
-        label="תחום פעילות"
+        label={tr('תחום פעילות')}
         required
-        placeholder="בחירת תחום"
+        placeholder={tr('בחירת תחום')}
         options={industryOptions}
         error={errors.industry?.message}
         {...form.register('industry')}
       />
       <div className="flex justify-end">
         <Button type="submit" loading={isSubmitting}>
-          המשך
+          {tr('המשך')}
         </Button>
       </div>
     </form>

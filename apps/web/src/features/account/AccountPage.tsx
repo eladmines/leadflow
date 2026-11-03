@@ -19,11 +19,12 @@ import { meQueryKey, useMe } from '../auth/api';
 import { applyServerErrors, errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
+import { tr } from '../../i18n';
 
 const passwordForm = changePasswordRequestSchema
-  .extend({ confirm: z.string().min(1, 'יש להזין שוב את הסיסמה החדשה') })
+  .extend({ confirm: z.string().min(1, tr('יש להזין שוב את הסיסמה החדשה')) })
   .refine((v) => v.newPassword === v.confirm, {
-    message: 'הסיסמאות אינן תואמות',
+    message: tr('הסיסמאות אינן תואמות'),
     path: ['confirm'],
   });
 type PasswordForm = z.infer<typeof passwordForm>;
@@ -55,27 +56,27 @@ function ProfileCard() {
 
   return (
     <Card className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold text-ink">פרטים אישיים</h2>
+      <h2 className="text-lg font-semibold text-ink">{tr('פרטים אישיים')}</h2>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         {error && <Alert tone="danger">{error}</Alert>}
         <Field
-          label="שם מלא"
+          label={tr('שם מלא')}
           autoComplete="name"
           error={form.formState.errors.fullName?.message}
           {...form.register('fullName')}
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">אימייל</span>
+          <span className="text-sm font-medium text-ink">{tr('אימייל')}</span>
           <p className="text-sm text-ink-muted">
-            <bdi dir="ltr">{user?.email}</bdi> · לשינוי כתובת האימייל פנו לתמיכה
+            <bdi dir="ltr">{user?.email}</bdi> {tr('· לשינוי כתובת האימייל פנו לתמיכה')}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p role="status" className="text-sm text-success-600">
-            {saved ? 'השם עודכן' : ''}
+            {saved ? tr('השם עודכן') : ''}
           </p>
           <Button type="submit" loading={form.formState.isSubmitting}>
-            שמירה
+            {tr('שמירה')}
           </Button>
         </div>
       </form>
@@ -110,35 +111,35 @@ function PasswordCard() {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold text-ink">שינוי סיסמה</h2>
+        <h2 className="text-lg font-semibold text-ink">{tr('שינוי סיסמה')}</h2>
         <p className="text-sm text-ink-muted">
-          אחרי השינוי ננתק את כל שאר המכשירים, ונשלח לך אימייל לאישור.
+          {tr('אחרי השינוי ננתק את כל שאר המכשירים, ונשלח לך אימייל לאישור.')}
         </p>
       </div>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         {error && <Alert tone="danger">{error}</Alert>}
-        {done && <Alert tone="success">הסיסמה שונתה. שאר המכשירים נותקו.</Alert>}
+        {done && <Alert tone="success">{tr('הסיסמה שונתה. שאר המכשירים נותקו.')}</Alert>}
         <PasswordField
-          label="סיסמה נוכחית"
+          label={tr('סיסמה נוכחית')}
           autoComplete="current-password"
           error={errors.currentPassword?.message}
           {...form.register('currentPassword')}
         />
         <PasswordField
-          label="סיסמה חדשה"
+          label={tr('סיסמה חדשה')}
           autoComplete="new-password"
-          hint="לפחות 10 תווים"
+          hint={tr('לפחות 10 תווים')}
           error={errors.newPassword?.message}
           {...form.register('newPassword')}
         />
         <PasswordField
-          label="אימות הסיסמה החדשה"
+          label={tr('אימות הסיסמה החדשה')}
           autoComplete="new-password"
           error={errors.confirm?.message}
           {...form.register('confirm')}
         />
         <Button type="submit" loading={isSubmitting} className="self-end">
-          שינוי סיסמה
+          {tr('שינוי סיסמה')}
         </Button>
       </form>
     </Card>
@@ -166,16 +167,18 @@ function NotificationsCard() {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold text-ink">התראות במייל</h2>
-        <p className="text-sm text-ink-muted">חלות רק על העסק {business.name}.</p>
+        <h2 className="text-lg font-semibold text-ink">{tr('התראות במייל')}</h2>
+        <p className="text-sm text-ink-muted">
+          {tr('חלות רק על העסק')} {business.name}.
+        </p>
       </div>
       {prefs.isPending ? (
-        <Spinner size="sm" label="טוענים העדפות…" />
+        <Spinner size="sm" label={tr('טוענים העדפות…')} />
       ) : prefs.isError ? (
         <Alert tone="danger">{errorMessage(prefs.error)}</Alert>
       ) : (
         <Checkbox
-          label="מייל על כל פנייה חדשה מהאתר"
+          label={tr('מייל על כל פנייה חדשה מהאתר')}
           checked={prefs.data.newLeadEmail}
           disabled={save.isPending}
           onChange={(e) => save.mutate({ newLeadEmail: e.target.checked })}
@@ -183,7 +186,7 @@ function NotificationsCard() {
       )}
       {save.isError && <Alert tone="danger">{errorMessage(save.error)}</Alert>}
       <p role="status" className="text-sm text-success-600">
-        {save.isSuccess ? 'ההעדפה נשמרה' : ''}
+        {save.isSuccess ? tr('ההעדפה נשמרה') : ''}
       </p>
     </Card>
   );
@@ -193,7 +196,7 @@ export function AccountPage() {
   const business = useCurrentBusiness();
   return (
     <>
-      <PageHeader title="החשבון שלי" description="הפרטים, הסיסמה וההתראות שלך." />
+      <PageHeader title={tr('החשבון שלי')} description={tr('הפרטים, הסיסמה וההתראות שלך.')} />
       <div className="grid gap-6 lg:grid-cols-2">
         <ProfileCard />
         <PasswordCard />

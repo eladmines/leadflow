@@ -2,6 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Button } from '../../components/ui';
+import { isRtl, tr } from '../../i18n';
 
 /**
  * Generic guided tour (D-093, D-096): a dialog bubble per step, with a spotlight on the step's
@@ -72,7 +73,7 @@ export function Tour({
   steps,
   open,
   onClose,
-  startLabel = 'הבא',
+  startLabel = tr('הבא'),
 }: {
   steps: TourStep[];
   open: boolean;
@@ -158,9 +159,11 @@ export function Tour({
             nextRef.current?.focus();
           }}
           onKeyDown={(e) => {
-            // RTL: the left arrow moves forward.
-            if (e.key === 'ArrowLeft') next();
-            if (e.key === 'ArrowRight') prev();
+            // Forward is the reading direction: left in Hebrew (RTL), right in English (LTR).
+            const forward = isRtl() ? 'ArrowLeft' : 'ArrowRight';
+            const back = isRtl() ? 'ArrowRight' : 'ArrowLeft';
+            if (e.key === forward) next();
+            if (e.key === back) prev();
           }}
           className={
             pos
@@ -174,7 +177,7 @@ export function Tour({
             <Dialog.Close asChild>
               <button
                 type="button"
-                aria-label="סגירת הסיור"
+                aria-label={tr('סגירת הסיור')}
                 className="-me-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-muted"
               >
                 <X aria-hidden className="h-4 w-4" />
@@ -194,20 +197,20 @@ export function Tour({
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-ink-muted">
-              {index + 1} מתוך {active.length}
+              {index + 1} {tr('מתוך')} {active.length}
             </span>
             <div className="flex items-center gap-2">
               {index === 0 ? (
                 <Button size="sm" variant="ghost" onClick={onClose}>
-                  דילוג
+                  {tr('דילוג')}
                 </Button>
               ) : (
                 <Button size="sm" variant="secondary" onClick={prev}>
-                  הקודם
+                  {tr('הקודם')}
                 </Button>
               )}
               <Button ref={nextRef} size="sm" onClick={next}>
-                {last ? 'סיום' : index === 0 ? startLabel : 'הבא'}
+                {last ? tr('סיום') : index === 0 ? startLabel : tr('הבא')}
               </Button>
             </div>
           </div>

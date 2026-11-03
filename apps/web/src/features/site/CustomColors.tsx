@@ -6,6 +6,7 @@ import {
 } from '@leadflow/shared';
 import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui';
+import { tr } from '../../i18n';
 
 /**
  * Owner-chosen main and accent colours (D-083). Only a main colour readable under white button
@@ -42,7 +43,7 @@ export function CustomColors({
       {(
         [
           [
-            'צבע ראשי (כפתורים וכותרות)',
+            tr('צבע ראשי (כפתורים וכותרות)'),
             primary,
             (v: string) => {
               setPrimary(v);
@@ -50,7 +51,7 @@ export function CustomColors({
             },
           ],
           [
-            'צבע הדגשה (נקודות וקישוטים)',
+            tr('צבע הדגשה (נקודות וקישוטים)'),
             accent,
             (v: string) => {
               setAccent(v);
@@ -69,7 +70,7 @@ export function CustomColors({
           />
           <span className="flex-1">{label}</span>
           <input
-            aria-label={`${label}, קוד`}
+            aria-label={tr('{0}, קוד', label)}
             dir="ltr"
             value={v}
             maxLength={7}
@@ -83,7 +84,7 @@ export function CustomColors({
           role="alert"
           className="flex flex-col gap-2 rounded-lg bg-warning-50 p-2.5 text-xs text-warning-600"
         >
-          הצבע הראשי בהיר מדי: טקסט לבן על כפתורים לא ייקרא היטב.
+          {tr('הצבע הראשי בהיר מדי: טקסט לבן על כפתורים לא ייקרא היטב.')}
           <Button
             size="sm"
             variant="secondary"
@@ -94,7 +95,7 @@ export function CustomColors({
               apply({ primary: fixed, accent });
             }}
           >
-            התאמה לגוון כהה יותר
+            {tr('התאמה לגוון כהה יותר')}
           </Button>
         </div>
       )}

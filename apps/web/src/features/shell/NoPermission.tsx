@@ -1,4 +1,5 @@
 import { Lock } from 'lucide-react';
+import { tr } from '../../i18n';
 
 export function NoPermission({ what }: { what: string }) {
   return (
@@ -6,8 +7,11 @@ export function NoPermission({ what }: { what: string }) {
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted text-ink-muted">
         <Lock aria-hidden className="h-6 w-6" />
       </span>
-      <h2 className="text-lg font-semibold text-ink">אין לך הרשאה לצפות ב{what}</h2>
-      <p className="max-w-md text-sm text-ink-muted">אם צריך גישה, פנו לבעל/ת העסק.</p>
+      <h2 className="text-lg font-semibold text-ink">
+        {tr('אין לך הרשאה לצפות ב')}
+        {what}
+      </h2>
+      <p className="max-w-md text-sm text-ink-muted">{tr('אם צריך גישה, פנו לבעל/ת העסק.')}</p>
     </section>
   );
 }

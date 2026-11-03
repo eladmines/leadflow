@@ -30,6 +30,7 @@ import { TaskItem } from '../tasks/TaskItem';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageTourButton } from '../tour/TourContext';
 import { useWhatsAppInbox } from '../whatsapp/api';
+import { tr } from '../../i18n';
 
 type ItemState = 'done' | 'todo' | 'soon';
 
@@ -40,31 +41,31 @@ function WeekStats({ businessId }: { businessId: string }) {
   const delta = report.leads.current - report.leads.previous;
   const stats = [
     {
-      label: 'פניות ב־7 הימים האחרונים',
+      label: tr('פניות ב־7 הימים האחרונים'),
       value: String(report.leads.current),
       note:
         delta === 0
-          ? 'כמו בשבוע שלפני'
-          : `${delta > 0 ? '+' : '−'}${Math.abs(delta)} לעומת השבוע שלפני`,
+          ? tr('כמו בשבוע שלפני')
+          : tr('{0}{1} לעומת השבוע שלפני', delta > 0 ? '+' : '−', Math.abs(delta)),
     },
     {
-      label: 'יחס סגירה',
+      label: tr('יחס סגירה'),
       value: report.closeRate === null ? '—' : `${Math.round(report.closeRate * 100)}%`,
-      note: report.closeRate === null ? 'עוד אין פניות שהוכרעו' : 'מהפניות של השבוע',
+      note: report.closeRate === null ? tr('עוד אין פניות שהוכרעו') : tr('מהפניות של השבוע'),
     },
     {
-      label: 'זמן תגובה ממוצע',
+      label: tr('זמן תגובה ממוצע'),
       value: report.avgResponseMinutes === null ? '—' : durationLabel(report.avgResponseMinutes),
-      note: report.avgResponseMinutes === null ? 'עוד לא טופלו פניות' : 'עד הטיפול הראשון',
+      note: report.avgResponseMinutes === null ? tr('עוד לא טופלו פניות') : tr('עד הטיפול הראשון'),
     },
   ];
   return (
     <section aria-labelledby="week-stats" className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="week-stats" className="text-lg font-semibold text-ink">
-          השבוע במספרים
+          {tr('השבוע במספרים')}
         </h2>
-        <TextLink to={businessWebPaths.section(businessId, 'reports')}>לכל הדוחות</TextLink>
+        <TextLink to={businessWebPaths.section(businessId, 'reports')}>{tr('לכל הדוחות')}</TextLink>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {stats.map((s) => (
@@ -180,9 +181,9 @@ function ProfileRow({
  */
 export function greeting(now = new Date()): string {
   const hour = now.getHours();
-  if (hour >= 5 && hour < 12) return 'בוקר טוב';
-  if (hour >= 12 && hour < 17) return 'צהריים טובים';
-  return 'ערב טוב';
+  if (hour >= 5 && hour < 12) return tr('בוקר טוב');
+  if (hour >= 12 && hour < 17) return tr('צהריים טובים');
+  return tr('ערב טוב');
 }
 
 /** Business home: welcome + setup progress (real state only), recent leads (empty until F07), profile. */
@@ -202,35 +203,35 @@ export function DashboardPage() {
 
   const checklist: { label: string; hint: string; state: ItemState }[] = [
     {
-      label: 'הקמת פרופיל העסק',
-      hint: 'שם, תחום, טלפון ושעות פעילות',
+      label: tr('הקמת פרופיל העסק'),
+      hint: tr('שם, תחום, טלפון ושעות פעילות'),
       state: business.status === 'ACTIVE' ? 'done' : 'todo',
     },
     {
-      label: 'אימות כתובת האימייל',
-      hint: 'כדי שנוכל לשלוח לך התראות על פניות',
+      label: tr('אימות כתובת האימייל'),
+      hint: tr('כדי שנוכל לשלוח לך התראות על פניות'),
       state: user?.emailVerified ? 'done' : 'todo',
     },
     {
-      label: 'בניית אתר העסק',
-      hint: 'בחירת תבנית ועריכת התוכן',
+      label: tr('בניית אתר העסק'),
+      hint: tr('בחירת תבנית ועריכת התוכן'),
       state: site ? 'done' : 'todo',
     },
     {
-      label: 'פרסום האתר',
-      hint: 'בחירת כתובת והעלאה לאוויר',
+      label: tr('פרסום האתר'),
+      hint: tr('בחירת כתובת והעלאה לאוויר'),
       state: site?.published ? 'done' : 'todo',
     },
     // Connected numbers are set up with LeadFlow for now (D-091); a self-service screen comes later.
     whatsappConnected
       ? {
-          label: 'חיבור WhatsApp עסקי',
-          hint: 'מחובר: הודעות מוואטסאפ נכנסות כלידים',
+          label: tr('חיבור WhatsApp עסקי'),
+          hint: tr('מחובר: הודעות מוואטסאפ נכנסות כלידים'),
           state: 'done',
         }
       : {
-          label: 'חיבור WhatsApp עסקי',
-          hint: 'מענה ללקוחות מתוך המערכת. חיבור עצמי יגיע בקרוב',
+          label: tr('חיבור WhatsApp עסקי'),
+          hint: tr('מענה ללקוחות מתוך המערכת. חיבור עצמי יגיע בקרוב'),
           state: 'soon',
         },
   ];
@@ -249,7 +250,7 @@ export function DashboardPage() {
         <div className="relative flex flex-wrap items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-accent-700">
-              {business.name} · {roleLabels[business.role]}
+              {business.name} · {tr(roleLabels[business.role])}
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
               {greeting()}, {firstName}
@@ -257,23 +258,23 @@ export function DashboardPage() {
             <p className="max-w-md text-base text-ink-muted">
               {next
                 ? next.state === 'soon'
-                  ? `הצעד הבא: ${next.label} — הכלי הזה יגיע בקרוב.`
-                  : `הצעד הבא: ${next.label}.`
-                : 'כל הצעדים הושלמו. העסק מוכן לעבודה!'}
+                  ? tr('הצעד הבא: {0} — הכלי הזה יגיע בקרוב.', next.label)
+                  : tr('הצעד הבא: {0}.', next.label)
+                : tr('כל הצעדים הושלמו. העסק מוכן לעבודה!')}
             </p>
             {can(business.role, 'site.edit') &&
-              (next?.label === 'בניית אתר העסק' || next?.label === 'פרסום האתר') && (
+              (next?.label === tr('בניית אתר העסק') || next?.label === tr('פרסום האתר')) && (
                 <Link
                   to={businessWebPaths.section(business.id, 'site')}
                   className={buttonClasses('primary', 'md', 'mt-2 self-start')}
                 >
-                  {next.label === 'בניית אתר העסק' ? 'לבניית האתר' : 'לפרסום האתר'}
+                  {next.label === tr('בניית אתר העסק') ? tr('לבניית האתר') : tr('לפרסום האתר')}
                 </Link>
               )}
           </div>
           <div
             role="progressbar"
-            aria-label="התקדמות ההקמה"
+            aria-label={tr('התקדמות ההקמה')}
             aria-valuemin={0}
             aria-valuemax={checklist.length}
             aria-valuenow={done}
@@ -294,9 +295,9 @@ export function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="flex flex-col gap-5 lg:col-span-3">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-lg font-semibold text-ink">הצעדים להפעלת העסק</h2>
+            <h2 className="text-lg font-semibold text-ink">{tr('הצעדים להפעלת העסק')}</h2>
             <span className="text-sm text-ink-muted">
-              הושלמו {done} מתוך {checklist.length}
+              {tr('הושלמו')} {done} {tr('מתוך')} {checklist.length}
             </span>
           </div>
           <ol className="flex flex-col">
@@ -339,17 +340,17 @@ export function DashboardPage() {
                     {item.label}
                     <span className="sr-only">
                       {item.state === 'done'
-                        ? ' — הושלם'
+                        ? tr(' — הושלם')
                         : item.state === 'soon'
-                          ? ' — בקרוב'
-                          : ' — טרם הושלם'}
+                          ? tr(' — בקרוב')
+                          : tr(' — טרם הושלם')}
                     </span>
                   </p>
                   <p className="text-xs text-ink-muted">{item.hint}</p>
                 </div>
                 {item.state === 'soon' && (
                   <span className="h-fit rounded-full bg-surface-muted px-2.5 py-1 text-xs text-ink-muted">
-                    בקרוב
+                    {tr('בקרוב')}
                   </span>
                 )}
               </li>
@@ -359,13 +360,18 @@ export function DashboardPage() {
 
         <Card className="flex flex-col gap-3 lg:col-span-2">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-lg font-semibold text-ink">פניות אחרונות</h2>
+            <h2 className="text-lg font-semibold text-ink">{tr('פניות אחרונות')}</h2>
             {leads.length > 0 && (
-              <TextLink to={businessWebPaths.section(business.id, 'leads')}>לכל הפניות</TextLink>
+              <TextLink to={businessWebPaths.section(business.id, 'leads')}>
+                {tr('לכל הפניות')}
+              </TextLink>
             )}
           </div>
           {leads.length > 0 ? (
-            <ul aria-label="פניות אחרונות" className="flex flex-col divide-y divide-surface-border">
+            <ul
+              aria-label={tr('פניות אחרונות')}
+              className="flex flex-col divide-y divide-surface-border"
+            >
               {leads.slice(0, 5).map((l) => (
                 <li key={l.id} className="flex items-center gap-3 py-3">
                   <span
@@ -383,7 +389,9 @@ export function DashboardPage() {
                         {l.contact.name}
                       </Link>
                     </p>
-                    <p className="truncate text-xs text-ink-muted">{l.message ?? 'ללא הודעה'}</p>
+                    <p className="truncate text-xs text-ink-muted">
+                      {l.message ?? tr('ללא הודעה')}
+                    </p>
                   </div>
                   <time dateTime={l.createdAt} className="shrink-0 text-xs text-ink-muted">
                     {timeAgo(l.createdAt)}
@@ -394,9 +402,9 @@ export function DashboardPage() {
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
               <EmptyInboxArt />
-              <p className="text-base font-medium text-ink">עדיין אין פניות</p>
+              <p className="text-base font-medium text-ink">{tr('עדיין אין פניות')}</p>
               <p className="max-w-xs text-sm text-ink-muted">
-                אחרי שהאתר יפורסם, כל פנייה מהטופס תופיע כאן ותקבלו עליה התראה.
+                {tr('אחרי שהאתר יפורסם, כל פנייה מהטופס תופיע כאן ותקבלו עליה התראה.')}
               </p>
             </div>
           )}
@@ -406,17 +414,19 @@ export function DashboardPage() {
       <Card className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-lg font-semibold text-ink">
-            המשימות שלי להיום
+            {tr('המשימות שלי להיום')}
             {myTasks.overdue.length > 0 && (
               <span className="ms-2 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-medium text-danger-600">
-                {myTasks.overdue.length} באיחור
+                {myTasks.overdue.length} {tr('באיחור')}
               </span>
             )}
           </h2>
-          <TextLink to={businessWebPaths.section(business.id, 'tasks')}>לכל המשימות</TextLink>
+          <TextLink to={businessWebPaths.section(business.id, 'tasks')}>
+            {tr('לכל המשימות')}
+          </TextLink>
         </div>
         {urgent.length > 0 ? (
-          <ul aria-label="המשימות שלי להיום" className="divide-y divide-surface-border">
+          <ul aria-label={tr('המשימות שלי להיום')} className="divide-y divide-surface-border">
             {urgent.slice(0, 6).map((t) => (
               <TaskItem key={t.id} task={t} businessId={business.id} showAssignee={false} />
             ))}
@@ -424,34 +434,42 @@ export function DashboardPage() {
         ) : (
           <p className="text-sm text-ink-muted">
             {myTasks.upcoming.length > 0
-              ? `אין משימות להיום. ${myTasks.upcoming.length} משימות בהמשך.`
-              : 'אין משימות פתוחות. 🎉'}
+              ? tr('אין משימות להיום. {0} משימות בהמשך.', myTasks.upcoming.length)
+              : tr('אין משימות פתוחות. 🎉')}
           </p>
         )}
       </Card>
 
       <Card className="flex flex-col gap-5">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-lg font-semibold text-ink">פרופיל העסק</h2>
+          <h2 className="text-lg font-semibold text-ink">{tr('פרופיל העסק')}</h2>
           {can(business.role, 'business.update') && (
-            <TextLink to={businessWebPaths.section(business.id, 'settings')}>עריכה</TextLink>
+            <TextLink to={businessWebPaths.section(business.id, 'settings')}>
+              {tr('עריכה')}
+            </TextLink>
           )}
         </div>
         <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <ProfileRow icon={Briefcase} label="תחום">
-            {industryLabels[business.industry]}
+          <ProfileRow icon={Briefcase} label={tr('תחום')}>
+            {tr(industryLabels[business.industry])}
           </ProfileRow>
-          <ProfileRow icon={Phone} label="טלפון">
-            {business.phone ? <bdi dir="ltr">{formatIsraeliPhone(business.phone)}</bdi> : 'לא הוזן'}
+          <ProfileRow icon={Phone} label={tr('טלפון')}>
+            {business.phone ? (
+              <bdi dir="ltr">{formatIsraeliPhone(business.phone)}</bdi>
+            ) : (
+              tr('לא הוזן')
+            )}
           </ProfileRow>
-          <ProfileRow icon={MapPin} label="כתובת">
-            {business.address ?? 'לא הוזנה'}
+          <ProfileRow icon={MapPin} label={tr('כתובת')}>
+            {business.address ?? tr('לא הוזנה')}
           </ProfileRow>
-          <ProfileRow icon={Route} label="אזורי שירות">
-            {business.serviceAreas.length ? business.serviceAreas.join(', ') : 'לא הוגדרו'}
+          <ProfileRow icon={Route} label={tr('אזורי שירות')}>
+            {business.serviceAreas.length ? business.serviceAreas.join(', ') : tr('לא הוגדרו')}
           </ProfileRow>
-          <ProfileRow icon={CalendarClock} label="ימי פעילות">
-            {openDays.length ? openDays.map((d) => weekdayLabels[d]).join(', ') : 'לא הוגדרו'}
+          <ProfileRow icon={CalendarClock} label={tr('ימי פעילות')}>
+            {openDays.length
+              ? openDays.map((d) => tr(weekdayLabels[d])).join(', ')
+              : tr('לא הוגדרו')}
           </ProfileRow>
         </dl>
       </Card>

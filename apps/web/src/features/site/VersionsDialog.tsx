@@ -3,8 +3,12 @@ import { useState } from 'react';
 import { Alert, Button, DialogShell, Spinner } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';
 import { useRollback, useUnpublish, useVersions } from './api';
+import { tr, intlLocale } from '../../i18n';
 
-const dateFormat = new Intl.DateTimeFormat('he-IL', { dateStyle: 'medium', timeStyle: 'short' });
+const dateFormat = new Intl.DateTimeFormat(intlLocale(), {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
 
 /** Published versions: roll back to any of them, or take the site offline. */
 export function VersionsDialog({
@@ -27,24 +31,27 @@ export function VersionsDialog({
   const error = rollback.error ?? unpublish.error;
 
   return (
-    <DialogShell open={open} onOpenChange={onOpenChange} title="היסטוריית פרסומים">
+    <DialogShell open={open} onOpenChange={onOpenChange} title={tr('היסטוריית פרסומים')}>
       {error && <Alert tone="danger">{errorMessage(error)}</Alert>}
       {versions.isPending ? (
-        <Spinner label="טוענים גרסאות…" />
+        <Spinner label={tr('טוענים גרסאות…')} />
       ) : versions.isError ? (
         <Alert tone="danger">{errorMessage(versions.error)}</Alert>
       ) : versions.data.length === 0 ? (
-        <p className="text-sm text-ink-muted">האתר עדיין לא פורסם.</p>
+        <p className="text-sm text-ink-muted">{tr('האתר עדיין לא פורסם.')}</p>
       ) : (
-        <ol aria-label="גרסאות שפורסמו" className="flex flex-col divide-y divide-surface-border">
+        <ol
+          aria-label={tr('גרסאות שפורסמו')}
+          className="flex flex-col divide-y divide-surface-border"
+        >
           {versions.data.map((v) => (
             <li key={v.id} className="flex items-center gap-3 py-3">
               <div className="flex-1">
                 <p className="text-sm font-medium text-ink">
-                  גרסה {v.number}
+                  {tr('גרסה')} {v.number}
                   {v.live && (
                     <span className="ms-2 rounded-full bg-success-50 px-2 py-0.5 text-xs text-success-600">
-                      באוויר
+                      {tr('באוויר')}
                     </span>
                   )}
                 </p>
@@ -61,7 +68,7 @@ export function VersionsDialog({
                   disabled={rollback.isPending}
                   onClick={() => rollback.mutate(v.id)}
                 >
-                  החזרה לגרסה זו
+                  {tr('החזרה לגרסה זו')}
                 </Button>
               )}
             </li>
@@ -74,9 +81,11 @@ export function VersionsDialog({
             <div
               className="flex flex-wrap items-center gap-2"
               role="group"
-              aria-label="אישור הורדה מהאוויר"
+              aria-label={tr('אישור הורדה מהאוויר')}
             >
-              <span className="text-sm text-ink">להוריד את האתר מהאוויר? הגרסאות יישמרו.</span>
+              <span className="text-sm text-ink">
+                {tr('להוריד את האתר מהאוויר? הגרסאות יישמרו.')}
+              </span>
               <Button
                 variant="danger"
                 size="sm"
@@ -85,15 +94,15 @@ export function VersionsDialog({
                   unpublish.mutate(undefined, { onSuccess: () => setConfirmOffline(false) })
                 }
               >
-                הורדה מהאוויר
+                {tr('הורדה מהאוויר')}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setConfirmOffline(false)}>
-                ביטול
+                {tr('ביטול')}
               </Button>
             </div>
           ) : (
             <Button variant="ghost" size="sm" onClick={() => setConfirmOffline(true)}>
-              הורדת האתר מהאוויר
+              {tr('הורדת האתר מהאוויר')}
             </Button>
           )}
         </div>

@@ -10,6 +10,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { useClassifyNumber, useForgetPersonal, usePersonalNumbers, useWhatsAppInbox } from './api';
+import { tr } from '../../i18n';
 
 /** Phone in local form when it is Israeli, otherwise as received. */
 const showPhone = (e164: string) => (e164.startsWith('+972') ? formatIsraeliPhone(e164) : e164);
@@ -17,7 +18,7 @@ const showPhone = (e164: string) => (e164.startsWith('+972') ? formatIsraeliPhon
 /** `/b/:businessId/conversations`: WhatsApp numbers waiting to be classified (D-092). */
 export function ConversationsPage() {
   const business = useCurrentBusiness();
-  if (!can(business.role, 'whatsapp.inbox')) return <NoPermission what="שיחות WhatsApp" />;
+  if (!can(business.role, 'whatsapp.inbox')) return <NoPermission what={tr('שיחות WhatsApp')} />;
   return <Inbox businessId={business.id} />;
 }
 
@@ -29,8 +30,10 @@ function Inbox({ businessId }: { businessId: string }) {
   return (
     <>
       <PageHeader
-        title="שיחות WhatsApp"
-        description="הודעות ממספרים חדשים מחכות כאן עד שתחליטו: לקוח או פרטי. ההחלטה נשמרת, וההודעות הבאות מאותו מספר יגיעו למקום הנכון לבד."
+        title={tr('שיחות WhatsApp')}
+        description={tr(
+          'הודעות ממספרים חדשים מחכות כאן עד שתחליטו: לקוח או פרטי. ההחלטה נשמרת, וההודעות הבאות מאותו מספר יגיעו למקום הנכון לבד.',
+        )}
         actions={
           <RefreshButton
             onRefresh={() =>
@@ -43,35 +46,40 @@ function Inbox({ businessId }: { businessId: string }) {
         <Alert tone="success">
           {done.leadId ? (
             <>
-              {done.name} נוסף/ה כליד.{' '}
+              {done.name} {tr('נוסף/ה כליד.')}{' '}
               <Link
                 to={`${businessWebPaths.section(businessId, 'leads')}/${done.leadId}`}
                 className="font-medium underline"
               >
-                פתיחת הליד
+                {tr('פתיחת הליד')}
               </Link>
             </>
           ) : (
-            `${done.name} סומן/ה כפרטי. ההודעות נמחקו, והודעות הבאות מהמספר הזה לא ייכנסו למערכת.`
+            tr(
+              '{0} סומן/ה כפרטי. ההודעות נמחקו, והודעות הבאות מהמספר הזה לא ייכנסו למערכת.',
+              done.name,
+            )
           )}
         </Alert>
       )}
       {inbox.isPending ? (
-        <Spinner label="טוענים את השיחות…" />
+        <Spinner label={tr('טוענים את השיחות…')} />
       ) : inbox.isError ? (
         <Alert tone="danger">{errorMessage(inbox.error)}</Alert>
       ) : !inbox.data.connected && inbox.data.numbers.length === 0 ? (
         <EmptyState
-          title="WhatsApp עדיין לא מחובר"
-          description="אחרי חיבור מספר WhatsApp לעסק, הודעות ממספרים חדשים יופיעו כאן לסיווג."
+          title={tr('WhatsApp עדיין לא מחובר')}
+          description={tr('אחרי חיבור מספר WhatsApp לעסק, הודעות ממספרים חדשים יופיעו כאן לסיווג.')}
         />
       ) : inbox.data.numbers.length === 0 ? (
         <EmptyState
-          title="אין הודעות שמחכות לסיווג"
-          description="הודעות מלקוחות מוכרים נכנסות ישר לליד שלהם. כשמספר חדש יכתוב, הוא יופיע כאן."
+          title={tr('אין הודעות שמחכות לסיווג')}
+          description={tr(
+            'הודעות מלקוחות מוכרים נכנסות ישר לליד שלהם. כשמספר חדש יכתוב, הוא יופיע כאן.',
+          )}
         />
       ) : (
-        <ul aria-label="מספרים שמחכים לסיווג" className="flex flex-col gap-4">
+        <ul aria-label={tr('מספרים שמחכים לסיווג')} className="flex flex-col gap-4">
           {inbox.data.numbers.map((n) => (
             <li key={n.id}>
               <NumberCard businessId={businessId} number={n} onDone={setDone} />
@@ -114,11 +122,11 @@ function NumberCard({
           </p>
         </div>
         <span className="rounded-full bg-surface-sunken px-2.5 py-1 text-xs font-medium text-ink-muted">
-          לא מסווג
+          {tr('לא מסווג')}
         </span>
       </header>
       <ol
-        aria-label={`הודעות מ${name}`}
+        aria-label={tr('הודעות מ{0}', name)}
         className="flex max-h-60 flex-col gap-2 overflow-y-auto rounded-xl bg-surface-muted p-3"
       >
         {number.messages.map((m) => (
@@ -139,7 +147,7 @@ function NumberCard({
           disabled={classify.isPending}
         >
           <Briefcase aria-hidden className="h-4 w-4" />
-          עסקי: יצירת ליד
+          {tr('עסקי: יצירת ליד')}
         </Button>
         <Button
           size="sm"
@@ -149,10 +157,10 @@ function NumberCard({
           disabled={classify.isPending}
         >
           <UserX aria-hidden className="h-4 w-4" />
-          פרטי
+          {tr('פרטי')}
         </Button>
         <p className="text-xs text-ink-muted">
-          פרטי: ההודעות יימחקו, והמספר לא ייכנס למערכת גם בהמשך.
+          {tr('פרטי: ההודעות יימחקו, והמספר לא ייכנס למערכת גם בהמשך.')}
         </p>
       </div>
     </Card>
@@ -167,17 +175,18 @@ function PersonalNumbers({ businessId }: { businessId: string }) {
   return (
     <details className="rounded-xl border border-surface-border bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium text-ink">
-        מספרים פרטיים ({personal.data.length})
+        {tr('מספרים פרטיים (')}
+        {personal.data.length})
       </summary>
       <p className="mt-2 text-xs text-ink-muted">
-        הודעות מהמספרים האלה לא נשמרות. ביטול הסימון מחזיר את ההודעה הבאה מהמספר לתיבה.
+        {tr('הודעות מהמספרים האלה לא נשמרות. ביטול הסימון מחזיר את ההודעה הבאה מהמספר לתיבה.')}
       </p>
       {forget.isError && (
         <div className="mt-2">
           <Alert tone="danger">{errorMessage(forget.error)}</Alert>
         </div>
       )}
-      <ul aria-label="מספרים פרטיים" className="mt-3 divide-y divide-surface-border">
+      <ul aria-label={tr('מספרים פרטיים')} className="mt-3 divide-y divide-surface-border">
         {personal.data.map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-2 py-2">
             <bdi dir="ltr" className="text-sm text-ink">
@@ -188,9 +197,9 @@ function PersonalNumbers({ businessId }: { businessId: string }) {
               variant="ghost"
               onClick={() => forget.mutate(p.id)}
               loading={forget.isPending && forget.variables === p.id}
-              aria-label={`ביטול סימון פרטי ל-${showPhone(p.phone)}`}
+              aria-label={tr('ביטול סימון פרטי ל-{0}', showPhone(p.phone))}
             >
-              ביטול סימון
+              {tr('ביטול סימון')}
             </Button>
           </li>
         ))}

@@ -9,10 +9,11 @@ import { applyServerErrors } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { defaultDueLocal, useCreateTask } from './api';
+import { tr } from '../../i18n';
 
 /** Form values: due time as the `datetime-local` string; converted to ISO on submit. */
 const formSchema = createTaskRequestSchema.pick({ title: true }).extend({
-  dueLocal: z.string().min(1, 'יש לבחור מועד'),
+  dueLocal: z.string().min(1, tr('יש לבחור מועד')),
   assigneeId: z.string().optional(),
 });
 type FormValues = z.infer<typeof formSchema>;
@@ -45,7 +46,12 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
   });
 
   return (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-3" aria-label="משימה חדשה">
+    <form
+      noValidate
+      onSubmit={submit}
+      className="flex flex-col gap-3"
+      aria-label={tr('משימה חדשה')}
+    >
       {formError && <Alert tone="danger">{formError}</Alert>}
       <div
         className={
@@ -55,22 +61,22 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
         }
       >
         <Field
-          label="משימה חדשה"
-          placeholder="למשל: להתקשר לגבי ההצעה"
+          label={tr('משימה חדשה')}
+          placeholder={tr('למשל: להתקשר לגבי ההצעה')}
           error={form.formState.errors.title?.message}
           {...form.register('title')}
         />
         <Field
-          label="מועד"
+          label={tr('מועד')}
           type="datetime-local"
           error={form.formState.errors.dueLocal?.message}
           {...form.register('dueLocal')}
         />
         {canAssign ? (
           <Select
-            label="אחראי למשימה"
+            label={tr('אחראי למשימה')}
             options={[
-              { value: '', label: 'אני' },
+              { value: '', label: tr('אני') },
               ...(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName })),
             ]}
             {...form.register('assigneeId')}
@@ -80,7 +86,7 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
         )}
         <Button type="submit" loading={form.formState.isSubmitting} className="self-end">
           <Plus aria-hidden className="h-4 w-4" />
-          הוספה
+          {tr('הוספה')}
         </Button>
       </div>
     </form>

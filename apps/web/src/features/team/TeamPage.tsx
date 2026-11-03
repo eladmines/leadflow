@@ -28,8 +28,9 @@ import {
   useResendInvite,
   useRevokeInvite,
 } from './api';
+import { tr } from '../../i18n';
 
-const roleOptions = INVITABLE_ROLES.map((r) => ({ value: r, label: roleLabels[r] }));
+const roleOptions = INVITABLE_ROLES.map((r) => ({ value: r, label: tr(roleLabels[r]) }));
 
 function InviteForm({ businessId }: { businessId: string }) {
   const invite = useInvite(businessId);
@@ -55,30 +56,33 @@ function InviteForm({ businessId }: { businessId: string }) {
     <Card className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <UserPlus aria-hidden className="h-5 w-5 text-brand-600" />
-        <h2 className="text-lg font-semibold text-ink">הזמנת חבר/ת צוות</h2>
+        <h2 className="text-lg font-semibold text-ink">{tr('הזמנת חבר/ת צוות')}</h2>
       </div>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         {formError && <Alert tone="danger">{formError}</Alert>}
         {sentTo && (
           <Alert tone="success">
-            ההזמנה נשלחה אל <bdi dir="ltr">{sentTo}</bdi>. היא תקפה ל-7 ימים.
+            {tr('ההזמנה נשלחה אל')} <bdi dir="ltr">{sentTo}</bdi>
+            {tr('. היא תקפה ל-7 ימים.')}
           </Alert>
         )}
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_200px]">
           <Field
-            label="אימייל"
+            label={tr('אימייל')}
             ltr
             type="email"
             error={form.formState.errors.email?.message}
             {...form.register('email')}
           />
-          <Select label="תפקיד" options={roleOptions} {...form.register('role')} />
+          <Select label={tr('תפקיד')} options={roleOptions} {...form.register('role')} />
         </div>
         <p className="text-xs text-ink-muted">
-          עובד/ת רואה רק את הלידים שהוקצו לו/לה. מנהל/ת צוות רואה את כל הלידים ויכול/ה לשייך אותם.
+          {tr(
+            'עובד/ת רואה רק את הלידים שהוקצו לו/לה. מנהל/ת צוות רואה את כל הלידים ויכול/ה לשייך אותם.',
+          )}
         </p>
         <Button type="submit" loading={form.formState.isSubmitting} className="self-start">
-          שליחת הזמנה
+          {tr('שליחת הזמנה')}
         </Button>
       </form>
     </Card>
@@ -114,7 +118,7 @@ function MemberRow({
         <div className="min-w-0 flex-1">
           <p className="font-medium text-ink">
             {m.fullName}
-            {isMe && <span className="ms-2 text-xs text-ink-muted">(את/ה)</span>}
+            {isMe && <span className="ms-2 text-xs text-ink-muted">{tr('(את/ה)')}</span>}
           </p>
           <p className="truncate text-xs text-ink-muted">
             <bdi dir="ltr">{m.email}</bdi>
@@ -123,7 +127,7 @@ function MemberRow({
         {editable ? (
           <>
             <label htmlFor={`role-${m.userId}`} className="sr-only">
-              התפקיד של {m.fullName}
+              {tr('התפקיד של')} {m.fullName}
             </label>
             <select
               id={`role-${m.userId}`}
@@ -146,7 +150,7 @@ function MemberRow({
             {confirm ? (
               <span
                 role="group"
-                aria-label={`אישור הסרת ${m.fullName}`}
+                aria-label={tr('אישור הסרת {0}', m.fullName)}
                 className="flex items-center gap-2"
               >
                 <Button
@@ -155,10 +159,10 @@ function MemberRow({
                   loading={remove.isPending}
                   onClick={() => remove.mutate(m.userId)}
                 >
-                  הסרה
+                  {tr('הסרה')}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setConfirm(false)}>
-                  ביטול
+                  {tr('ביטול')}
                 </Button>
               </span>
             ) : (
@@ -166,20 +170,22 @@ function MemberRow({
                 variant="ghost"
                 size="sm"
                 onClick={() => setConfirm(true)}
-                aria-label={`הסרת ${m.fullName} מהצוות`}
+                aria-label={tr('הסרת {0} מהצוות', m.fullName)}
               >
-                הסרה
+                {tr('הסרה')}
               </Button>
             )}
           </>
         ) : (
           <span className="rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-ink">
-            {roleLabels[m.role]}
+            {tr(roleLabels[m.role])}
           </span>
         )}
       </div>
       {confirm && (
-        <p className="text-xs text-ink-muted">הגישה לעסק תיחסם מיד. הלידים וההיסטוריה יישמרו.</p>
+        <p className="text-xs text-ink-muted">
+          {tr('הגישה לעסק תיחסם מיד. הלידים וההיסטוריה יישמרו.')}
+        </p>
       )}
       {error && <Alert tone="danger">{errorMessage(error)}</Alert>}
     </li>
@@ -198,21 +204,21 @@ export function TeamPage() {
 
   return (
     <>
-      <PageHeader title="צוות" description="האנשים שיש להם גישה לעסק ותפקידם." />
+      <PageHeader title={tr('צוות')} description={tr('האנשים שיש להם גישה לעסק ותפקידם.')} />
       {!allowed ? (
-        <NoPermission what="רשימת הצוות" />
+        <NoPermission what={tr('רשימת הצוות')} />
       ) : (
         <>
           {manage && <InviteForm businessId={business.id} />}
           {members.isPending ? (
-            <Spinner label="טוענים את הצוות…" />
+            <Spinner label={tr('טוענים את הצוות…')} />
           ) : members.isError ? (
-            <Alert tone="danger" title="לא הצלחנו לטעון את הצוות">
+            <Alert tone="danger" title={tr('לא הצלחנו לטעון את הצוות')}>
               {errorMessage(members.error)}
             </Alert>
           ) : (
             <Card className="p-0">
-              <ul aria-label="חברי הצוות" className="divide-y divide-surface-border">
+              <ul aria-label={tr('חברי הצוות')} className="divide-y divide-surface-border">
                 {members.data.map((m) => (
                   <MemberRow
                     key={m.userId}
@@ -227,12 +233,12 @@ export function TeamPage() {
           )}
           {manage && invitations.data && invitations.data.length > 0 && (
             <Card className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-ink">הזמנות שממתינות לאישור</h2>
+              <h2 className="text-lg font-semibold text-ink">{tr('הזמנות שממתינות לאישור')}</h2>
               {(resend.error ?? revoke.error) && (
                 <Alert tone="danger">{errorMessage(resend.error ?? revoke.error)}</Alert>
               )}
               <ul
-                aria-label="הזמנות ממתינות"
+                aria-label={tr('הזמנות ממתינות')}
                 className="flex flex-col divide-y divide-surface-border"
               >
                 {invitations.data.map((inv) => (
@@ -240,10 +246,10 @@ export function TeamPage() {
                     <Mail aria-hidden className="h-4 w-4 text-ink-subtle" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-ink">
-                        <bdi dir="ltr">{inv.email}</bdi> · {roleLabels[inv.role]}
+                        <bdi dir="ltr">{inv.email}</bdi> · {tr(roleLabels[inv.role])}
                       </p>
                       <p className="text-xs text-ink-muted">
-                        בתוקף עד {formatDateTime(inv.expiresAt)}
+                        {tr('בתוקף עד')} {formatDateTime(inv.expiresAt)}
                       </p>
                     </div>
                     <Button
@@ -252,16 +258,16 @@ export function TeamPage() {
                       loading={resend.isPending && resend.variables === inv.id}
                       onClick={() => resend.mutate(inv.id)}
                     >
-                      שליחה שוב
+                      {tr('שליחה שוב')}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       loading={revoke.isPending && revoke.variables === inv.id}
                       onClick={() => revoke.mutate(inv.id)}
-                      aria-label={`ביטול ההזמנה של ${inv.email}`}
+                      aria-label={tr('ביטול ההזמנה של {0}', inv.email)}
                     >
-                      ביטול
+                      {tr('ביטול')}
                     </Button>
                   </li>
                 ))}

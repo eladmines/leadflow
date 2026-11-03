@@ -1,6 +1,7 @@
 import { Button } from '../../components/ui';
 import { useResendVerification } from './api';
 import { errorMessage } from './serverErrors';
+import { tr } from '../../i18n';
 
 interface ResendVerificationProps {
   email: string;
@@ -26,12 +27,12 @@ export function ResendVerification({
           onClick={() => resend.mutate()}
           className="self-start"
         >
-          {resend.isSuccess ? 'שליחה נוספת' : 'שליחה מחדש'}
+          {resend.isSuccess ? tr('שליחה נוספת') : tr('שליחה מחדש')}
         </Button>
         <p aria-live="polite" className="text-sm">
           {resend.isSuccess && (
             <span className="text-success-600">
-              שלחנו קישור חדש אל{' '}
+              {tr('שלחנו קישור חדש אל')}{' '}
               <span dir="ltr" className="font-medium">
                 {email}
               </span>

@@ -1,5 +1,6 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
+import { tr } from '../../i18n';
 
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   /** May contain links; clicking a link does not toggle the box. */
@@ -38,7 +39,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
       </div>
       {error && (
         <p id={errorId} className="text-xs text-danger-600">
-          {error}
+          {tr(error)}
         </p>
       )}
     </div>

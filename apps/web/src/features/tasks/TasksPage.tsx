@@ -10,11 +10,12 @@ import { PageHeader } from '../shell/PageHeader';
 import { groupTasks, useTasks } from './api';
 import { NewTaskForm } from './NewTaskForm';
 import { TaskItem } from './TaskItem';
+import { tr } from '../../i18n';
 
 const sections: { key: keyof ReturnType<typeof groupTasks>; title: string; tone?: string }[] = [
-  { key: 'overdue', title: 'באיחור', tone: 'text-danger-600' },
-  { key: 'today', title: 'היום' },
-  { key: 'upcoming', title: 'בהמשך' },
+  { key: 'overdue', title: tr('באיחור'), tone: 'text-danger-600' },
+  { key: 'today', title: tr('היום') },
+  { key: 'upcoming', title: tr('בהמשך') },
 ];
 
 /** F10: follow-up tasks grouped by urgency. Managers can switch between "mine" and "everyone". */
@@ -31,11 +32,15 @@ export function TasksPage() {
   return (
     <>
       <PageHeader
-        title="משימות"
-        description="מעקב אחרי מה שצריך לעשות ומתי. תזכורת נשלחת באימייל כשמגיע המועד."
+        title={tr('משימות')}
+        description={tr('מעקב אחרי מה שצריך לעשות ומתי. תזכורת נשלחת באימייל כשמגיע המועד.')}
         actions={
           seesAll && (
-            <div role="group" aria-label="של מי" className="flex rounded-xl bg-surface-sunken p-1">
+            <div
+              role="group"
+              aria-label={tr('של מי')}
+              className="flex rounded-xl bg-surface-sunken p-1"
+            >
               {(['mine', 'all'] as const).map((s) => (
                 <button
                   key={s}
@@ -47,7 +52,7 @@ export function TasksPage() {
                     scope === s ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
                   )}
                 >
-                  {s === 'mine' ? 'שלי' : 'של כל הצוות'}
+                  {s === 'mine' ? tr('שלי') : tr('של כל הצוות')}
                 </button>
               ))}
             </div>
@@ -59,7 +64,7 @@ export function TasksPage() {
       </Card>
 
       {tasks.isPending ? (
-        <Spinner label="טוענים משימות…" />
+        <Spinner label={tr('טוענים משימות…')} />
       ) : tasks.isError ? (
         <Alert tone="danger">{errorMessage(tasks.error)}</Alert>
       ) : (
@@ -69,11 +74,11 @@ export function TasksPage() {
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
                 <ListTodo aria-hidden className="h-7 w-7" />
               </span>
-              <h2 className="text-lg font-semibold text-ink">אין משימות פתוחות</h2>
+              <h2 className="text-lg font-semibold text-ink">{tr('אין משימות פתוחות')}</h2>
               <p className="max-w-md text-sm text-ink-muted">
                 {groups.done.length > 0
-                  ? 'כל המשימות בוצעו. כל הכבוד!'
-                  : 'הוסיפו משימה למעלה, או מתוך כרטיס של ליד — למשל "להתקשר מחר בבוקר".'}
+                  ? tr('כל המשימות בוצעו. כל הכבוד!')
+                  : tr('הוסיפו משימה למעלה, או מתוך כרטיס של ליד — למשל "להתקשר מחר בבוקר".')}
               </p>
             </section>
           )}
@@ -105,11 +110,12 @@ export function TasksPage() {
                 onClick={() => setShowDone((v) => !v)}
                 className="self-start text-sm font-medium text-brand-700 hover:underline"
               >
-                {showDone ? 'הסתרת' : 'הצגת'} משימות שבוצעו ({groups.done.length})
+                {showDone ? tr('הסתרת') : tr('הצגת')} {tr('משימות שבוצעו (')}
+                {groups.done.length})
               </button>
               {showDone && (
                 <Card className="py-3">
-                  <ul aria-label="בוצעו" className="divide-y divide-surface-border">
+                  <ul aria-label={tr('בוצעו')} className="divide-y divide-surface-border">
                     {groups.done.map((t) => (
                       <TaskItem
                         key={t.id}

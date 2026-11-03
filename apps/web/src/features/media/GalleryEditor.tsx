@@ -5,6 +5,7 @@ import { Button, Field } from '../../components/ui';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useAssets } from './api';
 import { MediaPicker } from './MediaPicker';
+import { tr } from '../../i18n';
 
 type Items = Extract<Section, { type: 'gallery' }>['items'];
 const iconBtn =
@@ -32,10 +33,10 @@ export function GalleryEditor({
     <div className="flex flex-col gap-3">
       {items.length === 0 && (
         <p className="text-sm text-ink-muted">
-          עדיין אין תמונות בגלריה. הגלריה תוצג באתר רק כשיהיו בה תמונות.
+          {tr('עדיין אין תמונות בגלריה. הגלריה תוצג באתר רק כשיהיו בה תמונות.')}
         </p>
       )}
-      <ol aria-label="תמונות בגלריה" className="flex flex-col gap-3">
+      <ol aria-label={tr('תמונות בגלריה')} className="flex flex-col gap-3">
         {items.map((item, i) => (
           <li
             key={`${item.assetId}-${i}`}
@@ -48,8 +49,8 @@ export function GalleryEditor({
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <Field
-                label={`כיתוב לתמונה ${i + 1}`}
-                hint="מוצג מתחת לתמונה ומשמש כטקסט חלופי לנגישות"
+                label={tr('כיתוב לתמונה {0}', i + 1)}
+                hint={tr('מוצג מתחת לתמונה ומשמש כטקסט חלופי לנגישות')}
                 maxLength={160}
                 value={item.caption}
                 onChange={(e) =>
@@ -64,7 +65,7 @@ export function GalleryEditor({
                   className={iconBtn}
                   disabled={i === 0}
                   onClick={() => move(i, -1)}
-                  aria-label={`הזזת תמונה ${i + 1} למעלה`}
+                  aria-label={tr('הזזת תמונה {0} למעלה', i + 1)}
                 >
                   <ArrowUp aria-hidden className="h-4 w-4" />
                 </button>
@@ -73,7 +74,7 @@ export function GalleryEditor({
                   className={iconBtn}
                   disabled={i === items.length - 1}
                   onClick={() => move(i, 1)}
-                  aria-label={`הזזת תמונה ${i + 1} למטה`}
+                  aria-label={tr('הזזת תמונה {0} למטה', i + 1)}
                 >
                   <ArrowDown aria-hidden className="h-4 w-4" />
                 </button>
@@ -81,7 +82,7 @@ export function GalleryEditor({
                   type="button"
                   className={iconBtn}
                   onClick={() => onChange(items.filter((_, j) => j !== i))}
-                  aria-label={`הסרת תמונה ${i + 1} מהגלריה`}
+                  aria-label={tr('הסרת תמונה {0} מהגלריה', i + 1)}
                 >
                   <Trash2 aria-hidden className="h-4 w-4" />
                 </button>
@@ -93,13 +94,13 @@ export function GalleryEditor({
       {items.length < SITE_LIMITS.items && (
         <Button variant="secondary" size="sm" className="self-start" onClick={() => setOpen(true)}>
           <Plus aria-hidden className="h-4 w-4" />
-          הוספת תמונה
+          {tr('הוספת תמונה')}
         </Button>
       )}
       <MediaPicker
         open={open}
         onOpenChange={setOpen}
-        title="הוספת תמונה לגלריה"
+        title={tr('הוספת תמונה לגלריה')}
         onSelect={(a) => onChange([...items, { assetId: a.id, caption: '' }])}
       />
     </div>

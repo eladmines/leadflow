@@ -9,6 +9,8 @@ import { BusinessSwitcher } from './BusinessSwitcher';
 import { shortcutLabel } from './CommandPalette';
 import { navItems } from './nav';
 import { NotificationBell } from '../notifications/NotificationBell';
+import { tr } from '../../i18n';
+import { LanguageSwitch } from '../../i18n/LanguageSwitch';
 
 /** Sidebar content, shared by the desktop column and the mobile drawer. */
 export function Sidebar({
@@ -43,7 +45,7 @@ export function Sidebar({
           className="flex h-9 items-center gap-2 rounded-lg border border-surface-border bg-surface px-2.5 text-sm text-ink-muted shadow-card hover:border-accent-300 hover:text-ink"
         >
           <Search aria-hidden className="h-4 w-4" />
-          <span className="flex-1 text-start">חיפוש מהיר</span>
+          <span className="flex-1 text-start">{tr('חיפוש מהיר')}</span>
           <kbd
             dir="ltr"
             className="rounded border border-surface-border bg-surface-muted px-1.5 text-[11px] text-ink-subtle"
@@ -53,7 +55,7 @@ export function Sidebar({
         </button>
       )}
 
-      <nav aria-label="ניווט ראשי" className="flex-1 overflow-y-auto">
+      <nav aria-label={tr('ניווט ראשי')} className="flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-px">
           {items.map(({ segment, label, icon: Icon, comingSoon }) => (
             <li key={segment || 'dashboard'}>
@@ -90,9 +92,9 @@ export function Sidebar({
                           aria-hidden
                           className="rounded-md bg-surface-sunken px-1.5 py-0.5 text-[10px] font-medium text-ink-subtle"
                         >
-                          בקרוב
+                          {tr('בקרוב')}
                         </span>
-                        <span className="sr-only">(בקרוב)</span>
+                        <span className="sr-only">{tr('(בקרוב)')}</span>
                       </>
                     )}
                   </>
@@ -105,6 +107,7 @@ export function Sidebar({
 
       <div className="flex flex-col gap-3 border-t border-surface-border pt-3">
         {error && <Alert tone="danger">{error}</Alert>}
+        <LanguageSwitch className="px-1.5" />
         {onTour && (
           <button
             type="button"
@@ -112,7 +115,7 @@ export function Sidebar({
             className="flex h-8 items-center gap-2 rounded-lg px-2.5 text-sm text-ink-muted hover:bg-surface-sunken hover:text-ink"
           >
             <Compass aria-hidden className="h-4 w-4" />
-            סיור במערכת
+            {tr('סיור במערכת')}
           </button>
         )}
         <div className="flex items-center gap-2.5 px-1">
@@ -127,18 +130,18 @@ export function Sidebar({
               to={businessWebPaths.section(business.id, 'account')}
               onClick={onNavigate}
               className="block truncate text-sm font-medium text-ink hover:underline"
-              aria-label={`החשבון שלי: ${user?.fullName ?? ''}`}
+              aria-label={tr('החשבון שלי: {0}', user?.fullName ?? '')}
             >
               {user?.fullName}
             </NavLink>
-            <p className="truncate text-xs text-ink-muted">{roleLabels[business.role]}</p>
+            <p className="truncate text-xs text-ink-muted">{tr(roleLabels[business.role])}</p>
           </div>
           <button
             type="button"
             onClick={() => void signOut()}
             disabled={isPending}
-            aria-label="התנתקות"
-            title="התנתקות"
+            aria-label={tr('התנתקות')}
+            title={tr('התנתקות')}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-60"
           >
             <LogOut aria-hidden className="h-4 w-4 rtl:-scale-x-100" />

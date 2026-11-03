@@ -7,6 +7,7 @@ import { Alert, AuthLayout, Button, Field, PasswordField, TextLink } from '../..
 import { sanitizeNext } from '../../lib/safeNext';
 import { useLogin } from './api';
 import { applyServerErrors } from './serverErrors';
+import { tr } from '../../i18n';
 
 export interface LoginLocationState {
   notice?: 'passwordReset';
@@ -49,24 +50,24 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="כניסה לחשבון"
-      description="ברוכים השבים! הזינו את פרטי ההתחברות שלכם."
+      title={tr('כניסה לחשבון')}
+      description={tr('ברוכים השבים! הזינו את פרטי ההתחברות שלכם.')}
       footer={
         <>
-          עדיין אין לכם חשבון? <TextLink to={registerHref}>להרשמה בחינם</TextLink>
+          {tr('עדיין אין לכם חשבון?')} <TextLink to={registerHref}>{tr('להרשמה בחינם')}</TextLink>
         </>
       }
     >
       <form noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
         {notice === 'passwordReset' && !formError && (
-          <Alert tone="success" title="הסיסמה עודכנה. אפשר להתחבר">
-            מטעמי אבטחה, נותקת מכל המכשירים.
+          <Alert tone="success" title={tr('הסיסמה עודכנה. אפשר להתחבר')}>
+            {tr('מטעמי אבטחה, נותקת מכל המכשירים.')}
           </Alert>
         )}
         {formError && <Alert tone="danger">{formError}</Alert>}
 
         <Field
-          label="אימייל"
+          label={tr('אימייל')}
           type="email"
           autoComplete="email"
           inputMode="email"
@@ -77,19 +78,19 @@ export function LoginPage() {
         />
         <div className="flex flex-col gap-2">
           <PasswordField
-            label="סיסמה"
+            label={tr('סיסמה')}
             autoComplete="current-password"
             required
             error={errors.password?.message}
             {...register('password')}
           />
           <TextLink to={authWebPaths.forgotPassword} className="self-start text-sm">
-            שכחתי סיסמה
+            {tr('שכחתי סיסמה')}
           </TextLink>
         </div>
 
         <Button type="submit" size="lg" className="mt-2 w-full" loading={isSubmitting}>
-          {isSubmitting ? 'מתחברים…' : 'כניסה'}
+          {isSubmitting ? tr('מתחברים…') : tr('כניסה')}
         </Button>
       </form>
     </AuthLayout>

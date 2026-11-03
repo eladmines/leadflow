@@ -11,6 +11,7 @@ import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { formatBytes, useAssets, useDeleteAsset, useUploadAsset } from './api';
+import { tr } from '../../i18n';
 
 /**
  * The business's image library: upload (validated in the browser, enforced on the server),
@@ -21,7 +22,7 @@ export function MediaPicker({
   onOpenChange,
   onSelect,
   selectedId,
-  title = 'בחירת תמונה',
+  title = tr('בחירת תמונה'),
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -68,13 +69,15 @@ export function MediaPicker({
           )}
         >
           {upload.isPending ? (
-            <Spinner label="מעלים ומעבדים את התמונה…" />
+            <Spinner label={tr('מעלים ומעבדים את התמונה…')} />
           ) : (
             <ImagePlus aria-hidden className="h-7 w-7 text-brand-600" />
           )}
-          <span className="text-sm font-medium text-ink">העלאת תמונה מהמחשב או מהטלפון</span>
+          <span className="text-sm font-medium text-ink">
+            {tr('העלאת תמונה מהמחשב או מהטלפון')}
+          </span>
           <span className="text-xs text-ink-muted">
-            JPG, PNG או WebP, עד 8MB. נקטין ונדחוס אוטומטית.
+            {tr('JPG, PNG או WebP, עד 8MB. נקטין ונדחוס אוטומטית.')}
           </span>
           <input
             id={inputId}
@@ -88,13 +91,13 @@ export function MediaPicker({
         {remove.isError && <Alert tone="danger">{errorMessage(remove.error)}</Alert>}
 
         {assets.isPending ? (
-          <Spinner label="טוענים תמונות…" />
+          <Spinner label={tr('טוענים תמונות…')} />
         ) : assets.isError ? (
           <Alert tone="danger">{errorMessage(assets.error)}</Alert>
         ) : data!.assets.length === 0 ? (
-          <p className="text-center text-sm text-ink-muted">עדיין לא הועלו תמונות.</p>
+          <p className="text-center text-sm text-ink-muted">{tr('עדיין לא הועלו תמונות.')}</p>
         ) : (
-          <ul aria-label="ספריית התמונות" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <ul aria-label={tr('ספריית התמונות')} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {data!.assets.map((a) => (
               <li key={a.id} className="group relative">
                 <button
@@ -104,7 +107,7 @@ export function MediaPicker({
                     onOpenChange(false);
                   }}
                   aria-pressed={selectedId === a.id}
-                  aria-label={`בחירת ${a.originalName ?? 'תמונה'}`}
+                  aria-label={tr('בחירת {0}', a.originalName ?? tr('תמונה'))}
                   className={cn(
                     'block w-full overflow-hidden rounded-xl border-2 bg-surface-muted',
                     selectedId === a.id
@@ -134,7 +137,7 @@ export function MediaPicker({
                       className="font-medium text-danger-600 underline"
                       onClick={() => remove.mutate(a.id, { onSettled: () => setConfirm(null) })}
                     >
-                      מחיקה
+                      {tr('מחיקה')}
                     </button>
                     <span className="text-ink-subtle">·</span>
                     <button
@@ -142,14 +145,14 @@ export function MediaPicker({
                       className="text-ink-muted underline"
                       onClick={() => setConfirm(null)}
                     >
-                      ביטול
+                      {tr('ביטול')}
                     </button>
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setConfirm(a.id)}
-                    aria-label={`מחיקת ${a.originalName ?? 'תמונה'}`}
+                    aria-label={tr('מחיקת {0}', a.originalName ?? tr('תמונה'))}
                     className="absolute start-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-surface/90 text-ink-muted opacity-0 shadow-sm transition-opacity hover:text-danger-600 focus:opacity-100 group-hover:opacity-100"
                   >
                     <Trash2 aria-hidden className="h-4 w-4" />
@@ -163,7 +166,7 @@ export function MediaPicker({
           <div className="flex flex-col gap-1">
             <div
               role="progressbar"
-              aria-label="נפח אחסון בשימוש"
+              aria-label={tr('נפח אחסון בשימוש')}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={usedPct}
@@ -181,7 +184,7 @@ export function MediaPicker({
               <bdi dir="ltr">
                 {formatBytes(data.usedBytes)} / {formatBytes(data.quotaBytes)}
               </bdi>{' '}
-              בשימוש
+              {tr('בשימוש')}
             </p>
           </div>
         )}

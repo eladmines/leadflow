@@ -1,6 +1,7 @@
 import { forwardRef, useId, type SelectHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 import { inputClasses } from './Field';
+import { tr } from '../../i18n';
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
@@ -58,7 +59,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
       )}
       {error && (
         <p id={errorId} className="text-xs text-danger-600">
-          {error}
+          {tr(error)}
         </p>
       )}
     </div>

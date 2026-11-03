@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMatch, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import { useMarkRead, useNotifications, usePopupsEnabled } from './api';
+import { tr } from '../../i18n';
 
 const SHOW_MS = 8_000;
 const MAX_TOASTS = 3;
@@ -72,11 +73,13 @@ export function NotificationToasts({
   return (
     <div
       aria-live="polite"
-      aria-label="התראות חדשות"
+      aria-label={tr('התראות חדשות')}
       className="pointer-events-none fixed bottom-4 end-4 z-50 flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2"
     >
       {toasts.map((n) => {
-        const { title, body } = notificationText(n);
+        const text = notificationText(n);
+        const title = tr(text.title);
+        const body = tr(text.body);
         return (
           <div
             key={n.id}
@@ -90,13 +93,13 @@ export function NotificationToasts({
               <p className="text-sm font-semibold text-ink">{title}</p>
               {body && <p className="truncate text-sm text-ink-muted">{body}</p>}
               <Button size="sm" className="mt-1 self-start" onClick={() => open(n)}>
-                פתיחה
+                {tr('פתיחה')}
               </Button>
             </div>
             <button
               type="button"
               onClick={() => dismiss(n.id)}
-              aria-label="סגירת ההתראה"
+              aria-label={tr('סגירת ההתראה')}
               className="-me-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-muted"
             >
               <X aria-hidden className="h-4 w-4" />

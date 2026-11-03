@@ -41,6 +41,7 @@ import {
   useSaveQuote,
   useSendQuote,
 } from './api';
+import { tr, intlLocale } from '../../i18n';
 
 interface Line {
   description: string;
@@ -128,7 +129,9 @@ export function QuoteEditorPage() {
         });
       } else {
         await save.mutateAsync({ ...payload, id: quoteId });
-        setSavedAt(new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }));
+        setSavedAt(
+          new Date().toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' }),
+        );
       }
       return true;
     } catch (err) {
@@ -137,11 +140,11 @@ export function QuoteEditorPage() {
     }
   };
 
-  if (!isNew && existing.isPending) return <Spinner label="טוענים את ההצעה…" />;
+  if (!isNew && existing.isPending) return <Spinner label={tr('טוענים את ההצעה…')} />;
   if (!isNew && existing.isError)
     return <Alert tone="danger">{errorMessage(existing.error)}</Alert>;
   if (isNew && !leadId) {
-    return <Alert tone="info">כדי ליצור הצעת מחיר, פתחו ליד ובחרו "הצעת מחיר חדשה".</Alert>;
+    return <Alert tone="info">{tr('כדי ליצור הצעת מחיר, פתחו ליד ובחרו "הצעת מחיר חדשה".')}</Alert>;
   }
   const status = q ? displayStatus(q) : 'DRAFT';
   const customer = lead.data?.lead.contact ?? q?.customer;
@@ -155,8 +158,8 @@ export function QuoteEditorPage() {
           to={businessWebPaths.section(business.id, 'quotes')}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
         >
-          <ArrowRight aria-hidden className="h-4 w-4" />
-          כל ההצעות
+          <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
+          {tr('כל ההצעות')}
         </Link>
         <PageTourButton />
       </div>
@@ -164,7 +167,7 @@ export function QuoteEditorPage() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold text-ink sm:text-2xl">
-              {q ? `הצעת מחיר מס׳ ${q.number}` : 'הצעת מחיר חדשה'}
+              {q ? tr('הצעת מחיר מס׳ {0}', q.number) : tr('הצעת מחיר חדשה')}
             </h1>
             <span
               className={cn(
@@ -172,12 +175,12 @@ export function QuoteEditorPage() {
                 quoteStatusTone[status],
               )}
             >
-              {quoteStatusLabels[status]}
+              {tr(quoteStatusLabels[status])}
             </span>
           </div>
           {customer && (
             <p className="text-sm text-ink-muted">
-              עבור{' '}
+              {tr('עבור')}{' '}
               <Link
                 to={`${businessWebPaths.section(business.id, 'leads')}/${leadId}`}
                 className="font-medium text-ink hover:underline"
@@ -200,7 +203,7 @@ export function QuoteEditorPage() {
                   }
                 >
                   <Trash2 aria-hidden className="h-4 w-4" />
-                  מחיקת הטיוטה
+                  {tr('מחיקת הטיוטה')}
                 </Button>
               )}
               <Button
@@ -208,7 +211,7 @@ export function QuoteEditorPage() {
                 loading={create.isPending || save.isPending}
                 onClick={() => void submit()}
               >
-                {isNew ? 'שמירה כטיוטה' : 'שמירה'}
+                {isNew ? tr('שמירה כטיוטה') : tr('שמירה')}
               </Button>
               {q && (
                 <Button
@@ -216,7 +219,7 @@ export function QuoteEditorPage() {
                     if (await submit()) setSendOpen(true);
                   }}
                 >
-                  שליחה ללקוח
+                  {tr('שליחה ללקוח')}
                 </Button>
               )}
             </>
@@ -236,21 +239,21 @@ export function QuoteEditorPage() {
                   }
                 >
                   <Copy aria-hidden className="h-4 w-4" />
-                  שכפול לעריכה
+                  {tr('שכפול לעריכה')}
                 </Button>
                 {q.status === 'SENT' && (
                   <>
                     <Button variant="secondary" onClick={() => setSendOpen(true)}>
-                      שליחה שוב
+                      {tr('שליחה שוב')}
                     </Button>
                     <Button
                       variant="secondary"
                       onClick={() => decide.mutate({ id: q.id, status: 'REJECTED' })}
                     >
-                      סימון כנדחתה
+                      {tr('סימון כנדחתה')}
                     </Button>
                     <Button onClick={() => decide.mutate({ id: q.id, status: 'ACCEPTED' })}>
-                      סימון כאושרה
+                      {tr('סימון כאושרה')}
                     </Button>
                   </>
                 )}
@@ -265,24 +268,26 @@ export function QuoteEditorPage() {
       )}
       {savedAt && editable && (
         <p role="status" className="text-sm text-success-600">
-          נשמר ב־{savedAt}
+          {tr('נשמר ב־')}
+          {savedAt}
         </p>
       )}
       {q?.publicUrl && (
         <Card className="flex flex-wrap items-center gap-3 py-3">
-          <span className="text-sm text-ink-muted">קישור ללקוח:</span>
+          <span className="text-sm text-ink-muted">{tr('קישור ללקוח:')}</span>
           <a
             href={q.publicUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
           >
-            פתיחת עמוד ההצעה
+            {tr('פתיחת עמוד ההצעה')}
             <ExternalLink aria-hidden className="h-3.5 w-3.5" />
           </a>
           {q.sentAt && (
             <span className="text-xs text-ink-muted">
-              נשלחה ב־{dateFmt.format(new Date(q.sentAt))}
+              {tr('נשלחה ב־')}
+              {dateFmt.format(new Date(q.sentAt))}
             </span>
           )}
         </Card>
@@ -290,8 +295,8 @@ export function QuoteEditorPage() {
 
       <Card className="flex flex-col gap-4">
         <Field
-          label="כותרת (לא חובה)"
-          placeholder="למשל: שיפוץ חדר רחצה"
+          label={tr('כותרת (לא חובה)')}
+          placeholder={tr('למשל: שיפוץ חדר רחצה')}
           value={title}
           disabled={!editable}
           onChange={(e) => setTitle(e.target.value)}
@@ -301,11 +306,11 @@ export function QuoteEditorPage() {
           <table className="w-full min-w-[34rem] text-sm">
             <thead className="text-start text-xs text-ink-muted">
               <tr>
-                <th className="pb-2 text-start font-medium">תיאור</th>
-                <th className="w-20 pb-2 text-start font-medium">כמות</th>
-                <th className="w-28 pb-2 text-start font-medium">מחיר יחידה (₪)</th>
-                <th className="w-28 pb-2 text-end font-medium">סה״כ</th>
-                {editable && <th className="w-10" aria-label="פעולות" />}
+                <th className="pb-2 text-start font-medium">{tr('תיאור')}</th>
+                <th className="w-20 pb-2 text-start font-medium">{tr('כמות')}</th>
+                <th className="w-28 pb-2 text-start font-medium">{tr('מחיר יחידה (₪)')}</th>
+                <th className="w-28 pb-2 text-end font-medium">{tr('סה״כ')}</th>
+                {editable && <th className="w-10" aria-label={tr('פעולות')} />}
               </tr>
             </thead>
             <tbody>
@@ -313,7 +318,7 @@ export function QuoteEditorPage() {
                 <tr key={i} className="border-t border-surface-border align-top">
                   <td className="py-2 pe-2">
                     <input
-                      aria-label={`תיאור שורה ${i + 1}`}
+                      aria-label={tr('תיאור שורה {0}', i + 1)}
                       value={l.description}
                       disabled={!editable}
                       maxLength={300}
@@ -328,7 +333,7 @@ export function QuoteEditorPage() {
                   </td>
                   <td className="py-2 pe-2">
                     <input
-                      aria-label={`כמות שורה ${i + 1}`}
+                      aria-label={tr('כמות שורה {0}', i + 1)}
                       dir="ltr"
                       inputMode="numeric"
                       value={l.quantity}
@@ -339,7 +344,7 @@ export function QuoteEditorPage() {
                   </td>
                   <td className="py-2 pe-2">
                     <input
-                      aria-label={`מחיר יחידה שורה ${i + 1}`}
+                      aria-label={tr('מחיר יחידה שורה {0}', i + 1)}
                       dir="ltr"
                       inputMode="decimal"
                       value={l.price}
@@ -355,7 +360,7 @@ export function QuoteEditorPage() {
                     <td className="py-2 ps-1 pt-3">
                       <button
                         type="button"
-                        aria-label={`מחיקת שורה ${i + 1}`}
+                        aria-label={tr('מחיקת שורה {0}', i + 1)}
                         disabled={lines.length === 1}
                         onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))}
                         className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken disabled:opacity-30"
@@ -378,7 +383,7 @@ export function QuoteEditorPage() {
             onClick={() => setLines((ls) => [...ls, { ...emptyLine }])}
           >
             <Plus aria-hidden className="h-4 w-4" />
-            הוספת שורה
+            {tr('הוספת שורה')}
           </Button>
         )}
 
@@ -386,7 +391,7 @@ export function QuoteEditorPage() {
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">
               <Field
-                label="הנחה (₪)"
+                label={tr('הנחה (₪)')}
                 ltr
                 inputMode="decimal"
                 value={discount}
@@ -395,7 +400,7 @@ export function QuoteEditorPage() {
                 error={errors.discount}
               />
               <Field
-                label="בתוקף עד"
+                label={tr('בתוקף עד')}
                 type="date"
                 value={validUntil}
                 disabled={!editable}
@@ -403,13 +408,13 @@ export function QuoteEditorPage() {
               />
             </div>
             <Checkbox
-              label={`הוספת מע״מ (${DEFAULT_VAT_RATE}%)`}
+              label={tr('הוספת מע״מ ({0}%)', DEFAULT_VAT_RATE)}
               checked={vatRate > 0}
               disabled={!editable}
               onChange={(e) => setVatRate(e.target.checked ? DEFAULT_VAT_RATE : 0)}
             />
             <Textarea
-              label="הערות ותנאים"
+              label={tr('הערות ותנאים')}
               rows={3}
               value={notes}
               disabled={!editable}
@@ -418,16 +423,16 @@ export function QuoteEditorPage() {
             />
           </div>
           <dl
-            aria-label="סיכום"
+            aria-label={tr('סיכום')}
             className="flex flex-col gap-2 self-start rounded-xl bg-surface-muted p-4 text-sm"
           >
             <div className="flex justify-between">
-              <dt className="text-ink-muted">סכום ביניים</dt>
+              <dt className="text-ink-muted">{tr('סכום ביניים')}</dt>
               <dd className="tabular-nums">{formatAgorot(totals.subtotal)}</dd>
             </div>
             {totals.discount > 0 && (
               <div className="flex justify-between">
-                <dt className="text-ink-muted">הנחה</dt>
+                <dt className="text-ink-muted">{tr('הנחה')}</dt>
                 <dd className="tabular-nums">
                   <bdi dir="ltr">−{formatAgorot(totals.discount)}</bdi>
                 </dd>
@@ -435,12 +440,14 @@ export function QuoteEditorPage() {
             )}
             {vatRate > 0 && (
               <div className="flex justify-between">
-                <dt className="text-ink-muted">מע״מ {vatRate}%</dt>
+                <dt className="text-ink-muted">
+                  {tr('מע״מ')} {vatRate}%
+                </dt>
                 <dd className="tabular-nums">{formatAgorot(totals.vat)}</dd>
               </div>
             )}
             <div className="flex justify-between border-t border-surface-border pt-2 text-base font-semibold text-ink">
-              <dt>סה״כ לתשלום</dt>
+              <dt>{tr('סה״כ לתשלום')}</dt>
               <dd className="tabular-nums">{formatAgorot(totals.total)}</dd>
             </div>
           </dl>
@@ -476,24 +483,33 @@ function SendDialog({
   }, [open]);
 
   const message = (url: string) =>
-    `שלום ${q.customer.name}, מצורפת הצעת המחיר מ${business.name} (סה״כ ${formatAgorot(q.totals.total)}): ${url}`;
+    tr(
+      'שלום {0}, מצורפת הצעת המחיר מ{1} (סה״כ {2}): {3}',
+      q.customer.name,
+      business.name,
+      formatAgorot(q.totals.total),
+      url,
+    );
 
   return (
-    <DialogShell open={open} onOpenChange={onOpenChange} title="שליחת ההצעה ללקוח">
+    <DialogShell open={open} onOpenChange={onOpenChange} title={tr('שליחת ההצעה ללקוח')}>
       {send.isError && <Alert tone="danger">{errorMessage(send.error)}</Alert>}
       {!send.isSuccess ? (
         <>
           <p className="text-sm text-ink-muted">
-            הלקוח יקבל קישור פרטי לעמוד ההצעה, שבו אפשר לאשר או לדחות אותה ולהוריד אותה כ־PDF.
+            {tr(
+              'הלקוח יקבל קישור פרטי לעמוד ההצעה, שבו אפשר לאשר או לדחות אותה ולהוריד אותה כ־PDF.',
+            )}
           </p>
           <Checkbox
             label={
               q.customer.email ? (
                 <>
-                  שליחה גם במייל ל־<bdi dir="ltr">{q.customer.email}</bdi>
+                  {tr('שליחה גם במייל ל־')}
+                  <bdi dir="ltr">{q.customer.email}</bdi>
                 </>
               ) : (
-                'ללקוח אין כתובת אימייל, אפשר לשלוח את הקישור ב־WhatsApp'
+                tr('ללקוח אין כתובת אימייל, אפשר לשלוח את הקישור ב־WhatsApp')
               )
             }
             checked={email}
@@ -502,10 +518,10 @@ function SendDialog({
           />
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
-              ביטול
+              {tr('ביטול')}
             </Button>
             <Button loading={send.isPending} onClick={() => send.mutate({ id: q.id, email })}>
-              {q.status === 'DRAFT' ? 'שליחה' : 'שליחה שוב'}
+              {q.status === 'DRAFT' ? tr('שליחה') : tr('שליחה שוב')}
             </Button>
           </div>
         </>
@@ -513,7 +529,9 @@ function SendDialog({
         sent?.publicUrl && (
           <>
             <Alert tone="success">
-              ההצעה סומנה כנשלחה{email ? ' ונשלחה במייל' : ''}. אפשר גם לשלוח את הקישור ישירות:
+              {tr('ההצעה סומנה כנשלחה')}
+              {email ? tr(' ונשלחה במייל') : ''}
+              {tr('. אפשר גם לשלוח את הקישור ישירות:')}
             </Alert>
             <div className="flex flex-wrap gap-2">
               <a
@@ -523,7 +541,7 @@ function SendDialog({
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#1f8f4e] px-3.5 text-sm font-medium text-white hover:bg-[#19773f]"
               >
                 <MessageCircle aria-hidden className="h-4 w-4" />
-                שליחה ב־WhatsApp
+                {tr('שליחה ב־WhatsApp')}
               </a>
               <Button
                 variant="secondary"
@@ -533,7 +551,7 @@ function SendDialog({
                 }}
               >
                 <Copy aria-hidden className="h-4 w-4" />
-                {copied ? 'הקישור הועתק' : 'העתקת הקישור'}
+                {copied ? tr('הקישור הועתק') : tr('העתקת הקישור')}
               </Button>
             </div>
           </>

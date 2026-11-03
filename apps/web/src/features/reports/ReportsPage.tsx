@@ -9,13 +9,14 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { durationLabel, shortDate, useReportSummary } from './api';
+import { tr } from '../../i18n';
 
-const rangeLabels: Record<number, string> = { 7: '7 ימים', 30: '30 יום', 90: '90 יום' };
+const rangeLabels: Record<number, string> = { 7: tr('7 ימים'), 30: tr('30 יום'), 90: tr('90 יום') };
 
 /** F20 (lite): headline numbers, leads over time, the pipeline funnel and sources. */
 export function ReportsPage() {
   const business = useCurrentBusiness();
-  if (!can(business.role, 'reports.view')) return <NoPermission what="דוחות" />;
+  if (!can(business.role, 'reports.view')) return <NoPermission what={tr('דוחות')} />;
   return <Reports businessId={business.id} />;
 }
 
@@ -28,10 +29,14 @@ function Reports({ businessId }: { businessId: string }) {
   return (
     <>
       <PageHeader
-        title="דוחות"
-        description="איך העסק עובד עם הפניות: כמה מגיעות, מאיפה, כמה מהר עונים ומה נסגר."
+        title={tr('דוחות')}
+        description={tr('איך העסק עובד עם הפניות: כמה מגיעות, מאיפה, כמה מהר עונים ומה נסגר.')}
         actions={
-          <div role="group" aria-label="טווח זמן" className="flex rounded-xl bg-surface-sunken p-1">
+          <div
+            role="group"
+            aria-label={tr('טווח זמן')}
+            className="flex rounded-xl bg-surface-sunken p-1"
+          >
             {REPORT_RANGES.map((d) => (
               <button
                 key={d}
@@ -50,7 +55,7 @@ function Reports({ businessId }: { businessId: string }) {
         }
       />
       {report.isPending ? (
-        <Spinner label="טוענים דוחות…" />
+        <Spinner label={tr('טוענים דוחות…')} />
       ) : report.isError ? (
         <Alert tone="danger">{errorMessage(report.error)}</Alert>
       ) : (
@@ -67,40 +72,44 @@ function ReportBody({ r }: { r: ReportSummary }) {
     <>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
-          label="פניות חדשות"
+          label={tr('פניות חדשות')}
           value={String(r.leads.current)}
           note={
             delta === 0
-              ? 'כמו בתקופה הקודמת'
-              : `${delta > 0 ? '+' : '−'}${Math.abs(delta)} לעומת התקופה הקודמת`
+              ? tr('כמו בתקופה הקודמת')
+              : tr('{0}{1} לעומת התקופה הקודמת', delta > 0 ? '+' : '−', Math.abs(delta))
           }
         />
         <StatTile
-          label="יחס סגירה"
+          label={tr('יחס סגירה')}
           value={r.closeRate === null ? '—' : `${Math.round(r.closeRate * 100)}%`}
-          note={r.closeRate === null ? 'עדיין אין פניות שנסגרו או אבדו' : `מתוך ${decided} שהוכרעו`}
+          note={
+            r.closeRate === null
+              ? tr('עדיין אין פניות שנסגרו או אבדו')
+              : tr('מתוך {0} שהוכרעו', decided)
+          }
         />
         <StatTile
-          label="עסקאות שנסגרו"
+          label={tr('עסקאות שנסגרו')}
           value={shekel.format(r.wonValue)}
-          note={`${shekel.format(r.openValue)} עוד פתוחים`}
+          note={tr('{0} עוד פתוחים', shekel.format(r.openValue))}
         />
         <StatTile
-          label="זמן תגובה ממוצע"
+          label={tr('זמן תגובה ממוצע')}
           value={r.avgResponseMinutes === null ? '—' : durationLabel(r.avgResponseMinutes)}
           note={
             r.avgResponseMinutes === null
-              ? 'עוד לא טיפלו באף פנייה'
-              : `לפי ${r.respondedLeads} פניות שטופלו`
+              ? tr('עוד לא טיפלו באף פנייה')
+              : tr('לפי {0} פניות שטופלו', r.respondedLeads)
           }
         />
       </div>
       <LeadsOverTime series={r.series} />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-ink">פניות לפי שלב</h2>
+          <h2 className="text-lg font-semibold text-ink">{tr('פניות לפי שלב')}</h2>
           <HBars
-            label="פניות לפי שלב"
+            label={tr('פניות לפי שלב')}
             rows={r.byStage.map((s) => ({
               key: s.id,
               name: s.name,
@@ -110,12 +119,12 @@ function ReportBody({ r }: { r: ReportSummary }) {
           />
         </Card>
         <Card className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-ink">מאיפה הגיעו הפניות</h2>
+          <h2 className="text-lg font-semibold text-ink">{tr('מאיפה הגיעו הפניות')}</h2>
           <HBars
-            label="פניות לפי מקור"
+            label={tr('פניות לפי מקור')}
             rows={r.bySource.map((s) => ({
               key: s.source,
-              name: leadSourceLabels[s.source],
+              name: tr(leadSourceLabels[s.source]),
               count: s.count,
             }))}
           />
@@ -142,16 +151,16 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
   const [asTable, setAsTable] = useState(false);
   const max = Math.max(1, ...series.points.map((p) => p.count));
   const dateLabel = (d: string) =>
-    series.unit === 'week' ? `שבוע מ־${shortDate(d)}` : shortDate(d);
+    series.unit === 'week' ? tr('שבוע מ־{0}', shortDate(d)) : shortDate(d);
   const tickEvery = Math.ceil(series.points.length / 8);
 
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-ink">
-          פניות לאורך זמן{' '}
+          {tr('פניות לאורך זמן')}{' '}
           <span className="text-sm font-normal text-ink-muted">
-            ({series.unit === 'week' ? 'לפי שבוע' : 'לפי יום'})
+            ({series.unit === 'week' ? tr('לפי שבוע') : tr('לפי יום')})
           </span>
         </h2>
         <button
@@ -159,7 +168,7 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
           onClick={() => setAsTable((v) => !v)}
           className="text-sm text-brand-600 underline-offset-2 hover:underline"
         >
-          {asTable ? 'הצגה כגרף' : 'הצגה כטבלה'}
+          {asTable ? tr('הצגה כגרף') : tr('הצגה כטבלה')}
         </button>
       </div>
       {asTable ? (
@@ -168,9 +177,9 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
             <thead className="text-ink-muted">
               <tr>
                 <th className="py-1 text-start font-medium">
-                  {series.unit === 'week' ? 'שבוע' : 'יום'}
+                  {series.unit === 'week' ? tr('שבוע') : tr('יום')}
                 </th>
-                <th className="py-1 text-end font-medium">פניות</th>
+                <th className="py-1 text-end font-medium">{tr('פניות')}</th>
               </tr>
             </thead>
             <tbody>
@@ -187,7 +196,7 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
         <div>
           <div
             role="list"
-            aria-label="פניות לאורך זמן"
+            aria-label={tr('פניות לאורך זמן')}
             className="flex h-44 items-end gap-0.5 border-b border-chart-grid"
           >
             {series.points.map((p) => (
@@ -195,7 +204,7 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
                 key={p.date}
                 role="listitem"
                 tabIndex={0}
-                aria-label={`${dateLabel(p.date)}: ${p.count} פניות`}
+                aria-label={tr('{0}: {1} פניות', dateLabel(p.date), p.count)}
                 className="group relative flex h-full flex-1 items-end justify-center rounded-sm outline-none hover:bg-chart-soft focus-visible:bg-chart-soft focus-visible:ring-2 focus-visible:ring-brand-400"
               >
                 <div
@@ -206,7 +215,7 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
                   aria-hidden
                   className="pointer-events-none absolute bottom-full z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-xs text-white shadow-lift group-hover:block group-focus-visible:block"
                 >
-                  {dateLabel(p.date)} · {p.count} פניות
+                  {dateLabel(p.date)} · {p.count} {tr('פניות')}
                 </div>
               </div>
             ))}
@@ -218,7 +227,9 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
               </span>
             ))}
           </div>
-          <p className="mt-1 text-xs text-ink-muted">שיא: {max} פניות</p>
+          <p className="mt-1 text-xs text-ink-muted">
+            {tr('שיא:')} {max} {tr('פניות')}
+          </p>
         </div>
       )}
     </Card>

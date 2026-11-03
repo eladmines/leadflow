@@ -10,6 +10,7 @@ import { AddExistingWebsite, ExistingWebsite } from './ExistingWebsite';
 import { SiteEditor } from './SiteEditor';
 import { TemplatePicker } from './TemplatePicker';
 import { clearBackup, readBackup, type Draft } from './useDraftAutosave';
+import { tr } from '../../i18n';
 
 /** `/b/:businessId/site`: template picker on first visit, then the editor. */
 export function SitePage() {
@@ -19,10 +20,10 @@ export function SitePage() {
   // Bumped when the server replaces the draft (template change), so the editor starts over.
   const [reloads, setReloads] = useState(0);
 
-  if (site.isPending) return <Spinner label="טוענים את האתר…" />;
+  if (site.isPending) return <Spinner label={tr('טוענים את האתר…')} />;
   if (site.isError) {
     return (
-      <Alert tone="danger" title="לא הצלחנו לטעון את האתר">
+      <Alert tone="danger" title={tr('לא הצלחנו לטעון את האתר')}>
         {errorMessage(site.error)}
       </Alert>
     );
@@ -34,8 +35,8 @@ export function SitePage() {
       return (
         <>
           <PageHeader
-            title="האתר שלי"
-            description="האתר הקיים של העסק, לצפייה בלבד. אפשר גם לבנות אתר חדש ב-LeadFlow."
+            title={tr('האתר שלי')}
+            description={tr('האתר הקיים של העסק, לצפייה בלבד. אפשר גם לבנות אתר חדש ב-LeadFlow.')}
           />
           <ExistingWebsite business={business} canEdit={canEdit} />
           {canEdit && <TemplatePicker secondary />}
@@ -45,11 +46,13 @@ export function SitePage() {
     if (canEdit) return <TemplatePicker intro={<AddExistingWebsite business={business} />} />;
     return (
       <>
-        <PageHeader title="האתר שלי" />
+        <PageHeader title={tr('האתר שלי')} />
         <section className="flex flex-col items-center gap-3 rounded-3xl border border-surface-border bg-surface px-6 py-16 text-center shadow-card">
           <Globe aria-hidden className="h-8 w-8 text-ink-subtle" />
-          <h2 className="text-lg font-semibold text-ink">האתר עדיין לא נבנה</h2>
-          <p className="text-sm text-ink-muted">בעל/ת העסק יכול/ה לבחור תבנית ולהתחיל לבנות.</p>
+          <h2 className="text-lg font-semibold text-ink">{tr('האתר עדיין לא נבנה')}</h2>
+          <p className="text-sm text-ink-muted">
+            {tr('בעל/ת העסק יכול/ה לבחור תבנית ולהתחיל לבנות.')}
+          </p>
         </section>
       </>
     );
@@ -61,12 +64,12 @@ export function SitePage() {
   if (backup && backup.revision !== site.data.revision) clearBackup(business.id);
   if (backup && backup.revision === site.data.revision && can(business.role, 'site.edit')) {
     return (
-      <Alert tone="warning" title="נמצאו שינויים שלא נשמרו">
+      <Alert tone="warning" title={tr('נמצאו שינויים שלא נשמרו')}>
         <div className="flex flex-col gap-3">
-          <p>בפעם הקודמת השמירה נכשלה. לשחזר את השינויים מהמכשיר הזה?</p>
+          <p>{tr('בפעם הקודמת השמירה נכשלה. לשחזר את השינויים מהמכשיר הזה?')}</p>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => setRestored(backup.draft)}>
-              שחזור השינויים
+              {tr('שחזור השינויים')}
             </Button>
             <Button
               size="sm"
@@ -76,7 +79,7 @@ export function SitePage() {
                 setRestored('dismissed');
               }}
             >
-              התעלמות
+              {tr('התעלמות')}
             </Button>
           </div>
         </div>

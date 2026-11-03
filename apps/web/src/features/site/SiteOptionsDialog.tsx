@@ -5,6 +5,7 @@ import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useChangeTemplate, useDeleteSite } from './api';
 import { clearBackup } from './useDraftAutosave';
+import { tr } from '../../i18n';
 
 /**
  * D-095: switch the site to another template, or delete the LeadFlow site (for example to go back
@@ -61,16 +62,17 @@ export function SiteOptionsDialog({
   };
 
   return (
-    <DialogShell open={open} onOpenChange={close} title="אפשרויות האתר">
+    <DialogShell open={open} onOpenChange={close} title={tr('אפשרויות האתר')}>
       <section aria-labelledby="change-template" className="flex flex-col gap-3">
         <h3 id="change-template" className="text-base font-semibold text-ink">
-          החלפת תבנית
+          {tr('החלפת תבנית')}
         </h3>
         <p className="text-sm text-ink-muted">
-          התבנית החדשה תחליף את התוכן, העיצוב והתמונות של עמוד הבית. הלוגו, העמודים הנוספים וכתובת
-          האתר נשמרים. האתר באוויר לא משתנה עד שתפרסמו.
+          {tr(
+            'התבנית החדשה תחליף את התוכן, העיצוב והתמונות של עמוד הבית. הלוגו, העמודים הנוספים וכתובת האתר נשמרים. האתר באוויר לא משתנה עד שתפרסמו.',
+          )}
         </p>
-        <ul className="grid gap-2 sm:grid-cols-2" aria-label="תבניות">
+        <ul className="grid gap-2 sm:grid-cols-2" aria-label={tr('תבניות')}>
           {TEMPLATE_KEYS.map((key) => {
             const current = key === site.templateKey;
             return (
@@ -87,14 +89,16 @@ export function SiteOptionsDialog({
                   )}
                 >
                   <span className="flex items-center gap-2 text-sm font-medium text-ink">
-                    {templateInfo[key].label}
+                    {tr(templateInfo[key].label)}
                     {current && (
                       <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] font-medium text-ink-muted">
-                        התבנית הנוכחית
+                        {tr('התבנית הנוכחית')}
                       </span>
                     )}
                   </span>
-                  <span className="text-xs text-ink-muted">{templateInfo[key].description}</span>
+                  <span className="text-xs text-ink-muted">
+                    {tr(templateInfo[key].description)}
+                  </span>
                 </button>
               </li>
             );
@@ -105,10 +109,13 @@ export function SiteOptionsDialog({
             <div className="flex flex-col gap-2">
               <p>
                 {chosen === site.templateKey
-                  ? 'עמוד הבית יחזור לתוכן ההתחלתי של התבנית. השינויים שעשיתם בו יימחקו.'
-                  : `עמוד הבית יוחלף בתבנית "${templateInfo[chosen].label}". השינויים שעשיתם בעמוד הבית יימחקו.`}
+                  ? tr('עמוד הבית יחזור לתוכן ההתחלתי של התבנית. השינויים שעשיתם בו יימחקו.')
+                  : tr(
+                      'עמוד הבית יוחלף בתבנית "{0}". השינויים שעשיתם בעמוד הבית יימחקו.',
+                      tr(templateInfo[chosen].label),
+                    )}
               </p>
-              {saving && <p>שומרים עדיין את השינויים האחרונים. רגע אחד ונסו שוב.</p>}
+              {saving && <p>{tr('שומרים עדיין את השינויים האחרונים. רגע אחד ונסו שוב.')}</p>}
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -116,10 +123,10 @@ export function SiteOptionsDialog({
                   loading={change.isPending}
                   disabled={saving}
                 >
-                  החלפת התבנית
+                  {tr('החלפת התבנית')}
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setChosen(null)}>
-                  ביטול
+                  {tr('ביטול')}
                 </Button>
               </div>
             </div>
@@ -133,25 +140,28 @@ export function SiteOptionsDialog({
         className="flex flex-col gap-3 border-t border-surface-border pt-5"
       >
         <h3 id="delete-site" className="text-base font-semibold text-ink">
-          מחיקת האתר מ-LeadFlow
+          {tr('מחיקת האתר מ-LeadFlow')}
         </h3>
         <p className="text-sm text-ink-muted">
-          למשל כדי לחזור לאתר שכבר יש לעסק. האתר יורד מהאוויר מיד, הכתובת מתפנה, והטיוטה והגרסאות
-          נמחקות. הלידים שכבר הגיעו נשארים במערכת, והתמונות נשארות בספריית התמונות.
+          {tr(
+            'למשל כדי לחזור לאתר שכבר יש לעסק. האתר יורד מהאוויר מיד, הכתובת מתפנה, והטיוטה והגרסאות נמחקות. הלידים שכבר הגיעו נשארים במערכת, והתמונות נשארות בספריית התמונות.',
+          )}
         </p>
         {!confirmDelete ? (
           <Button variant="secondary" className="self-start" onClick={() => setConfirmDelete(true)}>
-            מחיקת האתר…
+            {tr('מחיקת האתר…')}
           </Button>
         ) : (
           <div className="flex flex-col gap-3 rounded-xl border border-danger-600/30 bg-danger-50 p-4">
             <Checkbox
-              label="הבנתי שאי אפשר לשחזר את האתר אחרי המחיקה"
+              label={tr('הבנתי שאי אפשר לשחזר את האתר אחרי המחיקה')}
               checked={understood}
               onChange={(e) => setUnderstood(e.target.checked)}
             />
             {saving && (
-              <p className="text-sm text-danger-700">שומרים עדיין שינויים. רגע אחד ונסו שוב.</p>
+              <p className="text-sm text-danger-700">
+                {tr('שומרים עדיין שינויים. רגע אחד ונסו שוב.')}
+              </p>
             )}
             <div className="flex gap-2">
               <Button
@@ -169,10 +179,10 @@ export function SiteOptionsDialog({
                   })
                 }
               >
-                מחיקה סופית
+                {tr('מחיקה סופית')}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
-                ביטול
+                {tr('ביטול')}
               </Button>
             </div>
           </div>

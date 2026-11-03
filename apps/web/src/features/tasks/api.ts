@@ -8,6 +8,7 @@ import {
 } from '@leadflow/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { tr, intlLocale } from '../../i18n';
 
 const tp = apiPaths.tasks;
 export const tasksQueryKey = (businessId: string) => ['businesses', businessId, 'tasks'] as const;
@@ -101,13 +102,13 @@ export const toLocalInput = (iso: string) => {
 /** "היום 14:30", "מחר 09:00", or a short date. */
 export function dueLabel(iso: string, now = new Date()) {
   const d = new Date(iso);
-  const time = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  const time = d.toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
   const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diff = Math.round((day(d) - day(now)) / 86_400_000);
-  if (diff === 0) return `היום ${time}`;
-  if (diff === 1) return `מחר ${time}`;
-  if (diff === -1) return `אתמול ${time}`;
-  return `${d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' })} ${time}`;
+  if (diff === 0) return tr('היום {0}', time);
+  if (diff === 1) return tr('מחר {0}', time);
+  if (diff === -1) return tr('אתמול {0}', time);
+  return `${d.toLocaleDateString(intlLocale(), { day: 'numeric', month: 'short' })} ${time}`;
 }
 
 /** Overdue / today / upcoming / done, using local days. */

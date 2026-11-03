@@ -9,10 +9,11 @@ import { InvalidLinkState } from './InvalidLinkState';
 import { ResendVerification } from './ResendVerification';
 import { errorMessage } from './serverErrors';
 import { useOneTimeToken } from './useOneTimeToken';
+import { tr } from '../../i18n';
 
 function VerifiedState() {
   return (
-    <AuthLayout title="האימייל אומת">
+    <AuthLayout title={tr('האימייל אומת')}>
       <div className="flex flex-col items-center gap-5 text-center">
         <span
           aria-hidden
@@ -29,10 +30,10 @@ function VerifiedState() {
           </svg>
         </span>
         <p role="status" className="text-sm text-ink">
-          תודה! כתובת האימייל שלך אומתה בהצלחה.
+          {tr('תודה! כתובת האימייל שלך אומתה בהצלחה.')}
         </p>
         <Link to={authWebPaths.appHome} className={buttonClasses('primary', 'lg', 'w-full')}>
-          המשך ל-LeadFlow
+          {tr('המשך ל-LeadFlow')}
         </Link>
       </div>
     </AuthLayout>
@@ -70,26 +71,26 @@ export function VerifyEmailPage() {
         {user ? (
           <div className="flex flex-col items-center gap-3 text-center">
             <p className="text-sm text-ink-muted">
-              אפשר לשלוח קישור אימות חדש אל{' '}
+              {tr('אפשר לשלוח קישור אימות חדש אל')}{' '}
               <span dir="ltr" className="font-medium text-ink">
                 {user.email}
               </span>
             </p>
             <ResendVerification email={user.email} variant="primary" />
             <Link to={authWebPaths.appHome} className={buttonClasses('ghost', 'md', 'w-full')}>
-              המשך ל-LeadFlow
+              {tr('המשך ל-LeadFlow')}
             </Link>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <p className="text-center text-sm text-ink-muted">
-              התחברו לחשבון כדי לשלוח לעצמכם קישור אימות חדש.
+              {tr('התחברו לחשבון כדי לשלוח לעצמכם קישור אימות חדש.')}
             </p>
             <Link
               to={loginPathWithNext(authWebPaths.appHome)}
               className={buttonClasses('primary', 'lg', 'w-full')}
             >
-              כניסה לחשבון
+              {tr('כניסה לחשבון')}
             </Link>
           </div>
         )}
@@ -99,13 +100,13 @@ export function VerifyEmailPage() {
 
   if (verify.isError) {
     return (
-      <AuthLayout title="אימות כתובת האימייל">
+      <AuthLayout title={tr('אימות כתובת האימייל')}>
         <div className="flex flex-col gap-4">
-          <Alert tone="danger" title="לא הצלחנו לאמת את הכתובת">
+          <Alert tone="danger" title={tr('לא הצלחנו לאמת את הכתובת')}>
             {errorMessage(verify.error)}
           </Alert>
           <Button size="lg" className="w-full" onClick={() => mutate({ token })}>
-            נסו שוב
+            {tr('נסו שוב')}
           </Button>
         </div>
       </AuthLayout>
@@ -113,10 +114,10 @@ export function VerifyEmailPage() {
   }
 
   return (
-    <AuthLayout title="אימות כתובת האימייל">
+    <AuthLayout title={tr('אימות כתובת האימייל')}>
       <div role="status" className="flex flex-col items-center gap-3 py-6 text-brand-600">
         <Spinner label="" />
-        <p className="text-sm text-ink-muted">מאמתים את כתובת האימייל…</p>
+        <p className="text-sm text-ink-muted">{tr('מאמתים את כתובת האימייל…')}</p>
       </div>
     </AuthLayout>
   );

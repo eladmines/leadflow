@@ -9,6 +9,7 @@ import { cn } from '../../lib/cn';
 import { applyServerErrors, errorMessage } from '../auth/serverErrors';
 import { usePublish, useSetSubdomain } from './api';
 import type { SaveState } from './useDraftAutosave';
+import { tr } from '../../i18n';
 
 /** Address field with the platform domain as a fixed suffix (always LTR). */
 function SubdomainForm({
@@ -44,7 +45,7 @@ function SubdomainForm({
       {formError && <Alert tone="danger">{formError}</Alert>}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="subdomain" className="text-sm font-medium text-ink">
-          כתובת האתר
+          {tr('כתובת האתר')}
         </label>
         <div dir="ltr" className="flex items-stretch">
           <input
@@ -63,16 +64,16 @@ function SubdomainForm({
         </div>
         {error ? (
           <p id="subdomain-error" className="text-xs text-danger-600">
-            {error}
+            {tr(error)}
           </p>
         ) : (
           <p id="subdomain-hint" className="text-xs text-ink-muted">
-            אותיות באנגלית, ספרות ומקף. אפשר לשנות בהמשך. דומיין פרטי יתווסף בהמשך.
+            {tr('אותיות באנגלית, ספרות ומקף. אפשר לשנות בהמשך. דומיין פרטי יתווסף בהמשך.')}
           </p>
         )}
       </div>
       <Button type="submit" loading={setSubdomain.isPending}>
-        שמירת הכתובת והמשך
+        {tr('שמירת הכתובת והמשך')}
       </Button>
     </form>
   );
@@ -116,14 +117,16 @@ export function PublishDialog({
     <DialogShell
       open={open}
       onOpenChange={close}
-      title={done ? 'האתר באוויר!' : needsAddress ? 'בחירת כתובת לאתר' : 'פרסום האתר'}
+      title={done ? tr('האתר באוויר!') : needsAddress ? tr('בחירת כתובת לאתר') : tr('פרסום האתר')}
     >
       {done && site.publicUrl ? (
         <div className="flex flex-col items-center gap-4 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 text-accent-600">
             <PartyPopper aria-hidden className="h-7 w-7" />
           </span>
-          <p className="text-ink-muted">כל מי שייכנס לכתובת הזו יראה את הגרסה שפרסמתם עכשיו.</p>
+          <p className="text-ink-muted">
+            {tr('כל מי שייכנס לכתובת הזו יראה את הגרסה שפרסמתם עכשיו.')}
+          </p>
           <a
             href={site.publicUrl}
             target="_blank"
@@ -135,7 +138,7 @@ export function PublishDialog({
             <ExternalLink aria-hidden className="h-4 w-4" />
           </a>
           <Button variant="secondary" onClick={() => close(false)}>
-            חזרה לעריכה
+            {tr('חזרה לעריכה')}
           </Button>
         </div>
       ) : needsAddress ? (
@@ -147,7 +150,7 @@ export function PublishDialog({
       ) : (
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-1 rounded-2xl bg-surface-muted p-4">
-            <span className="text-xs text-ink-muted">האתר יתפרסם בכתובת</span>
+            <span className="text-xs text-ink-muted">{tr('האתר יתפרסם בכתובת')}</span>
             <div className="flex items-center justify-between gap-3">
               <bdi dir="ltr" className="truncate font-medium text-ink">
                 {site.publicUrl?.replace(/^https?:\/\//, '')}
@@ -157,20 +160,21 @@ export function PublishDialog({
                 className="text-sm font-medium text-brand-700 hover:underline"
                 onClick={() => setEditingAddress(true)}
               >
-                שינוי
+                {tr('שינוי')}
               </button>
             </div>
           </div>
           <p className="text-sm text-ink-muted">
-            הגרסה הנוכחית של הטיוטה תעלה לאוויר, כולל פרטי העסק העדכניים. אפשר לחזור לגרסה קודמת בכל
-            זמן.
+            {tr(
+              'הגרסה הנוכחית של הטיוטה תעלה לאוויר, כולל פרטי העסק העדכניים. אפשר לחזור לגרסה קודמת בכל זמן.',
+            )}
           </p>
           {publish.isError && <Alert tone="danger">{errorMessage(publish.error)}</Alert>}
           {!saved && (
             <p role="status" className="text-sm text-ink-muted">
               {saveState === 'error' || saveState === 'conflict'
-                ? 'יש שינויים שלא נשמרו. יש לשמור אותם לפני הפרסום.'
-                : 'שומרים את השינויים האחרונים…'}
+                ? tr('יש שינויים שלא נשמרו. יש לשמור אותם לפני הפרסום.')
+                : tr('שומרים את השינויים האחרונים…')}
             </p>
           )}
           <Button
@@ -184,7 +188,7 @@ export function PublishDialog({
               );
             }}
           >
-            {site.published ? 'פרסום השינויים' : 'פרסום האתר'}
+            {site.published ? tr('פרסום השינויים') : tr('פרסום האתר')}
           </Button>
         </div>
       )}

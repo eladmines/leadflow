@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Alert, Button, Card, Field } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
+import { tr } from '../../i18n';
 
 const formSchema = z.object({ websiteUrl: websiteUrlSchema });
 type FormInput = z.input<typeof formSchema>;
@@ -46,7 +47,7 @@ function WebsiteForm({
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-60 flex-1">
           <Field
-            label="כתובת האתר הקיים"
+            label={tr('כתובת האתר הקיים')}
             placeholder="www.my-business.co.il"
             ltr
             inputMode="url"
@@ -56,11 +57,11 @@ function WebsiteForm({
           />
         </div>
         <Button type="submit" size={compact ? 'sm' : 'md'} loading={update.isPending}>
-          שמירה
+          {tr('שמירה')}
         </Button>
         {onDone && (
           <Button type="button" variant="ghost" size={compact ? 'sm' : 'md'} onClick={onDone}>
-            ביטול
+            {tr('ביטול')}
           </Button>
         )}
       </div>
@@ -76,14 +77,14 @@ export function AddExistingWebsite({ business }: { business: Business }) {
     <Card className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <h2 className="text-base font-semibold text-ink">כבר יש לעסק אתר?</h2>
+          <h2 className="text-base font-semibold text-ink">{tr('כבר יש לעסק אתר?')}</h2>
           <p className="text-sm text-ink-muted">
-            הוסיפו את הכתובת כדי לראות אותו כאן. LeadFlow לא ינהל אותו ולא ישנה בו דבר.
+            {tr('הוסיפו את הכתובת כדי לראות אותו כאן. LeadFlow לא ינהל אותו ולא ישנה בו דבר.')}
           </p>
         </div>
         {!open && (
           <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-            הוספת האתר הקיים
+            {tr('הוספת האתר הקיים')}
           </Button>
         )}
       </div>
@@ -105,7 +106,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
     <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-ink">האתר הקיים של העסק</h2>
+          <h2 className="text-lg font-semibold text-ink">{tr('האתר הקיים של העסק')}</h2>
           <a
             href={url}
             target="_blank"
@@ -114,25 +115,26 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
           >
             <bdi dir="ltr">{displayUrl(url)}</bdi>
             <ExternalLink aria-hidden className="h-3.5 w-3.5" />
-            <span className="sr-only">(נפתח בחלון חדש)</span>
+            <span className="sr-only">{tr('(נפתח בחלון חדש)')}</span>
           </a>
         </div>
         <span className="rounded-full bg-surface-sunken px-3 py-1 text-xs font-medium text-ink-muted">
-          לא מנוהל ב-LeadFlow
+          {tr('לא מנוהל ב-LeadFlow')}
         </span>
       </div>
 
       <p className="flex items-start gap-2 rounded-xl bg-surface-muted p-3 text-sm text-ink">
         <Info aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" />
         <span>
-          האתר הזה לא נבנה ב-LeadFlow ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה
-          או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת.
+          {tr(
+            'האתר הזה לא נבנה ב-LeadFlow ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת.',
+          )}
         </span>
       </p>
 
       <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-muted">
         <iframe
-          title="תצוגה של האתר הקיים"
+          title={tr('תצוגה של האתר הקיים')}
           src={url}
           loading="lazy"
           referrerPolicy="no-referrer"
@@ -141,8 +143,9 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
         />
       </div>
       <p className="text-xs text-ink-muted">
-        לא רואים את האתר? חלק מהאתרים לא מאפשרים הצגה בתוך מערכות אחרות. אפשר לפתוח אותו בחלון חדש
-        מהקישור למעלה.
+        {tr(
+          'לא רואים את האתר? חלק מהאתרים לא מאפשרים הצגה בתוך מערכות אחרות. אפשר לפתוח אותו בחלון חדש מהקישור למעלה.',
+        )}
       </p>
 
       {canEdit &&
@@ -151,7 +154,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
         ) : (
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-              שינוי הכתובת
+              {tr('שינוי הכתובת')}
             </Button>
             <Button
               variant="ghost"
@@ -159,11 +162,11 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
               loading={update.isPending}
               onClick={() => update.mutate({ websiteUrl: null })}
             >
-              הסרת האתר מהמערכת
+              {tr('הסרת האתר מהמערכת')}
             </Button>
           </div>
         ))}
-      {update.isError && <Alert tone="danger">שמירת השינוי נכשלה. נסו שוב.</Alert>}
+      {update.isError && <Alert tone="danger">{tr('שמירת השינוי נכשלה. נסו שוב.')}</Alert>}
     </Card>
   );
 }

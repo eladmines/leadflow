@@ -13,6 +13,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { tr } from '../../i18n';
 
 export interface NavItem {
   /** Path segment under `/b/:businessId` ('' = dashboard). */
@@ -27,25 +28,31 @@ export interface NavItem {
 
 /** Navigation map, in the order of the UX spec (doc 03). */
 export const navItems: NavItem[] = [
-  { segment: '', label: 'דשבורד', icon: LayoutDashboard },
-  { segment: 'site', label: 'האתר שלי', icon: Globe },
-  { segment: 'leads', label: 'לקוחות ולידים', icon: Users },
+  { segment: '', label: tr('דשבורד'), icon: LayoutDashboard },
+  { segment: 'site', label: tr('האתר שלי'), icon: Globe },
+  { segment: 'leads', label: tr('לקוחות ולידים'), icon: Users },
   // WhatsApp inbox of unclassified numbers (D-092); conversations with customers live on the lead.
-  { segment: 'conversations', label: 'שיחות', icon: MessageCircle, permission: 'whatsapp.inbox' },
-  { segment: 'tasks', label: 'משימות', icon: ListTodo },
-  { segment: 'appointments', label: 'תורים', icon: CalendarDays },
-  { segment: 'quotes', label: 'הצעות מחיר', icon: FileText },
+  {
+    segment: 'conversations',
+    label: tr('שיחות'),
+    icon: MessageCircle,
+    permission: 'whatsapp.inbox',
+  },
+  { segment: 'tasks', label: tr('משימות'), icon: ListTodo },
+  { segment: 'appointments', label: tr('תורים'), icon: CalendarDays },
+  { segment: 'quotes', label: tr('הצעות מחיר'), icon: FileText },
   {
     segment: 'automations',
-    label: 'אוטומציות',
+    label: tr('אוטומציות'),
     icon: Zap,
     comingSoon: {
-      title: 'אוטומציות בדרך',
-      description:
+      title: tr('אוטומציות בדרך'),
+      description: tr(
         'תהליכים מוכנים עם הפעלה וכיבוי, למשל התראה על פנייה חדשה או משימת מעקב אחרי הצעה.',
+      ),
     },
   },
-  { segment: 'reports', label: 'דוחות', icon: ChartColumn, permission: 'reports.view' },
-  { segment: 'team', label: 'צוות', icon: UsersRound, permission: 'members.view' },
-  { segment: 'settings', label: 'הגדרות וחיוב', icon: Settings },
+  { segment: 'reports', label: tr('דוחות'), icon: ChartColumn, permission: 'reports.view' },
+  { segment: 'team', label: tr('צוות'), icon: UsersRound, permission: 'members.view' },
+  { segment: 'settings', label: tr('הגדרות וחיוב'), icon: Settings },
 ];

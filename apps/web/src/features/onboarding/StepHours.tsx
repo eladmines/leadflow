@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { Alert, Button } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';
 import { HoursFields } from '../businesses/HoursFields';
+import { tr } from '../../i18n';
 
 interface Props {
   business: Business;
@@ -38,19 +39,19 @@ export function StepHours({ business, onSubmit, onBack }: Props) {
   return (
     <form noValidate onSubmit={submit} className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-ink">מתי העסק פתוח?</h1>
+        <h1 className="text-2xl font-bold text-ink">{tr('מתי העסק פתוח?')}</h1>
         <p className="text-sm text-ink-muted">
-          השעות יוצגו באתר ויעזרו בהמשך בניהול תורים. מילאנו הצעה — עדכנו לפי הצורך.
+          {tr('השעות יוצגו באתר ויעזרו בהמשך בניהול תורים. מילאנו הצעה — עדכנו לפי הצורך.')}
         </p>
       </header>
       {formError && <Alert tone="danger">{formError}</Alert>}
       <HoursFields form={form} />
       <div className="flex justify-between gap-3">
         <Button variant="ghost" onClick={onBack} disabled={form.formState.isSubmitting}>
-          חזרה
+          {tr('חזרה')}
         </Button>
         <Button type="submit" loading={form.formState.isSubmitting}>
-          סיום והמשך למערכת
+          {tr('סיום והמשך למערכת')}
         </Button>
       </div>
     </form>

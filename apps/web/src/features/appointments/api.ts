@@ -11,6 +11,7 @@ import {
 } from '@leadflow/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { intlLocale } from '../../i18n';
 
 const ap = apiPaths.appointments;
 export const appointmentsKey = (businessId: string) =>
@@ -115,13 +116,16 @@ export const toTimeInput = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes
 /** Local date + time inputs → ISO (UTC). */
 export const fromInputs = (date: string, time: string) => new Date(`${date}T${time}`).toISOString();
 
-export const timeFmt = new Intl.DateTimeFormat('he-IL', { hour: '2-digit', minute: '2-digit' });
-export const dayFmt = new Intl.DateTimeFormat('he-IL', {
+export const timeFmt = new Intl.DateTimeFormat(intlLocale(), {
+  hour: '2-digit',
+  minute: '2-digit',
+});
+export const dayFmt = new Intl.DateTimeFormat(intlLocale(), {
   weekday: 'long',
   day: 'numeric',
   month: 'long',
 });
-export const shortDayFmt = new Intl.DateTimeFormat('he-IL', {
+export const shortDayFmt = new Intl.DateTimeFormat(intlLocale(), {
   weekday: 'short',
   day: 'numeric',
   month: 'numeric',

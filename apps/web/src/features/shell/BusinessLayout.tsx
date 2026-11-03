@@ -20,6 +20,7 @@ import { Tour } from '../tour/Tour';
 import { ToursProvider } from '../tour/TourContext';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { NotificationToasts } from '../notifications/NotificationToasts';
+import { tr } from '../../i18n';
 
 /**
  * App shell for `/b/:businessId/*`: right-side sidebar on desktop, a drawer on mobile.
@@ -52,18 +53,18 @@ export function BusinessLayout() {
   // The site editor needs the full width for its live preview.
   const wide = useMatch('/b/:businessId/site') !== null;
 
-  if (business.isPending) return <FullPageSpinner label="טוענים את העסק…" />;
+  if (business.isPending) return <FullPageSpinner label={tr('טוענים את העסק…')} />;
   if (business.isError) {
     if (business.error instanceof ApiError && business.error.status === 404) {
       return <BusinessNotFound />;
     }
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4">
-        <Alert tone="danger" title="לא הצלחנו לטעון את העסק">
+        <Alert tone="danger" title={tr('לא הצלחנו לטעון את העסק')}>
           {errorMessage(business.error)}
         </Alert>
         <Button variant="secondary" onClick={() => void business.refetch()}>
-          נסו שוב
+          {tr('נסו שוב')}
         </Button>
       </main>
     );
@@ -82,7 +83,7 @@ export function BusinessLayout() {
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:shadow"
       >
-        דילוג לתוכן הראשי
+        {tr('דילוג לתוכן הראשי')}
       </a>
 
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-e border-surface-border bg-surface-muted lg:block">
@@ -99,7 +100,7 @@ export function BusinessLayout() {
             <Dialog.Trigger asChild>
               <button
                 type="button"
-                aria-label="פתיחת תפריט"
+                aria-label={tr('פתיחת תפריט')}
                 className="-ms-2 flex h-10 w-10 items-center justify-center rounded-lg text-ink hover:bg-surface-muted"
               >
                 <Menu aria-hidden className="h-5 w-5" />
@@ -110,7 +111,7 @@ export function BusinessLayout() {
             <NotificationBell businessId={b.id} />
             <button
               type="button"
-              aria-label="חיפוש מהיר"
+              aria-label={tr('חיפוש מהיר')}
               onClick={openPalette}
               className="flex h-10 w-10 items-center justify-center rounded-lg text-ink hover:bg-surface-muted"
             >
@@ -123,11 +124,11 @@ export function BusinessLayout() {
               aria-describedby={undefined}
               className="fixed inset-y-0 start-0 z-50 w-[85vw] max-w-xs overflow-y-auto rounded-e-3xl bg-surface shadow-lift focus:outline-none lg:hidden"
             >
-              <Dialog.Title className="sr-only">תפריט ניווט</Dialog.Title>
+              <Dialog.Title className="sr-only">{tr('תפריט ניווט')}</Dialog.Title>
               <Dialog.Close asChild>
                 <button
                   type="button"
-                  aria-label="סגירת התפריט"
+                  aria-label={tr('סגירת התפריט')}
                   className="absolute end-3 top-4 flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-muted"
                 >
                   <X aria-hidden className="h-5 w-5" />

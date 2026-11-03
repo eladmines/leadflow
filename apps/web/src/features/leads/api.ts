@@ -14,6 +14,7 @@ import {
 } from '@leadflow/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { tr, intlLocale } from '../../i18n';
 
 const lp = apiPaths.leads;
 
@@ -150,9 +151,9 @@ export function useDuplicates(businessId: string, phone: string, email: string, 
   });
 }
 
-const dateFmt = new Intl.DateTimeFormat('he-IL', { dateStyle: 'medium', timeStyle: 'short' });
+const dateFmt = new Intl.DateTimeFormat(intlLocale(), { dateStyle: 'medium', timeStyle: 'short' });
 export const formatDateTime = (iso: string) => dateFmt.format(new Date(iso));
-export const shekel = new Intl.NumberFormat('he-IL', {
+export const shekel = new Intl.NumberFormat(intlLocale(), {
   style: 'currency',
   currency: 'ILS',
   maximumFractionDigits: 0,
@@ -164,14 +165,23 @@ export const shekel = new Intl.NumberFormat('he-IL', {
  */
 export function timeAgo(iso: string, now = Date.now()): string {
   const seconds = Math.max(0, (now - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return 'עכשיו';
+  if (seconds < 60) return tr('עכשיו');
   const minutes = Math.round(seconds / 60);
   if (minutes < 60)
-    return minutes === 1 ? 'לפני דקה' : minutes === 2 ? 'לפני 2 דקות' : `לפני ${minutes} דקות`;
+    return minutes === 1
+      ? tr('לפני דקה')
+      : minutes === 2
+        ? tr('לפני 2 דקות')
+        : tr('לפני {0} דקות', minutes);
   const hours = Math.round(seconds / 3600);
   if (hours < 24)
-    return hours === 1 ? 'לפני שעה' : hours === 2 ? 'לפני שעתיים' : `לפני ${hours} שעות`;
+    return hours === 1
+      ? tr('לפני שעה')
+      : hours === 2
+        ? tr('לפני שעתיים')
+        : tr('לפני {0} שעות', hours);
   const days = Math.round(seconds / 86_400);
-  if (days < 7) return days === 1 ? 'אתמול' : days === 2 ? 'שלשום' : `לפני ${days} ימים`;
+  if (days < 7)
+    return days === 1 ? tr('אתמול') : days === 2 ? tr('שלשום') : tr('לפני {0} ימים', days);
   return dateFmt.format(new Date(iso));
 }

@@ -2,6 +2,7 @@ import { Compass } from 'lucide-react';
 import { createContext, useContext } from 'react';
 import { Button } from '../../components/ui';
 import { pageTours, usePageKey, type PageKey } from './pageTours';
+import { tr } from '../../i18n';
 
 interface Tours {
   startMainTour: () => void;
@@ -21,7 +22,7 @@ export function PageTourButton() {
   return (
     <Button variant="ghost" size="sm" onClick={() => tours.startPageTour(page)}>
       <Compass aria-hidden className="h-4 w-4" />
-      סיור בעמוד
+      {tr('סיור בעמוד')}
     </Button>
   );
 }

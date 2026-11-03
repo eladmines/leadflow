@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { SITE_LIMITS } from '@leadflow/shared';
 import { Button, Field, Textarea } from '../../components/ui';
+import { tr } from '../../i18n';
 
 export interface ItemField<T> {
   key: keyof T & string;
@@ -52,7 +53,7 @@ export function ItemsEditor<T extends Record<string, string>>({
                     className={iconBtn}
                     disabled={i === 0}
                     onClick={() => move(i, -1)}
-                    aria-label={`הזזת ${itemName(i + 1)} למעלה`}
+                    aria-label={tr('הזזת {0} למעלה', itemName(i + 1))}
                   >
                     <ArrowUp aria-hidden className="h-4 w-4" />
                   </button>
@@ -61,7 +62,7 @@ export function ItemsEditor<T extends Record<string, string>>({
                     className={iconBtn}
                     disabled={i === items.length - 1}
                     onClick={() => move(i, 1)}
-                    aria-label={`הזזת ${itemName(i + 1)} למטה`}
+                    aria-label={tr('הזזת {0} למטה', itemName(i + 1))}
                   >
                     <ArrowDown aria-hidden className="h-4 w-4" />
                   </button>
@@ -69,7 +70,7 @@ export function ItemsEditor<T extends Record<string, string>>({
                     type="button"
                     className={iconBtn}
                     onClick={() => onChange(items.filter((_, j) => j !== i))}
-                    aria-label={`מחיקת ${itemName(i + 1)}`}
+                    aria-label={tr('מחיקת {0}', itemName(i + 1))}
                   >
                     <Trash2 aria-hidden className="h-4 w-4" />
                   </button>

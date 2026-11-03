@@ -10,13 +10,17 @@ export default defineConfig({
     locale: 'he-IL',
     trace: 'retain-on-failure',
     // The product tour (D-093) opens on first entry and would cover the screens under test;
-    // e2e/tour.spec.ts turns it back on.
+    // e2e/tour.spec.ts turns it back on. The specs read the Hebrew copy (the app defaults to
+    // English, D-100); e2e/english.spec.ts covers English.
     storageState: {
       cookies: [],
       origins: [
         {
           origin: 'http://localhost:5173',
-          localStorage: [{ name: 'leadflow.tour.off', value: '1' }],
+          localStorage: [
+            { name: 'leadflow.tour.off', value: '1' },
+            { name: 'leadflow.locale', value: 'he' },
+          ],
         },
       ],
     },

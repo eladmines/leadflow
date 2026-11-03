@@ -9,6 +9,7 @@ import { ArrowDown, ArrowUp, EyeOff, ImageIcon, Plus, Settings2 } from 'lucide-r
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { fieldLimit } from './fieldPath';
+import { tr } from '../../i18n';
 
 /** Sections are direct children of <main> with id `s-<sectionId>` (see renderSitePage). */
 const SECTION_SELECTOR = 'main > [id^="s-"]';
@@ -326,7 +327,7 @@ export function EditablePreview({
   const index = (id: string) => sections.findIndex((s) => s.id === id);
   const label = (id: string) => {
     const s = sections.find((x) => x.id === id);
-    return s ? sectionTypeLabels[s.type] : '';
+    return s ? tr(sectionTypeLabels[s.type]) : '';
   };
   const hasImage = (id: string) => {
     const type = sections.find((x) => x.id === id)?.type;
@@ -360,7 +361,7 @@ export function EditablePreview({
       >
         <iframe
           ref={frame}
-          title="תצוגה מקדימה של האתר"
+          title={tr('תצוגה מקדימה של האתר')}
           srcDoc={frozen ?? html}
           // Same-origin lets this page attach listeners and measure sections; no scripts run inside.
           sandbox="allow-same-origin"
@@ -378,7 +379,7 @@ export function EditablePreview({
         {inspector && !frozen && (
           <div
             role="dialog"
-            aria-label={selected ? `הגדרות ${label(selected)}` : 'עיצוב האתר'}
+            aria-label={selected ? tr('הגדרות {0}', label(selected)) : tr('עיצוב האתר')}
             className="absolute end-3 z-20 hidden max-h-[calc(100%-1.5rem)] w-[22rem] overflow-y-auto rounded-xl border border-surface-border bg-surface p-4 shadow-lift lg:block"
             style={{
               top:
@@ -402,7 +403,7 @@ export function EditablePreview({
         {typing && textTools && (
           <div
             role="toolbar"
-            aria-label="עיצוב הטקסט"
+            aria-label={tr('עיצוב הטקסט')}
             // Keep the focus (and the caret) in the text while using the toolbar.
             onMouseDown={(e) => e.preventDefault()}
             className="absolute z-30 flex items-center gap-1 rounded-xl bg-ink/95 p-1 text-white shadow-lift"
@@ -425,7 +426,7 @@ export function EditablePreview({
             )}
             <div
               role="toolbar"
-              aria-label={`פעולות על ${label(active)}`}
+              aria-label={tr('פעולות על {0}', label(active))}
               hidden={Boolean(inspector) && active === selected}
               onMouseEnter={() => setHovered(active)}
               className="absolute z-10 flex items-center gap-0.5 rounded-xl bg-ink/90 p-1 shadow-lift"
@@ -439,7 +440,7 @@ export function EditablePreview({
               <button
                 type="button"
                 className={toolBtn}
-                aria-label={`הגדרות ${label(active)}`}
+                aria-label={tr('הגדרות {0}', label(active))}
                 onClick={() => onSettings(active)}
               >
                 <Settings2 aria-hidden className="h-4 w-4" />
@@ -448,7 +449,7 @@ export function EditablePreview({
                 <button
                   type="button"
                   className={toolBtn}
-                  aria-label={`תמונה ל${label(active)}`}
+                  aria-label={tr('תמונה ל{0}', label(active))}
                   onClick={() => onImage(active, 'imageAssetId')}
                 >
                   <ImageIcon aria-hidden className="h-4 w-4" />
@@ -457,7 +458,7 @@ export function EditablePreview({
               <button
                 type="button"
                 className={toolBtn}
-                aria-label={`הזזת ${label(active)} למעלה`}
+                aria-label={tr('הזזת {0} למעלה', label(active))}
                 disabled={index(active) <= 0}
                 onClick={() => onMove(active, -1)}
               >
@@ -466,7 +467,7 @@ export function EditablePreview({
               <button
                 type="button"
                 className={toolBtn}
-                aria-label={`הזזת ${label(active)} למטה`}
+                aria-label={tr('הזזת {0} למטה', label(active))}
                 disabled={index(active) >= sections.length - 1}
                 onClick={() => onMove(active, 1)}
               >
@@ -475,7 +476,7 @@ export function EditablePreview({
               <button
                 type="button"
                 className={toolBtn}
-                aria-label={`הסתרת ${label(active)}`}
+                aria-label={tr('הסתרת {0}', label(active))}
                 onClick={() => {
                   onHide(active);
                   setHovered(null);
@@ -503,11 +504,11 @@ export function EditablePreview({
                     className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-lift hover:bg-brand-700"
                   >
                     <Plus aria-hidden className="h-4 w-4" />
-                    הוספת מקטע כאן
+                    {tr('הוספת מקטע כאן')}
                   </button>
                   {menuFor === active && (
                     <ul
-                      aria-label="סוג המקטע להוספה"
+                      aria-label={tr('סוג המקטע להוספה')}
                       className={cn(
                         'absolute start-1/2 grid w-64 grid-cols-2 gap-1 rounded-2xl border border-surface-border bg-surface p-2 shadow-lift rtl:translate-x-1/2 ltr:-translate-x-1/2',
                         menuUp ? 'bottom-full mb-2' : 'top-full mt-2',
@@ -523,7 +524,7 @@ export function EditablePreview({
                               setMenuFor(null);
                             }}
                           >
-                            {sectionTypeLabels[t]}
+                            {tr(sectionTypeLabels[t])}
                           </button>
                         </li>
                       ))}
