@@ -33,10 +33,14 @@ describe('page tours (D-096)', () => {
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('leads'));
     await openPageTour(user);
-    const first = await screen.findByRole('dialog', { name: 'ליד חדש' });
+    const first = await screen.findByRole('dialog', { name: 'לקוחות ולידים' });
     // Owner sees the export button, so every leads step applies.
     expect(within(first).getByText(/^1 מתוך \d+$/)).toBeInTheDocument();
     await user.click(within(first).getByRole('button', { name: 'הבא' }));
+    expect(await screen.findByRole('dialog', { name: 'ליד חדש' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'הבא' }));
+    expect(await screen.findByRole('dialog', { name: 'רענון' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'הבא' }));
     expect(await screen.findByRole('dialog', { name: 'חיפוש וסינון' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
