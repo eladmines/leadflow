@@ -7,6 +7,8 @@ interface SentMessage {
   text: string;
   /** Buttons or list rows of an interactive message. */
   choices?: WhatsAppChoice[];
+  /** Size of a sent photo. */
+  imageBytes?: number;
 }
 
 /** Keeps sent messages in memory instead of calling Meta (local development and tests). */
@@ -24,6 +26,10 @@ export class MemoryWhatsAppSender implements WhatsAppSender {
 
   sendText(to: string, text: string): Promise<{ id: string }> {
     return this.record({ to, text });
+  }
+
+  sendImage(to: string, jpeg: Buffer, caption = ''): Promise<{ id: string }> {
+    return this.record({ to, text: caption, imageBytes: jpeg.length });
   }
 
   sendButtons(to: string, body: string, buttons: WhatsAppChoice[]): Promise<{ id: string }> {

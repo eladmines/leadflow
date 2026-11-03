@@ -23,8 +23,38 @@ export class WhatsAppSendError extends Error {
 export class CloudWhatsAppSender implements WhatsAppSender {
   constructor(private readonly opts: CloudApiOptions) {}
 
-  sendText(to: string, text: string): Promise<{ id: string }> {
-    return this.post(to, { type: 'text', text: { body: text, preview_url: false } });
+  sendText(to: string, text: string, opts: { preview?: boolean } = {}): Promise<{ id: string }> {
+    return this.post(to, {
+      type: 'text',
+      text: { body: text, preview_url: opts.preview ?? false },
+    });
+  }
+
+  /** Uploads the photo to Meta (no public URL needed), then sends it by its media id. */
+  async sendImage(to: string, jpeg: Buffer, caption?: string): Promise<{ id: string }> {
+    const doFetch = this.opts.fetch ?? fetch;
+    const form = new FormData();
+    form.set('messaging_product', 'whatsapp');
+    form.set('type', 'image/jpeg');
+    form.set('file', new Blob([new Uint8Array(jpeg)], { type: 'image/jpeg' }), 'photo.jpg');
+    const res = await doFetch(
+      `https://graph.facebook.com/${this.opts.graphVersion}/${this.opts.phoneNumberId}/media`,
+      {
+        method: 'POST',
+        headers: { authorization: `Bearer ${this.opts.accessToken}` },
+        body: form,
+        signal: AbortSignal.timeout(20_000),
+      },
+    );
+    const json = (await res.json().catch(() => null)) as {
+      id?: string;
+      error?: { code?: number };
+    } | null;
+    if (!res.ok || !json?.id) throw new WhatsAppSendError(res.status, json?.error?.code ?? null);
+    return this.post(to, {
+      type: 'image',
+      image: { id: json.id, ...(caption ? { caption: caption.slice(0, 1024) } : {}) },
+    });
   }
 
   sendButtons(to: string, body: string, buttons: WhatsAppChoice[]): Promise<{ id: string }> {

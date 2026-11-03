@@ -1,11 +1,16 @@
 import type { PrismaClient, WhatsAppBotSession } from '@prisma/client';
 import {
   botDefaultTexts,
+  botShowcaseSchema,
   botTextsSchema,
   fillBotText,
+  showcaseDefaultText,
   type BotTextKey,
   type BotTexts,
 } from '@leadflow/shared';
+import sharp from 'sharp';
+import type { z } from 'zod';
+import type { StorageProvider } from '../../integrations/storage';
 import type { WhatsAppChoice, WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -18,6 +23,7 @@ import { MANAGERS, notifySafe } from '../notifications/service';
  * It starts when a customer asks for an appointment (or a new number writes for the first time), never on a
  * personal number, and stays quiet once a team member has written in the chat or the customer
  * asked for a person. Texts to customers are Hebrew (customer-facing copy stays Hebrew, D-100).
+ * A customer who doesn't book gets the business's showcase ("in the meantime, take a look", D-106).
  */
 
 const SESSION_MS = 30 * 60_000;
@@ -26,14 +32,20 @@ const DAYS_AHEAD = 14;
 /** WhatsApp lists hold 10 rows; one is kept for "talk to the team" / "another day". */
 const MAX_ROWS = 9;
 const DEFAULT_DURATION = 30;
+/** The showcase goes to the same customer at most once in this time. */
+const SHOWCASE_EVERY_MS = 24 * 60 * 60_000;
+/** A conversation that stopped this long ago gets the showcase (inside WhatsApp's 24 h window). */
+const ABANDONED_AFTER_MS = 30 * 60_000;
+const ABANDONED_UNTIL_MS = 20 * 60 * 60_000;
 
 const TRIGGER = /תור|לקבוע|פנוי|זמינ|appointment|book/i;
 const CHOICE =
-  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|ok|other_time|other_day|cancel|human)$/;
+  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|ok|other_time|other_day|cancel|human|showcase|book)$/;
 const CANCEL_TEXT = /^\s*(ביטול|לבטל|cancel)\s*$/i;
 const HUMAN_TEXT = /נציג|לדבר עם|human|agent/i;
 
 const human: WhatsAppChoice = { id: 'human', title: 'דברו עם הצוות' };
+const seeOurWork: WhatsAppChoice = { id: 'showcase', title: '📸 העבודות שלנו' };
 
 /** What the bot did with a message: answered it, passed the chat to the team, or nothing. */
 export type BotOutcome = 'handled' | 'handoff' | 'none';
@@ -52,15 +64,19 @@ interface Log {
 type Business = {
   id: string;
   name: string;
+  industry: string;
   timezone: string;
   openingHours: unknown;
   whatsappBotAutoConfirm: boolean;
   texts: BotTexts;
+  showcase: z.output<typeof botShowcaseSchema>;
 };
 interface Chat {
   business: Business;
   numberId: string;
   phone: string;
+  /** When this customer last got the showcase. */
+  showcaseAt: Date | null;
   /** Contact and lead to file the bot's messages under (business numbers). */
   link: { contactId: string | null; leadId: string | null };
   session: WhatsAppBotSession | null;
@@ -98,6 +114,7 @@ export class BookingBot {
     private readonly prisma: PrismaClient,
     private readonly sender: WhatsAppSender,
     private readonly log: Log,
+    private readonly storage: StorageProvider,
     /** The contact and open lead for a number; an unclassified number becomes a business one. */
     private readonly ensureCustomer: (
       tx: Db,
@@ -109,51 +126,38 @@ export class BookingBot {
   }
 
   async handle(businessId: string, msg: BotMessage, now = new Date()): Promise<BotOutcome> {
-    const business = await this.prisma.business.findUnique({
-      where: { id: businessId },
-      select: {
-        id: true,
-        name: true,
-        timezone: true,
-        openingHours: true,
-        whatsappBotEnabled: true,
-        whatsappBotAutoConfirm: true,
-        whatsappBotTexts: true,
-      },
-    });
-    if (!business?.whatsappBotEnabled) return 'none';
-    const custom = botTextsSchema.safeParse(business.whatsappBotTexts ?? {});
     const number = await this.prisma.whatsAppNumber.findUnique({
       where: { businessId_phone: { businessId, phone: msg.from } },
     });
     if (!number || number.status === 'PERSONAL') return 'none';
+    const chat = await this.chatFor(businessId, number, now);
+    if (!chat) return 'none';
+    const choice = msg.replyId && CHOICE.test(msg.replyId) ? msg.replyId : null;
 
-    let session = await this.prisma.whatsAppBotSession.findUnique({
-      where: { numberId: number.id },
-    });
+    let session = chat.session;
     if (session && session.expiresAt <= now) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
-      session = null;
+      session = chat.session = null;
+    }
+    // "Book now" under the showcase reopens a chat that was handed to the team.
+    if (session?.step === 'handoff' && choice === 'book') {
+      await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
+      session = chat.session = null;
     }
     if (session?.step === 'handoff') return 'none';
-
-    const chat: Chat = {
-      business: { ...business, texts: custom.success ? custom.data : {} },
-      numberId: number.id,
-      phone: number.phone,
-      link: await this.linkOf(businessId, number.status, number.phone),
-      session,
-      now,
-    };
-    const choice = msg.replyId && CHOICE.test(msg.replyId) ? msg.replyId : null;
+    if (choice === 'showcase') {
+      await this.showcase(chat, { force: true, offerBooking: true });
+      return 'handled';
+    }
+    if (choice === 'book') return this.start(chat, now);
 
     if (!session) {
       // Asked for an appointment, tapped an old list, or a new number's first message.
       const wants =
         choice ||
         TRIGGER.test(msg.body) ||
-        (number.status === 'UNCLASSIFIED' && (await this.isFirstMessage(number.id)));
-      if (!wants || (await this.teamIsTalking(number.id, now))) return 'none';
+        (number.status === 'UNCLASSIFIED' && (await this.isFirstMessage(chat.numberId)));
+      if (!wants || (await this.teamIsTalking(chat.numberId, now))) return 'none';
       return this.start(chat, now);
     }
 
@@ -163,6 +167,7 @@ export class BookingBot {
     if (choice === 'cancel' || (!choice && CANCEL_TEXT.test(msg.body))) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
       await this.say(chat, 'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂');
+      await this.showcase(chat, { offerBooking: true });
       return 'handled';
     }
     if (choice?.startsWith('svc:')) return this.pickService(chat, choice.slice(4), now);
@@ -190,16 +195,18 @@ export class BookingBot {
   private async askService(chat: Chat, prefix = ''): Promise<BotOutcome> {
     const services = await this.activeServices(chat.business.id);
     await this.setSession(chat, { step: 'service', serviceId: null, date: null, time: null });
+    const extra = this.hasShowcase(chat) ? [seeOurWork] : [];
     await this.say(chat, `${prefix}${this.text(chat, 'greeting')}`, {
       button: 'בחירת שירות',
       rows: [
-        ...services.slice(0, MAX_ROWS).map((s) => ({
+        ...services.slice(0, MAX_ROWS - extra.length).map((s) => ({
           id: `svc:${s.id}`,
           title: s.name,
           description: [`${s.durationMin} דק׳`, s.price != null ? `₪${s.price}` : null]
             .filter(Boolean)
             .join(' · '),
         })),
+        ...extra,
         human,
       ],
     });
@@ -227,9 +234,11 @@ export class BookingBot {
       await this.duration(chat.business.id, serviceId),
       now,
     );
-    const days = dates.filter((d) => free.get(d)!.length > 0).slice(0, MAX_ROWS);
+    // The first list of the conversation (when services were skipped) offers the showcase too.
+    const extra = !chat.session && this.hasShowcase(chat) ? [seeOurWork] : [];
+    const days = dates.filter((d) => free.get(d)!.length > 0).slice(0, MAX_ROWS - extra.length);
     if (!days.length) {
-      return this.handoff(chat, now, this.text(chat, 'noTimes'));
+      return this.handoff(chat, now, this.text(chat, 'noTimes'), { offerBooking: false });
     }
     await this.setSession(chat, { step: 'day', serviceId, date: null, time: null });
     const tomorrow = addDaysTo(today, 1);
@@ -245,6 +254,7 @@ export class BookingBot {
             description: n === 1 ? 'זמן פנוי אחד' : `${n} זמנים פנויים`,
           };
         }),
+        ...extra,
         human,
       ],
     });
@@ -359,7 +369,12 @@ export class BookingBot {
     return this.askService(chat, prefix);
   }
 
-  private async handoff(chat: Chat, now: Date, text: string): Promise<BotOutcome> {
+  private async handoff(
+    chat: Chat,
+    now: Date,
+    text: string,
+    { offerBooking = true } = {},
+  ): Promise<BotOutcome> {
     await this.prisma.whatsAppBotSession.upsert({
       where: { numberId: chat.numberId },
       create: {
@@ -371,10 +386,154 @@ export class BookingBot {
       update: { step: 'handoff', expiresAt: new Date(now.getTime() + HANDOFF_MS) },
     });
     await this.say(chat, text);
+    await this.showcase(chat, { offerBooking });
     return 'handoff';
   }
 
+  /**
+   * Conversations that stopped in the middle (no answer for 30 minutes) get the showcase once,
+   * while WhatsApp still allows a free-form message. Run by a background job every minute.
+   */
+  async nudgeAbandoned(now = new Date()): Promise<number> {
+    const stale = await this.prisma.whatsAppBotSession.findMany({
+      where: {
+        step: { in: ['service', 'day', 'time', 'confirm'] },
+        updatedAt: {
+          lt: new Date(now.getTime() - ABANDONED_AFTER_MS),
+          gt: new Date(now.getTime() - ABANDONED_UNTIL_MS),
+        },
+      },
+      select: { id: true, businessId: true, numberId: true, updatedAt: true },
+      take: 100,
+    });
+    let sent = 0;
+    for (const s of stale) {
+      // Claim it: a customer reply in the meantime (updatedAt changes) keeps the conversation.
+      const { count } = await this.prisma.whatsAppBotSession.deleteMany({
+        where: { id: s.id, updatedAt: s.updatedAt },
+      });
+      if (!count) continue;
+      const number = await this.prisma.whatsAppNumber.findUnique({ where: { id: s.numberId } });
+      if (!number || number.status === 'PERSONAL') continue;
+      const chat = await this.chatFor(s.businessId, number, now);
+      if (!chat || (await this.teamIsTalking(number.id, now))) continue;
+      if (await this.showcase(chat, { offerBooking: true })) sent += 1;
+    }
+    return sent;
+  }
+
+  // -------------------------------------------------------------- showcase
+
+  private hasShowcase(chat: Chat) {
+    return chat.business.showcase.enabled;
+  }
+
+  /**
+   * "In the meantime, take a look" (D-106): the message with its link, up to 3 photos, and a
+   * "book" button. At most once a day per customer unless asked for. Returns whether it was sent.
+   */
+  private async showcase(
+    chat: Chat,
+    { force = false, offerBooking = false }: { force?: boolean; offerBooking?: boolean },
+  ): Promise<boolean> {
+    const sc = chat.business.showcase;
+    if (!sc.enabled) return false;
+    if (
+      !force &&
+      chat.showcaseAt &&
+      chat.now.getTime() - chat.showcaseAt.getTime() < SHOWCASE_EVERY_MS
+    ) {
+      return false;
+    }
+    const text = fillBotText(sc.text ?? showcaseDefaultText(chat.business.industry), {
+      business: chat.business.name,
+      service: 'תור',
+      when: '',
+    });
+    await this.say(chat, sc.link ? `${text}\n${sc.link}` : text, undefined, {
+      preview: Boolean(sc.link),
+    });
+
+    const assets = sc.assetIds.length
+      ? await this.prisma.asset.findMany({
+          where: { id: { in: sc.assetIds }, businessId: chat.business.id },
+          select: { id: true, key: true },
+        })
+      : [];
+    for (const id of sc.assetIds) {
+      const asset = assets.find((a) => a.id === id);
+      const file = asset ? await this.storage.get(asset.key) : null;
+      if (!file) continue;
+      try {
+        // WhatsApp takes JPEG or PNG; the library keeps WebP.
+        const jpeg = await sharp(file)
+          .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+          .flatten({ background: '#ffffff' })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+        await this.sayImage(chat, jpeg);
+      } catch (err) {
+        this.log.error({ errName: (err as Error)?.name }, 'whatsapp showcase image failed');
+      }
+    }
+    if (offerBooking) {
+      await this.say(chat, 'כשתרצו, אפשר לקבוע תור כאן 👇', {
+        buttons: [{ id: 'book', title: '📅 לקביעת תור' }],
+      });
+    }
+    chat.showcaseAt = chat.now;
+    await this.prisma.whatsAppNumber.update({
+      where: { id: chat.numberId },
+      data: { botShowcaseAt: chat.now },
+    });
+    return true;
+  }
+
   // ---------------------------------------------------------------- helpers
+
+  /** Everything the bot needs about this business and chat; null when the bot is off. */
+  private async chatFor(
+    businessId: string,
+    number: { id: string; phone: string; status: string; botShowcaseAt: Date | null },
+    now: Date,
+  ): Promise<Chat | null> {
+    const business = await this.prisma.business.findUnique({
+      where: { id: businessId },
+      select: {
+        id: true,
+        name: true,
+        industry: true,
+        timezone: true,
+        openingHours: true,
+        whatsappBotEnabled: true,
+        whatsappBotAutoConfirm: true,
+        whatsappBotTexts: true,
+        whatsappBotShowcase: true,
+      },
+    });
+    if (!business?.whatsappBotEnabled) return null;
+    const texts = botTextsSchema.safeParse(business.whatsappBotTexts ?? {});
+    const showcase = botShowcaseSchema.safeParse(
+      business.whatsappBotShowcase ?? { enabled: false },
+    );
+    return {
+      business: {
+        ...business,
+        texts: texts.success ? texts.data : {},
+        showcase: showcase.success
+          ? showcase.data
+          : { enabled: false, text: undefined, link: null, assetIds: [] },
+      },
+      numberId: number.id,
+      phone: number.phone,
+      showcaseAt: number.botShowcaseAt,
+      link: await this.linkOf(businessId, number.status, number.phone),
+      session: await this.prisma.whatsAppBotSession.findUnique({
+        where: { numberId: number.id },
+      }),
+      now,
+    };
+  }
 
   /** The business's wording for a message, or the default, with the placeholders filled in. */
   private text(chat: Chat, key: BotTextKey, values: { service?: string; when?: string } = {}) {
@@ -402,12 +561,13 @@ export class BookingBot {
     chat: Chat,
     body: string,
     choices?: { buttons: WhatsAppChoice[] } | { button: string; rows: WhatsAppChoice[] },
+    opts: { preview?: boolean } = {},
   ) {
     const options = choices ? ('buttons' in choices ? choices.buttons : choices.rows) : [];
     let id: string;
     try {
       ({ id } = !choices
-        ? await this.sender.sendText(chat.phone, body)
+        ? await this.sender.sendText(chat.phone, body, opts)
         : 'buttons' in choices
           ? await this.sender.sendButtons(chat.phone, body, choices.buttons)
           : await this.sender.sendList(chat.phone, body, choices.button, choices.rows));
@@ -429,6 +589,23 @@ export class BookingBot {
         direction: 'OUT',
         waMessageId: id,
         body: stored.slice(0, 4096),
+        status: 'sent',
+      },
+    });
+  }
+
+  /** Sends and stores a photo (shown in LeadFlow as "[תמונה]"). */
+  private async sayImage(chat: Chat, jpeg: Buffer) {
+    const { id } = await this.sender.sendImage(chat.phone, jpeg);
+    await this.prisma.whatsAppMessage.create({
+      data: {
+        businessId: chat.business.id,
+        numberId: chat.numberId,
+        contactId: chat.link.contactId,
+        leadId: chat.link.leadId,
+        direction: 'OUT',
+        waMessageId: id,
+        body: '[תמונה]',
         status: 'sent',
       },
     });

@@ -99,7 +99,7 @@ const STATUSES = ['sent', 'delivered', 'read', 'failed'] as const;
 /** Meta's webhook (F12 POC). Public: Meta calls it; every POST must carry a valid signature. */
 export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyncZod {
   return async (app) => {
-    const service = new WhatsAppService(app.prisma, app.config, sender, app.log);
+    const service = new WhatsAppService(app.prisma, app.config, sender, app.log, app.storage);
     const { config } = app;
 
     // Keep the raw text for the signature check (this parser only applies inside this plugin).
@@ -200,7 +200,7 @@ const numberParams = z.object({ businessId: z.string(), numberId: z.string() });
  */
 export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsyncZod {
   return async (app) => {
-    const service = new WhatsAppService(app.prisma, app.config, sender, app.log);
+    const service = new WhatsAppService(app.prisma, app.config, sender, app.log, app.storage);
 
     app.get(
       '/leads/:leadId/whatsapp',

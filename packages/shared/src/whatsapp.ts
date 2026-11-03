@@ -203,12 +203,57 @@ export const botTextsSchema = z.object(
 );
 export type BotTexts = Partial<Record<BotTextKey, string>>;
 
+/**
+ * "In the meantime, take a look" (D-106): when a customer doesn't book — cancels, asks for the
+ * team, finds no free time or stops answering — the bot sends the business's showcase (a message,
+ * a link such as Instagram or a video, and up to 3 photos from the media library), at most once a
+ * day per customer, then offers to book. Also on request from "📸 See our work" in the bot's list.
+ */
+export const SHOWCASE_MAX_IMAGES = 3;
+export const showcaseMessages = {
+  linkInvalid: 'יש להזין קישור מלא שמתחיל ב־https://',
+  tooManyImages: `אפשר לבחור עד ${SHOWCASE_MAX_IMAGES} תמונות`,
+  imageMissing: 'אחת התמונות כבר לא קיימת בספריית התמונות. בחרו תמונה אחרת.',
+} as const;
+
+const industryShowcase: Record<string, string> = {
+  beauty: 'בינתיים, הנה הצצה לעבודות שלנו ✂️',
+  studio: 'בינתיים, הנה הצצה לסטודיו ולשיעורים שלנו 💪',
+  garage: 'בינתיים, הנה קצת עלינו ועל העבודה שלנו 🔧',
+  trades: 'בינתיים, הנה כמה מהעבודות שעשינו לאחרונה 🛠️',
+};
+/** The showcase message until the business writes its own. */
+export const showcaseDefaultText = (industry: string) =>
+  industryShowcase[industry] ?? 'בינתיים, הנה הצצה למה שאנחנו עושים ✨';
+
+export const botShowcaseSchema = z.object({
+  enabled: z.boolean(),
+  /** Empty = the default for the business's industry. */
+  text: botTextSchema,
+  link: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    z
+      .string()
+      .trim()
+      .max(500, showcaseMessages.linkInvalid)
+      .regex(/^https:\/\/[^\s]+\.[^\s]+$/, showcaseMessages.linkInvalid)
+      .nullable()
+      .default(null),
+  ),
+  assetIds: z
+    .array(z.string().uuid())
+    .max(SHOWCASE_MAX_IMAGES, showcaseMessages.tooManyImages)
+    .default([]),
+});
+export type BotShowcase = z.input<typeof botShowcaseSchema>;
+
 export const whatsappBotSettingsSchema = z.object({
   enabled: z.boolean(),
   /** true: booked as confirmed; false: booked as "waiting for approval" (holds the time). */
   autoConfirm: z.boolean(),
   /** The business's own wording; missing keys use `botDefaultTexts`. */
   texts: botTextsSchema.default({}),
+  showcase: botShowcaseSchema.default({ enabled: false }),
 });
 export type WhatsAppBotSettings = z.input<typeof whatsappBotSettingsSchema>;
 
@@ -224,6 +269,14 @@ export const whatsappBotResponseSchema = z.object({
         z.ZodOptional<z.ZodString>
       >,
     ),
+    showcase: z.object({
+      enabled: z.boolean(),
+      /** Only when the business wrote its own; see `defaultText`. */
+      text: z.string().optional(),
+      defaultText: z.string(),
+      link: z.string().nullable(),
+      assetIds: z.array(z.string().uuid()),
+    }),
   }),
 });
 export type WhatsAppBotResponse = z.infer<typeof whatsappBotResponseSchema>;

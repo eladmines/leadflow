@@ -12,8 +12,13 @@ export interface WhatsAppChoice {
  * development and tests). Implementations must never log message texts or phone numbers.
  */
 export interface WhatsAppSender {
-  /** Sends a free-form text to an E.164 number; resolves with Meta's message id. */
-  sendText(to: string, text: string): Promise<{ id: string }>;
+  /**
+   * Sends a free-form text to an E.164 number; resolves with Meta's message id. `preview` shows a
+   * preview of the first link (e.g. a video).
+   */
+  sendText(to: string, text: string, opts?: { preview?: boolean }): Promise<{ id: string }>;
+  /** A JPEG photo with an optional caption. */
+  sendImage(to: string, jpeg: Buffer, caption?: string): Promise<{ id: string }>;
   /** A text with up to 3 reply buttons. */
   sendButtons(to: string, body: string, buttons: WhatsAppChoice[]): Promise<{ id: string }>;
   /** A text with a button that opens a list of up to 10 rows. */

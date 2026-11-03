@@ -1,5 +1,7 @@
 import {
   BOT_PLACEHOLDERS,
+  botShowcaseSchema,
+  SHOWCASE_MAX_IMAGES,
   botPlaceholderLabels,
   BOT_TEXT_KEYS,
   botDefaultTexts,
@@ -10,9 +12,11 @@ import {
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
 } from '@leadflow/shared';
-import { Bot, RotateCcw } from 'lucide-react';
+import { Bot, ImagePlus, RotateCcw, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
-import { Alert, Button, Card, Textarea } from '../../components/ui';
+import { Alert, Button, Card, Field, Textarea } from '../../components/ui';
+import { useAssets } from '../media/api';
+import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -26,14 +30,21 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   const bot = useBotSettings(businessId);
   const update = useUpdateBotSettings(businessId);
   // Shown at once; back to the saved settings if saving fails.
-  const [draft, setDraft] = useState<WhatsAppBotSettings | null>(null);
+  const [draft, setDraft] = useState<Pick<WhatsAppBotSettings, 'enabled' | 'autoConfirm'> | null>(
+    null,
+  );
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
-  const settings = draft ?? bot.data.settings;
-  const save = (patch: Partial<WhatsAppBotSettings>) => {
-    const next = { ...settings, ...patch };
+  const settings = { ...bot.data.settings, ...draft };
+  const save = (
+    patch: Pick<WhatsAppBotSettings, 'enabled'> | Pick<WhatsAppBotSettings, 'autoConfirm'>,
+  ) => {
+    const next = { enabled: settings.enabled, autoConfirm: settings.autoConfirm, ...patch };
     setDraft(next);
-    update.mutate(next, { onSettled: () => setDraft(null) });
+    update.mutate(
+      { ...toRequest(bot.data.settings), ...next },
+      { onSettled: () => setDraft(null) },
+    );
   };
 
   return (
@@ -95,11 +106,33 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         </summary>
         <BotTextsForm businessId={businessId} settings={bot.data.settings} />
       </details>
+      <details className="rounded-lg border border-surface-border p-3">
+        <summary className="cursor-pointer text-sm font-medium text-ink">
+          {tr('בינתיים, הצצה לעבודות שלנו')}
+          <span className="ms-2 text-xs font-normal text-ink-muted">
+            {bot.data.settings.showcase.enabled ? tr('פעיל') : tr('כבוי')}
+          </span>
+        </summary>
+        <ShowcaseForm businessId={businessId} settings={bot.data.settings} />
+      </details>
     </Card>
   );
 }
 
 type Saved = WhatsAppBotResponse['settings'];
+
+/** The saved settings as a full update, so saving one part never resets another. */
+const toRequest = (saved: Saved): WhatsAppBotSettings => ({
+  enabled: saved.enabled,
+  autoConfirm: saved.autoConfirm,
+  texts: saved.texts,
+  showcase: {
+    enabled: saved.showcase.enabled,
+    text: saved.showcase.text ?? null,
+    link: saved.showcase.link,
+    assetIds: saved.showcase.assetIds,
+  },
+});
 
 /**
  * In the editor, placeholders read as tags in the owner's language — "[שם העסק]" or
@@ -176,7 +209,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
     }
     setErrors({});
     update.mutate(
-      { enabled: settings.enabled, autoConfirm: settings.autoConfirm, texts: parsed.data },
+      { ...toRequest(settings), texts: parsed.data },
       { onSuccess: () => setSaved(true) },
     );
   };
@@ -249,6 +282,198 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
           {tr('שמירת ההודעות')}
         </Button>
       </div>
+    </form>
+  );
+}
+
+/**
+ * "In the meantime, take a look" (D-106): what a customer who doesn't book gets — a message, a
+ * link (Instagram, a video, the website) and up to 3 photos from the media library.
+ */
+function ShowcaseForm({ businessId, settings }: { businessId: string; settings: Saved }) {
+  const business = useCurrentBusiness();
+  const update = useUpdateBotSettings(businessId);
+  const assets = useAssets(businessId);
+  const saved = settings.showcase;
+  const [enabled, setEnabled] = useState(saved.enabled);
+  const [text, setText] = useState(toTags(saved.text ?? saved.defaultText));
+  const [link, setLink] = useState(saved.link ?? '');
+  const [assetIds, setAssetIds] = useState(saved.assetIds);
+  const [picking, setPicking] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [done, setDone] = useState(false);
+  const urlOf = (id: string) => assets.data?.assets.find((a) => a.id === id)?.url;
+  const changed = () => setDone(false);
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    setDone(false);
+    const own = toCodes(text).trim();
+    const parsed = botShowcaseSchema.safeParse({
+      enabled,
+      // The industry default isn't stored, so it can improve later.
+      text: own === saved.defaultText ? null : own,
+      link,
+      assetIds,
+    });
+    if (!parsed.success) {
+      setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])));
+      return;
+    }
+    setErrors({});
+    update.mutate(
+      { ...toRequest(settings), showcase: { ...parsed.data, text: parsed.data.text ?? null } },
+      { onSuccess: () => setDone(true) },
+    );
+  };
+
+  const filled = fillBotText(toCodes(text), {
+    business: business.name,
+    service: 'תור',
+    when: '',
+  });
+
+  return (
+    <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-4">
+      <p className="text-xs text-ink-muted">
+        {tr(
+          'לקוח שלא קבע תור — ביטל, ביקש לדבר עם הצוות, לא מצא זמן פנוי או הפסיק לענות חצי שעה — מקבל את ההצצה הזו, לכל היותר פעם ביום, ואחריה כפתור לקביעת תור. בנוסף מופיעה ברשימה של הבוט האפשרות "📸 העבודות שלנו".',
+        )}
+      </p>
+      <label className="flex items-center gap-2 text-sm font-medium text-ink">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => {
+            changed();
+            setEnabled(e.target.checked);
+          }}
+          className="h-4 w-4 accent-brand-600"
+        />
+        {tr('שליחת הצצה ללקוחות שלא קבעו')}
+      </label>
+      <fieldset disabled={!enabled} className="flex flex-col gap-4 disabled:opacity-60">
+        <Textarea
+          label={tr('ההודעה')}
+          dir="rtl"
+          lang="he"
+          rows={2}
+          value={text}
+          error={errors.text}
+          onChange={(e) => {
+            changed();
+            setText(e.target.value);
+          }}
+        />
+        <Field
+          label={tr('קישור (לא חובה)')}
+          hint={tr(
+            'אינסטגרם, יוטיוב, טיקטוק או האתר שלכם. בקישור לסרטון, וואטסאפ מציג תצוגה מקדימה.',
+          )}
+          ltr
+          type="url"
+          inputMode="url"
+          placeholder="https://instagram.com/…"
+          value={link}
+          error={errors.link}
+          onChange={(e) => {
+            changed();
+            setLink(e.target.value);
+          }}
+        />
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-ink">
+            {tr('תמונות (עד {0})', SHOWCASE_MAX_IMAGES)}
+          </span>
+          <ul aria-label={tr('תמונות בהצצה')} className="flex flex-wrap gap-2">
+            {assetIds.map((id, i) => (
+              <li
+                key={id}
+                className="relative h-20 w-20 overflow-hidden rounded-lg bg-surface-sunken"
+              >
+                {urlOf(id) && <img src={urlOf(id)} alt="" className="h-full w-full object-cover" />}
+                <button
+                  type="button"
+                  aria-label={tr('הסרת תמונה {0}', i + 1)}
+                  onClick={() => {
+                    changed();
+                    setAssetIds((ids) => ids.filter((x) => x !== id));
+                  }}
+                  className="absolute end-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-surface/90 text-ink shadow"
+                >
+                  <X aria-hidden className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+            {assetIds.length < SHOWCASE_MAX_IMAGES && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setPicking(true)}
+                  className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-surface-border text-xs text-ink-muted hover:bg-surface-sunken"
+                >
+                  <ImagePlus aria-hidden className="h-5 w-5" />
+                  {tr('הוספת תמונה')}
+                </button>
+              </li>
+            )}
+          </ul>
+          {errors.assetIds && <p className="text-xs text-danger-600">{tr(errors.assetIds)}</p>}
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-ink-muted">{tr('כך הלקוח יראה את זה:')}</span>
+          <div dir="rtl" lang="he" className="flex max-w-md flex-col gap-1.5">
+            <p className="whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
+              {filled || '—'}
+              {link && (
+                <>
+                  {'\n'}
+                  <bdi dir="ltr" className="text-brand-700 underline">
+                    {link}
+                  </bdi>
+                </>
+              )}
+            </p>
+            {assetIds.length > 0 && (
+              <div className="flex gap-1.5">
+                {assetIds.map((id) =>
+                  urlOf(id) ? (
+                    <img
+                      key={id}
+                      src={urlOf(id)}
+                      alt=""
+                      className="h-16 w-16 rounded-xl object-cover"
+                    />
+                  ) : null,
+                )}
+              </div>
+            )}
+            <p className="rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
+              כשתרצו, אפשר לקבוע תור כאן 👇
+              <span className="mt-1.5 block rounded-lg bg-surface px-2 py-1 text-center text-xs font-medium text-brand-700">
+                📅 לקביעת תור
+              </span>
+            </p>
+          </div>
+        </div>
+      </fieldset>
+      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+      {done && <Alert tone="success">{tr('ההצצה נשמרה.')}</Alert>}
+      <div>
+        <Button type="submit" loading={update.isPending}>
+          {tr('שמירה')}
+        </Button>
+      </div>
+      <MediaPicker
+        open={picking}
+        onOpenChange={setPicking}
+        title={tr('בחירת תמונה להצצה')}
+        onSelect={(asset) => {
+          changed();
+          setAssetIds((ids) => (ids.includes(asset.id) ? ids : [...ids, asset.id]));
+          setPicking(false);
+        }}
+      />
     </form>
   );
 }

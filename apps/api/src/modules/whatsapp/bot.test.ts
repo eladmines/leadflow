@@ -6,7 +6,10 @@ import { MemoryWhatsAppSender, signWebhookBody } from '../../integrations/whatsa
 import { MemoryEmailSender } from '../../integrations/email';
 import { buildApp } from '../../app';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
+import { WhatsAppService } from './service';
 import { zonedTimeToUtc } from '../../lib/time';
+import { randomUUID } from 'node:crypto';
+import sharp from 'sharp';
 
 const BUSINESS_ID = '11111111-2222-4333-8444-555555555555';
 const SECRET = 'test-app-secret-0123456789';
@@ -331,18 +334,190 @@ describe('WhatsApp booking bot (D-102)', () => {
     });
   });
 
+  describe('"in the meantime, take a look" (D-106)', () => {
+    async function withShowcase(over: Record<string, unknown> = {}) {
+      const ctxs = await setup();
+      const key = `${BUSINESS_ID}/${randomUUID()}.webp`;
+      const webp = await sharp({
+        create: { width: 40, height: 30, channels: 3, background: '#2c837d' },
+      })
+        .webp()
+        .toBuffer();
+      await ctx.app.storage.put(key, webp, 'image/webp');
+      const asset = await ctx.prisma.asset.create({
+        data: {
+          businessId: BUSINESS_ID,
+          key,
+          mime: 'image/webp',
+          sizeBytes: webp.length,
+          width: 40,
+          height: 30,
+        },
+      });
+      const put = await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), ctxs.owner.token, {
+        enabled: true,
+        autoConfirm: true,
+        showcase: {
+          enabled: true,
+          link: 'https://instagram.com/sigalit.hair',
+          assetIds: [asset.id],
+          ...over,
+        },
+      });
+      expect(put.statusCode).toBe(200);
+      return { ...ctxs, asset };
+    }
+    const texts = () => whatsapp.sent.map((m) => m.text);
+
+    it('after a cancel: the message with its link, the photo as JPEG, and "book" — once a day', async () => {
+      await withShowcase();
+      await post(text('תור'));
+      expect(last().choices!.map((c) => c.id)).toEqual([
+        expect.stringMatching(/^svc:/),
+        expect.stringMatching(/^svc:/),
+        'showcase',
+        'human',
+      ]);
+      whatsapp.clear();
+      await post(text('ביטול'));
+      expect(texts()).toEqual([
+        'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂',
+        'בינתיים, הנה הצצה לעבודות שלנו ✂️\nhttps://instagram.com/sigalit.hair',
+        '',
+        'כשתרצו, אפשר לקבוע תור כאן 👇',
+      ]);
+      expect(whatsapp.sent[2]!.imageBytes).toBeGreaterThan(0);
+      expect(last().choices).toEqual([{ id: 'book', title: '📅 לקביעת תור' }]);
+      const number = await ctx.prisma.whatsAppNumber.findFirstOrThrow();
+      expect(number.botShowcaseAt).not.toBeNull();
+
+      // "Book" starts again; a second cancel the same day doesn't repeat the showcase.
+      await post(tap('book'));
+      expect(last().text).toContain('רוצים לקבוע תור?');
+      whatsapp.clear();
+      await post(text('ביטול'));
+      expect(texts()).toEqual(['בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂']);
+    });
+
+    it('"See our work" sends it on request, even if it was sent today', async () => {
+      await withShowcase({ text: 'הצצה ל[שם העסק]: {business} 🎧', link: null });
+      await ctx.prisma.whatsAppNumber.create({
+        data: {
+          businessId: BUSINESS_ID,
+          phone: `+${FROM}`,
+          status: 'BUSINESS',
+          botShowcaseAt: new Date(),
+        },
+      });
+      await post(text('תור'));
+      whatsapp.clear();
+      await post(tap('showcase'));
+      expect(texts()[0]).toBe('הצצה ל[שם העסק]: עיצוב שיער סיגלית 🎧');
+      expect(last().choices![0]!.id).toBe('book');
+    });
+
+    it('talking to the team gets it too, and "book" reopens the bot', async () => {
+      await withShowcase();
+      await post(text('תור'));
+      whatsapp.clear();
+      await post(tap('human'));
+      expect(texts()[0]).toMatch(/^בסדר! העברנו את השיחה לצוות/);
+      expect(last().choices![0]!.id).toBe('book');
+      await post(tap('book'));
+      expect(last().text).toContain('רוצים לקבוע תור?');
+    });
+
+    it('a conversation that stopped in the middle gets it after 30 minutes, once', async () => {
+      const { owner } = await withShowcase();
+      await post(text('תור'));
+      await post(tap(last().choices![0]!.id));
+      await ctx.prisma
+        .$executeRaw`UPDATE whatsapp_bot_sessions SET updated_at = now() - interval '40 minutes'`;
+      whatsapp.clear();
+      const service = new WhatsAppService(
+        ctx.prisma,
+        ctx.app.config,
+        whatsapp,
+        ctx.app.log,
+        ctx.app.storage,
+      );
+      expect(await service.nudgeAbandonedBookings()).toBe(1);
+      expect(texts()[0]).toMatch(/^בינתיים, הנה הצצה לעבודות שלנו/);
+      expect(await ctx.prisma.whatsAppBotSession.count()).toBe(0);
+      expect(await service.nudgeAbandonedBookings()).toBe(0);
+
+      // Not while the team is talking in the chat.
+      const number = await ctx.prisma.whatsAppNumber.findFirstOrThrow();
+      await ctx.prisma.whatsAppNumber.update({
+        where: { id: number.id },
+        data: { botShowcaseAt: null },
+      });
+      await post(text('תור'));
+      await ctx.prisma.whatsAppMessage.create({
+        data: {
+          businessId: BUSINESS_ID,
+          numberId: number.id,
+          direction: 'OUT',
+          waMessageId: 'wamid.owner-x',
+          body: 'אני כאן!',
+          status: 'sent',
+          senderId: owner.userId,
+        },
+      });
+      await ctx.prisma
+        .$executeRaw`UPDATE whatsapp_bot_sessions SET updated_at = now() - interval '40 minutes'`;
+      expect(await service.nudgeAbandonedBookings()).toBe(0);
+    });
+
+    it("off by default; checks the link and that the photos are the business's own", async () => {
+      const { owner } = await setup();
+      const get = await req(ctx.app, 'GET', wp.bot(BUSINESS_ID), owner.token);
+      expect(get.json().settings.showcase).toEqual({
+        enabled: false,
+        defaultText: 'בינתיים, הנה הצצה לעבודות שלנו ✂️',
+        link: null,
+        assetIds: [],
+      });
+      const bad = (showcase: object) =>
+        req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
+          enabled: true,
+          autoConfirm: true,
+          showcase,
+        });
+      const link = await bad({ enabled: true, link: 'instagram.com/x' });
+      expect(link.statusCode).toBe(400);
+      expect(link.json().error.fields['showcase.link']).toBe(
+        'יש להזין קישור מלא שמתחיל ב־https://',
+      );
+      const other = await ctx.prisma.business.create({ data: { name: 'אחר', industry: 'beauty' } });
+      const foreign = await ctx.prisma.asset.create({
+        data: {
+          businessId: other.id,
+          key: `${other.id}/${randomUUID()}.webp`,
+          mime: 'image/webp',
+          sizeBytes: 1,
+          width: 1,
+          height: 1,
+        },
+      });
+      const img = await bad({ enabled: true, assetIds: [foreign.id] });
+      expect(img.statusCode).toBe(400);
+      expect(img.json().error.fields['showcase.assetIds']).toMatch(/כבר לא קיימת/);
+    });
+  });
+
   it('settings: owners and managers can read and change them, employees cannot', async () => {
     const { owner } = await setup({ enabled: false });
     const get = await req(ctx.app, 'GET', wp.bot(BUSINESS_ID), owner.token);
     expect(get.json()).toEqual({
       connected: true,
-      settings: { enabled: false, autoConfirm: true, texts: {} },
+      settings: expect.objectContaining({ enabled: false, autoConfirm: true, texts: {} }),
     });
     const put = await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
       enabled: true,
       autoConfirm: false,
     });
-    expect(put.json().settings).toEqual({ enabled: true, autoConfirm: false, texts: {} });
+    expect(put.json().settings).toMatchObject({ enabled: true, autoConfirm: false, texts: {} });
 
     const employee = await newUser(ctx.app, 'bot-employee');
     await addMember(ctx.prisma, BUSINESS_ID, employee.userId, 'EMPLOYEE');
