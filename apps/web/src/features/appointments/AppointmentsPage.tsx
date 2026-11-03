@@ -5,7 +5,7 @@ import {
   type AppointmentStatus,
 } from '@leadflow/shared';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Button, Card, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -28,6 +28,7 @@ import {
 import { AppointmentDialog } from './AppointmentDialog';
 import { NewAppointmentDialog } from './NewAppointmentDialog';
 import { ServicesPanel } from './ServicesPanel';
+import { TimeGrid, TimeGridLegend } from './TimeGrid';
 import { tr } from '../../i18n';
 
 /** Status tone + text (colour is never the only signal). */
@@ -63,7 +64,7 @@ function AppointmentChip({ a, onOpen }: { a: Appointment; onOpen: (a: Appointmen
   );
 }
 
-/** F17: day/week calendar, pending website requests, and services (owners/managers). */
+/** F17: day/week calendar with free slots (D-101), pending website requests, and services. */
 export function AppointmentsPage() {
   const business = useCurrentBusiness();
   const manager = can(business.role, 'appointments.view.all');
@@ -101,15 +102,9 @@ export function AppointmentsPage() {
   const shift = (n: number) =>
     set({ date: toDateInput(addDays(from, n * (view === 'day' ? 1 : 7))) });
 
-  const byDay = useMemo(
-    () =>
-      days.map((d) => ({
-        day: d,
-        items: (list.data ?? []).filter((a) => sameDay(new Date(a.startsAt), d)),
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.data, from.getTime(), days.length],
-  );
+  // A slot is free while fewer appointments overlap it than people who can take them.
+  const capacity = staff || !manager ? 1 : Math.max(1, (members.data ?? []).length);
+  const [slot, setSlot] = useState<{ day: Date; time: string } | null>(null);
   const pending = (requests.data ?? []).filter((r) => r.status === 'REQUESTED');
   const today = new Date();
   const rangeLabel =
@@ -228,48 +223,16 @@ export function AppointmentsPage() {
       ) : list.isError ? (
         <Alert tone="danger">{errorMessage(list.error)}</Alert>
       ) : (
-        <div
-          className={cn(
-            'grid gap-3',
-            view === 'week' ? 'sm:grid-cols-2 lg:grid-cols-7 lg:gap-2' : 'max-w-xl',
-          )}
-        >
-          {byDay.map(({ day, items }) => (
-            <section
-              key={day.toISOString()}
-              aria-label={dayFmt.format(day)}
-              className={cn(
-                'flex flex-col gap-2 rounded-xl border p-2 lg:min-h-28',
-                sameDay(day, today)
-                  ? 'border-brand-300 bg-brand-50/40'
-                  : 'border-surface-border bg-surface-muted/50',
-              )}
-            >
-              <header className="flex items-center justify-between px-1">
-                <button
-                  type="button"
-                  onClick={() => set({ view: 'day', date: toDateInput(day) })}
-                  className="text-xs font-semibold text-ink hover:underline"
-                >
-                  {shortDayFmt.format(day)}
-                </button>
-                {items.length > 0 && (
-                  <span className="text-[11px] text-ink-muted">{items.length}</span>
-                )}
-              </header>
-              {items.length === 0 ? (
-                <p className="px-1 text-xs text-ink-subtle">{tr('אין תורים')}</p>
-              ) : (
-                <ul className="flex flex-col gap-1.5">
-                  {items.map((a) => (
-                    <li key={a.id}>
-                      <AppointmentChip a={a} onOpen={setOpen} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
+        <div className="flex flex-col gap-2">
+          <TimeGrid
+            days={days}
+            appointments={list.data ?? []}
+            openingHours={business.openingHours}
+            capacity={capacity}
+            onPick={(day, time) => setSlot({ day, time })}
+            onOpen={setOpen}
+          />
+          <TimeGridLegend />
         </div>
       )}
 
@@ -283,10 +246,15 @@ export function AppointmentsPage() {
       )}
 
       <NewAppointmentDialog
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        // Today when it's in view, otherwise the first day shown.
-        day={days.find((d) => sameDay(d, today)) ?? from}
+        open={newOpen || slot !== null}
+        onOpenChange={(o) => {
+          setNewOpen(o);
+          if (!o) setSlot(null);
+        }}
+        // A picked free slot, else today when it's in view, else the first day shown.
+        day={slot?.day ?? days.find((d) => sameDay(d, today)) ?? from}
+        time={slot?.time}
+        staffId={slot ? staff || undefined : undefined}
       />
       <AppointmentDialog appointment={open} onOpenChange={(o) => !o && setOpen(null)} />
     </>

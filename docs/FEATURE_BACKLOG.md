@@ -79,3 +79,4 @@ F06 ─► F11 (after spike)
 - 2026-11-01 — Page tours (D-096): "סיור בעמוד" on every main screen, with steps that adapt to what the page shows.
 - 2026-11-01 — Notifications (D-097): bell with unread count and list, pop-ups for new leads and WhatsApp, events from the site form, WhatsApp, quotes and task reminders.
 - 2026-11-03 — Management app in English (default) with a Hebrew switch (D-100): ~1,200 strings translated, LTR/RTL by language, locale-aware dates, English e2e journey.
+- 2026-11-03 — Appointments calendar with free time slots (D-101): day/week time grid, opening hours, click a free slot to book.

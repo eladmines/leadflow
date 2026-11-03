@@ -14,12 +14,18 @@ export function NewAppointmentDialog({
   open,
   onOpenChange,
   day,
+  time: startTime,
+  staffId: startStaff,
   lead,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Pre-selected day (the calendar's current day). */
   day?: Date;
+  /** Pre-selected start time `HH:MM` (a free slot picked in the calendar). */
+  time?: string;
+  /** Pre-selected staff member (the calendar's staff filter). */
+  staffId?: string;
   /** Booking from a lead's page: the customer is fixed. */
   lead?: Pick<Lead, 'id' | 'contact'>;
 }) {
@@ -48,6 +54,8 @@ export function NewAppointmentDialog({
     setErrors({});
     create.reset();
     setDate(toDateInput(day ?? new Date()));
+    if (startTime) setTime(startTime);
+    if (startStaff) setStaffId(startStaff);
     setLeadId(lead?.id ?? '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

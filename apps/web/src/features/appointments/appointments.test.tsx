@@ -65,7 +65,59 @@ describe('appointments page', () => {
     });
     renderApp(page);
     expect(await screen.findByRole('button', { name: /רון לוי/ })).toBeInTheDocument();
-    expect(screen.getAllByRole('region').length).toBeGreaterThanOrEqual(7);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(7);
+  });
+
+  describe('free slots (D-101)', () => {
+    // A Monday well in the future, so no slot is in the past.
+    const monday = new Date();
+    monday.setDate(monday.getDate() + 14 + ((8 - monday.getDay()) % 7));
+    monday.setHours(0, 0, 0, 0);
+    const ymd = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
+    const at = (h: number, m = 0) =>
+      new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), h, m);
+    const slot = (time: string) =>
+      screen.queryByRole('button', { name: new RegExp(`^פנוי: קביעת תור ב.* ${time}$`) });
+
+    it('marks open, untaken times as free and books one with its time filled in', async () => {
+      mockApi({
+        [meKey]: me(testUser),
+        ...members,
+        [`GET ${ap.list(id)}`]: () =>
+          json(200, {
+            appointments: [
+              appt({ startsAt: at(10).toISOString(), endsAt: at(10, 45).toISOString() }),
+            ],
+          }),
+      });
+      const { user } = renderApp(`${page}?view=day&date=${ymd}`);
+      await screen.findByRole('button', { name: /רון לוי/ });
+      // Opening hours (09:00–18:00) are free except where the appointment is.
+      expect(slot('09:30')).toBeInTheDocument();
+      expect(slot('10:00')).not.toBeInTheDocument();
+      expect(slot('10:30')).not.toBeInTheDocument();
+      expect(slot('11:00')).toBeInTheDocument();
+      expect(slot('18:00')).not.toBeInTheDocument();
+
+      await user.click(slot('11:00')!);
+      const dialog = await screen.findByRole('dialog', { name: 'תור חדש' });
+      expect(within(dialog).getByLabelText('תאריך')).toHaveValue(ymd);
+      expect(within(dialog).getByLabelText('שעה')).toHaveValue('11:00');
+    });
+
+    it('a closed day has no free slots', async () => {
+      const saturday = new Date(monday);
+      saturday.setDate(monday.getDate() + 5);
+      const sat = `${saturday.getFullYear()}-${String(saturday.getMonth() + 1).padStart(2, '0')}-${String(saturday.getDate()).padStart(2, '0')}`;
+      mockApi({
+        [meKey]: me(testUser),
+        ...members,
+        [`GET ${ap.list(id)}`]: () => json(200, { appointments: [] }),
+      });
+      renderApp(`${page}?view=day&date=${sat}`);
+      expect(await screen.findByRole('columnheader')).toHaveTextContent('סגור');
+      expect(screen.queryAllByRole('button', { name: /^פנוי:/ })).toHaveLength(0);
+    });
   });
 
   it('books a new customer with the service duration', async () => {
