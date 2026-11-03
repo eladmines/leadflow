@@ -156,8 +156,8 @@ export function BusinessLayout() {
             'mx-auto flex flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6',
             // Room at the bottom so the help button never covers the last item.
             wide
-              ? 'max-w-[1600px] pb-20 lg:px-8 lg:pb-20 lg:pt-6'
-              : 'max-w-6xl pb-20 lg:px-10 lg:pb-20 lg:pt-8',
+              ? 'max-w-[1600px] pb-24 lg:px-8 lg:pb-24 lg:pt-6'
+              : 'max-w-6xl pb-24 lg:px-10 lg:pb-24 lg:pt-8',
           )}
         >
           <UnverifiedEmailBanner />

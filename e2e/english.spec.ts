@@ -7,7 +7,10 @@ test.use({
     origins: [
       {
         origin: 'http://localhost:5173',
-        localStorage: [{ name: 'leadflow.tour.off', value: '1' }],
+        localStorage: [
+          { name: 'leadflow.tour.off', value: '1' },
+          { name: 'leadflow.helper.greeted', value: '1' },
+        ],
       },
     ],
   },

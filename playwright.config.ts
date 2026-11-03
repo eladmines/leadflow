@@ -19,6 +19,7 @@ export default defineConfig({
           origin: 'http://localhost:5173',
           localStorage: [
             { name: 'leadflow.tour.off', value: '1' },
+            { name: 'leadflow.helper.greeted', value: '1' },
             { name: 'leadflow.locale', value: 'he' },
           ],
         },
