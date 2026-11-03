@@ -325,7 +325,8 @@ describe('WhatsApp booking bot (D-102)', () => {
     });
     expect(bad.statusCode).toBe(400);
     expect(bad.json().error.fields).toMatchObject({
-      'texts.greeting': 'אפשר להשתמש רק ב־{business}, {service} ו־{time}',
+      'texts.greeting':
+        'אי אפשר להשתמש בסוגריים מסולסלים { }. כדי להוסיף פרטים, השתמשו בכפתורי ההוספה.',
       'texts.pending': 'ההודעה ארוכה מדי (עד 600 תווים)',
     });
   });

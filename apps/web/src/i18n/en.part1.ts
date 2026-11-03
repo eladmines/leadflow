@@ -339,8 +339,8 @@ export const enPart1: Record<string, string> = {
   'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
   'במה אפשר לעזור?': 'How can I help?',
   'עריכת ההודעות של הבוט': "Edit the bot's messages",
-  'הלקוחות מקבלים את ההודעות בעברית. {business}, {service} ו־{time} יוחלפו בשם העסק, בשירות ובמועד שנבחרו. הכפתורים והרשימות נשארים קבועים.':
-    'Customers get these messages in Hebrew. {business}, {service} and {time} are replaced with the business name and the chosen service, date and time. Buttons and lists stay fixed.',
+  'הלקוחות מקבלים את ההודעות בעברית. פרטים בסוגריים, כמו [שם העסק], מתמלאים אוטומטית בפרטים האמיתיים. מוסיפים אותם בכפתורים שמתחת לכל הודעה. הכפתורים והרשימות בוואטסאפ נשארים קבועים.':
+    'Customers get these messages in Hebrew. Details in brackets, like [Business name], are filled in automatically with the real details. Add them with the buttons under each message. WhatsApp buttons and lists stay fixed.',
   'כך הלקוח יראה את זה:': 'What the customer sees:',
   'החזרת ברירת המחדל: {0}': 'Restore the default: {0}',
   'ברירת מחדל': 'Default',
@@ -354,8 +354,8 @@ export const enPart1: Record<string, string> = {
   'מעבר לצוות': 'Handing over to the team',
   'אין זמנים פנויים': 'No free times',
   'ההודעה ארוכה מדי (עד 600 תווים)': 'The message is too long (up to 600 characters)',
-  'אפשר להשתמש רק ב־{business}, {service} ו־{time}':
-    'Only {business}, {service} and {time} can be used',
+  'אי אפשר להשתמש בסוגריים מסולסלים { }. כדי להוסיף פרטים, השתמשו בכפתורי ההוספה.':
+    "Curly brackets { } can't be used. To add details, use the insert buttons.",
   'בקשה לתור מוואטסאפ': 'Appointment request from WhatsApp',
   '{0} מספרים חדשים כתבו בוואטסאפ': '{0} new numbers wrote on WhatsApp',
   'ומחכים לסיווג (לקוח או פרטי).': 'and are waiting to be classified (customer or personal).',

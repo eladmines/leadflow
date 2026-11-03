@@ -81,19 +81,22 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(page);
     await user.click(await screen.findByText('עריכת ההודעות של הבוט'));
+    // Placeholders read as tags in the owner's language, not codes.
+    expect(screen.getByLabelText('הודעת פתיחה')).toHaveValue(
+      'שלום! כאן [שם העסק] 👋\nרוצים לקבוע תור? בחרו שירות:',
+    );
     const confirmed = screen.getByLabelText('אישור תור');
     await user.clear(confirmed);
     await user.type(confirmed, 'נתראה ב{{business}, {{name}');
     await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
-    expect(
-      await screen.findByText('אפשר להשתמש רק ב־{business}, {service} ו־{time}'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/אי אפשר להשתמש בסוגריים מסולסלים/)).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
 
     await user.clear(confirmed);
     await user.type(confirmed, 'נתראה ב!');
     await user.keyboard('{ArrowLeft}');
     await user.click(screen.getByRole('button', { name: 'הוספה: שם העסק (אישור תור)' }));
+    expect(confirmed).toHaveValue('נתראה ב[שם העסק]!');
     expect(screen.getByText(`נתראה ב${testBusiness.name}!`)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
     expect(await screen.findByText('ההודעות נשמרו.')).toBeInTheDocument();
