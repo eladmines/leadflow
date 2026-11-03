@@ -331,8 +331,11 @@ export const enPart1: Record<string, string> = {
   'נשלחה על ידי {0}': 'Sent by {0}',
   'תשובה אוטומטית': 'Automatic reply',
   עזרה: 'Help',
-  'היי! אני העוזר של LeadFlow 👋 לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.':
-    "Hi! I'm the LeadFlow helper 👋 Click me for a page tour, the product tour or quick search.",
+  'היי {0}! 👋': 'Hi {0}! 👋',
+  'היי! 👋': 'Hi! 👋',
+  'אני העוזר של LeadFlow, ואני כאן כדי לעזור לך. לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.':
+    "I'm the LeadFlow helper, and I'm here to help you. Click me for a page tour, the product tour or quick search.",
+  'לא להציג שוב': "Don't show again",
   'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
   'במה אפשר לעזור?': 'How can I help?',
   'עריכת ההודעות של הבוט': "Edit the bot's messages",

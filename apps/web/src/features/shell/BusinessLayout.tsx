@@ -34,7 +34,8 @@ export function BusinessLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   useCommandPaletteShortcut(openPalette);
-  const userId = useMe().data?.user?.id;
+  const user = useMe().data?.user;
+  const userId = user?.id;
   const [tourOpen, setTourOpen] = useState(false);
   const ready = business.data?.status === 'ACTIVE';
   // First entry to a working business: show the tour once (D-093).
@@ -92,6 +93,8 @@ export function BusinessLayout() {
       <NotificationToasts businessId={b.id} userId={userId} />
       {pageTour && <Tour steps={pageTours[pageTour]} open onClose={() => setPageTour(null)} />}
       <HelpMenu
+        name={user?.fullName.trim().split(/\s+/)[0]}
+        busy={tourOpen || pageTour !== null}
         onPageTour={page && pageTours[page].length > 0 ? () => setPageTour(page) : null}
         onProductTour={() => setTourOpen(true)}
         onSearch={openPalette}

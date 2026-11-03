@@ -129,19 +129,40 @@ describe('help button (D-104)', () => {
 });
 
 describe('help character (D-105)', () => {
-  it('says hello once per browser', async () => {
-    localStorage.removeItem('leadflow.helper.greeted');
+  const hello = /אני העוזר של LeadFlow, ואני כאן כדי לעזור לך/;
+
+  it('greets the person by name by itself, until closed with X (once per visit)', async () => {
+    localStorage.removeItem('leadflow.helper.quiet');
     mockApi({ [meKey]: me(testUser) });
-    renderApp(section('leads'));
+    const { user } = renderApp(section('leads'));
+    const bubble = (await screen.findByText(hello, undefined, { timeout: 3000 })).closest(
+      '[role="status"]',
+    ) as HTMLElement;
     expect(
-      await screen.findByText(/אני העוזר של LeadFlow 👋/, undefined, { timeout: 3000 }),
+      within(bubble).getByText(`היי ${testUser.fullName.split(' ')[0]}! 👋`),
     ).toBeInTheDocument();
-    expect(localStorage.getItem('leadflow.helper.greeted')).toBeNull();
+    expect(within(bubble).getByText(hello)).toBeInTheDocument();
+    // It stays (no auto-hide) until closed.
+    await new Promise((r) => setTimeout(r, 300));
+    await user.click(within(bubble).getByRole('button', { name: 'סגירה' }));
+    expect(screen.queryByText(hello)).not.toBeInTheDocument();
+
+    // Same visit: not again.
     cleanup();
-    localStorage.setItem('leadflow.helper.greeted', '1');
     renderApp(section('leads'));
     await screen.findByRole('button', { name: 'עזרה' });
     await new Promise((r) => setTimeout(r, 1700));
-    expect(screen.queryByText(/אני העוזר של LeadFlow 👋/)).not.toBeInTheDocument();
+    expect(screen.queryByText(hello)).not.toBeInTheDocument();
+  });
+
+  it('"don\'t show again" keeps it quiet in later visits too', async () => {
+    localStorage.removeItem('leadflow.helper.quiet');
+    mockApi({ [meKey]: me(testUser) });
+    const { user } = renderApp(section('leads'));
+    await user.click(
+      await screen.findByRole('button', { name: 'לא להציג שוב' }, { timeout: 3000 }),
+    );
+    expect(localStorage.getItem('leadflow.helper.quiet')).toBe('1');
+    expect(screen.queryByText(hello)).not.toBeInTheDocument();
   });
 });
