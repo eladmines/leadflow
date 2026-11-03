@@ -26,7 +26,6 @@ import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useLeadDetail } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
-import { PageTourButton } from '../tour/TourContext';
 import {
   dateFmt,
   displayStatus,
@@ -161,7 +160,6 @@ export function QuoteEditorPage() {
           <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
           {tr('כל ההצעות')}
         </Link>
-        <PageTourButton />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border pb-5">
         <div className="flex flex-col gap-1">

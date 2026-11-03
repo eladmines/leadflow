@@ -1,5 +1,5 @@
 import { businessWebPaths, can, roleLabels, type Business } from '@leadflow/shared';
-import { Compass, LogOut, Search } from 'lucide-react';
+import { LogOut, Search } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { Alert, Logo } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -17,13 +17,10 @@ export function Sidebar({
   business,
   onNavigate,
   onSearch,
-  onTour,
 }: {
   business: Business;
   onNavigate?: () => void;
   onSearch?: () => void;
-  /** Replays the product tour (D-093). */
-  onTour?: () => void;
 }) {
   const me = useMe();
   const { signOut, isPending, error } = useSignOut();
@@ -108,16 +105,6 @@ export function Sidebar({
       <div className="flex flex-col gap-3 border-t border-surface-border pt-3">
         {error && <Alert tone="danger">{error}</Alert>}
         <LanguageSwitch className="px-1.5" />
-        {onTour && (
-          <button
-            type="button"
-            onClick={onTour}
-            className="flex h-8 items-center gap-2 rounded-lg px-2.5 text-sm text-ink-muted hover:bg-surface-sunken hover:text-ink"
-          >
-            <Compass aria-hidden className="h-4 w-4" />
-            {tr('סיור במערכת')}
-          </button>
-        )}
         <div className="flex items-center gap-2.5 px-1">
           <span
             aria-hidden

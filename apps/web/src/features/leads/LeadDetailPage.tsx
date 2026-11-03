@@ -53,7 +53,6 @@ import { useAppointments } from '../appointments/api';
 import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
-import { PageTourButton } from '../tour/TourContext';
 import { tr, intlLocale } from '../../i18n';
 
 const fieldLabels: Record<string, string> = {
@@ -412,7 +411,6 @@ export function LeadDetailPage() {
           <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
           {tr('כל הלידים')}
         </Link>
-        <PageTourButton />
       </div>
       <section className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-surface-border bg-surface p-6 shadow-card">
         <div className="flex items-center gap-4">

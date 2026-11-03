@@ -39,7 +39,7 @@ describe('product tour', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it('skipping remembers it for this user, and the menu button replays it', async () => {
+  it('skipping remembers it for this user, and the help menu replays it', async () => {
     mockApi({ [meKey]: me(testUser) });
     const first = renderApp(home);
     await first.user.click(within(await tourDialog()).getByRole('button', { name: 'דילוג' }));
@@ -49,7 +49,8 @@ describe('product tour', () => {
     const again = renderApp(home);
     await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    await again.user.click(screen.getAllByRole('button', { name: 'סיור במערכת' })[0]!);
+    await again.user.click(screen.getByRole('button', { name: 'עזרה' }));
+    await again.user.click(screen.getByRole('menuitem', { name: 'סיור במערכת' }));
     expect(await tourDialog()).toBeInTheDocument();
     await again.user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

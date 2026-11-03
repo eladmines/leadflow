@@ -18,6 +18,8 @@ import { markTourSeen, ProductTour, tourSeen } from '../tour/ProductTour';
 import { pageTours, type PageKey } from '../tour/pageTours';
 import { Tour } from '../tour/Tour';
 import { ToursProvider } from '../tour/TourContext';
+import { HelpMenu } from '../tour/HelpMenu';
+import { usePageKey } from '../tour/pageTours';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { NotificationToasts } from '../notifications/NotificationToasts';
 import { tr } from '../../i18n';
@@ -50,8 +52,9 @@ export function BusinessLayout() {
     startMainTour: () => setTourOpen(true),
     startPageTour: (page: PageKey) => setPageTour(page),
   };
-  // The site editor needs the full width for its live preview.
+  // The site editor needs the full width for its live preview (and has its own tour button).
   const wide = useMatch('/b/:businessId/site') !== null;
+  const page = usePageKey();
 
   if (business.isPending) return <FullPageSpinner label={tr('טוענים את העסק…')} />;
   if (business.isError) {
@@ -87,12 +90,19 @@ export function BusinessLayout() {
       </a>
 
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-e border-surface-border bg-surface-muted lg:block">
-        <Sidebar business={b} onSearch={openPalette} onTour={() => setTourOpen(true)} />
+        <Sidebar business={b} onSearch={openPalette} />
       </aside>
       <CommandPalette business={b} open={paletteOpen} onOpenChange={setPaletteOpen} />
       <ProductTour role={b.role} open={tourOpen} onClose={closeTour} />
       <NotificationToasts businessId={b.id} userId={userId} />
       {pageTour && <Tour steps={pageTours[pageTour]} open onClose={() => setPageTour(null)} />}
+      {!wide && (
+        <HelpMenu
+          onPageTour={page && pageTours[page].length > 0 ? () => setPageTour(page) : null}
+          onProductTour={() => setTourOpen(true)}
+          onSearch={openPalette}
+        />
+      )}
 
       <div className="min-w-0 flex-1">
         <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
@@ -141,10 +151,6 @@ export function BusinessLayout() {
                   closeMenu();
                   openPalette();
                 }}
-                onTour={() => {
-                  closeMenu();
-                  setTourOpen(true);
-                }}
               />
             </Dialog.Content>
           </Dialog.Portal>
@@ -155,7 +161,8 @@ export function BusinessLayout() {
           tabIndex={-1}
           className={cn(
             'mx-auto flex flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6',
-            wide ? 'max-w-[1600px] lg:px-8 lg:py-6' : 'max-w-6xl lg:px-10 lg:py-8',
+            // Room at the bottom so the help button never covers the last item.
+            wide ? 'max-w-[1600px] lg:px-8 lg:py-6' : 'max-w-6xl pb-20 lg:px-10 lg:pb-20 lg:pt-8',
           )}
         >
           <UnverifiedEmailBanner />

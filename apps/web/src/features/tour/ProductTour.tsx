@@ -6,7 +6,7 @@ import { tr } from '../../i18n';
 
 /**
  * Product tour (D-093): a few bubbles over the main menu, shown once per user on first entry and
- * replayable from "סיור במערכת". Steps follow the menu, so a role only sees screens it can open.
+ * replayable from the help button (D-104). Steps follow the menu, so a role only sees screens it can open.
  */
 
 interface MenuStep extends TourStep {
@@ -19,7 +19,7 @@ const STEPS: MenuStep[] = [
   {
     title: tr('ברוכים הבאים ל-LeadFlow'),
     body: tr(
-      'סיור קצר של דקה: נראה איפה כל דבר נמצא. הכול נמצא בתפריט (בטלפון: כפתור התפריט למעלה). אפשר לדלג בכל רגע, ובכל עמוד יש גם "סיור בעמוד".',
+      'סיור קצר של דקה: נראה איפה כל דבר נמצא. הכול נמצא בתפריט (בטלפון: כפתור התפריט למעלה). אפשר לדלג בכל רגע, ובכפתור העזרה (?) בפינת המסך יש גם סיור לכל עמוד.',
     ),
   },
   {
@@ -75,7 +75,7 @@ const STEPS: MenuStep[] = [
   },
   {
     title: tr('זהו, אפשר להתחיל!'),
-    body: tr('אפשר לחזור לסיור בכל זמן מהכפתור "סיור במערכת" בתחתית התפריט.'),
+    body: tr('אפשר לחזור לסיור בכל זמן מכפתור העזרה (?) בפינת המסך.'),
   },
 ];
 

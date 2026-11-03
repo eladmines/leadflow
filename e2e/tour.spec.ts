@@ -70,13 +70,14 @@ test('the tour walks through the menu once and replays from the sidebar', async 
   await tour.getByRole('button', { name: 'סיום' }).click();
   await expect(tour).toBeHidden();
 
-  // Seen: not shown again on the next visit, but available from the menu.
+  // Seen: not shown again on the next visit, but available from the help button.
   await page.reload();
   await expect(
     page.getByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), סיגלית/ }),
   ).toBeVisible();
   await expect(page.getByRole('dialog')).toBeHidden();
-  await page.getByRole('button', { name: 'סיור במערכת' }).click();
+  await page.getByRole('button', { name: 'עזרה' }).click();
+  await page.getByRole('menuitem', { name: 'סיור במערכת' }).click();
   await expect(
     page.getByRole('dialog').getByRole('heading', { name: 'ברוכים הבאים ל-LeadFlow' }),
   ).toBeVisible();

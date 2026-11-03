@@ -82,3 +82,4 @@ F06 ─► F11 (after spike)
 - 2026-11-03 — Appointments calendar with free time slots (D-101): day/week time grid, opening hours, click a free slot to book.
 - 2026-11-03 — WhatsApp booking bot (D-102): service → day → free time → confirm in WhatsApp lists, booked into the calendar; switch on the Conversations page; server-side free times in the business time zone.
 - 2026-11-03 — Editable booking-bot messages (D-103): five messages with placeholders, insert buttons, live preview and restore-default.
+- 2026-11-03 — Floating help button (D-104): page tour, product tour and quick search in one corner menu, replacing the header and menu tour buttons.
