@@ -69,6 +69,12 @@ export const enPart1: Record<string, string> = {
   הערות: 'Notes',
   'שמירת השינויים': 'Save changes',
   תורים: 'Appointments',
+  'לוח זמנים': 'Schedule',
+  'פנוי: קביעת תור ב{0}': 'Free: book at {0}',
+  'פנוי': 'Free',
+  'פנוי — לחצו לקביעת תור': 'Free — click to book',
+  'תור': 'Appointment',
+  'מחוץ לשעות הפעילות': 'Outside opening hours',
   'היומן של העסק: תורים, בקשות מהאתר ושירותים.':
     'The business calendar: appointments, website requests and services.',
   שירותים: 'Services',
