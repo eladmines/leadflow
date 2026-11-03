@@ -157,6 +157,8 @@ model Business {
   whatsappBotTexts       Json?          @map("whatsapp_bot_texts")
   /// "In the meantime" showcase (D-106; shared botShowcaseSchema).
   whatsappBotShowcase    Json?          @map("whatsapp_bot_showcase")
+  /// 'appointment' | 'event' (D-107); null = the industry's flow.
+  whatsappBotFlow        String?        @map("whatsapp_bot_flow") @db.VarChar(20)
   status                 BusinessStatus @default(ONBOARDING)
   /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.
   onboardingStep         Int            @default(1) @map("onboarding_step")
@@ -644,6 +646,8 @@ model WhatsAppBotSession {
   date       String?  @db.VarChar(10)
   /// HH:MM.
   time       String?  @db.VarChar(5)
+  /// Event requests (D-107): type, part of day, guests, area as they are answered.
+  data       Json?
   expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

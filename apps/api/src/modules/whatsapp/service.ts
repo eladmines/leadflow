@@ -1,6 +1,10 @@
 import { Prisma, type PrismaClient, type WhatsAppMessage as MessageRow } from '@prisma/client';
 import {
+  BOT_FLOWS,
+  botDefaultTextsFor,
+  botFlowFor,
   botShowcaseSchema,
+  type BotFlow,
   botTextsSchema,
   showcaseDefaultText,
   showcaseMessages,
@@ -487,9 +491,13 @@ export class WhatsAppService {
         whatsappBotAutoConfirm: true,
         whatsappBotTexts: true,
         whatsappBotShowcase: true,
+        whatsappBotFlow: true,
       },
     });
     const texts = botTextsSchema.safeParse(b.whatsappBotTexts ?? {});
+    const chosen = (BOT_FLOWS as readonly string[]).includes(b.whatsappBotFlow ?? '')
+      ? (b.whatsappBotFlow as BotFlow)
+      : null;
     const sc = botShowcaseSchema.safeParse(b.whatsappBotShowcase ?? { enabled: false });
     const showcase = sc.success ? sc.data : { enabled: false, link: null, assetIds: [] };
     return {
@@ -498,6 +506,9 @@ export class WhatsAppService {
         enabled: b.whatsappBotEnabled,
         autoConfirm: b.whatsappBotAutoConfirm,
         texts: texts.success ? texts.data : {},
+        flow: chosen ?? botFlowFor(b.industry),
+        flowIsDefault: chosen === null,
+        defaults: botDefaultTextsFor(b.industry),
         showcase: {
           enabled: showcase.enabled,
           ...('text' in showcase && showcase.text ? { text: showcase.text } : {}),
@@ -521,6 +532,7 @@ export class WhatsAppService {
           whatsappBotAutoConfirm: input.autoConfirm,
           whatsappBotTexts: input.texts,
           whatsappBotShowcase: input.showcase,
+          whatsappBotFlow: input.flow,
         },
       });
       // Switching off ends conversations in progress.

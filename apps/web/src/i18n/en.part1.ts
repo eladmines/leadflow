@@ -338,6 +338,18 @@ export const enPart1: Record<string, string> = {
   'לא להציג שוב': "Don't show again",
   'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
   'במה אפשר לעזור?': 'How can I help?',
+  'איך לקוחות מזמינים:': 'How customers book:',
+  'לקוח שכותב בוואטסאפ על אירוע (או מספר חדש שכותב בפעם הראשונה) עונה על כמה שאלות קצרות, והבקשה נכנסת למערכת. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.':
+    'A customer who writes on WhatsApp about an event (or a new number writing for the first time) answers a few short questions, and the request goes into LeadFlow. The bot never answers personal numbers, and stays quiet in a chat a team member has written in or when the customer asks to talk to the team.',
+  'סוג האירוע': 'Event type',
+  'תאריך האירוע': 'Event date',
+  '(מתאים לתחום שלכם)': '(suits your industry)',
+  'הלקוח בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, והתאריך נשמר עד שתאשרו. משם אפשר להכין לו הצעת מחיר.':
+    'The customer picks an event type, types a date, then chooses the part of day, number of guests and area. The request lands in "Pending requests" under Appointments, and the date is held until you confirm. From there you can prepare a quote.',
+  'תורים בשעות פנויות': 'Appointments in free time slots',
+  'בקשות לאירוע (תאריך, אורחים, אזור)': 'Event requests (date, guests, area)',
+  'בקשה לאירוע התקבלה': 'Event request received',
+  'התאריך תפוס': 'Date taken',
   'בינתיים, הצצה לעבודות שלנו': 'Meanwhile, a look at our work',
   פעיל: 'On',
   כבוי: 'Off',

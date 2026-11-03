@@ -373,6 +373,55 @@ export class AppointmentService {
     return created;
   }
 
+  /**
+   * An event request from the WhatsApp bot (D-107): REQUESTED with no staff member yet (like a
+   * website request), holding the date until the team confirms it — usually with a quote.
+   */
+  async requestEventFromWhatsApp(
+    db: Db,
+    input: {
+      businessId: string;
+      contactId: string;
+      leadId: string;
+      serviceId: string | null;
+      startsAt: Date;
+      endsAt: Date;
+      notes: string;
+      eventType: string;
+    },
+  ): Promise<{ id: string }> {
+    const created = await db.appointment.create({
+      data: {
+        businessId: input.businessId,
+        contactId: input.contactId,
+        leadId: input.leadId,
+        serviceId: input.serviceId,
+        staffId: null,
+        startsAt: input.startsAt,
+        endsAt: input.endsAt,
+        status: 'REQUESTED',
+        source: 'whatsapp',
+        notes: input.notes.slice(0, 1000),
+      },
+      select: { id: true },
+    });
+    await db.activity.create({
+      data: {
+        businessId: input.businessId,
+        leadId: input.leadId,
+        type: 'appointment.created',
+        data: {
+          startsAt: input.startsAt.toISOString(),
+          service: input.eventType,
+          staff: null,
+          source: 'whatsapp',
+          requested: true,
+        },
+      },
+    });
+    return created;
+  }
+
   async update(ctx: TenantContext, id: string, input: UpdateInput): Promise<Appointment> {
     const row = await this.prisma.$transaction(async (tx) => {
       const appt = await this.findVisible(ctx, id, tx);

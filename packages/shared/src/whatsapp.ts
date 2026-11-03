@@ -133,8 +133,50 @@ export type ClassifyNumberResponse = z.infer<typeof classifyNumberResponseSchema
  * appointment is booked. Off by default; never answers personal numbers or a chat the team took over.
  */
 /** Bot messages the business can rewrite (buttons, list labels and the steps stay fixed). */
-export const BOT_TEXT_KEYS = ['greeting', 'confirmed', 'pending', 'handoff', 'noTimes'] as const;
+export const BOT_TEXT_KEYS = [
+  'greeting',
+  'confirmed',
+  'pending',
+  'handoff',
+  'noTimes',
+  'eventReceived',
+  'dateTaken',
+] as const;
 export type BotTextKey = (typeof BOT_TEXT_KEYS)[number];
+
+/**
+ * How customers book (D-107): `appointment` = a free time slot (service → day → time), `event` =
+ * a request for a date (event type → date → part of day → guests → area), confirmed by the team,
+ * typically with a quote. The default follows the industry; the business can switch.
+ */
+export const BOT_FLOWS = ['appointment', 'event'] as const;
+export type BotFlow = (typeof BOT_FLOWS)[number];
+export const botFlowLabels: Record<BotFlow, string> = {
+  appointment: 'תורים בשעות פנויות',
+  event: 'בקשות לאירוע (תאריך, אורחים, אזור)',
+};
+const EVENT_INDUSTRIES = ['events', 'catering', 'photo'];
+export const botFlowFor = (industry: string): BotFlow =>
+  EVENT_INDUSTRIES.includes(industry) ? 'event' : 'appointment';
+
+/** The messages each flow sends. */
+export const botTextKeysFor = (flow: BotFlow): readonly BotTextKey[] =>
+  flow === 'event'
+    ? ['greeting', 'eventReceived', 'dateTaken', 'handoff']
+    : ['greeting', 'confirmed', 'pending', 'handoff', 'noTimes'];
+
+/** Event types offered when the business has no services of its own. */
+export function eventTypesFor(industry: string): string[] {
+  if (industry === 'catering') {
+    return ['חתונה', 'בר/בת מצווה', 'אירוע חברה', 'ארוחה פרטית', 'שבת / חג', 'אחר'];
+  }
+  if (industry === 'photo') {
+    return ['חתונה', 'צילומי משפחה', 'הריון וניובורן', 'אירוע חברה', 'תדמית ומוצר', 'אחר'];
+  }
+  return ['חתונה', 'בר/בת מצווה', 'יום הולדת', 'אירוע חברה', 'מסיבה פרטית', 'אחר'];
+}
+/** Photo shoots don't ask for the number of guests. */
+export const asksGuests = (industry: string) => industry !== 'photo';
 export const BOT_TEXT_MAX = 600;
 /** Filled in when the message is sent: business name, chosen service, chosen date and time. */
 export const BOT_PLACEHOLDERS = ['{business}', '{service}', '{time}'] as const;
@@ -150,6 +192,8 @@ export const botTextLabels: Record<BotTextKey, string> = {
   pending: 'בקשה שממתינה לאישור',
   handoff: 'מעבר לצוות',
   noTimes: 'אין זמנים פנויים',
+  eventReceived: 'בקשה לאירוע התקבלה',
+  dateTaken: 'התאריך תפוס',
 };
 
 export const botDefaultTexts: Record<BotTextKey, string> = {
@@ -160,7 +204,55 @@ export const botDefaultTexts: Record<BotTextKey, string> = {
   handoff: 'בסדר! העברנו את השיחה לצוות, נחזור אליכם כאן בהקדם 🙂',
   noTimes:
     'מצטערים, אין כרגע זמנים פנויים בשבועיים הקרובים. העברנו את הפנייה לצוות ונחזור אליכם כאן 🙏',
+  eventReceived: 'תודה! קיבלנו את הפרטים ל{service} ב{time} 🙏\nנחזור אליכם בהקדם עם הצעה מסודרת.',
+  dateTaken: 'התאריך הזה כבר תפוס אצלנו 😕 רוצים לבדוק תאריך אחר?',
 };
+
+/** Per industry, the messages that differ from the general ones (D-107). */
+const industryTexts: Record<string, Partial<Record<BotTextKey, string>>> = {
+  studio: {
+    greeting: 'היי! כאן {business} 💪\nרוצים לקבוע שיעור או אימון? בחרו:',
+    confirmed: 'מעולה! שריינו לכם {service} ל{time} ✅\nנתראה ב{business}! לשינוי או ביטול, כתבו לנו כאן.',
+    pending: 'קיבלנו את הבקשה ל{service} ב{time} 🙏\nנאשר לכם את המקום בהקדם.',
+  },
+  therapy: {
+    greeting: 'שלום, כאן {business}.\nרוצים לקבוע פגישה? בחרו את סוג הפגישה:',
+    confirmed: 'הפגישה נקבעה: {service}, {time} ✅\nלשינוי או ביטול אפשר לכתוב כאן.',
+    pending: 'קיבלנו את הבקשה לפגישה ב{time} 🙏\nאאשר בהקדם.',
+    handoff: 'בסדר, העברתי את השיחה. אחזור אליכם כאן בהקדם.',
+  },
+  tutoring: {
+    greeting: 'היי! כאן {business} 📚\nרוצים לקבוע שיעור? בחרו:',
+    confirmed: 'השיעור נקבע: {service}, {time} ✅\nלשינוי או ביטול, כתבו לנו כאן.',
+    pending: 'קיבלנו את הבקשה לשיעור ב{time} 🙏\nנאשר בהקדם.',
+  },
+  trades: {
+    greeting: 'היי! כאן {business} 🛠️\nרוצים לתאם ביקור? בחרו את סוג העבודה:',
+    confirmed: 'מעולה! תיאמנו ביקור ל{time} ({service}) ✅\nלשינוי או ביטול, כתבו לנו כאן.',
+    pending: 'קיבלנו את הבקשה לביקור ב{time} 🙏\nנאשר לכם בהקדם.',
+  },
+  garage: {
+    greeting: 'היי! כאן {business} 🔧\nרוצים לקבוע תור למוסך? בחרו טיפול:',
+  },
+  events: {
+    greeting: 'היי! כאן {business} 🎧\nמתכננים אירוע? בחרו את סוג האירוע:',
+  },
+  catering: {
+    greeting: 'היי! כאן {business} 🍽️\nאיזה אירוע אתם מתכננים? בחרו:',
+    eventReceived:
+      'תודה! קיבלנו את הפרטים ל{service} ב{time} 🙏\nנחזור אליכם בהקדם עם הצעה ותפריט מותאם.',
+  },
+  photo: {
+    greeting: 'היי! כאן {business} 📸\nמה מצלמים? בחרו:',
+    eventReceived: 'תודה! קיבלנו את הפרטים לצילום ({service}) ב{time} 🙏\nנחזור אליכם בהקדם עם הצעה.',
+  },
+};
+
+/** The default messages for a business in this industry. */
+export const botDefaultTextsFor = (industry: string): Record<BotTextKey, string> => ({
+  ...botDefaultTexts,
+  ...industryTexts[industry],
+});
 
 export const botTextMessages = {
   tooLong: `ההודעה ארוכה מדי (עד ${BOT_TEXT_MAX} תווים)`,
@@ -221,6 +313,11 @@ const industryShowcase: Record<string, string> = {
   studio: 'בינתיים, הנה הצצה לסטודיו ולשיעורים שלנו 💪',
   garage: 'בינתיים, הנה קצת עלינו ועל העבודה שלנו 🔧',
   trades: 'בינתיים, הנה כמה מהעבודות שעשינו לאחרונה 🛠️',
+  events: 'בינתיים, הנה הצצה לאירועים שלנו 🎧',
+  catering: 'בינתיים, הנה כמה מהמנות והאירועים שלנו 🍽️',
+  photo: 'בינתיים, הנה כמה מהצילומים שלנו 📸',
+  therapy: 'בינתיים, הנה קצת עליי ועל הדרך שלי 🌿',
+  tutoring: 'בינתיים, הנה קצת על השיעורים שלנו 📚',
 };
 /** The showcase message until the business writes its own. */
 export const showcaseDefaultText = (industry: string) =>
@@ -251,9 +348,11 @@ export const whatsappBotSettingsSchema = z.object({
   enabled: z.boolean(),
   /** true: booked as confirmed; false: booked as "waiting for approval" (holds the time). */
   autoConfirm: z.boolean(),
-  /** The business's own wording; missing keys use `botDefaultTexts`. */
+  /** The business's own wording; missing keys use the industry's defaults. */
   texts: botTextsSchema.default({}),
   showcase: botShowcaseSchema.default({ enabled: false }),
+  /** Null = the industry's flow. */
+  flow: z.enum(BOT_FLOWS).nullable().default(null),
 });
 export type WhatsAppBotSettings = z.input<typeof whatsappBotSettingsSchema>;
 
@@ -268,6 +367,13 @@ export const whatsappBotResponseSchema = z.object({
         BotTextKey,
         z.ZodOptional<z.ZodString>
       >,
+    ),
+    /** The flow in use, and whether it is the industry's default. */
+    flow: z.enum(BOT_FLOWS),
+    flowIsDefault: z.boolean(),
+    /** The industry's default messages (shown until the business writes its own). */
+    defaults: z.object(
+      Object.fromEntries(BOT_TEXT_KEYS.map((k) => [k, z.string()])) as Record<BotTextKey, z.ZodString>,
     ),
     showcase: z.object({
       enabled: z.boolean(),

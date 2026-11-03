@@ -451,8 +451,10 @@ export const templateInfo: Record<TemplateKey, { label: string; description: str
 
 /** Suggested template for an industry (owners can pick either). */
 export function templateForIndustry(industry: string): TemplateKey {
-  if (industry === 'beauty' || industry === 'studio') return 'beauty';
+  if (['beauty', 'studio', 'events', 'photo'].includes(industry)) return 'beauty';
   if (industry === 'garage') return 'garage';
+  if (industry === 'catering') return 'food';
+  if (industry === 'therapy' || industry === 'tutoring') return 'clinic';
   return 'trades';
 }
 

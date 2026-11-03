@@ -85,3 +85,4 @@ F06 ─► F11 (after spike)
 - 2026-11-03 — Floating help button (D-104): page tour, product tour and quick search in one corner menu, replacing the header and menu tour buttons.
 - 2026-11-03 — Animated help character (D-105) replaces the "?" icon; one-time hello bubble.
 - 2026-11-03 — Booking-bot showcase (D-106): message + link + up to 3 photos for customers who don't book (cancel, team, no times, stopped mid-way), "See our work" option, once a day.
+- 2026-11-03 — Bot per industry (D-107): 5 new industries, industry default messages, and an event-request flow (type → date → part of day → guests → area) for DJs, catering and photographers.

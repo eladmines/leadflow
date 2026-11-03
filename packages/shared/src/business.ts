@@ -27,12 +27,29 @@ export const businessStatusSchema = z.enum(BUSINESS_STATUSES);
 export type BusinessStatus = z.infer<typeof businessStatusSchema>;
 
 /** Industries from the PRD's target audience (§1). Stored as the code. */
-export const INDUSTRIES = ['trades', 'beauty', 'studio', 'garage', 'services', 'other'] as const;
+export const INDUSTRIES = [
+  'trades',
+  'beauty',
+  'studio',
+  'garage',
+  'events',
+  'catering',
+  'photo',
+  'therapy',
+  'tutoring',
+  'services',
+  'other',
+] as const;
 export const industryLabels: Record<(typeof INDUSTRIES)[number], string> = {
   trades: 'בעלי מקצוע (חשמל, אינסטלציה, שיפוצים)',
   beauty: 'מספרה וקוסמטיקה',
   studio: 'סטודיו וכושר',
   garage: 'מוסך',
+  events: 'די־ג׳יי והפקת אירועים',
+  catering: 'שף וקייטרינג',
+  photo: 'צילום',
+  therapy: 'טיפול ואימון אישי',
+  tutoring: 'מורים ושיעורים פרטיים',
   services: 'נותני שירות',
   other: 'אחר',
 };
