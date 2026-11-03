@@ -10,6 +10,12 @@ const id = testBusiness.id;
 const meKey = `GET ${apiPaths.auth.me}`;
 const section = (s: string) => businessWebPaths.section(id, s);
 
+/** Help button → "סיור בעמוד" (D-104). */
+async function openPageTour(user: ReturnType<typeof renderApp>['user']) {
+  await user.click(await screen.findByRole('button', { name: 'עזרה' }));
+  await user.click(screen.getByRole('menuitem', { name: 'סיור בעמוד' }));
+}
+
 describe('page tours (D-096)', () => {
   it('maps each screen to its tour', () => {
     expect(pageKeyFor(`/b/${id}`)).toBe('dashboard');
@@ -23,10 +29,10 @@ describe('page tours (D-096)', () => {
     expect(pageKeyFor(`/b/${id}/automations`)).toBeNull();
   });
 
-  it('runs the leads page tour from "סיור בעמוד"', async () => {
+  it('runs the leads page tour from the help menu', async () => {
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('leads'));
-    await user.click(await screen.findByRole('button', { name: 'סיור בעמוד' }));
+    await openPageTour(user);
     const first = await screen.findByRole('dialog', { name: 'ליד חדש' });
     // Owner sees the export button, so every leads step applies.
     expect(within(first).getByText(/^1 מתוך \d+$/)).toBeInTheDocument();
@@ -44,7 +50,7 @@ describe('page tours (D-096)', () => {
     });
     const { user } = renderApp(section('conversations'));
     await screen.findByText('WhatsApp עדיין לא מחובר');
-    await user.click(screen.getByRole('button', { name: 'סיור בעמוד' }));
+    await openPageTour(user);
     // Nothing to classify and no personal numbers: only the introduction is left.
     const only = await screen.findByRole('dialog', { name: 'שיחות WhatsApp' });
     expect(within(only).getByText('1 מתוך 1')).toBeInTheDocument();
@@ -55,23 +61,26 @@ describe('page tours (D-096)', () => {
   it('the dashboard has its own tour', async () => {
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(businessWebPaths.home(id));
-    await user.click(await screen.findByRole('button', { name: 'סיור בעמוד' }));
+    await openPageTour(user);
     expect(await screen.findByRole('dialog', { name: 'הדשבורד' })).toBeInTheDocument();
   });
 
   it('runs the settings tour over its sections', async () => {
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('settings'));
-    await user.click(await screen.findByRole('button', { name: 'סיור בעמוד' }));
+    await openPageTour(user);
     const first = await screen.findByRole('dialog', { name: 'פרטי העסק' });
     expect(within(first).getByText('1 מתוך 4')).toBeInTheDocument();
   });
 
-  it('screens without a tour show no button', async () => {
+  it('screens without a tour leave it out of the help menu', async () => {
     mockApi({ [meKey]: me(testUser) });
-    renderApp(section('automations'));
+    const { user } = renderApp(section('automations'));
     await screen.findByRole('heading', { level: 1 });
-    expect(screen.queryByRole('button', { name: 'סיור בעמוד' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'עזרה' }));
+    const menu = screen.getByRole('menu', { name: 'עזרה' });
+    expect(within(menu).queryByRole('menuitem', { name: 'סיור בעמוד' })).not.toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: 'סיור במערכת' })).toBeInTheDocument();
   });
 
   it('the dashboard marks WhatsApp as connected when it is', async () => {
@@ -81,5 +90,40 @@ describe('page tours (D-096)', () => {
     });
     renderApp(businessWebPaths.home(id));
     expect(await screen.findByText('מחובר: הודעות מוואטסאפ נכנסות כלידים')).toBeInTheDocument();
+  });
+});
+
+describe('help button (D-104)', () => {
+  it('opens with the keyboard, moves with the arrows and closes with Escape', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    const { user } = renderApp(section('leads'));
+    const help = await screen.findByRole('button', { name: 'עזרה' });
+    help.focus();
+    await user.keyboard('{ArrowDown}');
+    const menu = screen.getByRole('menu', { name: 'עזרה' });
+    const items = within(menu).getAllByRole('menuitem');
+    expect(items.map((i) => i.textContent)).toEqual([
+      'סיור בעמוד',
+      'סיור במערכת',
+      expect.stringMatching(/^חיפוש מהיר/),
+    ]);
+    expect(items[0]).toHaveFocus();
+    await user.keyboard('{ArrowUp}');
+    expect(items[2]).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('dialog', { name: 'חיפוש מהיר' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await user.click(help);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(help).toHaveFocus();
+  });
+
+  it('is not shown in the site editor (it has its own tour button)', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    renderApp(section('site'));
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByRole('button', { name: 'עזרה' })).not.toBeInTheDocument();
   });
 });

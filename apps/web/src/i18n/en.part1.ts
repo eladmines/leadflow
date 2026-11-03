@@ -330,6 +330,7 @@ export const enPart1: Record<string, string> = {
   'ממתינים לאישור שלכם (הזמן נשמר בינתיים)': 'Wait for your approval (the time is held meanwhile)',
   'נשלחה על ידי {0}': 'Sent by {0}',
   'תשובה אוטומטית': 'Automatic reply',
+  עזרה: 'Help',
   'עריכת ההודעות של הבוט': "Edit the bot's messages",
   'הלקוחות מקבלים את ההודעות בעברית. {business}, {service} ו־{time} יוחלפו בשם העסק, בשירות ובמועד שנבחרו. הכפתורים והרשימות נשארים קבועים.':
     'Customers get these messages in Hebrew. {business}, {service} and {time} are replaced with the business name and the chosen service, date and time. Buttons and lists stay fixed.',

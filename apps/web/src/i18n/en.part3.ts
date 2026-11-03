@@ -216,8 +216,8 @@ export const enPart3: Record<string, string> = {
   'הזמנות ממתינות': 'Pending invitations',
   'ביטול ההזמנה של {0}': "Cancel {0}'s invitation",
   'ברוכים הבאים ל-LeadFlow': 'Welcome to LeadFlow',
-  'סיור קצר של דקה: נראה איפה כל דבר נמצא. הכול נמצא בתפריט (בטלפון: כפתור התפריט למעלה). אפשר לדלג בכל רגע, ובכל עמוד יש גם "סיור בעמוד".':
-    'A one-minute tour of where everything is. It\'s all in the menu (on a phone: the menu button at the top). You can skip any time, and every page has its own "Page tour".',
+  'סיור קצר של דקה: נראה איפה כל דבר נמצא. הכול נמצא בתפריט (בטלפון: כפתור התפריט למעלה). אפשר לדלג בכל רגע, ובכפתור העזרה (?) בפינת המסך יש גם סיור לכל עמוד.':
+    "A one-minute tour of where everything is. It's all in the menu (on a phone: the menu button at the top). You can skip any time, and the help button (?) in the corner has a tour for every page.",
   'התמונה הכללית של העסק: פניות חדשות, משימות להיום והצעד הבא שכדאי לעשות.':
     "Your business at a glance: new inquiries, today's tasks and the next step to take.",
   'בונים ועורכים את אתר העסק ישירות על העמוד ומפרסמים בלחיצה. כל פנייה מהאתר נכנסת למערכת.':
@@ -237,8 +237,8 @@ export const enPart3: Record<string, string> = {
   'מחפשים לקוח או קופצים לכל מסך. אפשר גם בקיצור {0}.':
     'Find a customer or jump to any screen. Shortcut: {0}.',
   'זהו, אפשר להתחיל!': "That's it, you're ready!",
-  'אפשר לחזור לסיור בכל זמן מהכפתור "סיור במערכת" בתחתית התפריט.':
-    'You can replay the tour any time with "Product tour" at the bottom of the menu.',
+  'אפשר לחזור לסיור בכל זמן מכפתור העזרה (?) בפינת המסך.':
+    'You can replay the tour any time from the help button (?) in the corner of the screen.',
   'יאללה, מתחילים': "Let's go",
   הבא: 'Next',
   'סגירת הסיור': 'Close tour',
