@@ -143,6 +143,7 @@ export function BusinessLayout() {
               <Sidebar
                 business={b}
                 onNavigate={closeMenu}
+                inDrawer
                 onSearch={() => {
                   closeMenu();
                   openPalette();

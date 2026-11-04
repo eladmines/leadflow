@@ -17,10 +17,13 @@ export function Sidebar({
   business,
   onNavigate,
   onSearch,
+  inDrawer = false,
 }: {
   business: Business;
   onNavigate?: () => void;
   onSearch?: () => void;
+  /** The mobile drawer's close button sits at the top end corner; keep the top row clear of it. */
+  inDrawer?: boolean;
 }) {
   const me = useMe();
   const { signOut, isPending, error } = useSignOut();
@@ -29,9 +32,12 @@ export function Sidebar({
 
   return (
     <div className="flex h-full flex-col gap-4 px-3 py-4">
-      <div className="flex items-center justify-between gap-2 ps-2 pt-1">
+      <div className={cn('flex items-center justify-between gap-2 ps-2 pt-1', inDrawer && 'pe-10')}>
         <Logo />
-        <NotificationBell businessId={business.id} onNavigate={onNavigate} />
+        <div className="flex items-center gap-1">
+          <LanguageSwitch />
+          <NotificationBell businessId={business.id} onNavigate={onNavigate} />
+        </div>
       </div>
       <BusinessSwitcher business={business} onNavigate={onNavigate} />
       {onSearch && (
@@ -104,7 +110,6 @@ export function Sidebar({
 
       <div className="flex flex-col gap-3 border-t border-surface-border pt-3">
         {error && <Alert tone="danger">{error}</Alert>}
-        <LanguageSwitch className="px-1.5" />
         <div className="flex items-center gap-2.5 px-1">
           <span
             aria-hidden

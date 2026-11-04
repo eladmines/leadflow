@@ -174,7 +174,7 @@ export const pageTours: Record<PageKey, TourStep[]> = {
     {
       target: anywhere('[aria-label="Language / שפה"]'),
       title: tr('שפה'),
-      body: tr('מחליפים בין אנגלית לעברית. ההחלפה נשמרת בדפדפן הזה.'),
+      body: tr('לוחצים על הדגל כדי להחליף בין אנגלית לעברית. ההחלפה נשמרת בדפדפן הזה.'),
     },
     {
       target: anywhere(`button[aria-haspopup="menu"][aria-label="${tr('עזרה')}"]`),
