@@ -46,10 +46,10 @@ import { useWhatsAppInbox } from '../whatsapp/api';
 import { tr, intlLocale } from '../../i18n';
 
 export const stageTone: Record<Lead['stage']['kind'], string> = {
-  // Solid, friendly tags (D-111); white text passes contrast on each.
-  OPEN: 'bg-brand-600 text-white',
-  WON: 'bg-emerald-700 text-white',
-  LOST: 'bg-slate-500 text-white',
+  // Soft tags (D-112): the text carries the meaning, the tint helps scanning.
+  OPEN: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100',
+  WON: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100',
+  LOST: 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
 };
 
 const leadPath = (businessId: string, leadId: string) =>

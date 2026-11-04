@@ -53,7 +53,7 @@ export function BusinessSwitcher({
         <div className="flex items-center gap-2.5 rounded-xl bg-surface p-2 shadow-card">
           <span
             aria-hidden
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-coral-500 text-sm font-semibold text-white"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-600 text-sm font-semibold text-white"
           >
             {business.name.trim().charAt(0)}
           </span>

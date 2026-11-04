@@ -32,7 +32,6 @@ import { groupTasks, useTasks } from '../tasks/api';
 import { TaskItem } from '../tasks/TaskItem';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useWhatsAppInbox } from '../whatsapp/api';
-import { HelpCharacter } from '../tour/HelpCharacter';
 import { stageTone } from '../leads/LeadsPage';
 import { tr } from '../../i18n';
 
@@ -46,7 +45,7 @@ function WeekStats({ businessId }: { businessId: string }) {
   const stats = [
     {
       icon: Inbox,
-      tone: { strip: 'bg-sky-500', icon: 'bg-sky-500', note: 'text-sky-700' },
+      tone: 'bg-sky-50 text-sky-700',
       label: tr('פניות ב־7 הימים האחרונים'),
       value: String(report.leads.current),
       note:
@@ -56,14 +55,14 @@ function WeekStats({ businessId }: { businessId: string }) {
     },
     {
       icon: Trophy,
-      tone: { strip: 'bg-amber-500', icon: 'bg-amber-500', note: 'text-amber-700' },
+      tone: 'bg-amber-50 text-amber-700',
       label: tr('יחס סגירה'),
       value: report.closeRate === null ? '—' : `${Math.round(report.closeRate * 100)}%`,
       note: report.closeRate === null ? tr('עוד אין פניות שהוכרעו') : tr('מהפניות של השבוע'),
     },
     {
       icon: Timer,
-      tone: { strip: 'bg-violet-500', icon: 'bg-violet-500', note: 'text-violet-700' },
+      tone: 'bg-violet-50 text-violet-700',
       label: tr('זמן תגובה ממוצע'),
       value: report.avgResponseMinutes === null ? '—' : durationLabel(report.avgResponseMinutes),
       note: report.avgResponseMinutes === null ? tr('עוד לא טופלו פניות') : tr('עד הטיפול הראשון'),
@@ -79,22 +78,23 @@ function WeekStats({ businessId }: { businessId: string }) {
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {stats.map((s) => (
-          <Card key={s.label} className="relative flex flex-col gap-1 overflow-hidden">
-            <span aria-hidden className={cn('absolute inset-x-0 top-0 h-1.5', s.tone.strip)} />
+          <Card key={s.label} className="flex items-start gap-4">
             <span
               aria-hidden
               className={cn(
-                'mb-2 flex h-10 w-10 items-center justify-center rounded-full text-white',
-                s.tone.icon,
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                s.tone,
               )}
             >
               <s.icon className="h-5 w-5" />
             </span>
-            <span className="text-sm text-ink-muted">{s.label}</span>
-            <span className="text-3xl font-bold tabular-nums text-ink">
-              <bdi>{s.value}</bdi>
-            </span>
-            <span className={cn('text-xs font-medium', s.tone.note)}>{s.note}</span>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-sm text-ink-muted">{s.label}</span>
+              <span className="text-2xl font-semibold tabular-nums text-ink">
+                <bdi>{s.value}</bdi>
+              </span>
+              <span className="text-xs text-ink-muted">{s.note}</span>
+            </div>
           </Card>
         ))}
       </div>
@@ -127,7 +127,7 @@ function ProgressRing({ done, total }: { done: number; total: number }) {
         stroke="currentColor"
         strokeDasharray={c}
         strokeDashoffset={c * (1 - done / total)}
-        className="text-coral-500 transition-[stroke-dashoffset] duration-700"
+        className="text-brand-500 transition-[stroke-dashoffset] duration-700"
       />
     </svg>
   );
@@ -168,7 +168,7 @@ function EmptyInboxArt() {
         strokeWidth="3"
         strokeLinecap="round"
       />
-      <circle cx="92" cy="18" r="7" className="fill-coral-400" />
+      <circle cx="92" cy="18" r="7" className="fill-brand-200" />
     </svg>
   );
 }
@@ -176,18 +176,15 @@ function EmptyInboxArt() {
 function ProfileRow({
   icon: Icon,
   label,
-  tone,
   children,
 }: {
   icon: LucideIcon;
   label: string;
-  /** Icon tile colours (D-111). */
-  tone: string;
   children: ReactNode;
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', tone)}>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
         <Icon aria-hidden className="h-4 w-4" />
       </span>
       <div className="flex min-w-0 flex-col">
@@ -196,21 +193,6 @@ function ProfileRow({
       </div>
     </div>
   );
-}
-
-/** A steady colour per person for their initial (decorative; the name is next to it). */
-const AVATAR_TONES = [
-  'bg-sky-600',
-  'bg-amber-600',
-  'bg-violet-600',
-  'bg-rose-600',
-  'bg-emerald-600',
-  'bg-orange-600',
-];
-function avatarTone(name: string): string {
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return AVATAR_TONES[h % AVATAR_TONES.length]!;
 }
 
 /**
@@ -281,36 +263,20 @@ export function DashboardPage() {
 
   return (
     <>
-      {/* Welcome banner (D-111): blue into the logo's coral, the helper waving hello. The text sits
-          on the dark blue side (white text stays readable); decoration is aria-hidden. */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-600 via-brand-500 to-coral-500 p-6 text-white shadow-lift rtl:bg-gradient-to-l sm:p-8">
+      {/* Welcome banner (D-112): a calm blue gradient, one soft shape; decoration is aria-hidden. */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 p-6 text-white shadow-card rtl:bg-gradient-to-l sm:p-8">
         <span
           aria-hidden
-          className="absolute -top-8 end-48 hidden h-28 w-28 rounded-full bg-white/10 sm:block"
-        />
-        <span
-          aria-hidden
-          className="absolute -bottom-12 end-8 hidden h-36 w-36 rounded-full bg-amber-300/30 sm:block"
-        />
-        <span
-          aria-hidden
-          className="absolute end-72 top-6 hidden h-2.5 w-2.5 rounded-full bg-amber-300 sm:block"
-        />
-        <span
-          aria-hidden
-          className="absolute end-32 top-10 hidden h-3 w-3 rotate-45 bg-coral-100 sm:block"
+          className="absolute -end-16 -top-24 hidden h-64 w-64 rounded-full bg-white/[0.07] sm:block"
         />
         <div className="relative flex flex-wrap items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <span className="hidden h-24 w-24 shrink-0 items-center justify-center rounded-full bg-white shadow-md sm:flex">
-              <HelpCharacter happy className="h-20 w-20" />
-            </span>
             <div className="flex flex-col gap-2">
               <p className="text-sm font-medium text-brand-100">
                 {business.name} · {tr(roleLabels[business.role])}
               </p>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                {greeting()}, {firstName}! 👋
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                {greeting()}, {firstName}
               </h1>
               <p className="max-w-md text-base text-brand-50">
                 {next
@@ -323,7 +289,7 @@ export function DashboardPage() {
                 (next?.label === tr('בניית אתר העסק') || next?.label === tr('פרסום האתר')) && (
                   <Link
                     to={businessWebPaths.section(business.id, 'site')}
-                    className="mt-2 inline-flex h-10 items-center self-start rounded-xl bg-white px-4 text-sm font-semibold text-brand-700 shadow hover:bg-brand-50 focus-visible:ring-white focus-visible:ring-offset-brand-700"
+                    className="mt-2 inline-flex h-10 items-center self-start rounded-lg bg-white px-4 text-sm font-medium text-brand-700 shadow-sm hover:bg-brand-50 focus-visible:ring-white focus-visible:ring-offset-brand-700"
                   >
                     {next.label === tr('בניית אתר העסק') ? tr('לבניית האתר') : tr('לפרסום האתר')}
                   </Link>
@@ -336,7 +302,7 @@ export function DashboardPage() {
             aria-valuemin={0}
             aria-valuemax={checklist.length}
             aria-valuenow={done}
-            className="relative flex items-center justify-center rounded-2xl bg-white p-2 text-ink shadow-md"
+            className="relative flex items-center justify-center rounded-xl bg-white p-2 text-ink shadow-card"
           >
             <ProgressRing done={done} total={checklist.length} />
             <span className="absolute text-lg font-bold text-ink">
@@ -434,10 +400,7 @@ export function DashboardPage() {
                 <li key={l.id} className="flex items-center gap-3 py-3">
                   <span
                     aria-hidden
-                    className={cn(
-                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white',
-                      avatarTone(l.contact.name),
-                    )}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700"
                   >
                     {l.contact.name.trim().charAt(0)}
                   </span>
@@ -519,25 +482,25 @@ export function DashboardPage() {
           )}
         </div>
         <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <ProfileRow icon={Briefcase} tone="bg-sky-100 text-sky-700" label={tr('תחום')}>
+          <ProfileRow icon={Briefcase} label={tr('תחום')}>
             {tr(industryLabels[business.industry])}
           </ProfileRow>
-          <ProfileRow icon={Phone} tone="bg-emerald-100 text-emerald-700" label={tr('טלפון')}>
+          <ProfileRow icon={Phone} label={tr('טלפון')}>
             {business.phone ? (
               <bdi dir="ltr">{formatIsraeliPhone(business.phone)}</bdi>
             ) : (
               tr('לא הוזן')
             )}
           </ProfileRow>
-          <ProfileRow icon={MapPin} tone="bg-rose-100 text-rose-700" label={tr('כתובת')}>
+          <ProfileRow icon={MapPin} label={tr('כתובת')}>
             {business.address ?? tr('לא הוזנה')}
           </ProfileRow>
-          <ProfileRow icon={Route} tone="bg-amber-100 text-amber-700" label={tr('אזורי שירות')}>
+          <ProfileRow icon={Route} label={tr('אזורי שירות')}>
             {business.serviceAreas.length ? business.serviceAreas.join(', ') : tr('לא הוגדרו')}
           </ProfileRow>
           <ProfileRow
             icon={CalendarClock}
-            tone="bg-violet-100 text-violet-700"
+
             label={tr('ימי פעילות')}
           >
             {openDays.length
