@@ -31,7 +31,7 @@ export function Sidebar({
   const items = navItems.filter((i) => !i.permission || can(business.role, i.permission));
 
   return (
-    <div className="flex h-full flex-col gap-4 px-3 py-4">
+    <div className="flex min-h-full flex-col gap-4 bg-gradient-to-b from-brand-100 to-brand-50 px-3 py-4">
       <div className={cn('flex items-center justify-between gap-2 ps-2 pt-1', inDrawer && 'pe-10')}>
         <Logo />
         <div className="flex items-center gap-1">
@@ -76,10 +76,10 @@ export function Sidebar({
                   cn(
                     'group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors',
                     isActive
-                      ? 'bg-surface font-medium text-ink shadow-card ring-1 ring-surface-border'
+                      ? 'bg-surface font-semibold text-brand-800 shadow-card'
                       : comingSoon
-                        ? 'text-ink-subtle hover:bg-surface-sunken hover:text-ink-muted'
-                        : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
+                        ? 'text-ink-muted hover:bg-surface/60'
+                        : 'text-accent-700 hover:bg-surface/70 hover:text-ink',
                   )
                 }
               >
@@ -87,14 +87,21 @@ export function Sidebar({
                   <>
                     <Icon
                       aria-hidden
-                      className={cn('h-4 w-4 shrink-0', isActive && 'text-brand-600')}
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        isActive
+                          ? 'text-coral-500'
+                          : comingSoon
+                            ? 'text-ink-subtle'
+                            : 'text-brand-600',
+                      )}
                     />
                     <span className="flex-1">{label}</span>
                     {comingSoon && (
                       <>
                         <span
                           aria-hidden
-                          className="rounded-md bg-surface-sunken px-1.5 py-0.5 text-[10px] font-medium text-ink-subtle"
+                          className="rounded-md bg-surface/70 px-1.5 py-0.5 text-[10px] font-medium text-ink-muted"
                         >
                           {tr('בקרוב')}
                         </span>
@@ -109,12 +116,12 @@ export function Sidebar({
         </ul>
       </nav>
 
-      <div className="flex flex-col gap-3 border-t border-surface-border pt-3">
+      <div className="flex flex-col gap-3 border-t border-brand-200 pt-3">
         {error && <Alert tone="danger">{error}</Alert>}
         <div className="flex items-center gap-2.5 px-1">
           <span
             aria-hidden
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[13px] font-semibold text-brand-800"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-coral-500 text-[13px] font-semibold text-white"
           >
             {user?.fullName.trim().charAt(0)}
           </span>

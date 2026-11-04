@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { cn } from '../../lib/cn';
 
 /**
- * The help character (D-105): the LeadFlow mark come to life — the green rounded body with the
+ * The help character (D-105): the LeadFlow mark come to life — the blue rounded body with the
  * coral dot as a bobble on top. It floats and blinks, waves when `waving`, and smiles with closed
  * eyes when `happy` (menu open). Motion only runs for people who haven't asked for reduced motion.
  * Drawn facing the content (it looks towards the start side), so it flips in right-to-left.
@@ -26,8 +26,8 @@ export function HelpCharacter({
     >
       <defs>
         <linearGradient id={body} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2c837d" />
-          <stop offset="1" stopColor="#1b5653" />
+          <stop offset="0" stopColor="#0ea5e9" />
+          <stop offset="1" stopColor="#0369a1" />
         </linearGradient>
       </defs>
 
@@ -38,7 +38,7 @@ export function HelpCharacter({
       >
         <path
           d="M28 17 C28 12 30 10 32 8.5"
-          stroke="#1b5653"
+          stroke="#0369a1"
           strokeWidth="2.2"
           fill="none"
           strokeLinecap="round"
@@ -53,17 +53,17 @@ export function HelpCharacter({
       >
         <path
           d="M12 35 C8 33 6 30 5.5 26"
-          stroke="#1f6a66"
+          stroke="#0284c7"
           strokeWidth="4"
           fill="none"
           strokeLinecap="round"
         />
-        <circle cx="5.5" cy="25" r="3" fill="#2c837d" />
+        <circle cx="5.5" cy="25" r="3" fill="#0ea5e9" />
       </g>
       {/* Other arm, resting */}
       <path
         d="M44 36 C47 37 48.5 39 49 41.5"
-        stroke="#1f6a66"
+        stroke="#0284c7"
         strokeWidth="4"
         fill="none"
         strokeLinecap="round"
@@ -93,8 +93,8 @@ export function HelpCharacter({
           <ellipse cx="21" cy="30" rx="4.6" ry="5.2" fill="#fff" />
           <ellipse cx="35" cy="30" rx="4.6" ry="5.2" fill="#fff" />
           {/* Looking towards the content */}
-          <circle cx="19.8" cy="30.8" r="2.3" fill="#163b39" />
-          <circle cx="33.8" cy="30.8" r="2.3" fill="#163b39" />
+          <circle cx="19.8" cy="30.8" r="2.3" fill="#0c4a6e" />
+          <circle cx="33.8" cy="30.8" r="2.3" fill="#0c4a6e" />
           <circle cx="19" cy="29.6" r="0.8" fill="#fff" />
           <circle cx="33" cy="29.6" r="0.8" fill="#fff" />
         </g>
