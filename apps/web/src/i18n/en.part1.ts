@@ -339,6 +339,10 @@ export const enPart1: Record<string, string> = {
   'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
   'במה אפשר לעזור?': 'How can I help?',
   'איך לקוחות מזמינים:': 'How customers book:',
+  'ההגדרות נשמרו.': 'Settings saved.',
+  'שמירת ההגדרות': 'Save settings',
+  'יש שינויים שעוד לא נשמרו': 'You have unsaved changes',
+  'ביטול השינויים': 'Discard changes',
   'לשמור את התאריך כתפוס עד שאחליט': 'Hold the date as taken until I decide',
   'קודם הבוט שואל איך אפשר לעזור: לבדוק תאריך או שיחה אישית איתכם. מי שבוחר לבדוק תאריך בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, ומשם אפשר להכין לו הצעת מחיר.':
     'First the bot asks how it can help: check a date, or a personal chat with you. Whoever checks a date picks an event type, types a date, then the part of day, number of guests and area. The request lands in "Pending requests" under Appointments, and from there you can prepare a quote.',
