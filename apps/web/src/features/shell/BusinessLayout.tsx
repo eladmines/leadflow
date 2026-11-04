@@ -22,6 +22,7 @@ import { usePageKey } from '../tour/pageTours';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { NotificationToasts } from '../notifications/NotificationToasts';
 import { tr } from '../../i18n';
+import { LanguageSwitch } from '../../i18n/LanguageSwitch';
 
 /**
  * App shell for `/b/:businessId/*`: right-side sidebar on desktop, a drawer on mobile.
@@ -153,6 +154,16 @@ export function BusinessLayout() {
           </Dialog.Portal>
         </Dialog.Root>
 
+        {/* Desktop: the language flags at the top, opposite the sidebar (D-110). */}
+        <div
+          className={cn(
+            'mx-auto hidden justify-end lg:flex',
+            wide ? 'max-w-[1600px] px-8 pt-3' : 'max-w-6xl px-10 pt-3',
+          )}
+        >
+          <LanguageSwitch />
+        </div>
+
         <main
           id="main"
           tabIndex={-1}
@@ -160,8 +171,8 @@ export function BusinessLayout() {
             'mx-auto flex flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6',
             // Room at the bottom so the help button never covers the last item.
             wide
-              ? 'max-w-[1600px] pb-24 lg:px-8 lg:pb-24 lg:pt-6'
-              : 'max-w-6xl pb-24 lg:px-10 lg:pb-24 lg:pt-8',
+              ? 'max-w-[1600px] pb-24 lg:px-8 lg:pb-24 lg:pt-1'
+              : 'max-w-6xl pb-24 lg:px-10 lg:pb-24 lg:pt-3',
           )}
         >
           <UnverifiedEmailBanner />

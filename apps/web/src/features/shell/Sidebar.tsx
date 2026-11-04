@@ -35,7 +35,8 @@ export function Sidebar({
       <div className={cn('flex items-center justify-between gap-2 ps-2 pt-1', inDrawer && 'pe-10')}>
         <Logo />
         <div className="flex items-center gap-1">
-          <LanguageSwitch />
+          {/* On desktop the flags sit at the top of the page instead (BusinessLayout). */}
+          {inDrawer && <LanguageSwitch />}
           <NotificationBell businessId={business.id} onNavigate={onNavigate} />
         </div>
       </div>
