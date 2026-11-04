@@ -39,6 +39,7 @@ const noShowcase = { enabled: false, text: null, link: null, assetIds: [] };
 const botSettings = () => ({
   enabled: false,
   autoConfirm: true,
+  holdDate: false,
   flow: 'appointment',
   flowIsDefault: true,
   defaults: botDefaultTextsFor('beauty'),
@@ -102,8 +103,22 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(pending);
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
-        { enabled: true, autoConfirm: true, flow: null, texts: {}, showcase: noShowcase },
-        { enabled: true, autoConfirm: false, flow: null, texts: {}, showcase: noShowcase },
+        {
+          enabled: true,
+          autoConfirm: true,
+          holdDate: false,
+          flow: null,
+          texts: {},
+          showcase: noShowcase,
+        },
+        {
+          enabled: true,
+          autoConfirm: false,
+          holdDate: false,
+          flow: null,
+          texts: {},
+          showcase: noShowcase,
+        },
       ]),
     );
   });
@@ -142,6 +157,7 @@ describe('WhatsApp conversations inbox', () => {
       {
         enabled: false,
         autoConfirm: true,
+        holdDate: false,
         flow: null,
         texts: { confirmed: 'נתראה ב{business}!' },
         showcase: noShowcase,
@@ -184,6 +200,7 @@ describe('WhatsApp conversations inbox', () => {
       {
         enabled: false,
         autoConfirm: true,
+        holdDate: false,
         flow: null,
         texts: {},
         showcase: {

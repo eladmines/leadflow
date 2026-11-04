@@ -91,7 +91,14 @@ const open = () => new Date(Date.now() + 20 * 3600_000).toISOString();
 
 describe('WhatsApp on the lead page', () => {
   it('shows the conversation with who wrote what and the delivery status', async () => {
-    mockApi(routes({ connected: true, messages: [incoming, reply], replyUntil: open() }));
+    mockApi(
+      routes({
+        connected: true,
+        messages: [incoming, reply],
+        replyUntil: open(),
+        botPaused: false,
+      }),
+    );
     renderApp(page);
     const list = await screen.findByRole('list', { name: 'שיחת וואטסאפ' });
     const items = within(list).getAllByRole('listitem');
@@ -105,7 +112,7 @@ describe('WhatsApp on the lead page', () => {
   it('sends a reply while the window is open', async () => {
     const fetchMock = mockApi(
       routes(
-        { connected: true, messages: [incoming], replyUntil: open() },
+        { connected: true, messages: [incoming], replyUntil: open(), botPaused: false },
         { [`POST ${threadPath}`]: () => json(201, { message: reply }) },
       ),
     );
@@ -123,7 +130,7 @@ describe('WhatsApp on the lead page', () => {
   it('validates an empty reply and shows a server error', async () => {
     const fetchMock = mockApi(
       routes(
-        { connected: true, messages: [incoming], replyUntil: open() },
+        { connected: true, messages: [incoming], replyUntil: open(), botPaused: false },
         {
           [`POST ${threadPath}`]: () =>
             apiError(500, 'INTERNAL_ERROR', whatsappMessages.sendFailed),
@@ -142,14 +149,46 @@ describe('WhatsApp on the lead page', () => {
   });
 
   it('explains when the 24-hour window has closed', async () => {
-    mockApi(routes({ connected: true, messages: [incoming], replyUntil: null }));
+    mockApi(routes({ connected: true, messages: [incoming], replyUntil: null, botPaused: false }));
     renderApp(page);
     expect(await screen.findByText(whatsappMessages.windowClosed)).toBeInTheDocument();
     expect(screen.queryByLabelText('תשובה בוואטסאפ')).not.toBeInTheDocument();
   });
 
+  it('pauses the booking bot for this customer, and resumes it (D-108)', async () => {
+    let paused = false;
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, messages: [incoming], replyUntil: open(), botPaused: false },
+        {
+          [`GET ${threadPath}`]: () =>
+            json(200, {
+              connected: true,
+              messages: [incoming],
+              replyUntil: open(),
+              botPaused: paused,
+            }),
+          [`PUT ${apiPaths.whatsapp.botPause(testBusiness.id, leadId)}`]: (body: unknown) => {
+            paused = (body as { paused: boolean }).paused;
+            return new Response(null, { status: 204 });
+          },
+        },
+      ),
+    );
+    const { user } = renderApp(page);
+    expect(await screen.findByText('הבוט יכול לענות בשיחה הזו')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'השהיית הבוט' }));
+    expect(await screen.findByText('הבוט מושהה בשיחה הזו')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'הפעלת הבוט' }));
+    expect(await screen.findByText('הבוט יכול לענות בשיחה הזו')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', apiPaths.whatsapp.botPause(testBusiness.id, leadId))).toEqual([
+      { paused: true },
+      { paused: false },
+    ]);
+  });
+
   it('stays hidden when WhatsApp is not connected and there is no history', async () => {
-    mockApi(routes({ connected: false, messages: [], replyUntil: null }));
+    mockApi(routes({ connected: false, messages: [], replyUntil: null, botPaused: false }));
     renderApp(page);
     await screen.findByRole('heading', { name: 'דנה כהן', level: 1 });
     await waitFor(() =>

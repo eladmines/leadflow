@@ -6,6 +6,7 @@ import {
   classifyNumberResponseSchema,
   personalNumbersResponseSchema,
   sendWhatsAppRequestSchema,
+  pauseBotRequestSchema,
   sendWhatsAppResponseSchema,
   whatsappBotResponseSchema,
   whatsappBotSettingsSchema,
@@ -225,6 +226,18 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
         reply.code(201).send({
           message: await service.send(tenantOf(req), req.params.leadId, req.body.text),
         }),
+    );
+
+    app.put(
+      '/leads/:leadId/whatsapp/bot',
+      {
+        preValidation: requirePermission('leads.update'),
+        schema: { params: leadParams, body: pauseBotRequestSchema },
+      },
+      async (req, reply) => {
+        await service.pauseBot(tenantOf(req), req.params.leadId, req.body.paused);
+        return reply.code(204).send();
+      },
     );
 
     app.get(

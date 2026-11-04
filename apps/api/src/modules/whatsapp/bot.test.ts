@@ -529,7 +529,11 @@ describe('WhatsApp booking bot (D-102)', () => {
     it('a DJ: event type, typed date, part of day, guests, area → a request the team confirms', async () => {
       const { owner } = await setup({ industry: 'events', services: 0, name: 'DJ רון' });
       await post(text('היי, אפשר לבדוק תאריך לחתונה?'));
-      expect(last().text).toBe('היי! כאן DJ רון 🎧\nמתכננים אירוע? בחרו את סוג האירוע:');
+      // First it asks how to help, before any question (D-108).
+      expect(last().text).toBe('היי! כאן DJ רון 🎧\nאיך אפשר לעזור?');
+      expect(last().choices!.map((c) => c.id)).toEqual(['ev_start', 'human']);
+      await post(tap('ev_start'));
+      expect(last().text).toBe('איזה אירוע אתם מתכננים? בחרו:');
       expect(last().choices!.map((c) => c.title)).toEqual([
         'חתונה',
         'בר/בת מצווה',
@@ -598,6 +602,7 @@ describe('WhatsApp booking bot (D-102)', () => {
         },
       });
       await post(text('אירוע'));
+      await post(tap('ev_start'));
       await post(tap('evt:t3'));
       await post(text(typed(day)));
       expect(last().text).toBe('התאריך הזה כבר תפוס אצלנו 😕 רוצים לבדוק תאריך אחר?');
@@ -609,7 +614,9 @@ describe('WhatsApp booking bot (D-102)', () => {
     it("a photographer uses its services and doesn't ask for guests", async () => {
       await setup({ industry: 'photo', services: 2, name: 'סטודיו אור' });
       await post(text('הזמנה לצילום'));
-      expect(last().text).toBe('היי! כאן סטודיו אור 📸\nמה מצלמים? בחרו:');
+      expect(last().text).toBe('היי! כאן סטודיו אור 📸\nאיך אפשר לעזור?');
+      await post(tap('ev_start'));
+      expect(last().text).toBe('מה מצלמים? בחרו:');
       await post(tap(last().choices![0]!.id));
       await post(text(typed(inMonths(2))));
       await post(tap('part:day'));
@@ -630,9 +637,121 @@ describe('WhatsApp booking bot (D-102)', () => {
       });
       expect(put.json().settings).toMatchObject({ flow: 'event', flowIsDefault: false });
       await post(text('תור'));
+      await post(tap('ev_start'));
       expect(last().choices!.map((c) => c.id)).toContain(
         'evt:svc:' + (await ctx.prisma.service.findFirstOrThrow({ orderBy: { name: 'asc' } })).id,
       );
+    });
+  });
+
+  describe('a personal touch (D-108)', () => {
+    const inMonths = (n: number) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() + n);
+      return d;
+    };
+    const typed = (d: Date) => `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+
+    it('"can I talk to you about my wedding" goes straight to the owner, no menu', async () => {
+      await setup({ industry: 'events', services: 0, name: 'DJ רון' });
+      await post(text('היי, אפשר לדבר איתך על החתונה שלי?'));
+      expect(whatsapp.sent.map((m) => m.text)).toEqual([
+        'בסדר! העברנו את השיחה לצוות, נחזור אליכם כאן בהקדם 🙂',
+      ]);
+      expect(last().choices).toBeUndefined();
+      // And it stays quiet afterwards.
+      await post(text('אז מה, יש תאריך?'));
+      expect(whatsapp.sent).toHaveLength(1);
+    });
+
+    it('"personal chat" on the first reply hands over too', async () => {
+      await setup({ industry: 'events', services: 0 });
+      await post(text('היי'));
+      await post(tap('human'));
+      expect(last().text).toMatch(/^בסדר! העברנו את השיחה לצוות/);
+    });
+
+    it('after two messages it cannot understand, it hands the chat to the team', async () => {
+      await setup();
+      await post(text('תור'));
+      await post(text('מה?'));
+      expect(last().text).toMatch(/^לא הבנתי/);
+      await post(text('לא ברור לי'));
+      expect(last().text).toMatch(/^בסדר! העברנו את השיחה לצוות/);
+      const before = whatsapp.sent.length;
+      await post(text('הלו?'));
+      expect(whatsapp.sent).toHaveLength(before);
+    });
+
+    it("an event request doesn't hold the date unless the owner chose to", async () => {
+      const { owner } = await setup({ industry: 'events', services: 0 });
+      const day = typed(inMonths(4));
+      const request = async (from: string) => {
+        await post(text('אירוע', from));
+        await post(
+          event(
+            {
+              type: 'interactive',
+              interactive: { type: 'button_reply', button_reply: { id: 'ev_start', title: 'x' } },
+            },
+            from,
+          ),
+        );
+        await post(
+          event(
+            {
+              type: 'interactive',
+              interactive: { type: 'list_reply', list_reply: { id: 'evt:t0', title: 'x' } },
+            },
+            from,
+          ),
+        );
+        await post(text(day, from));
+      };
+      await request(FROM);
+      await post(tap('part:evening'));
+      await post(tap('guests:1'));
+      await post(text('חיפה'));
+      await post(tap('ev_send'));
+      expect(await ctx.prisma.appointment.count({ where: { status: 'REQUESTED' } })).toBe(1);
+      // Another customer can still ask for the same date: the owner decides.
+      await request('972502223344');
+      expect(last().text).toMatch(/התאריך פנוי/);
+
+      await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
+        enabled: true,
+        autoConfirm: true,
+        holdDate: true,
+      });
+      await request('972503334455');
+      expect(last().text).toBe('התאריך הזה כבר תפוס אצלנו 😕 רוצים לבדוק תאריך אחר?');
+    });
+
+    it('the owner can pause the bot for one customer from the lead', async () => {
+      const { owner } = await setup();
+      await post(text('תור'));
+      const lead = (
+        await req(ctx.app, 'POST', apiPaths.leads.list(BUSINESS_ID), owner.token, {
+          name: 'נועה לוי',
+          phone: '050-1112233',
+        })
+      ).json().lead as { id: string };
+      const pause = await req(ctx.app, 'PUT', wp.botPause(BUSINESS_ID, lead.id), owner.token, {
+        paused: true,
+      });
+      expect(pause.statusCode).toBe(204);
+      expect(await ctx.prisma.whatsAppBotSession.count()).toBe(0);
+      const thread = (
+        await req(ctx.app, 'GET', wp.thread(BUSINESS_ID, lead.id), owner.token)
+      ).json();
+      expect(thread.botPaused).toBe(true);
+      const before = whatsapp.sent.length;
+      await post(text('אפשר תור למחר?'));
+      expect(whatsapp.sent).toHaveLength(before);
+
+      await req(ctx.app, 'PUT', wp.botPause(BUSINESS_ID, lead.id), owner.token, { paused: false });
+      await post(text('אפשר תור למחר?'));
+      expect(whatsapp.sent.length).toBeGreaterThan(before);
     });
   });
 

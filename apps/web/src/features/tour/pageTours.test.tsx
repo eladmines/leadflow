@@ -57,6 +57,7 @@ describe('page tours (D-096)', () => {
           settings: {
             enabled: false,
             autoConfirm: true,
+            holdDate: false,
             flow: 'appointment',
             flowIsDefault: true,
             defaults: botDefaultTextsFor('beauty'),

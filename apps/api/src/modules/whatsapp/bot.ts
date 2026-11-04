@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient, WhatsAppBotSession } from '@prisma/client';
 import {
   asksGuests,
+  eventTypeQuestionFor,
   BLOCKING_STATUSES,
   BOT_FLOWS,
   botDefaultTextsFor,
@@ -49,7 +50,7 @@ const ABANDONED_UNTIL_MS = 20 * 60 * 60_000;
 
 const TRIGGER = /תור|לקבוע|פנוי|זמינ|אירוע|הזמנ|פגישה|שיעור|חתונה|appointment|book|event/i;
 const CHOICE =
-  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|ok|other_time|other_day|other_date|ev_send|ev_edit|cancel|human|showcase|book)$/;
+  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|ok|other_time|other_day|other_date|ev_send|ev_edit|ev_start|cancel|human|showcase|book)$/;
 /** Steps of a booking in progress (a conversation that stops in one of them gets the showcase). */
 const OPEN_STEPS = [
   'service',
@@ -79,7 +80,11 @@ interface EventData {
   area?: string;
 }
 const CANCEL_TEXT = /^\s*(ביטול|לבטל|cancel)\s*$/i;
-const HUMAN_TEXT = /נציג|לדבר עם|human|agent/i;
+/** The customer wants a person (D-108): the bot steps aside. */
+const HUMAN_TEXT =
+  /נציג|לדבר|להתקשר|תתקשר|תתקשרי|תחזור|תחזרי|שיחה|שאלה|בן אדם|אדם אמיתי|human|agent|call me|talk to/i;
+/** Misunderstood messages in one conversation before the bot hands it to the team. */
+const MAX_MISSES = 2;
 
 const human: WhatsAppChoice = { id: 'human', title: 'דברו עם הצוות' };
 const seeOurWork: WhatsAppChoice = { id: 'showcase', title: '📸 העבודות שלנו' };
@@ -108,6 +113,8 @@ type Business = {
   texts: BotTexts;
   showcase: z.output<typeof botShowcaseSchema>;
   flow: BotFlow;
+  /** Event requests hold their date until the owner decides. */
+  holdDate: boolean;
 };
 interface Chat {
   business: Business;
@@ -198,7 +205,8 @@ export class BookingBot {
     const number = await this.prisma.whatsAppNumber.findUnique({
       where: { businessId_phone: { businessId, phone: msg.from } },
     });
-    if (!number || number.status === 'PERSONAL') return 'none';
+    // Personal numbers, and customers the owner paused the bot for, never get an automatic reply.
+    if (!number || number.status === 'PERSONAL' || number.botPaused) return 'none';
     const chat = await this.chatFor(businessId, number, now);
     if (!chat) return 'none';
     const choice = msg.replyId && CHOICE.test(msg.replyId) ? msg.replyId : null;
@@ -218,7 +226,9 @@ export class BookingBot {
       await this.showcase(chat, { force: true, offerBooking: true });
       return 'handled';
     }
-    if (choice === 'book') return this.start(chat, now);
+    if (choice === 'book') {
+      return chat.business.flow === 'event' ? this.askEventType(chat) : this.start(chat, now);
+    }
 
     if (!session) {
       // Asked for an appointment, tapped an old list, or a new number's first message.
@@ -227,6 +237,10 @@ export class BookingBot {
         TRIGGER.test(msg.body) ||
         (number.status === 'UNCLASSIFIED' && (await this.isFirstMessage(chat.numberId)));
       if (!wants || (await this.teamIsTalking(chat.numberId, now))) return 'none';
+      // "Can I talk to you about…": straight to the team, no questions first.
+      if (!choice && HUMAN_TEXT.test(msg.body)) {
+        return this.handoff(chat, now, this.text(chat, 'handoff'));
+      }
       return this.start(chat, now);
     }
 
@@ -261,7 +275,7 @@ export class BookingBot {
   // ------------------------------------------------------------------ steps
 
   private async start(chat: Chat, now: Date): Promise<BotOutcome> {
-    if (chat.business.flow === 'event') return this.askEventType(chat);
+    if (chat.business.flow === 'event') return this.askHowToHelp(chat);
     const services = await this.activeServices(chat.business.id);
     if (services.length === 1) return this.askDay(chat, services[0]!.id, now);
     if (!services.length) return this.askDay(chat, null, now);
@@ -435,14 +449,37 @@ export class BookingBot {
   /** Anything that isn't one of the choices: ask the current question again. */
   private async repeat(chat: Chat, now: Date): Promise<BotOutcome> {
     const s = chat.session!;
+    if (await this.missedTooOften(chat, now)) return 'handoff';
     const prefix = 'לא הבנתי 🙂 בחרו מהרשימה, או כתבו "נציג" כדי לדבר עם הצוות.\n\n';
-    if (s.step === 'day') return this.askDay(chat, s.serviceId, now, prefix);
-    if (s.step === 'time' && s.date) return this.askTime(chat, s.date, now, prefix);
-    if (s.step === 'confirm' && s.date && s.time) {
+    let out: BotOutcome;
+    if (s.step === 'day') out = await this.askDay(chat, s.serviceId, now, prefix);
+    else if (s.step === 'time' && s.date) out = await this.askTime(chat, s.date, now, prefix);
+    else if (s.step === 'confirm' && s.date && s.time) {
       await this.say(chat, prefix.trim());
-      return this.askConfirm(chat, s.date, s.time);
-    }
-    return this.askService(chat, prefix);
+      out = await this.askConfirm(chat, s.date, s.time);
+    } else out = await this.askService(chat, prefix);
+    await this.countMiss(chat);
+    return out;
+  }
+
+  /**
+   * After the second message the bot couldn't understand, a person is better (D-108): the chat
+   * goes to the team instead of the same question again.
+   */
+  private async missedTooOften(chat: Chat, now: Date): Promise<boolean> {
+    const misses = (chat.session?.data as { misses?: number } | null)?.misses ?? 0;
+    if (misses + 1 < MAX_MISSES) return false;
+    await this.handoff(chat, now, this.text(chat, 'handoff'));
+    return true;
+  }
+
+  private async countMiss(chat: Chat) {
+    if (!chat.session) return;
+    const data = (chat.session.data ?? {}) as Record<string, unknown>;
+    chat.session = await this.prisma.whatsAppBotSession.update({
+      where: { id: chat.session.id },
+      data: { data: { ...data, misses: ((data.misses as number) ?? 0) + 1 } },
+    });
   }
 
   private async handoff(
@@ -511,6 +548,7 @@ export class BookingBot {
     now: Date,
   ): Promise<BotOutcome> {
     const s = chat.session!;
+    if (choice === 'ev_start') return this.askEventType(chat);
     if (choice?.startsWith('evt:')) return this.pickEventType(chat, choice.slice(4));
     if (choice === 'ev_edit') return this.askEventType(chat);
     if (choice === 'other_date') return this.askEventDate(chat);
@@ -533,6 +571,22 @@ export class BookingBot {
     return this.repeatEvent(chat);
   }
 
+  /**
+   * The first reply to an event business's customer (D-108): how can we help — check a date or a
+   * personal chat (and the showcase, when set) — before asking anything.
+   */
+  private async askHowToHelp(chat: Chat, prefix = ''): Promise<BotOutcome> {
+    await this.setSession(chat, { step: 'ev_intro', serviceId: null, date: null, time: null });
+    await this.say(chat, `${prefix}${this.text(chat, 'greeting')}`, {
+      buttons: [
+        { id: 'ev_start', title: '📅 לבדוק תאריך' },
+        { id: 'human', title: '💬 שיחה אישית' },
+        ...(this.hasShowcase(chat) ? [seeOurWork] : []),
+      ],
+    });
+    return 'handled';
+  }
+
   private async askEventType(chat: Chat, prefix = ''): Promise<BotOutcome> {
     const services = await this.activeServices(chat.business.id);
     const extra = this.hasShowcase(chat) ? [seeOurWork] : [];
@@ -550,7 +604,7 @@ export class BookingBot {
       time: null,
       data: {},
     });
-    await this.say(chat, `${prefix}${this.text(chat, 'greeting')}`, {
+    await this.say(chat, `${prefix}${eventTypeQuestionFor(chat.business.industry)}`, {
       button: 'בחירת סוג',
       rows: [...options.slice(0, MAX_ROWS - extra.length), ...extra, human],
     });
@@ -687,7 +741,8 @@ export class BookingBot {
       this.prisma.appointment.count({
         where: {
           businessId: chat.business.id,
-          status: { in: BLOCKING_STATUSES },
+          // Unconfirmed requests block the date only when the owner chose to hold dates.
+          status: { in: chat.business.holdDate ? BLOCKING_STATUSES : ['CONFIRMED'] },
           startsAt: { lt: zonedTimeToUtc(addDaysTo(date, 1), '00:00', tz) },
           endsAt: { gt: zonedTimeToUtc(date, '00:00', tz) },
         },
@@ -748,16 +803,20 @@ export class BookingBot {
   /** Not one of the choices: ask the current question of the event request again. */
   private async repeatEvent(chat: Chat): Promise<BotOutcome> {
     const s = chat.session!;
+    if (await this.missedTooOften(chat, chat.now)) return 'handoff';
     const prefix = 'לא הבנתי 🙂 בחרו מהאפשרויות, או כתבו "נציג" כדי לדבר עם הצוות.\n\n';
     const data = this.eventData(chat);
-    if (s.step === 'ev_part' && s.date) {
+    let out: BotOutcome;
+    if (s.step === 'ev_intro') out = await this.askHowToHelp(chat, prefix);
+    else if (s.step === 'ev_part' && s.date) {
       await this.say(chat, prefix.trim());
       chat.session = { ...s, step: 'ev_date' };
-      return this.onEventDate(chat, s.date.split('-').reverse().join('.'), chat.now);
-    }
-    if (s.step === 'ev_guests') return this.pickPart(chat, data.part ?? 'unknown');
-    if (s.step === 'ev_confirm') return this.askEventConfirm(chat, data);
-    return this.askEventType(chat, prefix);
+      out = await this.onEventDate(chat, s.date.split('-').reverse().join('.'), chat.now);
+    } else if (s.step === 'ev_guests') out = await this.pickPart(chat, data.part ?? 'unknown');
+    else if (s.step === 'ev_confirm') out = await this.askEventConfirm(chat, data);
+    else out = await this.askEventType(chat, prefix);
+    await this.countMiss(chat);
+    return out;
   }
 
   // -------------------------------------------------------------- showcase
@@ -848,6 +907,7 @@ export class BookingBot {
         whatsappBotTexts: true,
         whatsappBotShowcase: true,
         whatsappBotFlow: true,
+        whatsappBotHoldDate: true,
       },
     });
     if (!business?.whatsappBotEnabled) return null;
@@ -861,6 +921,7 @@ export class BookingBot {
     return {
       business: {
         ...business,
+        holdDate: business.whatsappBotHoldDate,
         flow,
         texts: texts.success ? texts.data : {},
         showcase: showcase.success

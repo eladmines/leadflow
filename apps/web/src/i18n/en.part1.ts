@@ -339,13 +339,18 @@ export const enPart1: Record<string, string> = {
   'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
   'במה אפשר לעזור?': 'How can I help?',
   'איך לקוחות מזמינים:': 'How customers book:',
+  'לשמור את התאריך כתפוס עד שאחליט': 'Hold the date as taken until I decide',
+  'קודם הבוט שואל איך אפשר לעזור: לבדוק תאריך או שיחה אישית איתכם. מי שבוחר לבדוק תאריך בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, ומשם אפשר להכין לו הצעת מחיר.':
+    'First the bot asks how it can help: check a date, or a personal chat with you. Whoever checks a date picks an event type, types a date, then the part of day, number of guests and area. The request lands in "Pending requests" under Appointments, and from there you can prepare a quote.',
+  'הבוט מושהה בשיחה הזו': 'The bot is paused in this chat',
+  'הבוט יכול לענות בשיחה הזו': 'The bot can reply in this chat',
+  'הפעלת הבוט': 'Resume the bot',
+  'השהיית הבוט': 'Pause the bot',
   'לקוח שכותב בוואטסאפ על אירוע (או מספר חדש שכותב בפעם הראשונה) עונה על כמה שאלות קצרות, והבקשה נכנסת למערכת. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.':
     'A customer who writes on WhatsApp about an event (or a new number writing for the first time) answers a few short questions, and the request goes into LeadFlow. The bot never answers personal numbers, and stays quiet in a chat a team member has written in or when the customer asks to talk to the team.',
   'סוג האירוע': 'Event type',
   'תאריך האירוע': 'Event date',
   '(מתאים לתחום שלכם)': '(suits your industry)',
-  'הלקוח בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, והתאריך נשמר עד שתאשרו. משם אפשר להכין לו הצעת מחיר.':
-    'The customer picks an event type, types a date, then chooses the part of day, number of guests and area. The request lands in "Pending requests" under Appointments, and the date is held until you confirm. From there you can prepare a quote.',
   'תורים בשעות פנויות': 'Appointments in free time slots',
   'בקשות לאירוע (תאריך, אורחים, אזור)': 'Event requests (date, guests, area)',
   'בקשה לאירוע התקבלה': 'Event request received',

@@ -42,6 +42,19 @@ export function useSendWhatsApp(businessId: string, leadId: string) {
   });
 }
 
+/** Pause or resume the booking bot for this lead's customer (D-108). */
+export function usePauseBot(businessId: string, leadId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (paused: boolean) =>
+      apiFetch<void>(apiPaths.whatsapp.botPause(businessId, leadId), {
+        method: 'PUT',
+        body: JSON.stringify({ paused }),
+      }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: threadKey(businessId, leadId) }),
+  });
+}
+
 /** Numbers nobody has classified yet, with their waiting messages (D-092). */
 export function useWhatsAppInbox(businessId: string, enabled = true) {
   return useQuery({
