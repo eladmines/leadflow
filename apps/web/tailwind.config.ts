@@ -13,19 +13,22 @@ export default {
         sans: ['Heebo', 'system-ui', 'Arial', 'sans-serif'],
       },
       colors: {
-        // Primary: a deep, slightly warm teal (trust, calm).
+        // Primary: sky blue (bright & friendly, D-111). 500+ keep white text readable
+        // (600 = 5.9:1 on white); 300/400 are for decoration, never for text.
         brand: {
-          50: '#edf7f6',
-          100: '#d3ece9',
-          200: '#a8d8d3',
-          300: '#74bdb6',
-          400: '#479f98',
-          500: '#2c837d',
-          600: '#1f6a66',
-          700: '#1b5653',
-          800: '#194644',
-          900: '#163b39',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0284c7',
+          600: '#0369a1',
+          700: '#075985',
+          800: '#0c4a6e',
+          900: '#082f49',
         },
+        // Coral, from the logo's dot: highlights and decoration (active menu icon, progress).
+        coral: { 50: '#fff4ef', 100: '#ffe4d9', 400: '#f99a79', 500: '#f77f57', 700: '#b4472a' },
         // Secondary tones are neutral slate: one accent colour (brand) carries the UI (D-073).
         accent: {
           50: '#f8fafc',
@@ -50,8 +53,8 @@ export default {
           border: '#e2e8f0',
         },
         /** Data mark color for single-series charts (passes the dataviz lightness, chroma and
-         *  contrast checks on the light surface; the brand teal reads gray as a data color). */
-        chart: { DEFAULT: '#0f8f84', soft: '#0f8f841a', grid: '#e2e8f0' },
+         *  contrast checks on the light surface). */
+        chart: { DEFAULT: '#0284c7', soft: '#0284c71a', grid: '#e2e8f0' },
         danger: { 50: '#fdf0ee', 600: '#c0392b', 700: '#a32e22' },
         success: { 50: '#ecf7f0', 600: '#2e7d4f' },
         warning: { 50: '#fff7e6', 600: '#946200' },
