@@ -85,42 +85,43 @@ function routes(inbox: WhatsAppInboxResponse, extra = {}) {
 }
 
 describe('WhatsApp conversations inbox', () => {
-  it('switches the booking bot on and chooses how its bookings are approved (D-102)', async () => {
+  it('switches the bot on and picks the approval, saved together with "Save settings"', async () => {
     const fetchMock = mockApi(
-      routes(
-        { connected: true, numbers: [] },
-        {
-          [`PUT ${wp.bot(id)}`]: echoBot,
-        },
-      ),
+      routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(page);
     const on = await screen.findByRole('checkbox', { name: 'הבוט פעיל' });
     const pending = screen.getByRole('radio', { name: /ממתינים לאישור שלכם/ });
+    const saveButton = screen.getByRole('button', { name: 'שמירת ההגדרות' });
     expect(pending).toBeDisabled();
+    expect(saveButton).toBeDisabled();
     await user.click(on);
-    await waitFor(() => expect(on).toBeChecked());
     await user.click(pending);
-    await waitFor(() =>
-      expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
-        {
-          enabled: true,
-          autoConfirm: true,
-          holdDate: false,
-          flow: null,
-          texts: {},
-          showcase: noShowcase,
-        },
-        {
-          enabled: true,
-          autoConfirm: false,
-          holdDate: false,
-          flow: null,
-          texts: {},
-          showcase: noShowcase,
-        },
-      ]),
-    );
+    // Nothing is sent until saving.
+    expect(screen.getByText('יש שינויים שעוד לא נשמרו')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
+    await user.click(saveButton);
+    expect(await screen.findByText('ההגדרות נשמרו.')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
+      {
+        enabled: true,
+        autoConfirm: false,
+        holdDate: false,
+        flow: null,
+        texts: {},
+        showcase: noShowcase,
+      },
+    ]);
+    expect(screen.getByRole('checkbox', { name: 'הבוט פעיל' })).toBeChecked();
+  });
+
+  it('"Discard changes" puts the saved settings back', async () => {
+    mockApi(routes({ connected: true, numbers: [] }));
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('checkbox', { name: 'הבוט פעיל' }));
+    await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
+    expect(screen.getByRole('checkbox', { name: 'הבוט פעיל' })).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeDisabled();
   });
 
   it('edits the bot messages with a live preview, and keeps unchanged ones as defaults', async () => {
@@ -223,6 +224,7 @@ describe('WhatsApp conversations inbox', () => {
     expect(screen.getByText('(מתאים לתחום שלכם)')).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'הבוט פעיל' }));
     await user.click(events);
+    await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );

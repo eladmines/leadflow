@@ -26,44 +26,62 @@ import { errorMessage } from '../auth/serverErrors';
 import { useBotSettings, useUpdateBotSettings } from './api';
 
 /**
- * Booking bot settings (D-102): on/off, and whether WhatsApp bookings are confirmed straight away
- * or wait for the team's approval.
+ * Booking bot settings (D-102): on/off, how customers book, and whether bookings are confirmed
+ * straight away or wait for the team's approval — saved together with "Save settings".
  */
 export function BookingBotCard({ businessId }: { businessId: string }) {
   const bot = useBotSettings(businessId);
   const update = useUpdateBotSettings(businessId);
-  // Shown at once; back to the saved settings if saving fails.
+  // Changes wait here until "Save settings" (D-109).
   const [draft, setDraft] = useState<{
     enabled: boolean;
     autoConfirm: boolean;
     holdDate: boolean;
     flow: BotFlow;
+    /** The owner picked a flow (otherwise it keeps following the industry). */
+    flowChosen: boolean;
   } | null>(null);
+  const [saved, setSaved] = useState(false);
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
-  const settings = { ...bot.data.settings, ...draft };
-  const save = (
+  const stored = bot.data.settings;
+  const settings = { ...stored, ...draft };
+  const dirty =
+    draft !== null &&
+    (draft.enabled !== stored.enabled ||
+      draft.autoConfirm !== stored.autoConfirm ||
+      draft.holdDate !== stored.holdDate ||
+      draft.flow !== stored.flow);
+  const change = (
     patch:
       { enabled: boolean } | { autoConfirm: boolean } | { holdDate: boolean } | { flow: BotFlow },
   ) => {
-    const next = {
+    setSaved(false);
+    setDraft({
       enabled: settings.enabled,
       autoConfirm: settings.autoConfirm,
       holdDate: settings.holdDate,
       flow: settings.flow,
+      flowChosen: (draft?.flowChosen ?? false) || 'flow' in patch,
       ...patch,
-    };
-    setDraft(next);
+    });
+  };
+  const saveSettings = () => {
+    if (!draft) return;
     update.mutate(
       {
-        ...toRequest(bot.data.settings),
-        enabled: next.enabled,
-        autoConfirm: next.autoConfirm,
-        holdDate: next.holdDate,
-        // The flow is stored only when chosen; otherwise it keeps following the industry.
-        flow: 'flow' in patch ? patch.flow : toRequest(bot.data.settings).flow,
+        ...toRequest(stored),
+        enabled: draft.enabled,
+        autoConfirm: draft.autoConfirm,
+        holdDate: draft.holdDate,
+        flow: draft.flowChosen ? draft.flow : toRequest(stored).flow,
       },
-      { onSettled: () => setDraft(null) },
+      {
+        onSuccess: () => {
+          setDraft(null);
+          setSaved(true);
+        },
+      },
     );
   };
   const industryFlow = bot.data.settings.flowIsDefault ? bot.data.settings.flow : null;
@@ -96,7 +114,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         <input
           type="checkbox"
           checked={settings.enabled}
-          onChange={(e) => save({ enabled: e.target.checked })}
+          onChange={(e) => change({ enabled: e.target.checked })}
           className="h-4 w-4 accent-brand-600"
         />
         {tr('הבוט פעיל')}
@@ -109,7 +127,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
               type="radio"
               name="bot-flow"
               checked={settings.flow === f}
-              onChange={() => save({ flow: f })}
+              onChange={() => change({ flow: f })}
               className="h-4 w-4 accent-brand-600"
             />
             {tr(botFlowLabels[f])}
@@ -126,7 +144,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
               type="checkbox"
               checked={settings.holdDate}
               disabled={!settings.enabled}
-              onChange={(e) => save({ holdDate: e.target.checked })}
+              onChange={(e) => change({ holdDate: e.target.checked })}
               className="h-4 w-4 accent-brand-600"
             />
             {tr('לשמור את התאריך כתפוס עד שאחליט')}
@@ -145,7 +163,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
               type="radio"
               name="bot-confirm"
               checked={settings.autoConfirm}
-              onChange={() => save({ autoConfirm: true })}
+              onChange={() => change({ autoConfirm: true })}
               className="h-4 w-4 accent-brand-600"
             />
             {tr('מאושרים מיד')}
@@ -155,7 +173,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
               type="radio"
               name="bot-confirm"
               checked={!settings.autoConfirm}
-              onChange={() => save({ autoConfirm: false })}
+              onChange={() => change({ autoConfirm: false })}
               className="h-4 w-4 accent-brand-600"
             />
             {tr('ממתינים לאישור שלכם (הזמן נשמר בינתיים)')}
@@ -163,6 +181,22 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         </fieldset>
       )}
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+      {saved && !dirty && <Alert tone="success">{tr('ההגדרות נשמרו.')}</Alert>}
+      <div className="flex flex-wrap items-center gap-3">
+        <Button onClick={saveSettings} disabled={!dirty} loading={update.isPending}>
+          {tr('שמירת ההגדרות')}
+        </Button>
+        {dirty && (
+          <>
+            <span role="status" className="text-sm text-warning-600">
+              {tr('יש שינויים שעוד לא נשמרו')}
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
+              {tr('ביטול השינויים')}
+            </Button>
+          </>
+        )}
+      </div>
       <details className="rounded-lg border border-surface-border p-3">
         <summary className="cursor-pointer text-sm font-medium text-ink">
           {tr('עריכת ההודעות של הבוט')}

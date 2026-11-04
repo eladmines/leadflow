@@ -426,8 +426,10 @@ export const enPart3: Record<string, string> = {
   'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שהבוט לא מבין אותו פעמיים, עובר אליכם מיד. הבוט לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
     "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or whom the bot can't understand twice, is passed to you right away. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
   'הדלקה וכיבוי': 'On and off',
-  'כשהתיבה מסומנת, הבוט עונה. כיבוי עוצר אותו מיד, גם באמצע שיחה.':
-    'When this is ticked, the bot answers. Turning it off stops it at once, even mid-conversation.',
+  'כשהתיבה מסומנת והגדרות נשמרו, הבוט עונה. כיבוי ושמירה עוצרים אותו, גם באמצע שיחה.':
+    'When this is ticked and the settings are saved, the bot answers. Turning it off and saving stops it, even mid-conversation.',
+  'השינויים בהגדרות שלמעלה נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה.':
+    'Changes to the settings above take effect only after you click here. Until then you see "You have unsaved changes", and "Discard changes" puts things back.',
   'איך לקוחות מזמינים': 'How customers book',
   '"תורים בשעות פנויות": הלקוח בוחר שירות, יום ושעה. "בקשות לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
     '"Free time slots": the customer picks a service, a day and a time. "Event requests": the customer types a date and tells you about the event, and you confirm. The option that suits your industry is marked.',
