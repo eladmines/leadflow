@@ -492,6 +492,7 @@ export class WhatsAppService {
         whatsappBotTexts: true,
         whatsappBotShowcase: true,
         whatsappBotFlow: true,
+        whatsappBotHoldDate: true,
       },
     });
     const texts = botTextsSchema.safeParse(b.whatsappBotTexts ?? {});
@@ -506,6 +507,7 @@ export class WhatsAppService {
         enabled: b.whatsappBotEnabled,
         autoConfirm: b.whatsappBotAutoConfirm,
         texts: texts.success ? texts.data : {},
+        holdDate: b.whatsappBotHoldDate,
         flow: chosen ?? botFlowFor(b.industry),
         flowIsDefault: chosen === null,
         defaults: botDefaultTextsFor(b.industry),
@@ -533,6 +535,7 @@ export class WhatsAppService {
           whatsappBotTexts: input.texts,
           whatsappBotShowcase: input.showcase,
           whatsappBotFlow: input.flow,
+          whatsappBotHoldDate: input.holdDate,
         },
       });
       // Switching off ends conversations in progress.
@@ -597,11 +600,43 @@ export class WhatsAppService {
     });
     const lastIn = rows.filter((r) => r.direction === 'IN').at(-1);
     const until = lastIn ? lastIn.createdAt.getTime() + WHATSAPP_WINDOW_MS : 0;
+    const number = lead.contact.phone
+      ? await this.prisma.whatsAppNumber.findUnique({
+          where: { businessId_phone: { businessId: ctx.businessId, phone: lead.contact.phone } },
+          select: { botPaused: true },
+        })
+      : null;
     return {
       connected: this.businessId === ctx.businessId,
       messages: rows.map(toDto),
       replyUntil: until > Date.now() ? new Date(until).toISOString() : null,
+      botPaused: number?.botPaused ?? false,
     };
+  }
+
+  /**
+   * Pause or resume the booking bot for this lead's customer (D-108). Pausing also ends a
+   * conversation in progress. A customer who hasn't written on WhatsApp yet is remembered too.
+   */
+  async pauseBot(ctx: TenantContext, leadId: string, paused: boolean): Promise<void> {
+    const lead = await this.leads.findVisible(ctx, leadId);
+    const phone = lead.contact.phone;
+    if (!phone) throw new AppError('CONFLICT', whatsappMessages.noPhone);
+    await this.prisma.$transaction(async (tx) => {
+      const number = await tx.whatsAppNumber.upsert({
+        where: { businessId_phone: { businessId: ctx.businessId, phone } },
+        create: { businessId: ctx.businessId, phone, status: 'BUSINESS', botPaused: paused },
+        update: { botPaused: paused },
+      });
+      if (paused) await tx.whatsAppBotSession.deleteMany({ where: { numberId: number.id } });
+      await recordAudit(tx, {
+        action: paused ? 'whatsapp.bot_paused' : 'whatsapp.bot_resumed',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'whatsapp_number',
+        entityId: number.id,
+      });
+    });
   }
 
   /** Free-form reply; only inside the 24-hour window that the customer's last message opened. */

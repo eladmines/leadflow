@@ -423,8 +423,8 @@ export const enPart3: Record<string, string> = {
   'יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו, ושם גם עונים לו.':
     'Creates a lead from the messages. From now on every message from this number goes to its lead, where you also reply.',
   'בוט קביעת התורים': 'The booking bot',
-  'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. הוא לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
-    "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
+  'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שהבוט לא מבין אותו פעמיים, עובר אליכם מיד. הבוט לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
+    "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or whom the bot can't understand twice, is passed to you right away. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
   'הדלקה וכיבוי': 'On and off',
   'כשהתיבה מסומנת, הבוט עונה. כיבוי עוצר אותו מיד, גם באמצע שיחה.':
     'When this is ticked, the bot answers. Turning it off stops it at once, even mid-conversation.',
@@ -478,8 +478,8 @@ export const enPart3: Record<string, string> = {
     'New inquiries appear on their own. This button fetches them right away.',
   'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות. כל שינוי נשמר ונרשם בהיסטוריה.':
     "The stage, who's responsible, estimated value, when to get back to the customer, and tags. Every change is saved and recorded in the history.",
-  'השיחה עם הלקוח בוואטסאפ, כולל התשובות האוטומטיות של הבוט. אפשר לענות מכאן עד 24 שעות מההודעה האחרונה שלו; כשאתם כותבים, הבוט שותק.':
-    "The WhatsApp conversation with the customer, including the bot's automatic replies. You can reply from here for 24 hours after their last message; once you write, the bot stays quiet.",
+  'השיחה עם הלקוח בוואטסאפ, כולל התשובות האוטומטיות של הבוט. אפשר לענות מכאן עד 24 שעות מההודעה האחרונה שלו; כשאתם כותבים, הבוט שותק. "השהיית הבוט" עוצרת אותו ללקוח הזה בלבד, עד שתפעילו שוב.':
+    'The WhatsApp conversation with the customer, including the bot\'s automatic replies. You can reply from here for 24 hours after their last message; once you write, the bot stays quiet. "Pause the bot" stops it for this customer only, until you resume it.',
   'כותבים הערות לצוות, ורואים כל מה שקרה בליד: שינויי שלב, שיוכים, משימות, תורים שנקבעו בבוט והצעות.':
     'Write notes for the team, and see everything that happened on the lead: stage changes, assignments, tasks, bot bookings and quotes.',
   'התורים והבקשות של הלקוח, כולל בקשות לאירוע מהבוט, וקביעת תור חדש.':

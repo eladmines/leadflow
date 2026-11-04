@@ -5,14 +5,14 @@ import {
   type SendWhatsAppRequest,
 } from '@leadflow/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MessageCircle } from 'lucide-react';
+import { Bot, MessageCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Alert, Button, Card, Spinner, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
-import { useSendWhatsApp, useWhatsAppThread } from './api';
+import { usePauseBot, useSendWhatsApp, useWhatsAppThread } from './api';
 import { tr, intlLocale } from '../../i18n';
 
 const timeFmt = new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute: '2-digit' });
@@ -25,6 +25,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
   const business = useCurrentBusiness();
   const thread = useWhatsAppThread(business.id, leadId);
   const send = useSendWhatsApp(business.id, leadId);
+  const pause = usePauseBot(business.id, leadId);
   const form = useForm<SendWhatsAppRequest>({
     resolver: zodResolver(sendWhatsAppRequestSchema),
     defaultValues: { text: '' },
@@ -46,15 +47,33 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
       </Card>
     );
   }
-  const { connected, messages, replyUntil } = thread.data;
+  const { connected, messages, replyUntil, botPaused } = thread.data;
   if (!connected && messages.length === 0) return null;
 
   return (
     <Card className="flex flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
-        <MessageCircle aria-hidden className="h-5 w-5 text-success-600" />
-        WhatsApp
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+          <MessageCircle aria-hidden className="h-5 w-5 text-success-600" />
+          WhatsApp
+        </h2>
+        {connected && (
+          // The booking bot for this customer only (D-108): pause it to talk yourself.
+          <div className="flex items-center gap-2 text-xs text-ink-muted">
+            <Bot aria-hidden className="h-4 w-4" />
+            <span>{botPaused ? tr('הבוט מושהה בשיחה הזו') : tr('הבוט יכול לענות בשיחה הזו')}</span>
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={pause.isPending}
+              onClick={() => pause.mutate(!botPaused)}
+            >
+              {botPaused ? tr('הפעלת הבוט') : tr('השהיית הבוט')}
+            </Button>
+          </div>
+        )}
+      </div>
+      {pause.isError && <Alert tone="danger">{errorMessage(pause.error)}</Alert>}
       {messages.length === 0 ? (
         <p className="text-sm text-ink-muted">
           {tr('עדיין אין הודעות. כשהלקוח יכתוב לעסק בוואטסאפ, השיחה תופיע כאן.')}

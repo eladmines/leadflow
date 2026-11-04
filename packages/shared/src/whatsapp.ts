@@ -52,6 +52,8 @@ export const whatsappThreadResponseSchema = z.object({
   messages: z.array(whatsappMessageSchema),
   /** End of the 24-hour reply window; null when the customer never wrote or it has closed. */
   replyUntil: z.string().datetime().nullable(),
+  /** The booking bot is paused for this customer (D-108). */
+  botPaused: z.boolean(),
 });
 export type WhatsAppThreadResponse = z.infer<typeof whatsappThreadResponseSchema>;
 
@@ -63,6 +65,10 @@ export const sendWhatsAppRequestSchema = z.object({
     .max(WHATSAPP_TEXT_MAX, whatsappMessages.textTooLong),
 });
 export type SendWhatsAppRequest = z.infer<typeof sendWhatsAppRequestSchema>;
+
+/** Pause or resume the booking bot for one customer (D-108). */
+export const pauseBotRequestSchema = z.object({ paused: z.boolean() });
+export type PauseBotRequest = z.infer<typeof pauseBotRequestSchema>;
 
 export const sendWhatsAppResponseSchema = z.object({ message: whatsappMessageSchema });
 export type SendWhatsAppResponse = z.infer<typeof sendWhatsAppResponseSchema>;
@@ -175,6 +181,13 @@ export function eventTypesFor(industry: string): string[] {
   }
   return ['חתונה', 'בר/בת מצווה', 'יום הולדת', 'אירוע חברה', 'מסיבה פרטית', 'אחר'];
 }
+/**
+ * Event businesses (D-108): the first reply asks how to help — check a date, or a personal chat —
+ * before any question; then this asks for the event type.
+ */
+export const eventTypeQuestionFor = (industry: string) =>
+  industry === 'photo' ? 'מה מצלמים? בחרו:' : 'איזה אירוע אתם מתכננים? בחרו:';
+
 /** Photo shoots don't ask for the number of guests. */
 export const asksGuests = (industry: string) => industry !== 'photo';
 export const BOT_TEXT_MAX = 600;
@@ -235,15 +248,15 @@ const industryTexts: Record<string, Partial<Record<BotTextKey, string>>> = {
     greeting: 'היי! כאן {business} 🔧\nרוצים לקבוע תור למוסך? בחרו טיפול:',
   },
   events: {
-    greeting: 'היי! כאן {business} 🎧\nמתכננים אירוע? בחרו את סוג האירוע:',
+    greeting: 'היי! כאן {business} 🎧\nאיך אפשר לעזור?',
   },
   catering: {
-    greeting: 'היי! כאן {business} 🍽️\nאיזה אירוע אתם מתכננים? בחרו:',
+    greeting: 'היי! כאן {business} 🍽️\nאיך אפשר לעזור?',
     eventReceived:
       'תודה! קיבלנו את הפרטים ל{service} ב{time} 🙏\nנחזור אליכם בהקדם עם הצעה ותפריט מותאם.',
   },
   photo: {
-    greeting: 'היי! כאן {business} 📸\nמה מצלמים? בחרו:',
+    greeting: 'היי! כאן {business} 📸\nאיך אפשר לעזור?',
     eventReceived: 'תודה! קיבלנו את הפרטים לצילום ({service}) ב{time} 🙏\nנחזור אליכם בהקדם עם הצעה.',
   },
 };
@@ -353,6 +366,8 @@ export const whatsappBotSettingsSchema = z.object({
   showcase: botShowcaseSchema.default({ enabled: false }),
   /** Null = the industry's flow. */
   flow: z.enum(BOT_FLOWS).nullable().default(null),
+  /** Event requests hold their date until the owner decides (off: only confirmed events do). */
+  holdDate: z.boolean().default(false),
 });
 export type WhatsAppBotSettings = z.input<typeof whatsappBotSettingsSchema>;
 
@@ -368,6 +383,7 @@ export const whatsappBotResponseSchema = z.object({
         z.ZodOptional<z.ZodString>
       >,
     ),
+    holdDate: z.boolean(),
     /** The flow in use, and whether it is the industry's default. */
     flow: z.enum(BOT_FLOWS),
     flowIsDefault: z.boolean(),
@@ -399,6 +415,9 @@ export const whatsappApiPaths = {
   /** DELETE: forget a personal marking (the next message lands in the inbox again). */
   number: (businessId: string, numberId: string) =>
     `/api/v1/businesses/${businessId}/whatsapp/numbers/${numberId}`,
+  /** PUT: pause or resume the bot for this lead's customer (D-108). */
+  botPause: (businessId: string, leadId: string) =>
+    `/api/v1/businesses/${businessId}/leads/${leadId}/whatsapp/bot`,
   /** GET / PUT the booking bot settings (D-102). */
   bot: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/bot`,
 } as const;

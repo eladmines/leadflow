@@ -36,15 +36,20 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   const [draft, setDraft] = useState<{
     enabled: boolean;
     autoConfirm: boolean;
+    holdDate: boolean;
     flow: BotFlow;
   } | null>(null);
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   const settings = { ...bot.data.settings, ...draft };
-  const save = (patch: { enabled: boolean } | { autoConfirm: boolean } | { flow: BotFlow }) => {
+  const save = (
+    patch:
+      { enabled: boolean } | { autoConfirm: boolean } | { holdDate: boolean } | { flow: BotFlow },
+  ) => {
     const next = {
       enabled: settings.enabled,
       autoConfirm: settings.autoConfirm,
+      holdDate: settings.holdDate,
       flow: settings.flow,
       ...patch,
     };
@@ -54,6 +59,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         ...toRequest(bot.data.settings),
         enabled: next.enabled,
         autoConfirm: next.autoConfirm,
+        holdDate: next.holdDate,
         // The flow is stored only when chosen; otherwise it keeps following the industry.
         flow: 'flow' in patch ? patch.flow : toRequest(bot.data.settings).flow,
       },
@@ -114,11 +120,23 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         ))}
       </fieldset>
       {settings.flow === 'event' ? (
-        <p className="text-sm text-ink-muted">
-          {tr(
-            'הלקוח בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, והתאריך נשמר עד שתאשרו. משם אפשר להכין לו הצעת מחיר.',
-          )}
-        </p>
+        <>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={settings.holdDate}
+              disabled={!settings.enabled}
+              onChange={(e) => save({ holdDate: e.target.checked })}
+              className="h-4 w-4 accent-brand-600"
+            />
+            {tr('לשמור את התאריך כתפוס עד שאחליט')}
+          </label>
+          <p className="text-sm text-ink-muted">
+            {tr(
+              'קודם הבוט שואל איך אפשר לעזור: לבדוק תאריך או שיחה אישית איתכם. מי שבוחר לבדוק תאריך בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, ומשם אפשר להכין לו הצעת מחיר.',
+            )}
+          </p>
+        </>
       ) : (
         <fieldset disabled={!settings.enabled} className="flex flex-col gap-2">
           <legend className="mb-1 text-sm text-ink-muted">{tr('תורים שנקבעים בבוט:')}</legend>
@@ -174,6 +192,7 @@ type Saved = WhatsAppBotResponse['settings'];
 const toRequest = (saved: Saved): WhatsAppBotSettings => ({
   enabled: saved.enabled,
   autoConfirm: saved.autoConfirm,
+  holdDate: saved.holdDate,
   flow: saved.flowIsDefault ? null : saved.flow,
   texts: saved.texts,
   showcase: {
