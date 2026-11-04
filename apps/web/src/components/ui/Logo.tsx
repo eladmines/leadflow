@@ -11,8 +11,8 @@ export function Logo({ className, compact }: { className?: string; compact?: boo
       <svg aria-hidden viewBox="0 0 40 40" className="h-7 w-7 shrink-0">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#0ea5e9" />
-            <stop offset="1" stopColor="#0369a1" />
+            <stop offset="0" stopColor="#3b82f6" />
+            <stop offset="1" stopColor="#1d4ed8" />
           </linearGradient>
         </defs>
         <rect width="40" height="40" rx="10" fill={`url(#${gradientId})`} />

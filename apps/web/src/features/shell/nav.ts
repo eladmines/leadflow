@@ -24,25 +24,64 @@ export interface NavItem {
   permission?: Permission;
   /** Not built yet: the route shows a "coming soon" state. */
   comingSoon?: { title: string; description: string };
+  /** Sidebar section (D-114); the dashboard sits above the sections. */
+  group?: NavGroup;
+  /** Colour of the item's icon tile (D-114). */
+  tone: string;
 }
+
+export type NavGroup = 'sales' | 'operations' | 'management';
+export const navGroupLabels: Record<NavGroup, string> = {
+  sales: tr('שיווק ומכירות'),
+  operations: tr('תפעול'),
+  management: tr('ניהול'),
+};
 
 /** Navigation map, in the order of the UX spec (doc 03). */
 export const navItems: NavItem[] = [
-  { segment: '', label: tr('דשבורד'), icon: LayoutDashboard },
-  { segment: 'site', label: tr('האתר שלי'), icon: Globe },
-  { segment: 'leads', label: tr('לקוחות ולידים'), icon: Users },
+  { segment: '', tone: 'bg-brand-600', label: tr('דשבורד'), icon: LayoutDashboard },
+  { segment: 'site', group: 'sales', tone: 'bg-sky-500', label: tr('האתר שלי'), icon: Globe },
+  {
+    segment: 'leads',
+    group: 'sales',
+    tone: 'bg-violet-500',
+    label: tr('לקוחות ולידים'),
+    icon: Users,
+  },
   // WhatsApp inbox of unclassified numbers (D-092); conversations with customers live on the lead.
   {
     segment: 'conversations',
+    group: 'sales',
+    tone: 'bg-emerald-500',
     label: tr('שיחות'),
     icon: MessageCircle,
     permission: 'whatsapp.inbox',
   },
-  { segment: 'tasks', label: tr('משימות'), icon: ListTodo },
-  { segment: 'appointments', label: tr('תורים'), icon: CalendarDays },
-  { segment: 'quotes', label: tr('הצעות מחיר'), icon: FileText },
+  {
+    segment: 'tasks',
+    group: 'operations',
+    tone: 'bg-amber-500',
+    label: tr('משימות'),
+    icon: ListTodo,
+  },
+  {
+    segment: 'appointments',
+    group: 'operations',
+    tone: 'bg-rose-500',
+    label: tr('תורים'),
+    icon: CalendarDays,
+  },
+  {
+    segment: 'quotes',
+    group: 'operations',
+    tone: 'bg-orange-500',
+    label: tr('הצעות מחיר'),
+    icon: FileText,
+  },
   {
     segment: 'automations',
+    group: 'operations',
+    tone: 'bg-slate-400',
     label: tr('אוטומציות'),
     icon: Zap,
     comingSoon: {
@@ -52,7 +91,27 @@ export const navItems: NavItem[] = [
       ),
     },
   },
-  { segment: 'reports', label: tr('דוחות'), icon: ChartColumn, permission: 'reports.view' },
-  { segment: 'team', label: tr('צוות'), icon: UsersRound, permission: 'members.view' },
-  { segment: 'settings', label: tr('הגדרות וחיוב'), icon: Settings },
+  {
+    segment: 'reports',
+    group: 'management',
+    tone: 'bg-indigo-500',
+    label: tr('דוחות'),
+    icon: ChartColumn,
+    permission: 'reports.view',
+  },
+  {
+    segment: 'team',
+    group: 'management',
+    tone: 'bg-teal-500',
+    label: tr('צוות'),
+    icon: UsersRound,
+    permission: 'members.view',
+  },
+  {
+    segment: 'settings',
+    group: 'management',
+    tone: 'bg-slate-500',
+    label: tr('הגדרות וחיוב'),
+    icon: Settings,
+  },
 ];

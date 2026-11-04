@@ -50,7 +50,7 @@ export function BusinessSwitcher({
           </select>
         </>
       ) : (
-        <div className="flex items-center gap-2.5 rounded-xl bg-surface p-2 shadow-card">
+        <div className="flex items-center gap-2.5 rounded-xl border border-surface-border bg-surface-muted p-2">
           <span
             aria-hidden
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-600 text-sm font-semibold text-white"
