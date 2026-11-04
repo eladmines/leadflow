@@ -31,7 +31,7 @@ export function Sidebar({
   const items = navItems.filter((i) => !i.permission || can(business.role, i.permission));
 
   return (
-    <div className="flex min-h-full flex-col gap-4 bg-gradient-to-b from-brand-100 to-brand-50 px-3 py-4">
+    <div className="flex min-h-full flex-col gap-4 bg-brand-50/70 px-3 py-4">
       <div className={cn('flex items-center justify-between gap-2 ps-2 pt-1', inDrawer && 'pe-10')}>
         <Logo />
         <div className="flex items-center gap-1">
@@ -76,7 +76,7 @@ export function Sidebar({
                   cn(
                     'group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors',
                     isActive
-                      ? 'bg-surface font-semibold text-brand-800 shadow-card'
+                      ? 'bg-surface font-medium text-brand-800 shadow-card ring-1 ring-brand-100'
                       : comingSoon
                         ? 'text-ink-muted hover:bg-surface/60'
                         : 'text-accent-700 hover:bg-surface/70 hover:text-ink',
@@ -90,10 +90,10 @@ export function Sidebar({
                       className={cn(
                         'h-4 w-4 shrink-0',
                         isActive
-                          ? 'text-coral-500'
+                          ? 'text-brand-600'
                           : comingSoon
                             ? 'text-ink-subtle'
-                            : 'text-brand-600',
+                            : 'text-brand-500',
                       )}
                     />
                     <span className="flex-1">{label}</span>
@@ -121,7 +121,7 @@ export function Sidebar({
         <div className="flex items-center gap-2.5 px-1">
           <span
             aria-hidden
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-coral-500 text-[13px] font-semibold text-white"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[13px] font-semibold text-brand-800"
           >
             {user?.fullName.trim().charAt(0)}
           </span>

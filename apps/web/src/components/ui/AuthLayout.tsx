@@ -53,9 +53,9 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
 
       <aside
         aria-hidden
-        className="relative hidden overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 p-12 text-white lg:flex lg:flex-col lg:justify-center"
+        className="relative hidden overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 p-12 text-white lg:flex lg:flex-col lg:justify-center"
       >
-        <div className="absolute -end-24 -top-24 h-72 w-72 rounded-full bg-coral-400/40 blur-3xl" />
+        <div className="absolute -end-24 -top-24 h-72 w-72 rounded-full bg-brand-300/25 blur-3xl" />
         <div className="absolute -bottom-32 -start-20 h-80 w-80 rounded-full bg-brand-400/25 blur-3xl" />
         <div className="relative mx-auto flex max-w-md flex-col gap-10">
           <div className="flex flex-col gap-3">
@@ -79,7 +79,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
           </ul>
           <div className="rounded-2xl bg-white p-4 text-ink shadow-lift">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-coral-100 font-semibold text-coral-700">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 font-semibold text-brand-700">
                 {tr('ד')}
               </span>
               <div className="flex-1">
