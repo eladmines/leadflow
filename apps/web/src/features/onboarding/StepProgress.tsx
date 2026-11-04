@@ -33,7 +33,7 @@ export function StepProgress({ step }: { step: number }) {
                   aria-hidden
                   className={cn(
                     'h-0.5 flex-1',
-                    i === 0 ? 'invisible' : n <= step ? 'bg-brand-500' : 'bg-surface-border',
+                    i === 0 ? 'invisible' : n <= step ? 'bg-brand-600' : 'bg-surface-border',
                   )}
                 />
                 <span
@@ -54,7 +54,7 @@ export function StepProgress({ step }: { step: number }) {
                     i === stepTitles.length - 1
                       ? 'invisible'
                       : n < step
-                        ? 'bg-brand-500'
+                        ? 'bg-brand-600'
                         : 'bg-surface-border',
                   )}
                 />

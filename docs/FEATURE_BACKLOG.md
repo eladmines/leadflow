@@ -87,6 +87,7 @@ F06 ─► F11 (after spike)
 - 2026-11-03 — Booking-bot showcase (D-106): message + link + up to 3 photos for customers who don't book (cancel, team, no times, stopped mid-way), "See our work" option, once a day.
 - 2026-11-03 — Bot per industry (D-107): 5 new industries, industry default messages, and an event-request flow (type → date → part of day → guests → area) for DJs, catering and photographers.
 - 2026-11-04 — Bot personal touch (D-108): event businesses ask "check a date or personal chat" first, wanting a person or two misunderstandings hand over, dates not held unless chosen, pause the bot per customer from the lead.
+- 2026-11-05 — Admin-style shell (D-114): white top bar (search, flags, bell, user), white sidebar in sections with a colour tile per feature, brighter blue, grey canvas.
 - 2026-11-05 — Dashboard welcome is a light header with a slim progress bar instead of the blue banner (D-113).
 - 2026-11-05 — Design made more professional (D-112): calm blue banner, soft tints instead of strong colours, no confetti or emoji.
 - 2026-11-05 — Bright light-blue design (D-111): blue brand with coral highlights, light blue menu, colourful dashboard (banner with the helper, coloured number cards, stage tags).

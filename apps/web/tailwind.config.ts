@@ -13,19 +13,19 @@ export default {
         sans: ['Heebo', 'system-ui', 'Arial', 'sans-serif'],
       },
       colors: {
-        // Primary: sky blue (bright & friendly, D-111). 500+ keep white text readable
-        // (600 = 5.9:1 on white); 300/400 are for decoration, never for text.
+        // Primary: a clear, bright blue (D-114). 600 carries white text (5.2:1 on white);
+        // 300/400/500 are for decoration, bars and dots, never for small text.
         brand: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0284c7',
-          600: '#0369a1',
-          700: '#075985',
-          800: '#0c4a6e',
-          900: '#082f49',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
         },
         // Coral, from the logo's dot: highlights and decoration (active menu icon, progress).
         coral: { 50: '#fff4ef', 100: '#ffe4d9', 400: '#f99a79', 500: '#f77f57', 700: '#b4472a' },
@@ -47,14 +47,16 @@ export default {
         },
         surface: {
           DEFAULT: '#ffffff',
-          // Cool, near-white page and sidebar background.
+          // Cool, near-white panels inside cards.
           muted: '#f8fafc',
+          // The grey canvas behind the app's pages (D-114).
+          canvas: '#f3f5f9',
           sunken: '#f1f5f9',
           border: '#e2e8f0',
         },
         /** Data mark color for single-series charts (passes the dataviz lightness, chroma and
          *  contrast checks on the light surface). */
-        chart: { DEFAULT: '#0284c7', soft: '#0284c71a', grid: '#e2e8f0' },
+        chart: { DEFAULT: '#2563eb', soft: '#2563eb1a', grid: '#e2e8f0' },
         danger: { 50: '#fdf0ee', 600: '#c0392b', 700: '#a32e22' },
         success: { 50: '#ecf7f0', 600: '#2e7d4f' },
         warning: { 50: '#fff7e6', 600: '#946200' },

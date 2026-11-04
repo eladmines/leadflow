@@ -26,8 +26,8 @@ export function HelpCharacter({
     >
       <defs>
         <linearGradient id={body} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#0ea5e9" />
-          <stop offset="1" stopColor="#0369a1" />
+          <stop offset="0" stopColor="#3b82f6" />
+          <stop offset="1" stopColor="#1d4ed8" />
         </linearGradient>
       </defs>
 
@@ -38,7 +38,7 @@ export function HelpCharacter({
       >
         <path
           d="M28 17 C28 12 30 10 32 8.5"
-          stroke="#0369a1"
+          stroke="#1d4ed8"
           strokeWidth="2.2"
           fill="none"
           strokeLinecap="round"
@@ -53,17 +53,17 @@ export function HelpCharacter({
       >
         <path
           d="M12 35 C8 33 6 30 5.5 26"
-          stroke="#0284c7"
+          stroke="#2563eb"
           strokeWidth="4"
           fill="none"
           strokeLinecap="round"
         />
-        <circle cx="5.5" cy="25" r="3" fill="#0ea5e9" />
+        <circle cx="5.5" cy="25" r="3" fill="#3b82f6" />
       </g>
       {/* Other arm, resting */}
       <path
         d="M44 36 C47 37 48.5 39 49 41.5"
-        stroke="#0284c7"
+        stroke="#2563eb"
         strokeWidth="4"
         fill="none"
         strokeLinecap="round"
@@ -93,8 +93,8 @@ export function HelpCharacter({
           <ellipse cx="21" cy="30" rx="4.6" ry="5.2" fill="#fff" />
           <ellipse cx="35" cy="30" rx="4.6" ry="5.2" fill="#fff" />
           {/* Looking towards the content */}
-          <circle cx="19.8" cy="30.8" r="2.3" fill="#0c4a6e" />
-          <circle cx="33.8" cy="30.8" r="2.3" fill="#0c4a6e" />
+          <circle cx="19.8" cy="30.8" r="2.3" fill="#1e3a8a" />
+          <circle cx="33.8" cy="30.8" r="2.3" fill="#1e3a8a" />
           <circle cx="19" cy="29.6" r="0.8" fill="#fff" />
           <circle cx="33" cy="29.6" r="0.8" fill="#fff" />
         </g>

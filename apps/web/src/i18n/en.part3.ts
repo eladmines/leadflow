@@ -505,4 +505,10 @@ export const enPart3: Record<string, string> = {
     "Name, industry, phone and address. They show on the website, the call button and emails. The industry also sets the WhatsApp bot's ready-made messages and how customers book (appointments or event requests).",
   'השעות מופיעות באתר, וקובעות אילו שעות פנויות מוצעות לתורים: ביומן, בבקשה מהאתר ובבוט בוואטסאפ. סמנו יום כסגור כדי שלא יוצעו בו תורים.':
     'Hours show on the website and decide which free times are offered for appointments: in the calendar, the website request and the WhatsApp bot. Mark a day as closed so no times are offered on it.',
+  // Sidebar sections (D-114)
+  'שיווק ומכירות': 'Sales & marketing',
+  תפעול: 'Operations',
+  ניהול: 'Management',
+  // Top bar (D-114)
+  'סרגל עליון': 'Top bar',
 };

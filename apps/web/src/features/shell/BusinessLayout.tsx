@@ -13,7 +13,7 @@ import { useBusiness } from '../businesses/api';
 import { BusinessNotFound } from '../businesses/BusinessNotFound';
 import type { BusinessOutletContext } from './CurrentBusiness';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
-import { Sidebar } from './Sidebar';
+import { SearchButton, Sidebar, UserCard } from './Sidebar';
 import { markTourSeen, ProductTour, tourSeen } from '../tour/ProductTour';
 import { pageTours, type PageKey } from '../tour/pageTours';
 import { Tour } from '../tour/Tour';
@@ -86,8 +86,8 @@ export function BusinessLayout() {
         {tr('דילוג לתוכן הראשי')}
       </a>
 
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 overflow-y-auto border-e border-brand-100 bg-brand-50 lg:block">
-        <Sidebar business={b} onSearch={openPalette} />
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 overflow-y-auto border-e border-surface-border bg-surface lg:block">
+        <Sidebar business={b} />
       </aside>
       <CommandPalette business={b} open={paletteOpen} onOpenChange={setPaletteOpen} />
       <ProductTour role={b.role} open={tourOpen} onClose={closeTour} />
@@ -129,7 +129,7 @@ export function BusinessLayout() {
             <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm lg:hidden" />
             <Dialog.Content
               aria-describedby={undefined}
-              className="fixed inset-y-0 start-0 z-50 w-[85vw] max-w-xs overflow-y-auto rounded-e-3xl bg-brand-50 shadow-lift focus:outline-none lg:hidden"
+              className="fixed inset-y-0 start-0 z-50 w-[85vw] max-w-xs overflow-y-auto rounded-e-3xl bg-surface shadow-lift focus:outline-none lg:hidden"
             >
               <Dialog.Title className="sr-only">{tr('תפריט ניווט')}</Dialog.Title>
               <Dialog.Close asChild>
@@ -154,15 +154,21 @@ export function BusinessLayout() {
           </Dialog.Portal>
         </Dialog.Root>
 
-        {/* Desktop: the language flags at the top, opposite the sidebar (D-110). */}
-        <div
-          className={cn(
-            'mx-auto hidden justify-end lg:flex',
-            wide ? 'max-w-[1600px] px-8 pt-3' : 'max-w-6xl px-10 pt-3',
-          )}
+        {/* Desktop top bar (D-114): search at the start; flags, bell and the user at the end. */}
+        <header
+          aria-label={tr('סרגל עליון')}
+          className="sticky top-0 z-30 hidden h-16 items-center gap-4 border-b border-surface-border bg-surface px-6 lg:flex"
         >
-          <LanguageSwitch />
-        </div>
+          <SearchButton onSearch={openPalette} className="w-full max-w-xs" />
+          <div className="ms-auto flex items-center gap-2">
+            <LanguageSwitch />
+            <NotificationBell businessId={b.id} />
+            <span aria-hidden className="mx-2 h-8 w-px bg-surface-border" />
+            <div className="w-52">
+              <UserCard business={b} />
+            </div>
+          </div>
+        </header>
 
         <main
           id="main"
@@ -171,8 +177,8 @@ export function BusinessLayout() {
             'mx-auto flex flex-col gap-6 px-4 py-6 focus:outline-none sm:px-6',
             // Room at the bottom so the help button never covers the last item.
             wide
-              ? 'max-w-[1600px] pb-24 lg:px-8 lg:pb-24 lg:pt-1'
-              : 'max-w-6xl pb-24 lg:px-10 lg:pb-24 lg:pt-3',
+              ? 'max-w-[1600px] pb-24 lg:px-8 lg:pb-24 lg:pt-6'
+              : 'max-w-6xl pb-24 lg:px-10 lg:pb-24 lg:pt-8',
           )}
         >
           <UnverifiedEmailBanner />
