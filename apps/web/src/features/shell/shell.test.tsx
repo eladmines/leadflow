@@ -90,7 +90,12 @@ describe('app shell', () => {
     const switcher = (await screen.findAllByLabelText('העסק הנוכחי'))[0]!;
     await user.selectOptions(switcher, second.id);
     await waitFor(() => expect(location()).toBe(businessWebPaths.home(second.id)));
-    expect(await screen.findByText(/מוסך הצפון · /)).toBeInTheDocument();
+    // The name sits in its own <bdi>, so match the whole line.
+    expect(
+      await screen.findByText(
+        (_, el) => el?.tagName === 'P' && /^מוסך הצפון · /.test(el.textContent ?? ''),
+      ),
+    ).toBeInTheDocument();
   });
 });
 
