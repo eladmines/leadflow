@@ -469,8 +469,8 @@ export const enPart3: Record<string, string> = {
   'הפעמון מראה כמה דברים חדשים מחכים: פנייה, הודעה בוואטסאפ, תור שנקבע בבוט או הצעה שאושרה. לחיצה על התראה לוקחת אליה.':
     'The bell shows how many new things are waiting: an inquiry, a WhatsApp message, a booking from the bot or an accepted quote. Click a notification to go to it.',
   שפה: 'Language',
-  'מחליפים בין אנגלית לעברית. ההחלפה נשמרת בדפדפן הזה.':
-    'Switch between English and Hebrew. The choice is saved in this browser.',
+  'לוחצים על הדגל כדי להחליף בין אנגלית לעברית. ההחלפה נשמרת בדפדפן הזה.':
+    'Click a flag to switch between English and Hebrew. Your choice is saved in this browser.',
   'העוזר של LeadFlow': 'The LeadFlow helper',
   'בכל עמוד אפשר ללחוץ עליי: סיור בעמוד שמסביר מה יש בו, סיור במערכת כולה, וחיפוש מהיר.':
     "Click me on any page: a page tour that explains what's on it, the full product tour, and quick search.",
