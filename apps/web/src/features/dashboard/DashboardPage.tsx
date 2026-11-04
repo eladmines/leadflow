@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, TextLink } from '../../components/ui';
+import { buttonClasses, Card, TextLink } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
 import { durationLabel, useReportSummary } from '../reports/api';
@@ -99,37 +99,6 @@ function WeekStats({ businessId }: { businessId: string }) {
         ))}
       </div>
     </section>
-  );
-}
-
-/** Circular progress (decorative; the accessible value is on the parent progressbar). */
-function ProgressRing({ done, total }: { done: number; total: number }) {
-  const r = 30;
-  const c = 2 * Math.PI * r;
-  return (
-    <svg aria-hidden viewBox="0 0 72 72" className="h-20 w-20 -rotate-90">
-      <circle
-        cx="36"
-        cy="36"
-        r={r}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="7"
-        className="text-brand-100"
-      />
-      <circle
-        cx="36"
-        cy="36"
-        r={r}
-        fill="none"
-        strokeWidth="7"
-        strokeLinecap="round"
-        stroke="currentColor"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - done / total)}
-        className="text-brand-500 transition-[stroke-dashoffset] duration-700"
-      />
-    </svg>
   );
 }
 
@@ -263,51 +232,59 @@ export function DashboardPage() {
 
   return (
     <>
-      {/* Welcome banner (D-112): a calm blue gradient, one soft shape; decoration is aria-hidden. */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 p-6 text-white shadow-card rtl:bg-gradient-to-l sm:p-8">
+      {/* Welcome header (D-113): a light card, dark text, a faint blue glow; progress as a slim bar. */}
+      <section className="relative overflow-hidden rounded-2xl border border-surface-border bg-surface p-6 shadow-card sm:p-8">
         <span
           aria-hidden
-          className="absolute -end-16 -top-24 hidden h-64 w-64 rounded-full bg-white/[0.07] sm:block"
+          className="absolute -end-24 -top-24 h-64 w-64 rounded-full bg-brand-100/70 blur-3xl"
         />
-        <div className="relative flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="flex flex-col gap-2">
-              <p className="text-sm font-medium text-brand-100">
-                {business.name} · {tr(roleLabels[business.role])}
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                {greeting()}, {firstName}
-              </h1>
-              <p className="max-w-md text-base text-brand-50">
-                {next
-                  ? next.state === 'soon'
-                    ? tr('הצעד הבא: {0} — הכלי הזה יגיע בקרוב.', next.label)
-                    : tr('הצעד הבא: {0}.', next.label)
-                  : tr('כל הצעדים הושלמו. העסק מוכן לעבודה!')}
-              </p>
-              {can(business.role, 'site.edit') &&
-                (next?.label === tr('בניית אתר העסק') || next?.label === tr('פרסום האתר')) && (
-                  <Link
-                    to={businessWebPaths.section(business.id, 'site')}
-                    className="mt-2 inline-flex h-10 items-center self-start rounded-lg bg-white px-4 text-sm font-medium text-brand-700 shadow-sm hover:bg-brand-50 focus-visible:ring-white focus-visible:ring-offset-brand-700"
-                  >
-                    {next.label === tr('בניית אתר העסק') ? tr('לבניית האתר') : tr('לפרסום האתר')}
-                  </Link>
-                )}
-            </div>
+        <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-brand-700">
+              <bdi>{business.name}</bdi> · {tr(roleLabels[business.role])}
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+              {greeting()}, <bdi>{firstName}</bdi>
+            </h1>
+            <p className="max-w-md text-base text-ink-muted">
+              {next
+                ? next.state === 'soon'
+                  ? tr('הצעד הבא: {0} — הכלי הזה יגיע בקרוב.', next.label)
+                  : tr('הצעד הבא: {0}.', next.label)
+                : tr('כל הצעדים הושלמו. העסק מוכן לעבודה!')}
+            </p>
+            {can(business.role, 'site.edit') &&
+              (next?.label === tr('בניית אתר העסק') || next?.label === tr('פרסום האתר')) && (
+                <Link
+                  to={businessWebPaths.section(business.id, 'site')}
+                  className={buttonClasses('primary', 'md', 'mt-2 self-start')}
+                >
+                  {next.label === tr('בניית אתר העסק') ? tr('לבניית האתר') : tr('לפרסום האתר')}
+                </Link>
+              )}
           </div>
-          <div
-            role="progressbar"
-            aria-label={tr('התקדמות ההקמה')}
-            aria-valuemin={0}
-            aria-valuemax={checklist.length}
-            aria-valuenow={done}
-            className="relative flex items-center justify-center rounded-xl bg-white p-2 text-ink shadow-card"
-          >
-            <ProgressRing done={done} total={checklist.length} />
-            <span className="absolute text-lg font-bold text-ink">
-              {done}/{checklist.length}
-            </span>
+          <div className="flex w-full flex-col gap-2 sm:w-56">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="text-ink-muted">{tr('התקדמות ההקמה')}</span>
+              <span className="font-semibold tabular-nums text-ink">
+                <bdi>
+                  {done}/{checklist.length}
+                </bdi>
+              </span>
+            </div>
+            <div
+              role="progressbar"
+              aria-label={tr('התקדמות ההקמה')}
+              aria-valuemin={0}
+              aria-valuemax={checklist.length}
+              aria-valuenow={done}
+              className="h-2 overflow-hidden rounded-full bg-brand-100"
+            >
+              <div
+                className="h-full rounded-full bg-brand-600 transition-[width] duration-700"
+                style={{ width: `${(done / checklist.length) * 100}%` }}
+              />
+            </div>
           </div>
         </div>
       </section>
