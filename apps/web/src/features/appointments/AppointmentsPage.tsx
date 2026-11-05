@@ -114,51 +114,53 @@ export function AppointmentsPage() {
 
   return (
     <>
-      <PageHeader
-        title={tr('תורים')}
-        description={tr('היומן של העסק: תורים, בקשות מהאתר ושירותים.')}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            {manager && (
-              <Button
-                variant="secondary"
-                aria-expanded={servicesOpen}
-                onClick={() => setServicesOpen((o) => !o)}
-              >
-                <Settings2 aria-hidden className="h-4 w-4" />
-                {tr('שירותים')}
-              </Button>
-            )}
-            <Button onClick={() => setNewOpen(true)}>
-              <Plus aria-hidden className="h-4 w-4" />
-              {tr('תור חדש')}
-            </Button>
-          </div>
-        }
-      />
       {servicesOpen && <ServicesPanel />}
-
-      {pending.length > 0 && (
-        <Card className="flex flex-col gap-3 border-warning-600/30 bg-warning-50/60">
-          <h2 className="text-sm font-semibold text-ink">
-            {tr('בקשות ממתינות לאישור (')}
-            {pending.length})
-          </h2>
-          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {pending.map((r) => (
-              <li key={r.id}>
-                <AppointmentChip a={r} onOpen={setOpen} />
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
 
       {/* One panel (D-116): the date controls on top, the calendar under it, the legend below. */}
       <section
         aria-label={tr('יומן')}
         className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
       >
+        <PageHeader
+          inPanel
+          title={tr('תורים')}
+          description={tr('היומן של העסק: תורים, בקשות מהאתר ושירותים.')}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              {manager && (
+                <Button
+                  variant="secondary"
+                  aria-expanded={servicesOpen}
+                  onClick={() => setServicesOpen((o) => !o)}
+                >
+                  <Settings2 aria-hidden className="h-4 w-4" />
+                  {tr('שירותים')}
+                </Button>
+              )}
+              <Button onClick={() => setNewOpen(true)}>
+                <Plus aria-hidden className="h-4 w-4" />
+                {tr('תור חדש')}
+              </Button>
+            </div>
+          }
+        />
+        {pending.length > 0 && (
+          <div className="border-b border-surface-border p-4">
+            <Card className="flex flex-col gap-3 border-warning-600/30 bg-warning-50/60">
+              <h2 className="text-sm font-semibold text-ink">
+                {tr('בקשות ממתינות לאישור (')}
+                {pending.length})
+              </h2>
+              <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {pending.map((r) => (
+                  <li key={r.id}>
+                    <AppointmentChip a={r} onOpen={setOpen} />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2 border-b border-surface-border p-3 sm:px-4">
           <Button variant="secondary" size="sm" onClick={() => set({ date: undefined })}>
             {tr('היום')}

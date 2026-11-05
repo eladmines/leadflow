@@ -27,15 +27,16 @@ export function QuotesPage() {
 
   return (
     <>
-      <PageHeader
-        title={tr('הצעות מחיר')}
-        description={tr('כל ההצעות של העסק. הצעה חדשה נפתחת מתוך כרטיס הליד.')}
-      />
       {/* One panel (D-116): the status filter on top, the quotes under it. */}
       <section
         aria-label={tr('הצעות מחיר')}
         className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
       >
+        <PageHeader
+          inPanel
+          title={tr('הצעות מחיר')}
+          description={tr('כל ההצעות של העסק. הצעה חדשה נפתחת מתוך כרטיס הליד.')}
+        />
         <div className="flex flex-wrap items-center gap-3 border-b border-surface-border p-4">
           <div
             role="group"

@@ -497,42 +497,6 @@ export function LeadsPage() {
 
   return (
     <>
-      <PageHeader
-        title={tr('לקוחות ולידים')}
-        description={
-          seesAll ? tr('כל הפניות של העסק, לפי שלב בתהליך המכירה.') : tr('הפניות שהוקצו לך.')
-        }
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <RefreshButton
-              onRefresh={() =>
-                Promise.all([
-                  // Leads, tags and the WhatsApp notice (new numbers waiting).
-                  queryClient.invalidateQueries({ queryKey: leadsQueryKey(business.id) }),
-                  queryClient.invalidateQueries({
-                    queryKey: ['businesses', business.id, 'whatsapp'],
-                  }),
-                ])
-              }
-            />
-            {can(business.role, 'leads.export') && (
-              <a
-                // Plain link: the browser downloads the CSV with the session cookie.
-                href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params)}` : ''}`}
-                download
-                className={buttonClasses('secondary', 'md')}
-              >
-                <Download aria-hidden className="h-4 w-4" />
-                {tr('ייצוא לאקסל')}
-              </a>
-            )}
-            <Button onClick={() => setNewOpen(true)}>
-              <Plus aria-hidden className="h-4 w-4" />
-              {tr('ליד חדש')}
-            </Button>
-          </div>
-        }
-      />
       <NewLeadDialog open={newOpen} onOpenChange={setNewOpen} />
       {can(business.role, 'whatsapp.inbox') && <InboxNotice businessId={business.id} />}
 
@@ -541,6 +505,43 @@ export function LeadsPage() {
         aria-label={tr('פניות')}
         className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
       >
+        <PageHeader
+          inPanel
+          title={tr('לקוחות ולידים')}
+          description={
+            seesAll ? tr('כל הפניות של העסק, לפי שלב בתהליך המכירה.') : tr('הפניות שהוקצו לך.')
+          }
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <RefreshButton
+                onRefresh={() =>
+                  Promise.all([
+                    // Leads, tags and the WhatsApp notice (new numbers waiting).
+                    queryClient.invalidateQueries({ queryKey: leadsQueryKey(business.id) }),
+                    queryClient.invalidateQueries({
+                      queryKey: ['businesses', business.id, 'whatsapp'],
+                    }),
+                  ])
+                }
+              />
+              {can(business.role, 'leads.export') && (
+                <a
+                  // Plain link: the browser downloads the CSV with the session cookie.
+                  href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params)}` : ''}`}
+                  download
+                  className={buttonClasses('secondary', 'md')}
+                >
+                  <Download aria-hidden className="h-4 w-4" />
+                  {tr('ייצוא לאקסל')}
+                </a>
+              )}
+              <Button onClick={() => setNewOpen(true)}>
+                <Plus aria-hidden className="h-4 w-4" />
+                {tr('ליד חדש')}
+              </Button>
+            </div>
+          }
+        />
         <div
           role="search"
           className="flex flex-wrap items-center gap-3 border-b border-surface-border bg-surface p-4"
