@@ -9,6 +9,19 @@
   body {
     @apply min-h-screen font-sans;
   }
+  /* Dropdowns: our own chevron, a comfortable distance from the edge (the browser's arrow sits
+     right against it). The :not()s out-rank the px-* utilities so the room for it stays. */
+  select:not([multiple]):not([size]) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2364748b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-size: 1.1em;
+    background-position: right 0.8em center;
+    padding-inline-end: 2.4em;
+  }
+  [dir='rtl'] select:not([multiple]):not([size]) {
+    background-position: left 0.8em center;
+  }
   /* Visible focus for keyboard users only. */
   :focus-visible {
     @apply outline-none ring-2 ring-brand-500 ring-offset-2;

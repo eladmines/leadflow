@@ -229,7 +229,7 @@ function Details({ lead }: { lead: Lead }) {
         >
           {stages.data?.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name}
+              {tr(s.name)}
             </option>
           ))}
         </select>
