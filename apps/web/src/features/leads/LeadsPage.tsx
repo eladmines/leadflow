@@ -244,7 +244,7 @@ function BoardCard({
       >
         {stages.map((s) => (
           <option key={s.id} value={s.id}>
-            {s.name}
+            {tr(s.name)}
           </option>
         ))}
       </select>
@@ -554,7 +554,7 @@ export function LeadsPage() {
             <option value="">{tr('כל השלבים')}</option>
             {stages.data?.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}
+                {tr(s.name)}
               </option>
             ))}
           </select>
