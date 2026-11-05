@@ -514,4 +514,6 @@ export const enPart3: Record<string, string> = {
   // Leads board side scrolling
   'לשלבים הקודמים': 'Earlier stages',
   'לשלבים הבאים': 'Later stages',
+  // Appointments panel label (D-116)
+  יומן: 'Calendar',
 };

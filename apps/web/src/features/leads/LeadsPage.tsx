@@ -256,7 +256,10 @@ function BoardCard({
  * Side scrolling for the board: whether there are stages before/after the visible ones, and a
  * step of about one column. Works in both directions (in RTL, scrollLeft runs negative).
  */
-function useBoardScroll(columns: number) {
+function useBoardScroll(
+  /** Re-measures when this changes (the board mounts after its data loads). */
+  layoutKey: string,
+) {
   const ref = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ canBack: false, canForward: false });
   const measure = useCallback(() => {
@@ -276,7 +279,7 @@ function useBoardScroll(columns: number) {
       el.removeEventListener('scroll', measure);
       window.removeEventListener('resize', measure);
     };
-  }, [measure, columns]);
+  }, [measure, layoutKey]);
   const scroll = (direction: 1 | -1) => {
     const el = ref.current;
     if (!el) return;
@@ -285,15 +288,47 @@ function useBoardScroll(columns: number) {
   };
   return { ref, scroll, ...edges };
 }
+type BoardScroll = ReturnType<typeof useBoardScroll>;
+
+/** "Earlier / later stages" buttons, shown in the toolbar when stages are out of view. */
+function BoardArrows({ scroller }: { scroller: BoardScroll }) {
+  if (!scroller.canBack && !scroller.canForward) return null;
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => scroller.scroll(-1)}
+        disabled={!scroller.canBack}
+        aria-label={tr('לשלבים הקודמים')}
+        title={tr('לשלבים הקודמים')}
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-border bg-surface text-ink-muted hover:text-ink disabled:opacity-40"
+      >
+        <ChevronLeft aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
+      </button>
+      <button
+        type="button"
+        onClick={() => scroller.scroll(1)}
+        disabled={!scroller.canForward}
+        aria-label={tr('לשלבים הבאים')}
+        title={tr('לשלבים הבאים')}
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-border bg-surface text-ink-muted hover:text-ink disabled:opacity-40"
+      >
+        <ChevronRight aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
+      </button>
+    </div>
+  );
+}
 
 function Board({
   leads,
   stages,
   businessId,
+  scroller,
 }: {
   leads: Lead[];
   stages: PipelineStage[];
   businessId: string;
+  scroller: BoardScroll;
 }) {
   const update = useUpdateLead(businessId);
   const [over, setOver] = useState<string | null>(null);
@@ -312,40 +347,14 @@ function Board({
     if (lead) move(lead, stage);
   };
 
-  const scroller = useBoardScroll(stages.length);
-
   return (
     <>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
-      {(scroller.canBack || scroller.canForward) && (
-        <div className="-mb-2 flex items-center justify-end gap-1">
-          <button
-            type="button"
-            onClick={() => scroller.scroll(-1)}
-            disabled={!scroller.canBack}
-            aria-label={tr('לשלבים הקודמים')}
-            title={tr('לשלבים הקודמים')}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-surface-border bg-surface text-ink-muted shadow-card hover:text-ink disabled:opacity-40"
-          >
-            <ChevronLeft aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroller.scroll(1)}
-            disabled={!scroller.canForward}
-            aria-label={tr('לשלבים הבאים')}
-            title={tr('לשלבים הבאים')}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-surface-border bg-surface text-ink-muted shadow-card hover:text-ink disabled:opacity-40"
-          >
-            <ChevronRight aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
-          </button>
-        </div>
-      )}
       {/* relative: the cards' sr-only labels are positioned inside the scroller (and clipped by
           it), so off-screen columns can't widen the page. The scrollbar stays visible. */}
       <div
         ref={scroller.ref}
-        className="scrollbar-visible relative -mx-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6"
+        className="scrollbar-visible relative -mx-4 overflow-x-auto px-4 pb-3"
       >
         <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4">
           {stages.map((stage) => {
@@ -362,7 +371,7 @@ function Board({
                 onDragLeave={() => setOver((o) => (o === stage.id ? null : o))}
                 onDrop={(e) => onDrop(e, stage)}
                 className={cn(
-                  'flex w-72 shrink-0 flex-col gap-3 rounded-2xl border border-surface-border bg-surface p-3 shadow-card transition-colors',
+                  'flex w-72 shrink-0 flex-col gap-3 rounded-xl border border-surface-border bg-surface-muted p-3 transition-colors',
                   over === stage.id && 'bg-brand-50 ring-2 ring-brand-300',
                 )}
               >
@@ -380,7 +389,7 @@ function Board({
                       )}
                     />
                     {tr(stage.name)}
-                    <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-xs font-medium text-ink-muted">
+                    <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-ink-muted ring-1 ring-surface-border">
                       {items.length}
                     </span>
                   </h2>
@@ -421,7 +430,6 @@ function exportParams(params: URLSearchParams) {
 export function LeadsPage() {
   const business = useCurrentBusiness();
   const [params, setParams] = useSearchParams();
-  const view = params.get('view') === 'list' ? 'list' : 'board';
   const seesAll = can(business.role, 'leads.view.all');
   const [q, setQ] = useState(params.get('q') ?? '');
 
@@ -454,6 +462,8 @@ export function LeadsPage() {
   };
   const tags = useLeadTags(business.id).data ?? [];
   const filtered = Boolean(query.q || query.stageId || query.ownerId || query.source || query.tag);
+  const view = params.get('view') === 'list' ? 'list' : 'board';
+  const scroller = useBoardScroll(`${view}:${stages.data?.length ?? 0}:${leads.data?.length ?? 0}`);
 
   const setParam = (key: string, value: string | undefined) =>
     setParams(
@@ -526,175 +536,192 @@ export function LeadsPage() {
       <NewLeadDialog open={newOpen} onOpenChange={setNewOpen} />
       {can(business.role, 'whatsapp.inbox') && <InboxNotice businessId={business.id} />}
 
-      <div role="search" className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-60 flex-1">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle"
-          />
-          <label htmlFor="lead-search" className="sr-only">
-            {tr('חיפוש לידים')}
-          </label>
-          <input
-            id="lead-search"
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={tr('חיפוש לפי שם, טלפון או אימייל')}
-            className={cn(inputClasses(false), 'ps-9')}
-          />
-        </div>
-        {view === 'list' && (
-          <select
-            aria-label={tr('סינון לפי שלב')}
-            value={query.stageId ?? ''}
-            onChange={(e) => setParam('stageId', e.target.value || undefined)}
-            className={selectClass}
-          >
-            <option value="">{tr('כל השלבים')}</option>
-            {stages.data?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {tr(s.name)}
-              </option>
-            ))}
-          </select>
-        )}
-        {seesAll && (
-          <select
-            aria-label={tr('סינון לפי אחראי')}
-            value={query.ownerId ?? ''}
-            onChange={(e) => setParam('ownerId', e.target.value || undefined)}
-            className={selectClass}
-          >
-            <option value="">{tr('כל האחראים')}</option>
-            <option value="none">{tr('ללא אחראי')}</option>
-            {members.data?.map((m) => (
-              <option key={m.userId} value={m.userId}>
-                {m.fullName}
-              </option>
-            ))}
-          </select>
-        )}
-        <select
-          aria-label={tr('סינון לפי מקור')}
-          value={query.source ?? ''}
-          onChange={(e) => setParam('source', e.target.value || undefined)}
-          className={selectClass}
-        >
-          <option value="">{tr('כל המקורות')}</option>
-          {sourceOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        {(tags.length > 0 || query.tag) && (
-          <select
-            aria-label={tr('סינון לפי תגית')}
-            value={query.tag ?? ''}
-            onChange={(e) => setParam('tag', e.target.value || undefined)}
-            className={selectClass}
-          >
-            <option value="">{tr('כל התגיות')}</option>
-            {query.tag && !tags.includes(query.tag) && (
-              <option value={query.tag}>{query.tag}</option>
-            )}
-            {tags.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        )}
+      {/* One panel (D-116): the toolbar on top, the board or list under it. */}
+      <section
+        aria-label={tr('פניות')}
+        className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
+      >
         <div
-          role="group"
-          aria-label={tr('תצוגה')}
-          className="flex rounded-xl bg-surface-sunken p-1"
+          role="search"
+          className="flex flex-wrap items-center gap-3 border-b border-surface-border bg-surface p-4"
         >
-          {(['board', 'list'] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={view === v}
-              onClick={() => setParam('view', v === 'board' ? undefined : 'list')}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm',
-                view === v ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
-              )}
+          <div className="relative min-w-60 flex-1">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle"
+            />
+            <label htmlFor="lead-search" className="sr-only">
+              {tr('חיפוש לידים')}
+            </label>
+            <input
+              id="lead-search"
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={tr('חיפוש לפי שם, טלפון או אימייל')}
+              className={cn(inputClasses(false), 'ps-9')}
+            />
+          </div>
+          {view === 'list' && (
+            <select
+              aria-label={tr('סינון לפי שלב')}
+              value={query.stageId ?? ''}
+              onChange={(e) => setParam('stageId', e.target.value || undefined)}
+              className={selectClass}
             >
-              {v === 'board' ? (
-                <Columns3 aria-hidden className="h-4 w-4" />
-              ) : (
-                <List aria-hidden className="h-4 w-4" />
+              <option value="">{tr('כל השלבים')}</option>
+              {stages.data?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {tr(s.name)}
+                </option>
+              ))}
+            </select>
+          )}
+          {seesAll && (
+            <select
+              aria-label={tr('סינון לפי אחראי')}
+              value={query.ownerId ?? ''}
+              onChange={(e) => setParam('ownerId', e.target.value || undefined)}
+              className={selectClass}
+            >
+              <option value="">{tr('כל האחראים')}</option>
+              <option value="none">{tr('ללא אחראי')}</option>
+              {members.data?.map((m) => (
+                <option key={m.userId} value={m.userId}>
+                  {m.fullName}
+                </option>
+              ))}
+            </select>
+          )}
+          <select
+            aria-label={tr('סינון לפי מקור')}
+            value={query.source ?? ''}
+            onChange={(e) => setParam('source', e.target.value || undefined)}
+            className={selectClass}
+          >
+            <option value="">{tr('כל המקורות')}</option>
+            {sourceOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {(tags.length > 0 || query.tag) && (
+            <select
+              aria-label={tr('סינון לפי תגית')}
+              value={query.tag ?? ''}
+              onChange={(e) => setParam('tag', e.target.value || undefined)}
+              className={selectClass}
+            >
+              <option value="">{tr('כל התגיות')}</option>
+              {query.tag && !tags.includes(query.tag) && (
+                <option value={query.tag}>{query.tag}</option>
               )}
-              {v === 'board' ? tr('לוח') : tr('רשימה')}
-            </button>
-          ))}
+              {tags.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          )}
+          <div
+            role="group"
+            aria-label={tr('תצוגה')}
+            className="flex rounded-xl bg-surface-sunken p-1"
+          >
+            {(['board', 'list'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={view === v}
+                onClick={() => setParam('view', v === 'board' ? undefined : 'list')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm',
+                  view === v ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
+                )}
+              >
+                {v === 'board' ? (
+                  <Columns3 aria-hidden className="h-4 w-4" />
+                ) : (
+                  <List aria-hidden className="h-4 w-4" />
+                )}
+                {v === 'board' ? tr('לוח') : tr('רשימה')}
+              </button>
+            ))}
+          </div>
+          {view === 'board' && <BoardArrows scroller={scroller} />}
         </div>
-      </div>
 
-      {leads.isPending || stages.isPending ? (
-        <Spinner label={tr('טוענים פניות…')} />
-      ) : leads.isError || stages.isError ? (
-        <Alert tone="danger" title={tr('לא הצלחנו לטעון את הפניות')}>
-          {errorMessage(leads.error ?? stages.error)}
-        </Alert>
-      ) : leads.data.length === 0 && !filtered ? (
-        <section className="flex flex-col items-center gap-3 rounded-3xl border border-surface-border bg-surface px-6 py-16 text-center shadow-card">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
-            <Inbox aria-hidden className="h-7 w-7" />
-          </span>
-          <h2 className="text-lg font-semibold text-ink">{tr('עדיין אין פניות')}</h2>
-          {!seesAll ? (
-            <p className="max-w-md text-sm text-ink-muted">
-              {tr('כשיוקצו לך פניות, הן יופיעו כאן.')}
-            </p>
-          ) : site.data?.published ? (
-            <p className="max-w-md text-sm text-ink-muted">
-              {tr('האתר באוויר עם טופס פנייה. שתפו את הכתובת')}{' '}
-              <bdi dir="ltr" className="font-medium text-ink">
-                {site.data.publicUrl?.replace(/^https?:\/\//, '')}
-              </bdi>{' '}
-              {tr('— כל פנייה תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.')}
+        <div className="flex flex-col gap-4 p-4">
+          {leads.isPending || stages.isPending ? (
+            <Spinner label={tr('טוענים פניות…')} />
+          ) : leads.isError || stages.isError ? (
+            <Alert tone="danger" title={tr('לא הצלחנו לטעון את הפניות')}>
+              {errorMessage(leads.error ?? stages.error)}
+            </Alert>
+          ) : leads.data.length === 0 && !filtered ? (
+            <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+                <Inbox aria-hidden className="h-7 w-7" />
+              </span>
+              <h2 className="text-lg font-semibold text-ink">{tr('עדיין אין פניות')}</h2>
+              {!seesAll ? (
+                <p className="max-w-md text-sm text-ink-muted">
+                  {tr('כשיוקצו לך פניות, הן יופיעו כאן.')}
+                </p>
+              ) : site.data?.published ? (
+                <p className="max-w-md text-sm text-ink-muted">
+                  {tr('האתר באוויר עם טופס פנייה. שתפו את הכתובת')}{' '}
+                  <bdi dir="ltr" className="font-medium text-ink">
+                    {site.data.publicUrl?.replace(/^https?:\/\//, '')}
+                  </bdi>{' '}
+                  {tr('— כל פנייה תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.')}
+                </p>
+              ) : (
+                <>
+                  <p className="max-w-md text-sm text-ink-muted">
+                    {tr(
+                      'אחרי שהאתר יפורסם, כל פנייה מהטופס באתר תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.',
+                    )}
+                  </p>
+                  {can(business.role, 'site.edit') && (
+                    <Link
+                      to={businessWebPaths.section(business.id, 'site')}
+                      className={buttonClasses('secondary', 'md')}
+                    >
+                      {tr('לבניית האתר')}
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+          ) : view === 'board' ? (
+            <Board
+              leads={leads.data}
+              stages={stages.data}
+              businessId={business.id}
+              scroller={scroller}
+            />
+          ) : leads.data.length === 0 ? (
+            <p className="py-10 text-center text-sm text-ink-muted">
+              {tr('לא נמצאו לידים שמתאימים לחיפוש.')}
             </p>
           ) : (
             <>
-              <p className="max-w-md text-sm text-ink-muted">
-                {tr(
-                  'אחרי שהאתר יפורסם, כל פנייה מהטופס באתר תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.',
-                )}
+              <p className="text-sm text-ink-muted" aria-live="polite">
+                {leads.data.length} {tr('פניות')}
               </p>
-              {can(business.role, 'site.edit') && (
-                <Link
-                  to={businessWebPaths.section(business.id, 'site')}
-                  className={buttonClasses('secondary', 'md')}
-                >
-                  {tr('לבניית האתר')}
-                </Link>
-              )}
+              <ul aria-label={tr('פניות')} className="grid gap-4 lg:grid-cols-2">
+                {leads.data.map((lead) => (
+                  <li key={lead.id}>
+                    <LeadCard lead={lead} businessId={business.id} />
+                  </li>
+                ))}
+              </ul>
             </>
           )}
-        </section>
-      ) : view === 'board' ? (
-        <Board leads={leads.data} stages={stages.data} businessId={business.id} />
-      ) : leads.data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-ink-muted">
-          {tr('לא נמצאו לידים שמתאימים לחיפוש.')}
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-ink-muted" aria-live="polite">
-            {leads.data.length} {tr('פניות')}
-          </p>
-          <ul aria-label={tr('פניות')} className="grid gap-4 lg:grid-cols-2">
-            {leads.data.map((lead) => (
-              <li key={lead.id}>
-                <LeadCard lead={lead} businessId={business.id} />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+        </div>
+      </section>
     </>
   );
 }

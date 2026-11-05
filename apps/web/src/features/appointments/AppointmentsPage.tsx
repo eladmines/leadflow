@@ -154,87 +154,99 @@ export function AppointmentsPage() {
         </Card>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="sm" onClick={() => set({ date: undefined })}>
-          {tr('היום')}
-        </Button>
-        <div className="flex">
-          <button
-            type="button"
-            aria-label={view === 'day' ? tr('היום הקודם') : tr('השבוע הקודם')}
-            onClick={() => shift(-1)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken"
-          >
-            <ChevronRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
-          </button>
-          <button
-            type="button"
-            aria-label={view === 'day' ? tr('היום הבא') : tr('השבוע הבא')}
-            onClick={() => shift(1)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken"
-          >
-            <ChevronLeft aria-hidden className="h-4 w-4 ltr:rotate-180" />
-          </button>
-        </div>
-        <h2 aria-live="polite" className="text-base font-semibold text-ink">
-          {rangeLabel}
-        </h2>
-        <div className="ms-auto flex flex-wrap items-center gap-2">
-          {manager && (
-            <select
-              aria-label={tr('סינון לפי איש צוות')}
-              value={staff}
-              onChange={(e) => set({ staff: e.target.value || undefined })}
-              className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
+      {/* One panel (D-116): the date controls on top, the calendar under it, the legend below. */}
+      <section
+        aria-label={tr('יומן')}
+        className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
+      >
+        <div className="flex flex-wrap items-center gap-2 border-b border-surface-border p-3 sm:px-4">
+          <Button variant="secondary" size="sm" onClick={() => set({ date: undefined })}>
+            {tr('היום')}
+          </Button>
+          <div className="flex">
+            <button
+              type="button"
+              aria-label={view === 'day' ? tr('היום הקודם') : tr('השבוע הקודם')}
+              onClick={() => shift(-1)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken"
             >
-              <option value="">{tr('כל הצוות')}</option>
-              {(members.data ?? []).map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.fullName}
-                </option>
-              ))}
-            </select>
-          )}
-          <div
-            role="group"
-            aria-label={tr('תצוגה')}
-            className="flex rounded-lg bg-surface-sunken p-0.5"
-          >
-            {(['day', 'week'] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                aria-pressed={view === v}
-                onClick={() => set({ view: v === 'week' ? undefined : 'day' })}
-                className={cn(
-                  'rounded-md px-3 py-1 text-sm',
-                  view === v ? 'bg-surface text-ink shadow-card' : 'text-ink-muted',
-                )}
+              <ChevronRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
+            </button>
+            <button
+              type="button"
+              aria-label={view === 'day' ? tr('היום הבא') : tr('השבוע הבא')}
+              onClick={() => shift(1)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken"
+            >
+              <ChevronLeft aria-hidden className="h-4 w-4 ltr:rotate-180" />
+            </button>
+          </div>
+          <h2 aria-live="polite" className="text-base font-semibold text-ink">
+            {rangeLabel}
+          </h2>
+          <div className="ms-auto flex flex-wrap items-center gap-2">
+            {manager && (
+              <select
+                aria-label={tr('סינון לפי איש צוות')}
+                value={staff}
+                onChange={(e) => set({ staff: e.target.value || undefined })}
+                className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
               >
-                {v === 'day' ? tr('יום') : tr('שבוע')}
-              </button>
-            ))}
+                <option value="">{tr('כל הצוות')}</option>
+                {(members.data ?? []).map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    {m.fullName}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div
+              role="group"
+              aria-label={tr('תצוגה')}
+              className="flex rounded-lg bg-surface-sunken p-0.5"
+            >
+              {(['day', 'week'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={view === v}
+                  onClick={() => set({ view: v === 'week' ? undefined : 'day' })}
+                  className={cn(
+                    'rounded-md px-3 py-1 text-sm',
+                    view === v ? 'bg-surface text-ink shadow-card' : 'text-ink-muted',
+                  )}
+                >
+                  {v === 'day' ? tr('יום') : tr('שבוע')}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {list.isPending ? (
-        <Spinner label={tr('טוענים את היומן…')} />
-      ) : list.isError ? (
-        <Alert tone="danger">{errorMessage(list.error)}</Alert>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <TimeGrid
-            days={days}
-            appointments={list.data ?? []}
-            openingHours={business.openingHours}
-            capacity={capacity}
-            onPick={(day, time) => setSlot({ day, time })}
-            onOpen={setOpen}
-          />
-          <TimeGridLegend />
-        </div>
-      )}
+        {list.isPending ? (
+          <div className="p-4">
+            <Spinner label={tr('טוענים את היומן…')} />
+          </div>
+        ) : list.isError ? (
+          <div className="p-4">
+            <Alert tone="danger">{errorMessage(list.error)}</Alert>
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <TimeGrid
+              days={days}
+              appointments={list.data ?? []}
+              openingHours={business.openingHours}
+              capacity={capacity}
+              onPick={(day, time) => setSlot({ day, time })}
+              onOpen={setOpen}
+            />
+            <div className="border-t border-surface-border px-4 py-3">
+              <TimeGridLegend />
+            </div>
+          </div>
+        )}
+      </section>
 
       {list.data?.length === 0 && pending.length === 0 && (
         <p className="flex items-center gap-2 text-sm text-ink-muted">
