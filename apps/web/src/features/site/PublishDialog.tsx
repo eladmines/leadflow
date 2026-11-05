@@ -48,6 +48,12 @@ function SubdomainForm({
           {tr('כתובת האתר')}
         </label>
         <div dir="ltr" className="flex items-stretch">
+          {/* Sites under a path when there's no domain (D-119): the address comes first. */}
+          {site.publicPrefix && (
+            <span className="flex items-center whitespace-nowrap rounded-s-xl border border-e-0 border-surface-border bg-surface-muted px-3 text-sm text-ink-muted">
+              {site.publicPrefix}
+            </span>
+          )}
           <input
             id="subdomain"
             autoComplete="off"
@@ -55,12 +61,18 @@ function SubdomainForm({
             placeholder="my-business"
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? 'subdomain-error' : 'subdomain-hint'}
-            className={cn(inputClasses(!!error), 'rounded-e-none text-start')}
+            className={cn(
+              inputClasses(!!error),
+              'text-start',
+              site.publicPrefix ? 'rounded-s-none' : 'rounded-e-none',
+            )}
             {...form.register('subdomain')}
           />
-          <span className="flex items-center whitespace-nowrap rounded-e-xl border border-s-0 border-surface-border bg-surface-muted px-3 text-sm text-ink-muted">
-            .{site.publicDomain}
-          </span>
+          {!site.publicPrefix && (
+            <span className="flex items-center whitespace-nowrap rounded-e-xl border border-s-0 border-surface-border bg-surface-muted px-3 text-sm text-ink-muted">
+              .{site.publicDomain}
+            </span>
+          )}
         </div>
         {error ? (
           <p id="subdomain-error" className="text-xs text-danger-600">

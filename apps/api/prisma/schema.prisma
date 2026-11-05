@@ -450,6 +450,18 @@ model Asset {
   @@map("assets")
 }
 
+/// Image bytes for STORAGE_DRIVER=database (D-119): hosts whose disk is wiped on restart. Not a
+/// tenant table of its own — the `assets` row owns it by `key` (`<businessId>/<uuid>.webp`),
+/// and only the storage provider reads it.
+model StoredObject {
+  key         String   @id @db.VarChar(120)
+  contentType String   @map("content_type") @db.VarChar(60)
+  body        Bytes
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("stored_objects")
+}
+
 // ---------------------------------------------------------------------------
 // F10 — Follow-up tasks
 // ---------------------------------------------------------------------------

@@ -34,6 +34,7 @@ const storedPages = z.array(sitePageSchema).catch([]);
 type SiteWithLive = SiteRow & { publishedVersion: SiteVersion | null };
 
 export function publicUrlFor(config: AppConfig, subdomain: string) {
+  if (config.PUBLIC_SITE_MODE === 'path') return `${config.APP_URL}/s/${subdomain}`;
   return `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}.${config.PUBLIC_SITE_HOST}`;
 }
 
@@ -45,6 +46,11 @@ export function toSiteDto(row: SiteWithLive, config: AppConfig): Site {
     subdomain: row.subdomain,
     publicUrl: row.subdomain ? publicUrlFor(config, row.subdomain) : null,
     publicDomain: config.PUBLIC_SITE_HOST,
+    // Without a domain the address is a path on the app's own (D-119): "app.example.com/s/".
+    publicPrefix:
+      config.PUBLIC_SITE_MODE === 'path'
+        ? `${config.APP_URL.replace(/^https?:\/\//, '')}/s/`
+        : null,
     published: live
       ? {
           versionId: live.id,

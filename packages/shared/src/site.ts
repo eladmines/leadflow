@@ -479,6 +479,8 @@ export const siteSchema = z.object({
   publicUrl: z.string().nullable(),
   /** Host suffix shown next to the subdomain field, e.g. "lvh.me:4100". */
   publicDomain: z.string(),
+  /** Set when sites live under a path instead (D-119): shown before the field, e.g. "app.onrender.com/s/". */
+  publicPrefix: z.string().nullable().optional(),
   published: publishedVersionSchema.nullable(),
   templateKey: templateKeySchema,
   theme: themeSchema,

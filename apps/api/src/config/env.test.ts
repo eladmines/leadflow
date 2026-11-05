@@ -80,4 +80,34 @@ describe('loadConfig', () => {
     expect(cfg.AUTH_RATE_LIMIT_MAX).toBe(3);
     expect(cfg.AUTH_RATE_LIMIT_WINDOW).toBe(60_000);
   });
+
+  it('free hosting on Render: address from RENDER_EXTERNAL_URL, same-origin web app (D-119)', () => {
+    const cfg = loadConfig({
+      DATABASE_URL: DB,
+      NODE_ENV: 'production',
+      RENDER_EXTERNAL_URL: 'https://leadflow-abc.onrender.com',
+      FORM_TOKEN_SECRET: 'x'.repeat(40),
+      PUBLIC_SITE_MODE: 'path',
+      STORAGE_DRIVER: 'database',
+      SMTP_HOST: 'smtp.gmail.com',
+      SMTP_PORT: '465',
+      SMTP_SECURE: 'true',
+      SMTP_USER: 'me@gmail.com',
+      SMTP_PASS: 'app-password',
+    });
+    expect(cfg.APP_URL).toBe('https://leadflow-abc.onrender.com');
+    expect(cfg.WEB_ORIGINS).toEqual(['https://leadflow-abc.onrender.com']);
+    expect(cfg.COOKIE_SECURE).toBe(true);
+    expect(cfg.PUBLIC_SITE_MODE).toBe('path');
+    expect(cfg.STORAGE_DRIVER).toBe('database');
+    expect(cfg.SMTP_SECURE).toBe(true);
+    // An explicit APP_URL wins.
+    expect(
+      loadConfig({
+        DATABASE_URL: DB,
+        APP_URL: 'https://a.test',
+        RENDER_EXTERNAL_URL: 'https://b.test',
+      }).APP_URL,
+    ).toBe('https://a.test');
+  });
 });

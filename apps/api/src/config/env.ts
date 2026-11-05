@@ -21,12 +21,13 @@ const envSchema = z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
     DATABASE_URL: z.string().url(),
+    /** Defaults to APP_URL's origin (the web app served from this port, D-119). */
     WEB_ORIGINS: z
       .string()
-      .default('http://localhost:5173')
+      .optional()
       .transform((v) =>
         v
-          .split(',')
+          ?.split(',')
           .map((s) => s.trim())
           .filter(Boolean),
       ),
@@ -43,6 +44,11 @@ const envSchema = z
     EMAIL_TRANSPORT: z.enum(['smtp', 'memory']).default('smtp'),
     SMTP_HOST: z.string().min(1).default('localhost'),
     SMTP_PORT: z.coerce.number().int().positive().default(1025),
+    /** Login for a real mail server (e.g. Gmail with an app password, D-119); unset for Mailpit. */
+    SMTP_USER: optionalSetting(z.string().min(1)),
+    SMTP_PASS: optionalSetting(z.string().min(1)),
+    /** TLS from the first byte (port 465). Port 587 upgrades with STARTTLS on its own. */
+    SMTP_SECURE: booleanString.default('false'),
     EMAIL_FROM: z.string().min(1).default('LeadFlow <no-reply@leadflow.local>'),
     /** Requests per client IP per route per window, on rate-limited auth routes. */
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
@@ -61,6 +67,13 @@ const envSchema = z
       .regex(/^[a-z0-9.-]+(:\d+)?$/i)
       .default('lvh.me:4100'),
     PUBLIC_SITE_PROTOCOL: z.enum(['http', 'https']).optional(),
+    /**
+     * `host`: each site on its own subdomain (needs a wildcard domain). `path`: sites under
+     * APP_URL/s/<subdomain> on the app's own port — for hosting without a domain (D-119).
+     */
+    PUBLIC_SITE_MODE: z.enum(['host', 'path']).default('host'),
+    /** Built web app (apps/web/dist) to serve from the API's port; unset = served separately. */
+    WEB_DIST_DIR: optionalSetting(z.string().min(1)),
 
     // F07 — Lead forms
     /** HMAC secret for public form tokens (≥ 32 chars). Random per boot outside production. */
@@ -70,7 +83,9 @@ const envSchema = z
     LEAD_FORM_RATE_LIMIT_WINDOW: z.coerce.number().int().positive().default(600_000),
 
     // F05 — Media
-    /** Local folder for uploaded images (dev/test). Production uses object storage (R2). */
+    /** `disk`: MEDIA_DIR. `database`: in Postgres, for hosts whose disk is wiped on restart (D-119). */
+    STORAGE_DRIVER: z.enum(['disk', 'database']).default('disk'),
+    /** Local folder for uploaded images (dev/test). */
     MEDIA_DIR: z.string().min(1).default('.data/media'),
     /** URL prefix images are served from: same-origin `/media` locally, a CDN origin in production. */
     MEDIA_PUBLIC_BASE: z.string().min(1).default('/media'),
@@ -149,6 +164,9 @@ const envSchema = z
   .transform((env) => ({
     ...env,
     APP_URL: env.APP_URL ?? 'http://localhost:5173',
+    WEB_ORIGINS: env.WEB_ORIGINS?.length
+      ? env.WEB_ORIGINS
+      : [new URL(env.APP_URL ?? 'http://localhost:5173').origin],
     COOKIE_SECURE: env.COOKIE_SECURE ?? env.NODE_ENV === 'production',
     PUBLIC_SITE_PROTOCOL:
       env.PUBLIC_SITE_PROTOCOL ?? (env.NODE_ENV === 'production' ? 'https' : 'http'),
@@ -159,7 +177,10 @@ export type AppConfig = z.infer<typeof envSchema>;
 
 /** Parses and validates environment variables; fails fast on misconfiguration. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
-  const parsed = envSchema.safeParse(env);
+  // Render gives every service its public address; use it when APP_URL isn't set (D-119).
+  const source =
+    !env.APP_URL && env.RENDER_EXTERNAL_URL ? { ...env, APP_URL: env.RENDER_EXTERNAL_URL } : env;
+  const parsed = envSchema.safeParse(source);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid environment configuration: ${issues}`);
