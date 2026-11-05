@@ -1,29 +1,46 @@
 import { useId } from 'react';
 import { cn } from '../../lib/cn';
 
-/** LeadFlow wordmark: a rounded mark (a lead flowing in) plus the name (always LTR). */
+/**
+ * LeadFlow wordmark (D-115): a bullseye with a dart that has just landed — a lead caught — drawn
+ * open, without a tile, in blue with a coral centre. The name is always LTR.
+ */
 export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
   // Unique per instance: a gradient defined inside a hidden copy (e.g. the desktop sidebar on
   // mobile) can't be referenced by a visible one.
-  const gradientId = `lf-mark-${useId().replace(/:/g, '')}`;
+  const id = `lf-mark-${useId().replace(/:/g, '')}`;
   return (
-    <span dir="ltr" className={cn('inline-flex items-center gap-2.5', className)}>
-      <svg aria-hidden viewBox="0 0 40 40" className="h-7 w-7 shrink-0">
+    <span dir="ltr" className={cn('inline-flex items-center gap-2', className)}>
+      <svg aria-hidden viewBox="0 0 64 64" className="h-8 w-8 shrink-0">
         <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#3b82f6" />
+          <linearGradient id={`${id}b`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#4f8ff7" />
             <stop offset="1" stopColor="#1d4ed8" />
           </linearGradient>
+          <linearGradient id={`${id}c`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ff8a5c" />
+            <stop offset="1" stopColor="#f2564a" />
+          </linearGradient>
         </defs>
-        <rect width="40" height="40" rx="10" fill={`url(#${gradientId})`} />
-        <path
-          d="M9 25c4.5 0 5.5-10 11-10s6.5 10 11 10"
-          stroke="#fff"
-          strokeWidth="3"
-          strokeLinecap="round"
+        <circle
+          cx="29"
+          cy="35"
+          r="23"
           fill="none"
+          stroke={`url(#${id}b)`}
+          strokeOpacity=".35"
+          strokeWidth="5"
         />
-        <circle cx="30.5" cy="13" r="3.5" fill="#f77f57" />
+        <circle cx="29" cy="35" r="13.5" fill="none" stroke={`url(#${id}b)`} strokeWidth="5" />
+        <circle cx="29" cy="35" r="6" fill={`url(#${id}c)`} />
+        {/* The dart */}
+        <path
+          d="M30.5 33.5L51 13"
+          stroke={`url(#${id}b)`}
+          strokeWidth="3.6"
+          strokeLinecap="round"
+        />
+        <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill={`url(#${id}b)`} />
       </svg>
       {!compact && (
         <span className="text-[17px] font-semibold tracking-tight text-ink">
