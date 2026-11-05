@@ -24,5 +24,10 @@ export function createEmailSender(config: AppConfig): EmailSender {
     host: config.SMTP_HOST,
     port: config.SMTP_PORT,
     from: config.EMAIL_FROM,
+    secure: config.SMTP_SECURE,
+    auth:
+      config.SMTP_USER && config.SMTP_PASS
+        ? { user: config.SMTP_USER, pass: config.SMTP_PASS }
+        : undefined,
   });
 }

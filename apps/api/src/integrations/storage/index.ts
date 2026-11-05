@@ -1,5 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import type { PrismaClient } from '@prisma/client';
 
 /**
  * Object storage for uploaded media. Local disk in dev/test; an S3-compatible adapter for
@@ -45,5 +46,40 @@ export class LocalDiskStorage implements StorageProvider {
 
   async delete(key: string) {
     await rm(this.file(key), { force: true });
+  }
+}
+
+/**
+ * Images in Postgres (D-119), for hosting whose disk doesn't survive a restart (free plans).
+ * Fine for test volumes; object storage (R2, D-011) replaces it for real traffic.
+ */
+export class DatabaseStorage implements StorageProvider {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  private check(key: string) {
+    if (!STORAGE_KEY.test(key)) throw new Error('invalid storage key');
+    return key;
+  }
+
+  async put(key: string, body: Buffer, contentType: string) {
+    const k = this.check(key);
+    const bytes = new Uint8Array(body); // Prisma's Bytes type wants a plain ArrayBuffer view
+    await this.prisma.storedObject.upsert({
+      where: { key: k },
+      create: { key: k, body: bytes, contentType },
+      update: { body: bytes, contentType },
+    });
+  }
+
+  async get(key: string) {
+    const row = await this.prisma.storedObject.findUnique({
+      where: { key: this.check(key) },
+      select: { body: true },
+    });
+    return row ? Buffer.from(row.body) : null;
+  }
+
+  async delete(key: string) {
+    await this.prisma.storedObject.deleteMany({ where: { key: this.check(key) } });
   }
 }

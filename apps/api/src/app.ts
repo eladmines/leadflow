@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import Fastify from 'fastify';
+import Fastify, { type FastifyServerFactory } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -16,6 +16,7 @@ import type { AppConfig } from './config/env';
 import { loggerOptions, type LogStream } from './lib/logger';
 import { AppError } from './lib/errors';
 import { registerErrorHandler } from './plugins/error-handler';
+import { createWebAppHandler } from './lib/web-app';
 import { registerCsrfGuard } from './plugins/csrf';
 import { registerSessionPlugin } from './plugins/session';
 import { registerTenantSupport, tenantScope } from './plugins/tenant';
@@ -66,6 +67,8 @@ export interface AppDeps {
   logStream?: LogStream;
   /** Defaults to the adapter chosen by `WHATSAPP_PROVIDER`. Tests inject a MemoryWhatsAppSender. */
   whatsappSender?: WhatsAppSender;
+  /** A server shared with the public-site app (one port, D-119); it calls `app.routing`. */
+  serverFactory?: FastifyServerFactory;
 }
 
 /** Builds the Fastify app. Used by the server and by tests (via `app.inject`). */
@@ -77,8 +80,10 @@ export async function buildApp({
   siteCache,
   storage,
   whatsappSender,
+  serverFactory,
 }: AppDeps) {
   const app = Fastify({
+    ...(serverFactory ? { serverFactory } : {}),
     logger: loggerOptions(config, logStream),
     genReqId: (req) => {
       const incoming = req.headers['x-request-id'];
@@ -114,7 +119,10 @@ export async function buildApp({
     reply.header('x-request-id', req.id);
   });
 
-  registerErrorHandler(app);
+  registerErrorHandler(
+    app,
+    config.WEB_DIST_DIR ? createWebAppHandler(path.resolve(config.WEB_DIST_DIR)) : undefined,
+  );
 
   await app.register(cors, {
     origin: config.WEB_ORIGINS,

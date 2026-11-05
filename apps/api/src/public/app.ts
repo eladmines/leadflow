@@ -30,7 +30,9 @@ import { registerMediaServing } from '../modules/media/serve';
 
 /**
  * Public-site server (F06): serves each business's *published* version by Host header,
- * e.g. http://shiran.lvh.me:4100. Read-only, no cookies, no auth, no scripts.
+ * e.g. http://shiran.lvh.me:4100 — or, with PUBLIC_SITE_MODE=path, under APP_URL/s/<subdomain>
+ * on the app's own port (hosting without a domain, D-119). Read-only, no cookies, no auth, no
+ * scripts.
  * Production will move this to a Cloudflare Worker reading snapshots from R2 (D-036).
  */
 
@@ -86,6 +88,19 @@ export async function buildPublicApp({
     trustProxy: true,
   });
   const suffix = `.${config.PUBLIC_SITE_HOST.toLowerCase()}`;
+  const byPath = config.PUBLIC_SITE_MODE === 'path';
+  /** The site's address: its own host, or its path on the app's address. */
+  const siteOrigin = (subdomain: string) =>
+    byPath
+      ? `${config.APP_URL}/s/${subdomain}`
+      : `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}${suffix}`;
+  /** Pages link with root paths (`/`, `/about`, the form's action); under a path they get it. */
+  const withBase = (html: string, subdomain: string) =>
+    byPath ? html.replace(/(\s(?:href|action)=")\/(?!\/)/g, `$1/s/${subdomain}/`) : html;
+  const validSubdomain = (sub: string | undefined) => {
+    const s = (sub ?? '').toLowerCase();
+    return SUBDOMAIN.test(s) ? s : null;
+  };
 
   // Plain HTML forms post urlencoded bodies; keep them small.
   app.addContentTypeParser(
@@ -154,23 +169,25 @@ export async function buildPublicApp({
   app.get('/health', async () => ({ status: 'ok' }));
   if (storage) registerMediaServing(app, storage);
 
-  app.get('/*', async (req, reply) => {
-    const subdomain = subdomainOf(req.host);
+  /** One site's page, robots.txt or sitemap; `path` is inside the site (`/`, `/about`). */
+  const serveSite = async (reply: FastifyReply, subdomain: string | null, path: string) => {
     if (!subdomain) return siteNotFound(reply);
     const site = await lookup(subdomain);
     if (!site.html) return siteNotFound(reply);
 
-    const path = req.url.split('?')[0]!;
-    const origin = `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}${suffix}`;
+    const origin = siteOrigin(subdomain);
     // `/about` and `/about/` → an extra page (D-081).
     const slug = path.replace(/^\/|\/$/g, '').toLowerCase();
     const pageHtml = path === '/' || path === '/index.html' ? site.html : site.pages[slug];
     if (pageHtml && !slug.includes('/')) {
       // Never cached by browsers: every view gets a fresh form token (its nonce is the lead's
       // idempotency key), and a new publish shows immediately. The server-side cache stays.
-      const html = pageHtml.replaceAll(
-        FORM_TOKEN_PLACEHOLDER,
-        createFormToken(config.FORM_TOKEN_SECRET, subdomain),
+      const html = withBase(
+        pageHtml.replaceAll(
+          FORM_TOKEN_PLACEHOLDER,
+          createFormToken(config.FORM_TOKEN_SECRET, subdomain),
+        ),
+        subdomain,
       );
       return send(reply, 200, 'text/html', html, 'no-store');
     }
@@ -204,11 +221,23 @@ export async function buildPublicApp({
       'text/html',
       notFoundPage('העמוד לא נמצא', 'העמוד שחיפשתם לא קיים באתר הזה.'),
     );
-  });
+  };
+
+  if (byPath) {
+    app.get<{ Params: { sub: string } }>('/s/:sub', (req, reply) =>
+      serveSite(reply, validSubdomain(req.params.sub), '/'),
+    );
+    app.get<{ Params: { sub: string; '*': string } }>('/s/:sub/*', (req, reply) =>
+      serveSite(reply, validSubdomain(req.params.sub), `/${req.params['*'].split('?')[0]}`),
+    );
+  } else {
+    app.get('/*', (req, reply) => serveSite(reply, subdomainOf(req.host), req.url.split('?')[0]!));
+  }
 
   /** A result page in the site's own look. */
   const message = (
     reply: FastifyReply,
+    subdomain: string,
     status: number,
     theme: SiteTheme,
     businessName: string,
@@ -218,22 +247,26 @@ export async function buildPublicApp({
       reply,
       status,
       'text/html',
-      renderSiteMessagePage(theme, { name: businessName }, { ...page, backLabel: 'חזרה לאתר' }),
+      withBase(
+        renderSiteMessagePage(theme, { name: businessName }, { ...page, backLabel: 'חזרה לאתר' }),
+        subdomain,
+      ),
     );
 
-  app.post(
-    LEAD_FORM_PATH,
+  app.post<{ Params: { sub?: string } }>(
+    byPath ? `/s/:sub${LEAD_FORM_PATH}` : LEAD_FORM_PATH,
     {
       config: {
         rateLimit: {
           max: config.LEAD_FORM_RATE_LIMIT_MAX,
           timeWindow: config.LEAD_FORM_RATE_LIMIT_WINDOW,
-          keyGenerator: (req) => `${req.ip}|${req.host}`,
+          keyGenerator: (req) =>
+            `${req.ip}|${req.host}|${(req.params as { sub?: string }).sub ?? ''}`,
         },
       },
     },
     async (req, reply) => {
-      const subdomain = subdomainOf(req.host);
+      const subdomain = byPath ? validSubdomain(req.params.sub) : subdomainOf(req.host);
       if (!subdomain) return siteNotFound(reply);
       const site = await prisma.site.findUnique({
         where: { subdomain },
@@ -255,23 +288,23 @@ export async function buildPublicApp({
       // Bots: pretend success, store nothing (they learn nothing from the response).
       if (body[HONEYPOT_FIELD]) {
         req.log.info({ subdomain, reason: 'honeypot' }, 'lead form spam dropped');
-        return message(reply, 200, theme, business.name, thanks);
+        return message(reply, subdomain, 200, theme, business.name, thanks);
       }
       const token = verifyFormToken(config.FORM_TOKEN_SECRET, subdomain, body._t);
       if (!token.ok) {
-        return message(reply, 400, theme, business.name, {
+        return message(reply, subdomain, 400, theme, business.name, {
           title: 'לא הצלחנו לשלוח',
           text: leadMessages.formExpired,
         });
       }
       if (token.tooFast) {
         req.log.info({ subdomain, reason: 'too_fast' }, 'lead form spam dropped');
-        return message(reply, 200, theme, business.name, thanks);
+        return message(reply, subdomain, 200, theme, business.name, thanks);
       }
 
       const data = leadSubmissionSchema.safeParse(body);
       if (!data.success) {
-        return message(reply, 400, theme, business.name, {
+        return message(reply, subdomain, 400, theme, business.name, {
           title: 'כמעט — חסרים כמה פרטים',
           text: 'יש לתקן את הפרטים הבאים ולשלוח שוב:',
           items: [...new Set(data.error.issues.map((i) => i.message))],
@@ -288,7 +321,7 @@ export async function buildPublicApp({
         slot = zonedTimeToUtc(data.data.date, data.data.time, timezone);
         const ahead = slot.getTime() - Date.now();
         if (Number.isNaN(ahead) || ahead <= 0 || ahead > 120 * 86_400_000) {
-          return message(reply, 400, theme, business.name, {
+          return message(reply, subdomain, 400, theme, business.name, {
             title: 'כמעט — חסרים כמה פרטים',
             text: 'יש לתקן את הפרטים הבאים ולשלוח שוב:',
             items: [leadMessages.slotPast],
@@ -301,7 +334,7 @@ export async function buildPublicApp({
         siteId: site.id,
         idempotencyKey: token.nonce,
         ipHash: sha256Hex(`${req.ip}|${config.FORM_TOKEN_SECRET}`),
-        sourceUrl: `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}${suffix}/${pageSlug}`,
+        sourceUrl: `${siteOrigin(subdomain)}/${pageSlug}`,
         data: data.data,
       });
       if (created) {
@@ -339,7 +372,7 @@ export async function buildPublicApp({
           to: { roles: MANAGERS },
         });
       }
-      return message(reply, 200, theme, business.name, thanks);
+      return message(reply, subdomain, 200, theme, business.name, thanks);
     },
   );
 

@@ -1,10 +1,14 @@
-import type { FastifyError, FastifyInstance } from 'fastify';
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 import { defaultErrorMessages, type ApiErrorBody } from '@leadflow/shared';
 import { AppError } from '../lib/errors';
 
 /** Maps every error to the shared `{ error: { code, message, fields? } }` shape. */
-export function registerErrorHandler(app: FastifyInstance) {
+export function registerErrorHandler(
+  app: FastifyInstance,
+  /** Serves the web app for unknown page paths; returns false when it doesn't. */
+  webApp?: (req: FastifyRequest, reply: FastifyReply) => Promise<boolean>,
+) {
   app.setErrorHandler((err: FastifyError, req, reply) => {
     const requestId = req.id;
 
@@ -56,8 +60,10 @@ export function registerErrorHandler(app: FastifyInstance) {
     } satisfies ApiErrorBody);
   });
 
-  app.setNotFoundHandler((req, reply) => {
-    reply.status(404).send({
+  app.setNotFoundHandler(async (req, reply) => {
+    // The built web app, when this server hosts it (D-119): page paths get its index.html.
+    if (webApp && (await webApp(req, reply))) return reply;
+    return reply.status(404).send({
       error: { code: 'NOT_FOUND', message: defaultErrorMessages.NOT_FOUND, requestId: req.id },
     } satisfies ApiErrorBody);
   });

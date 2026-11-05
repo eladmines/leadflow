@@ -1,0 +1,53 @@
+# Free test hosting on Render (D-119): one web service runs the API, the web app and the
+# customer sites (under /s/<name>). The database is Neon's free Postgres (DATABASE_URL).
+# Step-by-step: docs/DEPLOY.md.
+services:
+  - type: web
+    name: leadflow
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /health
+    # Dev dependencies are needed to build (tsup, vite, prisma), so install them explicitly.
+    buildCommand: >-
+      corepack enable &&
+      NODE_ENV=development pnpm install --frozen-lockfile &&
+      pnpm --filter @leadflow/shared build &&
+      pnpm --filter @leadflow/api exec prisma generate &&
+      pnpm --filter @leadflow/api build &&
+      pnpm --filter @leadflow/web build
+    # Migrations run on every start; they are no-ops when the database is up to date.
+    startCommand: cd apps/api && pnpm exec prisma migrate deploy && node dist/server.js
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      # APP_URL defaults to Render's own address (RENDER_EXTERNAL_URL).
+      - key: PUBLIC_SITE_MODE
+        value: path
+      - key: WEB_DIST_DIR
+        value: ../web/dist
+      - key: STORAGE_DRIVER
+        value: database
+      - key: FORM_TOKEN_SECRET
+        generateValue: true
+      - key: EMAIL_TRANSPORT
+        value: smtp
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: '465'
+      - key: SMTP_SECURE
+        value: 'true'
+      # Set in the Render dashboard (never committed):
+      - key: DATABASE_URL
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
