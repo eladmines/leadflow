@@ -116,7 +116,7 @@ export function TimeGrid({
   const week = days.length > 1;
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface">
+    <div className="overflow-x-auto bg-surface">
       <div
         role="grid"
         aria-label={tr('לוח זמנים')}
