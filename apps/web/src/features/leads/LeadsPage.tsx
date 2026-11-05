@@ -10,6 +10,8 @@ import {
   type PipelineStage,
 } from '@leadflow/shared';
 import {
+  ChevronLeft,
+  ChevronRight,
   Columns3,
   Download,
   Inbox,
@@ -21,7 +23,7 @@ import {
   Search,
   UserRound,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, buttonClasses, RefreshButton, Spinner } from '../../components/ui';
@@ -250,6 +252,40 @@ function BoardCard({
   );
 }
 
+/**
+ * Side scrolling for the board: whether there are stages before/after the visible ones, and a
+ * step of about one column. Works in both directions (in RTL, scrollLeft runs negative).
+ */
+function useBoardScroll(columns: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ canBack: false, canForward: false });
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const pos = Math.abs(el.scrollLeft);
+    setEdges({ canBack: pos > 4, canForward: max - pos > 4 });
+  }, []);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    measure();
+    el.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    return () => {
+      el.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+    };
+  }, [measure, columns]);
+  const scroll = (direction: 1 | -1) => {
+    const el = ref.current;
+    if (!el) return;
+    const rtl = getComputedStyle(el).direction === 'rtl';
+    el.scrollBy({ left: direction * (rtl ? -1 : 1) * 304, behavior: 'smooth' });
+  };
+  return { ref, scroll, ...edges };
+}
+
 function Board({
   leads,
   stages,
@@ -276,12 +312,41 @@ function Board({
     if (lead) move(lead, stage);
   };
 
+  const scroller = useBoardScroll(stages.length);
+
   return (
     <>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+      {(scroller.canBack || scroller.canForward) && (
+        <div className="-mb-2 flex items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={() => scroller.scroll(-1)}
+            disabled={!scroller.canBack}
+            aria-label={tr('לשלבים הקודמים')}
+            title={tr('לשלבים הקודמים')}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-surface-border bg-surface text-ink-muted shadow-card hover:text-ink disabled:opacity-40"
+          >
+            <ChevronLeft aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scroller.scroll(1)}
+            disabled={!scroller.canForward}
+            aria-label={tr('לשלבים הבאים')}
+            title={tr('לשלבים הבאים')}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-surface-border bg-surface text-ink-muted shadow-card hover:text-ink disabled:opacity-40"
+          >
+            <ChevronRight aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
+          </button>
+        </div>
+      )}
       {/* relative: the cards' sr-only labels are positioned inside the scroller (and clipped by
-          it), so off-screen columns can't widen the page. */}
-      <div className="relative -mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+          it), so off-screen columns can't widen the page. The scrollbar stays visible. */}
+      <div
+        ref={scroller.ref}
+        className="scrollbar-visible relative -mx-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6"
+      >
         <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4">
           {stages.map((stage) => {
             const items = leads.filter((l) => l.stage.id === stage.id);

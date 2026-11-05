@@ -14,3 +14,28 @@
     @apply outline-none ring-2 ring-brand-500 ring-offset-2;
   }
 }
+
+@layer components {
+  /* A scrollbar that stays visible (macOS hides overlay scrollbars until you scroll), so wide
+     boards show there is more to the side. */
+  /* Chrome and Safari draw a classic, always-on bar from these rules; the standard properties
+     would override them (and fall back to hidden overlay bars), so they're for Firefox only. */
+  @supports not selector(::-webkit-scrollbar) {
+    .scrollbar-visible {
+      scrollbar-width: thin;
+      scrollbar-color: theme('colors.accent.300') transparent;
+    }
+  }
+  .scrollbar-visible::-webkit-scrollbar {
+    height: 10px;
+  }
+  .scrollbar-visible::-webkit-scrollbar-track {
+    @apply rounded-full bg-surface-sunken;
+  }
+  .scrollbar-visible::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-accent-300;
+  }
+  .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent-400;
+  }
+}
