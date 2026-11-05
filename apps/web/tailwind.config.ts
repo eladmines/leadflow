@@ -52,7 +52,8 @@ export default {
           // The grey canvas behind the app's pages (D-114).
           canvas: '#f3f5f9',
           sunken: '#f1f5f9',
-          border: '#e2e8f0',
+          // A touch stronger than slate-200 so cards keep their edge on the grey canvas (D-114).
+          border: '#dbe1ea',
         },
         /** Data mark color for single-series charts (passes the dataviz lightness, chroma and
          *  contrast checks on the light surface). */

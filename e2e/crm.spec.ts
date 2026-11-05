@@ -59,8 +59,8 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
 
   // Lead page: stage change, note, history.
   await target.getByRole('link', { name: 'אבי כהן' }).click();
-  await expect(page.getByLabel('שלב')).toHaveValue(/.+/);
-  await page.getByLabel('שלב').selectOption({ label: 'הצעה נשלחה' });
+  await expect(page.getByLabel('שלב', { exact: true })).toHaveValue(/.+/);
+  await page.getByLabel('שלב', { exact: true }).selectOption({ label: 'הצעה נשלחה' });
   await expect(page.getByText('השלב שונה מ"נוצר קשר" ל"הצעה נשלחה"')).toBeVisible();
   await page.getByLabel('הוספת הערה').fill('נשלחה הצעה של ₪650, מחכה לאישור');
   await page.getByRole('button', { name: 'שמירת הערה' }).click();
