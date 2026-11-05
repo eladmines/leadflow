@@ -209,7 +209,7 @@ function BoardCard({
         e.dataTransfer.setData('text/lead-id', lead.id);
         e.dataTransfer.effectAllowed = 'move';
       }}
-      className="flex cursor-grab flex-col gap-2 rounded-2xl border border-surface-border bg-surface p-3 shadow-card active:cursor-grabbing"
+      className="flex cursor-grab flex-col gap-2 rounded-xl border border-accent-300/80 bg-surface p-3 shadow-card hover:border-brand-300 active:cursor-grabbing"
     >
       <h3 className="text-sm font-semibold text-ink">
         <Link to={leadPath(businessId, lead.id)} className="hover:underline">
@@ -362,11 +362,11 @@ function Board({
                 onDragLeave={() => setOver((o) => (o === stage.id ? null : o))}
                 onDrop={(e) => onDrop(e, stage)}
                 className={cn(
-                  'flex w-72 shrink-0 flex-col gap-3 rounded-3xl bg-surface-sunken/70 p-3 transition-colors',
+                  'flex w-72 shrink-0 flex-col gap-3 rounded-2xl border border-surface-border bg-surface p-3 shadow-card transition-colors',
                   over === stage.id && 'bg-brand-50 ring-2 ring-brand-300',
                 )}
               >
-                <div className="flex items-center justify-between px-1">
+                <div className="flex items-center justify-between border-b border-surface-border px-1 pb-2.5">
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
                     <span
                       aria-hidden
@@ -380,7 +380,7 @@ function Board({
                       )}
                     />
                     {tr(stage.name)}
-                    <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-ink-muted">
+                    <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-xs font-medium text-ink-muted">
                       {items.length}
                     </span>
                   </h2>
