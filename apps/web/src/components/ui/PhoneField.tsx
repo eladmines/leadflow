@@ -1,8 +1,8 @@
 import { normalizePhone, PHONE_COUNTRIES, splitPhone, type PhoneCountry } from '@leadflow/shared';
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Search } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
-import { intlLocale, tr } from '../../i18n';
+import { intlLocale, isRtl, tr } from '../../i18n';
 import { inputClasses } from './Field';
 
 /** 🇮🇱 from "IL" (regional indicator letters; some systems show the two letters instead). */
@@ -36,7 +36,8 @@ function parseValue(value: string, fallback: PhoneCountry) {
 /**
  * Phone input with a country-code picker (D-121). The form value is the full number with its
  * code (`+44 7700 900123`, `+972 050-1234567`), which the shared schema normalises to E.164;
- * empty stays empty. Labeled, keyboard reachable; the picker is a native select.
+ * empty stays empty. Labeled, keyboard reachable; the picker opens under the field with a
+ * search box and a short scrolling list.
  */
 export function PhoneField({
   label,
@@ -72,7 +73,7 @@ export function PhoneField({
     }
   }, [value, defaultCountry]);
   const { country, national } = state;
-  const dial = PHONE_COUNTRIES.find((c) => c.iso === country)!.dial;
+  const numberRef = useRef<HTMLInputElement>(null);
   const emit = (picked: PhoneCountry, nextNational: string) => {
     const typed = nextNational.trim();
     // A full number typed or pasted with its code (+44 …, 0044 …) speaks for itself; the picker
@@ -107,37 +108,18 @@ export function PhoneField({
         )}
       </label>
       {/* Code then number, left to right in both languages. */}
-      <div dir="ltr" className="flex">
-        <div
-          className={cn(
-            'relative flex shrink-0 items-center gap-1.5 rounded-s-lg border border-e-0 bg-surface-muted ps-3 pe-2 text-sm text-ink focus-within:ring-4 focus-within:ring-brand-500/15',
-            error ? 'border-danger-600' : 'border-surface-border',
-          )}
-        >
-          <span aria-hidden className="text-base leading-none">
-            {flagOf(country)}
-          </span>
-          <span aria-hidden className="tabular-nums">
-            +{dial}
-          </span>
-          <ChevronDown aria-hidden className="h-3.5 w-3.5 text-ink-subtle" />
-          <select
-            aria-label={tr('קידומת מדינה')}
-            value={country}
-            onChange={(e) => {
-              emit(e.target.value as PhoneCountry, national);
-            }}
-            onBlur={onBlur}
-            className="absolute inset-0 cursor-pointer opacity-0"
-          >
-            {names.map((c) => (
-              <option key={c.iso} value={c.iso}>
-                {`${flagOf(c.iso)} ${c.name} (+${c.dial})`}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div dir="ltr" className="relative flex">
+        <CountryPicker
+          country={country}
+          countries={names}
+          invalid={Boolean(error)}
+          onPick={(next) => {
+            emit(next, national);
+            numberRef.current?.focus();
+          }}
+        />
         <input
+          ref={numberRef}
           id={`${id}-number`}
           dir="ltr"
           type="tel"
@@ -162,6 +144,212 @@ export function PhoneField({
         <p id={errorId} className="text-xs text-danger-600">
           {tr(error!)}
         </p>
+      )}
+    </div>
+  );
+}
+
+type CountryOption = { iso: PhoneCountry; dial: string; name: string };
+
+/**
+ * The code picker: a button showing flag + code that opens a small panel under the field — a
+ * search box (name, code or +code) over a scrolling list (D-121). Combobox pattern: arrows move,
+ * Enter picks, Escape closes back to the button; a click outside closes it.
+ */
+function CountryPicker({
+  country,
+  countries,
+  invalid,
+  onPick,
+}: {
+  country: PhoneCountry;
+  countries: CountryOption[];
+  invalid: boolean;
+  onPick: (iso: PhoneCountry) => void;
+}) {
+  const listId = useId();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const current = countries.find((c) => c.iso === country)!;
+
+  const q = query.trim().toLowerCase().replace(/^\+/, '');
+  const shown = q
+    ? countries.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) || c.dial.startsWith(q) || c.iso.toLowerCase() === q,
+      )
+    : countries;
+
+  const close = (focusButton: boolean) => {
+    setOpen(false);
+    setQuery('');
+    if (focusButton) buttonRef.current?.focus();
+  };
+  const pick = (c: CountryOption) => {
+    setOpen(false);
+    setQuery('');
+    onPick(c.iso);
+  };
+
+  // A click anywhere else closes the panel.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) close(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+  /** Scrolls the list only (never the page, which would slide the list under the pointer). */
+  const reveal = (selector: string, center: boolean) => {
+    const list = listRef.current;
+    const el = list?.querySelector<HTMLElement>(selector);
+    if (!list || !el) return;
+    const top = el.offsetTop;
+    if (center) list.scrollTop = top - list.clientHeight / 2 + el.offsetHeight / 2;
+    else if (top < list.scrollTop) list.scrollTop = top;
+    else if (top + el.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = top + el.offsetHeight - list.clientHeight;
+    }
+  };
+  // On opening, the current country sits in the middle of the list.
+  useEffect(() => {
+    if (open) reveal('[aria-selected="true"]', true);
+  }, [open]);
+  // Keep the highlighted country in view while moving with the arrows.
+  useEffect(() => {
+    if (open) reveal(`[data-index="${active}"]`, false);
+  }, [active, open]);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActive((i) => Math.min(i + 1, shown.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (shown[active]) pick(shown[active]);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      close(true);
+    } else if (e.key === 'Tab') {
+      close(false);
+    }
+  };
+
+  return (
+    <div ref={rootRef} className="flex shrink-0">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`${tr('קידומת מדינה')}: ${current.name} +${current.dial}`}
+        onClick={() => {
+          if (open) return close(false);
+          setActive(
+            Math.max(
+              0,
+              countries.findIndex((c) => c.iso === country),
+            ),
+          );
+          setOpen(true);
+        }}
+        className={cn(
+          'flex items-center gap-1.5 rounded-s-lg border border-e-0 bg-surface-muted ps-3 pe-2 text-sm text-ink hover:bg-surface-sunken focus-visible:ring-4 focus-visible:ring-brand-500/15 focus-visible:ring-offset-0',
+          invalid ? 'border-danger-600' : 'border-surface-border',
+        )}
+      >
+        <span aria-hidden className="text-base leading-none">
+          {flagOf(country)}
+        </span>
+        <span className="tabular-nums">+{current.dial}</span>
+        <ChevronDown aria-hidden className="h-3.5 w-3.5 text-ink-subtle" />
+      </button>
+
+      {open && (
+        // Anchored in the field's left-to-right row (under the code button); the list itself reads
+        // in the page's direction.
+        <div className="absolute start-0 top-full z-40 mt-1">
+          <div
+            dir={isRtl() ? 'rtl' : 'ltr'}
+            className="w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lift"
+          >
+            <div className="border-b border-surface-border p-2">
+              <div className="relative">
+                <Search
+                  aria-hidden
+                  className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle"
+                />
+                <input
+                  autoFocus
+                  role="combobox"
+                  aria-expanded
+                  aria-controls={listId}
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    shown[active] ? `${listId}-${shown[active].iso}` : undefined
+                  }
+                  aria-label={tr('חיפוש מדינה')}
+                  placeholder={tr('חיפוש מדינה או קידומת')}
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setActive(0);
+                  }}
+                  onKeyDown={onKeyDown}
+                  className={cn(inputClasses(false), 'h-9 ps-8 shadow-none')}
+                />
+              </div>
+            </div>
+            <ul
+              ref={listRef}
+              id={listId}
+              role="listbox"
+              aria-label={tr('מדינות')}
+              className="relative max-h-60 overflow-y-auto py-1"
+            >
+              {shown.map((c, i) => (
+                <li
+                  key={c.iso}
+                  id={`${listId}-${c.iso}`}
+                  data-index={i}
+                  role="option"
+                  aria-selected={c.iso === country}
+                  // Only a real pointer move highlights (scrolling under a resting pointer doesn't).
+                  onMouseMove={() => active !== i && setActive(i)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => pick(c)}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm',
+                    i === active ? 'bg-brand-50' : '',
+                    c.iso === country ? 'font-semibold text-brand-700' : 'text-ink',
+                  )}
+                >
+                  <span aria-hidden className="text-base leading-none">
+                    {flagOf(c.iso)}
+                  </span>
+                  <span className="flex-1 truncate">{c.name}</span>
+                  <span dir="ltr" className="tabular-nums text-ink-muted">
+                    +{c.dial}
+                  </span>
+                  {c.iso === country && <Check aria-hidden className="h-4 w-4 text-brand-600" />}
+                </li>
+              ))}
+              {shown.length === 0 && (
+                <li className="px-3 py-4 text-center text-sm text-ink-muted">
+                  {tr('לא נמצאה מדינה')}
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
       )}
     </div>
   );

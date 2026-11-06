@@ -518,4 +518,8 @@ export const enPart3: Record<string, string> = {
   יומן: 'Calendar',
   // Phone country picker (D-121)
   'קידומת מדינה': 'Country code',
+  'חיפוש מדינה': 'Search countries',
+  'חיפוש מדינה או קידומת': 'Search country or code',
+  מדינות: 'Countries',
+  'לא נמצאה מדינה': 'No country found',
 };
