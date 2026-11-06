@@ -32,18 +32,35 @@ export class CloudWhatsAppSender implements WhatsAppSender {
 
   /** Uploads the photo to Meta (no public URL needed), then sends it by its media id. */
   async sendImage(to: string, jpeg: Buffer, caption?: string): Promise<{ id: string }> {
+    const mediaId = await this.upload(jpeg, 'image/jpeg', 'photo.jpg', 20_000);
+    return this.post(to, {
+      type: 'image',
+      image: { id: mediaId, ...(caption ? { caption: caption.slice(0, 1024) } : {}) },
+    });
+  }
+
+  async sendVideo(to: string, mp4: Buffer, caption?: string): Promise<{ id: string }> {
+    const mediaId = await this.upload(mp4, 'video/mp4', 'video.mp4', 60_000);
+    return this.post(to, {
+      type: 'video',
+      video: { id: mediaId, ...(caption ? { caption: caption.slice(0, 1024) } : {}) },
+    });
+  }
+
+  /** Uploads a file to Meta's media store; resolves with its media id. */
+  private async upload(body: Buffer, type: string, name: string, timeoutMs: number) {
     const doFetch = this.opts.fetch ?? fetch;
     const form = new FormData();
     form.set('messaging_product', 'whatsapp');
-    form.set('type', 'image/jpeg');
-    form.set('file', new Blob([new Uint8Array(jpeg)], { type: 'image/jpeg' }), 'photo.jpg');
+    form.set('type', type);
+    form.set('file', new Blob([new Uint8Array(body)], { type }), name);
     const res = await doFetch(
       `https://graph.facebook.com/${this.opts.graphVersion}/${this.opts.phoneNumberId}/media`,
       {
         method: 'POST',
         headers: { authorization: `Bearer ${this.opts.accessToken}` },
         body: form,
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(timeoutMs),
       },
     );
     const json = (await res.json().catch(() => null)) as {
@@ -51,10 +68,7 @@ export class CloudWhatsAppSender implements WhatsAppSender {
       error?: { code?: number };
     } | null;
     if (!res.ok || !json?.id) throw new WhatsAppSendError(res.status, json?.error?.code ?? null);
-    return this.post(to, {
-      type: 'image',
-      image: { id: json.id, ...(caption ? { caption: caption.slice(0, 1024) } : {}) },
-    });
+    return json.id;
   }
 
   sendButtons(to: string, body: string, buttons: WhatsAppChoice[]): Promise<{ id: string }> {

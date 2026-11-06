@@ -1,4 +1,6 @@
 import {
+  AUTO_REPLY_DEFAULT,
+  STATUS_PRESETS,
   apiPaths,
   botDefaultTextsFor,
   businessWebPaths,
@@ -36,8 +38,16 @@ const number: InboxNumber = {
 const leadId = '5c000000-0000-4000-8000-0000000000aa';
 const DEFAULT_SHOWCASE = 'בינתיים, הנה הצצה לעבודות שלנו ✂️';
 const noShowcase = { enabled: false, text: null, link: null, assetIds: [] };
-const botSettings = () => ({
-  enabled: false,
+const presets = STATUS_PRESETS.map((p) => ({ ...p, preset: true, video: null }));
+/** Saved settings: the booking bot by default here (most tests drive its card). */
+const botSettings = (mode: 'off' | 'auto_reply' | 'booking' = 'booking') => ({
+  mode,
+  autoReplyText: null,
+  autoReplyDefault: AUTO_REPLY_DEFAULT,
+  statuses: presets,
+  activeStatus: null,
+  videoBytesUsed: 0,
+  enabled: mode === 'booking',
   autoConfirm: true,
   holdDate: false,
   flow: 'appointment',
@@ -52,7 +62,15 @@ const echoBot = (body: unknown) => {
   return json(200, {
     connected: true,
     settings: {
+      ...botSettings(),
       ...b,
+      statuses: (b as unknown as { statuses?: object[] }).statuses
+        ? (b as unknown as { statuses: object[] }).statuses.map((x) => ({
+            ...x,
+            preset: true,
+            video: null,
+          }))
+        : presets,
       flow: b.flow ?? 'appointment',
       flowIsDefault: b.flow === null,
       defaults: botDefaultTextsFor('beauty'),
@@ -85,17 +103,14 @@ function routes(inbox: WhatsAppInboxResponse, extra = {}) {
 }
 
 describe('WhatsApp conversations inbox', () => {
-  it('switches the bot on and picks the approval, saved together with "Save settings"', async () => {
+  it('booking bot: picks the approval, saved together with "Save bot settings"', async () => {
     const fetchMock = mockApi(
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(page);
-    const on = await screen.findByRole('checkbox', { name: 'הבוט פעיל' });
-    const pending = screen.getByRole('radio', { name: /ממתינים לאישור שלכם/ });
-    const saveButton = screen.getByRole('button', { name: 'שמירת ההגדרות' });
-    expect(pending).toBeDisabled();
+    const pending = await screen.findByRole('radio', { name: /ממתינים לאישור שלכם/ });
+    const saveButton = screen.getByRole('button', { name: 'שמירת הגדרות הבוט' });
     expect(saveButton).toBeDisabled();
-    await user.click(on);
     await user.click(pending);
     // Nothing is sent until saving.
     expect(screen.getByText('יש שינויים שעוד לא נשמרו')).toBeInTheDocument();
@@ -104,6 +119,8 @@ describe('WhatsApp conversations inbox', () => {
     expect(await screen.findByText('ההגדרות נשמרו.')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
       {
+        mode: 'booking',
+        autoReplyText: null,
         enabled: true,
         autoConfirm: false,
         holdDate: false,
@@ -112,16 +129,98 @@ describe('WhatsApp conversations inbox', () => {
         showcase: noShowcase,
       },
     ]);
-    expect(screen.getByRole('checkbox', { name: 'הבוט פעיל' })).toBeChecked();
   });
 
   it('"Discard changes" puts the saved settings back', async () => {
     mockApi(routes({ connected: true, numbers: [] }));
     const { user } = renderApp(page);
-    await user.click(await screen.findByRole('checkbox', { name: 'הבוט פעיל' }));
+    await user.click(await screen.findByRole('radio', { name: /ממתינים לאישור שלכם/ }));
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
-    expect(screen.getByRole('checkbox', { name: 'הבוט פעיל' })).not.toBeChecked();
-    expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'מאושרים מיד' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' })).toBeDisabled();
+  });
+
+  it('automatic reply by default: the general message and the statuses; the booking card stays hidden (D-123)', async () => {
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () =>
+            json(200, { connected: true, settings: botSettings('auto_reply') }),
+          [`PUT ${wp.bot(id)}`]: echoBot,
+        },
+      ),
+    );
+    const { user } = renderApp(page);
+    expect(await screen.findByRole('radio', { name: 'מענה אוטומטי' })).toBeChecked();
+    expect(screen.queryByRole('button', { name: 'שמירת הגדרות הבוט' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('ההודעה הכללית')).toHaveValue(
+      AUTO_REPLY_DEFAULT.replace('{business}', '[שם העסק]'),
+    );
+    expect(screen.getAllByLabelText('שם הסטטוס').map((i) => (i as HTMLInputElement).value)).toEqual(
+      ['באירוע', 'בפגישה', 'בחופשה', 'סגור עכשיו'],
+    );
+
+    // An own status needs a name and a message.
+    await user.click(screen.getByRole('button', { name: 'הוספת סטטוס' }));
+    await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
+    expect(await screen.findByText('יש לתת שם לסטטוס')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
+    const names = screen.getAllByLabelText('שם הסטטוס');
+    await user.type(names.at(-1)!, 'באולפן');
+    await user.type(screen.getAllByLabelText('ההודעה ללקוח').at(-1)!, 'באולפן עד הערב 🎧');
+    const general = screen.getByLabelText('ההודעה הכללית');
+    await user.clear(general);
+    await user.type(general, 'שלום מ[[שם העסק]!');
+    await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
+    expect(await screen.findByText('ההגדרות נשמרו.')).toBeInTheDocument();
+    const body = callsTo(fetchMock, 'PUT', wp.bot(id))[0] as {
+      mode: string;
+      autoReplyText: string;
+      statuses: { label: string; text: string; id: string }[];
+    };
+    expect(body.mode).toBe('auto_reply');
+    expect(body.autoReplyText).toBe('שלום מ{business}!');
+    expect(body.statuses.at(-1)).toMatchObject({ label: 'באולפן', text: 'באולפן עד הערב 🎧' });
+    expect(body.statuses.at(-1)!.id).toMatch(/^c-/);
+  });
+
+  it('switches the status with one click, for a chosen time (D-123)', async () => {
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () =>
+            json(200, { connected: true, settings: botSettings('auto_reply') }),
+          [`PUT ${wp.status(id)}`]: (body: unknown) =>
+            json(200, {
+              connected: true,
+              settings: { ...botSettings('auto_reply'), activeStatus: body },
+            }),
+        },
+      ),
+    );
+    const { user } = renderApp(page);
+    const statuses = await screen.findByRole('group', { name: 'בחירת סטטוס' });
+    expect(within(statuses).getByRole('button', { name: 'זמין' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.selectOptions(screen.getByLabelText('לכמה זמן:'), 'לשעה');
+    const before = Date.now();
+    await user.click(within(statuses).getByRole('button', { name: 'באירוע' }));
+    await waitFor(() =>
+      expect(within(statuses).getByRole('button', { name: 'באירוע' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      ),
+    );
+    const sent = callsTo(fetchMock, 'PUT', wp.status(id))[0] as { id: string; until: string };
+    expect(sent.id).toBe('event');
+    const ahead = new Date(sent.until).getTime() - before;
+    expect(ahead).toBeGreaterThan(59 * 60_000);
+    expect(ahead).toBeLessThan(61 * 60_000);
+    expect(screen.getByText(/פעיל עד/)).toBeInTheDocument();
   });
 
   it('edits the bot messages with a live preview, and keeps unchanged ones as defaults', async () => {
@@ -156,7 +255,9 @@ describe('WhatsApp conversations inbox', () => {
     expect(await screen.findByText('ההודעות נשמרו.')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
       {
-        enabled: false,
+        mode: 'booking',
+        autoReplyText: null,
+        enabled: true,
         autoConfirm: true,
         holdDate: false,
         flow: null,
@@ -199,7 +300,9 @@ describe('WhatsApp conversations inbox', () => {
     expect(await screen.findByText('ההצצה נשמרה.')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
       {
-        enabled: false,
+        mode: 'booking',
+        autoReplyText: null,
+        enabled: true,
         autoConfirm: true,
         holdDate: false,
         flow: null,
@@ -222,9 +325,8 @@ describe('WhatsApp conversations inbox', () => {
     const events = await screen.findByRole('radio', { name: /בקשות לאירוע/ });
     expect(screen.getByRole('radio', { name: /תורים בשעות פנויות/ })).toBeChecked();
     expect(screen.getByText('(מתאים לתחום שלכם)')).toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: 'הבוט פעיל' }));
     await user.click(events);
-    await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
+    await user.click(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );

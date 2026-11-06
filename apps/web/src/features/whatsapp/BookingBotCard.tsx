@@ -34,7 +34,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   const update = useUpdateBotSettings(businessId);
   // Changes wait here until "Save settings" (D-109).
   const [draft, setDraft] = useState<{
-    enabled: boolean;
     autoConfirm: boolean;
     holdDate: boolean;
     flow: BotFlow;
@@ -45,20 +44,17 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   const stored = bot.data.settings;
+  // Its settings matter only when the booking bot is the reply mode (D-123).
+  if (stored.mode !== 'booking') return null;
   const settings = { ...stored, ...draft };
   const dirty =
     draft !== null &&
-    (draft.enabled !== stored.enabled ||
-      draft.autoConfirm !== stored.autoConfirm ||
+    (draft.autoConfirm !== stored.autoConfirm ||
       draft.holdDate !== stored.holdDate ||
       draft.flow !== stored.flow);
-  const change = (
-    patch:
-      { enabled: boolean } | { autoConfirm: boolean } | { holdDate: boolean } | { flow: BotFlow },
-  ) => {
+  const change = (patch: { autoConfirm: boolean } | { holdDate: boolean } | { flow: BotFlow }) => {
     setSaved(false);
     setDraft({
-      enabled: settings.enabled,
       autoConfirm: settings.autoConfirm,
       holdDate: settings.holdDate,
       flow: settings.flow,
@@ -71,7 +67,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
     update.mutate(
       {
         ...toRequest(stored),
-        enabled: draft.enabled,
         autoConfirm: draft.autoConfirm,
         holdDate: draft.holdDate,
         flow: draft.flowChosen ? draft.flow : toRequest(stored).flow,
@@ -110,15 +105,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           {tr('הבוט יתחיל לענות אחרי חיבור מספר WhatsApp לעסק.')}
         </p>
       )}
-      <label className="flex items-center gap-2 text-sm font-medium text-ink">
-        <input
-          type="checkbox"
-          checked={settings.enabled}
-          onChange={(e) => change({ enabled: e.target.checked })}
-          className="h-4 w-4 accent-brand-600"
-        />
-        {tr('הבוט פעיל')}
-      </label>
       <fieldset disabled={!settings.enabled} className="flex flex-col gap-2">
         <legend className="mb-1 text-sm text-ink-muted">{tr('איך לקוחות מזמינים:')}</legend>
         {BOT_FLOWS.map((f) => (
@@ -184,7 +170,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
       {saved && !dirty && <Alert tone="success">{tr('ההגדרות נשמרו.')}</Alert>}
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={saveSettings} disabled={!dirty} loading={update.isPending}>
-          {tr('שמירת ההגדרות')}
+          {tr('שמירת הגדרות הבוט')}
         </Button>
         {dirty && (
           <>
@@ -223,7 +209,9 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
 type Saved = WhatsAppBotResponse['settings'];
 
 /** The saved settings as a full update, so saving one part never resets another. */
-const toRequest = (saved: Saved): WhatsAppBotSettings => ({
+export const toRequest = (saved: Saved): WhatsAppBotSettings => ({
+  mode: saved.mode,
+  autoReplyText: saved.autoReplyText,
   enabled: saved.enabled,
   autoConfirm: saved.autoConfirm,
   holdDate: saved.holdDate,

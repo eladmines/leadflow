@@ -19,6 +19,8 @@ export interface WhatsAppSender {
   sendText(to: string, text: string, opts?: { preview?: boolean }): Promise<{ id: string }>;
   /** A JPEG photo with an optional caption. */
   sendImage(to: string, jpeg: Buffer, caption?: string): Promise<{ id: string }>;
+  /** An MP4 video (up to 16 MB) with an optional caption (D-123). */
+  sendVideo(to: string, mp4: Buffer, caption?: string): Promise<{ id: string }>;
   /** A text with up to 3 reply buttons. */
   sendButtons(to: string, body: string, buttons: WhatsAppChoice[]): Promise<{ id: string }>;
   /** A text with a button that opens a list of up to 10 rows. */

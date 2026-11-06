@@ -7,6 +7,7 @@ import {
   type SendWhatsAppResponse,
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
+  type SetStatusRequest,
   type WhatsAppInboxResponse,
   type WhatsAppThreadResponse,
 } from '@leadflow/shared';
@@ -105,6 +106,43 @@ export function useBotSettings(businessId: string) {
     queryKey: botKey(businessId),
     queryFn: () => apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.bot(businessId)),
   });
+}
+
+/** Turns a status on or off (D-123); saved at once. */
+export function useSetStatus(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: SetStatusRequest) =>
+      apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.status(businessId), {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data) => queryClient.setQueryData(botKey(businessId), data),
+  });
+}
+
+/** Uploads (replacing) or removes a status's video. */
+export function useStatusVideo(businessId: string) {
+  const queryClient = useQueryClient();
+  const upload = useMutation({
+    mutationFn: ({ statusId, file }: { statusId: string; file: File }) => {
+      const body = new FormData();
+      body.append('file', file);
+      return apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.statusVideo(businessId, statusId), {
+        method: 'PUT',
+        body,
+      });
+    },
+    onSuccess: (data) => queryClient.setQueryData(botKey(businessId), data),
+  });
+  const remove = useMutation({
+    mutationFn: (statusId: string) =>
+      apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.statusVideo(businessId, statusId), {
+        method: 'DELETE',
+      }),
+    onSuccess: (data) => queryClient.setQueryData(botKey(businessId), data),
+  });
+  return { upload, remove };
 }
 
 export function useUpdateBotSettings(businessId: string) {

@@ -114,6 +114,8 @@ describe('WhatsApp booking bot (D-102)', () => {
         timezone: TZ,
         openingHours: allDay,
         whatsappBotEnabled: enabled,
+        // These tests drive the booking bot (D-123: the default mode is the automatic reply).
+        whatsappReplyMode: enabled ? 'booking' : 'off',
         whatsappBotAutoConfirm: autoConfirm,
       },
     });

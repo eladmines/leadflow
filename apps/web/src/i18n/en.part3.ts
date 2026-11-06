@@ -522,4 +522,73 @@ export const enPart3: Record<string, string> = {
   'חיפוש מדינה או קידומת': 'Search country or code',
   מדינות: 'Countries',
   'לא נמצאה מדינה': 'No country found',
+  // Automatic replies and statuses (D-123)
+  'עד שאשנה': 'Until I change it',
+  לשעה: 'For an hour',
+  'ל־3 שעות': 'For 3 hours',
+  'עד סוף היום': 'Until the end of the day',
+  'עד מחר בבוקר': 'Until tomorrow morning',
+  'מענה אוטומטי': 'Automatic reply',
+  'מה קורה כשלקוח כותב לעסק בוואטסאפ. המענה לא נשלח למספרים פרטיים, ללקוחות שעצרתם להם את הבוט, ולשיחה שמישהו מהצוות כתב בה לאחרונה.':
+    'What happens when a customer writes to the business on WhatsApp. No automatic reply goes to personal numbers, customers you paused the bot for, or a chat a team member wrote in recently.',
+  'המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.':
+    'Replies start once a WhatsApp number is connected to the business.',
+  'הסטטוס שלך עכשיו': 'Your status now',
+  'פעיל עד {0}': 'On until {0}',
+  'פעיל עד שתשנו': 'On until you change it',
+  'זמין — נשלח המענה הכללי': 'Available — the general reply is sent',
+  'בחירת סטטוס': 'Choose a status',
+  זמין: 'Available',
+  'לכמה זמן:': 'For how long:',
+  'הסטטוס נשלח רק כשהמצב הוא "מענה אוטומטי".':
+    'The status is only sent when the mode is "Automatic reply".',
+  'מה קורה כשלקוח כותב:': 'When a customer writes:',
+  'ההודעה הכללית': 'General message',
+  '{0} מוחלף בשם העסק.': '{0} is replaced with the business name.',
+  'הסטטוסים שלך': 'Your statuses',
+  'מקום לסרטונים: {0} מתוך {1}': 'Video space: {0} of {1}',
+  'שם הסטטוס': 'Status name',
+  'מחיקת הסטטוס {0}': 'Delete the status {0}',
+  'ההודעה ללקוח': 'Message to the customer',
+  'הוספת סטטוס': 'Add a status',
+  'אחרי השמירה אפשר להוסיף לסטטוס סרטון.': 'After saving, you can add a video to this status.',
+  'סרטון · {0}': 'Video · {0}',
+  'הסרת הסרטון': 'Remove video',
+  'סרטון לסטטוס': 'Video for the status',
+  'החלפת הסרטון': 'Replace video',
+  'הוספת סרטון': 'Add a video',
+  'MP4 עד 16MB. סרטון קצר נשלח מהר יותר.': 'MP4 up to 16MB. A short video sends faster.',
+  'כבוי — בלי מענה אוטומטי': 'Off — no automatic reply',
+  'הודעות נכנסות בלי שום מענה אוטומטי.': 'Messages come in with no automatic reply.',
+  'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות). כשסטטוס פעיל — נשלחת הודעת הסטטוס, עם הסרטון שלו אם יש.':
+    'Every customer who writes gets one short message (at most once every 12 hours). While a status is on, the status message is sent instead, with its video if it has one.',
+  'הבוט מציע ללקוחות זמנים פנויים וקובע תורים או בקשות לאירוע.':
+    'The bot offers customers free times and books appointments or event requests.',
+  באירוע: 'At an event',
+  בפגישה: 'In a meeting',
+  בחופשה: 'On vacation',
+  'סגור עכשיו': 'Closed now',
+  'יש לתת שם לסטטוס': 'Give the status a name',
+  'שם הסטטוס ארוך מדי (עד 40 תווים)': 'The status name is too long (up to 40 characters)',
+  'יש לכתוב את ההודעה': 'Write the message',
+  'ההודעה ארוכה מדי (עד 1000 תווים)': 'The message is too long (up to 1000 characters)',
+  'אפשר להעלות רק סרטון MP4': 'Only MP4 videos can be uploaded',
+  'הסרטון גדול מ־16MB. נסו סרטון קצר יותר': 'The video is over 16MB. Try a shorter one',
+  'נגמר המקום לסרטונים (64MB לעסק). מחקו סרטון של סטטוס אחר ונסו שוב':
+    "Video space is full (64MB per business). Remove another status's video and try again",
+  'הזמן שבחרתם כבר עבר': 'That time has already passed',
+  'כאן בוחרים מה קורה כשלקוח כותב: בלי מענה, הודעה כללית קצרה (ברירת המחדל), או בוט שקובע תורים. ההודעה הכללית נשלחת פעם אחת בשיחה, לכל היותר פעם ב־12 שעות.':
+    'Choose what happens when a customer writes: no reply, a short general message (the default), or a bot that books appointments. The general message is sent once per conversation, at most once every 12 hours.',
+  'לחיצה אחת, למשל "באירוע", ומעכשיו לקוחות שכותבים מקבלים את הודעת הסטטוס במקום ההודעה הכללית, עם הסרטון שלו אם יש. אפשר לבחור לכמה זמן, ו"זמין" מחזיר את ההודעה הכללית.':
+    'One click, for example "At an event", and from now on customers who write get the status message instead of the general one, with its video if it has one. Choose for how long; "Available" brings the general message back.',
+  'מה קורה כשלקוח כותב': 'When a customer writes',
+  '"מענה אוטומטי" שולח את ההודעה הכללית או את הסטטוס. "בוט קביעת תורים" מציע זמנים פנויים וקובע תורים. "כבוי" משאיר את ההודעות בלי מענה.':
+    '"Automatic reply" sends the general message or your status. "Booking bot" offers free times and books appointments. "Off" leaves messages without a reply.',
+  'כל סטטוס עם שם והודעה משלו, ואפשר להוסיף סרטון קצר (MP4 עד 16MB) — למשל קטע מהאירוע. "הוספת סטטוס" יוצר סטטוס משלכם.':
+    'Each status has its own name and message, and you can add a short video (MP4 up to 16MB) — a clip from the event, for example. "Add a status" creates your own.',
+  'השינויים במענה האוטומטי נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה. הסטטוס עצמו נשמר מיד.':
+    'Changes to the automatic reply take effect only after clicking here. Until then you see "You have unsaved changes", and "Discard changes" puts things back. The status itself is saved straight away.',
+  'שמירת הגדרות הבוט': 'Save bot settings',
+  'השינויים בהגדרות הבוט נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה.':
+    'Changes to the bot settings take effect only after clicking here. Until then you see "You have unsaved changes", and "Discard changes" puts things back.',
 };
