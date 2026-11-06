@@ -1,11 +1,13 @@
 import type { AppConfig } from '../../config/env';
 import { MemoryEmailSender } from './memory';
 import { SmtpEmailSender } from './smtp';
+import { BrevoEmailSender, DisabledEmailSender } from './http';
 import type { EmailSender } from './types';
 
 export type { EmailMessage, EmailSender } from './types';
 export { MemoryEmailSender } from './memory';
 export { SmtpEmailSender } from './smtp';
+export { BrevoEmailSender, DisabledEmailSender } from './http';
 export {
   inviteTemplate,
   newLeadTemplate,
@@ -20,6 +22,10 @@ export {
 /** Picks the adapter from `EMAIL_TRANSPORT`. */
 export function createEmailSender(config: AppConfig): EmailSender {
   if (config.EMAIL_TRANSPORT === 'memory') return new MemoryEmailSender();
+  if (config.EMAIL_TRANSPORT === 'disabled') return new DisabledEmailSender();
+  if (config.EMAIL_TRANSPORT === 'brevo') {
+    return new BrevoEmailSender({ apiKey: config.BREVO_API_KEY!, from: config.EMAIL_FROM });
+  }
   return new SmtpEmailSender({
     host: config.SMTP_HOST,
     port: config.SMTP_PORT,

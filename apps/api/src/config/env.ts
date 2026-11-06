@@ -41,7 +41,12 @@ const envSchema = z
       .optional(),
     /** Defaults to true in production, false elsewhere. */
     COOKIE_SECURE: booleanString.optional(),
-    EMAIL_TRANSPORT: z.enum(['smtp', 'memory']).default('smtp'),
+    /**
+     * smtp (Mailpit locally) · brevo (HTTPS API, for hosts that block SMTP, D-120) · disabled
+     * (send nothing yet) · memory (tests only).
+     */
+    EMAIL_TRANSPORT: z.enum(['smtp', 'brevo', 'disabled', 'memory']).default('smtp'),
+    BREVO_API_KEY: optionalSetting(z.string().min(10)),
     SMTP_HOST: z.string().min(1).default('localhost'),
     SMTP_PORT: z.coerce.number().int().positive().default(1025),
     /** Login for a real mail server (e.g. Gmail with an app password, D-119); unset for Mailpit. */
@@ -130,6 +135,13 @@ const envSchema = z
           });
         }
       }
+    }
+    if (env.EMAIL_TRANSPORT === 'brevo' && !env.BREVO_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['BREVO_API_KEY'],
+        message: "is required when EMAIL_TRANSPORT is 'brevo'",
+      });
     }
     if (env.NODE_ENV !== 'production') return;
     if (!env.APP_URL) {

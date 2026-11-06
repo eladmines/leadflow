@@ -34,20 +34,14 @@ services:
         value: database
       - key: FORM_TOKEN_SECRET
         generateValue: true
+      # Render's free plan blocks SMTP ports, so email goes over HTTPS (Brevo) or is off (D-120).
+      # To turn it on: set EMAIL_TRANSPORT to brevo here, and BREVO_API_KEY + EMAIL_FROM in Render.
       - key: EMAIL_TRANSPORT
-        value: smtp
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: '465'
-      - key: SMTP_SECURE
-        value: 'true'
+        value: disabled
       # Set in the Render dashboard (never committed):
       - key: DATABASE_URL
         sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
+      - key: BREVO_API_KEY
         sync: false
       - key: EMAIL_FROM
         sync: false
