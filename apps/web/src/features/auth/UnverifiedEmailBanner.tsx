@@ -6,13 +6,14 @@ import { tr } from '../../i18n';
 
 /**
  * Soft email verification (D-002): a banner, not a gate. Renders nothing unless the
- * signed-in user's email is unverified, so it can sit in the app shell (F03) as is.
+ * signed-in user's email is unverified, so it can sit in the app shell (F03) as is. Hidden
+ * while the server sends no email (D-122).
  */
 export function UnverifiedEmailBanner() {
   const me = useMe();
   const titleId = useId();
   const user = me.data?.user;
-  if (!user || user.emailVerified) return null;
+  if (!user || user.emailVerified || me.data?.emailVerification === false) return null;
 
   return (
     <section

@@ -201,6 +201,11 @@ export type AuthUser = z.infer<typeof authUserSchema>;
 /** Body of GET /me, and of 201 register and 200 login. */
 export const meResponseSchema = z.object({
   user: authUserSchema,
+  /**
+   * False while the server sends no email (D-122): the app then doesn't ask anyone to verify
+   * their address. Missing (older servers) means true.
+   */
+  emailVerification: z.boolean().optional(),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;
 
