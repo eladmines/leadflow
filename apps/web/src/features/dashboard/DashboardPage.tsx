@@ -178,7 +178,8 @@ export function greeting(now = new Date()): string {
 /** Business home: welcome + setup progress (real state only), recent leads (empty until F07), profile. */
 export function DashboardPage() {
   const business = useCurrentBusiness();
-  const user = useMe().data?.user;
+  const me = useMe();
+  const user = me.data?.user;
   const site = useSite(business.id).data;
   const leads = useLeads(business.id).data ?? [];
   const myTasks = groupTasks(
@@ -196,11 +197,16 @@ export function DashboardPage() {
       hint: tr('שם, תחום, טלפון ושעות פעילות'),
       state: business.status === 'ACTIVE' ? 'done' : 'todo',
     },
-    {
-      label: tr('אימות כתובת האימייל'),
-      hint: tr('כדי שנוכל לשלוח לך התראות על פניות'),
-      state: user?.emailVerified ? 'done' : 'todo',
-    },
+    // Not a step while the server sends no email (D-122).
+    ...(me.data?.emailVerification === false
+      ? []
+      : [
+          {
+            label: tr('אימות כתובת האימייל'),
+            hint: tr('כדי שנוכל לשלוח לך התראות על פניות'),
+            state: (user?.emailVerified ? 'done' : 'todo') as ItemState,
+          },
+        ]),
     {
       label: tr('בניית אתר העסק'),
       hint: tr('בחירת תבנית ועריכת התוכן'),

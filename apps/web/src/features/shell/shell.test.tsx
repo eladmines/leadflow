@@ -117,6 +117,14 @@ describe('dashboard', () => {
     expect(await screen.findByText('הושלמו 2 מתוך 5')).toBeInTheDocument();
   });
 
+  it('asks for no verification while the server sends no email (D-122)', async () => {
+    mockApi({ [meKey]: () => json(200, { user: testUser, emailVerification: false }) });
+    renderApp(home);
+    expect(await screen.findByText('הושלמו 1 מתוך 4')).toBeInTheDocument();
+    expect(screen.queryByText('אימות כתובת האימייל')).not.toBeInTheDocument();
+    expect(screen.queryByText(/כדאי לאמת את כתובת האימייל/)).not.toBeInTheDocument();
+  });
+
   const someLead: Lead = {
     id: '5c000000-0000-4000-8000-000000000001',
     contact: {

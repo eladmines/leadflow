@@ -23,6 +23,8 @@ const paths = apiPaths.auth;
 /** F01 auth endpoints. Paths, bodies and responses come from the shared contract. */
 export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (app, opts) => {
   const service = new AuthService({ prisma: app.prisma, email: opts.email, config: app.config });
+  // No email going out (D-120) → nothing to verify, so the app doesn't ask (D-122).
+  const emailVerification = app.config.EMAIL_TRANSPORT !== 'disabled';
 
   // Per client IP, per route (each route gets its own counter store), D-023.
   const rateLimit = {
@@ -41,7 +43,7 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (app, 
     async (req, reply) => {
       const { user, sessionToken } = await service.register(req.body, requestMeta(req), req.auth);
       reply.setSessionCookie(sessionToken);
-      return reply.status(201).send({ user: toAuthUser(user) });
+      return reply.status(201).send({ user: toAuthUser(user), emailVerification });
     },
   );
 
@@ -54,7 +56,7 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (app, 
     async (req, reply) => {
       const { user, sessionToken } = await service.login(req.body, requestMeta(req), req.auth);
       reply.setSessionCookie(sessionToken);
-      return reply.status(200).send({ user: toAuthUser(user) });
+      return reply.status(200).send({ user: toAuthUser(user), emailVerification });
     },
   );
 
@@ -67,7 +69,7 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (app, 
   app.get(
     paths.me,
     { preHandler: requireAuth, schema: { response: { 200: meResponseSchema } } },
-    async (req) => ({ user: toAuthUser(authOf(req).user) }),
+    async (req) => ({ user: toAuthUser(authOf(req).user), emailVerification }),
   );
 
   app.post(
@@ -116,6 +118,7 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (app, 
     },
     async (req) => ({
       user: toAuthUser(await service.updateProfile(authOf(req), req.body.fullName)),
+      emailVerification,
     }),
   );
 

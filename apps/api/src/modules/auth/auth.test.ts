@@ -51,6 +51,8 @@ describe('auth: register, login, sessions', () => {
           emailVerified: false,
           createdAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T.*Z$/),
         },
+        // Email is sent in tests, so the app asks for verification (D-122).
+        emailVerification: true,
       });
 
       const cookie = sessionCookieOf(res)!;
