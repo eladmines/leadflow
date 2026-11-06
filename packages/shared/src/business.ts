@@ -106,9 +106,114 @@ export function normalizeIsraeliPhone(raw: string): string | null {
   return /^([57]\d{8}|[23489]\d{7})$/.test(national) ? `+972${national}` : null;
 }
 
-/** E.164 → local display form, e.g. `+972501234567` → `050-1234567`. */
+/**
+ * Countries for the phone field's code picker (D-121): ISO code and dialling code. Names come
+ * from `Intl.DisplayNames` in the viewer's language. Israel first; +1 resolves to the US.
+ */
+export const PHONE_COUNTRIES = [
+  { iso: 'IL', dial: '972' },
+  { iso: 'US', dial: '1' },
+  { iso: 'CA', dial: '1' },
+  { iso: 'GB', dial: '44' },
+  { iso: 'IE', dial: '353' },
+  { iso: 'FR', dial: '33' },
+  { iso: 'DE', dial: '49' },
+  { iso: 'ES', dial: '34' },
+  { iso: 'IT', dial: '39' },
+  { iso: 'PT', dial: '351' },
+  { iso: 'NL', dial: '31' },
+  { iso: 'BE', dial: '32' },
+  { iso: 'CH', dial: '41' },
+  { iso: 'AT', dial: '43' },
+  { iso: 'SE', dial: '46' },
+  { iso: 'NO', dial: '47' },
+  { iso: 'DK', dial: '45' },
+  { iso: 'FI', dial: '358' },
+  { iso: 'PL', dial: '48' },
+  { iso: 'CZ', dial: '420' },
+  { iso: 'HU', dial: '36' },
+  { iso: 'RO', dial: '40' },
+  { iso: 'GR', dial: '30' },
+  { iso: 'CY', dial: '357' },
+  { iso: 'UA', dial: '380' },
+  { iso: 'RU', dial: '7' },
+  { iso: 'TR', dial: '90' },
+  { iso: 'AE', dial: '971' },
+  { iso: 'SA', dial: '966' },
+  { iso: 'JO', dial: '962' },
+  { iso: 'EG', dial: '20' },
+  { iso: 'MA', dial: '212' },
+  { iso: 'ZA', dial: '27' },
+  { iso: 'IN', dial: '91' },
+  { iso: 'TH', dial: '66' },
+  { iso: 'SG', dial: '65' },
+  { iso: 'HK', dial: '852' },
+  { iso: 'JP', dial: '81' },
+  { iso: 'KR', dial: '82' },
+  { iso: 'CN', dial: '86' },
+  { iso: 'PH', dial: '63' },
+  { iso: 'AU', dial: '61' },
+  { iso: 'NZ', dial: '64' },
+  { iso: 'BR', dial: '55' },
+  { iso: 'MX', dial: '52' },
+  { iso: 'AR', dial: '54' },
+  { iso: 'CL', dial: '56' },
+  { iso: 'CO', dial: '57' },
+] as const;
+export type PhoneCountry = (typeof PHONE_COUNTRIES)[number]['iso'];
+
+const countryOf = (iso: string) => PHONE_COUNTRIES.find((c) => c.iso === iso);
+/** The country whose dialling code starts these digits (longest code wins). */
+function countryByDigits(digits: string) {
+  return [...PHONE_COUNTRIES]
+    .sort((a, b) => b.dial.length - a.dial.length)
+    .find((c) => digits.startsWith(c.dial));
+}
+
+/**
+ * Normalises any phone number to E.164, or null (D-121). Israeli numbers keep their exact rules
+ * (and local forms like 050-1234567 stay Israeli by default). Other countries: `+<code>` (or a
+ * local number with `country`), a leading trunk 0 dropped, 6–12 national digits.
+ */
+export function normalizePhone(raw: string, country: string = 'IL'): string | null {
+  const trimmed = raw.trim();
+  if (!/^\+?[\d\s\-().]+$/.test(trimmed)) return null;
+  const international = trimmed.startsWith('+') || /^00[1-9]/.test(trimmed.replace(/\D/g, ''));
+  let digits = trimmed.replace(/\D/g, '');
+  if (trimmed.startsWith('+') === false && international) digits = digits.slice(2);
+
+  let match = international ? countryByDigits(digits) : countryOf(country);
+  if (!match) return null;
+  if (match.iso === 'IL' || (!international && country === 'IL')) {
+    return normalizeIsraeliPhone(international ? `+${digits}` : trimmed);
+  }
+  if (match.dial === '1') match = countryOf('US')!;
+  const national = (international ? digits.slice(match.dial.length) : digits).replace(/^0/, '');
+  return /^\d{6,12}$/.test(national) ? `+${match.dial}${national}` : null;
+}
+
+/** E.164 → its country and the national part for editing (Israeli numbers in local form). */
+export function splitPhone(e164: string | null | undefined): {
+  country: PhoneCountry | null;
+  national: string;
+} {
+  if (!e164) return { country: null, national: '' };
+  const digits = e164.replace(/\D/g, '');
+  const c = e164.startsWith('+') ? countryByDigits(digits) : undefined;
+  if (!c) return { country: null, national: e164 };
+  if (c.iso === 'IL') return { country: 'IL', national: formatIsraeliPhone(e164) };
+  return { country: c.dial === '1' ? 'US' : c.iso, national: digits.slice(c.dial.length) };
+}
+
+/**
+ * E.164 → display form: Israeli numbers locally (`+972501234567` → `050-1234567`), others with
+ * their code (`+447700900123` → `+44 7700900123`).
+ */
 export function formatIsraeliPhone(e164: string): string {
-  if (!e164.startsWith('+972')) return e164;
+  if (!e164.startsWith('+972')) {
+    const c = e164.startsWith('+') ? countryByDigits(e164.slice(1)) : undefined;
+    return c ? `+${c.dial} ${e164.slice(1 + c.dial.length)}` : e164;
+  }
   const local = `0${e164.slice(4)}`;
   const prefixLength = local.length === 10 ? 3 : 2;
   return `${local.slice(0, prefixLength)}-${local.slice(prefixLength)}`;
@@ -132,12 +237,12 @@ export const industrySchema = z.enum(INDUSTRIES, {
 });
 export type Industry = z.infer<typeof industrySchema>;
 
-/** Validates and normalises to E.164. */
+/** Validates and normalises to E.164: Israeli local forms, or any country with `+<code>` (D-121). */
 export const phoneSchema = requiredString(businessMessages.phoneRequired)
   .trim()
   .min(1, businessMessages.phoneRequired)
-  .refine((v) => normalizeIsraeliPhone(v) !== null, businessMessages.phoneInvalid)
-  .transform((v) => normalizeIsraeliPhone(v) as string);
+  .refine((v) => normalizePhone(v) !== null, businessMessages.phoneInvalid)
+  .transform((v) => normalizePhone(v) as string);
 
 /** Optional address: trimmed; blank becomes null. */
 export const addressSchema = z

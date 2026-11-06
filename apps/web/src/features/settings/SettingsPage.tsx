@@ -11,8 +11,16 @@ import {
   type OpeningHours,
 } from '@leadflow/shared';
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
-import { Alert, Button, Card, Field, Select } from '../../components/ui';
+import { Controller, useForm } from 'react-hook-form';
+import {
+  Alert,
+  browserCountry,
+  Button,
+  Card,
+  Field,
+  PhoneField,
+  Select,
+} from '../../components/ui';
 import { applyServerErrors, errorMessage } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
 import { HoursFields } from '../businesses/HoursFields';
@@ -125,14 +133,20 @@ export function DetailsSection({ canEdit }: { canEdit: boolean }) {
             error={errors.industry?.message}
             {...form.register('industry')}
           />
-          <Field
-            label={tr('טלפון העסק')}
-            required
-            ltr
-            type="tel"
-            inputMode="tel"
-            error={errors.phone?.message}
-            {...form.register('phone')}
+          <Controller
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneField
+                label={tr('טלפון העסק')}
+                required
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                defaultCountry={browserCountry()}
+                error={errors.phone?.message}
+              />
+            )}
           />
           <Field
             label={tr('כתובת')}

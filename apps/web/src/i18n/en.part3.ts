@@ -516,4 +516,6 @@ export const enPart3: Record<string, string> = {
   'לשלבים הבאים': 'Later stages',
   // Appointments panel label (D-116)
   יומן: 'Calendar',
+  // Phone country picker (D-121)
+  'קידומת מדינה': 'Country code',
 };

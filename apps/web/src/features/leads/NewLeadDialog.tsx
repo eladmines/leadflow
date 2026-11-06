@@ -4,13 +4,22 @@ import {
   can,
   createLeadRequestSchema,
   formatIsraeliPhone,
-  normalizeIsraeliPhone,
+  normalizePhone,
+  splitPhone,
   type CreateLeadRequest,
 } from '@leadflow/shared';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, DialogShell, Field, Select, Textarea } from '../../components/ui';
+import {
+  Alert,
+  Button,
+  DialogShell,
+  Field,
+  PhoneField,
+  Select,
+  Textarea,
+} from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -42,7 +51,7 @@ export function NewLeadDialog({
   // Check duplicates once the phone/email look complete.
   const phone = form.watch('phone') ?? '';
   const email = form.watch('email') ?? '';
-  const phoneE164 = normalizeIsraeliPhone(phone) ?? '';
+  const phoneE164 = normalizePhone(phone) ?? '';
   const emailOk = /^\S+@\S+\.\S+$/.test(email) ? email : '';
   const duplicates = useDuplicates(business.id, phoneE164, emailOk, open);
 
@@ -86,13 +95,19 @@ export function NewLeadDialog({
           {...form.register('name')}
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label={tr('טלפון')}
-            ltr
-            type="tel"
-            inputMode="tel"
-            error={errors.phone?.message}
-            {...form.register('phone')}
+          <Controller
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneField
+                label={tr('טלפון')}
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                defaultCountry={splitPhone(business.phone).country ?? 'IL'}
+                error={errors.phone?.message}
+              />
+            )}
           />
           <Field
             label={tr('אימייל')}
