@@ -11,6 +11,7 @@ export const WHATSAPP_WINDOW_MS = 24 * 60 * 60 * 1000;
 export const WHATSAPP_TEXT_MAX = 1000;
 
 export const whatsappMessages = {
+  untilPast: 'הזמן שבחרתם כבר עבר',
   textRequired: 'יש לכתוב הודעה',
   textTooLong: `ההודעה ארוכה מדי (עד ${WHATSAPP_TEXT_MAX.toLocaleString('en-US')} תווים)`,
   notConnected: 'WhatsApp עדיין לא מחובר לעסק הזה',
@@ -225,7 +226,8 @@ export const botDefaultTexts: Record<BotTextKey, string> = {
 const industryTexts: Record<string, Partial<Record<BotTextKey, string>>> = {
   studio: {
     greeting: 'היי! כאן {business} 💪\nרוצים לקבוע שיעור או אימון? בחרו:',
-    confirmed: 'מעולה! שריינו לכם {service} ל{time} ✅\nנתראה ב{business}! לשינוי או ביטול, כתבו לנו כאן.',
+    confirmed:
+      'מעולה! שריינו לכם {service} ל{time} ✅\nנתראה ב{business}! לשינוי או ביטול, כתבו לנו כאן.',
     pending: 'קיבלנו את הבקשה ל{service} ב{time} 🙏\nנאשר לכם את המקום בהקדם.',
   },
   therapy: {
@@ -257,7 +259,8 @@ const industryTexts: Record<string, Partial<Record<BotTextKey, string>>> = {
   },
   photo: {
     greeting: 'היי! כאן {business} 📸\nאיך אפשר לעזור?',
-    eventReceived: 'תודה! קיבלנו את הפרטים לצילום ({service}) ב{time} 🙏\nנחזור אליכם בהקדם עם הצעה.',
+    eventReceived:
+      'תודה! קיבלנו את הפרטים לצילום ({service}) ב{time} 🙏\nנחזור אליכם בהקדם עם הצעה.',
   },
 };
 
@@ -357,7 +360,90 @@ export const botShowcaseSchema = z.object({
 });
 export type BotShowcase = z.input<typeof botShowcaseSchema>;
 
+// ---------------------------------------------------------------------------
+// Automatic replies and statuses (D-123)
+// ---------------------------------------------------------------------------
+
+/**
+ * What the business number does with a customer's message: nothing, a short automatic reply
+ * (the default — the business's status message when one is on), or the booking bot.
+ */
+export const REPLY_MODES = ['off', 'auto_reply', 'booking'] as const;
+export type ReplyMode = (typeof REPLY_MODES)[number];
+export const replyModeLabels: Record<ReplyMode, string> = {
+  off: 'כבוי — בלי מענה אוטומטי',
+  auto_reply: 'מענה אוטומטי',
+  booking: 'בוט קביעת תורים',
+};
+
+/** The general reply, until the business writes its own. Customer-facing: Hebrew. */
+export const AUTO_REPLY_DEFAULT =
+  'היי! תודה שכתבת ל{business} 🙏 קיבלנו את ההודעה ונחזור אליך בהקדם.';
+
+/** Ready-made statuses (D-123); the business edits their text and adds its own. */
+export const STATUS_PRESETS = [
+  {
+    id: 'event',
+    label: 'באירוע',
+    text: 'היי! כרגע אני באירוע 🎉 אחזור אליך בהקדם. בינתיים, הנה טעימה ממה שקורה כאן:',
+  },
+  { id: 'meeting', label: 'בפגישה', text: 'היי! אני בפגישה כרגע, אחזור אליך תוך זמן קצר 🙏' },
+  {
+    id: 'vacation',
+    label: 'בחופשה',
+    text: 'היי! אנחנו בחופשה קצרה 🌴 נחזור לענות בקרוב. תודה על הסבלנות!',
+  },
+  { id: 'closed', label: 'סגור עכשיו', text: 'היי! אנחנו סגורים כרגע 🌙 נחזור אליך כשנפתח.' },
+] as const;
+
+/** One video per status (WhatsApp's limit), and a total per business (free database, D-119). */
+export const STATUS_VIDEO_MAX_BYTES = 16 * 1024 * 1024;
+export const STATUS_VIDEOS_TOTAL_BYTES = 64 * 1024 * 1024;
+export const MAX_STATUSES = 12;
+
+export const statusMessages = {
+  labelRequired: 'יש לתת שם לסטטוס',
+  labelTooLong: 'שם הסטטוס ארוך מדי (עד 40 תווים)',
+  textRequired: 'יש לכתוב את ההודעה',
+  textTooLong: 'ההודעה ארוכה מדי (עד 1000 תווים)',
+  videoInvalid: 'אפשר להעלות רק סרטון MP4',
+  videoTooLarge: 'הסרטון גדול מ־16MB. נסו סרטון קצר יותר',
+  videosFull: 'נגמר המקום לסרטונים (64MB לעסק). מחקו סרטון של סטטוס אחר ונסו שוב',
+} as const;
+
+export const replyStatusSchema = z.object({
+  /** Preset ids (event, meeting…) or `c-…` for the business's own. */
+  id: z.string().regex(/^[a-z0-9-]{1,40}$/),
+  label: z
+    .string({ required_error: statusMessages.labelRequired })
+    .trim()
+    .min(1, statusMessages.labelRequired)
+    .max(40, statusMessages.labelTooLong),
+  text: z
+    .string({ required_error: statusMessages.textRequired })
+    .trim()
+    .min(1, statusMessages.textRequired)
+    .max(1000, statusMessages.textTooLong),
+});
+export type ReplyStatus = z.infer<typeof replyStatusSchema>;
+
+/** PUT …/whatsapp/status — the status on now (null = none), optionally until a time. */
+export const setStatusRequestSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[a-z0-9-]{1,40}$/)
+    .nullable(),
+  until: z.string().datetime().nullable().default(null),
+});
+export type SetStatusRequest = z.input<typeof setStatusRequestSchema>;
+
 export const whatsappBotSettingsSchema = z.object({
+  /** Missing (older clients): follows `enabled` (on = booking). */
+  mode: z.enum(REPLY_MODES).optional(),
+  /** The general automatic reply; null = AUTO_REPLY_DEFAULT. */
+  autoReplyText: z.string().trim().max(1000, statusMessages.textTooLong).nullable().default(null),
+  /** The statuses to keep (missing = unchanged). Videos stay with their status id. */
+  statuses: z.array(replyStatusSchema).max(MAX_STATUSES).optional(),
   enabled: z.boolean(),
   /** true: booked as confirmed; false: booked as "waiting for approval" (holds the time). */
   autoConfirm: z.boolean(),
@@ -374,6 +460,20 @@ export type WhatsAppBotSettings = z.input<typeof whatsappBotSettingsSchema>;
 export const whatsappBotResponseSchema = z.object({
   connected: z.boolean(),
   settings: z.object({
+    mode: z.enum(REPLY_MODES),
+    autoReplyText: z.string().nullable(),
+    autoReplyDefault: z.string(),
+    statuses: z.array(
+      replyStatusSchema.extend({
+        preset: z.boolean(),
+        /** The status's video, if one was uploaded. */
+        video: z.object({ sizeBytes: z.number().int() }).nullable(),
+      }),
+    ),
+    /** The status on now (expired ones come back as null). */
+    activeStatus: z.object({ id: z.string(), until: z.string().datetime().nullable() }).nullable(),
+    /** Space used by status videos, of STATUS_VIDEOS_TOTAL_BYTES. */
+    videoBytesUsed: z.number().int(),
     enabled: z.boolean(),
     autoConfirm: z.boolean(),
     /** Only the messages the business rewrote. */
@@ -389,7 +489,10 @@ export const whatsappBotResponseSchema = z.object({
     flowIsDefault: z.boolean(),
     /** The industry's default messages (shown until the business writes its own). */
     defaults: z.object(
-      Object.fromEntries(BOT_TEXT_KEYS.map((k) => [k, z.string()])) as Record<BotTextKey, z.ZodString>,
+      Object.fromEntries(BOT_TEXT_KEYS.map((k) => [k, z.string()])) as Record<
+        BotTextKey,
+        z.ZodString
+      >,
     ),
     showcase: z.object({
       enabled: z.boolean(),
@@ -406,6 +509,11 @@ export type WhatsAppBotResponse = z.infer<typeof whatsappBotResponseSchema>;
 export const whatsappApiPaths = {
   /** Meta's webhook (verification GET + signed event POST). Public, not tenant-scoped. */
   webhook: '/api/v1/integrations/whatsapp/webhook',
+  /** PUT: the status on now (D-123). */
+  status: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/status`,
+  /** PUT (multipart MP4) / GET / DELETE: a status's video. */
+  statusVideo: (businessId: string, statusId: string) =>
+    `/api/v1/businesses/${businessId}/whatsapp/statuses/${statusId}/video`,
   thread: (businessId: string, leadId: string) =>
     `/api/v1/businesses/${businessId}/leads/${leadId}/whatsapp`,
   inbox: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/inbox`,

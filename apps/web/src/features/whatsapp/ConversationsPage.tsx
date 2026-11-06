@@ -11,6 +11,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { useClassifyNumber, useForgetPersonal, usePersonalNumbers, useWhatsAppInbox } from './api';
+import { AutoReplyCard } from './AutoReplyCard';
 import { BookingBotCard } from './BookingBotCard';
 import { tr } from '../../i18n';
 
@@ -89,6 +90,7 @@ function Inbox({ businessId }: { businessId: string }) {
           ))}
         </ul>
       )}
+      <AutoReplyCard businessId={businessId} />
       <BookingBotCard businessId={businessId} />
       <PersonalNumbers businessId={businessId} />
     </>

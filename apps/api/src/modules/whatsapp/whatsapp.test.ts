@@ -115,7 +115,14 @@ describe('WhatsApp (F12 POC)', () => {
   async function connected() {
     const owner = await newUser(ctx.app, 'wa-owner');
     await ctx.prisma.business.create({
-      data: { id: BUSINESS_ID, name: 'עיצוב שיער סיגלית', industry: 'beauty', status: 'ACTIVE' },
+      data: {
+        id: BUSINESS_ID,
+        name: 'עיצוב שיער סיגלית',
+        industry: 'beauty',
+        status: 'ACTIVE',
+        // These tests cover messages themselves; automatic replies have their own (D-123).
+        whatsappReplyMode: 'off',
+      },
     });
     await addMember(ctx.prisma, BUSINESS_ID, owner.userId, 'OWNER');
     return owner;

@@ -9,6 +9,8 @@ interface SentMessage {
   choices?: WhatsAppChoice[];
   /** Size of a sent photo. */
   imageBytes?: number;
+  /** Size of a sent video. */
+  videoBytes?: number;
 }
 
 /** Keeps sent messages in memory instead of calling Meta (local development and tests). */
@@ -30,6 +32,10 @@ export class MemoryWhatsAppSender implements WhatsAppSender {
 
   sendImage(to: string, jpeg: Buffer, caption = ''): Promise<{ id: string }> {
     return this.record({ to, text: caption, imageBytes: jpeg.length });
+  }
+
+  sendVideo(to: string, mp4: Buffer, caption = ''): Promise<{ id: string }> {
+    return this.record({ to, text: caption, videoBytes: mp4.length });
   }
 
   sendButtons(to: string, body: string, buttons: WhatsAppChoice[]): Promise<{ id: string }> {

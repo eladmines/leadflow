@@ -161,6 +161,14 @@ model Business {
   whatsappBotFlow        String?        @map("whatsapp_bot_flow") @db.VarChar(20)
   /// Event requests hold their date (D-108); off = only confirmed events block a date.
   whatsappBotHoldDate    Boolean        @default(false) @map("whatsapp_bot_hold_date")
+  /// D-123: off | auto_reply | booking (booking also keeps whatsappBotEnabled on).
+  whatsappReplyMode      String         @default("auto_reply") @map("whatsapp_reply_mode") @db.VarChar(20)
+  /// The general automatic reply; null = the default text.
+  whatsappAutoReplyText  String?        @map("whatsapp_auto_reply_text") @db.VarChar(1000)
+  /// [{ id, label, text, videoKey?, videoBytes? }]; null = the ready-made statuses.
+  whatsappStatuses       Json?          @map("whatsapp_statuses")
+  /// { id, until } — the status on now.
+  whatsappActiveStatus   Json?          @map("whatsapp_active_status")
   status                 BusinessStatus @default(ONBOARDING)
   /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.
   onboardingStep         Int            @default(1) @map("onboarding_step")
@@ -637,6 +645,8 @@ model WhatsAppNumber {
   botShowcaseAt  DateTime?            @map("bot_showcase_at") @db.Timestamptz(3)
   /// The owner paused the booking bot for this customer (D-108).
   botPaused      Boolean              @default(false) @map("bot_paused")
+  /// Last automatic reply to this number (D-123): at most one per 12 hours.
+  autoReplyAt    DateTime?            @map("auto_reply_at") @db.Timestamptz(3)
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
 

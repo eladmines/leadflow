@@ -23,6 +23,7 @@ import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
+import { AutoReplier, modeOf } from './auto-reply';
 import { AppointmentService } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 
@@ -185,6 +186,7 @@ function spread<T>(items: T[], max: number): T[] {
 
 export class BookingBot {
   private readonly appointments: AppointmentService;
+  private readonly autoReplier: AutoReplier;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -199,6 +201,7 @@ export class BookingBot {
     ) => Promise<{ contactId: string; leadId: string }>,
   ) {
     this.appointments = new AppointmentService(prisma);
+    this.autoReplier = new AutoReplier(prisma, sender, storage, log);
   }
 
   async handle(businessId: string, msg: BotMessage, now = new Date()): Promise<BotOutcome> {
@@ -207,6 +210,32 @@ export class BookingBot {
     });
     // Personal numbers, and customers the owner paused the bot for, never get an automatic reply.
     if (!number || number.status === 'PERSONAL' || number.botPaused) return 'none';
+    // D-123: off, a short automatic reply (the default), or the booking bot below.
+    const replies = await this.prisma.business.findUnique({
+      where: { id: businessId },
+      select: {
+        id: true,
+        name: true,
+        whatsappReplyMode: true,
+        whatsappAutoReplyText: true,
+        whatsappStatuses: true,
+        whatsappActiveStatus: true,
+      },
+    });
+    if (!replies) return 'none';
+    const mode = modeOf(replies.whatsappReplyMode);
+    if (mode === 'off') return 'none';
+    if (mode === 'auto_reply') {
+      await this.autoReplier.reply(
+        replies,
+        number,
+        await this.linkOf(businessId, number.status, number.phone),
+        await this.teamIsTalking(number.id, now),
+        now,
+      );
+      // The message still reaches the team (bell and pop-up) like any other.
+      return 'none';
+    }
     const chat = await this.chatFor(businessId, number, now);
     if (!chat) return 'none';
     const choice = msg.replyId && CHOICE.test(msg.replyId) ? msg.replyId : null;

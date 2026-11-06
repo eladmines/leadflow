@@ -18,11 +18,22 @@ import {
   type WhatsAppMessage,
   type WhatsAppBotResponse,
   whatsappBotSettingsSchema,
+  AUTO_REPLY_DEFAULT,
+  setStatusRequestSchema,
   type WhatsAppThreadResponse,
 } from '@leadflow/shared';
 import type { z } from 'zod';
 import type { AppConfig } from '../../config/env';
 import type { StorageProvider } from '../../integrations/storage';
+import {
+  activeOf,
+  checkVideo,
+  mergeStatuses,
+  modeOf,
+  statusDtos,
+  statusesOf,
+  videoBytesUsed,
+} from './auto-reply';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -99,7 +110,7 @@ export class WhatsAppService {
     private readonly config: AppConfig,
     private readonly sender: WhatsAppSender,
     private readonly log: Log,
-    storage: StorageProvider,
+    private readonly storage: StorageProvider,
   ) {
     this.leads = new LeadService(prisma);
     this.bot = new BookingBot(prisma, sender, log, storage, (tx, businessId, numberId) =>
@@ -493,8 +504,14 @@ export class WhatsAppService {
         whatsappBotShowcase: true,
         whatsappBotFlow: true,
         whatsappBotHoldDate: true,
+        whatsappReplyMode: true,
+        whatsappAutoReplyText: true,
+        whatsappStatuses: true,
+        whatsappActiveStatus: true,
       },
     });
+    const statuses = statusesOf(b.whatsappStatuses);
+    const active = activeOf(b.whatsappActiveStatus, statuses, new Date());
     const texts = botTextsSchema.safeParse(b.whatsappBotTexts ?? {});
     const chosen = (BOT_FLOWS as readonly string[]).includes(b.whatsappBotFlow ?? '')
       ? (b.whatsappBotFlow as BotFlow)
@@ -504,6 +521,12 @@ export class WhatsAppService {
     return {
       connected: this.businessId === ctx.businessId,
       settings: {
+        mode: modeOf(b.whatsappReplyMode),
+        autoReplyText: b.whatsappAutoReplyText,
+        autoReplyDefault: AUTO_REPLY_DEFAULT,
+        statuses: statusDtos(statuses),
+        activeStatus: active ? { id: active.status.id, until: active.until } : null,
+        videoBytesUsed: videoBytesUsed(statuses),
         enabled: b.whatsappBotEnabled,
         autoConfirm: b.whatsappBotAutoConfirm,
         texts: texts.success ? texts.data : {},
@@ -526,11 +549,39 @@ export class WhatsAppService {
     ctx: TenantContext,
     input: z.output<typeof whatsappBotSettingsSchema>,
   ): Promise<WhatsAppBotResponse> {
+    let dropped: string[] = [];
     await this.prisma.$transaction(async (tx) => {
+      const current = await tx.business.findUniqueOrThrow({
+        where: { id: ctx.businessId },
+        select: { whatsappReplyMode: true, whatsappStatuses: true, whatsappActiveStatus: true },
+      });
+      // Older clients send only `enabled`: on = booking; off leaves the automatic reply as it was.
+      const mode =
+        input.mode ??
+        (input.enabled
+          ? 'booking'
+          : modeOf(current.whatsappReplyMode) === 'booking'
+            ? 'off'
+            : modeOf(current.whatsappReplyMode));
+      const enabled = mode === 'booking';
+      let statusData = {};
+      if (input.statuses) {
+        const result = mergeStatuses(statusesOf(current.whatsappStatuses), input.statuses);
+        dropped = result.dropped;
+        const active = activeOf(current.whatsappActiveStatus, result.merged, new Date());
+        statusData = {
+          whatsappStatuses: result.merged,
+          // A deleted status can't stay on.
+          ...(active ? {} : { whatsappActiveStatus: Prisma.DbNull }),
+        };
+      }
       await tx.business.update({
         where: { id: ctx.businessId },
         data: {
-          whatsappBotEnabled: input.enabled,
+          whatsappReplyMode: mode,
+          whatsappAutoReplyText: input.autoReplyText,
+          ...statusData,
+          whatsappBotEnabled: enabled,
           whatsappBotAutoConfirm: input.autoConfirm,
           whatsappBotTexts: input.texts,
           whatsappBotShowcase: input.showcase,
@@ -538,8 +589,8 @@ export class WhatsAppService {
           whatsappBotHoldDate: input.holdDate,
         },
       });
-      // Switching off ends conversations in progress.
-      if (!input.enabled) {
+      // Leaving the booking bot ends conversations in progress.
+      if (!enabled) {
         await tx.whatsAppBotSession.deleteMany({ where: { businessId: ctx.businessId } });
       }
       // Only the business's own photos can go into the showcase.
@@ -561,14 +612,107 @@ export class WhatsAppService {
         entityId: ctx.businessId,
         // Which messages are custom, not their wording.
         metadata: {
-          enabled: input.enabled,
+          mode,
+          customAutoReply: input.autoReplyText !== null,
+          statuses: input.statuses?.length,
+          enabled,
           autoConfirm: input.autoConfirm,
           customTexts: Object.keys(input.texts),
           showcase: input.showcase.enabled,
         },
       });
     });
+    // Videos of deleted statuses (after the change is saved).
+    for (const key of dropped) await this.storage.delete(key).catch(() => undefined);
     return this.botSettings(ctx);
+  }
+
+  /** Turns a status on (until a time, or until changed) or off (D-123). */
+  async setStatus(ctx: TenantContext, input: z.output<typeof setStatusRequestSchema>) {
+    const b = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+      select: { whatsappStatuses: true },
+    });
+    if (input.id && !statusesOf(b.whatsappStatuses).some((s) => s.id === input.id)) {
+      throw new AppError('NOT_FOUND');
+    }
+    if (input.until && new Date(input.until) <= new Date()) {
+      throw new AppError('VALIDATION_ERROR', whatsappMessages.untilPast, {
+        until: whatsappMessages.untilPast,
+      });
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.business.update({
+        where: { id: ctx.businessId },
+        data: {
+          whatsappActiveStatus: input.id ? { id: input.id, until: input.until } : Prisma.DbNull,
+        },
+      });
+      await recordAudit(tx, {
+        action: 'whatsapp.status_set',
+        businessId: ctx.businessId,
+        actorUserId: ctx.userId,
+        entityType: 'business',
+        entityId: ctx.businessId,
+        metadata: { status: input.id, until: input.until },
+      });
+    });
+    return this.botSettings(ctx);
+  }
+
+  /** Stores a status's video (replacing its old one). */
+  async setStatusVideo(ctx: TenantContext, statusId: string, video: Buffer) {
+    const b = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+      select: { whatsappStatuses: true },
+    });
+    const statuses = statusesOf(b.whatsappStatuses);
+    const { status, key } = checkVideo(ctx.businessId, statuses, statusId, video);
+    await this.storage.put(key, video, 'video/mp4');
+    const old = status.videoKey;
+    await this.prisma.business.update({
+      where: { id: ctx.businessId },
+      data: {
+        whatsappStatuses: statuses.map((s) =>
+          s.id === statusId ? { ...s, videoKey: key, videoBytes: video.length } : s,
+        ),
+      },
+    });
+    if (old) await this.storage.delete(old).catch(() => undefined);
+    return this.botSettings(ctx);
+  }
+
+  async deleteStatusVideo(ctx: TenantContext, statusId: string) {
+    const b = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+      select: { whatsappStatuses: true },
+    });
+    const statuses = statusesOf(b.whatsappStatuses);
+    const status = statuses.find((s) => s.id === statusId);
+    if (!status) throw new AppError('NOT_FOUND');
+    if (!status.videoKey) return this.botSettings(ctx);
+    await this.prisma.business.update({
+      where: { id: ctx.businessId },
+      data: {
+        whatsappStatuses: statuses.map((s) =>
+          s.id === statusId ? { id: s.id, label: s.label, text: s.text } : s,
+        ),
+      },
+    });
+    await this.storage.delete(status.videoKey).catch(() => undefined);
+    return this.botSettings(ctx);
+  }
+
+  /** The video's bytes, for the owner's preview (only this business's statuses). */
+  async statusVideo(ctx: TenantContext, statusId: string): Promise<Buffer> {
+    const b = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+      select: { whatsappStatuses: true },
+    });
+    const key = statusesOf(b.whatsappStatuses).find((s) => s.id === statusId)?.videoKey;
+    const video = key ? await this.storage.get(key) : null;
+    if (!video) throw new AppError('NOT_FOUND');
+    return video;
   }
 
   /** Forgets a personal marking; the number's next message lands in the inbox again. */

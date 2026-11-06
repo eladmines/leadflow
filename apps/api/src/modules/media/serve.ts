@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { MEDIA_PATH, STOCK_MEDIA_PATH } from '@leadflow/shared';
-import { STORAGE_KEY, type StorageProvider } from '../../integrations/storage';
+import { IMAGE_KEY, type StorageProvider } from '../../integrations/storage';
 
 /**
  * Serves stored images at `/media/<key>` (same origin as the page, so a strict CSP still allows
@@ -31,7 +31,7 @@ export function registerMediaServing(
 
   app.get(`${MEDIA_PATH}/*`, async (req, reply) => {
     const key = (req.params as { '*': string })['*'];
-    const body = STORAGE_KEY.test(key) ? await storage.get(key) : null;
+    const body = IMAGE_KEY.test(key) ? await storage.get(key) : null;
     if (!body)
       return reply
         .status(404)

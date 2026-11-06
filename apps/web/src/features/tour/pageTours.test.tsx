@@ -1,4 +1,10 @@
-import { apiPaths, botDefaultTextsFor, businessWebPaths } from '@leadflow/shared';
+import {
+  apiPaths,
+  AUTO_REPLY_DEFAULT,
+  botDefaultTextsFor,
+  businessWebPaths,
+  STATUS_PRESETS,
+} from '@leadflow/shared';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
@@ -55,7 +61,13 @@ describe('page tours (D-096)', () => {
         json(200, {
           connected: false,
           settings: {
-            enabled: false,
+            mode: 'booking',
+            autoReplyText: null,
+            autoReplyDefault: AUTO_REPLY_DEFAULT,
+            statuses: STATUS_PRESETS.map((p) => ({ ...p, preset: true, video: null })),
+            activeStatus: null,
+            videoBytesUsed: 0,
+            enabled: true,
             autoConfirm: true,
             holdDate: false,
             flow: 'appointment',
@@ -82,11 +94,14 @@ describe('page tours (D-096)', () => {
     expect(titles).toEqual([
       'שיחות WhatsApp',
       'רענון',
+      'מענה אוטומטי',
+      'הסטטוס שלך עכשיו',
+      'מה קורה כשלקוח כותב',
+      'שמירת ההגדרות',
       'בוט קביעת התורים',
-      'הדלקה וכיבוי',
       'איך לקוחות מזמינים',
       'אישור התורים',
-      'שמירת ההגדרות',
+      'שמירת הגדרות הבוט',
       'ההודעות של הבוט',
       'בינתיים, הצצה לעבודות שלנו',
     ]);
