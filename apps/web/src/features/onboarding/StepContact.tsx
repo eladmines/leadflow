@@ -6,8 +6,8 @@ import {
   type OnboardingContact,
 } from '@leadflow/shared';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Alert, Button, Field } from '../../components/ui';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, browserCountry, Button, Field, PhoneField } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
 import { tr } from '../../i18n';
 
@@ -48,16 +48,20 @@ export function StepContact({ business, onSubmit, onBack }: Props) {
         </p>
       </header>
       {formError && <Alert tone="danger">{formError}</Alert>}
-      <Field
-        label={tr('טלפון העסק')}
-        required
-        ltr
-        type="tel"
-        inputMode="tel"
-        autoComplete="tel"
-        placeholder="050-1234567"
-        error={errors.phone?.message}
-        {...form.register('phone')}
+      <Controller
+        control={form.control}
+        name="phone"
+        render={({ field }) => (
+          <PhoneField
+            label={tr('טלפון העסק')}
+            required
+            value={field.value ?? ''}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            defaultCountry={browserCountry()}
+            error={errors.phone?.message}
+          />
+        )}
       />
       <Field
         label={tr('כתובת')}
