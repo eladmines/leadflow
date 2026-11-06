@@ -1,14 +1,14 @@
 # Deploying LeadFlow for free (test version)
 
 This puts LeadFlow on the internet at no cost, for you and a few test businesses (D-119).
-Everything runs as one service on Render; the database is on Neon; emails go out through a
-Gmail account.
+Everything runs as one service on Render; the database is on Neon; emails go out through
+Brevo (optional).
 
 | Piece                       | Where                              | Free plan limits                                   |
 | --------------------------- | ---------------------------------- | -------------------------------------------------- |
 | App, API, customer websites | Render web service (`render.yaml`) | Sleeps after 15 min idle, ~1 min to wake; 750 h/mo |
 | Database (and photos)       | Neon Postgres                      | 0.5 GB, 100 compute hours/mo, pauses when idle     |
-| Email                       | Gmail SMTP with an app password    | About 500 emails a day                             |
+| Email                       | Brevo email API (optional)         | 300 emails a day                                   |
 
 Addresses: the app is `https://<service>.onrender.com`, and a business's website is
 `https://<service>.onrender.com/s/<its-name>`.
@@ -22,22 +22,29 @@ Addresses: the app is `https://<service>.onrender.com`, and a business's website
    `postgresql://user:password@ep-xxx.eu-central-1.aws.neon.tech/neondb?sslmode=require`.
    Keep it private — it is the database password.
 
-## 2. Email — Gmail app password (3 minutes)
+## 2. Email — Brevo (optional, 5 minutes)
 
-1. The Gmail account needs **2-Step Verification** on: <https://myaccount.google.com/security>.
-2. Create an app password at <https://myaccount.google.com/apppasswords> (name it "LeadFlow").
-   Google shows 16 letters once — copy them.
+Render's free plan blocks outgoing SMTP (ports 25/465/587), so Gmail SMTP can't be used there;
+Brevo sends over HTTPS instead, free for 300 emails a day, from one verified address (no domain).
+Until it's set up, email is off (`EMAIL_TRANSPORT=disabled`): everything works, but no
+verification, reset, new-lead or invitation emails go out.
+
+1. Sign up at <https://www.brevo.com> (free plan).
+2. **Senders, domains & dedicated IPs → Senders → Add a sender**: your Gmail address; confirm
+   the email Brevo sends you.
+3. **SMTP & API → API keys → Generate a new API key**; copy it (shown once).
+4. In Render → the service → **Environment**: `BREVO_API_KEY` = the key, `EMAIL_FROM` =
+   `LeadFlow <the verified address>`, and `EMAIL_TRANSPORT` = `brevo` (also change it in
+   `render.yaml`, or the Blueprint sets it back).
 
 ## 3. App — Render (10 minutes)
 
 1. Make sure the latest code is on GitHub (`main` branch of your `leadflow` repository).
 2. Sign up at <https://render.com> with GitHub.
 3. **New → Blueprint**, pick the `leadflow` repository. Render reads `render.yaml` and asks for
-   the four private values:
+   the private values:
    - `DATABASE_URL` — the Neon connection string from step 1.
-   - `SMTP_USER` — the Gmail address.
-   - `SMTP_PASS` — the 16-letter app password from step 2 (no spaces).
-   - `EMAIL_FROM` — `LeadFlow <the same Gmail address>`.
+   - `BREVO_API_KEY`, `EMAIL_FROM` — from step 2, or leave empty while email is off.
 4. **Apply**. The first build takes about 5–8 minutes. When the log shows the server listening,
    open the `https://….onrender.com` address and create your account.
 
@@ -61,5 +68,5 @@ token for anything longer than a test.
 - **Data:** this is a test setup. Before real customers: a paid instance (no sleep), backups, the
   privacy review (O-007) and a domain of your own.
 - **Moving to a domain later:** buy one, point `*.yourdomain` and `app.yourdomain` at Render, set
-  `PUBLIC_SITE_MODE=host` and `PUBLIC_SITE_HOST=yourdomain`, and switch email to a provider with
-  your domain (O-009).
+  `PUBLIC_SITE_MODE=host` and `PUBLIC_SITE_HOST=yourdomain`, and send email from your domain
+  (O-009).

@@ -13,6 +13,9 @@ export const redactPaths = [
   '*.tokenHash',
   '*.cookie',
   '*["set-cookie"]',
+  // Email provider credentials (D-120).
+  '*.apiKey',
+  '*["api-key"]',
   // WhatsApp (F12): Meta's webhook signature and message texts.
   'req.headers["x-hub-signature-256"]',
   '*.body',

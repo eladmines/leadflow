@@ -23,6 +23,11 @@ export class SmtpEmailSender implements EmailSender {
       port: opts.port,
       secure: opts.secure ?? false,
       auth: opts.auth,
+      // Fail fast when the server can't be reached (some hosts block SMTP ports) instead of
+      // nodemailer's minutes-long defaults; senders that wait (sign-up) stay quick.
+      connectionTimeout: 8_000,
+      greetingTimeout: 8_000,
+      socketTimeout: 15_000,
       // Never let nodemailer log message contents (they include tokens).
       logger: false,
       debug: false,
