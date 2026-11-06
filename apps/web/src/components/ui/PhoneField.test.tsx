@@ -23,7 +23,9 @@ describe('PhoneField (D-121)', () => {
     const user = userEvent.setup();
     let last = '';
     render(<Harness onValue={(v) => (last = v)} />);
-    await user.selectOptions(screen.getByLabelText('קידומת מדינה'), 'GB');
+    await user.click(screen.getByRole('button', { name: /קידומת מדינה/ }));
+    await user.type(screen.getByRole('combobox', { name: 'חיפוש מדינה' }), '44');
+    await user.click(screen.getByRole('option', { name: /\+44/ }));
     await user.type(screen.getByLabelText('טלפון'), '07700 900123');
     expect(last).toBe('+44 07700 900123');
     // What was typed stays as typed.
@@ -34,14 +36,14 @@ describe('PhoneField (D-121)', () => {
     const user = userEvent.setup();
     let last = '';
     render(<Harness onValue={(v) => (last = v)} />);
-    expect(screen.getByLabelText('קידומת מדינה')).toHaveValue('IL');
+    expect(screen.getByRole('button', { name: /קידומת מדינה/ })).toHaveAccessibleName(/\+972$/);
     await user.type(screen.getByLabelText('טלפון'), '050-1234567');
     expect(last).toBe('+972 050-1234567');
   });
 
   it('opens a saved number in its own country', () => {
     render(<Harness initial="+447700900123" onValue={() => {}} />);
-    expect(screen.getByLabelText('קידומת מדינה')).toHaveValue('GB');
+    expect(screen.getByRole('button', { name: /קידומת מדינה/ })).toHaveAccessibleName(/\+44$/);
     expect(screen.getByLabelText('טלפון')).toHaveValue('7700900123');
   });
 
@@ -52,7 +54,7 @@ describe('PhoneField (D-121)', () => {
     await user.click(screen.getByLabelText('טלפון'));
     await user.paste('+1 212 555 0199');
     expect(last).toBe('+1 212 555 0199');
-    expect(screen.getByLabelText('קידומת מדינה')).toHaveValue('US');
+    expect(screen.getByRole('button', { name: /קידומת מדינה/ })).toHaveAccessibleName(/\+1$/);
   });
 
   it('clearing the number empties the value', async () => {
@@ -61,5 +63,33 @@ describe('PhoneField (D-121)', () => {
     render(<Harness initial="+972501234567" onValue={(v) => (last = v)} />);
     await user.clear(screen.getByLabelText('טלפון'));
     expect(last).toBe('');
+  });
+
+  it('opens a short searchable list under the field, keyboard first', async () => {
+    const user = userEvent.setup();
+    let last = '';
+    render(<Harness onValue={(v) => (last = v)} />);
+    const button = screen.getByRole('button', { name: /קידומת מדינה/ });
+    await user.click(button);
+    const search = screen.getByRole('combobox', { name: 'חיפוש מדינה' });
+    expect(search).toHaveFocus();
+    expect(screen.getByRole('listbox')).toHaveClass('max-h-60', 'overflow-y-auto');
+    // Search by the country's name in the viewer's language.
+    await user.type(search, 'גרמניה');
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(button).toHaveAccessibleName(/\+49$/);
+    // The number field gets the focus back.
+    expect(screen.getByLabelText('טלפון')).toHaveFocus();
+    await user.keyboard('30 1234567');
+    expect(last).toBe('+49 30 1234567');
+
+    await user.click(button);
+    await user.type(screen.getByRole('combobox'), 'zzz');
+    expect(screen.getByText('לא נמצאה מדינה')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
   });
 });
