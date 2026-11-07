@@ -11,7 +11,7 @@ import { apiFetch } from '../../lib/api';
 import { tr, intlLocale } from '../../i18n';
 
 const tp = apiPaths.tasks;
-export const tasksQueryKey = (businessId: string) => ['businesses', businessId, 'tasks'] as const;
+const tasksQueryKey = (businessId: string) => ['businesses', businessId, 'tasks'] as const;
 
 const qs = (q: TaskListQuery) => {
   const p = new URLSearchParams();

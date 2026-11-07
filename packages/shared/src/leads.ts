@@ -311,5 +311,3 @@ export const leadsApiPaths = {
   exportCsv: (businessId: string) => `/api/v1/businesses/${businessId}/leads/export.csv`,
   tags: (businessId: string) => `/api/v1/businesses/${businessId}/leads/tags`,
 } as const;
-
-export const leadAuditActions = ['lead.created', 'lead.assigned', 'leads.exported'] as const;

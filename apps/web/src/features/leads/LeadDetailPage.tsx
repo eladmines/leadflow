@@ -48,7 +48,7 @@ import {
 import { stageTone } from './LeadsPage';
 import { NewTaskForm } from '../tasks/NewTaskForm';
 import { TaskItem } from '../tasks/TaskItem';
-import { useTasks } from '../tasks/api';
+import { useTasks, toLocalInput } from '../tasks/api';
 import { useAppointments } from '../appointments/api';
 import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
@@ -128,12 +128,6 @@ function activityText(a: Activity): string {
 }
 
 /** `<input type="datetime-local">` speaks local time without a zone. */
-const toLocalInput = (iso: string | null) => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-};
-
 function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
   const business = useCurrentBusiness();
   const suggestions = useLeadTags(business.id).data ?? [];
@@ -209,7 +203,7 @@ function Details({ lead }: { lead: Lead }) {
   const members = useMembers(business.id, canAssign);
   const update = useUpdateLead(business.id);
   const [value, setValue] = useState(lead.expectedValue?.toString() ?? '');
-  const [next, setNext] = useState(toLocalInput(lead.nextActionAt));
+  const [next, setNext] = useState(lead.nextActionAt ? toLocalInput(lead.nextActionAt) : '');
   const save = (body: Parameters<typeof update.mutate>[0]['body']) =>
     update.mutate({ leadId: lead.id, body });
 

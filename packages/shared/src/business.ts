@@ -17,15 +17,11 @@ export const BUSINESS_NAME_MAX_LENGTH = 80;
 export const ADDRESS_MAX_LENGTH = 200;
 export const SERVICE_AREA_MAX_LENGTH = 60;
 export const SERVICE_AREAS_MAX = 30;
-export const DEFAULT_TIMEZONE = 'Asia/Jerusalem';
-
 /** Wizard: 1 name + industry · 2 phone + address · 3 service areas · 4 opening hours. */
 export const ONBOARDING_STEPS = 4;
 
 export const BUSINESS_STATUSES = ['ONBOARDING', 'ACTIVE', 'SUSPENDED'] as const;
 export const businessStatusSchema = z.enum(BUSINESS_STATUSES);
-export type BusinessStatus = z.infer<typeof businessStatusSchema>;
-
 /** Industries from the PRD's target audience (§1). Stored as the code. */
 export const INDUSTRIES = [
   'trades',
@@ -289,8 +285,6 @@ export const dayHoursSchema = z
     message: businessMessages.hoursRange,
     path: ['to'],
   });
-export type DayHours = z.infer<typeof dayHoursSchema>;
-
 export const openingHoursSchema = z.object({
   sun: dayHoursSchema,
   mon: dayHoursSchema,
@@ -415,12 +409,6 @@ export const notificationPrefsSchema = z.object({
 export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
 export const notificationPrefsResponseSchema = z.object({ prefs: notificationPrefsSchema });
 export type NotificationPrefsResponse = z.infer<typeof notificationPrefsResponseSchema>;
-
-export const businessAuditActions = [
-  'business.created',
-  'business.updated',
-  'business.onboarding.completed',
-] as const;
 
 // ---------------------------------------------------------------------------
 // Paths

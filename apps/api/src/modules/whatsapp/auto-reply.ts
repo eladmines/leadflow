@@ -22,7 +22,7 @@ import { AppError } from '../../lib/errors';
  * numbers, paused customers, or a chat a team member wrote in recently.
  */
 
-export const AUTO_REPLY_GAP_MS = 12 * 60 * 60 * 1000;
+const AUTO_REPLY_GAP_MS = 12 * 60 * 60 * 1000;
 
 const storedStatus = z.object({
   id: z.string(),
@@ -82,7 +82,7 @@ export function mergeStatuses(old: StoredStatus[], next: ReplyStatus[]) {
 }
 
 /** MP4 (ISO media) files carry "ftyp" at byte 4. */
-export const isMp4 = (b: Buffer) => b.length > 12 && b.subarray(4, 8).toString('latin1') === 'ftyp';
+const isMp4 = (b: Buffer) => b.length > 12 && b.subarray(4, 8).toString('latin1') === 'ftyp';
 
 /** Checks a status video and returns where to store it. */
 export function checkVideo(

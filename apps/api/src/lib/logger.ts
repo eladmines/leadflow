@@ -2,7 +2,7 @@ import type { FastifyServerOptions } from 'fastify';
 import type { AppConfig } from '../config/env';
 
 /** Paths that must never reach the logs (secrets, credentials, personal tokens). */
-export const redactPaths = [
+const redactPaths = [
   'req.headers.cookie',
   'req.headers.authorization',
   'res.headers["set-cookie"]',

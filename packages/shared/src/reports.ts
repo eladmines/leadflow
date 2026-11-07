@@ -10,8 +10,6 @@ export const reportQuerySchema = z.object({
     .refine((d) => (REPORT_RANGES as readonly number[]).includes(d))
     .default(30),
 });
-export type ReportQuery = z.input<typeof reportQuerySchema>;
-
 export const reportSummarySchema = z.object({
   range: z.object({
     from: z.string().datetime(),

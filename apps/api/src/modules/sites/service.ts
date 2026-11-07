@@ -33,13 +33,13 @@ const storedSections = z.array(sectionSchema);
 const storedPages = z.array(sitePageSchema).catch([]);
 type SiteWithLive = SiteRow & { publishedVersion: SiteVersion | null };
 
-export function publicUrlFor(config: AppConfig, subdomain: string) {
+function publicUrlFor(config: AppConfig, subdomain: string) {
   if (config.PUBLIC_SITE_MODE === 'path') return `${config.APP_URL}/s/${subdomain}`;
   return `${config.PUBLIC_SITE_PROTOCOL}://${subdomain}.${config.PUBLIC_SITE_HOST}`;
 }
 
 /** Maps a row to the API shape, re-validating stored JSON (never trust what's in the DB blindly). */
-export function toSiteDto(row: SiteWithLive, config: AppConfig): Site {
+function toSiteDto(row: SiteWithLive, config: AppConfig): Site {
   const live = row.publishedVersion;
   return {
     id: row.id,

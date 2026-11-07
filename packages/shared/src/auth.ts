@@ -244,4 +244,3 @@ export const changePasswordRequestSchema = z.object({
   currentPassword: loginPasswordSchema,
   newPassword: newPasswordSchema,
 });
-export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;

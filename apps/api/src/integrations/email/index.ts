@@ -7,7 +7,6 @@ import type { EmailSender } from './types';
 export type { EmailMessage, EmailSender } from './types';
 export { MemoryEmailSender } from './memory';
 export { SmtpEmailSender } from './smtp';
-export { BrevoEmailSender, DisabledEmailSender } from './http';
 export {
   inviteTemplate,
   newLeadTemplate,

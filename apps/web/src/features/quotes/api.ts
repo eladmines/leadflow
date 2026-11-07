@@ -14,7 +14,7 @@ import { apiFetch } from '../../lib/api';
 import { intlLocale } from '../../i18n';
 
 const qp = apiPaths.quotes;
-export const quotesKey = (businessId: string) => ['businesses', businessId, 'quotes'] as const;
+const quotesKey = (businessId: string) => ['businesses', businessId, 'quotes'] as const;
 
 export function useQuotes(businessId: string, query: QuoteListQuery = {}) {
   const p = new URLSearchParams();

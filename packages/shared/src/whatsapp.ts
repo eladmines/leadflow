@@ -69,8 +69,6 @@ export type SendWhatsAppRequest = z.infer<typeof sendWhatsAppRequestSchema>;
 
 /** Pause or resume the booking bot for one customer (D-108). */
 export const pauseBotRequestSchema = z.object({ paused: z.boolean() });
-export type PauseBotRequest = z.infer<typeof pauseBotRequestSchema>;
-
 export const sendWhatsAppResponseSchema = z.object({ message: whatsappMessageSchema });
 export type SendWhatsAppResponse = z.infer<typeof sendWhatsAppResponseSchema>;
 
@@ -84,13 +82,6 @@ export type SendWhatsAppResponse = z.infer<typeof sendWhatsAppResponseSchema>;
  * ignored from then on). The choice is remembered.
  */
 export const WHATSAPP_NUMBER_STATUSES = ['UNCLASSIFIED', 'BUSINESS', 'PERSONAL'] as const;
-export const whatsappNumberStatusLabels: Record<(typeof WHATSAPP_NUMBER_STATUSES)[number], string> =
-  {
-    UNCLASSIFIED: 'לא מסווג',
-    BUSINESS: 'עסקי',
-    PERSONAL: 'פרטי',
-  };
-
 export const inboxNumberSchema = z.object({
   id: z.string().uuid(),
   phone: z.string(),
@@ -358,8 +349,6 @@ export const botShowcaseSchema = z.object({
     .max(SHOWCASE_MAX_IMAGES, showcaseMessages.tooManyImages)
     .default([]),
 });
-export type BotShowcase = z.input<typeof botShowcaseSchema>;
-
 // ---------------------------------------------------------------------------
 // Automatic replies and statuses (D-123)
 // ---------------------------------------------------------------------------

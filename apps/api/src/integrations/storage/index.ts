@@ -17,7 +17,7 @@ export interface StorageProvider {
  * Keys we generate: `<uuid>/<uuid>.webp` (images) or `.mp4` (status videos, D-123). Anything
  * else is rejected (no path traversal).
  */
-export const STORAGE_KEY = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(webp|mp4)$/;
+const STORAGE_KEY = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(webp|mp4)$/;
 /** Only images are served publicly at /media; videos stay inside the app. */
 export const IMAGE_KEY = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.webp$/;
 

@@ -8,7 +8,7 @@ import { AppError } from '../../lib/errors';
 import { processImage } from '../../lib/images';
 import type { TenantContext } from '../../plugins/tenant';
 
-export const assetUrl = (config: AppConfig, key: string) => `${config.MEDIA_PUBLIC_BASE}/${key}`;
+const assetUrl = (config: AppConfig, key: string) => `${config.MEDIA_PUBLIC_BASE}/${key}`;
 
 export class MediaService {
   constructor(

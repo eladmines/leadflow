@@ -32,7 +32,7 @@ import { TimeGrid, TimeGridLegend } from './TimeGrid';
 import { tr } from '../../i18n';
 
 /** Status tone + text (colour is never the only signal). */
-export const statusTone: Record<AppointmentStatus, string> = {
+const statusTone: Record<AppointmentStatus, string> = {
   REQUESTED: 'border-warning-600/40 bg-warning-50 text-warning-600',
   CONFIRMED: 'border-brand-200 bg-brand-50 text-brand-800',
   COMPLETED: 'border-success-600/30 bg-success-50 text-success-600',

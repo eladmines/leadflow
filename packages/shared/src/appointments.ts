@@ -186,7 +186,3 @@ export const appointmentsApiPaths = {
   /** Pending website requests, regardless of date. */
   requests: (businessId: string) => `/api/v1/businesses/${businessId}/appointments/requests`,
 } as const;
-
-/** Two time ranges overlap (touching ends don't). */
-export const overlaps = (aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) =>
-  aStart < bEnd && bStart < aEnd;

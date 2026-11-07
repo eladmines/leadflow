@@ -27,7 +27,7 @@ declare module 'fastify' {
 }
 
 /** `last_seen_at` / `expires_at` are written at most once per hour per session (D-019). */
-export const SESSION_TOUCH_INTERVAL_MS = 60 * 60 * 1000;
+const SESSION_TOUCH_INTERVAL_MS = 60 * 60 * 1000;
 
 /**
  * Session plugin: reads the `lf_session` cookie and resolves `req.auth`.
