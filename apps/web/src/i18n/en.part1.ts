@@ -203,7 +203,6 @@ export const enPart1: Record<string, string> = {
   'הוספת אזור שירות': 'Add a service area',
   'הקלידו שם עיר ולחצו Enter': 'Type a city name and press Enter',
   'אזורי השירות שנבחרו': 'Selected service areas',
-  'פניות ב־7 הימים האחרונים': 'Inquiries in the last 7 days',
   '{0}{1} לעומת השבוע שלפני': '{0}{1} vs. the week before',
   'יחס סגירה': 'Close rate',
   'זמן תגובה ממוצע': 'Average response time',
@@ -298,10 +297,6 @@ export const enPart1: Record<string, string> = {
   'מספר חדש כתב בוואטסאפ': 'A new number wrote on WhatsApp',
   'תור חדש מוואטסאפ': 'New appointment from WhatsApp',
   'בוט קביעת תורים': 'Booking bot',
-  'לקוח שמבקש תור בוואטסאפ (או מספר חדש שכותב בפעם הראשונה) בוחר שירות, יום ושעה פנויה מתוך רשימה, והתור נקבע ביומן. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.':
-    'A customer who asks for an appointment on WhatsApp (or a new number writing for the first time) picks a service, a day and a free time from a list, and the appointment goes into the calendar. The bot never answers personal numbers, and stays quiet in a chat a team member has written in or when the customer asks to talk to the team.',
-  'הבוט יתחיל לענות אחרי חיבור מספר WhatsApp לעסק.':
-    'The bot starts answering once a WhatsApp number is connected to the business.',
   'תורים שנקבעים בבוט:': 'Appointments booked by the bot:',
   'מאושרים מיד': 'Are confirmed straight away',
   'ממתינים לאישור שלכם (הזמן נשמר בינתיים)': 'Wait for your approval (the time is held meanwhile)',
@@ -321,14 +316,10 @@ export const enPart1: Record<string, string> = {
   'יש שינויים שעוד לא נשמרו': 'You have unsaved changes',
   'ביטול השינויים': 'Discard changes',
   'לשמור את התאריך כתפוס עד שאחליט': 'Hold the date as taken until I decide',
-  'קודם הבוט שואל איך אפשר לעזור: לבדוק תאריך או שיחה אישית איתכם. מי שבוחר לבדוק תאריך בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, ומשם אפשר להכין לו הצעת מחיר.':
-    'First the bot asks how it can help: check a date, or a personal chat with you. Whoever checks a date picks an event type, types a date, then the part of day, number of guests and area. The request lands in "Pending requests" under Appointments, and from there you can prepare a quote.',
   'הבוט מושהה בשיחה הזו': 'The bot is paused in this chat',
   'הבוט יכול לענות בשיחה הזו': 'The bot can reply in this chat',
   'הפעלת הבוט': 'Resume the bot',
   'השהיית הבוט': 'Pause the bot',
-  'לקוח שכותב בוואטסאפ על אירוע (או מספר חדש שכותב בפעם הראשונה) עונה על כמה שאלות קצרות, והבקשה נכנסת למערכת. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.':
-    'A customer who writes on WhatsApp about an event (or a new number writing for the first time) answers a few short questions, and the request goes into LeadFlow. The bot never answers personal numbers, and stays quiet in a chat a team member has written in or when the customer asks to talk to the team.',
   'סוג האירוע': 'Event type',
   'תאריך האירוע': 'Event date',
   '(מתאים לתחום שלכם)': '(suits your industry)',

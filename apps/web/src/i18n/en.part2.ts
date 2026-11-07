@@ -235,7 +235,6 @@ export const enPart2: Record<string, string> = {
   'אין לך הרשאה לצפות ב': "You don't have permission to view ",
   'אם צריך גישה, פנו לבעל/ת העסק.': 'If you need access, ask the business owner.',
   'ניווט ראשי': 'Main navigation',
-  '(בקרוב)': '(soon)',
   'סיור במערכת': 'Product tour',
   'החשבון שלי: {0}': 'My account: {0}',
   דשבורד: 'Dashboard',
@@ -266,9 +265,6 @@ export const enPart2: Record<string, string> = {
   'הוספת מקטע כאן': 'Add a section here',
   'סוג המקטע להוספה': 'Section type to add',
   'כתובת האתר הקיים': 'Existing website address',
-  'כבר יש לעסק אתר?': 'Already have a website?',
-  'הוסיפו את הכתובת כדי לראות אותו כאן. LeadFlow לא ינהל אותו ולא ישנה בו דבר.':
-    "Add its address to see it here. LeadFlow won't manage it or change anything on it.",
   'הוספת האתר הקיים': 'Add existing website',
   'האתר הקיים של העסק': "The business's existing website",
   '(נפתח בחלון חדש)': '(opens in a new window)',

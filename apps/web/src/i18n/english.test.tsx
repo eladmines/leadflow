@@ -26,15 +26,12 @@ describe('English app', () => {
     const { mockApi, me, renderApp, testUser, testBusiness } = utils;
     const { apiPaths, businessWebPaths } = await import('@leadflow/shared');
     mockApi({ [`GET ${apiPaths.auth.me}`]: me(testUser) });
-    const { user } = renderApp(businessWebPaths.home(testBusiness.id));
+    renderApp(businessWebPaths.home(testBusiness.id));
     expect(
       await screen.findByRole('heading', { name: /Good (morning|afternoon|evening), דנה/ }),
     ).toBeInTheDocument();
     expect(document.documentElement.dir).toBe('ltr');
     const nav = screen.getAllByRole('navigation', { name: 'Main navigation' })[0]!;
-    for (const topic of [/Sales & marketing/, /Operations/, /Management/]) {
-      await user.click(within(nav).getByRole('button', { name: topic }));
-    }
     for (const name of [
       'Dashboard',
       'My website',
@@ -44,7 +41,8 @@ describe('English app', () => {
     ]) {
       expect(await within(nav).findByRole('link', { name })).toBeInTheDocument();
     }
-    expect(screen.getByRole('region', { name: 'Sales & marketing' })).toBeInTheDocument();
+    expect(within(nav).getByRole('list', { name: 'Sales & marketing' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'What needs you today' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true');
   });
 

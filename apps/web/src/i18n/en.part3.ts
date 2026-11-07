@@ -249,9 +249,6 @@ export const enPart3: Record<string, string> = {
   'בונים אתר': 'Build a website',
   'בוחרים תבנית, והיא מתמלאת מראש בפרטי העסק ובתמונות לדוגמה. אחר כך משנים הכול.':
     'Pick a template and it fills in with your business details and sample photos. Then change anything.',
-  'כבר יש לכם אתר?': 'Already have a website?',
-  'אפשר להוסיף את הכתובת שלו כדי לראות אותו כאן. LeadFlow לא ינהל אותו.':
-    "Add its address to see it here. LeadFlow won't manage it.",
   'האתר הקיים': 'Existing website',
   'האתר שכבר יש לעסק, לצפייה בלבד. שינויים בו נעשים אצל מי שבנה אותו.':
     'The website the business already has, view only. Changes are made by whoever built it.',
@@ -287,8 +284,6 @@ export const enPart3: Record<string, string> = {
   'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות.':
     'The stage, the owner, estimated value, when to follow up, and tags.',
   'שיחת וואטסאפ': 'WhatsApp conversation',
-  'השיחה עם הלקוח בוואטסאפ. אפשר לענות מכאן עד 24 שעות מההודעה האחרונה שלו.':
-    'The WhatsApp conversation with the customer. You can reply from here up to 24 hours after their last message.',
   'תזכורת לחזור ללקוח. מקבלים מייל כשמגיע הזמן.':
     "A reminder to get back to the customer. You get an email when it's time.",
   'שיחות WhatsApp': 'WhatsApp conversations',
@@ -346,8 +341,6 @@ export const enPart3: Record<string, string> = {
   'אחרי שינוי סיסמה, החיבור במכשירים האחרים מתנתק ונשלח אליכם מייל.':
     'After a password change, your other devices are signed out and you get an email.',
   'בוחרים אם לקבל מייל על כל פנייה חדשה.': 'Choose whether to get an email for every new inquiry.',
-  'הודעות ממספרים חדשים מחכות כאן עד שתחליטו: לקוח או פרטי. ההחלטה נשמרת, וההודעות הבאות מאותו מספר יגיעו למקום הנכון לבד.':
-    'Messages from new numbers wait here until you decide: customer or personal. The choice is remembered, and later messages from that number go to the right place on their own.',
   'נוסף/ה כליד.': 'was added as a lead.',
   'פתיחת הליד': 'Open the lead',
   '{0} סומן/ה כפרטי. ההודעות נמחקו, והודעות הבאות מהמספר הזה לא ייכנסו למערכת.':
@@ -381,15 +374,12 @@ export const enPart3: Record<string, string> = {
   'אין חיבור לשרת. בדקו את החיבור לאינטרנט ונסו שוב':
     "Can't reach the server. Check your internet connection and try again",
   מקרא: 'Legend',
-  'כאן מנהלים את הוואטסאפ של העסק: מספרים חדשים שכתבו לכם, והבוט שעונה ללקוחות בשמכם. לקוחות מוכרים לא מגיעים לכאן — ההודעות שלהם נכנסות ישר לליד שלהם, ב"לקוחות ולידים".':
-    'Your business\'s WhatsApp: new numbers that wrote to you, and the bot that answers customers for you. Known customers don\'t land here — their messages go straight to their lead, under "Customers & leads".',
   'הודעות חדשות מגיעות לבד כל כמה שניות. הכפתור מביא אותן מיד.':
     'New messages arrive on their own every few seconds. This button fetches them right away.',
   'מספר שכותב בפעם הראשונה מחכה כאן עם ההודעות שלו, עד שתחליטו מי זה. תשובות של הבוט מסומנות "תשובה אוטומטית".':
     'A number writing for the first time waits here with its messages until you decide who it is. The bot\'s replies are marked "Automatic reply".',
   'יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו, ושם גם עונים לו.':
     'Creates a lead from the messages. From now on every message from this number goes to its lead, where you also reply.',
-  'בוט קביעת התורים': 'The booking bot',
   'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שהבוט לא מבין אותו פעמיים, עובר אליכם מיד. הבוט לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
     "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or whom the bot can't understand twice, is passed to you right away. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
   'איך לקוחות מזמינים': 'How customers book',
@@ -485,8 +475,6 @@ export const enPart3: Record<string, string> = {
   'עד סוף היום': 'Until the end of the day',
   'עד מחר בבוקר': 'Until tomorrow morning',
   'מענה אוטומטי': 'Automatic reply',
-  'מה קורה כשלקוח כותב לעסק בוואטסאפ. המענה לא נשלח למספרים פרטיים, ללקוחות שעצרתם להם את הבוט, ולשיחה שמישהו מהצוות כתב בה לאחרונה.':
-    'What happens when a customer writes to the business on WhatsApp. No automatic reply goes to personal numbers, customers you paused the bot for, or a chat a team member wrote in recently.',
   'המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.':
     'Replies start once a WhatsApp number is connected to the business.',
   'הסטטוס שלך עכשיו': 'Your status now',
@@ -496,8 +484,6 @@ export const enPart3: Record<string, string> = {
   'בחירת סטטוס': 'Choose a status',
   זמין: 'Available',
   'לכמה זמן:': 'For how long:',
-  'הסטטוס נשלח רק כשהמצב הוא "מענה אוטומטי".':
-    'The status is only sent when the mode is "Automatic reply".',
   'מה קורה כשלקוח כותב:': 'When a customer writes:',
   'ההודעה הכללית': 'General message',
   '{0} מוחלף בשם העסק.': '{0} is replaced with the business name.',
@@ -533,8 +519,6 @@ export const enPart3: Record<string, string> = {
   'נגמר המקום לסרטונים (64MB לעסק). מחקו סרטון של סטטוס אחר ונסו שוב':
     "Video space is full (64MB per business). Remove another status's video and try again",
   'הזמן שבחרתם כבר עבר': 'That time has already passed',
-  'כאן בוחרים מה קורה כשלקוח כותב: בלי מענה, הודעה כללית קצרה (ברירת המחדל), או בוט שקובע תורים. ההודעה הכללית נשלחת פעם אחת בשיחה, לכל היותר פעם ב־12 שעות.':
-    'Choose what happens when a customer writes: no reply, a short general message (the default), or a bot that books appointments. The general message is sent once per conversation, at most once every 12 hours.',
   'לחיצה אחת, למשל "באירוע", ומעכשיו לקוחות שכותבים מקבלים את הודעת הסטטוס במקום ההודעה הכללית, עם הסרטון שלו אם יש. אפשר לבחור לכמה זמן, ו"זמין" מחזיר את ההודעה הכללית.':
     'One click, for example "At an event", and from now on customers who write get the status message instead of the general one, with its video if it has one. Choose for how long; "Available" brings the general message back.',
   'מה קורה כשלקוח כותב': 'When a customer writes',
@@ -554,52 +538,23 @@ export const enPart3: Record<string, string> = {
   '{0} להיום': '{0} for today',
   '{0} היום': '{0} today',
   '{0} מחכות לתשובה': '{0} awaiting a reply',
-  'מבט על העסק': 'Your business at a glance',
   'מה צריך לעשות ומתי': 'What needs doing, and when',
-  'כל חלקי המערכת': 'Every part of the app',
-  'קופסה לכל חלק במערכת, מחולקות כמו בתפריט: שיווק ומכירות, תפעול וניהול. בכל קופסה מספר חי — פניות פתוחות, משימות להיום, תורים היום — ולחיצה פותחת את החלק.':
-    'A box for each part of the app, grouped like the menu: Sales & marketing, Operations and Management. Each box shows a live number — open leads, tasks for today, appointments today — and a click opens that part.',
+  'מה מחכה לכם היום': 'What needs you today',
+  'פניות פתוחות, תורים היום, משימות באיחור והודעות ממספרים חדשים. לחיצה על קופסה פותחת את העמוד שלה; כל שאר החלקים נמצאים בתפריט.':
+    'Open leads, today’s appointments, late tasks and messages from new numbers. Click a box to open its page; everything else is in the menu.',
+  'פניות פתוחות': 'Open leads',
+  '{0} חדשות השבוע': '{0} new this week',
+  'תורים היום': 'Appointments today',
+  'הבא ב-{0}': 'Next at {0}',
+  'אין עוד תורים היום': 'No more appointments today',
+  'משימות באיחור': 'Late tasks',
+  'ועוד {0} להיום': '+{0} due today',
+  'הודעות ממספרים חדשים': 'Messages from new numbers',
+  'הכול מטופל, אין דברים שמחכים לכם 🎉': 'All caught up, nothing is waiting for you 🎉',
   'מה קורה בעסק במבט אחד. למעלה מופיע הצעד הבא שכדאי לעשות, עם כפתור ישיר אליו, וכמה מההקמה כבר הושלם.':
     'Your business at a glance. At the top: the next step to take, with a button straight to it, and how much of the setup is done.',
   // Friendlier dashboard boxes (D-127)
-  'האתר של העסק שלכם: בוחרים עיצוב, משנים טקסטים ותמונות, ומפרסמים בלחיצה.':
-    'Your business website: pick a design, change the texts and photos, and publish with one click.',
-  'כל מי שפנה אליכם — מהאתר, מוואטסאפ או בטלפון — ואיפה עומד כל אחד.':
-    'Everyone who contacted you — from your website, WhatsApp or by phone — and where each one stands.',
-  'הודעות וואטסאפ ממספרים חדשים, ותשובה אוטומטית ללקוחות כשאתם עסוקים.':
-    "WhatsApp messages from new numbers, and an automatic reply to customers when you're busy.",
-  'תזכורות לעצמכם ולצוות: להתקשר, לשלוח הצעה, לחזור ללקוח.':
-    'Reminders for you and your team: call back, send a quote, follow up with a customer.',
-  'היומן שלכם: תורים שנקבעו, שעות פנויות, ובקשות שמחכות לאישור.':
-    'Your calendar: booked appointments, free times, and requests waiting for your approval.',
-  'שולחים ללקוח הצעת מחיר מסודרת, והוא מאשר אותה בלחיצה.':
-    'Send customers a neat quote that they approve with one click.',
-  'בקרוב: דברים שקורים לבד, כמו תזכורת ללקוח שלא ענה להצעה.':
-    "Soon: things that happen by themselves, like a reminder to a customer who didn't answer a quote.",
-  'כמה לקוחות פנו, מאיפה הגיעו, וכמה עסקאות סגרתם.':
-    'How many customers reached out, where they came from, and how many deals you closed.',
-  'מזמינים עובדים ובוחרים מה כל אחד יכול לראות ולעשות.':
-    'Invite your staff and choose what each person can see and do.',
-  'שם העסק, טלפון, כתובת, שעות פתיחה והמנוי שלכם.':
-    'Business name, phone, address, opening hours and your plan.',
-  '{0} פניות פתוחות': '{0} open inquiries',
-  'פנייה פתוחה אחת': '1 open inquiry',
-  'אין פניות פתוחות': 'No open inquiries',
-  '{0} מספרים חדשים מחכים לכם': '{0} new numbers waiting for you',
-  'מספר חדש אחד מחכה לכם': '1 new number waiting for you',
-  '{0} משימות באיחור': '{0} tasks overdue',
-  'משימה אחת באיחור': '1 task overdue',
-  '{0} משימות להיום': '{0} tasks for today',
-  'משימה אחת להיום': '1 task for today',
-  'אין משימות להיום': 'No tasks for today',
-  '{0} תורים היום': '{0} appointments today',
-  'תור אחד היום': '1 appointment today',
-  'אין תורים היום': 'No appointments today',
-  '{0} הצעות מחכות לתשובה': '{0} quotes awaiting a reply',
-  'הצעה אחת מחכה לתשובה': '1 quote awaiting a reply',
   'האתר באוויר': 'Your site is live',
-  'טיוטה — עוד לא פורסם': 'Draft — not published yet',
-  'עוד לא בניתם אתר': "You haven't built a site yet",
   'מה זה {0}?': 'What is {0}?',
   // Simpler Conversations page (D-129)
   'סטטוס חדש': 'New status',
