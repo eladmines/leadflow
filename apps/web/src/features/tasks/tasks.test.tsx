@@ -162,9 +162,9 @@ describe('tasks elsewhere', () => {
         json(200, { tasks: [task({ title: 'דחוף', dueAt: hours(-1) })] }),
     });
     renderApp(businessWebPaths.home(id));
-    // The Tasks box counts them (D-124, D-126).
-    const operations = await screen.findByRole('region', { name: 'תפעול' });
-    expect(await within(operations).findByText('משימה אחת באיחור')).toBeInTheDocument();
+    // The "Late tasks" box counts them (D-131).
+    const late = await screen.findByRole('link', { name: /משימות באיחור/ });
+    await waitFor(() => expect(late).toHaveTextContent(/^1/));
   });
 });
 

@@ -49,11 +49,6 @@ test.describe('desktop', () => {
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'דילוג לתוכן הראשי' })).toBeFocused();
 
-    // Topics open from the keyboard too (D-125).
-    const management = nav.getByRole('button', { name: /ניהול/ });
-    await management.focus();
-    await page.keyboard.press('Enter');
-    await expect(management).toHaveAttribute('aria-expanded', 'true');
     await nav.getByRole('link', { name: 'צוות' }).focus();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(new RegExp(`/b/${id}/team$`));
@@ -90,7 +85,6 @@ test.describe('mobile', () => {
     await expect(trigger).toBeFocused();
 
     await trigger.click();
-    await drawer.getByRole('button', { name: /ניהול/ }).click();
     await drawer.getByRole('link', { name: 'הגדרות וחיוב' }).click();
     await expect(drawer).toBeHidden();
     await expect(page.getByRole('heading', { name: 'הגדרות וחיוב', level: 1 })).toBeVisible();

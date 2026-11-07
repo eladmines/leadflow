@@ -5,7 +5,7 @@ import { useMe } from '../auth/api';
 import { useSite } from '../site/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useWhatsAppInbox } from '../whatsapp/api';
-import { FeatureTiles } from './FeatureTiles';
+import { TodayBoxes } from './TodayBoxes';
 import { tr } from '../../i18n';
 
 type ItemState = 'done' | 'todo' | 'soon';
@@ -22,8 +22,8 @@ export function greeting(now = new Date()): string {
 }
 
 /**
- * Business home (D-126): the welcome header — next step and setup progress — and a box for every
- * section. Details live in the sections themselves (reports, leads, tasks, settings).
+ * Business home (D-131): the welcome header — next step and setup progress — and what needs the
+ * viewer today. Every section is in the menu.
  */
 export function DashboardPage() {
   const business = useCurrentBusiness();
@@ -136,7 +136,7 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <FeatureTiles business={business} />
+      <TodayBoxes business={business} />
     </>
   );
 }

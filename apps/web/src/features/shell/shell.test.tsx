@@ -27,14 +27,11 @@ const mainNav = () => screen.getAllByRole('navigation', { name: 'ניווט רא
 describe('app shell', () => {
   it('shows the full navigation in the UX-spec order and marks the current page', async () => {
     mockApi({ [meKey]: me(testUser) });
-    const { user } = renderApp(home);
+    renderApp(home);
     await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ });
-    // Topics start closed on the dashboard (D-125); open them all.
-    for (const topic of ['שיווק ומכירות', 'תפעול', 'ניהול']) {
-      await user.click(within(mainNav()).getByRole('button', { name: new RegExp(topic) }));
-    }
     const links = within(mainNav()).getAllByRole('link');
-    expect(links.map((l) => l.textContent?.replace(/\(?בקרוב\)?/g, '').trim())).toEqual([
+    // Sections not built yet stay out of the menu (D-131).
+    expect(links.map((l) => l.textContent)).toEqual([
       'דשבורד',
       'האתר שלי',
       'לקוחות ולידים',
@@ -42,7 +39,6 @@ describe('app shell', () => {
       'משימות',
       'תורים',
       'הצעות מחיר',
-      'אוטומציות',
       'דוחות',
       'צוות',
       'הגדרות וחיוב',
@@ -53,31 +49,24 @@ describe('app shell', () => {
     );
   });
 
-  it("menu topics open and close, the current page's topic opens itself, and it is remembered (D-125)", async () => {
+  it('groups the menu under topic labels, all open (D-131)', async () => {
     mockApi({ [meKey]: me(testUser) });
-    const { user } = renderApp(section('tasks'));
+    renderApp(section('tasks'));
     await screen.findByRole('heading', { name: 'משימות', level: 1 });
-    const operations = within(mainNav()).getByRole('button', { name: /תפעול/ });
-    expect(operations).toHaveAttribute('aria-expanded', 'true');
-    expect(within(mainNav()).getByRole('link', { name: 'משימות' })).toBeVisible();
-    const sales = within(mainNav()).getByRole('button', { name: /שיווק ומכירות/ });
-    expect(sales).toHaveAttribute('aria-expanded', 'false');
-    expect(within(mainNav()).queryByRole('link', { name: 'האתר שלי' })).not.toBeInTheDocument();
-    await user.click(sales);
-    expect(within(mainNav()).getByRole('link', { name: 'האתר שלי' })).toBeVisible();
-    expect(JSON.parse(localStorage.getItem('leadflow.nav.open')!)).toContain('sales');
-    await user.click(operations);
-    expect(operations).toHaveAttribute('aria-expanded', 'false');
+    const operations = within(mainNav()).getByRole('list', { name: 'תפעול' });
+    expect(within(operations).getByRole('link', { name: 'משימות' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(within(mainNav()).getByRole('list', { name: 'שיווק ומכירות' })).toBeVisible();
+    expect(within(mainNav()).queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('renders a "coming soon" page for sections that are not built yet', async () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(section('automations'));
     expect(await screen.findByRole('heading', { name: 'אוטומציות בדרך' })).toBeInTheDocument();
-    expect(within(mainNav()).getByRole('link', { name: /אוטומציות/ })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    expect(within(mainNav()).queryByRole('link', { name: /אוטומציות/ })).not.toBeInTheDocument();
   });
 
   it('shows a not-found state for an unknown section', async () => {
@@ -91,7 +80,6 @@ describe('app shell', () => {
     const { user, location } = renderApp(home);
     await user.click(await screen.findByRole('button', { name: 'פתיחת תפריט' }));
     const dialog = await screen.findByRole('dialog', { name: 'תפריט ניווט' });
-    await user.click(within(dialog).getByRole('button', { name: /ניהול/ }));
     await user.click(within(dialog).getByRole('link', { name: 'הגדרות וחיוב' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(location()).toBe(section('settings'));
@@ -166,68 +154,59 @@ describe('dashboard', () => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  it('keeps only the welcome and the boxes; details live in their sections (D-126)', async () => {
+  const todayIso = (h: number) => {
+    const d = new Date();
+    d.setHours(h, 59, 0, 0);
+    return d.toISOString();
+  };
+  it('shows only what needs you today, each box opening its page (D-131)', async () => {
     mockApi({
       [meKey]: me(testUser),
       [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [someLead] }),
     });
     renderApp(home);
-    await screen.findByRole('region', { name: 'שיווק ומכירות' });
-    expect(screen.queryByRole('region', { name: 'השבוע במספרים' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('list', { name: 'פניות אחרונות' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'פרופיל העסק' })).not.toBeInTheDocument();
-  });
-
-  it('shows a box for every section, in the sidebar groups, with live counts (D-124)', async () => {
-    mockApi({
-      [meKey]: me(testUser),
-      [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [someLead] }),
-    });
-    renderApp(home);
-    const sales = await screen.findByRole('region', { name: 'שיווק ומכירות' });
-    expect(within(sales).getByRole('link', { name: /לקוחות ולידים/ })).toHaveAttribute(
-      'href',
-      `/b/${testBusiness.id}/leads`,
-    );
-    expect(await within(sales).findByText('פנייה פתוחה אחת')).toBeInTheDocument();
-    expect(within(sales).getByText('עוד לא בניתם אתר')).toBeInTheDocument();
-    const operations = screen.getByRole('region', { name: 'תפעול' });
+    const today = await screen.findByRole('region', { name: 'מה מחכה לכם היום' });
+    const leads = within(today).getByRole('link', { name: /פניות פתוחות/ });
+    expect(leads).toHaveAttribute('href', `/b/${testBusiness.id}/leads`);
+    await waitFor(() => expect(leads).toHaveTextContent('1'));
+    expect(leads).toHaveTextContent('1 חדשות השבוע');
     expect(
-      within(operations)
+      within(today)
         .getAllByRole('link')
-        .map((l) => l.textContent),
-    ).toEqual([
-      expect.stringContaining('משימות'),
-      expect.stringContaining('תורים'),
-      expect.stringContaining('הצעות מחיר'),
-      expect.stringContaining('אוטומציות'),
-    ]);
-    expect(screen.getByRole('region', { name: 'ניהול' })).toBeInTheDocument();
+        .map((l) => l.getAttribute('href')?.split('/').pop()),
+    ).toEqual(['leads', 'appointments', 'tasks', 'conversations']);
+    // No box per section any more: those live in the menu.
+    expect(within(today).queryByRole('link', { name: /האתר שלי|הגדרות/ })).not.toBeInTheDocument();
   });
 
-  it('explains a box from its "?" — on hover, focus or tap — without opening it (D-128)', async () => {
+  it("names today's next appointment", async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.appointments.list(testBusiness.id)}`]: () =>
+        json(200, {
+          appointments: [
+            { id: 'a1', startsAt: todayIso(23), status: 'CONFIRMED' },
+            { id: 'a2', startsAt: todayIso(0), status: 'CANCELLED' },
+          ],
+        }),
+    });
+    renderApp(home);
+    const box = await screen.findByRole('link', { name: /תורים היום/ });
+    await waitFor(() => expect(box).toHaveTextContent(/^1/));
+    expect(box).toHaveTextContent(/הבא ב-23:59/);
+  });
+
+  it('says when nothing is waiting', async () => {
     mockApi({ [meKey]: me(testUser) });
-    const { user, location } = renderApp(home);
-    const help = await screen.findByRole('button', { name: 'מה זה לקוחות ולידים?' });
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-    await user.hover(help);
-    expect(screen.getByRole('tooltip')).toHaveTextContent(/כל מי שפנה אליכם/);
-    expect(help).toHaveAccessibleDescription(/כל מי שפנה אליכם/);
-    await user.unhover(help);
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-    await user.click(help);
-    expect(screen.getByRole('tooltip')).toBeInTheDocument();
-    expect(location()).toBe(home);
-    await user.keyboard('{Escape}');
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    renderApp(home);
+    expect(await screen.findByText(/הכול מטופל/)).toBeInTheDocument();
   });
 
-  it("an employee's boxes are only the sections they can open", async () => {
+  it("an employee's today has no WhatsApp box", async () => {
     mockApi({ [meKey]: me(testUser), ...asRole('EMPLOYEE') });
     renderApp(home);
-    const management = await screen.findByRole('region', { name: 'ניהול' });
-    expect(within(management).queryByRole('link', { name: /צוות/ })).not.toBeInTheDocument();
-    expect(within(management).queryByRole('link', { name: /דוחות/ })).not.toBeInTheDocument();
+    const today = await screen.findByRole('region', { name: 'מה מחכה לכם היום' });
+    expect(within(today).getAllByRole('link')).toHaveLength(3);
   });
 });
 

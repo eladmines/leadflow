@@ -1,7 +1,7 @@
 import { businessWebPaths, can, roleLabels, type Business } from '@leadflow/shared';
-import { ChevronDown, LogOut, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { LogOut, Search } from 'lucide-react';
+import { useId } from 'react';
+import { NavLink } from 'react-router-dom';
 import { Alert, Logo } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
@@ -89,48 +89,10 @@ export function UserCard({
   );
 }
 
-const OPEN_KEY = 'leadflow.nav.open';
-const readOpen = (): NavGroup[] | null => {
-  try {
-    const v = JSON.parse(localStorage.getItem(OPEN_KEY) ?? 'null') as unknown;
-    return Array.isArray(v) ? (v as NavGroup[]) : null;
-  } catch {
-    return null;
-  }
-};
-
-/**
- * Which menu topics are open (D-125): the ones the person opened (remembered in this browser),
- * plus the topic of each page they arrive on.
- */
-function useOpenTopics(businessId: string, expandAll: boolean) {
-  const { pathname } = useLocation();
-  const segment = pathname.split(`/b/${businessId}/`)[1]?.split('/')[0] ?? '';
-  const current = navItems.find((i) => i.segment && i.segment === segment)?.group;
-  const [open, setOpen] = useState<NavGroup[]>(() => {
-    const saved = readOpen() ?? [];
-    return current && !saved.includes(current) ? [...saved, current] : saved;
-  });
-  // Arriving on a page opens its topic (it can still be closed).
-  useEffect(() => {
-    if (current) setOpen((o) => (o.includes(current) ? o : [...o, current]));
-  }, [current]);
-  const isOpen = (g: NavGroup) => expandAll || open.includes(g);
-  const toggle = (g: NavGroup) => {
-    const next = open.includes(g) ? open.filter((x) => x !== g) : [...open, g];
-    setOpen(next);
-    try {
-      localStorage.setItem(OPEN_KEY, JSON.stringify(next));
-    } catch {
-      // Remembering is a convenience only.
-    }
-  };
-  return { isOpen, toggle };
-}
-
 /**
  * Sidebar content, shared by the desktop column and the mobile drawer (D-114): the business,
- * then the menu in sections, each feature with its own colour tile. On desktop search, the bell,
+ * then the menu under small topic labels, with plain icons; only the current page is coloured
+ * (D-131). Sections not built yet stay out of the menu. On desktop search, the bell,
  * the flags and the user live in the top bar; the drawer carries them itself.
  */
 export function Sidebar({
@@ -138,18 +100,18 @@ export function Sidebar({
   onNavigate,
   onSearch,
   inDrawer = false,
-  expandAll = false,
 }: {
   business: Business;
   onNavigate?: () => void;
   onSearch?: () => void;
   /** The mobile drawer: adds bell, flags, search and the user, and keeps clear of the close button. */
   inDrawer?: boolean;
-  /** Every topic open (the product tour points at each item). */
-  expandAll?: boolean;
 }) {
-  const items = navItems.filter((i) => !i.permission || can(business.role, i.permission));
-  const { isOpen, toggle } = useOpenTopics(business.id, expandAll);
+  const items = navItems.filter(
+    (i) => !i.comingSoon && (!i.permission || can(business.role, i.permission)),
+  );
+  // The drawer and the desktop column can both be in the page: keep the label ids apart.
+  const uid = useId();
   const sections: { group?: NavGroup; items: NavItem[] }[] = [];
   for (const item of items) {
     const last = sections[sections.length - 1];
@@ -175,35 +137,18 @@ export function Sidebar({
         {sections.map(({ group, items: sectionItems }) => (
           <div key={group ?? 'home'} className={cn(group && 'mt-2')}>
             {group && (
-              <button
-                type="button"
-                aria-expanded={isOpen(group)}
-                aria-controls={`nav-${group}`}
-                onClick={() => toggle(group)}
-                className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-xs font-semibold uppercase tracking-wider text-ink-muted hover:bg-surface-muted hover:text-ink"
+              <h2
+                id={`${uid}-${group}`}
+                className="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-ink-subtle"
               >
-                <span className="flex-1 text-start">{navGroupLabels[group]}</span>
-                {!isOpen(group) && (
-                  <span className="rounded-full bg-surface-sunken px-1.5 text-[10px] font-medium normal-case tracking-normal text-ink-muted">
-                    {sectionItems.length}
-                  </span>
-                )}
-                <ChevronDown
-                  aria-hidden
-                  className={cn(
-                    'h-4 w-4 transition-transform',
-                    !isOpen(group) && '-rotate-90 rtl:rotate-90',
-                  )}
-                />
-              </button>
+                {navGroupLabels[group]}
+              </h2>
             )}
             <ul
-              id={group ? `nav-${group}` : undefined}
-              hidden={group ? !isOpen(group) : undefined}
-              // `hidden` alone loses to the flex display; the class keeps a closed topic closed.
-              className={cn('flex flex-col gap-px', group && !isOpen(group) && 'hidden')}
+              aria-labelledby={group ? `${uid}-${group}` : undefined}
+              className="flex flex-col gap-px"
             >
-              {sectionItems.map(({ segment, label, icon: Icon, comingSoon, tone }) => (
+              {sectionItems.map(({ segment, label, icon: Icon }) => (
                 <li key={segment || 'dashboard'}>
                   <NavLink
                     to={
@@ -216,37 +161,15 @@ export function Sidebar({
                     data-tour={segment || 'dashboard'}
                     className={({ isActive }) =>
                       cn(
-                        'group flex h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors',
+                        'flex h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors',
                         isActive
                           ? 'bg-brand-50 font-semibold text-brand-700'
-                          : comingSoon
-                            ? 'text-ink-muted hover:bg-surface-muted'
-                            : 'text-ink hover:bg-surface-muted',
+                          : 'text-ink-muted hover:bg-surface-muted hover:text-ink',
                       )
                     }
                   >
-                    <span
-                      aria-hidden
-                      className={cn(
-                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-white',
-                        tone,
-                        comingSoon && 'opacity-50',
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                    </span>
+                    <Icon aria-hidden className="h-[18px] w-[18px] shrink-0" />
                     <span className="flex-1">{label}</span>
-                    {comingSoon && (
-                      <>
-                        <span
-                          aria-hidden
-                          className="rounded-md bg-surface-sunken px-1.5 py-0.5 text-[10px] font-medium text-ink-muted"
-                        >
-                          {tr('בקרוב')}
-                        </span>
-                        <span className="sr-only">{tr('(בקרוב)')}</span>
-                      </>
-                    )}
                   </NavLink>
                 </li>
               ))}
