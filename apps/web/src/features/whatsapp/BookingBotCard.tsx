@@ -15,9 +15,9 @@ import {
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
 } from '@leadflow/shared';
-import { Bot, ImagePlus, RotateCcw, X } from 'lucide-react';
+import { ImagePlus, RotateCcw, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
-import { Alert, Button, Card, Field, Textarea } from '../../components/ui';
+import { Alert, Button, Field, Textarea } from '../../components/ui';
 import { useAssets } from '../media/api';
 import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -82,29 +82,13 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   const industryFlow = bot.data.settings.flowIsDefault ? bot.data.settings.flow : null;
 
   return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-          <Bot aria-hidden className="h-5 w-5" />
-        </span>
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-ink">{tr('בוט קביעת תורים')}</h2>
-          <p className="text-sm text-ink-muted">
-            {settings.flow === 'event'
-              ? tr(
-                  'לקוח שכותב בוואטסאפ על אירוע (או מספר חדש שכותב בפעם הראשונה) עונה על כמה שאלות קצרות, והבקשה נכנסת למערכת. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.',
-                )
-              : tr(
-                  'לקוח שמבקש תור בוואטסאפ (או מספר חדש שכותב בפעם הראשונה) בוחר שירות, יום ושעה פנויה מתוך רשימה, והתור נקבע ביומן. הבוט לא עונה למספרים פרטיים, ושותק בשיחה שמישהו מהצוות כתב בה או כשהלקוח ביקש לדבר עם הצוות.',
-                )}
-          </p>
-        </div>
-      </div>
-      {!bot.data.connected && (
-        <p className="text-sm text-ink-muted">
-          {tr('הבוט יתחיל לענות אחרי חיבור מספר WhatsApp לעסק.')}
-        </p>
-      )}
+    <section
+      aria-labelledby="bot-settings-title"
+      className="flex flex-col gap-3 border-t border-surface-border pt-5"
+    >
+      <h3 id="bot-settings-title" className="text-sm font-semibold text-ink">
+        {tr('הגדרות הבוט')}
+      </h3>
       <fieldset disabled={!settings.enabled} className="flex flex-col gap-2">
         <legend className="mb-1 text-sm text-ink-muted">{tr('איך לקוחות מזמינים:')}</legend>
         {BOT_FLOWS.map((f) => (
@@ -137,7 +121,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </label>
           <p className="text-sm text-ink-muted">
             {tr(
-              'קודם הבוט שואל איך אפשר לעזור: לבדוק תאריך או שיחה אישית איתכם. מי שבוחר לבדוק תאריך בוחר סוג אירוע, כותב תאריך, ובוחר חלק ביום, מספר אורחים ואזור. הבקשה נכנסת ל"בקשות ממתינות לאישור" בתורים, ומשם אפשר להכין לו הצעת מחיר.',
+              'הבוט שואל על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.',
             )}
           </p>
         </>
@@ -202,7 +186,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         </summary>
         <ShowcaseForm businessId={businessId} settings={bot.data.settings} />
       </details>
-    </Card>
+    </section>
   );
 }
 

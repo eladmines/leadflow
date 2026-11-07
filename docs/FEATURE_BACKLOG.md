@@ -87,6 +87,7 @@ F06 ─► F11 (after spike)
 - 2026-11-03 — Booking-bot showcase (D-106): message + link + up to 3 photos for customers who don't book (cancel, team, no times, stopped mid-way), "See our work" option, once a day.
 - 2026-11-03 — Bot per industry (D-107): 5 new industries, industry default messages, and an event-request flow (type → date → part of day → guests → area) for DJs, catering and photographers.
 - 2026-11-04 — Bot personal touch (D-108): event businesses ask "check a date or personal chat" first, wanting a person or two misunderstandings hand over, dates not held unless chosen, pause the bot per customer from the lead.
+- 2026-11-07 — Simpler Conversations page: three tabs, short texts, compact statuses (D-129).
 - 2026-11-07 — Box descriptions behind a "?" bubble (D-128).
 - 2026-11-07 — Dashboard boxes in plain, friendly words, counts as short sentences (D-127).
 - 2026-11-07 — Simpler dashboard: welcome header and the section boxes only (D-126).

@@ -601,4 +601,27 @@ export const enPart3: Record<string, string> = {
   'טיוטה — עוד לא פורסם': 'Draft — not published yet',
   'עוד לא בניתם אתר': "You haven't built a site yet",
   'מה זה {0}?': 'What is {0}?',
+  // Simpler Conversations page (D-129)
+  'סטטוס חדש': 'New status',
+  'עוד אין הודעה': 'No message yet',
+  סרטון: 'Video',
+  'עריכת הסטטוס {0}': 'Edit the status {0}',
+  'הגדרות הבוט': 'Bot settings',
+  'הבוט שואל על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.':
+    'The bot asks about the event (type, date, guests and area), and the request waits for your approval on the Appointments page.',
+  הודעות: 'Messages',
+  'הודעות ממספרים חדשים, ותשובה אוטומטית ללקוחות כשאתם עסוקים.':
+    "Messages from new numbers, and an automatic reply to customers when you're busy.",
+  'חלקי העמוד': 'Page sections',
+  'מספרים חדשים שכתבו לכם. החליטו: לקוח (נוצר ליד) או פרטי (ההודעות נמחקות).':
+    'New numbers that wrote to you. Decide: customer (a lead is created) or personal (the messages are deleted).',
+  'טוענים…': 'Loading…',
+  'אין מספרים פרטיים': 'No personal numbers',
+  'מספר שתסמנו כפרטי (חברים, משפחה) יופיע כאן, וההודעות שלו לא יישמרו.':
+    "A number you mark as personal (friends, family) shows here, and its messages aren't saved.",
+  'כאן מנהלים את הוואטסאפ של העסק: מספרים חדשים שכתבו לכם, והתשובה האוטומטית ללקוחות. לקוחות מוכרים לא מגיעים לכאן — ההודעות שלהם נכנסות ישר לליד שלהם.':
+    "Your business's WhatsApp: new numbers that wrote to you, and the automatic reply to customers. Known customers don't come here — their messages go straight to their lead.",
+  'שלושה חלקים': 'Three parts',
+  '"הודעות": מספרים חדשים שמחכים להחלטה שלכם. "מענה אוטומטי": מה הלקוח מקבל כשהוא כותב, והסטטוס שלכם. "מספרים פרטיים": מספרים שסימנתם כפרטיים.':
+    '"Messages": new numbers waiting for your decision. "Automatic reply": what customers get when they write, and your status. "Personal numbers": numbers you marked as personal.',
 };
