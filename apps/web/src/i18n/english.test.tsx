@@ -44,9 +44,7 @@ describe('English app', () => {
     ]) {
       expect(await within(nav).findByRole('link', { name })).toBeInTheDocument();
     }
-    expect(
-      screen.getByRole('heading', { name: 'Getting your business started' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Sales & marketing' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true');
   });
 

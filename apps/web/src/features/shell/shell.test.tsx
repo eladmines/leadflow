@@ -125,25 +125,25 @@ describe('dashboard', () => {
   it('counts only real progress: profile done, email not yet verified, the rest "soon"', async () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(home);
-    expect(await screen.findByText('הושלמו 1 מתוך 5')).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: 'התקדמות ההקמה' })).toHaveAttribute(
-      'aria-valuenow',
-      '1',
-    );
-    expect(screen.getByText('עדיין אין פניות')).toBeInTheDocument();
+    const bar = await screen.findByRole('progressbar', { name: 'התקדמות ההקמה' });
+    expect(bar).toHaveAttribute('aria-valuenow', '1');
+    expect(bar).toHaveAttribute('aria-valuemax', '5');
   });
 
   it('marks the email step done once verified', async () => {
     mockApi({ [meKey]: me({ ...testUser, emailVerified: true }) });
     renderApp(home);
-    expect(await screen.findByText('הושלמו 2 מתוך 5')).toBeInTheDocument();
+    const bar = await screen.findByRole('progressbar', { name: 'התקדמות ההקמה' });
+    expect(bar).toHaveAttribute('aria-valuenow', '2');
+    expect(bar).toHaveAttribute('aria-valuemax', '5');
   });
 
   it('asks for no verification while the server sends no email (D-122)', async () => {
     mockApi({ [meKey]: () => json(200, { user: testUser, emailVerification: false }) });
     renderApp(home);
-    expect(await screen.findByText('הושלמו 1 מתוך 4')).toBeInTheDocument();
-    expect(screen.queryByText('אימות כתובת האימייל')).not.toBeInTheDocument();
+    const bar = await screen.findByRole('progressbar', { name: 'התקדמות ההקמה' });
+    expect(bar).toHaveAttribute('aria-valuenow', '1');
+    expect(bar).toHaveAttribute('aria-valuemax', '4');
     expect(screen.queryByText(/כדאי לאמת את כתובת האימייל/)).not.toBeInTheDocument();
   });
 
@@ -166,44 +166,16 @@ describe('dashboard', () => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  const weekReport = {
-    range: { from: '2026-10-21T00:00:00.000Z', to: '2026-10-28T00:00:00.000Z', days: 7 },
-    leads: { current: 4, previous: 6 },
-    closeRate: 0.5,
-    wonValue: 0,
-    openValue: 0,
-    avgResponseMinutes: 30,
-    respondedLeads: 3,
-    series: { unit: 'day', points: [] },
-    byStage: [],
-    bySource: [],
-  };
-
-  it('shows the week in numbers to owners and managers once there are leads', async () => {
-    const fetchMock = mockApi({
-      [meKey]: me(testUser),
-      [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [someLead] }),
-      [`GET ${apiPaths.reports.summary(testBusiness.id)}`]: () => json(200, weekReport),
-    });
-    renderApp(home);
-    const stats = await screen.findByRole('region', { name: 'השבוע במספרים' });
-    expect(within(stats).getByText('−2 לעומת השבוע שלפני')).toBeInTheDocument();
-    expect(within(stats).getByText('50%')).toBeInTheDocument();
-    expect(within(stats).getByText('30 דק׳')).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith('/reports/summary?days=7'))).toBe(
-      true,
-    );
-  });
-
-  it('employees do not get the week in numbers', async () => {
+  it('keeps only the welcome and the boxes; details live in their sections (D-126)', async () => {
     mockApi({
       [meKey]: me(testUser),
-      ...asRole('EMPLOYEE'),
       [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [someLead] }),
     });
     renderApp(home);
-    await screen.findByRole('list', { name: 'פניות אחרונות' });
+    await screen.findByRole('region', { name: 'שיווק ומכירות' });
     expect(screen.queryByRole('region', { name: 'השבוע במספרים' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'פניות אחרונות' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'פרופיל העסק' })).not.toBeInTheDocument();
   });
 
   it('shows a box for every section, in the sidebar groups, with live counts (D-124)', async () => {
