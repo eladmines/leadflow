@@ -26,12 +26,15 @@ describe('English app', () => {
     const { mockApi, me, renderApp, testUser, testBusiness } = utils;
     const { apiPaths, businessWebPaths } = await import('@leadflow/shared');
     mockApi({ [`GET ${apiPaths.auth.me}`]: me(testUser) });
-    renderApp(businessWebPaths.home(testBusiness.id));
+    const { user } = renderApp(businessWebPaths.home(testBusiness.id));
     expect(
       await screen.findByRole('heading', { name: /Good (morning|afternoon|evening), דנה/ }),
     ).toBeInTheDocument();
     expect(document.documentElement.dir).toBe('ltr');
     const nav = screen.getAllByRole('navigation', { name: 'Main navigation' })[0]!;
+    for (const topic of [/Sales & marketing/, /Operations/, /Management/]) {
+      await user.click(within(nav).getByRole('button', { name: topic }));
+    }
     for (const name of [
       'Dashboard',
       'My website',
@@ -39,7 +42,7 @@ describe('English app', () => {
       'Tasks',
       'Settings & billing',
     ]) {
-      expect(within(nav).getByRole('link', { name })).toBeInTheDocument();
+      expect(await within(nav).findByRole('link', { name })).toBeInTheDocument();
     }
     expect(
       screen.getByRole('heading', { name: 'Getting your business started' }),
