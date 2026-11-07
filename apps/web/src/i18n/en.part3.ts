@@ -580,10 +580,8 @@ export const enPart3: Record<string, string> = {
   '"הודעות": מספרים חדשים שמחכים להחלטה שלכם. "מענה אוטומטי": מה הלקוח מקבל כשהוא כותב, והסטטוס שלכם. "מספרים פרטיים": מספרים שסימנתם כפרטיים.':
     '"Messages": new numbers waiting for your decision. "Automatic reply": what customers get when they write, and your status. "Personal numbers": numbers you marked as personal.',
   // My website: two choices (D-130)
-  'חזרה לבחירה': 'Back to the choice',
   'מוסיפים את הכתובת ורואים את האתר כאן. LeadFlow לא משנה בו כלום.':
     "Add its address and see it here. LeadFlow doesn't change anything on it.",
-  'לבחירת תבנית': 'Choose a template',
   'יש לכם כבר אתר?': 'Already have a website?',
   'כן, יש לי כבר אתר': 'Yes, I already have a website',
   'לא, אני רוצה לבנות אתר': 'No, I want to build a website',
@@ -593,4 +591,9 @@ export const enPart3: Record<string, string> = {
     "If you do, add its address to see it here — LeadFlow doesn't change anything on it. If not, pick a template and build a new one; every inquiry from it lands straight in LeadFlow.",
   'האתר הוא הכרטיס של העסק באינטרנט: לקוחות רואים מה אתם מציעים, איך להגיע ואיך ליצור קשר. כל מי שממלא בו את הטופס מגיע ישר ל"לקוחות ולידים", כך שאף פנייה לא הולכת לאיבוד.':
     'Your website is your business card online: customers see what you offer, where to find you and how to get in touch. Everyone who fills in its form lands straight in "Customers & leads", so no inquiry gets lost.',
+  המשך: 'Continue',
+  חזרה: 'Back',
+  'מה הכתובת של האתר שלכם?': "What's your website's address?",
+  'אחרי השמירה תראו את האתר כאן. אפשר לשנות את הכתובת בכל זמן.':
+    "Once saved, you'll see the site here. You can change the address any time.",
 };
