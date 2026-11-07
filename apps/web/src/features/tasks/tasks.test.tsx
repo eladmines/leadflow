@@ -142,6 +142,7 @@ describe('tasks elsewhere', () => {
       [`POST ${tp.list(id)}`]: () => json(201, { task: task() }),
     });
     const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}/${leadId}`);
+    await user.click(await screen.findByRole('tab', { name: 'משימות' }));
     const list = await screen.findByRole('list', { name: 'משימות הליד' });
     expect(within(list).getByText('לחזור לרון')).toBeInTheDocument();
     const form = screen.getByRole('form', { name: 'משימה חדשה' });

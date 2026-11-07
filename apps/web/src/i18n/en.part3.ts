@@ -280,8 +280,6 @@ export const enPart3: Record<string, string> = {
   'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות.':
     'The stage, the owner, estimated value, when to follow up, and tags.',
   'שיחת וואטסאפ': 'WhatsApp conversation',
-  'תזכורת לחזור ללקוח. מקבלים מייל כשמגיע הזמן.':
-    "A reminder to get back to the customer. You get an email when it's time.",
   'שיחות WhatsApp': 'WhatsApp conversations',
   'מחכים לסיווג': 'Waiting to be classified',
   'עסקי: יצירת ליד': 'Business: create lead',
@@ -418,14 +416,6 @@ export const enPart3: Record<string, string> = {
     "Everyone who contacted the business: from the website form, WhatsApp, the booking bot or added by you. Each lead moves through stages until it's closed.",
   'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות. כל שינוי נשמר ונרשם בהיסטוריה.':
     "The stage, who's responsible, estimated value, when to get back to the customer, and tags. Every change is saved and recorded in the history.",
-  'השיחה עם הלקוח בוואטסאפ, כולל התשובות האוטומטיות של הבוט. אפשר לענות מכאן עד 24 שעות מההודעה האחרונה שלו; כשאתם כותבים, הבוט שותק. "השהיית הבוט" עוצרת אותו ללקוח הזה בלבד, עד שתפעילו שוב.':
-    'The WhatsApp conversation with the customer, including the bot\'s automatic replies. You can reply from here for 24 hours after their last message; once you write, the bot stays quiet. "Pause the bot" stops it for this customer only, until you resume it.',
-  'כותבים הערות לצוות, ורואים כל מה שקרה בליד: שינויי שלב, שיוכים, משימות, תורים שנקבעו בבוט והצעות.':
-    'Write notes for the team, and see everything that happened on the lead: stage changes, assignments, tasks, bot bookings and quotes.',
-  'התורים והבקשות של הלקוח, כולל בקשות לאירוע מהבוט, וקביעת תור חדש.':
-    "The customer's appointments and requests, including event requests from the bot, and booking a new one.",
-  'יוצרים הצעת מחיר מתוך הליד ושולחים ללקוח בקישור — למשל אחרי בקשה לאירוע. הלקוח מאשר אונליין.':
-    'Create a quote from the lead and send the customer a link — for example after an event request. The customer accepts online.',
   'כותבים מה צריך לעשות ומתי, ולוחצים "הוספה". אפשר לשייך לעובד, ומקבלים מייל ופעמון כשמגיע הזמן.':
     'Write what needs doing and when, then click "Add". You can assign it to a teammate, and you get an email and a bell notification when it\'s due.',
   '"שלי" מראה רק את המשימות שלכם; "של כל הצוות" את כולן.': `"Mine" shows only your tasks; "Everyone's" shows all of them.`,
@@ -608,4 +598,10 @@ export const enPart3: Record<string, string> = {
   'כשייקבעו לך תורים, הם יופיעו כאן.':
     'When appointments are booked for you, they will appear here.',
   'ללקוחות ולידים': 'Go to Customers & leads',
+  'חלקי הליד': 'Lead sections',
+  'אין שיחת וואטסאפ עם הליד. אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.':
+    'No WhatsApp conversation with this lead. Once a WhatsApp number is connected to the business, messages will appear here.',
+  'הכול על הליד, בלשוניות': 'Everything about the lead, in tabs',
+  'הערות והיסטוריה (כל מה שקרה בליד), WhatsApp (אפשר לענות עד 24 שעות מההודעה האחרונה של הלקוח), משימות, תורים והצעות מחיר. לחיצה על לשונית מציגה את החלק שלה.':
+    "Notes & history (everything that happened with the lead), WhatsApp (you can reply up to 24 hours after the customer's last message), tasks, appointments and quotes. Click a tab to see that part.",
 };

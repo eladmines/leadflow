@@ -16,7 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Mail, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Button,
@@ -453,20 +453,89 @@ export function LeadDetailPage() {
           </p>
         )}
       </section>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="flex flex-col gap-6">
-          <WhatsAppThread leadId={lead.id} />
-          <Notes leadId={lead.id} activities={activities} />
-        </div>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <LeadTabs lead={lead} activities={activities} />
         <div className="flex flex-col gap-6 lg:order-first">
           <Details key={lead.updatedAt} lead={lead} />
-          <LeadTasks leadId={lead.id} />
-          <LeadAppointments lead={lead} />
-          <LeadQuotes leadId={lead.id} />
         </div>
       </div>
       {can(business.role, 'leads.delete') && <DeleteLead lead={lead} />}
     </>
+  );
+}
+
+const LEAD_TABS = ['notes', 'whatsapp', 'tasks', 'appointments', 'quotes'] as const;
+type LeadTab = (typeof LEAD_TABS)[number];
+
+/**
+ * Everything about the lead beyond its details, one part at a time (D-140): notes and history,
+ * WhatsApp, tasks, appointments, quotes. The tab is kept in the address (`?tab=`); a lead that
+ * came from WhatsApp opens on the conversation.
+ */
+function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) {
+  const [params, setParams] = useSearchParams();
+  const fallback: LeadTab = lead.source === 'whatsapp' || lead.lastWhatsApp ? 'whatsapp' : 'notes';
+  const asked = params.get('tab');
+  const tab: LeadTab = (LEAD_TABS as readonly string[]).includes(asked ?? '')
+    ? (asked as LeadTab)
+    : fallback;
+  const labels: Record<LeadTab, string> = {
+    notes: tr('הערות והיסטוריה'),
+    whatsapp: 'WhatsApp',
+    tasks: tr('משימות'),
+    appointments: tr('תורים'),
+    quotes: tr('הצעות מחיר'),
+  };
+  return (
+    <section className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card">
+      <div
+        role="tablist"
+        aria-label={tr('חלקי הליד')}
+        className="flex gap-1 overflow-x-auto border-b border-surface-border px-3"
+      >
+        {LEAD_TABS.map((t) => (
+          <button
+            key={t}
+            id={`lead-tab-${t}`}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={`lead-panel-${t}`}
+            onClick={() =>
+              setParams(
+                (p) => {
+                  const next = new URLSearchParams(p);
+                  next.set('tab', t);
+                  return next;
+                },
+                { replace: true },
+              )
+            }
+            className={cn(
+              '-mb-px shrink-0 border-b-2 px-3 py-3 text-sm font-medium transition-colors',
+              tab === t
+                ? 'border-brand-600 text-brand-700'
+                : 'border-transparent text-ink-muted hover:text-ink',
+            )}
+          >
+            {labels[t]}
+          </button>
+        ))}
+      </div>
+      {/* The parts keep their own cards; inside the tab they lose the frame. */}
+      <div
+        id={`lead-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`lead-tab-${tab}`}
+        className="p-2 sm:p-3 [&>*]:border-0 [&>*]:shadow-none"
+      >
+        {tab === 'notes' && <Notes leadId={lead.id} activities={activities} />}
+        {tab === 'whatsapp' && <WhatsAppThread leadId={lead.id} />}
+        {tab === 'tasks' && <LeadTasks leadId={lead.id} />}
+        {tab === 'appointments' && <LeadAppointments lead={lead} />}
+        {tab === 'quotes' && <LeadQuotes leadId={lead.id} />}
+      </div>
+    </section>
   );
 }
 

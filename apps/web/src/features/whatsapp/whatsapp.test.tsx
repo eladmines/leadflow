@@ -99,14 +99,16 @@ describe('WhatsApp on the lead page', () => {
         botPaused: false,
       }),
     );
-    renderApp(page);
+    const { user } = renderApp(page);
     const list = await screen.findByRole('list', { name: 'שיחת וואטסאפ' });
     const items = within(list).getAllByRole('listitem');
     expect(items[0]).toHaveTextContent('הלקוח כתב:');
     expect(items[0]).toHaveTextContent('היי, אפשר לקבוע תור?');
     expect(items[1]).toHaveTextContent('נשלחה על ידי סיגלית:');
     expect(items[1]).toHaveTextContent('נקראה');
-    expect(screen.getByText('הליד נוצר מהודעת וואטסאפ')).toBeInTheDocument();
+    // History is in its own tab (D-140).
+    await user.click(screen.getByRole('tab', { name: 'הערות והיסטוריה' }));
+    expect(await screen.findByText('הליד נוצר מהודעת וואטסאפ')).toBeInTheDocument();
   });
 
   it('sends a reply while the window is open', async () => {
@@ -187,12 +189,10 @@ describe('WhatsApp on the lead page', () => {
     ]);
   });
 
-  it('stays hidden when WhatsApp is not connected and there is no history', async () => {
+  it('says there is no conversation when WhatsApp is not connected and there is no history', async () => {
     mockApi(routes({ connected: false, messages: [], replyUntil: null, botPaused: false }));
-    renderApp(page);
-    await screen.findByRole('heading', { name: 'דנה כהן', level: 1 });
-    await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: 'WhatsApp' })).not.toBeInTheDocument(),
-    );
+    renderApp(`${page}?tab=whatsapp`);
+    expect(await screen.findByText(/אין שיחת וואטסאפ עם הליד/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'שליחה בוואטסאפ' })).not.toBeInTheDocument();
   });
 });
