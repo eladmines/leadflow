@@ -326,11 +326,6 @@ export const enPart3: Record<string, string> = {
   'עמוד ההצעה': 'Quote page',
   'כך הלקוח רואה את ההצעה. משם אפשר גם להדפיס או לשמור כ-PDF.':
     'How the customer sees the quote. From there you can also print or save it as a PDF.',
-  'השם, התחום, הטלפון והכתובת. הם מופיעים באתר, בכפתור החיוג ובמיילים.':
-    'Name, industry, phone and address. They show on the website, the call button and in emails.',
-  'הערים והאזורים שבהם העסק עובד. מופיעים באתר.':
-    'The cities and regions the business serves. Shown on the website.',
-  'המסלול ואמצעי התשלום של החשבון.': "The account's plan and payment method.",
   'השם שלכם כפי שהצוות רואה אותו.': 'Your name as the team sees it.',
   'אחרי שינוי סיסמה, החיבור במכשירים האחרים מתנתק ונשלח אליכם מייל.':
     'After a password change, your other devices are signed out and you get an email.',
@@ -429,10 +424,6 @@ export const enPart3: Record<string, string> = {
     'How many inquiries arrived each day. Each bar is one day.',
   'אותם נתונים כטבלה של מספרים, לקריאה נוחה או להעתקה.':
     'The same data as a table of numbers, easier to read or copy.',
-  'השם, התחום, הטלפון והכתובת. הם מופיעים באתר, בכפתור החיוג ובמיילים. התחום קובע גם את ההודעות המוכנות של בוט הוואטסאפ ואת אופן ההזמנה (תורים או בקשות לאירוע).':
-    "Name, industry, phone and address. They show on the website, the call button and emails. The industry also sets the WhatsApp bot's ready-made messages and how customers book (appointments or event requests).",
-  'השעות מופיעות באתר, וקובעות אילו שעות פנויות מוצעות לתורים: ביומן, בבקשה מהאתר ובבוט בוואטסאפ. סמנו יום כסגור כדי שלא יוצעו בו תורים.':
-    'Hours show on the website and decide which free times are offered for appointments: in the calendar, the website request and the WhatsApp bot. Mark a day as closed so no times are offered on it.',
   // Sidebar sections (D-114)
   'שיווק ומכירות': 'Sales & marketing',
   תפעול: 'Operations',
@@ -604,4 +595,8 @@ export const enPart3: Record<string, string> = {
   'הכול על הליד, בלשוניות': 'Everything about the lead, in tabs',
   'הערות והיסטוריה (כל מה שקרה בליד), WhatsApp (אפשר לענות עד 24 שעות מההודעה האחרונה של הלקוח), משימות, תורים והצעות מחיר. לחיצה על לשונית מציגה את החלק שלה.':
     "Notes & history (everything that happened with the lead), WhatsApp (you can reply up to 24 hours after the customer's last message), tasks, appointments and quotes. Click a tab to see that part.",
+  'חלקי ההגדרות': 'Settings sections',
+  'ההגדרות, בלשוניות': 'Settings, in tabs',
+  'פרטי העסק (מופיעים באתר, בכפתור החיוג ובמיילים), אזורי שירות, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ומנוי. כל לשונית נשמרת בכפתור משלה.':
+    'Business details (shown on your website, the call button and emails), service areas, opening hours (they decide which times are offered for appointments) and your plan. Each tab has its own save button.',
 };

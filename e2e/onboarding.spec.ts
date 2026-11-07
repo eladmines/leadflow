@@ -58,6 +58,7 @@ test('owner completes onboarding (resuming after a reload) and reaches the busin
   // What onboarding saved shows in Settings (the dashboard keeps only the boxes, D-126).
   await page.goto(`${homeUrl}/settings`);
   await expect(page.getByLabel(/טלפון העסק/)).toHaveValue('050-1234567');
+  await page.getByRole('tab', { name: 'אזורי שירות' }).click();
   await expect(page.getByText('חיפה')).toBeVisible();
   await expect(page.getByText('יקנעם')).toBeVisible();
   await page.goto(homeUrl);

@@ -1,4 +1,5 @@
 import { can, leadSourceLabels, REPORT_RANGES, type ReportSummary } from '@leadflow/shared';
+import { Coins, Target, Timer, Users, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Card, Spinner } from '../../components/ui';
@@ -72,6 +73,8 @@ function ReportBody({ r }: { r: ReportSummary }) {
     <>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
+          icon={Users}
+          tone="bg-violet-500"
           label={tr('פניות חדשות')}
           value={String(r.leads.current)}
           note={
@@ -81,6 +84,8 @@ function ReportBody({ r }: { r: ReportSummary }) {
           }
         />
         <StatTile
+          icon={Target}
+          tone="bg-emerald-500"
           label={tr('יחס סגירה')}
           value={r.closeRate === null ? '—' : `${Math.round(r.closeRate * 100)}%`}
           note={
@@ -90,11 +95,15 @@ function ReportBody({ r }: { r: ReportSummary }) {
           }
         />
         <StatTile
+          icon={Coins}
+          tone="bg-amber-500"
           label={tr('עסקאות שנסגרו')}
           value={shekel.format(r.wonValue)}
           note={tr('{0} עוד פתוחים', shekel.format(r.openValue))}
         />
         <StatTile
+          icon={Timer}
+          tone="bg-sky-500"
           label={tr('זמן תגובה ממוצע')}
           value={r.avgResponseMinutes === null ? '—' : durationLabel(r.avgResponseMinutes)}
           note={
@@ -134,10 +143,34 @@ function ReportBody({ r }: { r: ReportSummary }) {
   );
 }
 
-function StatTile({ label, value, note }: { label: string; value: string; note: string }) {
+function StatTile({
+  label,
+  value,
+  note,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  icon: LucideIcon;
+  /** The icon tile's colour (D-141). */
+  tone: string;
+}) {
   return (
     <Card className="flex flex-col gap-1">
-      <span className="text-sm text-ink-muted">{label}</span>
+      <span className="flex items-center gap-2 text-sm text-ink-muted">
+        <span
+          aria-hidden
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm',
+            tone,
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        {label}
+      </span>
       <span className="text-2xl font-semibold tabular-nums text-ink sm:text-3xl">
         <bdi>{value}</bdi>
       </span>
