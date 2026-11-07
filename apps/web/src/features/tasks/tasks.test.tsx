@@ -164,7 +164,10 @@ describe('tasks elsewhere', () => {
     renderApp(businessWebPaths.home(id));
     const list = await screen.findByRole('list', { name: 'המשימות שלי להיום' });
     expect(within(list).getByText('דחוף')).toBeInTheDocument();
-    expect(screen.getByText('1 באיחור')).toBeInTheDocument();
+    // In the tasks card (the Tasks tile above shows the same count, D-124).
+    expect(
+      within(screen.getByRole('heading', { name: /המשימות שלי להיום/ })).getByText('1 באיחור'),
+    ).toBeInTheDocument();
   });
 });
 

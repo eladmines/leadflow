@@ -32,6 +32,7 @@ import { groupTasks, useTasks } from '../tasks/api';
 import { TaskItem } from '../tasks/TaskItem';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useWhatsAppInbox } from '../whatsapp/api';
+import { FeatureTiles } from './FeatureTiles';
 import { stageTone } from '../leads/LeadsPage';
 import { tr } from '../../i18n';
 
@@ -294,6 +295,8 @@ export function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <FeatureTiles business={business} />
 
       {can(business.role, 'reports.view') && leads.length > 0 && (
         <WeekStats businessId={business.id} />
