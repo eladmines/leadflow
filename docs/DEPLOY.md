@@ -70,3 +70,16 @@ token for anything longer than a test.
 - **Moving to a domain later:** buy one, point `*.yourdomain` and `app.yourdomain` at Render, set
   `PUBLIC_SITE_MODE=host` and `PUBLIC_SITE_HOST=yourdomain`, and send email from your domain
   (O-009).
+
+## Sample data for a demo account
+
+To make an account look lived-in (about 20 leads with history, tasks, appointments, quotes and
+WhatsApp conversations, all tagged "דוגמה"), run from the repository on your computer:
+
+```bash
+DATABASE_URL='<the Neon connection string>' pnpm --filter @leadflow/api seed:demo --email <the account's email>
+```
+
+The same command with `--remove` at the end deletes it again. The account must have finished
+onboarding. The database address is never read from `.env`, so it is always your choice which
+database gets the data.
