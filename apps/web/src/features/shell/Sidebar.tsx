@@ -91,8 +91,8 @@ export function UserCard({
 
 /**
  * Sidebar content, shared by the desktop column and the mobile drawer (D-114): the business,
- * then the menu under small topic labels, with plain icons; only the current page is coloured
- * (D-131). Sections not built yet stay out of the menu. On desktop search, the bell,
+ * then the menu under small topic labels; each icon in its section's colour (D-137), the current
+ * page on a light blue row (D-131). Sections not built yet stay out of the menu. On desktop search, the bell,
  * the flags and the user live in the top bar; the drawer carries them itself.
  */
 export function Sidebar({
@@ -148,7 +148,7 @@ export function Sidebar({
               aria-labelledby={group ? `${uid}-${group}` : undefined}
               className="flex flex-col gap-px"
             >
-              {sectionItems.map(({ segment, label, icon: Icon }) => (
+              {sectionItems.map(({ segment, label, icon: Icon, color }) => (
                 <li key={segment || 'dashboard'}>
                   <NavLink
                     to={
@@ -168,7 +168,7 @@ export function Sidebar({
                       )
                     }
                   >
-                    <Icon aria-hidden className="h-[18px] w-[18px] shrink-0" />
+                    <Icon aria-hidden className={cn('h-[18px] w-[18px] shrink-0', color.icon)} />
                     <span className="flex-1">{label}</span>
                   </NavLink>
                 </li>
