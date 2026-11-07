@@ -21,6 +21,8 @@ export function testConfig(overrides: Partial<Record<string, string>> = {}): App
     WEB_ORIGINS: TEST_WEB_ORIGIN,
     APP_URL: TEST_WEB_ORIGIN,
     EMAIL_TRANSPORT: 'memory',
+    // The verification flow stays covered; off is tested on its own (D-133).
+    EMAIL_VERIFICATION: 'on',
     AUTH_RATE_LIMIT_MAX: '10000',
     // Uploaded images go to a throwaway folder, never the dev media folder.
     MEDIA_DIR: path.join(os.tmpdir(), `leadflow-test-media-${process.pid}`),

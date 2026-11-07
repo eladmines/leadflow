@@ -51,7 +51,12 @@ export function SiteStart({ business }: { business: Business }) {
 
   return (
     <>
-      <PageHeader title={tr('האתר שלי')} />
+      <PageHeader
+        title={tr('האתר שלי')}
+        description={tr(
+          'האתר הוא הכרטיס של העסק באינטרנט: לקוחות רואים מה אתם מציעים, איך להגיע ואיך ליצור קשר. כל מי שממלא בו את הטופס מגיע ישר ל"לקוחות ולידים", כך שאף פנייה לא הולכת לאיבוד.',
+        )}
+      />
       <section
         id="site-start"
         className="flex max-w-2xl flex-col gap-5 rounded-2xl border border-surface-border bg-surface p-6 shadow-card"

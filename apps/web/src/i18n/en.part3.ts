@@ -591,4 +591,6 @@ export const enPart3: Record<string, string> = {
     'Pick a ready-made template and it fills in with your business details.',
   'אם יש — מוסיפים את הכתובת ורואים אותו כאן, ו-LeadFlow לא משנה בו דבר. אם לא — בוחרים תבנית ובונים אתר חדש, וכל פנייה ממנו נכנסת ישר למערכת.':
     "If you do, add its address to see it here — LeadFlow doesn't change anything on it. If not, pick a template and build a new one; every inquiry from it lands straight in LeadFlow.",
+  'האתר הוא הכרטיס של העסק באינטרנט: לקוחות רואים מה אתם מציעים, איך להגיע ואיך ליצור קשר. כל מי שממלא בו את הטופס מגיע ישר ל"לקוחות ולידים", כך שאף פנייה לא הולכת לאיבוד.':
+    'Your website is your business card online: customers see what you offer, where to find you and how to get in touch. Everyone who fills in its form lands straight in "Customers & leads", so no inquiry gets lost.',
 };

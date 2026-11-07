@@ -46,6 +46,8 @@ const envSchema = z
      * (send nothing yet) · memory (tests only).
      */
     EMAIL_TRANSPORT: z.enum(['smtp', 'brevo', 'disabled', 'memory']).default('smtp'),
+    // Asking users to verify their email (D-133): off until the owner turns it on.
+    EMAIL_VERIFICATION: z.enum(['on', 'off']).default('off'),
     BREVO_API_KEY: optionalSetting(z.string().min(10)),
     SMTP_HOST: z.string().min(1).default('localhost'),
     SMTP_PORT: z.coerce.number().int().positive().default(1025),
