@@ -45,7 +45,7 @@ import {
   usePipeline,
   useUpdateLead,
 } from './api';
-import { stageTone } from './LeadsPage';
+import { stageColor } from './stageColors';
 import { NewTaskForm } from '../tasks/NewTaskForm';
 import { TaskItem } from '../tasks/TaskItem';
 import { useTasks, toLocalInput } from '../tasks/api';
@@ -373,6 +373,7 @@ export function LeadDetailPage() {
   const business = useCurrentBusiness();
   const { leadId = '' } = useParams();
   const detail = useLeadDetail(business.id, leadId);
+  const pipeline = usePipeline(business.id);
   const back = businessWebPaths.section(business.id, 'leads');
 
   if (detail.isPending) return <Spinner label={tr('טוענים את הליד…')} />;
@@ -394,6 +395,7 @@ export function LeadDetailPage() {
   }
   const { lead, activities } = detail.data;
   const phone = lead.contact.phone;
+  const tone = stageColor(lead.stage, pipeline.data).tag;
 
   return (
     <>
@@ -422,9 +424,7 @@ export function LeadDetailPage() {
             </p>
           </div>
         </div>
-        <span
-          className={cn('rounded-full px-3 py-1 text-sm font-medium', stageTone[lead.stage.kind])}
-        >
+        <span className={cn('rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset', tone)}>
           {tr(lead.stage.name)}
         </span>
         <div className="flex w-full flex-wrap gap-2">

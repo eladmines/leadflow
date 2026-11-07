@@ -18,12 +18,23 @@ import {
   List,
   Mail,
   MessageCircle,
+  MoreHorizontal,
   Phone,
   Plus,
   Search,
+  SlidersHorizontal,
   UserRound,
+  X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type ReactNode,
+} from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, buttonClasses, RefreshButton, Spinner } from '../../components/ui';
@@ -44,15 +55,9 @@ import {
   useUpdateLead,
 } from './api';
 import { NewLeadDialog } from './NewLeadDialog';
+import { stageColor } from './stageColors';
 import { useWhatsAppInbox } from '../whatsapp/api';
 import { tr, intlLocale } from '../../i18n';
-
-export const stageTone: Record<Lead['stage']['kind'], string> = {
-  // Soft tags (D-112): the text carries the meaning, the tint helps scanning.
-  OPEN: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100',
-  WON: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100',
-  LOST: 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
-};
 
 const leadPath = (businessId: string, leadId: string) =>
   `${businessWebPaths.section(businessId, 'leads')}/${leadId}`;
@@ -128,7 +133,15 @@ function TagChips({ tags }: { tags: string[] }) {
   );
 }
 
-function LeadCard({ lead, businessId }: { lead: Lead; businessId: string }) {
+function LeadCard({
+  lead,
+  stages,
+  businessId,
+}: {
+  lead: Lead;
+  stages: PipelineStage[];
+  businessId: string;
+}) {
   const phone = lead.contact.phone;
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-surface-border bg-surface p-4 shadow-card sm:p-5">
@@ -159,7 +172,10 @@ function LeadCard({ lead, businessId }: { lead: Lead; businessId: string }) {
           </div>
         </div>
         <span
-          className={cn('rounded-full px-2.5 py-1 text-xs font-medium', stageTone[lead.stage.kind])}
+          className={cn(
+            'rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset',
+            stageColor(lead.stage, stages).tag,
+          )}
         >
           {tr(lead.stage.name)}
         </span>
@@ -359,6 +375,7 @@ function Board({
         <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4">
           {stages.map((stage) => {
             const items = leads.filter((l) => l.stage.id === stage.id);
+            const color = stageColor(stage, stages);
             const total = items.reduce((sum, l) => sum + (l.expectedValue ?? 0), 0);
             return (
               <li
@@ -371,23 +388,15 @@ function Board({
                 onDragLeave={() => setOver((o) => (o === stage.id ? null : o))}
                 onDrop={(e) => onDrop(e, stage)}
                 className={cn(
-                  'flex w-72 shrink-0 flex-col gap-3 rounded-xl border border-surface-border bg-surface-muted p-3 transition-colors',
+                  'relative flex w-72 shrink-0 flex-col gap-3 overflow-hidden rounded-xl border border-surface-border bg-surface-muted p-3 pt-4 transition-colors',
                   over === stage.id && 'bg-brand-50 ring-2 ring-brand-300',
                 )}
               >
+                {/* Each stage in its colour (D-138). */}
+                <span aria-hidden className={cn('absolute inset-x-0 top-0 h-1', color.bar)} />
                 <div className="flex items-center justify-between border-b border-surface-border px-1 pb-2.5">
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-                    <span
-                      aria-hidden
-                      className={cn(
-                        'h-2.5 w-2.5 rounded-full',
-                        stage.kind === 'WON'
-                          ? 'bg-success-600'
-                          : stage.kind === 'LOST'
-                            ? 'bg-ink-subtle'
-                            : 'bg-brand-500',
-                      )}
-                    />
+                    <span aria-hidden className={cn('h-2.5 w-2.5 rounded-full', color.dot)} />
                     {tr(stage.name)}
                     <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-ink-muted ring-1 ring-surface-border">
                       {items.length}
@@ -415,6 +424,49 @@ function Board({
         </ol>
       </div>
     </>
+  );
+}
+
+/** "More": a small panel of the page's secondary actions; closes on Escape or a click outside. */
+function MoreActions({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="lead-more"
+        onClick={() => setOpen((o) => !o)}
+        className={buttonClasses('secondary', 'md')}
+      >
+        <MoreHorizontal aria-hidden className="h-4 w-4" />
+        {tr('עוד')}
+      </button>
+      {open && (
+        <div
+          id="lead-more"
+          className="absolute end-0 top-full z-20 mt-2 flex w-48 flex-col gap-2 rounded-xl border border-surface-border bg-surface p-2 shadow-lift [&>*]:w-full [&>*]:justify-start"
+        >
+          {children}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -462,6 +514,20 @@ export function LeadsPage() {
   };
   const tags = useLeadTags(business.id).data ?? [];
   const filtered = Boolean(query.q || query.stageId || query.ownerId || query.source || query.tag);
+  const activeFilters = [query.stageId, query.ownerId, query.source, query.tag].filter(
+    Boolean,
+  ).length;
+  // Filters sit behind one button (D-138); open on arrival when some are already on.
+  const [filtersOpen, setFiltersOpen] = useState(activeFilters > 0);
+  const clearFilters = () =>
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        for (const k of ['stageId', 'ownerId', 'source', 'tag']) next.delete(k);
+        return next;
+      },
+      { replace: true },
+    );
   const view = params.get('view') === 'list' ? 'list' : 'board';
   const scroller = useBoardScroll(`${view}:${stages.data?.length ?? 0}:${leads.data?.length ?? 0}`);
 
@@ -512,33 +578,36 @@ export function LeadsPage() {
             seesAll ? tr('כל הפניות של העסק, לפי שלב בתהליך המכירה.') : tr('הפניות שהוקצו לך.')
           }
           actions={
-            <div className="flex flex-wrap gap-2">
-              <RefreshButton
-                onRefresh={() =>
-                  Promise.all([
-                    // Leads, tags and the WhatsApp notice (new numbers waiting).
-                    queryClient.invalidateQueries({ queryKey: leadsQueryKey(business.id) }),
-                    queryClient.invalidateQueries({
-                      queryKey: ['businesses', business.id, 'whatsapp'],
-                    }),
-                  ])
-                }
-              />
-              {can(business.role, 'leads.export') && (
-                <a
-                  // Plain link: the browser downloads the CSV with the session cookie.
-                  href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params)}` : ''}`}
-                  download
-                  className={buttonClasses('secondary', 'md')}
-                >
-                  <Download aria-hidden className="h-4 w-4" />
-                  {tr('ייצוא לאקסל')}
-                </a>
-              )}
+            <div className="flex flex-wrap items-center gap-2">
               <Button onClick={() => setNewOpen(true)}>
                 <Plus aria-hidden className="h-4 w-4" />
                 {tr('ליד חדש')}
               </Button>
+              {/* The rest behind "More" (D-138): one main action per page. */}
+              <MoreActions>
+                <RefreshButton
+                  onRefresh={() =>
+                    Promise.all([
+                      // Leads, tags and the WhatsApp notice (new numbers waiting).
+                      queryClient.invalidateQueries({ queryKey: leadsQueryKey(business.id) }),
+                      queryClient.invalidateQueries({
+                        queryKey: ['businesses', business.id, 'whatsapp'],
+                      }),
+                    ])
+                  }
+                />
+                {can(business.role, 'leads.export') && (
+                  <a
+                    // Plain link: the browser downloads the CSV with the session cookie.
+                    href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params)}` : ''}`}
+                    download
+                    className={buttonClasses('secondary', 'md')}
+                  >
+                    <Download aria-hidden className="h-4 w-4" />
+                    {tr('ייצוא לאקסל')}
+                  </a>
+                )}
+              </MoreActions>
             </div>
           }
         />
@@ -563,68 +632,21 @@ export function LeadsPage() {
               className={cn(inputClasses(false), 'ps-9')}
             />
           </div>
-          {view === 'list' && (
-            <select
-              aria-label={tr('סינון לפי שלב')}
-              value={query.stageId ?? ''}
-              onChange={(e) => setParam('stageId', e.target.value || undefined)}
-              className={selectClass}
-            >
-              <option value="">{tr('כל השלבים')}</option>
-              {stages.data?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {tr(s.name)}
-                </option>
-              ))}
-            </select>
-          )}
-          {seesAll && (
-            <select
-              aria-label={tr('סינון לפי אחראי')}
-              value={query.ownerId ?? ''}
-              onChange={(e) => setParam('ownerId', e.target.value || undefined)}
-              className={selectClass}
-            >
-              <option value="">{tr('כל האחראים')}</option>
-              <option value="none">{tr('ללא אחראי')}</option>
-              {members.data?.map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.fullName}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            aria-label={tr('סינון לפי מקור')}
-            value={query.source ?? ''}
-            onChange={(e) => setParam('source', e.target.value || undefined)}
-            className={selectClass}
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            aria-controls="lead-filters"
+            onClick={() => setFiltersOpen((o) => !o)}
+            className={buttonClasses(activeFilters ? 'primary' : 'secondary', 'md')}
           >
-            <option value="">{tr('כל המקורות')}</option>
-            {sourceOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          {(tags.length > 0 || query.tag) && (
-            <select
-              aria-label={tr('סינון לפי תגית')}
-              value={query.tag ?? ''}
-              onChange={(e) => setParam('tag', e.target.value || undefined)}
-              className={selectClass}
-            >
-              <option value="">{tr('כל התגיות')}</option>
-              {query.tag && !tags.includes(query.tag) && (
-                <option value={query.tag}>{query.tag}</option>
-              )}
-              {tags.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          )}
+            <SlidersHorizontal aria-hidden className="h-4 w-4" />
+            {tr('סינון')}
+            {activeFilters > 0 && (
+              <span className="rounded-full bg-white/25 px-1.5 text-xs tabular-nums">
+                {activeFilters}
+              </span>
+            )}
+          </button>
           <div
             role="group"
             aria-label={tr('תצוגה')}
@@ -652,6 +674,88 @@ export function LeadsPage() {
           </div>
           {view === 'board' && <BoardArrows scroller={scroller} />}
         </div>
+
+        {filtersOpen && (
+          <div
+            id="lead-filters"
+            role="group"
+            aria-label={tr('סינון')}
+            className="flex flex-wrap items-center gap-3 border-b border-surface-border bg-surface-muted px-4 py-3"
+          >
+            {view === 'list' && (
+              <select
+                aria-label={tr('סינון לפי שלב')}
+                value={query.stageId ?? ''}
+                onChange={(e) => setParam('stageId', e.target.value || undefined)}
+                className={selectClass}
+              >
+                <option value="">{tr('כל השלבים')}</option>
+                {stages.data?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {tr(s.name)}
+                  </option>
+                ))}
+              </select>
+            )}
+            {seesAll && (
+              <select
+                aria-label={tr('סינון לפי אחראי')}
+                value={query.ownerId ?? ''}
+                onChange={(e) => setParam('ownerId', e.target.value || undefined)}
+                className={selectClass}
+              >
+                <option value="">{tr('כל האחראים')}</option>
+                <option value="none">{tr('ללא אחראי')}</option>
+                {members.data?.map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    {m.fullName}
+                  </option>
+                ))}
+              </select>
+            )}
+            <select
+              aria-label={tr('סינון לפי מקור')}
+              value={query.source ?? ''}
+              onChange={(e) => setParam('source', e.target.value || undefined)}
+              className={selectClass}
+            >
+              <option value="">{tr('כל המקורות')}</option>
+              {sourceOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            {(tags.length > 0 || query.tag) && (
+              <select
+                aria-label={tr('סינון לפי תגית')}
+                value={query.tag ?? ''}
+                onChange={(e) => setParam('tag', e.target.value || undefined)}
+                className={selectClass}
+              >
+                <option value="">{tr('כל התגיות')}</option>
+                {query.tag && !tags.includes(query.tag) && (
+                  <option value={query.tag}>{query.tag}</option>
+                )}
+                {tags.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            )}
+            {activeFilters > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
+              >
+                <X aria-hidden className="h-4 w-4" />
+                {tr('ניקוי הסינון')}
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-4 p-4">
           {leads.isPending || stages.isPending ? (
@@ -715,7 +819,7 @@ export function LeadsPage() {
               <ul aria-label={tr('פניות')} className="grid gap-4 lg:grid-cols-2">
                 {leads.data.map((lead) => (
                   <li key={lead.id}>
-                    <LeadCard lead={lead} businessId={business.id} />
+                    <LeadCard lead={lead} stages={stages.data} businessId={business.id} />
                   </li>
                 ))}
               </ul>

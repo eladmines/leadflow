@@ -335,6 +335,8 @@ describe('tags in the list', () => {
     const { user } = renderApp(`${leadsPath}?view=list`);
     const chips = await screen.findByRole('list', { name: 'תגיות' });
     expect(within(chips).getByText('VIP')).toBeInTheDocument();
+    // Filters open from one button (D-138).
+    await user.click(screen.getByRole('button', { name: 'סינון' }));
     await user.selectOptions(await screen.findByLabelText('סינון לפי תגית'), 'חוזר');
     await waitFor(() =>
       expect(
@@ -353,7 +355,8 @@ describe('export', () => {
       ...members,
       [`GET ${lp.list(id)}`]: () => json(200, { leads: [lead()] }),
     });
-    renderApp(`${leadsPath}?view=list&source=manual`);
+    const { user } = renderApp(`${leadsPath}?view=list&source=manual`);
+    await user.click(await screen.findByRole('button', { name: 'עוד' }));
     const link = await screen.findByRole('link', { name: 'ייצוא לאקסל' });
     expect(link).toHaveAttribute('href', `${lp.exportCsv(id)}?source=manual`);
     expect(link).toHaveAttribute('download');
@@ -366,8 +369,9 @@ describe('export', () => {
       [`GET ${apiPaths.businesses.detail(id)}`]: () =>
         json(200, { business: { ...testBusiness, role: 'MANAGER' } }),
     });
-    renderApp(leadsPath);
+    const { user } = renderApp(leadsPath);
     await screen.findByRole('button', { name: 'ליד חדש' });
+    await user.click(screen.getByRole('button', { name: 'עוד' }));
     expect(screen.queryByRole('link', { name: 'ייצוא לאקסל' })).not.toBeInTheDocument();
   });
 });
