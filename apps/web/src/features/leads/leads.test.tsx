@@ -157,22 +157,6 @@ describe('leads page', () => {
   });
 });
 
-describe('dashboard recent leads', () => {
-  it('shows the latest five with a link to all', async () => {
-    const many = Array.from({ length: 7 }, (_, i) =>
-      lead({ contact: { ...lead().contact, name: `לקוח ${i + 1}` } }),
-    );
-    mockApi({ [meKey]: me(testUser), [leadsKey]: () => json(200, { leads: many }) });
-    renderApp(businessWebPaths.home(id));
-    const list = await screen.findByRole('list', { name: 'פניות אחרונות' });
-    expect(within(list).getAllByRole('listitem')).toHaveLength(5);
-    expect(screen.getByRole('link', { name: 'לכל הפניות' })).toHaveAttribute(
-      'href',
-      businessWebPaths.section(id, 'leads'),
-    );
-  });
-});
-
 describe('contact form settings in the editor', () => {
   it('turns the email field off and autosaves it', async () => {
     const site = { ...liveSite, published: null, status: 'DRAFT' as const };

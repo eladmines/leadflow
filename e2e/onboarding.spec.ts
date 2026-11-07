@@ -54,9 +54,13 @@ test('owner completes onboarding (resuming after a reload) and reaches the busin
   await expect(
     page.getByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), שירן/ }),
   ).toBeVisible();
-  await expect(page.getByText('050-1234567')).toBeVisible();
-  await expect(page.getByText('חיפה, יקנעם')).toBeVisible();
   const homeUrl = page.url();
+  // What onboarding saved shows in Settings (the dashboard keeps only the boxes, D-126).
+  await page.goto(`${homeUrl}/settings`);
+  await expect(page.getByLabel(/טלפון העסק/)).toHaveValue('050-1234567');
+  await expect(page.getByText('חיפה')).toBeVisible();
+  await expect(page.getByText('יקנעם')).toBeVisible();
+  await page.goto(homeUrl);
 
   // Another tenant opens the same URL → "not found" (AC-05).
   const other = await browser.newContext();

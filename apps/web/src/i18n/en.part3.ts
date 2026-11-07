@@ -613,4 +613,6 @@ export const enPart3: Record<string, string> = {
   'כל חלקי המערכת': 'Every part of the app',
   'קופסה לכל חלק במערכת, מחולקות כמו בתפריט: שיווק ומכירות, תפעול וניהול. בכל קופסה מספר חי — פניות פתוחות, משימות להיום, תורים היום — ולחיצה פותחת את החלק.':
     'A box for each part of the app, grouped like the menu: Sales & marketing, Operations and Management. Each box shows a live number — open leads, tasks for today, appointments today — and a click opens that part.',
+  'מה קורה בעסק במבט אחד. למעלה מופיע הצעד הבא שכדאי לעשות, עם כפתור ישיר אליו, וכמה מההקמה כבר הושלם.':
+    'Your business at a glance. At the top: the next step to take, with a button straight to it, and how much of the setup is done.',
 };

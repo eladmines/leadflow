@@ -186,6 +186,11 @@ describe('dashboard progress', () => {
   it('marks build + publish done for a live site', async () => {
     mockApi({ [meKey]: me({ ...testUser, emailVerified: true }), ...getSite(live) });
     renderApp(businessWebPaths.home(id));
-    expect(await screen.findByText('הושלמו 4 מתוך 5')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar', { name: 'התקדמות ההקמה' })).toHaveAttribute(
+        'aria-valuenow',
+        '4',
+      ),
+    );
   });
 });

@@ -155,19 +155,16 @@ describe('tasks elsewhere', () => {
     );
   });
 
-  it('the dashboard shows my overdue and today tasks', async () => {
+  it('the dashboard counts my overdue tasks', async () => {
     mockApi({
       [meKey]: me(testUser),
       [`GET ${tp.list(id)}`]: () =>
         json(200, { tasks: [task({ title: 'דחוף', dueAt: hours(-1) })] }),
     });
     renderApp(businessWebPaths.home(id));
-    const list = await screen.findByRole('list', { name: 'המשימות שלי להיום' });
-    expect(within(list).getByText('דחוף')).toBeInTheDocument();
-    // In the tasks card (the Tasks tile above shows the same count, D-124).
-    expect(
-      within(screen.getByRole('heading', { name: /המשימות שלי להיום/ })).getByText('1 באיחור'),
-    ).toBeInTheDocument();
+    // The Tasks box counts them (D-124, D-126).
+    const operations = await screen.findByRole('region', { name: 'תפעול' });
+    expect(await within(operations).findByText('1 באיחור')).toBeInTheDocument();
   });
 });
 

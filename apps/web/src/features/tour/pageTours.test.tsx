@@ -152,7 +152,13 @@ describe('page tours (D-096)', () => {
       [`GET ${apiPaths.whatsapp.inbox(id)}`]: () => json(200, { connected: true, numbers: [] }),
     });
     renderApp(businessWebPaths.home(id));
-    expect(await screen.findByText('מחובר: הודעות מוואטסאפ נכנסות כלידים')).toBeInTheDocument();
+    // Profile and WhatsApp done (email not verified, no site yet).
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar', { name: 'התקדמות ההקמה' })).toHaveAttribute(
+        'aria-valuenow',
+        '2',
+      ),
+    );
   });
 });
 

@@ -65,8 +65,9 @@ test('a visitor submits the website form and the owner sees the lead (AC-04)', a
     'tel:+972527654321',
   );
 
+  // The dashboard's Customers & leads box counts it (D-124, D-126).
   await page.goto(`/b/${owner.id}`);
-  await expect(page.getByRole('list', { name: 'פניות אחרונות' })).toContainText('דנה כהן');
+  await expect(page.getByRole('region', { name: 'שיווק ומכירות' })).toContainText('1 פתוחות');
 
   // …and got an email.
   await expect
