@@ -7,6 +7,7 @@ export { EmptyState } from './EmptyState';
 export { Field } from './Field';
 export { FullPageSpinner } from './FullPageSpinner';
 export { Logo } from './Logo';
+export { MoreMenu } from './MoreMenu';
 export { PasswordField } from './PasswordField';
 export { RefreshButton } from './RefreshButton';
 export { Spinner } from './Spinner';

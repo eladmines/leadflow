@@ -402,8 +402,6 @@ export const enPart3: Record<string, string> = {
   'בקשות ממתינות': 'Pending requests',
   'בקשות מהאתר ומהבוט בוואטסאפ, כולל בקשות לאירוע. לוחצים על בקשה, משבצים איש צוות ומאשרים.':
     'Requests from the website and the WhatsApp bot, event requests included. Click one, assign a staff member and confirm.',
-  'השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת התור באתר וברשימה של הבוט בוואטסאפ.':
-    "The services the business offers, with length and price. They appear in the website's booking request and in the WhatsApp bot's list.",
   'בוחרים איך לראות את היומן, ועוברים בין ימים או שבועות בחיצים. "היום" חוזר להיום.':
     'Choose how to see the calendar, and move between days or weeks with the arrows. "Today" jumps back to today.',
   'רואים את היומן של כל הצוות או של אדם אחד. השעות הפנויות מתעדכנות בהתאם.':
@@ -602,4 +600,12 @@ export const enPart3: Record<string, string> = {
     'Refresh (new leads appear by themselves; this brings them in right away) and export your leads to Excel.',
   'מחפשים לפי שם, טלפון או אימייל. הכפתור "סינון" פותח סינון לפי שלב, אחראי, מקור או תגית.':
     'Search by name, phone or email. The "Filter" button filters by stage, owner, source or tag.',
+  'בכפתור "עוד": השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת התור באתר וברשימה של הבוט בוואטסאפ.':
+    'Under "More": the services your business offers, with duration and price. They appear in the website booking request and in the WhatsApp bot\'s list.',
+  'אין תורים בתקופה הזו': 'No appointments in this period',
+  'כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע תור ראשון.':
+    'Start by setting up your services (under "More"), then book a first appointment.',
+  'כשייקבעו לך תורים, הם יופיעו כאן.':
+    'When appointments are booked for you, they will appear here.',
+  'ללקוחות ולידים': 'Go to Customers & leads',
 };

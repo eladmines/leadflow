@@ -7,7 +7,7 @@ import {
 } from '@leadflow/shared';
 import { FileText } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Alert, Spinner } from '../../components/ui';
+import { Alert, buttonClasses, EmptyState, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -74,17 +74,23 @@ export function QuotesPage() {
             <Alert tone="danger">{errorMessage(quotes.error)}</Alert>
           </div>
         ) : quotes.data.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-              <FileText aria-hidden className="h-6 w-6" />
-            </span>
-            <h2 className="text-base font-semibold text-ink">
-              {status ? tr('אין הצעות בסטטוס הזה') : tr('עדיין אין הצעות מחיר')}
-            </h2>
-            <p className="max-w-md text-sm text-ink-muted">
-              {tr('פתחו ליד מ"לקוחות ולידים" ובחרו "הצעת מחיר חדשה".')}
-            </p>
-          </div>
+          <EmptyState
+            bare
+            icon={FileText}
+            tone="bg-orange-500"
+            title={status ? tr('אין הצעות בסטטוס הזה') : tr('עדיין אין הצעות מחיר')}
+            description={tr('פתחו ליד מ"לקוחות ולידים" ובחרו "הצעת מחיר חדשה".')}
+            action={
+              !status && (
+                <Link
+                  to={businessWebPaths.section(business.id, 'leads')}
+                  className={buttonClasses('primary', 'md')}
+                >
+                  {tr('ללקוחות ולידים')}
+                </Link>
+              )
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[40rem] text-sm">

@@ -7,7 +7,7 @@ import {
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Button, Card, Spinner } from '../../components/ui';
+import { Alert, Button, Card, EmptyState, MoreMenu, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
@@ -126,21 +126,24 @@ export function AppointmentsPage() {
           title={tr('תורים')}
           description={tr('היומן של העסק: תורים, בקשות מהאתר ושירותים.')}
           actions={
-            <div className="flex flex-wrap gap-2">
-              {manager && (
-                <Button
-                  variant="secondary"
-                  aria-expanded={servicesOpen}
-                  onClick={() => setServicesOpen((o) => !o)}
-                >
-                  <Settings2 aria-hidden className="h-4 w-4" />
-                  {tr('שירותים')}
-                </Button>
-              )}
+            <div className="flex flex-wrap items-center gap-2">
               <Button onClick={() => setNewOpen(true)}>
                 <Plus aria-hidden className="h-4 w-4" />
                 {tr('תור חדש')}
               </Button>
+              {/* One main button (D-139); services behind "More". */}
+              {manager && (
+                <MoreMenu>
+                  <Button
+                    variant="secondary"
+                    aria-expanded={servicesOpen}
+                    onClick={() => setServicesOpen((o) => !o)}
+                  >
+                    <Settings2 aria-hidden className="h-4 w-4" />
+                    {tr('שירותים')}
+                  </Button>
+                </MoreMenu>
+              )}
             </div>
           }
         />
@@ -251,12 +254,16 @@ export function AppointmentsPage() {
       </section>
 
       {list.data?.length === 0 && pending.length === 0 && (
-        <p className="flex items-center gap-2 text-sm text-ink-muted">
-          <CalendarDays aria-hidden className="h-4 w-4" />
-          {manager
-            ? tr('אין תורים בתקופה הזו. כדאי להתחיל בהגדרת השירותים שלכם, ואז לקבוע תור ראשון.')
-            : tr('אין לך תורים בתקופה הזו.')}
-        </p>
+        <EmptyState
+          icon={CalendarDays}
+          tone="bg-rose-500"
+          title={tr('אין תורים בתקופה הזו')}
+          description={
+            manager
+              ? tr('כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע תור ראשון.')
+              : tr('כשייקבעו לך תורים, הם יופיעו כאן.')
+          }
+        />
       )}
 
       <NewAppointmentDialog

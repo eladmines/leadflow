@@ -28,6 +28,7 @@ test('book, clash, cancel, and see it from the calendar', async ({ page }) => {
   await page.goto(`/b/${id}/appointments`);
 
   // Define a service.
+  await page.getByRole('button', { name: 'עוד' }).click();
   await page.getByRole('button', { name: 'שירותים' }).click();
   await page.getByLabel('שירות חדש').fill('תספורת');
   await page.getByLabel('משך (דק׳)').fill('45');
