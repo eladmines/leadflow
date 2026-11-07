@@ -268,16 +268,12 @@ export const enPart3: Record<string, string> = {
   'פניות מהאתר ומוואטסאפ נכנסות לבד. כאן מוסיפים ליד ידנית, למשל מטלפון.':
     'Inquiries from the website and WhatsApp arrive by themselves. Here you add a lead manually, e.g. from a call.',
   'חיפוש וסינון': 'Search and filter',
-  'מחפשים לפי שם, טלפון או אימייל, ומסננים לפי שלב, אחראי, מקור או תגית.':
-    'Search by name, phone or email, and filter by stage, owner, source or tag.',
   'לוח או רשימה': 'Board or list',
   'בלוח רואים את הלידים לפי שלב וגוררים ביניהם. ברשימה רואים יותר פרטים על כל ליד.':
     'The board shows leads by stage, and you drag between them. The list shows more detail on each lead.',
   הלידים: 'The leads',
   'לחיצה על שם פותחת את הליד: פרטים, הערות, משימות, תורים, הצעות מחיר ושיחת וואטסאפ.':
     'Click a name to open the lead: details, notes, tasks, appointments, quotes and the WhatsApp conversation.',
-  'מורידים את הלידים (לפי הסינון הנוכחי) לקובץ שנפתח באקסל.':
-    'Download the leads (with the current filters) to a file that opens in Excel.',
   'כרטיס הליד': 'The lead',
   'מי הלקוח, מאיפה הגיע ומה ביקש. כפתורי החיוג והאימייל פותחים שיחה בלחיצה.':
     'Who the customer is, where they came from and what they asked for. The call and email buttons start a conversation.',
@@ -422,8 +418,6 @@ export const enPart3: Record<string, string> = {
     "Click me on any page: a page tour that explains what's on it, the full product tour, and quick search.",
   'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט התורים או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.':
     "Everyone who contacted the business: from the website form, WhatsApp, the booking bot or added by you. Each lead moves through stages until it's closed.",
-  'פניות חדשות מופיעות לבד. הכפתור מביא אותן מיד.':
-    'New inquiries appear on their own. This button fetches them right away.',
   'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות. כל שינוי נשמר ונרשם בהיסטוריה.':
     "The stage, who's responsible, estimated value, when to get back to the customer, and tags. Every change is saved and recorded in the history.",
   'השיחה עם הלקוח בוואטסאפ, כולל התשובות האוטומטיות של הבוט. אפשר לענות מכאן עד 24 שעות מההודעה האחרונה שלו; כשאתם כותבים, הבוט שותק. "השהיית הבוט" עוצרת אותו ללקוח הזה בלבד, עד שתפעילו שוב.':
@@ -601,4 +595,11 @@ export const enPart3: Record<string, string> = {
   'חזרה לבחירה': 'Back to the choice',
   'בונים אתר חדש מתבנית מוכנה, או מחברים את האתר שכבר יש לכם ורואים אותו כאן — LeadFlow לא משנה בו דבר. כל פנייה מאתר שנבנה כאן נכנסת ישר למערכת.':
     "Build a new website from a ready-made template, or link the one you already have and see it here — LeadFlow doesn't change anything on it. Every inquiry from a site built here lands straight in LeadFlow.",
+  עוד: 'More',
+  סינון: 'Filter',
+  'ניקוי הסינון': 'Clear filters',
+  'רענון (פניות חדשות מופיעות לבד, והכפתור מביא אותן מיד) וייצוא הלידים לאקסל.':
+    'Refresh (new leads appear by themselves; this brings them in right away) and export your leads to Excel.',
+  'מחפשים לפי שם, טלפון או אימייל. הכפתור "סינון" פותח סינון לפי שלב, אחראי, מקור או תגית.':
+    'Search by name, phone or email. The "Filter" button filters by stage, owner, source or tag.',
 };

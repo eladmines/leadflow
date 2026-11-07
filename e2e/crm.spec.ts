@@ -80,6 +80,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await page.getByLabel('חיפוש לידים').fill('');
   await expect(page).not.toHaveURL(/q=/); // the search is debounced into the URL
   const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'עוד' }).click();
   await page.getByRole('link', { name: 'ייצוא לאקסל' }).click();
   const file = await download;
   expect(file.suggestedFilename()).toMatch(/^leadflow-leads-\d{4}-\d{2}-\d{2}\.csv$/);

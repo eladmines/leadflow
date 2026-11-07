@@ -124,6 +124,8 @@ describe('leads page', () => {
     });
     const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}?view=list`);
     await screen.findByRole('heading', { name: 'עדיין אין פניות' });
+    // Secondary actions sit behind "More" (D-138).
+    await user.click(screen.getByRole('button', { name: 'עוד' }));
     await user.click(screen.getByRole('button', { name: 'רענון' }));
     expect(await screen.findByText('פנייה שהגיעה עכשיו')).toBeInTheDocument();
     expect(screen.getByRole('status', { name: '' })).toHaveTextContent('עודכן');

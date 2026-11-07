@@ -14,8 +14,7 @@ import { apiFetch } from '../../lib/api';
 import { intlLocale } from '../../i18n';
 
 const ap = apiPaths.appointments;
-const appointmentsKey = (businessId: string) =>
-  ['businesses', businessId, 'appointments'] as const;
+const appointmentsKey = (businessId: string) => ['businesses', businessId, 'appointments'] as const;
 const servicesKey = (businessId: string) => ['businesses', businessId, 'services'] as const;
 
 const qs = (q: AppointmentListQuery) => {
