@@ -107,7 +107,7 @@ export function SiteStart({ business }: { business: Business }) {
 /** "Step 1 of 2", a two-part bar, and on step 2 the way back. */
 function StepBar({ step, onBack }: { step: 1 | 2; onBack?: () => void }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full max-w-2xl flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-ink-muted">{tr('שלב {0} מתוך {1}', step, 2)}</p>
         {onBack && (
@@ -122,7 +122,7 @@ function StepBar({ step, onBack }: { step: 1 | 2; onBack?: () => void }) {
           </button>
         )}
       </div>
-      <div aria-hidden className="grid max-w-2xl grid-cols-2 gap-1.5">
+      <div aria-hidden className="grid grid-cols-2 gap-1.5">
         <span className="h-1.5 rounded-full bg-brand-600" />
         <span className={cn('h-1.5 rounded-full', step === 2 ? 'bg-brand-600' : 'bg-brand-100')} />
       </div>
