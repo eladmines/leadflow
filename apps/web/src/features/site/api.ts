@@ -93,8 +93,7 @@ export function siteBusinessInfo(b: Business): SiteBusinessInfo {
 // F06 — publishing
 // ---------------------------------------------------------------------------
 
-const versionsQueryKey = (businessId: string) =>
-  [...siteQueryKey(businessId), 'versions'] as const;
+const versionsQueryKey = (businessId: string) => [...siteQueryKey(businessId), 'versions'] as const;
 
 /** Mutations that return the site update the cached site (status, live version, address). */
 function useSiteMutation<TBody>(

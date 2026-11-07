@@ -55,6 +55,16 @@ const previewHtml = () =>
   (screen.getByTitle('תצוגה מקדימה של האתר') as HTMLIFrameElement).getAttribute('srcdoc') ?? '';
 
 describe('template picker', () => {
+  it('starts with two choices and can go back from the templates (D-130)', async () => {
+    mockApi({ [meKey]: me(testUser), ...getSite(null) });
+    const { user } = renderApp(sitePath);
+    const build = await screen.findByRole('region', { name: 'אני רוצה לבנות אתר' });
+    await user.click(within(build).getByRole('button', { name: 'לבחירת תבנית' }));
+    await user.click(await screen.findByRole('button', { name: 'חזרה לבחירה' }));
+    expect(await screen.findByRole('region', { name: 'יש לי כבר אתר' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('article')).toHaveLength(0);
+  });
+
   it('suggests the template for the industry and creates the site', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
@@ -62,6 +72,9 @@ describe('template picker', () => {
       [`POST ${sp.site(testBusiness.id)}`]: () => json(201, { site }),
     });
     const { user } = renderApp(sitePath);
+    // First the two choices (D-130): already have a site, or build one.
+    expect(await screen.findByRole('region', { name: 'יש לי כבר אתר' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'לבחירת תבנית' }));
     expect(
       await screen.findByRole('heading', { name: 'בואו נבנה את האתר שלך' }),
     ).toBeInTheDocument();
