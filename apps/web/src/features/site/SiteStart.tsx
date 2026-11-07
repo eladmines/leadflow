@@ -1,5 +1,5 @@
 import type { Business } from '@leadflow/shared';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Globe, Sparkles, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -23,14 +23,28 @@ export function SiteStart({ business }: { business: Business }) {
     return <TemplatePicker intro={<StepBar step={2} onBack={back} />} />;
   }
 
-  const options: { value: Choice; label: string; hint: string }[] = [
+  // Each answer has its own colour (D-135): its icon tile, and the card once picked.
+  const options: {
+    value: Choice;
+    label: string;
+    hint: string;
+    icon: LucideIcon;
+    tile: string;
+    picked: string;
+  }[] = [
     {
       value: 'existing',
+      icon: Globe,
+      tile: 'bg-sky-500',
+      picked: 'border-sky-300 bg-sky-50',
       label: tr('כן, יש לי כבר אתר'),
       hint: tr('מוסיפים את הכתובת ורואים את האתר כאן. LeadFlow לא משנה בו כלום.'),
     },
     {
       value: 'build',
+      icon: Sparkles,
+      tile: 'bg-violet-500',
+      picked: 'border-violet-300 bg-violet-50',
       label: tr('לא, אני רוצה לבנות אתר'),
       hint: tr('בוחרים תבנית מוכנה, והיא מתמלאת בפרטי העסק.'),
     },
@@ -46,8 +60,12 @@ export function SiteStart({ business }: { business: Business }) {
       />
       <section
         id="site-start"
-        className="flex max-w-2xl flex-col gap-5 rounded-2xl border border-surface-border bg-surface p-6 shadow-card"
+        className="relative flex max-w-2xl flex-col gap-5 overflow-hidden rounded-2xl border border-surface-border bg-surface p-6 pt-7 shadow-card"
       >
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-sky-400 via-brand-500 to-violet-500"
+        />
         {step === 1 ? (
           <>
             <StepBar step={1} />
@@ -55,14 +73,12 @@ export function SiteStart({ business }: { business: Business }) {
               <legend className="mb-3 text-lg font-semibold text-ink">
                 {tr('יש לכם כבר אתר?')}
               </legend>
-              {options.map(({ value, label, hint }) => (
+              {options.map(({ value, label, hint, icon: Icon, tile, picked }) => (
                 <label
                   key={value}
                   className={cn(
-                    'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors',
-                    choice === value
-                      ? 'border-brand-300 bg-brand-50/60'
-                      : 'border-surface-border hover:bg-surface-muted',
+                    'flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-colors',
+                    choice === value ? picked : 'border-surface-border hover:bg-surface-muted',
                   )}
                 >
                   <input
@@ -72,8 +88,17 @@ export function SiteStart({ business }: { business: Business }) {
                     checked={choice === value}
                     onChange={() => setChoice(value)}
                     aria-describedby={`site-start-${value}`}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-brand-600"
+                    className="h-4 w-4 shrink-0 accent-brand-600"
                   />
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm',
+                      tile,
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
                   <span className="flex flex-col gap-0.5">
                     <span className="text-sm font-semibold text-ink">{label}</span>
                     <span id={`site-start-${value}`} className="text-sm text-ink-muted">
@@ -90,11 +115,19 @@ export function SiteStart({ business }: { business: Business }) {
         ) : (
           <>
             <StepBar step={2} onBack={back} />
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold text-ink">{tr('מה הכתובת של האתר שלכם?')}</h2>
-              <p className="text-sm text-ink-muted">
-                {tr('אחרי השמירה תראו את האתר כאן. אפשר לשנות את הכתובת בכל זמן.')}
-              </p>
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm"
+              >
+                <Globe className="h-5 w-5" />
+              </span>
+              <div className="flex flex-col gap-0.5">
+                <h2 className="text-lg font-semibold text-ink">{tr('מה הכתובת של האתר שלכם?')}</h2>
+                <p className="text-sm text-ink-muted">
+                  {tr('אחרי השמירה תראו את האתר כאן. אפשר לשנות את הכתובת בכל זמן.')}
+                </p>
+              </div>
             </div>
             <WebsiteForm business={business} compact />
           </>
@@ -123,8 +156,15 @@ function StepBar({ step, onBack }: { step: 1 | 2; onBack?: () => void }) {
         )}
       </div>
       <div aria-hidden className="grid grid-cols-2 gap-1.5">
-        <span className="h-1.5 rounded-full bg-brand-600" />
-        <span className={cn('h-1.5 rounded-full', step === 2 ? 'bg-brand-600' : 'bg-brand-100')} />
+        <span className="h-1.5 rounded-full bg-gradient-to-r from-sky-400 to-brand-500 rtl:bg-gradient-to-l" />
+        <span
+          className={cn(
+            'h-1.5 rounded-full',
+            step === 2
+              ? 'bg-gradient-to-r from-brand-500 to-violet-500 rtl:bg-gradient-to-l'
+              : 'bg-surface-sunken',
+          )}
+        />
       </div>
     </div>
   );
