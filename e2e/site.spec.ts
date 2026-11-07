@@ -44,8 +44,7 @@ test('owner builds the site: template → edit → autosave → reload', async (
   await page.goto(`/b/${id}/site`);
 
   // First the two choices on My website (D-130).
-  await page.getByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }).check();
-  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: /בניית אתר חדש/ }).click();
   await expect(page.getByText('מומלץ לעסק שלך')).toBeVisible();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   await expect(page.getByRole('heading', { name: 'האתר שלי' })).toBeVisible();
@@ -102,8 +101,7 @@ test('desktop editing happens on the page: sections, list items and settings', a
   const id = await ownerWithActiveBusiness(page);
   await page.goto(`/b/${id}/site`);
   // First the two choices on My website (D-130).
-  await page.getByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }).check();
-  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: /בניית אתר חדש/ }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const frame = preview(page);
   await expect(frame.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
@@ -182,8 +180,7 @@ test('fixed labels are editable on the page; phone opens the business details', 
   const id = await ownerWithActiveBusiness(page);
   await page.goto(`/b/${id}/site`);
   // First the two choices on My website (D-130).
-  await page.getByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }).check();
-  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: /בניית אתר חדש/ }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const frame = preview(page);
   await expect(frame.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
