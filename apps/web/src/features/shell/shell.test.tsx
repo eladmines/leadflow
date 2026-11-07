@@ -290,6 +290,8 @@ describe('settings', () => {
   it('shows the Hebrew validation error and does not save invalid hours', async () => {
     const fetchMock = mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('settings'));
+    // Settings come in tabs (D-141).
+    await user.click(await screen.findByRole('tab', { name: 'שעות פעילות' }));
     const close = await screen.findByLabelText('שעת סגירה ביום שני');
     await user.clear(close);
     await user.type(close, '07:00');

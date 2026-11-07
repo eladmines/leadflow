@@ -54,8 +54,14 @@ function InviteForm({ businessId }: { businessId: string }) {
 
   return (
     <Card className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <UserPlus aria-hidden className="h-5 w-5 text-brand-600" />
+      <div className="flex items-center gap-3">
+        {/* Coloured like the Team section (D-141). */}
+        <span
+          aria-hidden
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500 text-white shadow-sm"
+        >
+          <UserPlus className="h-5 w-5" />
+        </span>
         <h2 className="text-lg font-semibold text-ink">{tr('הזמנת חבר/ת צוות')}</h2>
       </div>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">

@@ -126,12 +126,11 @@ describe('page tours (D-096)', () => {
     expect(await screen.findByRole('dialog', { name: 'הדשבורד' })).toBeInTheDocument();
   });
 
-  it('runs the settings tour over its sections', async () => {
+  it('runs the settings tour over its tabs (D-141)', async () => {
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('settings'));
     await openPageTour(user);
-    const first = await screen.findByRole('dialog', { name: 'פרטי העסק' });
-    expect(within(first).getByText('1 מתוך 4')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'ההגדרות, בלשוניות' })).toBeInTheDocument();
   });
 
   it('screens without a tour leave it out of the help menu', async () => {
