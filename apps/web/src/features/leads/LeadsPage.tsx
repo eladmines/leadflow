@@ -18,7 +18,6 @@ import {
   List,
   Mail,
   MessageCircle,
-  MoreHorizontal,
   Phone,
   Plus,
   Search,
@@ -26,18 +25,17 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type DragEvent,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, buttonClasses, RefreshButton, Spinner } from '../../components/ui';
+import {
+  Alert,
+  Button,
+  buttonClasses,
+  MoreMenu,
+  RefreshButton,
+  Spinner,
+} from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
@@ -427,49 +425,6 @@ function Board({
   );
 }
 
-/** "More": a small panel of the page's secondary actions; closes on Escape or a click outside. */
-function MoreActions({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="lead-more"
-        onClick={() => setOpen((o) => !o)}
-        className={buttonClasses('secondary', 'md')}
-      >
-        <MoreHorizontal aria-hidden className="h-4 w-4" />
-        {tr('עוד')}
-      </button>
-      {open && (
-        <div
-          id="lead-more"
-          className="absolute end-0 top-full z-20 mt-2 flex w-48 flex-col gap-2 rounded-xl border border-surface-border bg-surface p-2 shadow-lift [&>*]:w-full [&>*]:justify-start"
-        >
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /** The list filters, without UI-only params (view). */
 function exportParams(params: URLSearchParams) {
   const p = new URLSearchParams(params);
@@ -584,7 +539,7 @@ export function LeadsPage() {
                 {tr('ליד חדש')}
               </Button>
               {/* The rest behind "More" (D-138): one main action per page. */}
-              <MoreActions>
+              <MoreMenu>
                 <RefreshButton
                   onRefresh={() =>
                     Promise.all([
@@ -607,7 +562,7 @@ export function LeadsPage() {
                     {tr('ייצוא לאקסל')}
                   </a>
                 )}
-              </MoreActions>
+              </MoreMenu>
             </div>
           }
         />

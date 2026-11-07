@@ -2,7 +2,7 @@ import { can, type Task } from '@leadflow/shared';
 import { ListTodo } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Card, Spinner } from '../../components/ui';
+import { Alert, Card, EmptyState, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -12,10 +12,11 @@ import { NewTaskForm } from './NewTaskForm';
 import { TaskItem } from './TaskItem';
 import { tr } from '../../i18n';
 
-const sections: { key: keyof ReturnType<typeof groupTasks>; title: string; tone?: string }[] = [
-  { key: 'overdue', title: tr('באיחור'), tone: 'text-danger-600' },
-  { key: 'today', title: tr('היום') },
-  { key: 'upcoming', title: tr('בהמשך') },
+// Each group has its colour (D-139); the title says it too.
+const sections: { key: keyof ReturnType<typeof groupTasks>; title: string; dot: string }[] = [
+  { key: 'overdue', title: tr('באיחור'), dot: 'bg-rose-500' },
+  { key: 'today', title: tr('היום'), dot: 'bg-amber-500' },
+  { key: 'upcoming', title: tr('בהמשך'), dot: 'bg-sky-500' },
 ];
 
 /** F10: follow-up tasks grouped by urgency. Managers can switch between "mine" and "everyone". */
@@ -70,22 +71,22 @@ export function TasksPage() {
       ) : (
         <>
           {openCount === 0 && (
-            <section className="flex flex-col items-center gap-3 rounded-3xl border border-surface-border bg-surface px-6 py-14 text-center shadow-card">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
-                <ListTodo aria-hidden className="h-7 w-7" />
-              </span>
-              <h2 className="text-lg font-semibold text-ink">{tr('אין משימות פתוחות')}</h2>
-              <p className="max-w-md text-sm text-ink-muted">
-                {groups.done.length > 0
+            <EmptyState
+              icon={ListTodo}
+              tone="bg-amber-500"
+              title={tr('אין משימות פתוחות')}
+              description={
+                groups.done.length > 0
                   ? tr('כל המשימות בוצעו. כל הכבוד!')
-                  : tr('הוסיפו משימה למעלה, או מתוך כרטיס של ליד — למשל "להתקשר מחר בבוקר".')}
-              </p>
-            </section>
+                  : tr('הוסיפו משימה למעלה, או מתוך כרטיס של ליד — למשל "להתקשר מחר בבוקר".')
+              }
+            />
           )}
-          {sections.map(({ key, title, tone }) =>
+          {sections.map(({ key, title, dot }) =>
             groups[key].length > 0 ? (
               <Card key={key} className="py-3">
-                <h2 className={cn('text-base font-semibold', tone ?? 'text-ink')}>
+                <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+                  <span aria-hidden className={cn('h-2.5 w-2.5 rounded-full', dot)} />
                   {title}{' '}
                   <span className="text-sm font-normal text-ink-muted">({groups[key].length})</span>
                 </h2>

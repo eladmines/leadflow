@@ -95,9 +95,6 @@ export const enPart1: Record<string, string> = {
   שבוע: 'Week',
   'טוענים את היומן…': 'Loading the calendar…',
   'אין תורים': 'No appointments',
-  'אין תורים בתקופה הזו. כדאי להתחיל בהגדרת השירותים שלכם, ואז לקבוע תור ראשון.':
-    'No appointments in this period. Start by setting up your services, then book a first appointment.',
-  'אין לך תורים בתקופה הזו.': 'You have no appointments in this period.',
   'לקוח:': 'Customer:',
   לקוח: 'Customer',
   'לקוח חדש': 'New customer',
