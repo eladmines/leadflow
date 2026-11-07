@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';
 
-export const stepTitles = [
+const stepTitles = [
   tr('פרטי העסק'),
   tr('יצירת קשר'),
   tr('אזורי שירות'),

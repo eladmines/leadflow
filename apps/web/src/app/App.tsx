@@ -29,7 +29,7 @@ import { TeamPage } from '../features/team/TeamPage';
 import { ContinueOnboardingPage, NewBusinessPage } from '../features/onboarding/OnboardingPage';
 import { NotFoundPage } from './NotFoundPage';
 
-export function createQueryClient() {
+function createQueryClient() {
   return new QueryClient({
     defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
   });

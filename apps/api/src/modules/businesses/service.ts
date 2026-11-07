@@ -20,7 +20,7 @@ import { businessRepo } from './repo';
 
 type UpdateInput = z.output<typeof updateBusinessRequestSchema>;
 
-export function toBusinessDto(business: Business, role: Role): BusinessDto {
+function toBusinessDto(business: Business, role: Role): BusinessDto {
   const hours = openingHoursSchema.safeParse(business.openingHours);
   return {
     id: business.id,

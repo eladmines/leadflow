@@ -37,7 +37,7 @@ const hasSize = (el: Element) => {
 };
 
 /** The element for a step; a visible one when there are several (sidebar vs. drawer). */
-export function resolveTarget(target: TourTarget | undefined): HTMLElement | null {
+function resolveTarget(target: TourTarget | undefined): HTMLElement | null {
   if (!target) return null;
   if (typeof target === 'function') return target();
   const all = [...document.querySelectorAll<HTMLElement>(target)].filter(outsideDialogs);

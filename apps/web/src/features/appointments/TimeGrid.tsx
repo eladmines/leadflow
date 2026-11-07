@@ -59,7 +59,7 @@ function lanes(items: Appointment[]) {
   return out;
 }
 
-export const statusBlock: Record<Appointment['status'], string> = {
+const statusBlock: Record<Appointment['status'], string> = {
   REQUESTED: 'border-warning-600/50 bg-warning-50 text-warning-600',
   CONFIRMED: 'border-brand-300 bg-brand-50 text-brand-800',
   COMPLETED: 'border-success-600/40 bg-success-50 text-success-600',

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { apiFetch } from '../../lib/api';
 
 const mp = apiPaths.media;
-export const assetsQueryKey = (businessId: string) => ['businesses', businessId, 'assets'] as const;
+const assetsQueryKey = (businessId: string) => ['businesses', businessId, 'assets'] as const;
 
 export function useAssets(businessId: string) {
   return useQuery({

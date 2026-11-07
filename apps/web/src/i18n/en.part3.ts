@@ -246,16 +246,6 @@ export const enPart3: Record<string, string> = {
   סיום: 'Done',
   'סיור בעמוד': 'Page tour',
   הדשבורד: 'The dashboard',
-  'מה קורה בעסק במבט אחד. למעלה מופיע הצעד הבא שכדאי לעשות, עם כפתור ישיר אליו.':
-    "What's happening in your business at a glance. The next step to take is at the top, with a button to it.",
-  'רשימת ההקמה: מה כבר הושלם ומה נשאר. כל צעד מסומן לבד כשמסיימים אותו.':
-    "The setup checklist: what's done and what's left. Each step ticks itself off when you finish it.",
-  'הפניות החדשות ביותר מהאתר ומוואטסאפ. לחיצה על פנייה פותחת את הליד.':
-    'The newest inquiries from the website and WhatsApp. Click one to open the lead.',
-  'מה צריך לעשות היום ומה באיחור, כדי ששום לקוח לא ייפול בין הכיסאות.':
-    "What's due today and what's overdue, so no customer slips through the cracks.",
-  'טלפון, כתובת, שעות ואזורי שירות. הפרטים האלה מופיעים גם באתר.':
-    'Phone, address, hours and service areas. These also show on the website.',
   'בונים אתר': 'Build a website',
   'בוחרים תבנית, והיא מתמלאת מראש בפרטי העסק ובתמונות לדוגמה. אחר כך משנים הכול.':
     'Pick a template and it fills in with your business details and sample photos. Then change anything.',
@@ -299,47 +289,26 @@ export const enPart3: Record<string, string> = {
   'שיחת וואטסאפ': 'WhatsApp conversation',
   'השיחה עם הלקוח בוואטסאפ. אפשר לענות מכאן עד 24 שעות מההודעה האחרונה שלו.':
     'The WhatsApp conversation with the customer. You can reply from here up to 24 hours after their last message.',
-  'כותבים הערות לצוות, ורואים כל מה שקרה בליד: שינויי שלב, שיוכים, משימות והצעות.':
-    'Write notes for the team, and see everything that happened: stage changes, assignments, tasks and quotes.',
   'תזכורת לחזור ללקוח. מקבלים מייל כשמגיע הזמן.':
     "A reminder to get back to the customer. You get an email when it's time.",
-  'התורים של הלקוח, וקביעת תור חדש.': "The customer's appointments, and booking a new one.",
-  'יוצרים הצעת מחיר מתוך הליד ושולחים ללקוח בקישור.':
-    'Create a quote from the lead and send it to the customer by link.',
   'שיחות WhatsApp': 'WhatsApp conversations',
-  'מספרים חדשים שכתבו לעסק בוואטסאפ מחכים כאן, עד שתחליטו אם זה לקוח או מישהו פרטי.':
-    "New numbers that wrote to the business on WhatsApp wait here until you decide whether it's a customer or someone personal.",
   'מחכים לסיווג': 'Waiting to be classified',
-  'כל מספר עם ההודעות שלו. לקוחות מוכרים לא מגיעים לכאן: ההודעות שלהם נכנסות ישר לליד.':
-    "Each number with its messages. Known customers don't come here: their messages go straight to their lead.",
   'עסקי: יצירת ליד': 'Business: create lead',
   עסקי: 'Business',
-  'יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו.':
-    'Creates a lead from the messages. From now on every message from this number goes to its lead.',
   פרטי: 'Personal',
   'ההודעות נמחקות, והמספר לא ייכנס למערכת גם בהמשך. מתאים לבני משפחה וחברים.':
     'The messages are deleted, and the number stays out from now on. Good for family and friends.',
   'מספרים פרטיים': 'Personal numbers',
   'המספרים שסימנתם כפרטיים. אפשר לבטל סימון אם טעיתם.':
     'The numbers you marked as personal. You can undo a marking if you made a mistake.',
-  'מה צריך לעשות ומתי. אפשר לשייך לעובד, ומקבלים מייל כשמגיע הזמן.':
-    "What needs doing and when. You can assign it to a teammate, and an email goes out when it's due.",
-  'המשימות שלכם או של כל הצוות.': "Your tasks or the whole team's.",
   הרשימה: 'The list',
-  'באיחור, היום והלאה. מסמנים משימה כבוצעה בלחיצה.':
-    'Overdue, today and later. Mark a task as done with one click.',
   'קובעים תור ללקוח: שירות, איש צוות ושעה. המערכת לא תאפשר שני תורים באותה שעה.':
     "Book a customer: service, staff member and time. LeadFlow won't allow two appointments at the same time.",
-  'השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים גם בבקשת התור באתר.':
-    'The services the business offers, with duration and price. They also appear in the website booking request.',
   'יום או שבוע': 'Day or week',
   'בוחרים איך לראות את היומן, ועוברים בין ימים או שבועות בחיצים.':
     'Choose how to view the calendar, and move between days or weeks with the arrows.',
   'לפי איש צוות': 'By staff member',
   'רואים את היומן של כל הצוות או של אדם אחד.': "See the whole team's calendar or one person's.",
-  'כל ההצעות של העסק. הצעה חדשה נוצרת מתוך ליד, בכפתור "הצעת מחיר חדשה" בכרטיס הליד.':
-    'All of the business\'s quotes. A new quote is created from a lead, with "New quote" on the lead.',
-  'טיוטות, הצעות שנשלחו, אושרו או נדחו.': 'Drafts, and quotes sent, accepted or declined.',
   'לחיצה על הצעה פותחת אותה לעריכה, לשליחה או להדפסה.': 'Click a quote to edit, send or print it.',
   '7, 30 או 90 הימים האחרונים, בהשוואה לתקופה שלפניהם.':
     'The last 7, 30 or 90 days, compared with the period before.',
@@ -372,8 +341,6 @@ export const enPart3: Record<string, string> = {
     'Name, industry, phone and address. They show on the website, the call button and in emails.',
   'הערים והאזורים שבהם העסק עובד. מופיעים באתר.':
     'The cities and regions the business serves. Shown on the website.',
-  'השעות מופיעות באתר, וקובעות מתי אפשר לבקש תור.':
-    'The hours show on the website and set when customers can request an appointment.',
   'המסלול ואמצעי התשלום של החשבון.': "The account's plan and payment method.",
   'השם שלכם כפי שהצוות רואה אותו.': 'Your name as the team sees it.',
   'אחרי שינוי סיסמה, החיבור במכשירים האחרים מתנתק ונשלח אליכם מייל.':
@@ -425,11 +392,6 @@ export const enPart3: Record<string, string> = {
   'בוט קביעת התורים': 'The booking bot',
   'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שהבוט לא מבין אותו פעמיים, עובר אליכם מיד. הבוט לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
     "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or whom the bot can't understand twice, is passed to you right away. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
-  'הדלקה וכיבוי': 'On and off',
-  'כשהתיבה מסומנת והגדרות נשמרו, הבוט עונה. כיבוי ושמירה עוצרים אותו, גם באמצע שיחה.':
-    'When this is ticked and the settings are saved, the bot answers. Turning it off and saving stops it, even mid-conversation.',
-  'השינויים בהגדרות שלמעלה נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה.':
-    'Changes to the settings above take effect only after you click here. Until then you see "You have unsaved changes", and "Discard changes" puts things back.',
   'איך לקוחות מזמינים': 'How customers book',
   '"תורים בשעות פנויות": הלקוח בוחר שירות, יום ושעה. "בקשות לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
     '"Free time slots": the customer picks a service, a day and a time. "Event requests": the customer types a date and tells you about the event, and you confirm. The option that suits your industry is marked.',
@@ -460,12 +422,6 @@ export const enPart3: Record<string, string> = {
     'Choose how to see the calendar, and move between days or weeks with the arrows. "Today" jumps back to today.',
   'רואים את היומן של כל הצוות או של אדם אחד. השעות הפנויות מתעדכנות בהתאם.':
     "See the whole team's calendar or one person's. The free times update to match.",
-  'רשימת ההקמה: מה כבר הושלם ומה נשאר. כל צעד מסומן לבד כשמסיימים אותו, והצעד הבא מופיע למעלה עם כפתור ישיר.':
-    "The setup list: what's done and what's left. Each step ticks itself when you finish it, and the next step shows at the top with a direct button.",
-  'מה צריך לעשות היום ומה באיחור, כדי ששום לקוח לא ייפול בין הכיסאות. "לכל המשימות" פותח את הרשימה המלאה.':
-    'What\'s due today and what\'s overdue, so no customer falls through the cracks. "All tasks" opens the full list.',
-  'טלפון, כתובת, שעות ואזורי שירות. הפרטים האלה מופיעים באתר, ו"עריכה" פותח אותם בהגדרות.':
-    'Phone, address, hours and service areas. These show on your website, and "Edit" opens them in Settings.',
   'הפעמון מראה כמה דברים חדשים מחכים: פנייה, הודעה בוואטסאפ, תור שנקבע בבוט או הצעה שאושרה. לחיצה על התראה לוקחת אליה.':
     'The bell shows how many new things are waiting: an inquiry, a WhatsApp message, a booking from the bot or an accepted quote. Click a notification to go to it.',
   שפה: 'Language',
@@ -592,7 +548,6 @@ export const enPart3: Record<string, string> = {
   'השינויים בהגדרות הבוט נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה.':
     'Changes to the bot settings take effect only after clicking here. Until then you see "You have unsaved changes", and "Discard changes" puts things back.',
   // Dashboard tiles (D-124)
-  'עוד לא נבנה': 'Not built yet',
   '{0} פתוחות': '{0} open',
   '{0} מחכים לסיווג': '{0} waiting to classify',
   '{0} באיחור': '{0} overdue',
@@ -600,16 +555,7 @@ export const enPart3: Record<string, string> = {
   '{0} היום': '{0} today',
   '{0} מחכות לתשובה': '{0} awaiting a reply',
   'מבט על העסק': 'Your business at a glance',
-  'בונים ומעדכנים את אתר העסק': "Build and update your business's website",
-  'כל הפניות והלקוחות, לפי שלב': 'Every inquiry and customer, by stage',
-  'וואטסאפ, מענה אוטומטי וסטטוס': 'WhatsApp, automatic reply and status',
   'מה צריך לעשות ומתי': 'What needs doing, and when',
-  'היומן, תורים ובקשות': 'The calendar, appointments and requests',
-  'הצעות מחיר שהלקוח מאשר אונליין': 'Quotes customers approve online',
-  'תהליכים שרצים לבד': 'Processes that run by themselves',
-  'כמה פניות, מאיפה ומה נסגר': 'How many inquiries, from where, and what closed',
-  'מי עובד איתך ובאיזה תפקיד': 'Who works with you, and in what role',
-  'פרטי העסק, שעות פעילות וחיוב': 'Business details, opening hours and billing',
   'כל חלקי המערכת': 'Every part of the app',
   'קופסה לכל חלק במערכת, מחולקות כמו בתפריט: שיווק ומכירות, תפעול וניהול. בכל קופסה מספר חי — פניות פתוחות, משימות להיום, תורים היום — ולחיצה פותחת את החלק.':
     'A box for each part of the app, grouped like the menu: Sales & marketing, Operations and Management. Each box shows a live number — open leads, tasks for today, appointments today — and a click opens that part.',

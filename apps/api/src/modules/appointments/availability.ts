@@ -15,9 +15,9 @@ import { zonedTimeToUtc } from '../../lib/time';
  * rule the clash check applies when booking.
  */
 
-export const SLOT_STEP_MIN = 30;
+const SLOT_STEP_MIN = 30;
 /** How soon a customer can book (minutes from now). */
-export const MIN_NOTICE_MIN = 60;
+const MIN_NOTICE_MIN = 60;
 
 export interface FreeTime {
   /** HH:MM, wall clock in the business's time zone. */

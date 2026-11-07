@@ -39,7 +39,7 @@ const leadInclude = {
 } as const;
 type LeadRow = Prisma.LeadGetPayload<{ include: typeof leadInclude }>;
 
-export function toLeadDto(row: LeadRow): Lead {
+function toLeadDto(row: LeadRow): Lead {
   const { whatsapp, ...contact } = row.contact;
   const last = whatsapp[0];
   return {

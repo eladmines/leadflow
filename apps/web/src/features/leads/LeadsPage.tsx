@@ -115,7 +115,7 @@ function InboxNotice({ businessId }: { businessId: string }) {
 }
 
 /** List view card. */
-export function TagChips({ tags }: { tags: string[] }) {
+function TagChips({ tags }: { tags: string[] }) {
   if (tags.length === 0) return null;
   return (
     <ul aria-label={tr('תגיות')} className="flex flex-wrap gap-1">
@@ -128,7 +128,7 @@ export function TagChips({ tags }: { tags: string[] }) {
   );
 }
 
-export function LeadCard({ lead, businessId }: { lead: Lead; businessId: string }) {
+function LeadCard({ lead, businessId }: { lead: Lead; businessId: string }) {
   const phone = lead.contact.phone;
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-surface-border bg-surface p-4 shadow-card sm:p-5">

@@ -175,8 +175,6 @@ export const contactFormSchema = z.object({
   /** F17: let visitors request an appointment (service, date, time), confirmed manually. */
   askAppointment: z.boolean().default(false),
 });
-export type ContactForm = z.infer<typeof contactFormSchema>;
-
 /** Optional image reference (F05); defaults keep drafts saved before F05 valid. */
 const imageRef = z.string().uuid().nullable().default(null);
 const altText = z.string().trim().max(160, siteMessages.textTooLong).default('');
@@ -254,7 +252,6 @@ export const sectionSchema = z.discriminatedUnion('type', [
   }),
 ]);
 export type Section = z.infer<typeof sectionSchema>;
-export type SectionOf<T extends SectionType> = Extract<Section, { type: T }>;
 export type SectionStyle = NonNullable<Section['style']>;
 
 // ---------------------------------------------------------------------------
@@ -543,14 +540,6 @@ export const siteVersionSchema = z.object({
 export type SiteVersion = z.infer<typeof siteVersionSchema>;
 export const siteVersionListResponseSchema = z.object({ versions: z.array(siteVersionSchema) });
 export type SiteVersionListResponse = z.infer<typeof siteVersionListResponseSchema>;
-
-export const siteAuditActions = [
-  'site.created',
-  'site.subdomain.changed',
-  'site.published',
-  'site.rolled_back',
-  'site.unpublished',
-] as const;
 
 export const siteApiPaths = {
   site: (businessId: string) => `/api/v1/businesses/${businessId}/site`,

@@ -48,8 +48,6 @@ export type UpdateMemberRequest = z.infer<typeof updateMemberRequestSchema>;
 export const inviteTokenRequestSchema = z.object({
   token: z.string().regex(AUTH_TOKEN_PATTERN, teamMessages.inviteInvalid),
 });
-export type InviteTokenRequest = z.infer<typeof inviteTokenRequestSchema>;
-
 export const invitePreviewSchema = z.object({
   status: z.enum(['valid', 'expired', 'used', 'revoked']),
   businessName: z.string(),
@@ -62,14 +60,6 @@ export const invitePreviewResponseSchema = z.object({ invite: invitePreviewSchem
 
 export const acceptInviteResponseSchema = z.object({ businessId: z.string().uuid() });
 export type AcceptInviteResponse = z.infer<typeof acceptInviteResponseSchema>;
-
-export const teamAuditActions = [
-  'member.invited',
-  'member.joined',
-  'member.role_changed',
-  'member.removed',
-  'invitation.revoked',
-] as const;
 
 export const teamApiPaths = {
   invitations: (businessId: string) => `/api/v1/businesses/${businessId}/invitations`,

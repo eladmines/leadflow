@@ -9,7 +9,7 @@ export interface RenderedEmail {
 const HOURS = Math.round(EMAIL_VERIFY_TOKEN_TTL_MS / 3_600_000);
 const MINUTES = Math.round(PASSWORD_RESET_TOKEN_TTL_MS / 60_000);
 
-export function escapeHtml(value: string): string {
+function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

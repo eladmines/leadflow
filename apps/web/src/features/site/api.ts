@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 
 const paths = apiPaths.site;
-export const siteQueryKey = (businessId: string) => ['businesses', businessId, 'site'] as const;
+const siteQueryKey = (businessId: string) => ['businesses', businessId, 'site'] as const;
 
 export function useSite(businessId: string) {
   return useQuery({
@@ -93,7 +93,7 @@ export function siteBusinessInfo(b: Business): SiteBusinessInfo {
 // F06 — publishing
 // ---------------------------------------------------------------------------
 
-export const versionsQueryKey = (businessId: string) =>
+const versionsQueryKey = (businessId: string) =>
   [...siteQueryKey(businessId), 'versions'] as const;
 
 /** Mutations that return the site update the cached site (status, live version, address). */
