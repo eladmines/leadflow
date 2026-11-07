@@ -26,6 +26,8 @@ export interface NavItem {
   comingSoon?: { title: string; description: string };
   /** Sidebar section (D-114); the dashboard sits above the sections. */
   group?: NavGroup;
+  /** The section's colour (D-137): its icon in the menu, and the tile by its page title. */
+  color: { icon: string; tile: string };
 }
 
 export type NavGroup = 'sales' | 'operations' | 'management';
@@ -39,17 +41,20 @@ export const navGroupLabels: Record<NavGroup, string> = {
 export const navItems: NavItem[] = [
   {
     segment: '',
+    color: { icon: 'text-brand-600', tile: 'bg-brand-600' },
     label: tr('דשבורד'),
     icon: LayoutDashboard,
   },
   {
     segment: 'site',
+    color: { icon: 'text-sky-500', tile: 'bg-sky-500' },
     group: 'sales',
     label: tr('האתר שלי'),
     icon: Globe,
   },
   {
     segment: 'leads',
+    color: { icon: 'text-violet-500', tile: 'bg-violet-500' },
     group: 'sales',
     label: tr('לקוחות ולידים'),
     icon: Users,
@@ -57,6 +62,7 @@ export const navItems: NavItem[] = [
   // WhatsApp inbox of unclassified numbers (D-092); conversations with customers live on the lead.
   {
     segment: 'conversations',
+    color: { icon: 'text-emerald-500', tile: 'bg-emerald-500' },
     group: 'sales',
     label: tr('שיחות'),
     icon: MessageCircle,
@@ -64,24 +70,28 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'tasks',
+    color: { icon: 'text-amber-500', tile: 'bg-amber-500' },
     group: 'operations',
     label: tr('משימות'),
     icon: ListTodo,
   },
   {
     segment: 'appointments',
+    color: { icon: 'text-rose-500', tile: 'bg-rose-500' },
     group: 'operations',
     label: tr('תורים'),
     icon: CalendarDays,
   },
   {
     segment: 'quotes',
+    color: { icon: 'text-orange-500', tile: 'bg-orange-500' },
     group: 'operations',
     label: tr('הצעות מחיר'),
     icon: FileText,
   },
   {
     segment: 'automations',
+    color: { icon: 'text-slate-400', tile: 'bg-slate-400' },
     group: 'operations',
     label: tr('אוטומציות'),
     icon: Zap,
@@ -94,6 +104,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'reports',
+    color: { icon: 'text-indigo-500', tile: 'bg-indigo-500' },
     group: 'management',
     label: tr('דוחות'),
     icon: ChartColumn,
@@ -101,6 +112,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'team',
+    color: { icon: 'text-teal-500', tile: 'bg-teal-500' },
     group: 'management',
     label: tr('צוות'),
     icon: UsersRound,
@@ -108,8 +120,16 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'settings',
+    color: { icon: 'text-slate-500', tile: 'bg-slate-500' },
     group: 'management',
     label: tr('הגדרות וחיוב'),
     icon: Settings,
   },
 ];
+
+/** The menu item of a path under `/b/:businessId/…` (the dashboard for the business home). */
+export function navItemOf(pathname: string): NavItem | undefined {
+  const m = /^\/b\/[^/]+(?:\/([^/]+))?/.exec(pathname);
+  if (!m) return undefined;
+  return navItems.find((i) => i.segment === (m[1] ?? ''));
+}
