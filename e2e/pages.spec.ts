@@ -28,7 +28,7 @@ test('add an "about" page, publish, and open it on the live site', async ({ page
   await page.goto(`/b/${id}/site`);
   // First the two choices on My website (D-130).
   await page.getByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }).check();
-  await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
+  await page.getByRole('button', { name: 'המשך' }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const preview = page.frameLocator('iframe[title="תצוגה מקדימה של האתר"]');
   await expect(preview.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
@@ -62,7 +62,7 @@ test('an empty page offers its first section right on the page', async ({ page }
   await page.goto(`/b/${id}/site`);
   // First the two choices on My website (D-130).
   await page.getByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }).check();
-  await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
+  await page.getByRole('button', { name: 'המשך' }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const preview = page.frameLocator('iframe[title="תצוגה מקדימה של האתר"]');
   await expect(preview.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
