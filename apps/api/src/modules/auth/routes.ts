@@ -12,7 +12,7 @@ import {
 } from '@leadflow/shared';
 import { authOf, requireAuth } from '../../plugins/session';
 import type { EmailSender } from '../../integrations/email';
-import { AuthService, requestMeta, toAuthUser } from './service';
+import { AuthService, verificationOn, requestMeta, toAuthUser } from './service';
 
 export interface AuthRoutesOptions {
   email: EmailSender;
@@ -23,8 +23,8 @@ const paths = apiPaths.auth;
 /** F01 auth endpoints. Paths, bodies and responses come from the shared contract. */
 export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (app, opts) => {
   const service = new AuthService({ prisma: app.prisma, email: opts.email, config: app.config });
-  // No email going out (D-120) → nothing to verify, so the app doesn't ask (D-122).
-  const emailVerification = app.config.EMAIL_TRANSPORT !== 'disabled';
+  // Only when turned on (D-133) and email actually goes out (D-120, D-122).
+  const emailVerification = verificationOn(app.config);
 
   // Per client IP, per route (each route gets its own counter store), D-023.
   const rateLimit = {

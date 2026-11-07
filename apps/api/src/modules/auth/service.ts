@@ -90,6 +90,10 @@ function isUniqueViolation(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 }
 
+/** Whether users are asked to verify their email: turned on (D-133) and email goes out (D-122). */
+export const verificationOn = (config: AppConfig) =>
+  config.EMAIL_VERIFICATION === 'on' && config.EMAIL_TRANSPORT !== 'disabled';
+
 export class AuthService {
   constructor(private readonly deps: AuthServiceDeps) {}
 
@@ -145,7 +149,9 @@ export class AuthService {
       throw err;
     }
 
-    await this.sendVerificationEmail(result.user, verifyToken, 'register', meta);
+    if (verificationOn(this.deps.config)) {
+      await this.sendVerificationEmail(result.user, verifyToken, 'register', meta);
+    }
     return result;
   }
 
@@ -245,9 +251,9 @@ export class AuthService {
     );
   }
 
-  /** Already verified → no-op (D-022). Earlier unused verify links stay valid. */
+  /** Already verified, or verification off (D-133) → no-op (D-022). Earlier unused links stay valid. */
   async resendVerification(user: User, meta: RequestMeta): Promise<void> {
-    if (user.emailVerifiedAt !== null) return;
+    if (user.emailVerifiedAt !== null || !verificationOn(this.deps.config)) return;
     const token = generateToken();
     await repo.createAuthToken(this.prisma, {
       userId: user.id,
