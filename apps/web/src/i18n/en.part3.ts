@@ -591,4 +591,26 @@ export const enPart3: Record<string, string> = {
   'שמירת הגדרות הבוט': 'Save bot settings',
   'השינויים בהגדרות הבוט נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה.':
     'Changes to the bot settings take effect only after clicking here. Until then you see "You have unsaved changes", and "Discard changes" puts things back.',
+  // Dashboard tiles (D-124)
+  'עוד לא נבנה': 'Not built yet',
+  '{0} פתוחות': '{0} open',
+  '{0} מחכים לסיווג': '{0} waiting to classify',
+  '{0} באיחור': '{0} overdue',
+  '{0} להיום': '{0} for today',
+  '{0} היום': '{0} today',
+  '{0} מחכות לתשובה': '{0} awaiting a reply',
+  'מבט על העסק': 'Your business at a glance',
+  'בונים ומעדכנים את אתר העסק': "Build and update your business's website",
+  'כל הפניות והלקוחות, לפי שלב': 'Every inquiry and customer, by stage',
+  'וואטסאפ, מענה אוטומטי וסטטוס': 'WhatsApp, automatic reply and status',
+  'מה צריך לעשות ומתי': 'What needs doing, and when',
+  'היומן, תורים ובקשות': 'The calendar, appointments and requests',
+  'הצעות מחיר שהלקוח מאשר אונליין': 'Quotes customers approve online',
+  'תהליכים שרצים לבד': 'Processes that run by themselves',
+  'כמה פניות, מאיפה ומה נסגר': 'How many inquiries, from where, and what closed',
+  'מי עובד איתך ובאיזה תפקיד': 'Who works with you, and in what role',
+  'פרטי העסק, שעות פעילות וחיוב': 'Business details, opening hours and billing',
+  'כל חלקי המערכת': 'Every part of the app',
+  'קופסה לכל חלק במערכת, מחולקות כמו בתפריט: שיווק ומכירות, תפעול וניהול. בכל קופסה מספר חי — פניות פתוחות, משימות להיום, תורים היום — ולחיצה פותחת את החלק.':
+    'A box for each part of the app, grouped like the menu: Sales & marketing, Operations and Management. Each box shows a live number — open leads, tasks for today, appointments today — and a click opens that part.',
 };

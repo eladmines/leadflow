@@ -183,6 +183,41 @@ describe('dashboard', () => {
     await screen.findByRole('list', { name: 'פניות אחרונות' });
     expect(screen.queryByRole('region', { name: 'השבוע במספרים' })).not.toBeInTheDocument();
   });
+
+  it('shows a box for every section, in the sidebar groups, with live counts (D-124)', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.leads.list(testBusiness.id)}`]: () => json(200, { leads: [someLead] }),
+    });
+    renderApp(home);
+    const sales = await screen.findByRole('region', { name: 'שיווק ומכירות' });
+    expect(within(sales).getByRole('link', { name: /לקוחות ולידים/ })).toHaveAttribute(
+      'href',
+      `/b/${testBusiness.id}/leads`,
+    );
+    expect(await within(sales).findByText('1 פתוחות')).toBeInTheDocument();
+    expect(within(sales).getByText('עוד לא נבנה')).toBeInTheDocument();
+    const operations = screen.getByRole('region', { name: 'תפעול' });
+    expect(
+      within(operations)
+        .getAllByRole('link')
+        .map((l) => l.textContent),
+    ).toEqual([
+      expect.stringContaining('משימות'),
+      expect.stringContaining('תורים'),
+      expect.stringContaining('הצעות מחיר'),
+      expect.stringContaining('אוטומציות'),
+    ]);
+    expect(screen.getByRole('region', { name: 'ניהול' })).toBeInTheDocument();
+  });
+
+  it("an employee's boxes are only the sections they can open", async () => {
+    mockApi({ [meKey]: me(testUser), ...asRole('EMPLOYEE') });
+    renderApp(home);
+    const management = await screen.findByRole('region', { name: 'ניהול' });
+    expect(within(management).queryByRole('link', { name: /צוות/ })).not.toBeInTheDocument();
+    expect(within(management).queryByRole('link', { name: /דוחות/ })).not.toBeInTheDocument();
+  });
 });
 
 describe('roles in the shell', () => {

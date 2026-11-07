@@ -28,6 +28,8 @@ export interface NavItem {
   group?: NavGroup;
   /** Colour of the item's icon tile (D-114). */
   tone: string;
+  /** One line about the section, for the dashboard's tiles (D-124). */
+  description: string;
 }
 
 export type NavGroup = 'sales' | 'operations' | 'management';
@@ -39,10 +41,24 @@ export const navGroupLabels: Record<NavGroup, string> = {
 
 /** Navigation map, in the order of the UX spec (doc 03). */
 export const navItems: NavItem[] = [
-  { segment: '', tone: 'bg-brand-600', label: tr('דשבורד'), icon: LayoutDashboard },
-  { segment: 'site', group: 'sales', tone: 'bg-sky-500', label: tr('האתר שלי'), icon: Globe },
+  {
+    segment: '',
+    description: tr('מבט על העסק'),
+    tone: 'bg-brand-600',
+    label: tr('דשבורד'),
+    icon: LayoutDashboard,
+  },
+  {
+    segment: 'site',
+    description: tr('בונים ומעדכנים את אתר העסק'),
+    group: 'sales',
+    tone: 'bg-sky-500',
+    label: tr('האתר שלי'),
+    icon: Globe,
+  },
   {
     segment: 'leads',
+    description: tr('כל הפניות והלקוחות, לפי שלב'),
     group: 'sales',
     tone: 'bg-violet-500',
     label: tr('לקוחות ולידים'),
@@ -51,6 +67,7 @@ export const navItems: NavItem[] = [
   // WhatsApp inbox of unclassified numbers (D-092); conversations with customers live on the lead.
   {
     segment: 'conversations',
+    description: tr('וואטסאפ, מענה אוטומטי וסטטוס'),
     group: 'sales',
     tone: 'bg-emerald-500',
     label: tr('שיחות'),
@@ -59,6 +76,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'tasks',
+    description: tr('מה צריך לעשות ומתי'),
     group: 'operations',
     tone: 'bg-amber-500',
     label: tr('משימות'),
@@ -66,6 +84,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'appointments',
+    description: tr('היומן, תורים ובקשות'),
     group: 'operations',
     tone: 'bg-rose-500',
     label: tr('תורים'),
@@ -73,6 +92,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'quotes',
+    description: tr('הצעות מחיר שהלקוח מאשר אונליין'),
     group: 'operations',
     tone: 'bg-orange-500',
     label: tr('הצעות מחיר'),
@@ -80,6 +100,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'automations',
+    description: tr('תהליכים שרצים לבד'),
     group: 'operations',
     tone: 'bg-slate-400',
     label: tr('אוטומציות'),
@@ -93,6 +114,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'reports',
+    description: tr('כמה פניות, מאיפה ומה נסגר'),
     group: 'management',
     tone: 'bg-indigo-500',
     label: tr('דוחות'),
@@ -101,6 +123,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'team',
+    description: tr('מי עובד איתך ובאיזה תפקיד'),
     group: 'management',
     tone: 'bg-teal-500',
     label: tr('צוות'),
@@ -109,6 +132,7 @@ export const navItems: NavItem[] = [
   },
   {
     segment: 'settings',
+    description: tr('פרטי העסק, שעות פעילות וחיוב'),
     group: 'management',
     tone: 'bg-slate-500',
     label: tr('הגדרות וחיוב'),
