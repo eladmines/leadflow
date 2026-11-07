@@ -654,4 +654,5 @@ export const enPart3: Record<string, string> = {
   'האתר באוויר': 'Your site is live',
   'טיוטה — עוד לא פורסם': 'Draft — not published yet',
   'עוד לא בניתם אתר': "You haven't built a site yet",
+  'מה זה {0}?': 'What is {0}?',
 };

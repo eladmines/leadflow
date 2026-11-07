@@ -1,5 +1,6 @@
 import { businessWebPaths, can, type Business } from '@leadflow/shared';
 import { Link } from 'react-router-dom';
+import { HelpTip } from './HelpTip';
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';
 import { useAppointments } from '../appointments/api';
@@ -97,10 +98,9 @@ export function FeatureTiles({ business }: { business: Business }) {
                 const s = status[segment];
                 return (
                   <li key={segment}>
-                    <Link
-                      to={businessWebPaths.section(id, segment)}
+                    <div
                       className={cn(
-                        'group flex h-full items-start gap-3 rounded-xl border border-surface-border bg-surface p-4 shadow-card transition hover:border-brand-300 hover:shadow-lift',
+                        'group relative flex h-full items-start gap-3 rounded-xl border border-surface-border bg-surface p-4 shadow-card transition focus-within:border-brand-300 hover:border-brand-300 hover:shadow-lift',
                         comingSoon && 'opacity-70',
                       )}
                     >
@@ -113,22 +113,26 @@ export function FeatureTiles({ business }: { business: Business }) {
                       >
                         <Icon className="h-5 w-5" />
                       </span>
-                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-ink group-hover:text-brand-700">
+                      <span className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          {/* The name is the link, stretched over the whole box. */}
+                          <Link
+                            to={businessWebPaths.section(id, segment)}
+                            className="font-semibold text-ink after:absolute after:inset-0 after:rounded-xl group-hover:text-brand-700 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:after:ring-2 focus-visible:after:ring-brand-500"
+                          >
                             {label}
-                          </span>
+                          </Link>
+                          <HelpTip label={label} text={description} />
                           {comingSoon && (
                             <span className="rounded-md bg-surface-sunken px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">
                               {tr('בקרוב')}
                             </span>
                           )}
                         </span>
-                        <span className="text-sm text-ink-muted">{description}</span>
                         {s && (
                           <span
                             className={cn(
-                              'mt-1.5 self-start rounded-full px-2 py-0.5 text-xs font-medium',
+                              'self-start rounded-full px-2 py-0.5 text-xs font-medium',
                               s.tone === 'attention'
                                 ? 'bg-amber-50 text-amber-800'
                                 : s.tone === 'good'
@@ -140,7 +144,7 @@ export function FeatureTiles({ business }: { business: Business }) {
                           </span>
                         )}
                       </span>
-                    </Link>
+                    </div>
                   </li>
                 );
               })}
