@@ -78,9 +78,8 @@ describe('page tours (D-096)', () => {
           },
         }),
     });
-    const { user } = renderApp(section('conversations'));
-    await screen.findByText('WhatsApp עדיין לא מחובר');
-    await screen.findByRole('heading', { name: 'בוט קביעת תורים' });
+    const { user } = renderApp(`${section('conversations')}?tab=auto`);
+    await screen.findByRole('heading', { name: 'הגדרות הבוט' });
     await openPageTour(user);
     // Nothing to classify and no personal numbers: those steps are skipped.
     const titles: string[] = [];
@@ -93,12 +92,12 @@ describe('page tours (D-096)', () => {
     }
     expect(titles).toEqual([
       'שיחות WhatsApp',
+      'שלושה חלקים',
       'רענון',
-      'מענה אוטומטי',
-      'הסטטוס שלך עכשיו',
+      // Booking mode: no status; the bot's settings follow the mode.
       'מה קורה כשלקוח כותב',
       'שמירת ההגדרות',
-      'בוט קביעת התורים',
+      'הגדרות הבוט',
       'איך לקוחות מזמינים',
       'אישור התורים',
       'שמירת הגדרות הבוט',

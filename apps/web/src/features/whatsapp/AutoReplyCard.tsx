@@ -8,9 +8,9 @@ import {
   type ReplyMode,
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
-import { MessageSquareReply, Plus, Trash2, Video, X } from 'lucide-react';
+import { Plus, Trash2, Video, X } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
-import { Alert, Button, Card, Field, Textarea } from '../../components/ui';
+import { Alert, Button, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -62,26 +62,16 @@ export function AutoReplyCard({ businessId }: { businessId: string }) {
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   return (
-    <Card className="flex flex-col gap-5">
-      <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-          <MessageSquareReply aria-hidden className="h-5 w-5" />
-        </span>
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-ink">{tr('מענה אוטומטי')}</h2>
-          <p className="text-sm text-ink-muted">
-            {tr(
-              'מה קורה כשלקוח כותב לעסק בוואטסאפ. המענה לא נשלח למספרים פרטיים, ללקוחות שעצרתם להם את הבוט, ולשיחה שמישהו מהצוות כתב בה לאחרונה.',
-            )}
-          </p>
-        </div>
-      </div>
+    <div className="flex flex-col gap-5">
       {!bot.data.connected && (
         <p className="text-sm text-ink-muted">
           {tr('המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.')}
         </p>
       )}
-      <StatusNow businessId={businessId} settings={bot.data.settings} />
+      {/* The status is what the automatic reply sends; other modes don't use it (D-129). */}
+      {bot.data.settings.mode === 'auto_reply' && (
+        <StatusNow businessId={businessId} settings={bot.data.settings} />
+      )}
       <ReplySettings
         key={settingsKey(bot.data.settings)}
         businessId={businessId}
@@ -89,7 +79,7 @@ export function AutoReplyCard({ businessId }: { businessId: string }) {
         justSaved={justSaved}
         onSaved={setJustSaved}
       />
-    </Card>
+    </div>
   );
 }
 
@@ -168,11 +158,6 @@ function StatusNow({ businessId, settings }: { businessId: string; settings: Sav
             </option>
           ))}
         </select>
-        {settings.mode !== 'auto_reply' && (
-          <span className="text-xs text-warning-600">
-            {tr('הסטטוס נשלח רק כשהמצב הוא "מענה אוטומטי".')}
-          </span>
-        )}
       </div>
       {setStatus.isError && <Alert tone="danger">{errorMessage(setStatus.error)}</Alert>}
     </section>
@@ -201,6 +186,8 @@ function ReplySettings({
   const [text, setText] = useState(initial.text);
   const [statuses, setStatuses] = useState<DraftStatus[]>(initial.statuses);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** The status whose fields are open (one at a time keeps the list short). */
+  const [editing, setEditing] = useState<string | null>(null);
   const done = justSaved;
   const setDone = onSaved;
   const dirty = JSON.stringify({ mode, text, statuses }) !== JSON.stringify(initial);
@@ -237,30 +224,27 @@ function ReplySettings({
     <div className="flex flex-col gap-5">
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium text-ink">{tr('מה קורה כשלקוח כותב:')}</legend>
-        {REPLY_MODES.map((m) => (
-          <div key={m} className="flex items-start gap-2 text-sm text-ink">
-            <input
-              id={`reply-mode-${m}`}
-              type="radio"
-              name="reply-mode"
-              checked={mode === m}
-              aria-describedby={`reply-mode-${m}-help`}
-              onChange={() => {
-                setDone(false);
-                setMode(m);
-              }}
-              className="mt-0.5 h-4 w-4 accent-brand-600"
-            />
-            <div className="flex flex-col">
-              <label htmlFor={`reply-mode-${m}`} className="font-medium">
-                {tr(replyModeLabels[m])}
-              </label>
-              <span id={`reply-mode-${m}-help`} className="text-xs text-ink-muted">
-                {tr(modeHelp[m])}
-              </span>
-            </div>
-          </div>
-        ))}
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          {REPLY_MODES.map((m) => (
+            <label key={m} className="flex items-center gap-2 text-sm font-medium text-ink">
+              <input
+                type="radio"
+                name="reply-mode"
+                checked={mode === m}
+                aria-describedby="reply-mode-help"
+                onChange={() => {
+                  setDone(false);
+                  setMode(m);
+                }}
+                className="h-4 w-4 accent-brand-600"
+              />
+              {tr(replyModeLabels[m])}
+            </label>
+          ))}
+        </div>
+        <p id="reply-mode-help" className="text-xs text-ink-muted">
+          {tr(modeHelp[mode])}
+        </p>
       </fieldset>
 
       {mode === 'auto_reply' && (
@@ -291,16 +275,52 @@ function ReplySettings({
                 )}
               </span>
             </div>
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col divide-y divide-surface-border rounded-xl border border-surface-border">
               {statuses.map((s, i) => {
                 const stored = saved.statuses.find((x) => x.id === s.id);
+                const open =
+                  editing === s.id || Boolean(errors[`${i}.label`] || errors[`${i}.text`]);
                 return (
-                  <li
-                    key={s.id}
-                    className="flex flex-col gap-3 rounded-xl border border-surface-border p-3"
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1">
+                  <li key={s.id} className="flex flex-col gap-3 p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-ink" dir="auto">
+                          {s.label || tr('סטטוס חדש')}
+                        </p>
+                        {!open && (
+                          <p className="truncate text-xs text-ink-muted" dir="auto">
+                            {s.text || tr('עוד אין הודעה')}
+                          </p>
+                        )}
+                      </div>
+                      {stored?.video && (
+                        <span className="flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-xs text-ink-muted">
+                          <Video aria-hidden className="h-3.5 w-3.5" />
+                          {tr('סרטון')}
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-expanded={open}
+                        aria-label={tr('עריכת הסטטוס {0}', s.label || tr('חדש'))}
+                        onClick={() => setEditing(open ? null : s.id)}
+                      >
+                        {open ? tr('סגירה') : tr('עריכה')}
+                      </Button>
+                      {!stored?.preset && (
+                        <button
+                          type="button"
+                          aria-label={tr('מחיקת הסטטוס {0}', s.label || tr('חדש'))}
+                          onClick={() => setStatuses((list) => list.filter((_, j) => j !== i))}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-danger-50 hover:text-danger-600"
+                        >
+                          <Trash2 aria-hidden className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {open && (
+                      <div className="flex flex-col gap-3">
                         <Field
                           label={tr('שם הסטטוס')}
                           dir="auto"
@@ -309,27 +329,17 @@ function ReplySettings({
                           error={errors[`${i}.label`]}
                           onChange={(e) => edit(i, { label: e.target.value })}
                         />
+                        <Textarea
+                          label={tr('ההודעה ללקוח')}
+                          dir="auto"
+                          value={s.text}
+                          rows={2}
+                          error={errors[`${i}.text`]}
+                          onChange={(e) => edit(i, { text: e.target.value })}
+                        />
+                        <StatusVideo businessId={businessId} statusId={s.id} stored={stored} />
                       </div>
-                      {!stored?.preset && (
-                        <button
-                          type="button"
-                          aria-label={tr('מחיקת הסטטוס {0}', s.label || tr('חדש'))}
-                          onClick={() => setStatuses((list) => list.filter((_, j) => j !== i))}
-                          className="mt-7 flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted hover:bg-danger-50 hover:text-danger-600"
-                        >
-                          <Trash2 aria-hidden className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                    <Textarea
-                      label={tr('ההודעה ללקוח')}
-                      dir="auto"
-                      value={s.text}
-                      rows={2}
-                      error={errors[`${i}.text`]}
-                      onChange={(e) => edit(i, { text: e.target.value })}
-                    />
-                    <StatusVideo businessId={businessId} statusId={s.id} stored={stored} />
+                    )}
                   </li>
                 );
               })}
@@ -341,10 +351,9 @@ function ReplySettings({
                 className="self-start"
                 onClick={() => {
                   setDone(false);
-                  setStatuses((list) => [
-                    ...list,
-                    { id: `c-${Date.now().toString(36)}`, label: '', text: '' },
-                  ]);
+                  const id = `c-${Date.now().toString(36)}`;
+                  setStatuses((list) => [...list, { id, label: '', text: '' }]);
+                  setEditing(id);
                 }}
               >
                 <Plus aria-hidden className="h-4 w-4" />

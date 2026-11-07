@@ -1,7 +1,7 @@
 import { businessWebPaths, can, formatIsraeliPhone, type InboxNumber } from '@leadflow/shared';
 import { Briefcase, UserX } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Card, EmptyState, RefreshButton, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -25,18 +25,42 @@ export function ConversationsPage() {
   return <Inbox businessId={business.id} />;
 }
 
+const TABS = ['messages', 'auto', 'personal'] as const;
+type Tab = (typeof TABS)[number];
+
+/**
+ * One page, three tabs (D-129): the messages waiting for you (default), the automatic reply and
+ * booking bot settings, and the numbers marked personal. The tab is kept in the address.
+ */
 function Inbox({ businessId }: { businessId: string }) {
   const inbox = useWhatsAppInbox(businessId);
+  const personal = usePersonalNumbers(businessId);
   const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = (TABS as readonly string[]).includes(params.get('tab') ?? '')
+    ? (params.get('tab') as Tab)
+    : 'messages';
   const [done, setDone] = useState<{ name: string; leadId: string | null } | null>(null);
+  const waiting = inbox.data?.numbers.length ?? 0;
+  const labels: Record<Tab, string> = {
+    messages: tr('הודעות'),
+    auto: tr('מענה אוטומטי'),
+    personal: tr('מספרים פרטיים'),
+  };
+  const counts: Partial<Record<Tab, number>> = {
+    messages: waiting || undefined,
+    personal: personal.data?.length || undefined,
+  };
 
   return (
-    <>
+    <section
+      aria-label={tr('שיחות WhatsApp')}
+      className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
+    >
       <PageHeader
+        inPanel
         title={tr('שיחות WhatsApp')}
-        description={tr(
-          'הודעות ממספרים חדשים מחכות כאן עד שתחליטו: לקוח או פרטי. ההחלטה נשמרת, וההודעות הבאות מאותו מספר יגיעו למקום הנכון לבד.',
-        )}
+        description={tr('הודעות ממספרים חדשים, ותשובה אוטומטית ללקוחות כשאתם עסוקים.')}
         actions={
           <RefreshButton
             onRefresh={() =>
@@ -45,55 +69,115 @@ function Inbox({ businessId }: { businessId: string }) {
           />
         }
       />
-      {done && (
-        <Alert tone="success">
-          {done.leadId ? (
-            <>
-              {done.name} {tr('נוסף/ה כליד.')}{' '}
-              <Link
-                to={`${businessWebPaths.section(businessId, 'leads')}/${done.leadId}`}
-                className="font-medium underline"
+      <div
+        role="tablist"
+        aria-label={tr('חלקי העמוד')}
+        className="flex gap-1 overflow-x-auto border-b border-surface-border px-4 sm:px-5"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t}
+            id={`tab-${t}`}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={`panel-${t}`}
+            onClick={() => setParams(t === 'messages' ? {} : { tab: t }, { replace: true })}
+            className={cn(
+              '-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors',
+              tab === t
+                ? 'border-brand-600 text-brand-700'
+                : 'border-transparent text-ink-muted hover:text-ink',
+            )}
+          >
+            {labels[t]}
+            {counts[t] && (
+              <span
+                className={cn(
+                  'rounded-full px-1.5 text-xs',
+                  t === 'messages'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-surface-sunken text-ink-muted',
+                )}
               >
-                {tr('פתיחת הליד')}
-              </Link>
-            </>
-          ) : (
-            tr(
-              '{0} סומן/ה כפרטי. ההודעות נמחקו, והודעות הבאות מהמספר הזה לא ייכנסו למערכת.',
-              done.name,
-            )
-          )}
-        </Alert>
-      )}
-      {inbox.isPending ? (
-        <Spinner label={tr('טוענים את השיחות…')} />
-      ) : inbox.isError ? (
-        <Alert tone="danger">{errorMessage(inbox.error)}</Alert>
-      ) : !inbox.data.connected && inbox.data.numbers.length === 0 ? (
-        <EmptyState
-          title={tr('WhatsApp עדיין לא מחובר')}
-          description={tr('אחרי חיבור מספר WhatsApp לעסק, הודעות ממספרים חדשים יופיעו כאן לסיווג.')}
-        />
-      ) : inbox.data.numbers.length === 0 ? (
-        <EmptyState
-          title={tr('אין הודעות שמחכות לסיווג')}
-          description={tr(
-            'הודעות מלקוחות מוכרים נכנסות ישר לליד שלהם. כשמספר חדש יכתוב, הוא יופיע כאן.',
-          )}
-        />
-      ) : (
-        <ul aria-label={tr('מספרים שמחכים לסיווג')} className="flex flex-col gap-4">
-          {inbox.data.numbers.map((n) => (
-            <li key={n.id}>
-              <NumberCard businessId={businessId} number={n} onDone={setDone} />
-            </li>
-          ))}
-        </ul>
-      )}
-      <AutoReplyCard businessId={businessId} />
-      <BookingBotCard businessId={businessId} />
-      <PersonalNumbers businessId={businessId} />
-    </>
+                {counts[t]}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div
+        id={`panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${tab}`}
+        className="flex flex-col gap-4 p-4 sm:p-5"
+      >
+        {tab === 'messages' && (
+          <>
+            {done && (
+              <Alert tone="success">
+                {done.leadId ? (
+                  <>
+                    {done.name} {tr('נוסף/ה כליד.')}{' '}
+                    <Link
+                      to={`${businessWebPaths.section(businessId, 'leads')}/${done.leadId}`}
+                      className="font-medium underline"
+                    >
+                      {tr('פתיחת הליד')}
+                    </Link>
+                  </>
+                ) : (
+                  tr(
+                    '{0} סומן/ה כפרטי. ההודעות נמחקו, והודעות הבאות מהמספר הזה לא ייכנסו למערכת.',
+                    done.name,
+                  )
+                )}
+              </Alert>
+            )}
+            {inbox.isPending ? (
+              <Spinner label={tr('טוענים את השיחות…')} />
+            ) : inbox.isError ? (
+              <Alert tone="danger">{errorMessage(inbox.error)}</Alert>
+            ) : !inbox.data.connected && inbox.data.numbers.length === 0 ? (
+              <EmptyState
+                title={tr('WhatsApp עדיין לא מחובר')}
+                description={tr(
+                  'אחרי חיבור מספר WhatsApp לעסק, הודעות ממספרים חדשים יופיעו כאן לסיווג.',
+                )}
+              />
+            ) : inbox.data.numbers.length === 0 ? (
+              <EmptyState
+                title={tr('אין הודעות שמחכות לסיווג')}
+                description={tr(
+                  'הודעות מלקוחות מוכרים נכנסות ישר לליד שלהם. כשמספר חדש יכתוב, הוא יופיע כאן.',
+                )}
+              />
+            ) : (
+              <>
+                <p className="text-sm text-ink-muted">
+                  {tr('מספרים חדשים שכתבו לכם. החליטו: לקוח (נוצר ליד) או פרטי (ההודעות נמחקות).')}
+                </p>
+                <ul aria-label={tr('מספרים שמחכים לסיווג')} className="flex flex-col gap-4">
+                  {inbox.data.numbers.map((n) => (
+                    <li key={n.id}>
+                      <NumberCard businessId={businessId} number={n} onDone={setDone} />
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        )}
+        {tab === 'auto' && (
+          <>
+            <AutoReplyCard businessId={businessId} />
+            <BookingBotCard businessId={businessId} />
+          </>
+        )}
+        {tab === 'personal' && <PersonalNumbers businessId={businessId} />}
+      </div>
+    </section>
   );
 }
 
@@ -187,24 +271,28 @@ function NumberCard({
 function PersonalNumbers({ businessId }: { businessId: string }) {
   const personal = usePersonalNumbers(businessId);
   const forget = useForgetPersonal(businessId);
-  if (personal.isPending || personal.isError || personal.data.length === 0) return null;
+  if (personal.isPending) return <Spinner label={tr('טוענים…')} />;
+  if (personal.isError) return <Alert tone="danger">{errorMessage(personal.error)}</Alert>;
+  if (personal.data.length === 0) {
+    return (
+      <EmptyState
+        title={tr('אין מספרים פרטיים')}
+        description={tr('מספר שתסמנו כפרטי (חברים, משפחה) יופיע כאן, וההודעות שלו לא יישמרו.')}
+      />
+    );
+  }
   return (
-    <details className="rounded-xl border border-surface-border bg-surface p-4">
-      <summary className="cursor-pointer text-sm font-medium text-ink">
-        {tr('מספרים פרטיים (')}
-        {personal.data.length})
-      </summary>
-      <p className="mt-2 text-xs text-ink-muted">
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-ink-muted">
         {tr('הודעות מהמספרים האלה לא נשמרות. ביטול הסימון מחזיר את ההודעה הבאה מהמספר לתיבה.')}
       </p>
-      {forget.isError && (
-        <div className="mt-2">
-          <Alert tone="danger">{errorMessage(forget.error)}</Alert>
-        </div>
-      )}
-      <ul aria-label={tr('מספרים פרטיים')} className="mt-3 divide-y divide-surface-border">
+      {forget.isError && <Alert tone="danger">{errorMessage(forget.error)}</Alert>}
+      <ul
+        aria-label={tr('מספרים פרטיים')}
+        className="divide-y divide-surface-border rounded-xl border border-surface-border"
+      >
         {personal.data.map((p) => (
-          <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+          <li key={p.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
             <bdi dir="ltr" className="text-sm text-ink">
               {showPhone(p.phone)}
             </bdi>
@@ -220,6 +308,6 @@ function PersonalNumbers({ businessId }: { businessId: string }) {
           </li>
         ))}
       </ul>
-    </details>
+    </div>
   );
 }

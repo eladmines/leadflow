@@ -18,6 +18,8 @@ const id = testBusiness.id;
 const wp = apiPaths.whatsapp;
 const meKey = `GET ${apiPaths.auth.me}`;
 const page = businessWebPaths.section(id, 'conversations');
+/** The automatic reply and bot settings have their own tab (D-129). */
+const autoTab = `${page}?tab=auto`;
 
 const number: InboxNumber = {
   id: '9a000000-0000-4000-8000-000000000001',
@@ -107,7 +109,7 @@ describe('WhatsApp conversations inbox', () => {
     const fetchMock = mockApi(
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(autoTab);
     const pending = await screen.findByRole('radio', { name: /ממתינים לאישור שלכם/ });
     const saveButton = screen.getByRole('button', { name: 'שמירת הגדרות הבוט' });
     expect(saveButton).toBeDisabled();
@@ -133,7 +135,7 @@ describe('WhatsApp conversations inbox', () => {
 
   it('"Discard changes" puts the saved settings back', async () => {
     mockApi(routes({ connected: true, numbers: [] }));
-    const { user } = renderApp(page);
+    const { user } = renderApp(autoTab);
     await user.click(await screen.findByRole('radio', { name: /ממתינים לאישור שלכם/ }));
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
     expect(screen.getByRole('radio', { name: 'מאושרים מיד' })).toBeChecked();
@@ -151,15 +153,20 @@ describe('WhatsApp conversations inbox', () => {
         },
       ),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(autoTab);
     expect(await screen.findByRole('radio', { name: 'מענה אוטומטי' })).toBeChecked();
     expect(screen.queryByRole('button', { name: 'שמירת הגדרות הבוט' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('ההודעה הכללית')).toHaveValue(
       AUTO_REPLY_DEFAULT.replace('{business}', '[שם העסק]'),
     );
-    expect(screen.getAllByLabelText('שם הסטטוס').map((i) => (i as HTMLInputElement).value)).toEqual(
-      ['באירוע', 'בפגישה', 'בחופשה', 'סגור עכשיו'],
-    );
+    // Statuses are short rows; their fields open with "Edit".
+    for (const name of ['באירוע', 'בפגישה', 'בחופשה', 'סגור עכשיו']) {
+      expect(screen.getByRole('button', { name: `עריכת הסטטוס ${name}` })).toBeInTheDocument();
+    }
+    expect(screen.queryByLabelText('שם הסטטוס')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'עריכת הסטטוס באירוע' }));
+    expect(screen.getByLabelText('שם הסטטוס')).toHaveValue('באירוע');
+    await user.click(screen.getByRole('button', { name: 'עריכת הסטטוס באירוע' }));
 
     // An own status needs a name and a message.
     await user.click(screen.getByRole('button', { name: 'הוספת סטטוס' }));
@@ -200,7 +207,7 @@ describe('WhatsApp conversations inbox', () => {
         },
       ),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(autoTab);
     const statuses = await screen.findByRole('group', { name: 'בחירת סטטוס' });
     expect(within(statuses).getByRole('button', { name: 'זמין' })).toHaveAttribute(
       'aria-pressed',
@@ -232,7 +239,7 @@ describe('WhatsApp conversations inbox', () => {
         },
       ),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(autoTab);
     await user.click(await screen.findByText('עריכת ההודעות של הבוט'));
     // Placeholders read as tags in the owner's language, not codes.
     expect(screen.getByLabelText('הודעת פתיחה')).toHaveValue(
@@ -278,7 +285,7 @@ describe('WhatsApp conversations inbox', () => {
         },
       ),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(autoTab);
     await user.click(await screen.findByText('בינתיים, הצצה לעבודות שלנו'));
     // The industry's default message, ready to edit.
     expect(screen.getByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
@@ -321,7 +328,7 @@ describe('WhatsApp conversations inbox', () => {
     const fetchMock = mockApi(
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(autoTab);
     const events = await screen.findByRole('radio', { name: /בקשות לאירוע/ });
     expect(screen.getByRole('radio', { name: /תורים בשעות פנויות/ })).toBeChecked();
     expect(screen.getByText('(מתאים לתחום שלכם)')).toBeInTheDocument();
@@ -330,7 +337,7 @@ describe('WhatsApp conversations inbox', () => {
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );
-    expect(await screen.findByText(/הבקשה נכנסת ל"בקשות ממתינות לאישור"/)).toBeInTheDocument();
+    expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד התורים/)).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: 'מאושרים מיד' })).not.toBeInTheDocument();
     await user.click(screen.getByText('עריכת ההודעות של הבוט'));
     expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();
@@ -418,7 +425,7 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(page);
     expect(await screen.findByText('אין הודעות שמחכות לסיווג')).toBeInTheDocument();
-    await user.click(await screen.findByText('מספרים פרטיים (1)'));
+    await user.click(screen.getByRole('tab', { name: /מספרים פרטיים/ }));
     await user.click(screen.getByRole('button', { name: 'ביטול סימון פרטי ל-052-1112233' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'DELETE', wp.number(id, personalId))).toHaveLength(1),
