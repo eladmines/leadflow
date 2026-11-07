@@ -87,7 +87,7 @@ export function BusinessLayout() {
       </a>
 
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 overflow-y-auto border-e border-surface-border bg-surface lg:block">
-        <Sidebar business={b} />
+        <Sidebar business={b} expandAll={tourOpen} />
       </aside>
       <CommandPalette business={b} open={paletteOpen} onOpenChange={setPaletteOpen} />
       <ProductTour role={b.role} open={tourOpen} onClose={closeTour} />

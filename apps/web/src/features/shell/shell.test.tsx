@@ -27,8 +27,12 @@ const mainNav = () => screen.getAllByRole('navigation', { name: 'ניווט רא
 describe('app shell', () => {
   it('shows the full navigation in the UX-spec order and marks the current page', async () => {
     mockApi({ [meKey]: me(testUser) });
-    renderApp(home);
+    const { user } = renderApp(home);
     await screen.findByRole('heading', { name: /(בוקר טוב|צהריים טובים|ערב טוב), דנה/ });
+    // Topics start closed on the dashboard (D-125); open them all.
+    for (const topic of ['שיווק ומכירות', 'תפעול', 'ניהול']) {
+      await user.click(within(mainNav()).getByRole('button', { name: new RegExp(topic) }));
+    }
     const links = within(mainNav()).getAllByRole('link');
     expect(links.map((l) => l.textContent?.replace(/\(?בקרוב\)?/g, '').trim())).toEqual([
       'דשבורד',
@@ -47,6 +51,23 @@ describe('app shell', () => {
       'aria-current',
       'page',
     );
+  });
+
+  it("menu topics open and close, the current page's topic opens itself, and it is remembered (D-125)", async () => {
+    mockApi({ [meKey]: me(testUser) });
+    const { user } = renderApp(section('tasks'));
+    await screen.findByRole('heading', { name: 'משימות', level: 1 });
+    const operations = within(mainNav()).getByRole('button', { name: /תפעול/ });
+    expect(operations).toHaveAttribute('aria-expanded', 'true');
+    expect(within(mainNav()).getByRole('link', { name: 'משימות' })).toBeVisible();
+    const sales = within(mainNav()).getByRole('button', { name: /שיווק ומכירות/ });
+    expect(sales).toHaveAttribute('aria-expanded', 'false');
+    expect(within(mainNav()).queryByRole('link', { name: 'האתר שלי' })).not.toBeInTheDocument();
+    await user.click(sales);
+    expect(within(mainNav()).getByRole('link', { name: 'האתר שלי' })).toBeVisible();
+    expect(JSON.parse(localStorage.getItem('leadflow.nav.open')!)).toContain('sales');
+    await user.click(operations);
+    expect(operations).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders a "coming soon" page for sections that are not built yet', async () => {
@@ -70,6 +91,7 @@ describe('app shell', () => {
     const { user, location } = renderApp(home);
     await user.click(await screen.findByRole('button', { name: 'פתיחת תפריט' }));
     const dialog = await screen.findByRole('dialog', { name: 'תפריט ניווט' });
+    await user.click(within(dialog).getByRole('button', { name: /ניהול/ }));
     await user.click(within(dialog).getByRole('link', { name: 'הגדרות וחיוב' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(location()).toBe(section('settings'));
