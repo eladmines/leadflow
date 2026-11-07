@@ -164,7 +164,7 @@ describe('tasks elsewhere', () => {
     renderApp(businessWebPaths.home(id));
     // The Tasks box counts them (D-124, D-126).
     const operations = await screen.findByRole('region', { name: 'תפעול' });
-    expect(await within(operations).findByText('1 באיחור')).toBeInTheDocument();
+    expect(await within(operations).findByText('משימה אחת באיחור')).toBeInTheDocument();
   });
 });
 
