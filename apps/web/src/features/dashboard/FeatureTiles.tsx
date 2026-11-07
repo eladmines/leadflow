@@ -34,32 +34,45 @@ export function FeatureTiles({ business }: { business: Business }) {
   const sent = useQuotes(id, { status: 'SENT' }).data;
 
   const due = tasks ? groupTasks(tasks) : null;
+  /** "No …", "1 …" or "{n} …" in full words, so the count reads as a sentence. */
+  const count = (n: number, none: string | null, one: string, many: string) =>
+    n === 0 ? none : n === 1 ? tr(one) : tr(many, n);
+  const say = (text: string | null, tone?: 'attention' | 'good') => (text ? { text, tone } : null);
+  const openLeads = leads?.filter((l) => l.stage.kind === 'OPEN').length;
+  const todayCount = appointments?.filter(
+    (a) => a.status !== 'CANCELLED' && a.status !== 'REQUESTED',
+  ).length;
   const status: Record<string, { text: string; tone?: 'attention' | 'good' } | null> = {
     site: site
       ? site.published
-        ? { text: tr('באוויר'), tone: 'good' }
-        : { text: tr('טיוטה') }
-      : { text: tr('עוד לא נבנה'), tone: 'attention' },
-    leads: leads
-      ? { text: tr('{0} פתוחות', leads.filter((l) => l.stage.kind === 'OPEN').length) }
-      : null,
-    conversations: inbox?.numbers.length
-      ? { text: tr('{0} מחכים לסיווג', inbox.numbers.length), tone: 'attention' }
-      : null,
-    tasks: due
-      ? due.overdue.length
-        ? { text: tr('{0} באיחור', due.overdue.length), tone: 'attention' }
-        : { text: tr('{0} להיום', due.today.length) }
-      : null,
-    appointments: appointments
-      ? {
-          text: tr(
-            '{0} היום',
-            appointments.filter((a) => a.status !== 'CANCELLED' && a.status !== 'REQUESTED').length,
+        ? say(tr('האתר באוויר'), 'good')
+        : say(tr('טיוטה — עוד לא פורסם'))
+      : say(tr('עוד לא בניתם אתר'), 'attention'),
+    leads:
+      openLeads === undefined
+        ? null
+        : say(count(openLeads, tr('אין פניות פתוחות'), 'פנייה פתוחה אחת', '{0} פניות פתוחות')),
+    conversations: say(
+      count(
+        inbox?.numbers.length ?? 0,
+        null,
+        'מספר חדש אחד מחכה לכם',
+        '{0} מספרים חדשים מחכים לכם',
+      ),
+      'attention',
+    ),
+    tasks: !due
+      ? null
+      : due.overdue.length
+        ? say(count(due.overdue.length, null, 'משימה אחת באיחור', '{0} משימות באיחור'), 'attention')
+        : say(
+            count(due.today.length, tr('אין משימות להיום'), 'משימה אחת להיום', '{0} משימות להיום'),
           ),
-        }
-      : null,
-    quotes: sent?.length ? { text: tr('{0} מחכות לתשובה', sent.length) } : null,
+    appointments:
+      todayCount === undefined
+        ? null
+        : say(count(todayCount, tr('אין תורים היום'), 'תור אחד היום', '{0} תורים היום')),
+    quotes: say(count(sent?.length ?? 0, null, 'הצעה אחת מחכה לתשובה', '{0} הצעות מחכות לתשובה')),
   };
 
   const items = navItems.filter(

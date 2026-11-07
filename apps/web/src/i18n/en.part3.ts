@@ -615,4 +615,43 @@ export const enPart3: Record<string, string> = {
     'A box for each part of the app, grouped like the menu: Sales & marketing, Operations and Management. Each box shows a live number — open leads, tasks for today, appointments today — and a click opens that part.',
   'מה קורה בעסק במבט אחד. למעלה מופיע הצעד הבא שכדאי לעשות, עם כפתור ישיר אליו, וכמה מההקמה כבר הושלם.':
     'Your business at a glance. At the top: the next step to take, with a button straight to it, and how much of the setup is done.',
+  // Friendlier dashboard boxes (D-127)
+  'האתר של העסק שלכם: בוחרים עיצוב, משנים טקסטים ותמונות, ומפרסמים בלחיצה.':
+    'Your business website: pick a design, change the texts and photos, and publish with one click.',
+  'כל מי שפנה אליכם — מהאתר, מוואטסאפ או בטלפון — ואיפה עומד כל אחד.':
+    'Everyone who contacted you — from your website, WhatsApp or by phone — and where each one stands.',
+  'הודעות וואטסאפ ממספרים חדשים, ותשובה אוטומטית ללקוחות כשאתם עסוקים.':
+    "WhatsApp messages from new numbers, and an automatic reply to customers when you're busy.",
+  'תזכורות לעצמכם ולצוות: להתקשר, לשלוח הצעה, לחזור ללקוח.':
+    'Reminders for you and your team: call back, send a quote, follow up with a customer.',
+  'היומן שלכם: תורים שנקבעו, שעות פנויות, ובקשות שמחכות לאישור.':
+    'Your calendar: booked appointments, free times, and requests waiting for your approval.',
+  'שולחים ללקוח הצעת מחיר מסודרת, והוא מאשר אותה בלחיצה.':
+    'Send customers a neat quote that they approve with one click.',
+  'בקרוב: דברים שקורים לבד, כמו תזכורת ללקוח שלא ענה להצעה.':
+    "Soon: things that happen by themselves, like a reminder to a customer who didn't answer a quote.",
+  'כמה לקוחות פנו, מאיפה הגיעו, וכמה עסקאות סגרתם.':
+    'How many customers reached out, where they came from, and how many deals you closed.',
+  'מזמינים עובדים ובוחרים מה כל אחד יכול לראות ולעשות.':
+    'Invite your staff and choose what each person can see and do.',
+  'שם העסק, טלפון, כתובת, שעות פתיחה והמנוי שלכם.':
+    'Business name, phone, address, opening hours and your plan.',
+  '{0} פניות פתוחות': '{0} open inquiries',
+  'פנייה פתוחה אחת': '1 open inquiry',
+  'אין פניות פתוחות': 'No open inquiries',
+  '{0} מספרים חדשים מחכים לכם': '{0} new numbers waiting for you',
+  'מספר חדש אחד מחכה לכם': '1 new number waiting for you',
+  '{0} משימות באיחור': '{0} tasks overdue',
+  'משימה אחת באיחור': '1 task overdue',
+  '{0} משימות להיום': '{0} tasks for today',
+  'משימה אחת להיום': '1 task for today',
+  'אין משימות להיום': 'No tasks for today',
+  '{0} תורים היום': '{0} appointments today',
+  'תור אחד היום': '1 appointment today',
+  'אין תורים היום': 'No appointments today',
+  '{0} הצעות מחכות לתשובה': '{0} quotes awaiting a reply',
+  'הצעה אחת מחכה לתשובה': '1 quote awaiting a reply',
+  'האתר באוויר': 'Your site is live',
+  'טיוטה — עוד לא פורסם': 'Draft — not published yet',
+  'עוד לא בניתם אתר': "You haven't built a site yet",
 };

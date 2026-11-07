@@ -189,8 +189,8 @@ describe('dashboard', () => {
       'href',
       `/b/${testBusiness.id}/leads`,
     );
-    expect(await within(sales).findByText('1 פתוחות')).toBeInTheDocument();
-    expect(within(sales).getByText('עוד לא נבנה')).toBeInTheDocument();
+    expect(await within(sales).findByText('פנייה פתוחה אחת')).toBeInTheDocument();
+    expect(within(sales).getByText('עוד לא בניתם אתר')).toBeInTheDocument();
     const operations = screen.getByRole('region', { name: 'תפעול' });
     expect(
       within(operations)
