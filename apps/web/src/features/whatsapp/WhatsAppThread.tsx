@@ -48,7 +48,17 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
     );
   }
   const { connected, messages, replyUntil, botPaused } = thread.data;
-  if (!connected && messages.length === 0) return null;
+  // Its own tab on the lead page (D-140), so say why it's empty rather than show nothing.
+  if (!connected && messages.length === 0) {
+    return (
+      <Card className="flex flex-col gap-2">
+        <h2 className="text-lg font-semibold text-ink">WhatsApp</h2>
+        <p className="text-sm text-ink-muted">
+          {tr('אין שיחת וואטסאפ עם הליד. אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.')}
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <Card className="flex flex-col gap-4">

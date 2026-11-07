@@ -28,7 +28,7 @@ async function ownerWithLead(page: Page) {
 
 test('quote from a lead, sent, accepted by the customer', async ({ page, browser }) => {
   const { id, leadId } = await ownerWithLead(page);
-  await page.goto(`/b/${id}/leads/${leadId}`);
+  await page.goto(`/b/${id}/leads/${leadId}?tab=quotes`);
   await page.getByRole('link', { name: 'הצעת מחיר חדשה' }).click();
   await expect(page.getByRole('heading', { name: 'הצעת מחיר חדשה' })).toBeVisible();
 

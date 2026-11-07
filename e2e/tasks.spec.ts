@@ -38,12 +38,14 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   page,
 }) => {
   const { id, leadId } = await ownerWithLead(page);
-  await page.goto(`/b/${id}/leads/${leadId}`);
+  // The lead page shows one part at a time, in tabs (D-140).
+  await page.goto(`/b/${id}/leads/${leadId}?tab=tasks`);
   const form = page.getByRole('form', { name: 'משימה חדשה' });
   await form.getByLabel('משימה חדשה').fill('להתקשר לגבי הטיפול');
   await form.getByLabel('מועד').fill(localIn(-30));
   await form.getByRole('button', { name: 'הוספה' }).click();
   await expect(page.getByRole('list', { name: 'משימות הליד' })).toContainText('להתקשר לגבי הטיפול');
+  await page.getByRole('tab', { name: 'הערות והיסטוריה' }).click();
   await expect(page.getByRole('list', { name: 'היסטוריית הליד' })).toContainText(
     'נוספה משימה: להתקשר לגבי הטיפול',
   );
