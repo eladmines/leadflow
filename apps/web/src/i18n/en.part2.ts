@@ -265,7 +265,6 @@ export const enPart2: Record<string, string> = {
   'הוספת מקטע כאן': 'Add a section here',
   'סוג המקטע להוספה': 'Section type to add',
   'כתובת האתר הקיים': 'Existing website address',
-  'הוספת האתר הקיים': 'Add existing website',
   'האתר הקיים של העסק': "The business's existing website",
   '(נפתח בחלון חדש)': '(opens in a new window)',
   'לא מנוהל ב-LeadFlow': 'Not managed by LeadFlow',

@@ -55,13 +55,18 @@ const previewHtml = () =>
   (screen.getByTitle('תצוגה מקדימה של האתר') as HTMLIFrameElement).getAttribute('srcdoc') ?? '';
 
 describe('template picker', () => {
-  it('starts with two choices and can go back from the templates (D-130)', async () => {
+  it('asks one question with two answers and can go back from the templates (D-132)', async () => {
     mockApi({ [meKey]: me(testUser), ...getSite(null) });
     const { user } = renderApp(sitePath);
-    const build = await screen.findByRole('region', { name: 'אני רוצה לבנות אתר' });
-    await user.click(within(build).getByRole('button', { name: 'לבחירת תבנית' }));
+    const question = await screen.findByRole('group', { name: 'יש לכם כבר אתר?' });
+    expect(within(question).getAllByRole('radio')).toHaveLength(2);
+    // Nothing to do until an answer is picked.
+    expect(screen.queryByRole('button', { name: 'לבחירת תבנית' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('כתובת האתר הקיים')).not.toBeInTheDocument();
+    await user.click(within(question).getByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }));
+    await user.click(screen.getByRole('button', { name: 'לבחירת תבנית' }));
     await user.click(await screen.findByRole('button', { name: 'חזרה לבחירה' }));
-    expect(await screen.findByRole('region', { name: 'יש לי כבר אתר' })).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: /לא, אני רוצה לבנות אתר/ })).toBeChecked();
     expect(screen.queryAllByRole('article')).toHaveLength(0);
   });
 
@@ -72,8 +77,8 @@ describe('template picker', () => {
       [`POST ${sp.site(testBusiness.id)}`]: () => json(201, { site }),
     });
     const { user } = renderApp(sitePath);
-    // First the two choices (D-130): already have a site, or build one.
-    expect(await screen.findByRole('region', { name: 'יש לי כבר אתר' })).toBeInTheDocument();
+    // First the question (D-132): already have a site, or build one.
+    await user.click(await screen.findByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }));
     await user.click(screen.getByRole('button', { name: 'לבחירת תבנית' }));
     expect(
       await screen.findByRole('heading', { name: 'בואו נבנה את האתר שלך' }),
@@ -111,7 +116,7 @@ describe('existing website (D-094)', () => {
         json(200, { business: { ...testBusiness, websiteUrl: 'https://www.shiran.co.il' } }),
     });
     const { user } = renderApp(sitePath);
-    await user.click(await screen.findByRole('button', { name: 'הוספת האתר הקיים' }));
+    await user.click(await screen.findByRole('radio', { name: /כן, יש לי כבר אתר/ }));
     await user.type(screen.getByLabelText('כתובת האתר הקיים'), 'shiran');
     await user.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByText(/כתובת האתר אינה תקינה/)).toBeInTheDocument();

@@ -44,6 +44,7 @@ test('publish a site, see it live, and keep draft edits private until republishi
   const { id, subdomain } = await ownerWithActiveBusiness(page);
   await page.goto(`/b/${id}/site`);
   // First the two choices on My website (D-130).
+  await page.getByRole('radio', { name: /לא, אני רוצה לבנות אתר/ }).check();
   await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   await expect(page.getByText('טיוטה · לא פורסם')).toBeVisible();
