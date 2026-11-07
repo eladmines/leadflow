@@ -205,6 +205,23 @@ describe('dashboard', () => {
     expect(screen.getByRole('region', { name: 'ניהול' })).toBeInTheDocument();
   });
 
+  it('explains a box from its "?" — on hover, focus or tap — without opening it (D-128)', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    const { user, location } = renderApp(home);
+    const help = await screen.findByRole('button', { name: 'מה זה לקוחות ולידים?' });
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.hover(help);
+    expect(screen.getByRole('tooltip')).toHaveTextContent(/כל מי שפנה אליכם/);
+    expect(help).toHaveAccessibleDescription(/כל מי שפנה אליכם/);
+    await user.unhover(help);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.click(help);
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    expect(location()).toBe(home);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
   it("an employee's boxes are only the sections they can open", async () => {
     mockApi({ [meKey]: me(testUser), ...asRole('EMPLOYEE') });
     renderApp(home);
