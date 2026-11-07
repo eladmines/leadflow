@@ -26,6 +26,8 @@ async function owner(page: Page) {
 test('add an "about" page, publish, and open it on the live site', async ({ page, context }) => {
   const { id, subdomain } = await owner(page);
   await page.goto(`/b/${id}/site`);
+  // First the two choices on My website (D-130).
+  await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const preview = page.frameLocator('iframe[title="תצוגה מקדימה של האתר"]');
   await expect(preview.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
@@ -57,6 +59,8 @@ test('add an "about" page, publish, and open it on the live site', async ({ page
 test('an empty page offers its first section right on the page', async ({ page }) => {
   const { id } = await owner(page);
   await page.goto(`/b/${id}/site`);
+  // First the two choices on My website (D-130).
+  await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const preview = page.frameLocator('iframe[title="תצוגה מקדימה של האתר"]');
   await expect(preview.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');

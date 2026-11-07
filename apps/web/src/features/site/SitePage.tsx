@@ -6,13 +6,14 @@ import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { useSite } from './api';
-import { AddExistingWebsite, ExistingWebsite } from './ExistingWebsite';
+import { ExistingWebsite } from './ExistingWebsite';
+import { SiteStart } from './SiteStart';
 import { SiteEditor } from './SiteEditor';
 import { TemplatePicker } from './TemplatePicker';
 import { clearBackup, readBackup, type Draft } from './useDraftAutosave';
 import { tr } from '../../i18n';
 
-/** `/b/:businessId/site`: template picker on first visit, then the editor. */
+/** `/b/:businessId/site`: two choices on first visit (D-130), then the editor. */
 export function SitePage() {
   const business = useCurrentBusiness();
   const site = useSite(business.id);
@@ -43,7 +44,7 @@ export function SitePage() {
         </>
       );
     }
-    if (canEdit) return <TemplatePicker intro={<AddExistingWebsite business={business} />} />;
+    if (canEdit) return <SiteStart business={business} />;
     return (
       <>
         <PageHeader title={tr('האתר שלי')} />

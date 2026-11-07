@@ -17,7 +17,7 @@ type FormOutput = z.output<typeof formSchema>;
 const displayUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
 /** Saves (or clears) the business's existing website address. */
-function WebsiteForm({
+export function WebsiteForm({
   business,
   onDone,
   compact = false,
@@ -67,29 +67,6 @@ function WebsiteForm({
       </div>
       {formError && <Alert tone="danger">{formError}</Alert>}
     </form>
-  );
-}
-
-/** Invitation shown above the template picker: "already have a site? add its address". */
-export function AddExistingWebsite({ business }: { business: Business }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-base font-semibold text-ink">{tr('כבר יש לעסק אתר?')}</h2>
-          <p className="text-sm text-ink-muted">
-            {tr('הוסיפו את הכתובת כדי לראות אותו כאן. LeadFlow לא ינהל אותו ולא ישנה בו דבר.')}
-          </p>
-        </div>
-        {!open && (
-          <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-            {tr('הוספת האתר הקיים')}
-          </Button>
-        )}
-      </div>
-      {open && <WebsiteForm business={business} onDone={() => setOpen(false)} compact />}
-    </Card>
   );
 }
 

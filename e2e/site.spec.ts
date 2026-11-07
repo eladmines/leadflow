@@ -43,6 +43,8 @@ test('owner builds the site: template → edit → autosave → reload', async (
   const id = await ownerWithActiveBusiness(page);
   await page.goto(`/b/${id}/site`);
 
+  // First the two choices on My website (D-130).
+  await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
   await expect(page.getByText('מומלץ לעסק שלך')).toBeVisible();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   await expect(page.getByRole('heading', { name: 'האתר שלי' })).toBeVisible();
@@ -98,6 +100,8 @@ test('desktop editing happens on the page: sections, list items and settings', a
   test.skip(isMobile, 'hover tools are for mouse users; touch users use the panel');
   const id = await ownerWithActiveBusiness(page);
   await page.goto(`/b/${id}/site`);
+  // First the two choices on My website (D-130).
+  await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const frame = preview(page);
   await expect(frame.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');
@@ -175,6 +179,8 @@ test('fixed labels are editable on the page; phone opens the business details', 
   test.skip(isMobile, 'on-page editing is for mouse users');
   const id = await ownerWithActiveBusiness(page);
   await page.goto(`/b/${id}/site`);
+  // First the two choices on My website (D-130).
+  await page.getByRole('button', { name: 'לבחירת תבנית' }).click();
   await page.getByRole('button', { name: 'בחירת התבנית' }).first().click();
   const frame = preview(page);
   await expect(frame.getByRole('heading', { level: 1 })).toHaveText('מספרת שירן');

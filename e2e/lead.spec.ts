@@ -67,7 +67,9 @@ test('a visitor submits the website form and the owner sees the lead (AC-04)', a
 
   // The dashboard's Customers & leads box counts it (D-124, D-126).
   await page.goto(`/b/${owner.id}`);
-  await expect(page.getByRole('region', { name: 'שיווק ומכירות' })).toContainText('פנייה פתוחה אחת');
+  await expect(page.getByRole('region', { name: 'שיווק ומכירות' })).toContainText(
+    'פנייה פתוחה אחת',
+  );
 
   // …and got an email.
   await expect
