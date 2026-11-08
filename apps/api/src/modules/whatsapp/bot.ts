@@ -30,8 +30,7 @@ import { MANAGERS, notifySafe } from '../notifications/service';
 
 /**
  * WhatsApp booking bot (D-102). A button conversation: service → day → time → confirm → booked.
- * It starts when a customer asks for an appointment (or a new number writes for the first time), never on a
- * personal number, and stays quiet once a team member has written in the chat or the customer
+ * Every message starts it (D-154), never on a personal number, and stays quiet once a team member has written in the chat or the customer
  * asked for a person. Texts to customers are in the business's language (D-143).
  * A customer who doesn't book gets the business's showcase ("in the meantime, take a look", D-106).
  * Event businesses (DJ, catering, photography) use the event-request flow instead (D-107):
@@ -50,8 +49,6 @@ const SHOWCASE_EVERY_MS = 24 * 60 * 60_000;
 const ABANDONED_AFTER_MS = 30 * 60_000;
 const ABANDONED_UNTIL_MS = 20 * 60 * 60_000;
 
-const TRIGGER =
-  /תור|לקבוע|פנוי|זמינ|אירוע|הזמנ|פגישה|שיעור|חתונה|appointment|book|event|available|slot|meeting|lesson|session|wedding/i;
 const CHOICE =
   /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|xcl:[0-9a-f-]{36}|xpick:[0-9a-f-]{36}|xcl_no|ok|other_time|other_day|other_date|ev_send|ev_edit|ev_start|cancel|human|showcase|book)$/;
 /** Steps of a booking in progress (a conversation that stops in one of them gets the showcase). */
@@ -86,6 +83,20 @@ const CANCEL_TEXT = /בטל|ביטול|cancel/i;
 /** The customer wants a person (D-108): the bot steps aside. */
 const HUMAN_TEXT =
   /נציג|לדבר|להתקשר|תתקשר|תתקשרי|תחזור|תחזרי|שיחה|שאלה|בן אדם|אדם אמיתי|human|agent|call me|talk to/i;
+/** Hebrew typed with the keyboard on English (QWERTY → the Israeli layout), e.g. "vhh ,ur". */
+const HEBREW_KEYS: Record<string, string> = Object.fromEntries(
+  [..."qwertyuiopasdfghjkl;zxcvbnm,./'"].map((k, i) => [
+    k,
+    [..."/'קראטוןםפשדגכעיחלךףזסבהנמצתץ.,"][i]!,
+  ]),
+);
+/** The message plus, when it has no Hebrew letters, how it reads on the Hebrew layout. */
+export function withHebrewLayout(body: string): string {
+  if (/[\u0590-\u05FF]/.test(body) || !/[a-z]/i.test(body)) return body;
+  const hebrew = [...body.toLowerCase()].map((ch) => HEBREW_KEYS[ch] ?? ch).join('');
+  return `${body} ${hebrew}`;
+}
+
 /** Misunderstood messages in one conversation before the bot hands it to the team. */
 const MAX_MISSES = 2;
 
@@ -378,14 +389,20 @@ export class BookingBot {
     const chat = await this.chatFor(businessId, number, now);
     if (!chat) return 'none';
     const choice = msg.replyId && CHOICE.test(msg.replyId) ? msg.replyId : null;
+    // For recognising words only (the message itself is kept as written).
+    const text = withHebrewLayout(msg.body);
 
     let session = chat.session;
     if (session && session.expiresAt <= now) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
       session = chat.session = null;
     }
-    // "Book now" under the showcase reopens a chat that was handed to the team.
-    if (session?.step === 'handoff' && choice === 'book') {
+    // D-154: every message gets an answer, also after "talk to the team" — the bot starts again
+    // (its greeting keeps the "talk to the team" button). Only a team member writing keeps it quiet.
+    if (
+      session?.step === 'handoff' &&
+      (choice === 'book' || !(await this.teamIsTalking(chat.numberId, now)))
+    ) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
       session = chat.session = null;
     }
@@ -394,7 +411,7 @@ export class BookingBot {
     if (choice?.startsWith('xcl') || choice?.startsWith('xpick')) {
       return this.onCancelChoice(chat, choice, now);
     }
-    if ((!session || session.step === 'handoff') && !choice && CANCEL_TEXT.test(msg.body)) {
+    if ((!session || session.step === 'handoff') && !choice && CANCEL_TEXT.test(text)) {
       if (await this.teamIsTalking(chat.numberId, now)) return 'none';
       return this.askCancel(chat, now);
     }
@@ -408,23 +425,20 @@ export class BookingBot {
     }
 
     if (!session) {
-      // Asked for an appointment, tapped an old list, or a new number's first message.
-      const wants =
-        choice ||
-        TRIGGER.test(msg.body) ||
-        (number.status === 'UNCLASSIFIED' && (await this.isFirstMessage(chat.numberId)));
-      if (!wants || (await this.teamIsTalking(chat.numberId, now))) return 'none';
+      // D-154: any message starts it (not only booking words or a new number's first message),
+      // unless a team member is talking in this chat.
+      if (await this.teamIsTalking(chat.numberId, now)) return 'none';
       // "Can I talk to you about…": straight to the team, no questions first.
-      if (!choice && HUMAN_TEXT.test(msg.body)) {
+      if (!choice && HUMAN_TEXT.test(text)) {
         return this.handoff(chat, now, this.text(chat, 'handoff'));
       }
       return this.start(chat, now);
     }
 
-    if (choice === 'human' || (!choice && HUMAN_TEXT.test(msg.body))) {
+    if (choice === 'human' || (!choice && HUMAN_TEXT.test(text))) {
       return this.handoff(chat, now, this.text(chat, 'handoff'));
     }
-    if (choice === 'cancel' || (!choice && CANCEL_TEXT.test(msg.body))) {
+    if (choice === 'cancel' || (!choice && CANCEL_TEXT.test(text))) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
       await this.say(
         chat,
@@ -1371,13 +1385,6 @@ export class BookingBot {
         })
       : null;
     return { contactId: contact?.id ?? null, leadId: lead?.id ?? null };
-  }
-
-  private async isFirstMessage(numberId: string) {
-    const count = await this.prisma.whatsAppMessage.count({
-      where: { numberId, direction: 'IN' },
-    });
-    return count <= 1;
   }
 
   /** A team member wrote in this chat recently: the bot doesn't interrupt. */

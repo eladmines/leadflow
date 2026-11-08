@@ -22,6 +22,29 @@ const redactPaths = [
   '*.text',
 ];
 
+/** Hides secret query values in a logged address (Meta's webhook check sends the verify token). */
+export const redactUrl = (url: string) =>
+  url.replace(/([?&](?:hub\.verify_token|[a-z_]*token)=)[^&]*/gi, '$1[REDACTED]');
+
+/** The request as logged: Fastify's usual fields, with the address's secrets hidden. */
+const serializers = {
+  req(req: {
+    method: string;
+    url: string;
+    host?: string;
+    ip?: string;
+    socket?: { remotePort?: number };
+  }) {
+    return {
+      method: req.method,
+      url: redactUrl(req.url),
+      host: req.host,
+      remoteAddress: req.ip,
+      remotePort: req.socket?.remotePort,
+    };
+  },
+};
+
 /** A writable destination for log lines (tests capture logs through it). */
 export interface LogStream {
   write(line: string): void;
@@ -36,10 +59,11 @@ export function loggerOptions(
   stream?: LogStream,
 ): FastifyServerOptions['logger'] {
   const redact = { paths: redactPaths, censor: '[REDACTED]' };
-  if (stream) return { level: config.LOG_LEVEL, redact, stream };
+  if (stream) return { level: config.LOG_LEVEL, redact, serializers, stream };
   return {
     level: config.NODE_ENV === 'test' ? 'silent' : config.LOG_LEVEL,
     redact,
+    serializers,
     ...(config.NODE_ENV === 'development' && {
       transport: { target: 'pino-pretty', options: { translateTime: 'SYS:HH:MM:ss' } },
     }),
