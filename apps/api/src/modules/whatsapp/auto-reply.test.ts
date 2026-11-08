@@ -127,7 +127,7 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
         ...patch,
       }),
     );
-  const uploadVideo = (token: string, statusId: string, body: Buffer, type = 'video/mp4') => {
+  const uploadVideo = (token: string, body: Buffer, type = 'video/mp4') => {
     const boundary = '----lf-video';
     const payload = Buffer.concat([
       Buffer.from(
@@ -138,7 +138,7 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     ]);
     return ctx.app.inject({
       method: 'PUT',
-      url: wp.statusVideo(BUSINESS_ID, statusId),
+      url: wp.showcaseVideo(BUSINESS_ID),
       headers: {
         ...csrfHeaders,
         ...sessionCookie(token),
@@ -220,14 +220,8 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(whatsapp.sent[0]!.text).toBe(AUTO_REPLY_DEFAULT_EN.replace('{business}', 'די ג׳יי רון'));
   });
 
-  it('sends the status message and its video while a status is on, until it ends', async () => {
+  it('sends the status message while a status is on, until it ends', async () => {
     const owner = await setup();
-    const up = await uploadVideo(owner.token, 'event', mp4(4096));
-    expect(up.statusCode).toBe(200);
-    expect(up.json().settings.statuses.find((x: { id: string }) => x.id === 'event').video).toEqual(
-      { sizeBytes: 4096 },
-    );
-    expect(up.json().settings.videoBytesUsed).toBe(4096);
     const until = new Date(Date.now() + 3600_000).toISOString();
     const on = await req(ctx.app, 'PUT', wp.status(BUSINESS_ID), owner.token, {
       id: 'event',
@@ -236,19 +230,8 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(on.json().settings.activeStatus).toEqual({ id: 'event', until });
 
     await post(text('היי'));
-    expect(whatsapp.sent).toHaveLength(2);
+    expect(whatsapp.sent).toHaveLength(1);
     expect(whatsapp.sent[0]!.text).toMatch(/^היי! כרגע אני באירוע 🎉/);
-    expect(whatsapp.sent[1]!.videoBytes).toBe(4096);
-    const stored = await ctx.prisma.whatsAppMessage.findMany({
-      where: { direction: 'OUT' },
-      orderBy: { createdAt: 'asc' },
-    });
-    expect(stored.map((m) => m.body)).toContain('[וידאו]');
-
-    // The owner can watch it; nobody else can reach it publicly.
-    const watch = await req(ctx.app, 'GET', wp.statusVideo(BUSINESS_ID, 'event'), owner.token);
-    expect(watch.headers['content-type']).toBe('video/mp4');
-    expect(watch.rawPayload.length).toBe(4096);
 
     // After the status ends, the general reply is back.
     await ctx.prisma.business.update({
@@ -305,9 +288,8 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(whatsapp.sent).toHaveLength(0);
   });
 
-  it('saves its own wording and statuses; a deleted status takes its video and stops being on', async () => {
+  it('saves its own wording and statuses; a deleted status stops being on', async () => {
     const owner = await setup();
-    await uploadVideo(owner.token, 'vacation', mp4());
     await req(ctx.app, 'PUT', wp.status(BUSINESS_ID), owner.token, { id: 'vacation', until: null });
     const saved = await save(owner.token, {
       autoReplyText: 'שלום מ{business}! נחזור בקרוב',
@@ -320,27 +302,16 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     const s = saved.json().settings;
     expect(s.autoReplyText).toBe('שלום מ{business}! נחזור בקרוב');
     expect(s.statuses).toEqual([
-      {
-        id: 'event',
-        label: 'באירוע',
-        text: 'אני באירוע, אחזור אחרי 23:00',
-        preset: true,
-        video: null,
-      },
-      { id: 'c-studio', label: 'באולפן', text: 'באולפן עד הערב 🎧', preset: false, video: null },
+      { id: 'event', label: 'באירוע', text: 'אני באירוע, אחזור אחרי 23:00', preset: true },
+      { id: 'c-studio', label: 'באולפן', text: 'באולפן עד הערב 🎧', preset: false },
     ]);
     expect(s.activeStatus).toBeNull();
-    expect(s.videoBytesUsed).toBe(0);
-    // The deleted status's video is gone too.
-    expect(
-      (await req(ctx.app, 'GET', wp.statusVideo(BUSINESS_ID, 'vacation'), owner.token)).statusCode,
-    ).toBe(404);
 
     await post(text('היי'));
     expect(whatsapp.sent[0]!.text).toBe('שלום מדי ג׳יי רון! נחזור בקרוב');
   });
 
-  it('checks statuses and videos', async () => {
+  it('checks statuses', async () => {
     const owner = await setup();
     expect(
       (await req(ctx.app, 'PUT', wp.status(BUSINESS_ID), owner.token, { id: 'nope', until: null }))
@@ -353,21 +324,6 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(past.statusCode).toBe(400);
     expect(past.json().error.message).toBe('הזמן שבחרתם כבר עבר');
 
-    const notMp4 = await uploadVideo(owner.token, 'event', Buffer.from('not a video at all'));
-    expect(notMp4.statusCode).toBe(400);
-    expect(notMp4.json().error.message).toBe('אפשר להעלות רק סרטון MP4');
-    const tooBig = await uploadVideo(owner.token, 'event', mp4(16 * 1024 * 1024 + 10));
-    expect(tooBig.statusCode).toBe(400);
-    expect((await uploadVideo(owner.token, 'nope', mp4())).statusCode).toBe(404);
-
-    // Removing a video.
-    await uploadVideo(owner.token, 'event', mp4());
-    const removed = await req(ctx.app, 'DELETE', wp.statusVideo(BUSINESS_ID, 'event'), owner.token);
-    expect(removed.json().settings.statuses[0].video).toBeNull();
-    expect(
-      (await req(ctx.app, 'GET', wp.statusVideo(BUSINESS_ID, 'event'), owner.token)).statusCode,
-    ).toBe(404);
-
     // Only people with the WhatsApp inbox permission manage it.
     const employee = await newUser(ctx.app, 'ar-emp');
     await addMember(ctx.prisma, BUSINESS_ID, employee.userId, 'EMPLOYEE');
@@ -376,5 +332,43 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
       until: null,
     });
     expect(denied.statusCode).toBe(403);
+    expect((await uploadVideo(employee.token, mp4())).statusCode).toBe(403);
+  });
+
+  it('the "meanwhile" video: uploaded, kept when saving, sent after the reply, removed (D-151)', async () => {
+    const owner = await setup();
+    const notMp4 = await uploadVideo(owner.token, Buffer.from('not a video at all'));
+    expect(notMp4.statusCode).toBe(400);
+    expect(notMp4.json().error.message).toBe('אפשר להעלות רק סרטון MP4');
+    expect((await uploadVideo(owner.token, mp4(16 * 1024 * 1024 + 10))).statusCode).toBe(400);
+
+    const up = await uploadVideo(owner.token, mp4(4096));
+    expect(up.statusCode).toBe(200);
+    expect(up.json().settings.showcase.video).toEqual({ sizeBytes: 4096 });
+    // Saving the settings (switching "meanwhile" on) keeps the video.
+    const on = await save(owner.token, {
+      showcase: { enabled: true, text: null, link: null, assetIds: [] },
+    });
+    expect(on.json().settings.showcase).toMatchObject({
+      enabled: true,
+      video: { sizeBytes: 4096 },
+    });
+
+    await post(text('היי'));
+    // The automatic reply, the "meanwhile" message, then its video.
+    expect(whatsapp.sent).toHaveLength(3);
+    expect(whatsapp.sent[2]!.videoBytes).toBe(4096);
+    const stored = await ctx.prisma.whatsAppMessage.findMany({ where: { direction: 'OUT' } });
+    expect(stored.map((m) => m.body)).toContain('[וידאו]');
+
+    // The owner can watch it; then remove it.
+    const watch = await req(ctx.app, 'GET', wp.showcaseVideo(BUSINESS_ID), owner.token);
+    expect(watch.headers['content-type']).toBe('video/mp4');
+    expect(watch.rawPayload.length).toBe(4096);
+    const removed = await req(ctx.app, 'DELETE', wp.showcaseVideo(BUSINESS_ID), owner.token);
+    expect(removed.json().settings.showcase.video).toBeNull();
+    expect((await req(ctx.app, 'GET', wp.showcaseVideo(BUSINESS_ID), owner.token)).statusCode).toBe(
+      404,
+    );
   });
 });

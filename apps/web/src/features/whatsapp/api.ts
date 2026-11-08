@@ -121,14 +121,14 @@ export function useSetStatus(businessId: string) {
   });
 }
 
-/** Uploads (replacing) or removes a status's video. */
-export function useStatusVideo(businessId: string) {
+/** Uploads (replacing) or removes the "meanwhile" video (D-151). */
+export function useShowcaseVideo(businessId: string) {
   const queryClient = useQueryClient();
   const upload = useMutation({
-    mutationFn: ({ statusId, file }: { statusId: string; file: File }) => {
+    mutationFn: (file: File) => {
       const body = new FormData();
       body.append('file', file);
-      return apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.statusVideo(businessId, statusId), {
+      return apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.showcaseVideo(businessId), {
         method: 'PUT',
         body,
       });
@@ -136,8 +136,8 @@ export function useStatusVideo(businessId: string) {
     onSuccess: (data) => queryClient.setQueryData(botKey(businessId), data),
   });
   const remove = useMutation({
-    mutationFn: (statusId: string) =>
-      apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.statusVideo(businessId, statusId), {
+    mutationFn: () =>
+      apiFetch<WhatsAppBotResponse>(apiPaths.whatsapp.showcaseVideo(businessId), {
         method: 'DELETE',
       }),
     onSuccess: (data) => queryClient.setQueryData(botKey(businessId), data),

@@ -1,4 +1,5 @@
 import {
+  apiPaths,
   BOT_PLACEHOLDERS,
   botShowcaseSchema,
   SHOWCASE_MAX_IMAGES,
@@ -14,7 +15,7 @@ import {
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
 } from '@leadflow/shared';
-import { ImagePlus, MessageSquareText, RotateCcw, X } from 'lucide-react';
+import { ImagePlus, MessageSquareText, RotateCcw, Video, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { Alert, Button, DialogShell, Field, Textarea } from '../../components/ui';
 import { useAssets } from '../media/api';
@@ -22,7 +23,7 @@ import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
-import { useBotSettings, useUpdateBotSettings } from './api';
+import { useBotSettings, useShowcaseVideo, useUpdateBotSettings } from './api';
 
 /**
  * Booking bot settings (D-102): on/off, how customers book, and whether bookings are confirmed
@@ -83,7 +84,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
     <section aria-labelledby="bot-settings-title" className="flex flex-col gap-3">
       {/* The card around it carries the visible title and the on/off switch (D-147). */}
       <h3 id="bot-settings-title" className="sr-only">
-        {tr('הגדרות הבוט')}
+        {tr('הגדרות קביעת התורים')}
       </h3>
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium text-ink">
@@ -113,13 +114,13 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </label>
           <p className="text-sm text-ink-muted">
             {tr(
-              'הבוט שואל על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.',
+              'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.',
             )}
           </p>
         </>
       ) : (
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-medium text-ink">{tr('כשהבוט קובע תור:')}</legend>
+          <legend className="mb-1 text-sm font-medium text-ink">{tr('כשלקוח קובע תור:')}</legend>
           <Choice
             name="bot-confirm"
             checked={settings.autoConfirm}
@@ -140,7 +141,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
       {saved && !dirty && <Alert tone="success">{tr('ההגדרות נשמרו.')}</Alert>}
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={saveSettings} disabled={!dirty} loading={update.isPending}>
-          {tr('שמירת הגדרות הבוט')}
+          {tr('שמירת ההגדרות')}
         </Button>
         {dirty && (
           <>
@@ -157,13 +158,13 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
       <div className="flex flex-wrap gap-2 border-t border-surface-border pt-4">
         <Button variant="secondary" onClick={() => setEditor('texts')}>
           <MessageSquareText aria-hidden className="h-4 w-4" />
-          {tr('עריכת ההודעות של הבוט')}
+          {tr('עריכת ההודעות ללקוחות')}
         </Button>
       </div>
       <DialogShell
         open={editor === 'texts'}
         onOpenChange={(o) => !o && setEditor(null)}
-        title={tr('עריכת ההודעות של הבוט')}
+        title={tr('עריכת ההודעות ללקוחות')}
         wide
       >
         <BotTextsForm
@@ -178,7 +179,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
 
 /** What customers can book, said plainly (D-149). */
 const FLOW_CHOICES: Record<BotFlow, { label: string; hint: string }> = {
-  appointment: { label: 'תור בשעה פנויה', hint: 'הבוט מציע ימים ושעות פנויים מהיומן.' },
+  appointment: { label: 'תור בשעה פנויה', hint: 'הלקוח רואה ימים ושעות פנויים מהיומן.' },
   event: { label: 'בקשה לאירוע', hint: 'הלקוח כותב תאריך, מספר אורחים ואזור, ואתם מאשרים.' },
 };
 
@@ -210,6 +211,79 @@ function Choice({
         <span className="text-xs text-ink-muted">{hint}</span>
       </span>
     </label>
+  );
+}
+
+const mb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+
+/** The "meanwhile" video (D-151): preview, replace or remove; saved as soon as it's chosen. */
+function ShowcaseVideo({
+  businessId,
+  video,
+}: {
+  businessId: string;
+  video: { sizeBytes: number } | null;
+}) {
+  const { upload, remove } = useShowcaseVideo(businessId);
+  const input = useRef<HTMLInputElement>(null);
+  const busy = upload.isPending || remove.isPending;
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-medium text-ink">{tr('סרטון (לא חובה)')}</span>
+      {video && (
+        <div className="flex flex-wrap items-end gap-3">
+          <video
+            controls
+            preload="metadata"
+            src={`${apiPaths.whatsapp.showcaseVideo(businessId)}?s=${video.sizeBytes}`}
+            className="h-36 max-w-full rounded-lg bg-ink/90"
+          />
+          <div className="flex flex-col gap-1 text-xs text-ink-muted">
+            <span>{tr('סרטון · {0}', mb(video.sizeBytes))}</span>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => remove.mutate()}
+              className="inline-flex items-center gap-1 text-danger-600 hover:underline"
+            >
+              <X aria-hidden className="h-3.5 w-3.5" />
+              {tr('הסרת הסרטון')}
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          ref={input}
+          type="file"
+          accept="video/mp4"
+          className="sr-only"
+          aria-label={tr('סרטון להצצה')}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) upload.mutate(file);
+          }}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          loading={upload.isPending}
+          disabled={busy}
+          onClick={() => input.current?.click()}
+        >
+          <Video aria-hidden className="h-4 w-4" />
+          {video ? tr('החלפת הסרטון') : tr('הוספת סרטון')}
+        </Button>
+        <span className="text-xs text-ink-muted">
+          {tr('MP4 עד 16MB. סרטון קצר נשלח מהר יותר.')}
+        </span>
+      </div>
+      {(upload.isError || remove.isError) && (
+        <Alert tone="danger">{errorMessage(upload.error ?? remove.error)}</Alert>
+      )}
+    </div>
   );
 }
 
@@ -449,9 +523,7 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
   return (
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-4">
       <p className="text-xs text-ink-muted">
-        {tr(
-          'נשלחת אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור בבוט. לכל היותר פעם ביום ללקוח.',
-        )}
+        {tr('נשלחת אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור. לכל היותר פעם ביום ללקוח.')}
       </p>
       <fieldset className="flex flex-col gap-4">
         <Textarea
@@ -520,9 +592,10 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
           </ul>
           {errors.assetIds && <p className="text-xs text-danger-600">{tr(errors.assetIds)}</p>}
         </div>
+        <ShowcaseVideo businessId={businessId} video={saved.video ?? null} />
         <div className="flex flex-col gap-1">
           <span className="text-xs text-ink-muted">{tr('כך הלקוח יראה את זה:')}</span>
-          <div dir="rtl" lang="he" className="flex max-w-md flex-col gap-1.5">
+          <div dir="auto" className="flex max-w-md flex-col gap-1.5">
             <p className="whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
               {filled || '—'}
               {link && (
@@ -548,12 +621,12 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
                 )}
               </div>
             )}
-            <p className="rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
-              כשתרצו, אפשר לקבוע תור כאן 👇
-              <span className="mt-1.5 block rounded-lg bg-surface px-2 py-1 text-center text-xs font-medium text-brand-700">
-                📅 לקביעת תור
-              </span>
-            </p>
+            {saved.video && (
+              <p className="flex items-center gap-1.5 rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
+                <Video aria-hidden className="h-4 w-4" />
+                {tr('סרטון')}
+              </p>
+            )}
           </div>
         </div>
       </fieldset>

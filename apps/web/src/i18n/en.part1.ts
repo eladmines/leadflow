@@ -293,7 +293,7 @@ export const enPart1: Record<string, string> = {
   'התשובה האחרונה שלכם': 'Your last reply',
   'מספר חדש כתב בוואטסאפ': 'A new number wrote on WhatsApp',
   'תור חדש מוואטסאפ': 'New appointment from WhatsApp',
-  'בוט קביעת תורים': 'Booking bot',
+  'קביעת תורים אוטומטית': 'Automatic booking',
   'נשלחה על ידי {0}': 'Sent by {0}',
   'תשובה אוטומטית': 'Automatic reply',
   עזרה: 'Help',
@@ -333,7 +333,7 @@ export const enPart1: Record<string, string> = {
   'אפשר לבחור עד 3 תמונות': 'You can choose up to 3 photos',
   'אחת התמונות כבר לא קיימת בספריית התמונות. בחרו תמונה אחרת.':
     'One of the photos is no longer in the media library. Choose another one.',
-  'עריכת ההודעות של הבוט': "Edit the bot's messages",
+  'עריכת ההודעות ללקוחות': 'Edit the messages to customers',
   'הלקוחות מקבלים את ההודעות בעברית. פרטים בסוגריים, כמו [שם העסק], מתמלאים אוטומטית בפרטים האמיתיים. מוסיפים אותם בכפתורים שמתחת לכל הודעה. הכפתורים והרשימות בוואטסאפ נשארים קבועים.':
     'Customers get these messages in Hebrew. Details in brackets, like [Business name], are filled in automatically with the real details. Add them with the buttons under each message. WhatsApp buttons and lists stay fixed.',
   'כך הלקוח יראה את זה:': 'What the customer sees:',

@@ -122,7 +122,7 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(autoTab);
     expect(await screen.findByText('שלב 1 מתוך 3')).toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: /בוט קביעת תורים/ }));
+    await user.click(screen.getByRole('radio', { name: /קביעת תורים אוטומטית/ }));
     await user.click(screen.getByRole('button', { name: 'המשך' }));
     expect(screen.getByText('שלב 2 מתוך 3')).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: /מחכה לאישור שלי/ }));
@@ -135,7 +135,7 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(screen.getByRole('button', { name: 'סיום' }));
     // Then the full page, with a way back to the guide.
     // Then the two cards, the bot's switch on (D-147).
-    expect(await screen.findByRole('switch', { name: 'בוט קביעת תורים' })).toBeInTheDocument();
+    expect(await screen.findByRole('switch', { name: 'קביעת תורים אוטומטית' })).toBeInTheDocument();
   });
 
   it('booking bot: picks the approval, saved together with "Save bot settings"', async () => {
@@ -144,7 +144,7 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(autoTab);
     const pending = await screen.findByRole('radio', { name: /מחכה לאישור שלי/ });
-    const saveButton = screen.getByRole('button', { name: 'שמירת הגדרות הבוט' });
+    const saveButton = screen.getByRole('button', { name: 'שמירת ההגדרות' });
     expect(saveButton).toBeDisabled();
     await user.click(pending);
     // Nothing is sent until saving.
@@ -172,7 +172,7 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(await screen.findByRole('radio', { name: /מחכה לאישור שלי/ }));
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
     expect(screen.getByRole('radio', { name: /מאושר מיד/ })).toBeChecked();
-    expect(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeDisabled();
   });
 
   it('automatic reply: pick a status, see and edit what customers get (D-146)', async () => {
@@ -196,11 +196,11 @@ describe('WhatsApp conversations inbox', () => {
       'aria-checked',
       'true',
     );
-    expect(screen.getByRole('switch', { name: 'בוט קביעת תורים' })).toHaveAttribute(
+    expect(screen.getByRole('switch', { name: 'קביעת תורים אוטומטית' })).toHaveAttribute(
       'aria-checked',
       'false',
     );
-    expect(screen.queryByRole('button', { name: 'שמירת הגדרות הבוט' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'שמירת ההגדרות' })).not.toBeInTheDocument();
 
     // Available: the general message, no save button until it changes, no "how long".
     const message = screen.getByLabelText('מה לקוחות מקבלים עכשיו');
@@ -244,10 +244,10 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    const bot = await screen.findByRole('switch', { name: 'בוט קביעת תורים' });
+    const bot = await screen.findByRole('switch', { name: 'קביעת תורים אוטומטית' });
     // The bot can be set up while it's off.
     await user.click(screen.getByRole('button', { name: 'הגדרות' }));
-    expect(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeInTheDocument();
     // Turning it on turns the automatic reply off.
     await user.click(bot);
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))[0]).toMatchObject({
@@ -301,7 +301,7 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    await user.click(await screen.findByRole('button', { name: 'עריכת ההודעות של הבוט' }));
+    await user.click(await screen.findByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
     // Placeholders read as tags in the owner's language, not codes.
     expect(screen.getByLabelText('הודעת פתיחה')).toHaveValue(
       'שלום! כאן [שם העסק] 👋\nרוצים לקבוע תור? בחרו שירות:',
@@ -355,6 +355,8 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(screen.getByRole('button', { name: 'עריכת ההצצה' }));
     // The industry's default message, ready to edit.
     expect(await screen.findByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
+    // Photos and a video (D-151), uploaded on its own.
+    expect(screen.getByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
     await user.type(screen.getByLabelText('קישור (לא חובה)'), 'instagram.com/sigalit');
     await user.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByText('יש להזין קישור מלא שמתחיל ב־https://')).toBeInTheDocument();
@@ -396,13 +398,13 @@ describe('WhatsApp conversations inbox', () => {
     expect(screen.getByRole('radio', { name: /תור בשעה פנויה/ })).toBeChecked();
     expect(screen.getByText(/מתאים לתחום שלכם/)).toBeInTheDocument();
     await user.click(events);
-    await user.click(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' }));
+    await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );
     expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד התורים/)).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /מאושר מיד/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'עריכת ההודעות של הבוט' }));
+    await user.click(screen.getByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
     expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();
     expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();
   });

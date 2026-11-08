@@ -27,13 +27,14 @@ import type { AppConfig } from '../../config/env';
 import type { StorageProvider } from '../../integrations/storage';
 import {
   activeOf,
-  checkVideo,
+  checkShowcaseVideo,
+  showcaseObject,
+  showcaseVideoOf,
   mergeStatuses,
   modeOf,
   statusDtos,
   statusesOf,
   languageOf,
-  videoBytesUsed,
 } from './auto-reply';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
@@ -521,6 +522,7 @@ export class WhatsAppService {
       : null;
     const sc = botShowcaseSchema.safeParse(b.whatsappBotShowcase ?? { enabled: false });
     const showcase = sc.success ? sc.data : { enabled: false, link: null, assetIds: [] };
+    const video = showcaseVideoOf(b.whatsappBotShowcase);
     return {
       connected: this.businessId === ctx.businessId,
       settings: {
@@ -529,7 +531,6 @@ export class WhatsAppService {
         autoReplyDefault: autoReplyDefaultFor(lang),
         statuses: statusDtos(statuses),
         activeStatus: active ? { id: active.status.id, until: active.until } : null,
-        videoBytesUsed: videoBytesUsed(statuses),
         enabled: b.whatsappBotEnabled,
         autoConfirm: b.whatsappBotAutoConfirm,
         texts: texts.success ? texts.data : {},
@@ -543,6 +544,7 @@ export class WhatsAppService {
           defaultText: showcaseDefaultText(b.industry, lang),
           link: showcase.link,
           assetIds: showcase.assetIds,
+          video: video ? { sizeBytes: video.bytes } : null,
         },
       },
     };
@@ -556,7 +558,12 @@ export class WhatsAppService {
     await this.prisma.$transaction(async (tx) => {
       const current = await tx.business.findUniqueOrThrow({
         where: { id: ctx.businessId },
-        select: { whatsappReplyMode: true, whatsappStatuses: true, whatsappActiveStatus: true },
+        select: {
+          whatsappReplyMode: true,
+          whatsappStatuses: true,
+          whatsappActiveStatus: true,
+          whatsappBotShowcase: true,
+        },
       });
       // Older clients send only `enabled`: on = booking; off leaves the automatic reply as it was.
       const mode =
@@ -567,6 +574,7 @@ export class WhatsAppService {
             ? 'off'
             : modeOf(current.whatsappReplyMode));
       const enabled = mode === 'booking';
+      const video = showcaseVideoOf(current.whatsappBotShowcase);
       let statusData = {};
       if (input.statuses) {
         const result = mergeStatuses(statusesOf(current.whatsappStatuses), input.statuses);
@@ -587,7 +595,11 @@ export class WhatsAppService {
           whatsappBotEnabled: enabled,
           whatsappBotAutoConfirm: input.autoConfirm,
           whatsappBotTexts: input.texts,
-          whatsappBotShowcase: input.showcase,
+          // The video is uploaded on its own (D-151); saving the settings keeps it.
+          whatsappBotShowcase: {
+            ...input.showcase,
+            ...(video ? { videoKey: video.key, videoBytes: video.bytes } : {}),
+          },
           whatsappBotFlow: input.flow,
           whatsappBotHoldDate: input.holdDate,
         },
@@ -663,57 +675,55 @@ export class WhatsAppService {
     return this.botSettings(ctx);
   }
 
-  /** Stores a status's video (replacing its old one). */
-  async setStatusVideo(ctx: TenantContext, statusId: string, video: Buffer) {
+  /** Stores the "meanwhile" video (D-151), replacing the old one. */
+  async setShowcaseVideo(ctx: TenantContext, video: Buffer) {
+    const key = checkShowcaseVideo(ctx.businessId, video);
     const b = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
-      select: { whatsappStatuses: true },
+      select: { whatsappBotShowcase: true },
     });
-    const statuses = statusesOf(b.whatsappStatuses);
-    const { status, key } = checkVideo(ctx.businessId, statuses, statusId, video);
     await this.storage.put(key, video, 'video/mp4');
-    const old = status.videoKey;
+    const old = showcaseVideoOf(b.whatsappBotShowcase);
     await this.prisma.business.update({
       where: { id: ctx.businessId },
       data: {
-        whatsappStatuses: statuses.map((s) =>
-          s.id === statusId ? { ...s, videoKey: key, videoBytes: video.length } : s,
-        ),
+        whatsappBotShowcase: {
+          ...showcaseObject(b.whatsappBotShowcase),
+          videoKey: key,
+          videoBytes: video.length,
+        },
       },
     });
-    if (old) await this.storage.delete(old).catch(() => undefined);
+    if (old) await this.storage.delete(old.key).catch(() => undefined);
     return this.botSettings(ctx);
   }
 
-  async deleteStatusVideo(ctx: TenantContext, statusId: string) {
+  async deleteShowcaseVideo(ctx: TenantContext) {
     const b = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
-      select: { whatsappStatuses: true },
+      select: { whatsappBotShowcase: true },
     });
-    const statuses = statusesOf(b.whatsappStatuses);
-    const status = statuses.find((s) => s.id === statusId);
-    if (!status) throw new AppError('NOT_FOUND');
-    if (!status.videoKey) return this.botSettings(ctx);
+    const old = showcaseVideoOf(b.whatsappBotShowcase);
+    if (!old) return this.botSettings(ctx);
+    const rest = showcaseObject(b.whatsappBotShowcase);
+    delete rest.videoKey;
+    delete rest.videoBytes;
     await this.prisma.business.update({
       where: { id: ctx.businessId },
-      data: {
-        whatsappStatuses: statuses.map((s) =>
-          s.id === statusId ? { id: s.id, label: s.label, text: s.text } : s,
-        ),
-      },
+      data: { whatsappBotShowcase: rest as Prisma.InputJsonValue },
     });
-    await this.storage.delete(status.videoKey).catch(() => undefined);
+    await this.storage.delete(old.key).catch(() => undefined);
     return this.botSettings(ctx);
   }
 
-  /** The video's bytes, for the owner's preview (only this business's statuses). */
-  async statusVideo(ctx: TenantContext, statusId: string): Promise<Buffer> {
+  /** The video's bytes, for the owner's preview (this business's only). */
+  async showcaseVideo(ctx: TenantContext): Promise<Buffer> {
     const b = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
-      select: { whatsappStatuses: true },
+      select: { whatsappBotShowcase: true },
     });
-    const key = statusesOf(b.whatsappStatuses).find((s) => s.id === statusId)?.videoKey;
-    const video = key ? await this.storage.get(key) : null;
+    const v = showcaseVideoOf(b.whatsappBotShowcase);
+    const video = v ? await this.storage.get(v.key) : null;
     if (!video) throw new AppError('NOT_FOUND');
     return video;
   }

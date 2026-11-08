@@ -508,6 +508,7 @@ describe('WhatsApp booking bot (D-102)', () => {
         defaultText: 'בינתיים, הנה הצצה לעבודות שלנו ✂️',
         link: null,
         assetIds: [],
+        video: null,
       });
       const bad = (showcase: object) =>
         req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {

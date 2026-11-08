@@ -1,17 +1,16 @@
 import {
-  apiPaths,
   replyStatusSchema,
   MAX_STATUSES,
   type ReplyMode,
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
-import { Plus, Trash2, Video, X } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { useId, useState } from 'react';
 import { Alert, Button, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
-import { useBotSettings, useSetStatus, useStatusVideo, useUpdateBotSettings } from './api';
+import { useBotSettings, useSetStatus, useUpdateBotSettings } from './api';
 import { toRequest } from './BookingBotCard';
 
 type Saved = WhatsAppBotResponse['settings'];
@@ -24,8 +23,8 @@ export const toCode = (text: string) => text.replaceAll(businessTag(), '{busines
 export const modeHelp: Record<ReplyMode, string> = {
   off: 'הודעות נכנסות בלי שום מענה אוטומטי.',
   auto_reply:
-    'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות). כשסטטוס פעיל — נשלחת הודעת הסטטוס, עם הסרטון שלו אם יש.',
-  booking: 'הבוט מציע ללקוחות זמנים פנויים וקובע תורים או בקשות לאירוע.',
+    'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות). כשסטטוס פעיל — נשלחת הודעת הסטטוס.',
+  booking: 'לקוחות רואים זמנים פנויים וקובעים לבד תור או בקשה לאירוע.',
 };
 
 /** Until-when choices for a status, as a time from now (null = until I change it). */
@@ -44,12 +43,10 @@ function untilOptions(now = new Date()) {
   ] as const;
 }
 
-const mb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-
 /**
  * Automatic reply (D-123, simplified in D-146): one idea — pick your status, and see and edit the
  * message customers get now. "Available" sends the general message; any other status sends its
- * own (and its video). Picking a status is saved at once; a changed message gets a save button.
+ * own. Picking a status is saved at once; a changed message gets a save button.
  */
 export function AutoReplyCard({ businessId }: { businessId: string }) {
   const bot = useBotSettings(businessId);
@@ -192,7 +189,6 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
         onSave={saveMessage}
       />
 
-      {current && <StatusVideo businessId={businessId} statusId={current.id} stored={current} />}
       {current && !current.preset && (
         <button
           type="button"
@@ -324,79 +320,5 @@ function NewStatus({
         </Button>
       </div>
     </section>
-  );
-}
-
-/** A status's video: preview, replace or remove; added once the status is saved. */
-function StatusVideo({
-  businessId,
-  statusId,
-  stored,
-}: {
-  businessId: string;
-  statusId: string;
-  stored: Saved['statuses'][number] | undefined;
-}) {
-  const { upload, remove } = useStatusVideo(businessId);
-  const input = useRef<HTMLInputElement>(null);
-  if (!stored) {
-    return <p className="text-xs text-ink-muted">{tr('אחרי השמירה אפשר להוסיף לסטטוס סרטון.')}</p>;
-  }
-  const busy = upload.isPending || remove.isPending;
-  return (
-    <div className="flex flex-col gap-2">
-      {stored.video ? (
-        <div className="flex flex-wrap items-end gap-3">
-          <video
-            controls
-            preload="metadata"
-            src={`${apiPaths.whatsapp.statusVideo(businessId, statusId)}?s=${stored.video.sizeBytes}`}
-            className="h-36 max-w-full rounded-lg bg-ink/90"
-          />
-          <div className="flex flex-col gap-1 text-xs text-ink-muted">
-            <span>{tr('סרטון · {0}', mb(stored.video.sizeBytes))}</span>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => remove.mutate(statusId)}
-              className="inline-flex items-center gap-1 text-danger-600 hover:underline"
-            >
-              <X aria-hidden className="h-3.5 w-3.5" />
-              {tr('הסרת הסרטון')}
-            </button>
-          </div>
-        </div>
-      ) : null}
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          ref={input}
-          type="file"
-          accept="video/mp4"
-          className="sr-only"
-          aria-label={tr('סרטון לסטטוס')}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = '';
-            if (file) upload.mutate({ statusId, file });
-          }}
-        />
-        <Button
-          variant="secondary"
-          size="sm"
-          loading={upload.isPending}
-          disabled={busy}
-          onClick={() => input.current?.click()}
-        >
-          <Video aria-hidden className="h-4 w-4" />
-          {stored.video ? tr('החלפת הסרטון') : tr('הוספת סרטון')}
-        </Button>
-        <span className="text-xs text-ink-muted">
-          {tr('MP4 עד 16MB. סרטון קצר נשלח מהר יותר.')}
-        </span>
-      </div>
-      {(upload.isError || remove.isError) && (
-        <Alert tone="danger">{errorMessage(upload.error ?? remove.error)}</Alert>
-      )}
-    </div>
   );
 }

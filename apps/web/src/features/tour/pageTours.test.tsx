@@ -78,7 +78,7 @@ describe('page tours (D-096)', () => {
         }),
     });
     const { user } = renderApp(`${section('conversations')}?tab=auto`);
-    await screen.findByRole('heading', { name: 'הגדרות הבוט' });
+    await screen.findByRole('heading', { name: 'הגדרות קביעת התורים' });
     await openPageTour(user);
     // Nothing to classify and no personal numbers: those steps are skipped.
     const titles: string[] = [];
@@ -95,11 +95,11 @@ describe('page tours (D-096)', () => {
       'רענון',
       // Booking mode: no status, and one save button — the bot's (D-145).
       'מה קורה כשלקוח כותב',
-      'הגדרות הבוט',
+      'הגדרות קביעת התורים',
       'מה לקוחות יכולים להזמין',
       'אישור התורים',
-      'שמירת הגדרות הבוט',
-      'ההודעות של הבוט',
+      'שמירת ההגדרות',
+      'ההודעות ללקוחות',
       'בינתיים, הצצה לעבודות שלנו',
     ]);
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'סיום' }));

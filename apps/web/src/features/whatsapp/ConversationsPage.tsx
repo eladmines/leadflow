@@ -272,7 +272,7 @@ function ModeCards({
       </ModeCard>
       <ModeCard
         title={tr(replyModeLabels.booking)}
-        description={tr('הבוט מציע ללקוחות זמנים פנויים וקובע תורים או בקשות לאירוע.')}
+        description={tr('לקוחות רואים זמנים פנויים וקובעים לבד תור או בקשה לאירוע.')}
         icon={CalendarCheck}
         tone="bg-violet-500"
         on={saved.mode === 'booking'}

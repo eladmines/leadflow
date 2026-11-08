@@ -332,6 +332,8 @@ export const showcaseMessages = {
   linkInvalid: 'יש להזין קישור מלא שמתחיל ב־https://',
   tooManyImages: `אפשר לבחור עד ${SHOWCASE_MAX_IMAGES} תמונות`,
   imageMissing: 'אחת התמונות כבר לא קיימת בספריית התמונות. בחרו תמונה אחרת.',
+  videoInvalid: 'אפשר להעלות רק סרטון MP4',
+  videoTooLarge: 'הסרטון גדול מ־16MB. נסו סרטון קצר יותר',
 } as const;
 
 const industryShowcase: Record<string, string> = {
@@ -383,7 +385,7 @@ export type ReplyMode = (typeof REPLY_MODES)[number];
 export const replyModeLabels: Record<ReplyMode, string> = {
   off: 'כבוי — בלי מענה אוטומטי',
   auto_reply: 'מענה אוטומטי',
-  booking: 'בוט קביעת תורים',
+  booking: 'קביעת תורים אוטומטית',
 };
 
 /** The general reply, until the business writes its own (in the business's language, D-143). */
@@ -410,9 +412,8 @@ export const STATUS_PRESETS = [
 export const statusPresetsFor = (lang: Language = 'he') =>
   lang === 'en' ? STATUS_PRESETS_EN : STATUS_PRESETS;
 
-/** One video per status (WhatsApp's limit), and a total per business (free database, D-119). */
-export const STATUS_VIDEO_MAX_BYTES = 16 * 1024 * 1024;
-export const STATUS_VIDEOS_TOTAL_BYTES = 64 * 1024 * 1024;
+/** The "meanwhile" video (D-151): one MP4, WhatsApp's limit. */
+export const SHOWCASE_VIDEO_MAX_BYTES = 16 * 1024 * 1024;
 export const MAX_STATUSES = 12;
 
 export const statusMessages = {
@@ -420,9 +421,6 @@ export const statusMessages = {
   labelTooLong: 'שם הסטטוס ארוך מדי (עד 40 תווים)',
   textRequired: 'יש לכתוב את ההודעה',
   textTooLong: 'ההודעה ארוכה מדי (עד 1000 תווים)',
-  videoInvalid: 'אפשר להעלות רק סרטון MP4',
-  videoTooLarge: 'הסרטון גדול מ־16MB. נסו סרטון קצר יותר',
-  videosFull: 'נגמר המקום לסרטונים (64MB לעסק). מחקו סרטון של סטטוס אחר ונסו שוב',
 } as const;
 
 export const replyStatusSchema = z.object({
@@ -477,17 +475,9 @@ export const whatsappBotResponseSchema = z.object({
     mode: z.enum(REPLY_MODES),
     autoReplyText: z.string().nullable(),
     autoReplyDefault: z.string(),
-    statuses: z.array(
-      replyStatusSchema.extend({
-        preset: z.boolean(),
-        /** The status's video, if one was uploaded. */
-        video: z.object({ sizeBytes: z.number().int() }).nullable(),
-      }),
-    ),
+    statuses: z.array(replyStatusSchema.extend({ preset: z.boolean() })),
     /** The status on now (expired ones come back as null). */
     activeStatus: z.object({ id: z.string(), until: z.string().datetime().nullable() }).nullable(),
-    /** Space used by status videos, of STATUS_VIDEOS_TOTAL_BYTES. */
-    videoBytesUsed: z.number().int(),
     enabled: z.boolean(),
     autoConfirm: z.boolean(),
     /** Only the messages the business rewrote. */
@@ -515,6 +505,8 @@ export const whatsappBotResponseSchema = z.object({
       defaultText: z.string(),
       link: z.string().nullable(),
       assetIds: z.array(z.string().uuid()),
+      /** Its video (D-151), if one was uploaded; sent after the photos. */
+      video: z.object({ sizeBytes: z.number().int() }).nullable().optional(),
     }),
   }),
 });
@@ -525,9 +517,8 @@ export const whatsappApiPaths = {
   webhook: '/api/v1/integrations/whatsapp/webhook',
   /** PUT: the status on now (D-123). */
   status: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/status`,
-  /** PUT (multipart MP4) / GET / DELETE: a status's video. */
-  statusVideo: (businessId: string, statusId: string) =>
-    `/api/v1/businesses/${businessId}/whatsapp/statuses/${statusId}/video`,
+  /** PUT (multipart MP4) / GET / DELETE: the "meanwhile" video (D-151). */
+  showcaseVideo: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/showcase/video`,
   thread: (businessId: string, leadId: string) =>
     `/api/v1/businesses/${businessId}/leads/${leadId}/whatsapp`,
   inbox: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/inbox`,
