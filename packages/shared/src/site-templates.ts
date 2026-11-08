@@ -4,9 +4,17 @@ import {
   type Section,
   type SiteSeo,
   type SitePage,
+  type SiteLanguage,
   type SiteTheme,
   type TemplateKey,
 } from './site';
+import {
+  buildTemplateDraftEn,
+  DEFAULT_CONTACT_FORM_EN,
+  NEW_SECTION_EN,
+  PAGE_TITLES_EN,
+  STOCK_ABOUT_ALT_EN,
+} from './site-templates-en';
 
 /** The business details a template or the renderer needs. */
 export interface SiteBusinessInfo {
@@ -31,10 +39,21 @@ export interface SiteDraft {
 }
 
 /**
- * Starting content for a new site. Copy is realistic but generic; the owner edits it.
- * Ids are deterministic per template (unique within the site); sections added later get random ids.
+ * Starting content for a new site, in the site's language (D-142). Copy is realistic but generic;
+ * the owner edits it. Ids are deterministic per template (unique within the site); sections added
+ * later get random ids.
  */
-export function buildTemplateDraft(templateKey: TemplateKey, b: SiteBusinessInfo): SiteDraft {
+export function buildTemplateDraft(
+  templateKey: TemplateKey,
+  b: SiteBusinessInfo,
+  lang: SiteLanguage = 'he',
+): SiteDraft {
+  if (lang === 'en') return buildTemplateDraftEn(templateKey, b);
+  const draft = buildTemplateDraftHe(templateKey, b);
+  return { ...draft, theme: { language: 'he', ...draft.theme } };
+}
+
+function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): SiteDraft {
   const areas = b.serviceAreas.length ? b.serviceAreas.join(', ') : '';
   if (templateKey === 'beauty') {
     return {
@@ -555,7 +574,9 @@ export function withTemplatePhotos(
       }
       if (s.type === 'about' && !about && ids.about) {
         about = true;
-        return { ...s, imageAssetId: ids.about, imageAlt: photos.about.alt };
+        const alt =
+          draft.theme.language === 'en' ? STOCK_ABOUT_ALT_EN[draft.templateKey] : photos.about.alt;
+        return { ...s, imageAssetId: ids.about, imageAlt: alt };
       }
       return s;
     }),
@@ -567,9 +588,10 @@ export function templatePreview(
   key: TemplateKey,
   b: SiteBusinessInfo,
   base = '',
+  lang: SiteLanguage = 'he',
 ): { draft: SiteDraft; media: MediaMap } {
   const photos = STOCK_PHOTOS[key];
-  const draft = withTemplatePhotos(buildTemplateDraft(key, b), PREVIEW_IDS);
+  const draft = withTemplatePhotos(buildTemplateDraft(key, b, lang), PREVIEW_IDS);
   const ref = (p: StockPhoto) => ({
     url: `${base}${STOCK_MEDIA_PATH}/${p.file}`,
     width: p.width,
@@ -582,16 +604,19 @@ export function templatePreview(
 }
 
 /** Empty content for a section the owner adds in the editor. */
-export function newSection(type: Section['type'], id: string): Section {
+export function newSection(type: Section['type'], id: string, lang: SiteLanguage = 'he'): Section {
+  const en = lang === 'en';
+  const t = (heText: string, key: keyof typeof NEW_SECTION_EN) =>
+    en ? NEW_SECTION_EN[key] : heText;
   switch (type) {
     case 'hero':
       return {
         id,
         type,
         visible: true,
-        title: 'כותרת חדשה',
+        title: t('כותרת חדשה', 'heroTitle'),
         subtitle: '',
-        buttonLabel: 'צרו קשר',
+        buttonLabel: t('צרו קשר', 'contactButton'),
         buttonAction: 'contact',
         imageAssetId: null,
       };
@@ -600,38 +625,44 @@ export function newSection(type: Section['type'], id: string): Section {
         id,
         type,
         visible: true,
-        title: 'אודות',
+        title: t('אודות', 'about'),
         body: '',
         imageAssetId: null,
         imageAlt: '',
       };
     case 'gallery':
-      return { id, type, visible: true, title: 'גלריה', items: [] };
+      return { id, type, visible: true, title: t('גלריה', 'gallery'), items: [] };
     case 'services':
       return {
         id,
         type,
         visible: true,
-        title: 'השירותים שלנו',
-        items: [{ name: 'שירות', description: '' }],
+        title: t('השירותים שלנו', 'services'),
+        items: [{ name: t('שירות', 'service'), description: '' }],
       };
     case 'pricing':
       return {
         id,
         type,
         visible: true,
-        title: 'מחירון',
+        title: t('מחירון', 'pricing'),
         note: '',
-        items: [{ name: 'שירות', price: '' }],
+        items: [{ name: t('שירות', 'service'), price: '' }],
       };
     case 'testimonials':
-      return { id, type, visible: true, title: 'המלצות', items: [{ quote: '', author: '' }] };
+      return {
+        id,
+        type,
+        visible: true,
+        title: t('המלצות', 'testimonials'),
+        items: [{ quote: '', author: '' }],
+      };
     case 'faq':
       return {
         id,
         type,
         visible: true,
-        title: 'שאלות נפוצות',
+        title: t('שאלות נפוצות', 'faq'),
         items: [{ question: '', answer: '' }],
       };
     case 'contact':
@@ -639,21 +670,21 @@ export function newSection(type: Section['type'], id: string): Section {
         id,
         type,
         visible: true,
-        title: 'יצירת קשר',
+        title: t('יצירת קשר', 'contact'),
         subtitle: '',
         showPhone: true,
         showAddress: true,
         showHours: true,
-        form: { ...DEFAULT_CONTACT_FORM },
+        form: { ...(en ? DEFAULT_CONTACT_FORM_EN : DEFAULT_CONTACT_FORM) },
       };
     case 'cta':
       return {
         id,
         type,
         visible: true,
-        title: 'מוכנים להתחיל?',
+        title: t('מוכנים להתחיל?', 'cta'),
         subtitle: '',
-        buttonLabel: 'צרו קשר',
+        buttonLabel: t('צרו קשר', 'contactButton'),
       };
   }
 }
@@ -699,6 +730,7 @@ export function newPage(
   newId: () => string,
   taken: string[] = [],
   home: Section[] = [],
+  lang: SiteLanguage = 'he',
 ): SitePage {
   const p = PAGE_PRESETS[preset];
   let slug: string = p.slug;
@@ -706,14 +738,14 @@ export function newPage(
   return {
     id,
     slug,
-    title: p.label,
+    title: lang === 'en' ? PAGE_TITLES_EN[preset] : p.label,
     inMenu: p.inMenu,
     seo: { title: '', description: '' },
     sections: p.sections.map((type) => {
       const source = type === 'hero' ? undefined : home.find((s) => s.type === type);
       return source
         ? ({ ...structuredClone(source), id: newId(), visible: true } as Section)
-        : newSection(type, newId());
+        : newSection(type, newId(), lang);
     }),
   };
 }

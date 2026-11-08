@@ -42,7 +42,7 @@ pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` 
    `apps/web/src/i18n/en.*.ts`; shared labels/messages are wrapped where they're shown. `dir` follows the
    language, so use logical Tailwind utilities only (`ms-/me-/ps-/pe-/start-/end-/text-start/text-end`),
    never `ml-/mr-/pl-/pr-/left-/right-/text-left/text-right`; directional icons flip with `ltr:`/`rtl:`.
-   Emails, phones and URLs get `dir="ltr"`. Customer websites and emails are still Hebrew-only.
+   Emails, phones and URLs get `dir="ltr"`. Customer websites follow the site's language (D-142, `packages/shared/src/site-i18n.ts`); emails are still Hebrew-only.
 7. **Accessibility.** Labeled inputs, visible focus, keyboard reachable, colour never the only signal.
    Every screen has loading, empty, error and no-permission states.
 8. **External integrations** sit behind an interface in `apps/api/src/integrations/*`, with a

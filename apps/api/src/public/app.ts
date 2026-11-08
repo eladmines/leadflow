@@ -10,6 +10,8 @@ import {
   leadMessages,
   leadSubmissionSchema,
   renderSiteMessagePage,
+  siteError,
+  siteText,
   sectionSchema,
   themeSchema,
   type SiteTheme,
@@ -248,7 +250,11 @@ export async function buildPublicApp({
       status,
       'text/html',
       withBase(
-        renderSiteMessagePage(theme, { name: businessName }, { ...page, backLabel: 'חזרה לאתר' }),
+        renderSiteMessagePage(
+          theme,
+          { name: businessName },
+          { ...page, backLabel: siteText(theme.language).result.back },
+        ),
         subdomain,
       ),
     );
@@ -283,7 +289,9 @@ export async function buildPublicApp({
         (s) => s.type === 'contact' && s.visible && s.form.enabled && s.id === body._s,
       );
       if (!section || section.type !== 'contact') return siteNotFound(reply);
-      const thanks = { title: 'תודה!', text: section.form.successMessage };
+      // Result pages in the site's language (D-142).
+      const L = siteText(theme.language);
+      const thanks = { title: L.result.thanks, text: section.form.successMessage };
 
       // Bots: pretend success, store nothing (they learn nothing from the response).
       if (body[HONEYPOT_FIELD]) {
@@ -293,8 +301,8 @@ export async function buildPublicApp({
       const token = verifyFormToken(config.FORM_TOKEN_SECRET, subdomain, body._t);
       if (!token.ok) {
         return message(reply, subdomain, 400, theme, business.name, {
-          title: 'לא הצלחנו לשלוח',
-          text: leadMessages.formExpired,
+          title: L.result.notSent,
+          text: siteError(theme.language, leadMessages.formExpired),
         });
       }
       if (token.tooFast) {
@@ -305,9 +313,9 @@ export async function buildPublicApp({
       const data = leadSubmissionSchema.safeParse(body);
       if (!data.success) {
         return message(reply, subdomain, 400, theme, business.name, {
-          title: 'כמעט — חסרים כמה פרטים',
-          text: 'יש לתקן את הפרטים הבאים ולשלוח שוב:',
-          items: [...new Set(data.error.issues.map((i) => i.message))],
+          title: L.result.almost,
+          text: L.result.fix,
+          items: [...new Set(data.error.issues.map((i) => siteError(theme.language, i.message)))],
         });
       }
 
@@ -322,9 +330,9 @@ export async function buildPublicApp({
         const ahead = slot.getTime() - Date.now();
         if (Number.isNaN(ahead) || ahead <= 0 || ahead > 120 * 86_400_000) {
           return message(reply, subdomain, 400, theme, business.name, {
-            title: 'כמעט — חסרים כמה פרטים',
-            text: 'יש לתקן את הפרטים הבאים ולשלוח שוב:',
-            items: [leadMessages.slotPast],
+            title: L.result.almost,
+            text: L.result.fix,
+            items: [siteError(theme.language, leadMessages.slotPast)],
           });
         }
       }

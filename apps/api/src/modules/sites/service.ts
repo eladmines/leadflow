@@ -14,6 +14,7 @@ import {
   seoSchema,
   siteMessages,
   templateKeySchema,
+  type SiteLanguage,
   themeSchema,
   type SaveDraftRequest,
   type Site,
@@ -121,22 +122,33 @@ export class SiteService {
     return row ? this.dto(row) : null;
   }
 
-  /** Creates the business's site from a template, pre-filled with the business profile. */
-  async create(ctx: TenantContext, templateKey: TemplateKey): Promise<Site> {
+  /**
+   * Creates the business's site from a template, pre-filled with the business profile, in the
+   * chosen language (D-142).
+   */
+  async create(
+    ctx: TenantContext,
+    templateKey: TemplateKey,
+    language: SiteLanguage = 'he',
+  ): Promise<Site> {
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
     });
     if (await this.prisma.site.findUnique({ where: { businessId: ctx.businessId } })) {
       throw new AppError('CONFLICT', siteMessages.siteExists);
     }
-    const base = buildTemplateDraft(templateKey, {
-      name: business.name,
-      industry: business.industry,
-      phone: business.phone,
-      address: business.address,
-      serviceAreas: business.serviceAreas,
-      openingHours: null,
-    });
+    const base = buildTemplateDraft(
+      templateKey,
+      {
+        name: business.name,
+        industry: business.industry,
+        phone: business.phone,
+        address: business.address,
+        serviceAreas: business.serviceAreas,
+        openingHours: null,
+      },
+      language,
+    );
     const draft = withTemplatePhotos(base, await this.importStockPhotos(ctx, templateKey));
     try {
       const row = await this.prisma.$transaction(async (tx) => {
@@ -386,14 +398,20 @@ export class SiteService {
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
     });
-    const base = buildTemplateDraft(templateKey, {
-      name: business.name,
-      industry: business.industry,
-      phone: business.phone,
-      address: business.address,
-      serviceAreas: business.serviceAreas,
-      openingHours: null,
-    });
+    // The site keeps its language (D-142).
+    const language = (site.theme as { language?: SiteLanguage } | null)?.language;
+    const base = buildTemplateDraft(
+      templateKey,
+      {
+        name: business.name,
+        industry: business.industry,
+        phone: business.phone,
+        address: business.address,
+        serviceAreas: business.serviceAreas,
+        openingHours: null,
+      },
+      language,
+    );
     const draft = withTemplatePhotos(base, await this.importStockPhotos(ctx, templateKey));
     const logoAssetId = (site.theme as { logoAssetId?: string | null } | null)?.logoAssetId ?? null;
 

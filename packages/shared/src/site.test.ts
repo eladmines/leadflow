@@ -36,6 +36,32 @@ describe('templates', () => {
     expect(draft.sections[0]).toMatchObject({ type: 'hero', title: 'מספרת שירן' });
   });
 
+  it.each(TEMPLATE_KEYS)('%s has English content too, valid and without Hebrew (D-142)', (key) => {
+    const en = {
+      ...business,
+      name: 'Shiran Salon',
+      address: '10 High St',
+      serviceAreas: ['Leeds'],
+    };
+    const draft = buildTemplateDraft(key, en, 'en');
+    expect(saveDraftRequestSchema.safeParse({ revision: 0, ...draft }).success).toBe(true);
+    expect(draft.theme.language).toBe('en');
+    const html = renderSitePage(draft, en);
+    expect(html).toContain('<html lang="en" dir="ltr">');
+    expect(html).not.toMatch(/[\u0590-\u05FF]/);
+    // Same sections as the Hebrew template.
+    expect(draft.sections.map((s) => s.id)).toEqual(
+      buildTemplateDraft(key, business).sections.map((s) => s.id),
+    );
+  });
+
+  it('a site without a language (made before D-142) stays Hebrew and right-to-left', () => {
+    const theme = { ...buildTemplateDraft('beauty', business).theme, language: undefined };
+    const html = renderSitePage({ ...buildTemplateDraft('beauty', business), theme }, business);
+    expect(html).toContain('<html lang="he" dir="rtl">');
+    expect(hoursSummary(defaultOpeningHours, 'en')[0]).toMatch(/^Sunday/);
+  });
+
   it('every section type has a valid empty starter', () => {
     for (const type of SECTION_TYPES) {
       expect(sectionSchema.safeParse(newSection(type, `new-${type}`)).success, type).toBe(true);

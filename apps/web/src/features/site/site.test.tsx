@@ -17,6 +17,7 @@ import {
   testBusiness,
   testUser,
 } from '../../test/utils';
+import { setLocaleForTests } from '../../i18n';
 import { siteBusinessInfo } from './api';
 
 afterEach(() => {
@@ -87,8 +88,34 @@ describe('template picker', () => {
     await user.click(within(cards[0]!).getByRole('button', { name: 'בחירת התבנית' }));
     expect(await screen.findByRole('heading', { name: 'האתר שלי' })).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', sp.site(testBusiness.id))).toEqual([
-      { templateKey: 'beauty' },
+      { templateKey: 'beauty', language: 'he' },
     ]);
+  });
+
+  it('in English, the templates and the new site are in English (D-142)', async () => {
+    setLocaleForTests('en');
+    try {
+      const fetchMock = mockApi({
+        [meKey]: me(testUser),
+        ...getSite(null),
+        [`POST ${sp.site(testBusiness.id)}`]: () => json(201, { site }),
+      });
+      const { user } = renderApp(sitePath);
+      await user.click(await screen.findByRole('button', { name: /Build a new website/ }));
+      const cards = await screen.findAllByRole('article');
+      const preview = cards[0]!.querySelector('iframe')!.getAttribute('srcdoc')!;
+      expect(preview).toContain('<html lang="en" dir="ltr">');
+      expect(preview).toContain('Book an appointment');
+      expect(preview).not.toContain('לקביעת תור');
+      await user.click(within(cards[0]!).getByRole('button', { name: 'Choose template' }));
+      await waitFor(() =>
+        expect(callsTo(fetchMock, 'POST', sp.site(testBusiness.id))).toEqual([
+          { templateKey: 'beauty', language: 'en' },
+        ]),
+      );
+    } finally {
+      setLocaleForTests('he');
+    }
   });
 
   it('non-owners see an empty state instead of the picker', async () => {
