@@ -235,6 +235,46 @@ describe('WhatsApp booking bot (D-102)', () => {
     expect(last().text).toMatch(/^Great! You're booked for תספורת נשים on /);
   });
 
+  it('a customer cancels a booked appointment by writing "cancel" (D-153)', async () => {
+    const { owner, services } = await setup();
+    // Nothing booked yet: says so and offers to book.
+    await post(text('היי, אפשר לקבוע תור?'));
+    await post(tap('cancel'));
+    await post(text('אני רוצה לבטל'));
+    expect(last().text).toBe('לא מצאנו תור קרוב לבטל 🙂 רוצים לקבוע תור?');
+
+    // Book one, then cancel it.
+    await post(text('אפשר לקבוע תור?'));
+    await post(tap(`svc:${services[0]!.id}`));
+    await post(tap(last().choices![0]!.id));
+    await post(tap(last().choices![0]!.id));
+    await post(tap('ok'));
+    const appt = await ctx.prisma.appointment.findFirstOrThrow();
+    expect(appt.status).toBe('CONFIRMED');
+
+    await post(text('אני רוצה לבטל את התור'));
+    expect(last().text).toMatch(/^לבטל את התור לתספורת נשים ב.* בשעה \d{2}:\d{2}\?$/);
+    expect(last().choices!.map((c) => c.title)).toEqual(['כן, לבטל', 'לא, להשאיר']);
+    await post(tap('xcl_no'));
+    expect(last().text).toBe('מעולה, התור נשאר 👍');
+    expect((await ctx.prisma.appointment.findFirstOrThrow()).status).toBe('CONFIRMED');
+
+    await post(text('ביטול'));
+    await post(tap(`xcl:${appt.id}`));
+    expect(last().text).toMatch(/^התור בוטל ✅/);
+    expect((await ctx.prisma.appointment.findFirstOrThrow()).status).toBe('CANCELLED');
+    // The team hears about it: a notification and a task.
+    const note = await ctx.prisma.notification.findFirst({
+      where: { userId: owner.userId, type: 'appointment.cancelled' },
+    });
+    expect(note).not.toBeNull();
+    const tasks = await ctx.prisma.task.findMany({ orderBy: { createdAt: 'asc' } });
+    expect(tasks.at(-1)!.title).toMatch(/^תור בוטל: נועה לוי · תספורת נשים · /);
+    // Tapping "yes" again does nothing more.
+    await post(tap(`xcl:${appt.id}`));
+    expect(last().text).toBe('לא מצאנו תור קרוב לבטל 🙂 רוצים לקבוע תור?');
+  });
+
   it("greets a new number's first message, but not its next ones", async () => {
     await setup();
     await post(text('היי'));
