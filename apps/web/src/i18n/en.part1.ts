@@ -309,7 +309,6 @@ export const enPart1: Record<string, string> = {
   'במה אפשר לעזור?': 'How can I help?',
   'איך לקוחות מזמינים:': 'How customers book:',
   'ההגדרות נשמרו.': 'Settings saved.',
-  'שמירת ההגדרות': 'Save settings',
   'יש שינויים שעוד לא נשמרו': 'You have unsaved changes',
   'ביטול השינויים': 'Discard changes',
   'לשמור את התאריך כתפוס עד שאחליט': 'Hold the date as taken until I decide',

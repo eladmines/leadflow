@@ -175,7 +175,59 @@ describe('WhatsApp conversations inbox', () => {
     expect(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' })).toBeDisabled();
   });
 
-  it('automatic reply by default: the general message and the statuses; the booking card stays hidden (D-123)', async () => {
+  it('automatic reply: pick a status, see and edit what customers get (D-146)', async () => {
+    let settings = botSettings('auto_reply');
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () => json(200, { connected: true, settings }),
+          [`PUT ${wp.bot(id)}`]: echoBot,
+          [`PUT ${wp.status(id)}`]: (body: unknown) => {
+            settings = { ...settings, activeStatus: body as never };
+            return json(200, { connected: true, settings });
+          },
+        },
+      ),
+    );
+    const { user } = renderApp(autoTab);
+    // One line says what happens (D-145); no mode choices on the page.
+    const summary = await screen.findByRole('region', { name: 'מה קורה כשלקוח כותב' });
+    expect(within(summary).getByText('מענה אוטומטי')).toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'שמירת הגדרות הבוט' })).not.toBeInTheDocument();
+
+    // Available: the general message, no save button until it changes, no "how long".
+    const message = screen.getByLabelText('מה לקוחות מקבלים עכשיו');
+    expect(message).toHaveValue(AUTO_REPLY_DEFAULT.replace('{business}', '[שם העסק]'));
+    expect(screen.queryByRole('button', { name: 'שמירת ההודעה' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('לכמה זמן:')).not.toBeInTheDocument();
+    await user.clear(message);
+    await user.type(message, 'שלום מ[[שם העסק]!');
+    await user.click(screen.getByRole('button', { name: 'שמירת ההודעה' }));
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))[0]).toMatchObject({
+      mode: 'auto_reply',
+      autoReplyText: 'שלום מ{business}!',
+    });
+
+    // A status: saved at once, and the box shows its message.
+    const statuses = screen.getByRole('group', { name: 'בחירת סטטוס' });
+    const before = Date.now();
+    await user.click(within(statuses).getByRole('button', { name: 'באירוע' }));
+    expect(callsTo(fetchMock, 'PUT', wp.status(id))[0]).toEqual({ id: 'event', until: null });
+    expect(await screen.findByLabelText('מה לקוחות מקבלים כשאתם "באירוע"')).toHaveValue(
+      presets[0]!.text,
+    );
+    // How long, once you're away.
+    await user.selectOptions(screen.getByLabelText('לכמה זמן:'), 'לשעה');
+    const sent = callsTo(fetchMock, 'PUT', wp.status(id))[1] as { id: string; until: string };
+    expect(sent.id).toBe('event');
+    const ahead = new Date(sent.until).getTime() - before;
+    expect(ahead).toBeGreaterThan(59 * 60_000);
+    expect(ahead).toBeLessThan(61 * 60_000);
+  });
+
+  it('adds an own status with a name and a message', async () => {
     const fetchMock = mockApi(
       routes(
         { connected: true, numbers: [] },
@@ -187,85 +239,19 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    // One line says what happens (D-145); "Change" opens the guide.
-    const summary = await screen.findByRole('region', { name: 'מה קורה כשלקוח כותב' });
-    expect(within(summary).getByText('מענה אוטומטי')).toBeInTheDocument();
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
-    // Editing statuses is folded away until opened.
-    await user.click(screen.getByText('עריכת הסטטוסים (4)'));
-    expect(screen.queryByRole('button', { name: 'שמירת הגדרות הבוט' })).not.toBeInTheDocument();
-    expect(screen.getByLabelText('ההודעה הכללית')).toHaveValue(
-      AUTO_REPLY_DEFAULT.replace('{business}', '[שם העסק]'),
-    );
-    // Statuses are short rows; their fields open with "Edit".
-    for (const name of ['באירוע', 'בפגישה', 'בחופשה', 'סגור עכשיו']) {
-      expect(screen.getByRole('button', { name: `עריכת הסטטוס ${name}` })).toBeInTheDocument();
-    }
-    expect(screen.queryByLabelText('שם הסטטוס')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'עריכת הסטטוס באירוע' }));
-    expect(screen.getByLabelText('שם הסטטוס')).toHaveValue('באירוע');
-    await user.click(screen.getByRole('button', { name: 'עריכת הסטטוס באירוע' }));
-
-    // An own status needs a name and a message.
-    await user.click(screen.getByRole('button', { name: 'הוספת סטטוס' }));
-    await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
+    await user.click(await screen.findByRole('button', { name: 'סטטוס חדש' }));
+    await user.click(screen.getByRole('button', { name: 'הוספה' }));
     expect(await screen.findByText('יש לתת שם לסטטוס')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
-    const names = screen.getAllByLabelText('שם הסטטוס');
-    await user.type(names.at(-1)!, 'באולפן');
-    await user.type(screen.getAllByLabelText('ההודעה ללקוח').at(-1)!, 'באולפן עד הערב 🎧');
-    const general = screen.getByLabelText('ההודעה הכללית');
-    await user.clear(general);
-    await user.type(general, 'שלום מ[[שם העסק]!');
-    await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
-    expect(await screen.findByText('ההגדרות נשמרו.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('שם הסטטוס'), 'באולפן');
+    await user.type(screen.getByLabelText('ההודעה ללקוח'), 'באולפן עד הערב 🎧');
+    await user.click(screen.getByRole('button', { name: 'הוספה' }));
     const body = callsTo(fetchMock, 'PUT', wp.bot(id))[0] as {
-      mode: string;
-      autoReplyText: string;
       statuses: { label: string; text: string; id: string }[];
     };
-    expect(body.mode).toBe('auto_reply');
-    expect(body.autoReplyText).toBe('שלום מ{business}!');
     expect(body.statuses.at(-1)).toMatchObject({ label: 'באולפן', text: 'באולפן עד הערב 🎧' });
     expect(body.statuses.at(-1)!.id).toMatch(/^c-/);
-  });
-
-  it('switches the status with one click, for a chosen time (D-123)', async () => {
-    const fetchMock = mockApi(
-      routes(
-        { connected: true, numbers: [] },
-        {
-          [`GET ${wp.bot(id)}`]: () =>
-            json(200, { connected: true, settings: botSettings('auto_reply') }),
-          [`PUT ${wp.status(id)}`]: (body: unknown) =>
-            json(200, {
-              connected: true,
-              settings: { ...botSettings('auto_reply'), activeStatus: body },
-            }),
-        },
-      ),
-    );
-    const { user } = renderApp(autoTab);
-    const statuses = await screen.findByRole('group', { name: 'בחירת סטטוס' });
-    expect(within(statuses).getByRole('button', { name: 'זמין' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await user.selectOptions(screen.getByLabelText('לכמה זמן:'), 'לשעה');
-    const before = Date.now();
-    await user.click(within(statuses).getByRole('button', { name: 'באירוע' }));
-    await waitFor(() =>
-      expect(within(statuses).getByRole('button', { name: 'באירוע' })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      ),
-    );
-    const sent = callsTo(fetchMock, 'PUT', wp.status(id))[0] as { id: string; until: string };
-    expect(sent.id).toBe('event');
-    const ahead = new Date(sent.until).getTime() - before;
-    expect(ahead).toBeGreaterThan(59 * 60_000);
-    expect(ahead).toBeLessThan(61 * 60_000);
-    expect(screen.getByText(/פעיל עד/)).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'באולפן' })).toBeInTheDocument();
   });
 
   it('edits the bot messages with a live preview, and keeps unchanged ones as defaults', async () => {
