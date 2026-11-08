@@ -401,17 +401,25 @@ export async function buildPublicApp({
       },
       select: { user: { select: { email: true, status: true } } },
     });
-    const mail = newLeadTemplate({
-      businessName,
-      name: d.name,
-      phone: formatIsraeliPhone(d.phone),
-      email: d.email,
-      message: requested
-        ? `בקשה לתור: ${requested}${d.message ? `\n\n${d.message}` : ''}`
-        : d.message,
-      link: `${config.APP_URL}/b/${businessId}/leads`,
-      settingsLink: `${config.APP_URL}/b/${businessId}/account`,
+    const { language } = await prisma.business.findUniqueOrThrow({
+      where: { id: businessId },
+      select: { language: true },
     });
+    const en = language === 'en';
+    const mail = newLeadTemplate(
+      {
+        businessName,
+        name: d.name,
+        phone: formatIsraeliPhone(d.phone),
+        email: d.email,
+        message: requested
+          ? `${en ? 'Appointment request' : 'בקשה לתור'}: ${requested}${d.message ? `\n\n${d.message}` : ''}`
+          : d.message,
+        link: `${config.APP_URL}/b/${businessId}/leads`,
+        settingsLink: `${config.APP_URL}/b/${businessId}/account`,
+      },
+      en ? 'en' : 'he',
+    );
     for (const { user } of team) {
       if (user.status !== 'ACTIVE') continue;
       try {

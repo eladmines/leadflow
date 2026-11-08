@@ -283,6 +283,7 @@ describe('settings', () => {
         industry: 'beauty',
         phone: '+972527654321',
         address: 'הרצל 10, חיפה',
+        language: 'he',
       },
     ]);
   });

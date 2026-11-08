@@ -128,7 +128,7 @@ export async function buildApp({
     origin: config.WEB_ORIGINS,
     credentials: true,
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', CSRF_HEADER_NAME],
+    allowedHeaders: ['Content-Type', CSRF_HEADER_NAME, 'X-LeadFlow-Locale'],
   });
   await app.register(cookie);
   // Uploads: one file per request; the route enforces the size limit too.

@@ -18,7 +18,7 @@ import {
   type WhatsAppMessage,
   type WhatsAppBotResponse,
   whatsappBotSettingsSchema,
-  AUTO_REPLY_DEFAULT,
+  autoReplyDefaultFor,
   setStatusRequestSchema,
   type WhatsAppThreadResponse,
 } from '@leadflow/shared';
@@ -32,6 +32,7 @@ import {
   modeOf,
   statusDtos,
   statusesOf,
+  languageOf,
   videoBytesUsed,
 } from './auto-reply';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
@@ -508,9 +509,11 @@ export class WhatsAppService {
         whatsappAutoReplyText: true,
         whatsappStatuses: true,
         whatsappActiveStatus: true,
+        language: true,
       },
     });
-    const statuses = statusesOf(b.whatsappStatuses);
+    const lang = languageOf(b.language);
+    const statuses = statusesOf(b.whatsappStatuses, lang);
     const active = activeOf(b.whatsappActiveStatus, statuses, new Date());
     const texts = botTextsSchema.safeParse(b.whatsappBotTexts ?? {});
     const chosen = (BOT_FLOWS as readonly string[]).includes(b.whatsappBotFlow ?? '')
@@ -523,7 +526,7 @@ export class WhatsAppService {
       settings: {
         mode: modeOf(b.whatsappReplyMode),
         autoReplyText: b.whatsappAutoReplyText,
-        autoReplyDefault: AUTO_REPLY_DEFAULT,
+        autoReplyDefault: autoReplyDefaultFor(lang),
         statuses: statusDtos(statuses),
         activeStatus: active ? { id: active.status.id, until: active.until } : null,
         videoBytesUsed: videoBytesUsed(statuses),
@@ -533,11 +536,11 @@ export class WhatsAppService {
         holdDate: b.whatsappBotHoldDate,
         flow: chosen ?? botFlowFor(b.industry),
         flowIsDefault: chosen === null,
-        defaults: botDefaultTextsFor(b.industry),
+        defaults: botDefaultTextsFor(b.industry, lang),
         showcase: {
           enabled: showcase.enabled,
           ...('text' in showcase && showcase.text ? { text: showcase.text } : {}),
-          defaultText: showcaseDefaultText(b.industry),
+          defaultText: showcaseDefaultText(b.industry, lang),
           link: showcase.link,
           assetIds: showcase.assetIds,
         },

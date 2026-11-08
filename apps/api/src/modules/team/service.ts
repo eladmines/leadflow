@@ -33,6 +33,8 @@ const pending = (now = new Date()) => ({
   expiresAt: { gt: now },
 });
 
+const ROLE_LABELS_EN = { OWNER: 'Owner', MANAGER: 'Manager', EMPLOYEE: 'Employee' } as const;
+
 export class TeamService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -135,15 +137,19 @@ export class TeamService {
   private async sendEmail(businessId: string, row: Row, token: string) {
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: businessId },
-      select: { name: true },
+      select: { name: true, language: true },
     });
-    const mail = inviteTemplate({
-      businessName: business.name,
-      inviterName: row.invitedBy?.fullName ?? null,
-      roleLabel: roleLabels[row.role],
-      link: `${this.config.APP_URL}${INVITE_WEB_PATH}?token=${token}`,
-      days: Math.round(INVITE_TTL_MS / 86_400_000),
-    });
+    const en = business.language === 'en';
+    const mail = inviteTemplate(
+      {
+        businessName: business.name,
+        inviterName: row.invitedBy?.fullName ?? null,
+        roleLabel: en ? ROLE_LABELS_EN[row.role] : roleLabels[row.role],
+        link: `${this.config.APP_URL}${INVITE_WEB_PATH}?token=${token}`,
+        days: Math.round(INVITE_TTL_MS / 86_400_000),
+      },
+      en ? 'en' : 'he',
+    );
     try {
       await this.email.send({ to: row.email, ...mail });
     } catch (err) {

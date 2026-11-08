@@ -39,6 +39,7 @@ export const testBusiness: Business = {
   openingHours: defaultOpeningHours,
   websiteUrl: null,
   timezone: 'Asia/Jerusalem',
+  language: 'he',
   status: 'ACTIVE',
   onboardingStep: 4,
   role: 'OWNER',

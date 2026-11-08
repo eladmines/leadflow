@@ -16,4 +16,5 @@ export * from './reports';
 export * from './appointments';
 export * from './quotes';
 export * from './whatsapp';
+export * from './whatsapp-en';
 export * from './notifications';

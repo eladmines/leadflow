@@ -313,9 +313,19 @@ const onboardingStepSchema = z.number().int().min(1).max(ONBOARDING_STEPS);
 // Requests
 // ---------------------------------------------------------------------------
 
+/**
+ * The business's language (D-143): what its customers get — website, WhatsApp replies and bot,
+ * emails. Set at sign-up from the app language; existing businesses are Hebrew.
+ */
+export const LANGUAGES = ['he', 'en'] as const;
+export const languageSchema = z.enum(LANGUAGES);
+export type Language = z.infer<typeof languageSchema>;
+export const languageLabels: Record<Language, string> = { he: 'עברית', en: 'English' };
+
 export const createBusinessRequestSchema = z.object({
   name: businessNameSchema,
   industry: industrySchema,
+  language: languageSchema.default('he'),
 });
 export type CreateBusinessRequest = z.infer<typeof createBusinessRequestSchema>;
 
@@ -332,6 +342,7 @@ export const businessDetailsSchema = z.object({
   industry: industrySchema,
   phone: phoneSchema,
   address: addressSchema,
+  language: languageSchema.optional(),
 });
 export type BusinessDetails = z.infer<typeof businessDetailsSchema>;
 
@@ -347,6 +358,7 @@ export const updateBusinessRequestSchema = z.object({
   serviceAreas: serviceAreasSchema.optional(),
   openingHours: openingHoursSchema.nullable().optional(),
   websiteUrl: websiteUrlSchema.optional(),
+  language: languageSchema.optional(),
   onboardingStep: onboardingStepSchema.optional(),
 });
 export type UpdateBusinessRequest = z.input<typeof updateBusinessRequestSchema>;
@@ -366,6 +378,8 @@ export const businessSchema = z.object({
   /** Existing website outside LeadFlow (D-094); null = none. */
   websiteUrl: z.string().nullable(),
   timezone: z.string(),
+  /** What its customers get (D-143). */
+  language: languageSchema,
   status: businessStatusSchema,
   onboardingStep: z.number().int(),
   /** The caller's role in this business. */

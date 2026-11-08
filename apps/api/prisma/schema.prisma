@@ -150,6 +150,8 @@ model Business {
   /// Existing website outside LeadFlow (D-094); shown in "האתר שלי", never managed by LeadFlow.
   websiteUrl             String?        @map("website_url") @db.VarChar(300)
   timezone               String         @default("Asia/Jerusalem") @db.VarChar(64)
+  /// 'he' | 'en' (D-143): what its customers get (website, WhatsApp, emails).
+  language               String         @default("he") @db.VarChar(2)
   /// WhatsApp booking bot (D-102): off by default; confirmed bookings unless autoConfirm is off.
   whatsappBotEnabled     Boolean        @default(false) @map("whatsapp_bot_enabled")
   whatsappBotAutoConfirm Boolean        @default(true) @map("whatsapp_bot_auto_confirm")

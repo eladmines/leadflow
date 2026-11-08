@@ -599,4 +599,7 @@ export const enPart3: Record<string, string> = {
   'ההגדרות, בלשוניות': 'Settings, in tabs',
   'פרטי העסק (מופיעים באתר, בכפתור החיוג ובמיילים), אזורי שירות, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ומנוי. כל לשונית נשמרת בכפתור משלה.':
     'Business details (shown on your website, the call button and emails), service areas, opening hours (they decide which times are offered for appointments) and your plan. Each tab has its own save button.',
+  'שפת הלקוחות': 'Customer language',
+  'ההודעות בוואטסאפ, המיילים ללקוחות ואתר חדש יהיו בשפה הזו.':
+    'WhatsApp messages, emails to customers and a new website will be in this language.',
 };

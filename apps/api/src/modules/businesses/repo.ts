@@ -18,11 +18,17 @@ export const businessRepo = {
   async createWithOwner(
     db: Db,
     userId: string,
-    data: { name: string; industry: string },
+    data: { name: string; industry: string; language: string },
   ): Promise<{ business: Business; membership: Membership }> {
     const business = await db.business.create({
       // Step 1 (name + industry) is done at creation, so the wizard resumes at step 2.
-      data: { name: data.name, industry: data.industry, status: 'ONBOARDING', onboardingStep: 2 },
+      data: {
+        name: data.name,
+        industry: data.industry,
+        language: data.language,
+        status: 'ONBOARDING',
+        onboardingStep: 2,
+      },
     });
     const membership = await db.membership.create({
       data: { userId, businessId: business.id, role: 'OWNER' },

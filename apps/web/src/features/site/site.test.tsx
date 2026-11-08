@@ -88,15 +88,17 @@ describe('template picker', () => {
     await user.click(within(cards[0]!).getByRole('button', { name: 'בחירת התבנית' }));
     expect(await screen.findByRole('heading', { name: 'האתר שלי' })).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', sp.site(testBusiness.id))).toEqual([
-      { templateKey: 'beauty', language: 'he' },
+      { templateKey: 'beauty' },
     ]);
   });
 
-  it('in English, the templates and the new site are in English (D-142)', async () => {
+  it('an English business gets English templates (D-142, D-143)', async () => {
     setLocaleForTests('en');
     try {
       const fetchMock = mockApi({
         [meKey]: me(testUser),
+        [`GET ${apiPaths.businesses.detail(testBusiness.id)}`]: () =>
+          json(200, { business: { ...testBusiness, language: 'en' } }),
         ...getSite(null),
         [`POST ${sp.site(testBusiness.id)}`]: () => json(201, { site }),
       });
@@ -110,7 +112,7 @@ describe('template picker', () => {
       await user.click(within(cards[0]!).getByRole('button', { name: 'Choose template' }));
       await waitFor(() =>
         expect(callsTo(fetchMock, 'POST', sp.site(testBusiness.id))).toEqual([
-          { templateKey: 'beauty', language: 'en' },
+          { templateKey: 'beauty' },
         ]),
       );
     } finally {
