@@ -4,12 +4,22 @@ import {
   formatIsraeliPhone,
   replyModeLabels,
   type InboxNumber,
+  type ReplyMode,
+  type WhatsAppBotResponse,
 } from '@leadflow/shared';
-import { Briefcase, MessageCircleReply, UserX } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Briefcase, CalendarCheck, MessageCircleReply, UserX, type LucideIcon } from 'lucide-react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Card, EmptyState, RefreshButton, Spinner } from '../../components/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  EmptyState,
+  RefreshButton,
+  Spinner,
+  Switch,
+} from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
@@ -18,13 +28,14 @@ import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import {
   useBotSettings,
+  useUpdateBotSettings,
   useClassifyNumber,
   useForgetPersonal,
   usePersonalNumbers,
   useWhatsAppInbox,
 } from './api';
 import { AutoReplyCard } from './AutoReplyCard';
-import { BookingBotCard } from './BookingBotCard';
+import { BookingBotCard, toRequest } from './BookingBotCard';
 import { SetupGuide, shouldOfferSetup } from './SetupGuide';
 import { tr } from '../../i18n';
 
@@ -209,28 +220,127 @@ function AutoTab({ businessId }: { businessId: string }) {
       />
     );
   }
+  if (!bot.isSuccess) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   return (
-    <>
-      {bot.isSuccess && (
-        <section
-          aria-label={tr('מה קורה כשלקוח כותב')}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
-            <MessageCircleReply className="h-5 w-5" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-ink-muted">{tr('כשלקוח כותב:')}</p>
-            <p className="font-semibold text-ink">{tr(replyModeLabels[bot.data.settings.mode])}</p>
-          </div>
-          <Button variant="secondary" size="sm" onClick={() => setGuide(true)}>
-            {tr('שינוי')}
-          </Button>
-        </section>
+    <ModeCards businessId={businessId} saved={bot.data.settings} connected={bot.data.connected} />
+  );
+}
+
+/**
+ * The two ways to answer (D-147): automatic reply and the booking bot, each with its own saved
+ * settings and an on/off switch. One at a time: turning one on turns the other off.
+ */
+function ModeCards({
+  businessId,
+  saved,
+  connected,
+}: {
+  businessId: string;
+  saved: WhatsAppBotResponse['settings'];
+  connected: boolean;
+}) {
+  const update = useUpdateBotSettings(businessId);
+  const turn = (mode: ReplyMode, on: boolean) => {
+    const next = on ? mode : 'off';
+    update.mutate({ ...toRequest(saved), mode: next, enabled: next === 'booking' });
+  };
+  return (
+    <div role="group" aria-label={tr('מה קורה כשלקוח כותב')} className="flex flex-col gap-4">
+      {!connected && (
+        <p className="text-sm text-ink-muted">
+          {tr('המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.')}
+        </p>
       )}
-      <AutoReplyCard businessId={businessId} />
-      <BookingBotCard businessId={businessId} />
-    </>
+      <ModeCard
+        title={tr(replyModeLabels.auto_reply)}
+        description={tr('כל לקוח שכותב מקבל הודעה קצרה, לפי הסטטוס שלך.')}
+        icon={MessageCircleReply}
+        tone="bg-emerald-500"
+        on={saved.mode === 'auto_reply'}
+        busy={update.isPending}
+        onToggle={(on) => turn('auto_reply', on)}
+      >
+        <AutoReplyCard businessId={businessId} />
+      </ModeCard>
+      <ModeCard
+        title={tr(replyModeLabels.booking)}
+        description={tr('הבוט מציע ללקוחות זמנים פנויים וקובע תורים או בקשות לאירוע.')}
+        icon={CalendarCheck}
+        tone="bg-violet-500"
+        on={saved.mode === 'booking'}
+        busy={update.isPending}
+        onToggle={(on) => turn('booking', on)}
+      >
+        <BookingBotCard businessId={businessId} />
+      </ModeCard>
+      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+    </div>
+  );
+}
+
+/** One way to answer: title, switch, and its settings (open when on, or on request). */
+function ModeCard({
+  title,
+  description,
+  icon: Icon,
+  tone,
+  on,
+  busy,
+  onToggle,
+  children,
+}: {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  tone: string;
+  on: boolean;
+  busy: boolean;
+  onToggle: (on: boolean) => void;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const uid = useId();
+  const shown = on || open;
+  return (
+    <section
+      aria-labelledby={`${uid}-title`}
+      className={cn(
+        'flex flex-col gap-4 rounded-2xl border bg-surface p-4',
+        on ? 'border-emerald-300' : 'border-surface-border',
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white',
+            on ? tone : 'bg-slate-400',
+          )}
+        >
+          <Icon className="h-5 w-5" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 id={`${uid}-title`} className="font-semibold text-ink">
+            {title}
+          </h3>
+          <p className="text-sm text-ink-muted">{description}</p>
+          <p className={cn('text-sm font-medium', on ? 'text-emerald-700' : 'text-ink-muted')}>
+            {on ? tr('פועל') : tr('כבוי')}
+          </p>
+        </div>
+        <Switch checked={on} onChange={onToggle} label={title} disabled={busy} />
+      </div>
+      {!on && (
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="self-start text-sm font-medium text-brand-700 hover:underline"
+        >
+          {open ? tr('הסתרת ההגדרות') : tr('הגדרות')}
+        </button>
+      )}
+      {shown && children}
+    </section>
   );
 }
 

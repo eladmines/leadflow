@@ -16,3 +16,4 @@ export { Select } from './Select';
 export { Textarea } from './Textarea';
 export { DialogShell } from './DialogShell';
 export { PhoneField, browserCountry } from './PhoneField';
+export { Switch } from './Switch';

@@ -55,18 +55,8 @@ export function AutoReplyCard({ businessId }: { businessId: string }) {
   const bot = useBotSettings(businessId);
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
-  const s = bot.data.settings;
-  return (
-    <div className="flex flex-col gap-5">
-      {!bot.data.connected && (
-        <p className="text-sm text-ink-muted">
-          {tr('המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.')}
-        </p>
-      )}
-      {/* The mode is chosen with "Change" at the top (D-145); here only its own settings. */}
-      {s.mode === 'auto_reply' && <StatusAndMessage businessId={businessId} saved={s} />}
-    </div>
-  );
+  // Editable whether it's on or off: each mode keeps its own settings (D-147).
+  return <StatusAndMessage businessId={businessId} saved={bot.data.settings} />;
 }
 
 function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Saved }) {

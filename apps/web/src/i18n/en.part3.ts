@@ -489,8 +489,6 @@ export const enPart3: Record<string, string> = {
     "Video space is full (64MB per business). Remove another status's video and try again",
   'הזמן שבחרתם כבר עבר': 'That time has already passed',
   'מה קורה כשלקוח כותב': 'When a customer writes',
-  '"מענה אוטומטי" שולח את ההודעה הכללית או את הסטטוס. "בוט קביעת תורים" מציע זמנים פנויים וקובע תורים. "כבוי" משאיר את ההודעות בלי מענה. "שינוי" פותח הגדרה קצרה בשלבים.':
-    '"Automatic reply" sends the general message or your status. "Booking bot" offers free times and books appointments. "Off" leaves messages without a reply. "Change" opens a short step-by-step setup.',
   'שמירת הגדרות הבוט': 'Save bot settings',
   'השינויים בהגדרות הבוט נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה.':
     'Changes to the bot settings take effect only after clicking here. Until then you see "You have unsaved changes", and "Discard changes" puts things back.',
@@ -597,7 +595,6 @@ export const enPart3: Record<string, string> = {
     'Messages come in with no automatic reply. You can change this here any time.',
   'מעכשיו לקוחות שכותבים מקבלים מענה לבד. כל השאר, כמו סטטוסים והודעות הבוט, נמצא כאן בהמשך העמוד.':
     "From now on, customers who write get a reply automatically. Everything else, like statuses and the bot's messages, is further down this page.",
-  'כשלקוח כותב:': 'When a customer writes:',
   'עריכת הסטטוסים ({0})': 'Edit statuses ({0})',
   'הסטטוס שלך': 'Your status',
   'מה לקוחות מקבלים כשאתם "{0}"': 'What customers get while you\'re "{0}"',
@@ -606,4 +603,10 @@ export const enPart3: Record<string, string> = {
   'ההודעה נשמרה.': 'Message saved.',
   'לחיצה אחת, למשל "באירוע", ומתחת רואים בדיוק מה לקוחות מקבלים עכשיו — ואפשר לשנות את ההודעה שם. אפשר לבחור לכמה זמן ולהוסיף סרטון, ו"זמין" מחזיר את ההודעה הכללית.':
     'One click, for example "At an event", and below you see exactly what customers get now — and can change the message right there. You can choose for how long and add a video; "Available" brings back the general message.',
+  'כל לקוח שכותב מקבל הודעה קצרה, לפי הסטטוס שלך.':
+    'Every customer who writes gets a short message, based on your status.',
+  פועל: 'On',
+  'הסתרת ההגדרות': 'Hide settings',
+  'שתי דרכים לענות: מענה אוטומטי או בוט קביעת תורים. לכל אחת ההגדרות שלה, שנשמרות גם כשהיא כבויה. מדליקים את המתג של מה שרוצים — אחת בכל פעם.':
+    'Two ways to answer: an automatic reply or the booking bot. Each keeps its own settings, even while off. Turn on the switch of the one you want — one at a time.',
 };

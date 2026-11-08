@@ -134,8 +134,8 @@ describe('WhatsApp conversations inbox', () => {
     expect(localStorage.getItem(guideKey)).toBe('1');
     await user.click(screen.getByRole('button', { name: 'סיום' }));
     // Then the full page, with a way back to the guide.
-    const summary = await screen.findByRole('region', { name: 'מה קורה כשלקוח כותב' });
-    expect(within(summary).getByRole('button', { name: 'שינוי' })).toBeInTheDocument();
+    // Then the two cards, the bot's switch on (D-147).
+    expect(await screen.findByRole('switch', { name: 'בוט קביעת תורים' })).toBeInTheDocument();
   });
 
   it('booking bot: picks the approval, saved together with "Save bot settings"', async () => {
@@ -191,10 +191,15 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    // One line says what happens (D-145); no mode choices on the page.
-    const summary = await screen.findByRole('region', { name: 'מה קורה כשלקוח כותב' });
-    expect(within(summary).getByText('מענה אוטומטי')).toBeInTheDocument();
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    // Two switches (D-147): the automatic reply is on, the bot's settings stay folded.
+    expect(await screen.findByRole('switch', { name: 'מענה אוטומטי' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByRole('switch', { name: 'בוט קביעת תורים' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
     expect(screen.queryByRole('button', { name: 'שמירת הגדרות הבוט' })).not.toBeInTheDocument();
 
     // Available: the general message, no save button until it changes, no "how long".
@@ -225,6 +230,38 @@ describe('WhatsApp conversations inbox', () => {
     const ahead = new Date(sent.until).getTime() - before;
     expect(ahead).toBeGreaterThan(59 * 60_000);
     expect(ahead).toBeLessThan(61 * 60_000);
+  });
+
+  it('two switches, one at a time; each keeps its settings (D-147)', async () => {
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () =>
+            json(200, { connected: true, settings: botSettings('auto_reply') }),
+          [`PUT ${wp.bot(id)}`]: echoBot,
+        },
+      ),
+    );
+    const { user } = renderApp(autoTab);
+    const bot = await screen.findByRole('switch', { name: 'בוט קביעת תורים' });
+    // The bot can be set up while it's off.
+    await user.click(screen.getByRole('button', { name: 'הגדרות' }));
+    expect(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' })).toBeInTheDocument();
+    // Turning it on turns the automatic reply off.
+    await user.click(bot);
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))[0]).toMatchObject({
+      mode: 'booking',
+      enabled: true,
+    });
+    await waitFor(() => expect(bot).toHaveAttribute('aria-checked', 'true'));
+    expect(screen.getByRole('switch', { name: 'מענה אוטומטי' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    // And off again: nothing answers.
+    await user.click(bot);
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))[1]).toMatchObject({ mode: 'off', enabled: false });
   });
 
   it('adds an own status with a name and a message', async () => {
