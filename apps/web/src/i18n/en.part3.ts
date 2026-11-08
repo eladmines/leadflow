@@ -450,22 +450,18 @@ export const enPart3: Record<string, string> = {
   'מענה אוטומטי': 'Automatic reply',
   'המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.':
     'Replies start once a WhatsApp number is connected to the business.',
-  'הסטטוס שלך עכשיו': 'Your status now',
   'פעיל עד {0}': 'On until {0}',
   'פעיל עד שתשנו': 'On until you change it',
   'זמין — נשלח המענה הכללי': 'Available — the general reply is sent',
   'בחירת סטטוס': 'Choose a status',
   זמין: 'Available',
   'לכמה זמן:': 'For how long:',
-  'מה קורה כשלקוח כותב:': 'When a customer writes:',
   'ההודעה הכללית': 'General message',
   '{0} מוחלף בשם העסק.': '{0} is replaced with the business name.',
-  'הסטטוסים שלך': 'Your statuses',
   'מקום לסרטונים: {0} מתוך {1}': 'Video space: {0} of {1}',
   'שם הסטטוס': 'Status name',
   'מחיקת הסטטוס {0}': 'Delete the status {0}',
   'ההודעה ללקוח': 'Message to the customer',
-  'הוספת סטטוס': 'Add a status',
   'אחרי השמירה אפשר להוסיף לסטטוס סרטון.': 'After saving, you can add a video to this status.',
   'סרטון · {0}': 'Video · {0}',
   'הסרת הסרטון': 'Remove video',
@@ -492,15 +488,9 @@ export const enPart3: Record<string, string> = {
   'נגמר המקום לסרטונים (64MB לעסק). מחקו סרטון של סטטוס אחר ונסו שוב':
     "Video space is full (64MB per business). Remove another status's video and try again",
   'הזמן שבחרתם כבר עבר': 'That time has already passed',
-  'לחיצה אחת, למשל "באירוע", ומעכשיו לקוחות שכותבים מקבלים את הודעת הסטטוס במקום ההודעה הכללית, עם הסרטון שלו אם יש. אפשר לבחור לכמה זמן, ו"זמין" מחזיר את ההודעה הכללית.':
-    'One click, for example "At an event", and from now on customers who write get the status message instead of the general one, with its video if it has one. Choose for how long; "Available" brings the general message back.',
   'מה קורה כשלקוח כותב': 'When a customer writes',
   '"מענה אוטומטי" שולח את ההודעה הכללית או את הסטטוס. "בוט קביעת תורים" מציע זמנים פנויים וקובע תורים. "כבוי" משאיר את ההודעות בלי מענה. "שינוי" פותח הגדרה קצרה בשלבים.':
     '"Automatic reply" sends the general message or your status. "Booking bot" offers free times and books appointments. "Off" leaves messages without a reply. "Change" opens a short step-by-step setup.',
-  'כל סטטוס עם שם והודעה משלו, ואפשר להוסיף סרטון קצר (MP4 עד 16MB) — למשל קטע מהאירוע. "הוספת סטטוס" יוצר סטטוס משלכם.':
-    'Each status has its own name and message, and you can add a short video (MP4 up to 16MB) — a clip from the event, for example. "Add a status" creates your own.',
-  'השינויים במענה האוטומטי נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה. הסטטוס עצמו נשמר מיד.':
-    'Changes to the automatic reply take effect only after clicking here. Until then you see "You have unsaved changes", and "Discard changes" puts things back. The status itself is saved straight away.',
   'שמירת הגדרות הבוט': 'Save bot settings',
   'השינויים בהגדרות הבוט נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה.':
     'Changes to the bot settings take effect only after clicking here. Until then you see "You have unsaved changes", and "Discard changes" puts things back.',
@@ -531,8 +521,6 @@ export const enPart3: Record<string, string> = {
   'מה זה {0}?': 'What is {0}?',
   // Simpler Conversations page (D-129)
   'סטטוס חדש': 'New status',
-  'עוד אין הודעה': 'No message yet',
-  סרטון: 'Video',
   'עריכת הסטטוס {0}': 'Edit the status {0}',
   'הגדרות הבוט': 'Bot settings',
   'הבוט שואל על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.':
@@ -609,8 +597,13 @@ export const enPart3: Record<string, string> = {
     'Messages come in with no automatic reply. You can change this here any time.',
   'מעכשיו לקוחות שכותבים מקבלים מענה לבד. כל השאר, כמו סטטוסים והודעות הבוט, נמצא כאן בהמשך העמוד.':
     "From now on, customers who write get a reply automatically. Everything else, like statuses and the bot's messages, is further down this page.",
-  'הגדרה בשלבים': 'Set up step by step',
   'כשלקוח כותב:': 'When a customer writes:',
   'עריכת הסטטוסים ({0})': 'Edit statuses ({0})',
-  'עריכת הסטטוסים': 'Edit statuses',
+  'הסטטוס שלך': 'Your status',
+  'מה לקוחות מקבלים כשאתם "{0}"': 'What customers get while you\'re "{0}"',
+  'מה לקוחות מקבלים עכשיו': 'What customers get now',
+  'שמירת ההודעה': 'Save message',
+  'ההודעה נשמרה.': 'Message saved.',
+  'לחיצה אחת, למשל "באירוע", ומתחת רואים בדיוק מה לקוחות מקבלים עכשיו — ואפשר לשנות את ההודעה שם. אפשר לבחור לכמה זמן ולהוסיף סרטון, ו"זמין" מחזיר את ההודעה הכללית.':
+    'One click, for example "At an event", and below you see exactly what customers get now — and can change the message right there. You can choose for how long and add a video; "Available" brings back the general message.',
 };
