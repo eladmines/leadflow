@@ -46,12 +46,13 @@ describe('website lead form (F07)', () => {
   async function liveSite(
     sub = 'salon',
     configure?: (sections: Array<{ type: string; form?: { enabled: boolean } }>) => void,
+    language: 'he' | 'en' = 'he',
   ) {
     const o = await ownerWithBusiness(ctx.app);
     const id = o.business.id;
     await req(ctx.app, 'PATCH', apiPaths.businesses.detail(id), o.token, { phone: '050-1111111' });
     const site = (
-      await req(ctx.app, 'POST', sp.site(id), o.token, { templateKey: 'beauty' })
+      await req(ctx.app, 'POST', sp.site(id), o.token, { templateKey: 'beauty', language })
     ).json().site;
     let revision = 0;
     if (configure) {
@@ -275,6 +276,25 @@ describe('website lead form (F07)', () => {
     expect(res.body).toContain('יש לאשר את יצירת הקשר כדי לשלוח');
     expect(res.body).toContain('מספר הטלפון אינו תקין');
     expect(res.body).toContain('noindex');
+  });
+
+  it('an English site is English: page, form, errors and thank-you page (D-142)', async () => {
+    const o = await liveSite('salon', undefined, 'en');
+    const page = await pub.inject({ method: 'GET', url: '/', headers: { host: host('salon') } });
+    expect(page.body).toContain('<html lang="en" dir="ltr">');
+    expect(page.body).toContain('Book an appointment');
+    expect(page.body).toContain('Full name');
+    expect(page.body).not.toContain('שם מלא');
+
+    const bad = await submit('salon', valid(o.contactId, 'salon', { phone: '123', consent: '' }));
+    expect(bad.statusCode).toBe(400);
+    expect(bad.body).toContain('Please agree to be contacted so we can send this');
+    expect(bad.body).toContain('The phone number is not valid');
+    expect(bad.body).toContain('Back to the site');
+
+    const ok = await submit('salon', valid(o.contactId));
+    expect(ok.body).toContain('Thank you!');
+    expect(ok.body).toContain('received your details');
   });
 
   it('404 for unpublished sites, unknown hosts, disabled forms and unknown sections', async () => {

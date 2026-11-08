@@ -120,6 +120,8 @@ export function SiteEditor({
       pages: site.pages,
     },
   );
+  // New sections and pages start in the site's language (D-142).
+  const language = draft.theme.language;
   // The page being edited: '' = home, otherwise an extra page's id (D-081).
   const [pageId, setPageId] = useState<PageId>('');
   const { state, retry, revision } = useDraftAutosave(business.id, site, draft);
@@ -193,6 +195,7 @@ export function SiteEditor({
         newId,
         draft.pages.map((p) => p.slug),
         draft.sections,
+        language,
       ),
       ...opts,
     };
@@ -259,8 +262,9 @@ export function SiteEditor({
           if (s.id !== id || !('items' in s)) return s;
           const items = [...(s.items as Record<string, unknown>[])];
           if (action === 'add') {
-            const template = (newSection(s.type, s.id) as { items?: Record<string, unknown>[] })
-              .items?.[0];
+            const template = (
+              newSection(s.type, s.id, d.theme.language) as { items?: Record<string, unknown>[] }
+            ).items?.[0];
             if (!template || items.length >= SITE_LIMITS.items) return s;
             items.push(Object.fromEntries(Object.keys(template).map((k) => [k, ''])));
           } else if (action === 'del') {
@@ -276,7 +280,7 @@ export function SiteEditor({
     );
   /** Adds a section at the end of the current page and opens it. */
   const addSectionAtEnd = (type: SectionType) => {
-    const added = newSection(type, newId());
+    const added = newSection(type, newId(), language);
     setSections((ss) => [...ss, added]);
     select(added.id);
   };
@@ -362,7 +366,7 @@ export function SiteEditor({
     return null;
   };
   const insertAfter = (afterId: string, type: SectionType) => {
-    const s = newSection(type, newId());
+    const s = newSection(type, newId(), language);
     setSections((ss) => {
       const i = ss.findIndex((x) => x.id === afterId);
       const next = [...ss];
@@ -800,7 +804,7 @@ export function SiteEditor({
                       <Button
                         variant="secondary"
                         onClick={() => {
-                          const s = newSection(adding, newId());
+                          const s = newSection(adding, newId(), language);
                           setSections((ss) => [...ss, s]);
                           setSelected(s.id);
                         }}
@@ -865,6 +869,7 @@ export function SiteEditor({
               className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-surface-border bg-surface p-1.5 shadow-card"
             >
               <PagesBar
+                language={language}
                 pages={draft.pages}
                 pageId={pageId}
                 editable={editable}

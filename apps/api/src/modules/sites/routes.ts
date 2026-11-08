@@ -40,7 +40,7 @@ export const siteTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: { params, body: createSiteRequestSchema, response: { 201: siteResponseSchema } },
     },
     async (req, reply) => {
-      const site = await service.create(tenantOf(req), req.body.templateKey);
+      const site = await service.create(tenantOf(req), req.body.templateKey, req.body.language);
       return reply.status(201).send({ site });
     },
   );

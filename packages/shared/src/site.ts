@@ -376,7 +376,16 @@ export const customColorsSchema = z.object({
 });
 export type CustomColors = z.infer<typeof customColorsSchema>;
 
+/**
+ * Customer website language (D-142): chosen when the site is created (the app's language at the
+ * time). Hebrew sites are right-to-left, English left-to-right. Unset = Hebrew (older sites).
+ */
+export const SITE_LANGUAGES = ['he', 'en'] as const;
+export const siteLanguageSchema = z.enum(SITE_LANGUAGES);
+export type SiteLanguage = z.infer<typeof siteLanguageSchema>;
+
 export const themeSchema = z.object({
+  language: siteLanguageSchema.optional(),
   palette: z.enum(PALETTE_KEYS),
   /** Owner-chosen colours; when set they replace the palette's (D-083). */
   custom: customColorsSchema.nullable().optional(),
@@ -494,7 +503,10 @@ export type Site = z.infer<typeof siteSchema>;
 export const siteResponseSchema = z.object({ site: siteSchema.nullable() });
 export type SiteResponse = z.infer<typeof siteResponseSchema>;
 
-export const createSiteRequestSchema = z.object({ templateKey: templateKeySchema });
+export const createSiteRequestSchema = z.object({
+  templateKey: templateKeySchema,
+  language: siteLanguageSchema.default('he'),
+});
 export type CreateSiteRequest = z.infer<typeof createSiteRequestSchema>;
 
 /** Full draft replace, guarded by the revision the client last saw (409 when stale). */

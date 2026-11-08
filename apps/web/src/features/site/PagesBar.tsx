@@ -1,9 +1,11 @@
 import {
   PAGE_PRESETS,
+  PAGE_TITLES_EN,
   pageSlugSchema,
   siteMessages,
   SITE_LIMITS,
   type PagePresetKey,
+  type SiteLanguage,
   type SitePage,
   type SiteSeo,
 } from '@leadflow/shared';
@@ -35,6 +37,7 @@ export function PagesBar({
   onDelete,
   seo,
   onSeo,
+  language,
 }: {
   pages: SitePage[];
   pageId: PageId;
@@ -46,6 +49,8 @@ export function PagesBar({
   /** Google title/description of the page being edited (the home page's too). */
   seo: SiteSeo;
   onSeo: (seo: SiteSeo) => void;
+  /** The site's language: a new page's suggested name is in it (D-142). */
+  language?: SiteLanguage;
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -102,6 +107,7 @@ export function PagesBar({
       )}
 
       <AddPage
+        language={language}
         open={addOpen}
         onOpenChange={setAddOpen}
         taken={pages.map((p) => p.slug)}
@@ -134,10 +140,12 @@ function AddPage({
   onOpenChange,
   taken,
   onAdd,
+  language,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   taken: string[];
+  language?: SiteLanguage;
   onAdd: (preset: PagePresetKey, page: { title: string; slug: string; inMenu: boolean }) => void;
 }) {
   const freeSlug = (base: string) => {
@@ -164,7 +172,9 @@ function AddPage({
   const choose = (k: PagePresetKey) => {
     setPreset(k);
     const p = PAGE_PRESETS[k];
-    if (!touched.title) setTitle(k === 'blank' ? '' : p.label);
+    if (!touched.title) {
+      setTitle(k === 'blank' ? '' : language === 'en' ? PAGE_TITLES_EN[k] : p.label);
+    }
     if (!touched.slug) setSlug(freeSlug(p.slug));
     setInMenu(p.inMenu);
   };

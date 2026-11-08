@@ -14,7 +14,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { siteBusinessInfo, useCreateSite } from './api';
 import { PreviewFrame } from './PreviewFrame';
-import { tr } from '../../i18n';
+import { locale, tr } from '../../i18n';
 
 /**
  * First visit to "My site": choose a template; it's pre-filled with the business profile.
@@ -35,7 +35,7 @@ export function TemplatePicker({
       Object.fromEntries(
         TEMPLATE_KEYS.map((k) => {
           // Shown with the sample photos the new site will start with (D-069).
-          const { draft, media } = templatePreview(k, info);
+          const { draft, media } = templatePreview(k, info, '', locale());
           return [k, renderSitePage(draft, info, media)];
         }),
       ) as Record<TemplateKey, string>,
@@ -45,7 +45,7 @@ export function TemplatePicker({
 
   const choose = (key: TemplateKey) => {
     setChosen(key);
-    create.mutate({ templateKey: key });
+    create.mutate({ templateKey: key, language: locale() });
   };
 
   return (
