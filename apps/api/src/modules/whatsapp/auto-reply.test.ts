@@ -178,6 +178,32 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(whatsapp.sent).toHaveLength(2);
   });
 
+  it('"meanwhile, a look at our work" follows the automatic reply, once a day (D-149)', async () => {
+    await setup();
+    await ctx.prisma.business.update({
+      where: { id: BUSINESS_ID },
+      data: {
+        whatsappBotShowcase: {
+          enabled: true,
+          text: 'בינתיים, תציצו 👇',
+          link: 'https://example.com/work',
+          assetIds: [],
+        },
+      },
+    });
+    await post(text('היי'));
+    expect(whatsapp.sent.map((m) => m.text)).toEqual([
+      AUTO_REPLY_DEFAULT.replace('{business}', 'די ג׳יי רון'),
+      'בינתיים, תציצו 👇\nhttps://example.com/work',
+    ]);
+    // The next automatic reply (13 hours later) comes without it: once a day.
+    await ctx.prisma.whatsAppNumber.updateMany({
+      data: { autoReplyAt: new Date(Date.now() - 13 * 3600_000) },
+    });
+    await post(text('שוב היי'));
+    expect(whatsapp.sent).toHaveLength(3);
+  });
+
   it('an English business replies in English, with English statuses (D-143)', async () => {
     const owner = await setup();
     await ctx.prisma.business.update({ where: { id: BUSINESS_ID }, data: { language: 'en' } });

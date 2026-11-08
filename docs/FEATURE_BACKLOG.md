@@ -87,6 +87,7 @@ F06 ─► F11 (after spike)
 - 2026-11-03 — Booking-bot showcase (D-106): message + link + up to 3 photos for customers who don't book (cancel, team, no times, stopped mid-way), "See our work" option, once a day.
 - 2026-11-03 — Bot per industry (D-107): 5 new industries, industry default messages, and an event-request flow (type → date → part of day → guests → area) for DJs, catering and photographers.
 - 2026-11-04 — Bot personal touch (D-108): event businesses ask "check a date or personal chat" first, wanting a person or two misunderstandings hand over, dates not held unless chosen, pause the bot per customer from the lead.
+- 2026-11-08 — "Meanwhile" for both modes in its own card with a switch; plainer WhatsApp settings wording (D-149).
 - 2026-11-08 — Bot messages and showcase editors open in pop-ups (D-148).
 - 2026-11-08 — WhatsApp: automatic reply and booking bot as two cards with on/off switches, one at a time (D-147).
 - 2026-11-08 — Automatic reply as one idea: pick a status, see and edit what customers get now (D-146).

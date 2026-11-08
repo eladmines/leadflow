@@ -371,18 +371,10 @@ export const enPart3: Record<string, string> = {
     'Creates a lead from the messages. From now on every message from this number goes to its lead, where you also reply.',
   'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שהבוט לא מבין אותו פעמיים, עובר אליכם מיד. הבוט לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
     "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or whom the bot can't understand twice, is passed to you right away. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
-  'איך לקוחות מזמינים': 'How customers book',
-  '"תורים בשעות פנויות": הלקוח בוחר שירות, יום ושעה. "בקשות לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
-    '"Free time slots": the customer picks a service, a day and a time. "Event requests": the customer types a date and tells you about the event, and you confirm. The option that suits your industry is marked.',
   'אישור התורים': 'Confirming bookings',
-  '"מאושרים מיד": התור נכנס ליומן כמאושר. "ממתינים לאישור": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד התורים.':
-    '"Confirmed straight away": the booking goes into the calendar as confirmed. "Wait for approval": the time is held, and the booking waits for you in "Pending requests" on the Appointments page.',
   'ההודעות של הבוט': "The bot's messages",
   'פתחו כדי לכתוב את ההודעות במילים שלכם. פרטים בסוגריים, כמו [שם העסק], מתמלאים לבד, ומתחת לכל הודעה רואים בדיוק מה הלקוח יקבל. "ברירת מחדל" מחזיר את הנוסח המקורי.':
     'Open this to write the messages in your own words. Details in brackets, like [Business name], fill in by themselves, and under each message you see exactly what the customer gets. "Default" restores the original wording.',
-  'לקוח שלא קבע — ביטל, לא מצא זמן או הפסיק לענות — מקבל הודעה עם קישור ועד 3 תמונות מהעבודות שלכם, וכפתור לקביעת תור. לכל היותר פעם ביום ללקוח.':
-    "A customer who didn't book — cancelled, found no time or stopped answering — gets a message with a link and up to 3 photos of your work, plus a book button. At most once a day per customer.",
-  היומן: 'The calendar',
   'כל עמודה היא יום וכל שורה חצי שעה. תור מופיע כבלוק בגודל הזמן שהוא תופס; לחיצה עליו פותחת אותו לשינוי, לשיבוץ איש צוות או לביטול.':
     'Each column is a day and each row half an hour. An appointment shows as a block the size of the time it takes; click it to change it, assign a staff member or cancel.',
   'שעה פנויה': 'A free time',
@@ -609,4 +601,30 @@ export const enPart3: Record<string, string> = {
   'הסתרת ההגדרות': 'Hide settings',
   'שתי דרכים לענות: מענה אוטומטי או בוט קביעת תורים. לכל אחת ההגדרות שלה, שנשמרות גם כשהיא כבויה. מדליקים את המתג של מה שרוצים — אחת בכל פעם.':
     'Two ways to answer: an automatic reply or the booking bot. Each keeps its own settings, even while off. Turn on the switch of the one you want — one at a time.',
+  'מה לקוחות יכולים להזמין?': 'What can customers book?',
+  'מה לקוחות יכולים להזמין': 'What can customers book',
+  'תור בשעה פנויה': 'An appointment at a free time',
+  'הבוט מציע ימים ושעות פנויים מהיומן.': 'The bot offers free days and times from your calendar.',
+  'בקשה לאירוע': 'An event request',
+  'הלקוח כותב תאריך, מספר אורחים ואזור, ואתם מאשרים.':
+    'The customer writes a date, number of guests and area, and you approve.',
+  'מתאים לתחום שלכם': 'suits your field',
+  'כשהבוט קובע תור:': 'When the bot books an appointment:',
+  'התור מאושר מיד': "It's confirmed straight away",
+  'הלקוח מקבל אישור, והתור נכנס ליומן.':
+    'The customer gets a confirmation, and it goes into your calendar.',
+  'התור מחכה לאישור שלי': 'It waits for my approval',
+  'השעה שמורה בינתיים. מאשרים בעמוד התורים.':
+    'The time is held meanwhile. You approve it on the Appointments page.',
+  'נשלחת אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור בבוט. לכל היותר פעם ביום ללקוח.':
+    "Sent after the automatic reply, or to a customer who didn't finish booking with the bot. At most once a day per customer.",
+  'אחרי המענה, הלקוח מקבל קישור ועד 3 תמונות מהעבודות שלכם. לכל היותר פעם ביום.':
+    'After the reply, the customer gets a link and up to 3 photos of your work. At most once a day.',
+  'עריכת ההצצה': 'Edit',
+  '"תור בשעה פנויה": הלקוח בוחר שירות, יום ושעה. "בקשה לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
+    '"An appointment at a free time": the customer picks a service, day and time. "An event request": the customer writes a date and tells you about the event, and you approve. The option that suits your field is marked.',
+  '"התור מאושר מיד": התור נכנס ליומן כמאושר. "התור מחכה לאישור שלי": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד התורים.':
+    '"It\'s confirmed straight away": it goes into the calendar as confirmed. "It waits for my approval": the time is held, and the appointment waits for you under "Requests waiting for approval" on the Appointments page.',
+  'אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור בבוט, נשלחת הודעה עם קישור ועד 3 תמונות מהעבודות שלכם. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
+    "After the automatic reply, or to a customer who didn't finish booking with the bot, a message goes out with a link and up to 3 photos of your work. At most once a day per customer. The switch turns it on and off.",
 };

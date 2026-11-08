@@ -123,7 +123,7 @@ interface Log {
   error: (obj: object, msg: string) => void;
 }
 
-/** Sends the automatic reply for one incoming message, when it's due. */
+/** Sends the automatic reply for one incoming message, when it's due; true when it did. */
 export class AutoReplier {
   constructor(
     private readonly prisma: PrismaClient,
@@ -145,10 +145,10 @@ export class AutoReplier {
     link: { contactId: string | null; leadId: string | null },
     teamIsTalking: boolean,
     now: Date,
-  ): Promise<void> {
-    if (teamIsTalking) return;
+  ): Promise<boolean> {
+    if (teamIsTalking) return false;
     if (number.autoReplyAt && now.getTime() - number.autoReplyAt.getTime() < AUTO_REPLY_GAP_MS) {
-      return;
+      return false;
     }
     // Claim the slot first, so two messages arriving together get one reply.
     const claimed = await this.prisma.whatsAppNumber.updateMany({
@@ -161,7 +161,7 @@ export class AutoReplier {
       },
       data: { autoReplyAt: now },
     });
-    if (!claimed.count) return;
+    if (!claimed.count) return false;
 
     const lang = languageOf(business.language);
     const statuses = statusesOf(business.whatsappStatuses, lang);
@@ -185,6 +185,7 @@ export class AutoReplier {
         );
       }
     }
+    return true;
   }
 
   /** Sends and files the message under the customer (a failure is logged, never thrown). */

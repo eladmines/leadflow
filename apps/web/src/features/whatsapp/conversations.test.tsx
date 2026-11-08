@@ -125,7 +125,7 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(screen.getByRole('radio', { name: /בוט קביעת תורים/ }));
     await user.click(screen.getByRole('button', { name: 'המשך' }));
     expect(screen.getByText('שלב 2 מתוך 3')).toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: /ממתינים לאישור/ }));
+    await user.click(screen.getByRole('radio', { name: /מחכה לאישור שלי/ }));
     await user.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByRole('heading', { name: 'הכול מוכן!' })).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
@@ -143,7 +143,7 @@ describe('WhatsApp conversations inbox', () => {
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(autoTab);
-    const pending = await screen.findByRole('radio', { name: /ממתינים לאישור שלכם/ });
+    const pending = await screen.findByRole('radio', { name: /מחכה לאישור שלי/ });
     const saveButton = screen.getByRole('button', { name: 'שמירת הגדרות הבוט' });
     expect(saveButton).toBeDisabled();
     await user.click(pending);
@@ -169,9 +169,9 @@ describe('WhatsApp conversations inbox', () => {
   it('"Discard changes" puts the saved settings back', async () => {
     mockApi(routes({ connected: true, numbers: [] }));
     const { user } = renderApp(autoTab);
-    await user.click(await screen.findByRole('radio', { name: /ממתינים לאישור שלכם/ }));
+    await user.click(await screen.findByRole('radio', { name: /מחכה לאישור שלי/ }));
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
-    expect(screen.getByRole('radio', { name: 'מאושרים מיד' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /מאושר מיד/ })).toBeChecked();
     expect(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' })).toBeDisabled();
   });
 
@@ -335,7 +335,7 @@ describe('WhatsApp conversations inbox', () => {
     ]);
   });
 
-  it('sets up the "in the meantime" showcase with a link and a photo (D-106)', async () => {
+  it('the shared "meanwhile" card: its switch, and the editor in a pop-up (D-106, D-149)', async () => {
     const fetchMock = mockApi(
       routes(
         { connected: true, numbers: [] },
@@ -347,14 +347,18 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    await user.click(await screen.findByRole('button', { name: /^בינתיים, הצצה לעבודות שלנו/ }));
+    // Its own switch, saved at once.
+    await user.click(await screen.findByRole('switch', { name: 'בינתיים, הצצה לעבודות שלנו' }));
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))[0]).toMatchObject({
+      showcase: { enabled: true },
+    });
+    await user.click(screen.getByRole('button', { name: 'עריכת ההצצה' }));
     // The industry's default message, ready to edit.
-    expect(screen.getByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
-    await user.click(screen.getByRole('checkbox', { name: 'שליחת הצצה ללקוחות שלא קבעו' }));
+    expect(await screen.findByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
     await user.type(screen.getByLabelText('קישור (לא חובה)'), 'instagram.com/sigalit');
     await user.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByText('יש להזין קישור מלא שמתחיל ב־https://')).toBeInTheDocument();
-    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(1);
 
     await user.clear(screen.getByLabelText('קישור (לא חובה)'));
     await user.type(screen.getByLabelText('קישור (לא חובה)'), 'https://instagram.com/sigalit');
@@ -366,23 +370,21 @@ describe('WhatsApp conversations inbox', () => {
     ).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByText('ההצצה נשמרה.')).toBeInTheDocument();
-    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
-      {
-        mode: 'booking',
-        autoReplyText: null,
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))[1]).toEqual({
+      mode: 'booking',
+      autoReplyText: null,
+      enabled: true,
+      autoConfirm: true,
+      holdDate: false,
+      flow: null,
+      texts: {},
+      showcase: {
         enabled: true,
-        autoConfirm: true,
-        holdDate: false,
-        flow: null,
-        texts: {},
-        showcase: {
-          enabled: true,
-          text: null,
-          link: 'https://instagram.com/sigalit',
-          assetIds: [photo.id],
-        },
+        text: null,
+        link: 'https://instagram.com/sigalit',
+        assetIds: [photo.id],
       },
-    ]);
+    });
   });
 
   it('switches to event requests, which changes the messages to edit (D-107)', async () => {
@@ -390,16 +392,16 @@ describe('WhatsApp conversations inbox', () => {
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(autoTab);
-    const events = await screen.findByRole('radio', { name: /בקשות לאירוע/ });
-    expect(screen.getByRole('radio', { name: /תורים בשעות פנויות/ })).toBeChecked();
-    expect(screen.getByText('(מתאים לתחום שלכם)')).toBeInTheDocument();
+    const events = await screen.findByRole('radio', { name: /בקשה לאירוע/ });
+    expect(screen.getByRole('radio', { name: /תור בשעה פנויה/ })).toBeChecked();
+    expect(screen.getByText(/מתאים לתחום שלכם/)).toBeInTheDocument();
     await user.click(events);
     await user.click(screen.getByRole('button', { name: 'שמירת הגדרות הבוט' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );
     expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד התורים/)).toBeInTheDocument();
-    expect(screen.queryByRole('radio', { name: 'מאושרים מיד' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /מאושר מיד/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'עריכת ההודעות של הבוט' }));
     expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();
     expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();
