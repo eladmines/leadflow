@@ -111,6 +111,35 @@ describe('WhatsApp on the lead page', () => {
     expect(await screen.findByText('הליד נוצר מהודעת וואטסאפ')).toBeInTheDocument();
   });
 
+  it('a Facebook lead: its tab, the conversation and the reply say Facebook (F23)', async () => {
+    const fbLead = {
+      ...lead,
+      source: 'facebook' as const,
+      contact: { ...lead.contact, phone: null },
+    };
+    mockApi({
+      ...routes({
+        connected: true,
+        messages: [{ ...incoming, channel: 'messenger' }],
+        replyUntil: open(),
+        botPaused: false,
+        channel: 'messenger',
+      }),
+      [`GET ${apiPaths.leads.detail(id, leadId)}`]: () =>
+        json(200, { lead: fbLead, activities: [] }),
+    });
+    renderApp(page);
+    expect(await screen.findByRole('tab', { name: 'פייסבוק' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(await screen.findByRole('heading', { name: 'Facebook Messenger' })).toBeInTheDocument();
+    expect(screen.getByLabelText('תשובה בפייסבוק')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'שליחה בפייסבוק' })).toBeInTheDocument();
+    // No booking bot on Facebook.
+    expect(screen.queryByRole('button', { name: 'השהיית הבוט' })).not.toBeInTheDocument();
+  });
+
   it('sends a reply while the window is open', async () => {
     const fetchMock = mockApi(
       routes(

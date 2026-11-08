@@ -80,7 +80,9 @@ function activityText(a: Activity): string {
         ? tr('הליד נוצר ידנית')
         : d.source === 'whatsapp'
           ? tr('הליד נוצר מהודעת וואטסאפ')
-          : tr('הליד נוצר מטופס באתר');
+          : d.source === 'facebook'
+            ? tr('הליד נוצר מהודעה בפייסבוק')
+            : tr('הליד נוצר מטופס באתר');
     case 'lead.stage_changed':
       return tr('השלב שונה מ"{0}" ל"{1}"', String(d.from), String(d.to));
     case 'lead.assigned':
@@ -474,14 +476,18 @@ type LeadTab = (typeof LEAD_TABS)[number];
  */
 function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) {
   const [params, setParams] = useSearchParams();
-  const fallback: LeadTab = lead.source === 'whatsapp' || lead.lastWhatsApp ? 'whatsapp' : 'notes';
+  const fallback: LeadTab =
+    lead.source === 'whatsapp' || lead.source === 'facebook' || lead.lastWhatsApp
+      ? 'whatsapp'
+      : 'notes';
   const asked = params.get('tab');
   const tab: LeadTab = (LEAD_TABS as readonly string[]).includes(asked ?? '')
     ? (asked as LeadTab)
     : fallback;
   const labels: Record<LeadTab, string> = {
     notes: tr('הערות והיסטוריה'),
-    whatsapp: 'WhatsApp',
+    // The conversation: WhatsApp, or Facebook for a lead that came from the Page (F23).
+    whatsapp: lead.source === 'facebook' ? tr('פייסבוק') : 'WhatsApp',
     tasks: tr('משימות'),
     appointments: tr('תורים'),
     quotes: tr('הצעות מחיר'),

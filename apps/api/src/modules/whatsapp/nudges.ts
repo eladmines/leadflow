@@ -12,6 +12,7 @@ export function startBookingNudges(app: FastifyInstance, intervalMs = 60_000) {
     app.whatsappSender,
     app.log,
     app.storage,
+    app.messengerSender,
   );
   let running = false;
   const tick = async () => {

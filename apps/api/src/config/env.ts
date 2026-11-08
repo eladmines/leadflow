@@ -123,6 +123,16 @@ const envSchema = z
       .string()
       .regex(/^v\d+\.\d+$/)
       .default('v21.0'),
+
+    // F23 — Facebook Messenger (D-157). One Page, connected to one business, from the environment.
+    // Same Meta app as WhatsApp: its app secret, verify token and Graph version are shared.
+    /** `local` records outgoing messages without calling Meta; `cloud` uses the Graph API. */
+    MESSENGER_PROVIDER: z.enum(['local', 'cloud']).default('local'),
+    /** LeadFlow business the Facebook Page belongs to; unset = Messenger off. */
+    MESSENGER_BUSINESS_ID: optionalSetting(z.string().uuid()),
+    /** The Facebook Page's id. */
+    MESSENGER_PAGE_ID: optionalSetting(z.string().min(1)),
+    MESSENGER_PAGE_ACCESS_TOKEN: optionalSetting(z.string().min(1)),
   })
   .superRefine((env, ctx) => {
     if (env.WHATSAPP_BUSINESS_ID) {
@@ -134,6 +144,19 @@ const envSchema = z
             code: z.ZodIssueCode.custom,
             path: [key],
             message: 'is required when WHATSAPP_BUSINESS_ID is set',
+          });
+        }
+      }
+    }
+    if (env.MESSENGER_BUSINESS_ID) {
+      const required = ['WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN'] as const;
+      const cloud = ['MESSENGER_PAGE_ID', 'MESSENGER_PAGE_ACCESS_TOKEN'] as const;
+      for (const key of [...required, ...(env.MESSENGER_PROVIDER === 'cloud' ? cloud : [])]) {
+        if (!env[key]) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: 'is required when MESSENGER_BUSINESS_ID is set',
           });
         }
       }

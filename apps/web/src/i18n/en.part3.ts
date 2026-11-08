@@ -628,4 +628,14 @@ export const enPart3: Record<string, string> = {
     'Every customer who writes gets one short message (at most once every 12 hours). While a status is on, its message is sent instead.',
   'לקוח ביטל תור בוואטסאפ': 'A customer cancelled on WhatsApp',
   'הסתרת התצוגה המקדימה': 'Hide preview',
+  'משתמש/ת פייסבוק': 'Facebook user',
+  פייסבוק: 'Facebook',
+  'תשובה בפייסבוק': 'Reply on Facebook',
+  'שליחה בפייסבוק': 'Send on Facebook',
+  'הליד נוצר מהודעה בפייסבוק': 'The lead was created from a Facebook message',
+  'פנייה חדשה בפייסבוק': 'New message on Facebook',
+  'ליד חדש מפייסבוק': 'New lead from Facebook',
+  'פייסבוק עדיין לא מחובר לעסק הזה': 'Facebook is not connected to this business yet',
+  'אפשר לענות בפייסבוק רק עד 24 שעות אחרי ההודעה האחרונה של הלקוח.':
+    "You can reply on Facebook only up to 24 hours after the customer's last message.",
 };

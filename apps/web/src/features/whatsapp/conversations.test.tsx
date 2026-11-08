@@ -440,6 +440,21 @@ describe('WhatsApp conversations inbox', () => {
     expect(within(card).getByText('לא מסווג')).toBeInTheDocument();
   });
 
+  it('a Facebook sender waits with its name and a Facebook label, no phone (F23)', async () => {
+    mockApi(
+      routes({
+        connected: true,
+        numbers: [{ ...number, phone: 'fb:1234567890', channel: 'messenger', profileName: null }],
+      }),
+    );
+    renderApp(page);
+    const list = await screen.findByRole('list', { name: 'מספרים שמחכים לסיווג' });
+    const [card] = within(list).getAllByRole('listitem') as [HTMLElement];
+    expect(within(card).getByRole('heading', { name: 'משתמש/ת פייסבוק' })).toBeInTheDocument();
+    expect(within(card).getAllByText('פייסבוק').length).toBeGreaterThan(0);
+    expect(within(card).queryByText(/fb:/)).not.toBeInTheDocument();
+  });
+
   it('marks a number business and links to the new lead', async () => {
     const fetchMock = mockApi(
       routes(

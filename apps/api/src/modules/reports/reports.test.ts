@@ -60,6 +60,7 @@ describe('reports summary', () => {
       { source: 'website_form', count: 0 },
       { source: 'manual', count: 3 },
       { source: 'whatsapp', count: 0 },
+      { source: 'facebook', count: 0 },
     ]);
     expect(r.series.unit).toBe('day');
     expect(r.series.points.length).toBeGreaterThanOrEqual(30);

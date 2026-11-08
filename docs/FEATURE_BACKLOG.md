@@ -29,7 +29,7 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F19 | Preset automations                                      | Medium             | F08, F10          | F16           | Full pipeline                       | Planned  |
 | F20 | Reports & analytics                                     | Medium             | F08               | F16           | Full pipeline                       | **Lite** |
 | F21 | Platform admin console (audited support access)         | Medium             | F02, F15          | any           | Full pipeline                       | Planned  |
-| F23 | Facebook Messenger → leads (D-157)                      | Medium             | F12               | F16           | Full pipeline                       | Proposed |
+| F23 | Facebook Messenger → leads (D-157)                      | Medium             | F12               | F16           | Full pipeline                       | **Built** |
 
 ## Dependency graph (core journey)
 
@@ -88,6 +88,7 @@ F06 ─► F11 (after spike)
 - 2026-11-03 — Booking-bot showcase (D-106): message + link + up to 3 photos for customers who don't book (cancel, team, no times, stopped mid-way), "See our work" option, once a day.
 - 2026-11-03 — Bot per industry (D-107): 5 new industries, industry default messages, and an event-request flow (type → date → part of day → guests → area) for DJs, catering and photographers.
 - 2026-11-04 — Bot personal touch (D-108): event businesses ask "check a date or personal chat" first, wanting a person or two misunderstandings hand over, dates not held unless chosen, pause the bot per customer from the lead.
+- 2026-11-08 — F23 Facebook Messenger → leads: Page messages wait in Conversations, become Facebook leads, replies within 24 h (D-157).
 - 2026-11-08 — "Meanwhile" renamed "A peek at the business" (D-156).
 - 2026-11-08 — "Meanwhile" editor: customer view behind a Preview button (D-155).
 - 2026-11-08 — Automatic booking answers every message, also after a handoff; wrong-keyboard Hebrew understood; tokens hidden in logs (D-154).
