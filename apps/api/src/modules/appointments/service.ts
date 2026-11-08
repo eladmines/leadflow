@@ -305,6 +305,15 @@ export class AppointmentService {
           source: 'website',
         },
       });
+      await this.awarenessTask(tx, {
+        businessId: input.businessId,
+        contactId: input.contactId,
+        leadId: input.leadId,
+        staffId: null,
+        what: service?.name ?? null,
+        startsAt: input.startsAt,
+        kind: 'request',
+      });
       await tx.activity.create({
         data: {
           businessId: input.businessId,
@@ -370,6 +379,15 @@ export class AppointmentService {
         },
       },
     });
+    await this.awarenessTask(db, {
+      businessId: input.businessId,
+      contactId: input.contactId,
+      leadId: input.leadId,
+      staffId: input.staffId,
+      what: input.serviceName,
+      startsAt: input.startsAt,
+      kind: input.confirmed ? 'booked' : 'request',
+    });
     return created;
   }
 
@@ -419,7 +437,79 @@ export class AppointmentService {
         },
       },
     });
+    await this.awarenessTask(db, {
+      businessId: input.businessId,
+      contactId: input.contactId,
+      leadId: input.leadId,
+      staffId: null,
+      what: input.eventType,
+      startsAt: input.startsAt,
+      kind: 'event',
+    });
     return created;
+  }
+
+  /**
+   * D-152: a customer's own booking (WhatsApp or the website) also becomes a task due now, so the
+   * team notices it: who, what and when, linked to the lead. It goes to the staff member who has
+   * it, or else the owner; no reminder email (the booking already notifies the team).
+   */
+  private async awarenessTask(
+    db: Db,
+    x: {
+      businessId: string;
+      contactId: string;
+      leadId: string;
+      staffId: string | null;
+      what: string | null;
+      startsAt: Date;
+      kind: 'booked' | 'request' | 'event';
+    },
+  ) {
+    const [business, contact, owner] = await Promise.all([
+      db.business.findUniqueOrThrow({
+        where: { id: x.businessId },
+        select: { language: true, timezone: true },
+      }),
+      db.contact.findUnique({ where: { id: x.contactId }, select: { name: true } }),
+      db.membership.findFirst({
+        where: { businessId: x.businessId, role: 'OWNER', status: 'ACTIVE' },
+        orderBy: { createdAt: 'asc' },
+        select: { userId: true },
+      }),
+    ]);
+    const assigneeId = x.staffId ?? owner?.userId;
+    if (!assigneeId) return;
+    const en = business.language === 'en';
+    const when = new Intl.DateTimeFormat(en ? 'en-GB' : 'he-IL', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      ...(x.kind === 'event' ? {} : { hour: '2-digit', minute: '2-digit' }),
+      timeZone: business.timezone,
+    }).format(x.startsAt);
+    const label = {
+      booked: en ? 'New appointment' : 'תור חדש',
+      request: en ? 'New appointment request' : 'בקשה חדשה לתור',
+      event: en ? 'New event request' : 'בקשה חדשה לאירוע',
+    }[x.kind];
+    const title = [contact?.name, x.what, when].filter(Boolean).join(' · ');
+    await db.task.create({
+      data: {
+        businessId: x.businessId,
+        title: `${label}: ${title}`.slice(0, 200),
+        notes:
+          x.kind === 'booked'
+            ? null
+            : en
+              ? 'Waiting for your approval on the Appointments page.'
+              : 'מחכה לאישור שלכם בעמוד התורים.',
+        dueAt: new Date(),
+        assigneeId,
+        leadId: x.leadId,
+        remind: false,
+      },
+    });
   }
 
   async update(ctx: TenantContext, id: string, input: UpdateInput): Promise<Appointment> {
