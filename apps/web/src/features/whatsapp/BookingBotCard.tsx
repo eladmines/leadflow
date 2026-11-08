@@ -594,18 +594,6 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
           {errors.assetIds && <p className="text-xs text-danger-600">{tr(errors.assetIds)}</p>}
         </div>
         <ShowcaseVideo businessId={businessId} video={saved.video ?? null} />
-        {/* The customer's view, on request (D-155). */}
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="self-start"
-          aria-expanded={previewing}
-          onClick={() => setPreviewing((v) => !v)}
-        >
-          <Eye aria-hidden className="h-4 w-4" />
-          {previewing ? tr('הסתרת התצוגה המקדימה') : tr('תצוגה מקדימה')}
-        </Button>
         {previewing && (
           <div className="flex flex-col gap-1">
             <span className="text-xs text-ink-muted">{tr('כך הלקוח יראה את זה:')}</span>
@@ -647,9 +635,19 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
       </fieldset>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {done && <Alert tone="success">{tr('ההצצה נשמרה.')}</Alert>}
-      <div>
+      <div className="flex flex-wrap gap-2">
         <Button type="submit" loading={update.isPending}>
           {tr('שמירה')}
+        </Button>
+        {/* The customer's view, on request (D-155); it opens above. */}
+        <Button
+          type="button"
+          variant="secondary"
+          aria-expanded={previewing}
+          onClick={() => setPreviewing((v) => !v)}
+        >
+          <Eye aria-hidden className="h-4 w-4" />
+          {previewing ? tr('הסתרת התצוגה המקדימה') : tr('תצוגה מקדימה')}
         </Button>
       </div>
       <MediaPicker
