@@ -348,7 +348,7 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(autoTab);
     // Its own switch, saved at once.
-    await user.click(await screen.findByRole('switch', { name: 'בינתיים, הצצה לעבודות שלנו' }));
+    await user.click(await screen.findByRole('switch', { name: 'הצצה לעסק' }));
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))[0]).toMatchObject({
       showcase: { enabled: true },
     });

@@ -318,7 +318,7 @@ export const enPart1: Record<string, string> = {
   'בקשות לאירוע (תאריך, אורחים, אזור)': 'Event requests (date, guests, area)',
   'בקשה לאירוע התקבלה': 'Event request received',
   'התאריך תפוס': 'Date taken',
-  'בינתיים, הצצה לעבודות שלנו': 'Meanwhile, a look at our work',
+  'הצצה לעסק': 'A peek at the business',
   פעיל: 'On',
   כבוי: 'Off',
   'קישור (לא חובה)': 'Link (optional)',
