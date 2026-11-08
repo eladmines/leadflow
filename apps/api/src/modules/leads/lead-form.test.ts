@@ -234,6 +234,12 @@ describe('website lead form (F07)', () => {
     expect(past.statusCode).toBe(400);
     expect(past.body).toContain('מועד עתידי');
     expect(await ctx.prisma.appointment.count()).toBe(1);
+
+    // A task for the owner, so the request is noticed (D-152).
+    const tasks = await ctx.prisma.task.findMany();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]!.title).toMatch(/^בקשה חדשה לתור: דנה כהן · /);
+    expect(tasks[0]!.notes).toBe('מחכה לאישור שלכם בעמוד התורים.');
   });
 
   it('a double submit (same token) creates one lead; a returning phone reuses the contact', async () => {

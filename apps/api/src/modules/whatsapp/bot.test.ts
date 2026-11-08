@@ -205,6 +205,17 @@ describe('WhatsApp booking bot (D-102)', () => {
     // One notification for the booking, not one per tap.
     const notes = await ctx.prisma.notification.findMany({ where: { userId: owner.userId } });
     expect(notes.map((n) => n.type).sort()).toEqual(['appointment.booked', 'whatsapp.new_number']);
+
+    // And a task due now, so the team notices it (D-152).
+    const [task] = await ctx.prisma.task.findMany();
+    expect(task).toMatchObject({
+      assigneeId: owner.userId,
+      leadId: lead.id,
+      status: 'OPEN',
+      remind: false,
+    });
+    expect(task!.title).toMatch(/^תור חדש: נועה לוי · תספורת נשים · /);
+    expect(Math.abs(task!.dueAt.getTime() - Date.now())).toBeLessThan(60_000);
   });
 
   it('an English business books in English (D-143)', async () => {
@@ -593,6 +604,9 @@ describe('WhatsApp booking bot (D-102)', () => {
 
       const appt = await ctx.prisma.appointment.findFirstOrThrow();
       expect(appt).toMatchObject({ status: 'REQUESTED', source: 'whatsapp', staffId: null });
+      // The owner gets a task to notice it (D-152).
+      const [task] = await ctx.prisma.task.findMany();
+      expect(task!.title).toMatch(/^בקשה חדשה לאירוע: /);
       expect(appt.startsAt).toEqual(zonedTimeToUtc(ymd(day), '19:00', TZ));
       expect(appt.notes).toMatch(/^בקשה מוואטסאפ · חתונה · /);
       expect(appt.notes).toContain('אורחים: 150–300 · אזור: ראשון לציון');
