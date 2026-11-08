@@ -627,4 +627,5 @@ export const enPart3: Record<string, string> = {
   'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות). כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
     'Every customer who writes gets one short message (at most once every 12 hours). While a status is on, its message is sent instead.',
   'לקוח ביטל תור בוואטסאפ': 'A customer cancelled on WhatsApp',
+  'הסתרת התצוגה המקדימה': 'Hide preview',
 };
