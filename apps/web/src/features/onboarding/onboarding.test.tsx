@@ -81,7 +81,7 @@ describe('onboarding wizard', () => {
       await screen.findByRole('heading', { name: 'איך לקוחות יכולים להגיע אליך?' }),
     ).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', bp.create)).toEqual([
-      { name: 'מספרת שירן', industry: 'beauty' },
+      { name: 'מספרת שירן', industry: 'beauty', language: 'he' },
     ]);
     expect(location()).toBe(businessWebPaths.onboardingFor(draft.id));
   });

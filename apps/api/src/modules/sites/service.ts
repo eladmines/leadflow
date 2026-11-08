@@ -14,6 +14,7 @@ import {
   seoSchema,
   siteMessages,
   templateKeySchema,
+  languageSchema,
   type SiteLanguage,
   themeSchema,
   type SaveDraftRequest,
@@ -124,12 +125,12 @@ export class SiteService {
 
   /**
    * Creates the business's site from a template, pre-filled with the business profile, in the
-   * chosen language (D-142).
+   * chosen language or else the business's (D-142, D-143).
    */
   async create(
     ctx: TenantContext,
     templateKey: TemplateKey,
-    language: SiteLanguage = 'he',
+    language?: SiteLanguage,
   ): Promise<Site> {
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: ctx.businessId },
@@ -147,7 +148,7 @@ export class SiteService {
         serviceAreas: business.serviceAreas,
         openingHours: null,
       },
-      language,
+      language ?? languageSchema.catch('he').parse(business.language),
     );
     const draft = withTemplatePhotos(base, await this.importStockPhotos(ctx, templateKey));
     try {

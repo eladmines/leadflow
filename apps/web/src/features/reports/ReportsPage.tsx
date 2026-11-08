@@ -121,7 +121,7 @@ function ReportBody({ r }: { r: ReportSummary }) {
             label={tr('פניות לפי שלב')}
             rows={r.byStage.map((s) => ({
               key: s.id,
-              name: s.name,
+              name: tr(s.name),
               count: s.count,
               extra: s.value ? shekel.format(s.value) : undefined,
             }))}

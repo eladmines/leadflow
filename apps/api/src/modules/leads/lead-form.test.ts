@@ -292,7 +292,12 @@ describe('website lead form (F07)', () => {
     expect(bad.body).toContain('The phone number is not valid');
     expect(bad.body).toContain('Back to the site');
 
+    // An English business (D-143): the team's email is in English too.
+    await ctx.prisma.business.update({ where: { id: o.id }, data: { language: 'en' } });
     const ok = await submit('salon', valid(o.contactId));
+    await expect
+      .poll(() => ctx.email.sent.map((m) => m.subject))
+      .toContainEqual(expect.stringMatching(/^New website enquiry — /));
     expect(ok.body).toContain('Thank you!');
     expect(ok.body).toContain('received your details');
   });

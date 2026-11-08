@@ -18,7 +18,7 @@ import { StepContact } from './StepContact';
 import { StepHours } from './StepHours';
 import { StepProgress } from './StepProgress';
 import { StepServiceAreas } from './StepServiceAreas';
-import { tr } from '../../i18n';
+import { locale, tr } from '../../i18n';
 
 function WizardFrame({ step, children }: { step: number; children: React.ReactNode }) {
   return (
@@ -44,7 +44,8 @@ export function NewBusinessPage() {
     <WizardFrame step={1}>
       <StepBusiness
         onSubmit={async (values) => {
-          const { business } = await create.mutateAsync(values);
+          // Customers get the language the owner signs up in (D-143).
+          const { business } = await create.mutateAsync({ ...values, language: locale() });
           navigate(businessWebPaths.onboardingFor(business.id), { replace: true });
         }}
       />

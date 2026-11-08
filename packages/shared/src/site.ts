@@ -380,8 +380,7 @@ export type CustomColors = z.infer<typeof customColorsSchema>;
  * Customer website language (D-142): chosen when the site is created (the app's language at the
  * time). Hebrew sites are right-to-left, English left-to-right. Unset = Hebrew (older sites).
  */
-export const SITE_LANGUAGES = ['he', 'en'] as const;
-export const siteLanguageSchema = z.enum(SITE_LANGUAGES);
+export const siteLanguageSchema = z.enum(['he', 'en']);
 export type SiteLanguage = z.infer<typeof siteLanguageSchema>;
 
 export const themeSchema = z.object({
@@ -505,7 +504,8 @@ export type SiteResponse = z.infer<typeof siteResponseSchema>;
 
 export const createSiteRequestSchema = z.object({
   templateKey: templateKeySchema,
-  language: siteLanguageSchema.default('he'),
+  /** Omitted = the business's language (D-143). */
+  language: siteLanguageSchema.optional(),
 });
 export type CreateSiteRequest = z.infer<typeof createSiteRequestSchema>;
 

@@ -141,7 +141,7 @@ export function NewLeadDialog({
         <div className="grid gap-4 sm:grid-cols-2">
           <Select
             label={tr('שלב')}
-            options={(stages.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
+            options={(stages.data ?? []).map((s) => ({ value: s.id, label: tr(s.name) }))}
             {...form.register('stageId', { setValueAs: (v: string) => v || undefined })}
           />
           {canAssign && (

@@ -12,6 +12,7 @@ import {
   type AuthUser,
   type LoginRequest,
   type RegisterRequest,
+  type Language,
 } from '@leadflow/shared';
 import type { AppConfig } from '../../config/env';
 import type { Db } from '../../lib/db';
@@ -41,6 +42,8 @@ export interface RequestMeta {
   ip: string | null;
   userAgent: string | null;
   log: FastifyBaseLogger;
+  /** The app's language (`X-LeadFlow-Locale`), for account emails (D-143). */
+  lang?: Language;
 }
 
 export interface AuthServiceDeps {
@@ -75,6 +78,7 @@ export function requestMeta(req: {
     ip: req.ip ? req.ip.slice(0, IP_MAX) : null,
     userAgent: typeof ua === 'string' ? ua.slice(0, USER_AGENT_MAX) : null,
     log: req.log,
+    lang: req.headers['x-leadflow-locale'] === 'en' ? 'en' : 'he',
   };
 }
 
@@ -298,10 +302,13 @@ export class AuthService {
       }),
     );
 
-    const message = passwordResetTemplate({
-      fullName: user.fullName,
-      link: this.webLink(authWebPaths.resetPassword, token),
-    });
+    const message = passwordResetTemplate(
+      {
+        fullName: user.fullName,
+        link: this.webLink(authWebPaths.resetPassword, token),
+      },
+      meta.lang,
+    );
     // Not awaited: the response time must not depend on the mail server, so an existing
     // and an unknown email look the same to the caller.
     void this.deps.email
@@ -403,10 +410,13 @@ export class AuthService {
         }),
       );
     });
-    const message = passwordChangedTemplate({
-      fullName: auth.user.fullName,
-      resetLink: `${this.deps.config.APP_URL}${authWebPaths.forgotPassword}`,
-    });
+    const message = passwordChangedTemplate(
+      {
+        fullName: auth.user.fullName,
+        resetLink: `${this.deps.config.APP_URL}${authWebPaths.forgotPassword}`,
+      },
+      meta.lang,
+    );
     await this.deps.email
       .send({ to: auth.user.email, ...message })
       .catch((err: unknown) => logSendFailure(meta.log, 'password_changed', err));
@@ -455,10 +465,13 @@ export class AuthService {
     trigger: 'register' | 'resend',
     meta: RequestMeta,
   ) {
-    const message = verifyEmailTemplate({
-      fullName: user.fullName,
-      link: this.webLink(authWebPaths.verifyEmail, token),
-    });
+    const message = verifyEmailTemplate(
+      {
+        fullName: user.fullName,
+        link: this.webLink(authWebPaths.verifyEmail, token),
+      },
+      meta.lang,
+    );
     try {
       await this.deps.email.send({ to: user.email, ...message });
     } catch (err) {

@@ -6,6 +6,8 @@ import {
   formatIsraeliPhone,
   INDUSTRIES,
   industryLabels,
+  LANGUAGES,
+  languageLabels,
   openingHoursSchema,
   type BusinessDetails,
   type OpeningHours,
@@ -167,6 +169,7 @@ export function DetailsSection({ canEdit }: { canEdit: boolean }) {
       industry: business.industry,
       phone: business.phone ? formatIsraeliPhone(business.phone) : '',
       address: business.address ?? '',
+      language: business.language,
     },
   });
   const { errors, isSubmitting } = form.formState;
@@ -218,6 +221,12 @@ export function DetailsSection({ canEdit }: { canEdit: boolean }) {
             label={tr('כתובת')}
             error={errors.address?.message}
             {...form.register('address')}
+          />
+          <Select
+            label={tr('שפת הלקוחות')}
+            hint={tr('ההודעות בוואטסאפ, המיילים ללקוחות ואתר חדש יהיו בשפה הזו.')}
+            options={LANGUAGES.map((value) => ({ value, label: languageLabels[value] }))}
+            {...form.register('language')}
           />
         </fieldset>
         {canEdit && (

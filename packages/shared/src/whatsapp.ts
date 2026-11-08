@@ -1,4 +1,15 @@
 import { z } from 'zod';
+import type { Language } from './business';
+import {
+  AUTO_REPLY_DEFAULT_EN,
+  BOT_DEFAULT_TEXTS_EN,
+  eventTypeQuestionEn,
+  eventTypesEn,
+  INDUSTRY_TEXTS_EN,
+  SHOWCASE_DEFAULT_EN,
+  SHOWCASE_TEXTS_EN,
+  STATUS_PRESETS_EN,
+} from './whatsapp-en';
 
 /**
  * F12 POC — WhatsApp via Meta's Cloud API (D-091, Proposed). An incoming message becomes a lead
@@ -164,7 +175,8 @@ export const botTextKeysFor = (flow: BotFlow): readonly BotTextKey[] =>
     : ['greeting', 'confirmed', 'pending', 'handoff', 'noTimes'];
 
 /** Event types offered when the business has no services of its own. */
-export function eventTypesFor(industry: string): string[] {
+export function eventTypesFor(industry: string, lang: Language = 'he'): string[] {
+  if (lang === 'en') return eventTypesEn(industry);
   if (industry === 'catering') {
     return ['חתונה', 'בר/בת מצווה', 'אירוע חברה', 'ארוחה פרטית', 'שבת / חג', 'אחר'];
   }
@@ -177,8 +189,12 @@ export function eventTypesFor(industry: string): string[] {
  * Event businesses (D-108): the first reply asks how to help — check a date, or a personal chat —
  * before any question; then this asks for the event type.
  */
-export const eventTypeQuestionFor = (industry: string) =>
-  industry === 'photo' ? 'מה מצלמים? בחרו:' : 'איזה אירוע אתם מתכננים? בחרו:';
+export const eventTypeQuestionFor = (industry: string, lang: Language = 'he') =>
+  lang === 'en'
+    ? eventTypeQuestionEn(industry)
+    : industry === 'photo'
+      ? 'מה מצלמים? בחרו:'
+      : 'איזה אירוע אתם מתכננים? בחרו:';
 
 /** Photo shoots don't ask for the number of guests. */
 export const asksGuests = (industry: string) => industry !== 'photo';
@@ -255,11 +271,14 @@ const industryTexts: Record<string, Partial<Record<BotTextKey, string>>> = {
   },
 };
 
-/** The default messages for a business in this industry. */
-export const botDefaultTextsFor = (industry: string): Record<BotTextKey, string> => ({
-  ...botDefaultTexts,
-  ...industryTexts[industry],
-});
+/** The default messages for a business in this industry, in its language (D-143). */
+export const botDefaultTextsFor = (
+  industry: string,
+  lang: Language = 'he',
+): Record<BotTextKey, string> =>
+  lang === 'en'
+    ? { ...BOT_DEFAULT_TEXTS_EN, ...INDUSTRY_TEXTS_EN[industry] }
+    : { ...botDefaultTexts, ...industryTexts[industry] };
 
 export const botTextMessages = {
   tooLong: `ההודעה ארוכה מדי (עד ${BOT_TEXT_MAX} תווים)`,
@@ -327,8 +346,10 @@ const industryShowcase: Record<string, string> = {
   tutoring: 'בינתיים, הנה קצת על השיעורים שלנו 📚',
 };
 /** The showcase message until the business writes its own. */
-export const showcaseDefaultText = (industry: string) =>
-  industryShowcase[industry] ?? 'בינתיים, הנה הצצה למה שאנחנו עושים ✨';
+export const showcaseDefaultText = (industry: string, lang: Language = 'he') =>
+  lang === 'en'
+    ? (SHOWCASE_TEXTS_EN[industry] ?? SHOWCASE_DEFAULT_EN)
+    : (industryShowcase[industry] ?? 'בינתיים, הנה הצצה למה שאנחנו עושים ✨');
 
 export const botShowcaseSchema = z.object({
   enabled: z.boolean(),
@@ -365,9 +386,11 @@ export const replyModeLabels: Record<ReplyMode, string> = {
   booking: 'בוט קביעת תורים',
 };
 
-/** The general reply, until the business writes its own. Customer-facing: Hebrew. */
+/** The general reply, until the business writes its own (in the business's language, D-143). */
 export const AUTO_REPLY_DEFAULT =
   'היי! תודה שכתבת ל{business} 🙏 קיבלנו את ההודעה ונחזור אליך בהקדם.';
+export const autoReplyDefaultFor = (lang: Language = 'he') =>
+  lang === 'en' ? AUTO_REPLY_DEFAULT_EN : AUTO_REPLY_DEFAULT;
 
 /** Ready-made statuses (D-123); the business edits their text and adds its own. */
 export const STATUS_PRESETS = [
@@ -384,6 +407,8 @@ export const STATUS_PRESETS = [
   },
   { id: 'closed', label: 'סגור עכשיו', text: 'היי! אנחנו סגורים כרגע 🌙 נחזור אליך כשנפתח.' },
 ] as const;
+export const statusPresetsFor = (lang: Language = 'he') =>
+  lang === 'en' ? STATUS_PRESETS_EN : STATUS_PRESETS;
 
 /** One video per status (WhatsApp's limit), and a total per business (free database, D-119). */
 export const STATUS_VIDEO_MAX_BYTES = 16 * 1024 * 1024;

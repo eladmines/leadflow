@@ -14,6 +14,7 @@ import {
   showcaseDefaultText,
   type BotTextKey,
   type BotTexts,
+  type Language,
 } from '@leadflow/shared';
 import sharp from 'sharp';
 import type { z } from 'zod';
@@ -23,7 +24,7 @@ import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
-import { AutoReplier, modeOf } from './auto-reply';
+import { AutoReplier, languageOf, modeOf } from './auto-reply';
 import { AppointmentService } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 
@@ -31,7 +32,7 @@ import { MANAGERS, notifySafe } from '../notifications/service';
  * WhatsApp booking bot (D-102). A button conversation: service → day → time → confirm → booked.
  * It starts when a customer asks for an appointment (or a new number writes for the first time), never on a
  * personal number, and stays quiet once a team member has written in the chat or the customer
- * asked for a person. Texts to customers are Hebrew (customer-facing copy stays Hebrew, D-100).
+ * asked for a person. Texts to customers are in the business's language (D-143).
  * A customer who doesn't book gets the business's showcase ("in the meantime, take a look", D-106).
  * Event businesses (DJ, catering, photography) use the event-request flow instead (D-107):
  * event type → date (typed) → part of day → guests → area → a request the team confirms.
@@ -49,7 +50,8 @@ const SHOWCASE_EVERY_MS = 24 * 60 * 60_000;
 const ABANDONED_AFTER_MS = 30 * 60_000;
 const ABANDONED_UNTIL_MS = 20 * 60 * 60_000;
 
-const TRIGGER = /תור|לקבוע|פנוי|זמינ|אירוע|הזמנ|פגישה|שיעור|חתונה|appointment|book|event/i;
+const TRIGGER =
+  /תור|לקבוע|פנוי|זמינ|אירוע|הזמנ|פגישה|שיעור|חתונה|appointment|book|event|available|slot|meeting|lesson|session|wedding/i;
 const CHOICE =
   /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|ok|other_time|other_day|other_date|ev_send|ev_edit|ev_start|cancel|human|showcase|book)$/;
 /** Steps of a booking in progress (a conversation that stops in one of them gets the showcase). */
@@ -66,11 +68,10 @@ const OPEN_STEPS = [
   'ev_confirm',
 ];
 
-const GUESTS = ['עד 50', '50–150', '150–300', '300+', 'עוד לא יודעים'];
 const PARTS = {
-  day: { label: 'צהריים', from: '12:00', to: '16:00' },
-  evening: { label: 'ערב', from: '19:00', to: '23:00' },
-  unknown: { label: 'עוד לא יודעים', from: '19:00', to: '23:00' },
+  day: { from: '12:00', to: '16:00' },
+  evening: { from: '19:00', to: '23:00' },
+  unknown: { from: '19:00', to: '23:00' },
 } as const;
 type Part = keyof typeof PARTS;
 /** What an event request has collected so far (kept on the session). */
@@ -87,8 +88,120 @@ const HUMAN_TEXT =
 /** Misunderstood messages in one conversation before the bot hands it to the team. */
 const MAX_MISSES = 2;
 
-const human: WhatsAppChoice = { id: 'human', title: 'דברו עם הצוות' };
-const seeOurWork: WhatsAppChoice = { id: 'showcase', title: '📸 העבודות שלנו' };
+/** What the bot says, in the business's language (D-143). */
+const WORDS = {
+  he: {
+    intl: 'he-IL',
+    human: 'דברו עם הצוות',
+    seeOurWork: '📸 העבודות שלנו',
+    guests: ['עד 50', '50–150', '150–300', '300+', 'עוד לא יודעים'],
+    parts: { day: 'צהריים', evening: 'ערב', unknown: 'עוד לא יודעים' },
+    at: (day: string, time: string) => `${day} בשעה ${time}`,
+    cancelledEvent: 'בוטל. כשתרצו, פשוט כתבו לנו כאן 🙂',
+    cancelled: 'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂',
+    chooseService: 'בחירת שירות',
+    minutes: (n: number) => `${n} דק׳`,
+    serviceGone: 'השירות הזה כבר לא זמין. ',
+    whichDay: 'באיזה יום נוח לכם?',
+    chooseDay: 'בחירת יום',
+    today: (d: string) => `היום · ${d}`,
+    tomorrow: (d: string) => `מחר · ${d}`,
+    freeTimes: (n: number) => (n === 1 ? 'זמן פנוי אחד' : `${n} זמנים פנויים`),
+    dayFull: 'היום הזה כבר התמלא. ',
+    whichTime: (day: string) => `באיזו שעה? (${day})`,
+    chooseTime: 'בחירת שעה',
+    otherDay: 'יום אחר',
+    appointment: 'תור',
+    confirm: (what: string, at: string) => `לקבוע לכם ${what} ב${at}?`,
+    yesBook: 'כן, לקבוע',
+    otherTime: 'שעה אחרת',
+    cancel: 'ביטול',
+    timeTaken: 'אופס, השעה הזו נתפסה הרגע. ',
+    notUnderstood: 'לא הבנתי 🙂 בחרו מהרשימה, או כתבו "נציג" כדי לדבר עם הצוות.\n\n',
+    notUnderstoodEvent: 'לא הבנתי 🙂 בחרו מהאפשרויות, או כתבו "נציג" כדי לדבר עם הצוות.\n\n',
+    whichAreaEvent: 'באיזה אזור או עיר יהיה האירוע?',
+    checkDate: '📅 לבדוק תאריך',
+    personalChat: '💬 שיחה אישית',
+    from: (price: number) => `החל מ־₪${price}`,
+    chooseType: 'בחירת סוג',
+    optionGone: 'האפשרות הזו כבר לא זמינה. ',
+    great: (type: string) => `${type}, מעולה! 🎉\n`,
+    whichDate: 'לאיזה תאריך? כתבו אותו כאן, למשל 14.2.2027',
+    badDate: 'לא הצלחתי להבין את התאריך 🙂 כתבו אותו כך: 14.2.2027',
+    otherDate: 'תאריך אחר',
+    dateFree: (day: string) => `${day} — התאריך פנוי 👍\nבאיזה חלק של היום?`,
+    howManyGuests: 'כמה אורחים בערך?',
+    guestsButton: 'מספר אורחים',
+    whichArea: 'ובאיזה אזור או עיר?',
+    guestsLine: (g: string) => `אורחים: ${g}`,
+    areaLine: (a: string) => `אזור: ${a}`,
+    summary: (lines: string) => `לסיכום:\n${lines}\n\nלשלוח את הבקשה?`,
+    yesSend: 'כן, לשלוח',
+    change: 'לשנות',
+    fromWhatsApp: 'בקשה מוואטסאפ',
+    event: 'אירוע',
+    theEvent: 'האירוע',
+    bookHere: 'כשתרצו, אפשר לקבוע תור כאן 👇',
+    bookButton: '📅 לקביעת תור',
+  },
+  en: {
+    intl: 'en-GB',
+    human: 'Talk to the team',
+    seeOurWork: '📸 Our work',
+    guests: ['Up to 50', '50–150', '150–300', '300+', "Don't know yet"],
+    parts: { day: 'Afternoon', evening: 'Evening', unknown: "Don't know yet" },
+    at: (day: string, time: string) => `${day} at ${time}`,
+    cancelledEvent: 'Cancelled. Whenever you like, just write to us here 🙂',
+    cancelled: 'Cancelled. Whenever you want to book, just write "book" 🙂',
+    chooseService: 'Choose a service',
+    minutes: (n: number) => `${n} min`,
+    serviceGone: 'That service is no longer available. ',
+    whichDay: 'Which day suits you?',
+    chooseDay: 'Choose a day',
+    today: (d: string) => `Today · ${d}`,
+    tomorrow: (d: string) => `Tomorrow · ${d}`,
+    freeTimes: (n: number) => (n === 1 ? 'One free time' : `${n} free times`),
+    dayFull: 'That day has just filled up. ',
+    whichTime: (day: string) => `What time? (${day})`,
+    chooseTime: 'Choose a time',
+    otherDay: 'Another day',
+    appointment: 'an appointment',
+    confirm: (what: string, at: string) => `Book ${what} on ${at}?`,
+    yesBook: 'Yes, book it',
+    otherTime: 'Another time',
+    cancel: 'Cancel',
+    timeTaken: 'Oops, that time was just taken. ',
+    notUnderstood:
+      'Sorry, I didn\'t get that 🙂 Choose from the list, or write "agent" to talk to the team.\n\n',
+    notUnderstoodEvent:
+      'Sorry, I didn\'t get that 🙂 Choose one of the options, or write "agent" to talk to the team.\n\n',
+    whichAreaEvent: 'Which area or town will the event be in?',
+    checkDate: '📅 Check a date',
+    personalChat: '💬 Personal chat',
+    from: (price: number) => `From ₪${price}`,
+    chooseType: 'Choose a type',
+    optionGone: 'That option is no longer available. ',
+    great: (type: string) => `${type}, great! 🎉\n`,
+    whichDate: 'Which date? Write it here, for example 14/2/2027',
+    badDate: "I couldn't understand the date 🙂 Write it like this: 14/2/2027",
+    otherDate: 'Another date',
+    dateFree: (day: string) => `${day} — the date is free 👍\nWhich part of the day?`,
+    howManyGuests: 'About how many guests?',
+    guestsButton: 'Number of guests',
+    whichArea: 'And which area or town?',
+    guestsLine: (g: string) => `Guests: ${g}`,
+    areaLine: (a: string) => `Area: ${a}`,
+    summary: (lines: string) => `To sum up:\n${lines}\n\nSend the request?`,
+    yesSend: 'Yes, send',
+    change: 'Change',
+    fromWhatsApp: 'Request from WhatsApp',
+    event: 'Event',
+    theEvent: 'the event',
+    bookHere: 'Whenever you like, you can book here 👇',
+    bookButton: '📅 Book now',
+  },
+} satisfies Record<Language, unknown>;
+type Words = (typeof WORDS)['he'];
 
 /** What the bot did with a message: answered it, passed the chat to the team, or nothing. */
 export type BotOutcome = 'handled' | 'handoff' | 'none';
@@ -108,6 +221,7 @@ type Business = {
   id: string;
   name: string;
   industry: string;
+  language: Language;
   timezone: string;
   openingHours: unknown;
   whatsappBotAutoConfirm: boolean;
@@ -130,27 +244,20 @@ interface Chat {
 }
 
 const noon = (date: string) => new Date(`${date}T12:00:00Z`);
-const shortDay = new Intl.DateTimeFormat('he-IL', {
-  weekday: 'short',
-  day: 'numeric',
-  month: 'numeric',
-  timeZone: 'UTC',
+const dayFormat = (w: Words, options: Intl.DateTimeFormatOptions) => (date: string) =>
+  new Intl.DateTimeFormat(w.intl, { ...options, timeZone: 'UTC' }).format(noon(date));
+const shortDay = (w: Words) => dayFormat(w, { weekday: 'short', day: 'numeric', month: 'numeric' });
+const longDay = (w: Words) => dayFormat(w, { weekday: 'long', day: 'numeric', month: 'long' });
+const when = (w: Words, date: string, time: string) => w.at(longDay(w)(date), time);
+const eventDay = (w: Words, date: string) =>
+  dayFormat(w, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })(date);
+/** The words for this chat's business. */
+const wordsOf = (chat: Chat): Words => WORDS[chat.business.language];
+const human = (chat: Chat): WhatsAppChoice => ({ id: 'human', title: wordsOf(chat).human });
+const seeOurWork = (chat: Chat): WhatsAppChoice => ({
+  id: 'showcase',
+  title: wordsOf(chat).seeOurWork,
 });
-const longDay = new Intl.DateTimeFormat('he-IL', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  timeZone: 'UTC',
-});
-const when = (date: string, time: string) => `${longDay.format(noon(date))} בשעה ${time}`;
-const longDate = new Intl.DateTimeFormat('he-IL', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-const eventDay = (date: string) => longDate.format(noon(date));
 
 /**
  * A date the customer typed — "14.2.2027", "14/2/27", "14-02" (the next 14 February) — as
@@ -220,6 +327,7 @@ export class BookingBot {
         whatsappAutoReplyText: true,
         whatsappStatuses: true,
         whatsappActiveStatus: true,
+        language: true,
       },
     });
     if (!replies) return 'none';
@@ -280,9 +388,7 @@ export class BookingBot {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
       await this.say(
         chat,
-        chat.business.flow === 'event'
-          ? 'בוטל. כשתרצו, פשוט כתבו לנו כאן 🙂'
-          : 'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂',
+        chat.business.flow === 'event' ? wordsOf(chat).cancelledEvent : wordsOf(chat).cancelled,
       );
       await this.showcase(chat, { offerBooking: true });
       return 'handled';
@@ -314,19 +420,22 @@ export class BookingBot {
   private async askService(chat: Chat, prefix = ''): Promise<BotOutcome> {
     const services = await this.activeServices(chat.business.id);
     await this.setSession(chat, { step: 'service', serviceId: null, date: null, time: null });
-    const extra = this.hasShowcase(chat) ? [seeOurWork] : [];
+    const extra = this.hasShowcase(chat) ? [seeOurWork(chat)] : [];
     await this.say(chat, `${prefix}${this.text(chat, 'greeting')}`, {
-      button: 'בחירת שירות',
+      button: wordsOf(chat).chooseService,
       rows: [
         ...services.slice(0, MAX_ROWS - extra.length).map((s) => ({
           id: `svc:${s.id}`,
           title: s.name,
-          description: [`${s.durationMin} דק׳`, s.price != null ? `₪${s.price}` : null]
+          description: [
+            wordsOf(chat).minutes(s.durationMin),
+            s.price != null ? `₪${s.price}` : null,
+          ]
             .filter(Boolean)
             .join(' · '),
         })),
         ...extra,
-        human,
+        human(chat),
       ],
     });
     return 'handled';
@@ -334,7 +443,7 @@ export class BookingBot {
 
   private async pickService(chat: Chat, serviceId: string, now: Date): Promise<BotOutcome> {
     const service = (await this.activeServices(chat.business.id)).find((s) => s.id === serviceId);
-    if (!service) return this.askService(chat, 'השירות הזה כבר לא זמין. ');
+    if (!service) return this.askService(chat, wordsOf(chat).serviceGone);
     return this.askDay(chat, service.id, now);
   }
 
@@ -354,27 +463,28 @@ export class BookingBot {
       now,
     );
     // The first list of the conversation (when services were skipped) offers the showcase too.
-    const extra = !chat.session && this.hasShowcase(chat) ? [seeOurWork] : [];
+    const extra = !chat.session && this.hasShowcase(chat) ? [seeOurWork(chat)] : [];
     const days = dates.filter((d) => free.get(d)!.length > 0).slice(0, MAX_ROWS - extra.length);
     if (!days.length) {
       return this.handoff(chat, now, this.text(chat, 'noTimes'), { offerBooking: false });
     }
     await this.setSession(chat, { step: 'day', serviceId, date: null, time: null });
     const tomorrow = addDaysTo(today, 1);
-    await this.say(chat, `${prefix}באיזה יום נוח לכם?`, {
-      button: 'בחירת יום',
+    const w = wordsOf(chat);
+    await this.say(chat, `${prefix}${w.whichDay}`, {
+      button: w.chooseDay,
       rows: [
         ...days.map((d) => {
           const n = free.get(d)!.length;
-          const label = shortDay.format(noon(d));
+          const label = shortDay(w)(d);
           return {
             id: `day:${d}`,
-            title: d === today ? `היום · ${label}` : d === tomorrow ? `מחר · ${label}` : label,
-            description: n === 1 ? 'זמן פנוי אחד' : `${n} זמנים פנויים`,
+            title: d === today ? w.today(label) : d === tomorrow ? w.tomorrow(label) : label,
+            description: w.freeTimes(n),
           };
         }),
         ...extra,
-        human,
+        human(chat),
       ],
     });
     return 'handled';
@@ -387,14 +497,15 @@ export class BookingBot {
       return this.askDay(chat, serviceId, now);
     const times = await this.timesOn(chat, date, serviceId, now);
     if (!times.length) {
-      return this.askDay(chat, serviceId, now, 'היום הזה כבר התמלא. ');
+      return this.askDay(chat, serviceId, now, wordsOf(chat).dayFull);
     }
     await this.setSession(chat, { step: 'time', serviceId, date, time: null });
-    await this.say(chat, `${prefix}באיזו שעה? (${longDay.format(noon(date))})`, {
-      button: 'בחירת שעה',
+    const w = wordsOf(chat);
+    await this.say(chat, `${prefix}${w.whichTime(longDay(w)(date))}`, {
+      button: w.chooseTime,
       rows: [
         ...spread(times, MAX_ROWS).map((t) => ({ id: `time:${t.time}`, title: t.time })),
-        { id: 'other_day', title: 'יום אחר' },
+        { id: 'other_day', title: w.otherDay },
       ],
     });
     return 'handled';
@@ -404,11 +515,12 @@ export class BookingBot {
     const serviceId = chat.session?.serviceId ?? null;
     const service = serviceId ? await this.serviceById(chat.business.id, serviceId) : null;
     await this.setSession(chat, { step: 'confirm', serviceId, date, time });
-    await this.say(chat, `לקבוע לכם ${service ? service.name : 'תור'} ב${when(date, time)}?`, {
+    const w = wordsOf(chat);
+    await this.say(chat, w.confirm(service ? service.name : w.appointment, when(w, date, time)), {
       buttons: [
-        { id: 'ok', title: 'כן, לקבוע' },
-        { id: 'other_time', title: 'שעה אחרת' },
-        { id: 'cancel', title: 'ביטול' },
+        { id: 'ok', title: w.yesBook },
+        { id: 'other_time', title: w.otherTime },
+        { id: 'cancel', title: w.cancel },
       ],
     });
     return 'handled';
@@ -420,7 +532,7 @@ export class BookingBot {
     const service = serviceId ? await this.serviceById(business.id, serviceId) : null;
     const durationMin = service?.durationMin ?? DEFAULT_DURATION;
     const slot = (await this.timesOn(chat, date, serviceId, now)).find((t) => t.time === time);
-    const taken = 'אופס, השעה הזו נתפסה הרגע. ';
+    const taken = wordsOf(chat).timeTaken;
     if (!slot) return this.askTime(chat, date, now, taken);
 
     let booked: { contactId: string; leadId: string };
@@ -449,7 +561,7 @@ export class BookingBot {
     chat.link = booked;
     chat.session = null;
 
-    const at = when(date, time);
+    const at = when(wordsOf(chat), date, time);
     await this.say(
       chat,
       this.text(chat, business.whatsappBotAutoConfirm ? 'confirmed' : 'pending', {
@@ -479,7 +591,7 @@ export class BookingBot {
   private async repeat(chat: Chat, now: Date): Promise<BotOutcome> {
     const s = chat.session!;
     if (await this.missedTooOften(chat, now)) return 'handoff';
-    const prefix = 'לא הבנתי 🙂 בחרו מהרשימה, או כתבו "נציג" כדי לדבר עם הצוות.\n\n';
+    const prefix = wordsOf(chat).notUnderstood;
     let out: BotOutcome;
     if (s.step === 'day') out = await this.askDay(chat, s.serviceId, now, prefix);
     else if (s.step === 'time' && s.date) out = await this.askTime(chat, s.date, now, prefix);
@@ -583,7 +695,7 @@ export class BookingBot {
     if (choice === 'other_date') return this.askEventDate(chat);
     if (choice?.startsWith('part:') && s.date) return this.pickPart(chat, choice.slice(5) as Part);
     if (choice?.startsWith('guests:')) {
-      const guests = GUESTS[Number(choice.slice(7))];
+      const guests = wordsOf(chat).guests[Number(choice.slice(7))];
       if (guests) return this.askArea(chat, { ...this.eventData(chat), guests });
     }
     if (choice === 'ev_send' && s.step === 'ev_confirm' && s.date) {
@@ -594,7 +706,7 @@ export class BookingBot {
     if (!choice && s.step === 'ev_area') {
       const area = body.trim().replace(/\s+/g, ' ').slice(0, 80);
       if (area.length >= 2) return this.askEventConfirm(chat, { ...this.eventData(chat), area });
-      await this.say(chat, 'באיזה אזור או עיר יהיה האירוע?');
+      await this.say(chat, wordsOf(chat).whichAreaEvent);
       return 'handled';
     }
     return this.repeatEvent(chat);
@@ -608,9 +720,9 @@ export class BookingBot {
     await this.setSession(chat, { step: 'ev_intro', serviceId: null, date: null, time: null });
     await this.say(chat, `${prefix}${this.text(chat, 'greeting')}`, {
       buttons: [
-        { id: 'ev_start', title: '📅 לבדוק תאריך' },
-        { id: 'human', title: '💬 שיחה אישית' },
-        ...(this.hasShowcase(chat) ? [seeOurWork] : []),
+        { id: 'ev_start', title: wordsOf(chat).checkDate },
+        { id: 'human', title: wordsOf(chat).personalChat },
+        ...(this.hasShowcase(chat) ? [seeOurWork(chat)] : []),
       ],
     });
     return 'handled';
@@ -618,14 +730,17 @@ export class BookingBot {
 
   private async askEventType(chat: Chat, prefix = ''): Promise<BotOutcome> {
     const services = await this.activeServices(chat.business.id);
-    const extra = this.hasShowcase(chat) ? [seeOurWork] : [];
+    const extra = this.hasShowcase(chat) ? [seeOurWork(chat)] : [];
     const options: WhatsAppChoice[] = services.length
       ? services.map((sv) => ({
           id: `evt:svc:${sv.id}`,
           title: sv.name,
-          ...(sv.price != null ? { description: `החל מ־₪${sv.price}` } : {}),
+          ...(sv.price != null ? { description: wordsOf(chat).from(sv.price) } : {}),
         }))
-      : eventTypesFor(chat.business.industry).map((t, i) => ({ id: `evt:t${i}`, title: t }));
+      : eventTypesFor(chat.business.industry, chat.business.language).map((t, i) => ({
+          id: `evt:t${i}`,
+          title: t,
+        }));
     await this.setSession(chat, {
       step: 'ev_type',
       serviceId: null,
@@ -633,9 +748,10 @@ export class BookingBot {
       time: null,
       data: {},
     });
-    await this.say(chat, `${prefix}${eventTypeQuestionFor(chat.business.industry)}`, {
-      button: 'בחירת סוג',
-      rows: [...options.slice(0, MAX_ROWS - extra.length), ...extra, human],
+    const question = eventTypeQuestionFor(chat.business.industry, chat.business.language);
+    await this.say(chat, `${prefix}${question}`, {
+      button: wordsOf(chat).chooseType,
+      rows: [...options.slice(0, MAX_ROWS - extra.length), ...extra, human(chat)],
     });
     return 'handled';
   }
@@ -648,9 +764,9 @@ export class BookingBot {
       type = sv?.name;
       serviceId = sv?.id ?? null;
     } else {
-      type = eventTypesFor(chat.business.industry)[Number(id.slice(1))];
+      type = eventTypesFor(chat.business.industry, chat.business.language)[Number(id.slice(1))];
     }
-    if (!type) return this.askEventType(chat, 'האפשרות הזו כבר לא זמינה. ');
+    if (!type) return this.askEventType(chat, wordsOf(chat).optionGone);
     await this.setSession(chat, {
       step: 'ev_date',
       serviceId,
@@ -658,7 +774,7 @@ export class BookingBot {
       time: null,
       data: { type },
     });
-    return this.askEventDate(chat, `${type}, מעולה! 🎉\n`);
+    return this.askEventDate(chat, wordsOf(chat).great(type));
   }
 
   private async askEventDate(chat: Chat, prefix = ''): Promise<BotOutcome> {
@@ -670,8 +786,8 @@ export class BookingBot {
       time: null,
       data: this.eventData(chat) as Prisma.InputJsonValue,
     });
-    await this.say(chat, `${prefix}לאיזה תאריך? כתבו אותו כאן, למשל 14.2.2027`, {
-      buttons: [human],
+    await this.say(chat, `${prefix}${wordsOf(chat).whichDate}`, {
+      buttons: [human(chat)],
     });
     return 'handled';
   }
@@ -679,12 +795,12 @@ export class BookingBot {
   private async onEventDate(chat: Chat, body: string, now: Date): Promise<BotOutcome> {
     const date = parseEventDate(body, todayIn(chat.business.timezone, now));
     if (!date) {
-      await this.say(chat, 'לא הצלחתי להבין את התאריך 🙂 כתבו אותו כך: 14.2.2027');
+      await this.say(chat, wordsOf(chat).badDate);
       return 'handled';
     }
     if (await this.dateTaken(chat, date)) {
       await this.say(chat, this.text(chat, 'dateTaken'), {
-        buttons: [{ id: 'other_date', title: 'תאריך אחר' }, human],
+        buttons: [{ id: 'other_date', title: wordsOf(chat).otherDate }, human(chat)],
       });
       return 'handled';
     }
@@ -695,10 +811,10 @@ export class BookingBot {
       time: null,
       data: this.eventData(chat) as Prisma.InputJsonValue,
     });
-    await this.say(chat, `${eventDay(date)} — התאריך פנוי 👍\nבאיזה חלק של היום?`, {
+    await this.say(chat, wordsOf(chat).dateFree(eventDay(wordsOf(chat), date)), {
       buttons: (Object.keys(PARTS) as Part[]).map((k) => ({
         id: `part:${k}`,
-        title: PARTS[k].label,
+        title: wordsOf(chat).parts[k],
       })),
     });
     return 'handled';
@@ -715,9 +831,10 @@ export class BookingBot {
       time: null,
       data: data as Prisma.InputJsonValue,
     });
-    await this.say(chat, 'כמה אורחים בערך?', {
-      button: 'מספר אורחים',
-      rows: GUESTS.map((g, i) => ({ id: `guests:${i}`, title: g })),
+    const w = wordsOf(chat);
+    await this.say(chat, w.howManyGuests, {
+      button: w.guestsButton,
+      rows: w.guests.map((g, i) => ({ id: `guests:${i}`, title: g })),
     });
     return 'handled';
   }
@@ -730,16 +847,16 @@ export class BookingBot {
       time: null,
       data: data as Prisma.InputJsonValue,
     });
-    await this.say(chat, 'ובאיזה אזור או עיר?');
+    await this.say(chat, wordsOf(chat).whichArea);
     return 'handled';
   }
 
-  private eventSummary(date: string, d: EventData): string[] {
+  private eventSummary(w: Words, date: string, d: EventData): string[] {
     return [
       d.type ?? '',
-      `${eventDay(date)}${d.part && d.part !== 'unknown' ? `, ${PARTS[d.part].label}` : ''}`,
-      ...(d.guests ? [`אורחים: ${d.guests}`] : []),
-      ...(d.area ? [`אזור: ${d.area}`] : []),
+      `${eventDay(w, date)}${d.part && d.part !== 'unknown' ? `, ${w.parts[d.part]}` : ''}`,
+      ...(d.guests ? [w.guestsLine(d.guests)] : []),
+      ...(d.area ? [w.areaLine(d.area)] : []),
     ].filter(Boolean);
   }
 
@@ -752,12 +869,13 @@ export class BookingBot {
       time: null,
       data: data as Prisma.InputJsonValue,
     });
-    const lines = this.eventSummary(date, data).map((l) => `• ${l}`);
-    await this.say(chat, `לסיכום:\n${lines.join('\n')}\n\nלשלוח את הבקשה?`, {
+    const w = wordsOf(chat);
+    const lines = this.eventSummary(w, date, data).map((l) => `• ${l}`);
+    await this.say(chat, w.summary(lines.join('\n')), {
       buttons: [
-        { id: 'ev_send', title: 'כן, לשלוח' },
-        { id: 'ev_edit', title: 'לשנות' },
-        { id: 'cancel', title: 'ביטול' },
+        { id: 'ev_send', title: w.yesSend },
+        { id: 'ev_edit', title: w.change },
+        { id: 'cancel', title: w.cancel },
       ],
     });
     return 'handled';
@@ -786,11 +904,12 @@ export class BookingBot {
     const data = this.eventData(chat);
     if (await this.dateTaken(chat, date)) {
       await this.say(chat, this.text(chat, 'dateTaken'), {
-        buttons: [{ id: 'other_date', title: 'תאריך אחר' }, human],
+        buttons: [{ id: 'other_date', title: wordsOf(chat).otherDate }, human(chat)],
       });
       return 'handled';
     }
     const part = PARTS[data.part ?? 'unknown'];
+    const w = wordsOf(chat);
     const booked = await this.prisma.$transaction(async (tx) => {
       const customer = await this.ensureCustomer(tx, business.id, chat.numberId);
       await this.appointments.requestEventFromWhatsApp(tx, {
@@ -799,8 +918,8 @@ export class BookingBot {
         serviceId: chat.session?.serviceId ?? null,
         startsAt: zonedTimeToUtc(date, part.from, business.timezone),
         endsAt: zonedTimeToUtc(date, part.to, business.timezone),
-        notes: ['בקשה מוואטסאפ', ...this.eventSummary(date, data)].join(' · '),
-        eventType: data.type ?? 'אירוע',
+        notes: [w.fromWhatsApp, ...this.eventSummary(w, date, data)].join(' · '),
+        eventType: data.type ?? w.event,
       });
       await tx.whatsAppBotSession.deleteMany({ where: { numberId: chat.numberId } });
       return customer;
@@ -809,7 +928,10 @@ export class BookingBot {
     chat.session = null;
     await this.say(
       chat,
-      this.text(chat, 'eventReceived', { service: data.type ?? 'האירוע', when: eventDay(date) }),
+      this.text(chat, 'eventReceived', {
+        service: data.type ?? w.theEvent,
+        when: eventDay(w, date),
+      }),
     );
     const contact = await this.prisma.contact.findUnique({
       where: { id: booked.contactId },
@@ -821,7 +943,7 @@ export class BookingBot {
       data: {
         leadId: booked.leadId,
         name: contact?.name ?? chat.phone,
-        when: `${data.type ?? 'אירוע'} · ${eventDay(date)}`,
+        when: `${data.type ?? w.event} · ${eventDay(w, date)}`,
         pending: true,
       },
       to: { roles: MANAGERS },
@@ -833,7 +955,7 @@ export class BookingBot {
   private async repeatEvent(chat: Chat): Promise<BotOutcome> {
     const s = chat.session!;
     if (await this.missedTooOften(chat, chat.now)) return 'handoff';
-    const prefix = 'לא הבנתי 🙂 בחרו מהאפשרויות, או כתבו "נציג" כדי לדבר עם הצוות.\n\n';
+    const prefix = wordsOf(chat).notUnderstoodEvent;
     const data = this.eventData(chat);
     let out: BotOutcome;
     if (s.step === 'ev_intro') out = await this.askHowToHelp(chat, prefix);
@@ -871,11 +993,14 @@ export class BookingBot {
     ) {
       return false;
     }
-    const text = fillBotText(sc.text ?? showcaseDefaultText(chat.business.industry), {
-      business: chat.business.name,
-      service: 'תור',
-      when: '',
-    });
+    const text = fillBotText(
+      sc.text ?? showcaseDefaultText(chat.business.industry, chat.business.language),
+      {
+        business: chat.business.name,
+        service: wordsOf(chat).appointment,
+        when: '',
+      },
+    );
     await this.say(chat, sc.link ? `${text}\n${sc.link}` : text, undefined, {
       preview: Boolean(sc.link),
     });
@@ -903,8 +1028,8 @@ export class BookingBot {
       }
     }
     if (offerBooking) {
-      await this.say(chat, 'כשתרצו, אפשר לקבוע תור כאן 👇', {
-        buttons: [{ id: 'book', title: '📅 לקביעת תור' }],
+      await this.say(chat, wordsOf(chat).bookHere, {
+        buttons: [{ id: 'book', title: wordsOf(chat).bookButton }],
       });
     }
     chat.showcaseAt = chat.now;
@@ -937,6 +1062,7 @@ export class BookingBot {
         whatsappBotShowcase: true,
         whatsappBotFlow: true,
         whatsappBotHoldDate: true,
+        language: true,
       },
     });
     if (!business?.whatsappBotEnabled) return null;
@@ -950,6 +1076,7 @@ export class BookingBot {
     return {
       business: {
         ...business,
+        language: languageOf(business.language),
         holdDate: business.whatsappBotHoldDate,
         flow,
         texts: texts.success ? texts.data : {},
@@ -971,10 +1098,11 @@ export class BookingBot {
   /** The business's wording for a message, or the default, with the placeholders filled in. */
   private text(chat: Chat, key: BotTextKey, values: { service?: string; when?: string } = {}) {
     return fillBotText(
-      chat.business.texts[key] ?? botDefaultTextsFor(chat.business.industry)[key],
+      chat.business.texts[key] ??
+        botDefaultTextsFor(chat.business.industry, chat.business.language)[key],
       {
         business: chat.business.name,
-        service: values.service ?? 'תור',
+        service: values.service ?? wordsOf(chat).appointment,
         when: values.when ?? '',
       },
     );

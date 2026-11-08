@@ -208,7 +208,7 @@ export class TaskService {
       include: {
         ...include,
         assignee: { select: { id: true, fullName: true, email: true, status: true } },
-        business: { select: { timezone: true } },
+        business: { select: { timezone: true, language: true } },
       },
       take: 100,
     });
@@ -230,7 +230,8 @@ export class TaskService {
         data: { taskId: t.id, title: t.title, leadId: t.leadId },
         to: { userIds: [t.assigneeId] },
       });
-      const dueText = new Intl.DateTimeFormat('he-IL', {
+      const lang = t.business.language === 'en' ? 'en' : 'he';
+      const dueText = new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'he-IL', {
         dateStyle: 'full',
         timeStyle: 'short',
         timeZone: t.business.timezone,
@@ -241,13 +242,16 @@ export class TaskService {
       try {
         await email.send({
           to: t.assignee.email,
-          ...taskReminderTemplate({
-            name: t.assignee.fullName,
-            title: t.title,
-            dueText,
-            leadName: t.lead?.contact.name ?? null,
-            link,
-          }),
+          ...taskReminderTemplate(
+            {
+              name: t.assignee.fullName,
+              title: t.title,
+              dueText,
+              leadName: t.lead?.contact.name ?? null,
+              link,
+            },
+            lang,
+          ),
         });
         sent += 1;
       } catch (err) {

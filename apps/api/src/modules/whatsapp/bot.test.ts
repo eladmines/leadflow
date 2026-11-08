@@ -103,6 +103,7 @@ describe('WhatsApp booking bot (D-102)', () => {
     services = 2,
     industry = 'beauty',
     name = 'עיצוב שיער סיגלית',
+    language = 'he',
   } = {}) {
     const owner = await newUser(ctx.app, 'bot-owner');
     await ctx.prisma.business.create({
@@ -117,6 +118,7 @@ describe('WhatsApp booking bot (D-102)', () => {
         // These tests drive the booking bot (D-123: the default mode is the automatic reply).
         whatsappReplyMode: enabled ? 'booking' : 'off',
         whatsappBotAutoConfirm: autoConfirm,
+        language,
       },
     });
     await addMember(ctx.prisma, BUSINESS_ID, owner.userId, 'OWNER');
@@ -203,6 +205,23 @@ describe('WhatsApp booking bot (D-102)', () => {
     // One notification for the booking, not one per tap.
     const notes = await ctx.prisma.notification.findMany({ where: { userId: owner.userId } });
     expect(notes.map((n) => n.type).sort()).toEqual(['appointment.booked', 'whatsapp.new_number']);
+  });
+
+  it('an English business books in English (D-143)', async () => {
+    const { services } = await setup({ language: 'en', name: 'Sigal Hair' });
+    await post(text('Hi, can I book an appointment?'));
+    expect(last().text).toMatch(/^Hello! This is Sigal Hair 👋/);
+    expect(last().choices!.at(-1)!.title).toBe('Talk to the team');
+    await post(tap(`svc:${services[0]!.id}`));
+    expect(last().text).toBe('Which day suits you?');
+    const day = last().choices![0]!;
+    expect(day.description).toMatch(/free time/);
+    await post(tap(day.id));
+    expect(last().choices!.at(-1)).toEqual({ id: 'other_day', title: 'Another day' });
+    await post(tap(last().choices![0]!.id));
+    expect(last().text).toMatch(/^Book תספורת נשים on .* at \d{2}:\d{2}\?$/);
+    await post(tap('ok'));
+    expect(last().text).toMatch(/^Great! You're booked for תספורת נשים on /);
   });
 
   it("greets a new number's first message, but not its next ones", async () => {

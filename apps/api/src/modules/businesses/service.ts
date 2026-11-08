@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   businessMessages,
   industrySchema,
+  languageSchema,
   openingHoursSchema,
   type Business as BusinessDto,
   type BusinessSummary,
@@ -32,6 +33,7 @@ function toBusinessDto(business: Business, role: Role): BusinessDto {
     openingHours: hours.success ? hours.data : null,
     websiteUrl: business.websiteUrl,
     timezone: business.timezone,
+    language: languageSchema.catch('he').parse(business.language),
     status: business.status,
     onboardingStep: business.onboardingStep,
     role,
@@ -85,6 +87,7 @@ export class BusinessService {
     if (input.address !== undefined) data.address = input.address;
     if (input.serviceAreas !== undefined) data.serviceAreas = input.serviceAreas;
     if (input.websiteUrl !== undefined) data.websiteUrl = input.websiteUrl;
+    if (input.language !== undefined) data.language = input.language;
     if (input.openingHours !== undefined) {
       data.openingHours = input.openingHours ?? Prisma.DbNull;
     }

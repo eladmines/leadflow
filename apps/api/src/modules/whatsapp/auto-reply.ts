@@ -1,9 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import {
-  AUTO_REPLY_DEFAULT,
+  autoReplyDefaultFor,
+  languageSchema,
   REPLY_MODES,
   STATUS_PRESETS,
+  statusPresetsFor,
+  type Language,
   STATUS_VIDEO_MAX_BYTES,
   STATUS_VIDEOS_TOTAL_BYTES,
   statusMessages,
@@ -37,11 +40,15 @@ const activeSchema = z.object({ id: z.string(), until: z.string().datetime().nul
 export const modeOf = (raw: string): ReplyMode =>
   (REPLY_MODES as readonly string[]).includes(raw) ? (raw as ReplyMode) : 'auto_reply';
 
-/** The business's statuses; the ready-made ones until it saves its own list. */
-export function statusesOf(raw: unknown): StoredStatus[] {
+/** The business's statuses; the ready-made ones (in its language) until it saves its own list. */
+export function statusesOf(raw: unknown, lang: Language = 'he'): StoredStatus[] {
   const parsed = z.array(storedStatus).safeParse(raw);
-  return parsed.success ? parsed.data : STATUS_PRESETS.map((p) => ({ ...p }));
+  return parsed.success ? parsed.data : statusPresetsFor(lang).map((p) => ({ ...p }));
 }
+
+/** A business's language as stored (D-143); anything else is Hebrew. */
+export const languageOf = (raw: string | null | undefined): Language =>
+  languageSchema.catch('he').parse(raw);
 
 /** The status on now, if it still exists and hasn't ended. */
 export function activeOf(raw: unknown, statuses: StoredStatus[], now: Date) {
@@ -132,6 +139,7 @@ export class AutoReplier {
       whatsappAutoReplyText: string | null;
       whatsappStatuses: unknown;
       whatsappActiveStatus: unknown;
+      language: string;
     },
     number: { id: string; phone: string; status: string; autoReplyAt: Date | null },
     link: { contactId: string | null; leadId: string | null },
@@ -155,9 +163,14 @@ export class AutoReplier {
     });
     if (!claimed.count) return;
 
-    const statuses = statusesOf(business.whatsappStatuses);
+    const lang = languageOf(business.language);
+    const statuses = statusesOf(business.whatsappStatuses, lang);
     const active = activeOf(business.whatsappActiveStatus, statuses, now);
-    const text = (active?.status.text ?? business.whatsappAutoReplyText ?? AUTO_REPLY_DEFAULT)
+    const text = (
+      active?.status.text ??
+      business.whatsappAutoReplyText ??
+      autoReplyDefaultFor(lang)
+    )
       .replaceAll('{business}', business.name)
       .slice(0, 4096);
     await this.send(business.id, number, link, text, () =>

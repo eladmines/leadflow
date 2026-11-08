@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths, AUTO_REPLY_DEFAULT } from '@leadflow/shared';
+import { apiPaths, AUTO_REPLY_DEFAULT, AUTO_REPLY_DEFAULT_EN } from '@leadflow/shared';
 import {
   createTestApp,
   csrfHeaders,
@@ -176,6 +176,22 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     });
     await post(text('שוב היי'));
     expect(whatsapp.sent).toHaveLength(2);
+  });
+
+  it('an English business replies in English, with English statuses (D-143)', async () => {
+    const owner = await setup();
+    await ctx.prisma.business.update({ where: { id: BUSINESS_ID }, data: { language: 'en' } });
+    const s = await settings(owner.token);
+    expect(s.autoReplyDefault).toBe(AUTO_REPLY_DEFAULT_EN);
+    expect(s.statuses.map((x: { label: string }) => x.label)).toEqual([
+      'At an event',
+      'In a meeting',
+      'On vacation',
+      'Closed now',
+    ]);
+    expect(s.defaults.greeting).toMatch(/^Hi! This is \{business\}/);
+    await post(text('Hi, are you free on 14/2?'));
+    expect(whatsapp.sent[0]!.text).toBe(AUTO_REPLY_DEFAULT_EN.replace('{business}', 'די ג׳יי רון'));
   });
 
   it('sends the status message and its video while a status is on, until it ends', async () => {

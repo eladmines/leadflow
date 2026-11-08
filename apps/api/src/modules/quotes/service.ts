@@ -26,7 +26,7 @@ import { MANAGERS, notifySafe } from '../notifications/service';
 
 const include = {
   lead: { select: { id: true, contact: { select: { name: true, phone: true, email: true } } } },
-  business: { select: { name: true, phone: true, address: true, timezone: true } },
+  business: { select: { name: true, phone: true, address: true, timezone: true, language: true } },
 } as const;
 type Row = Prisma.QuoteGetPayload<{ include: typeof include }>;
 
@@ -248,14 +248,17 @@ export class QuoteService {
       return updated;
     });
     if (opts.email && q.lead.contact.email) {
-      const mail = quoteTemplate({
-        businessName: row.business.name,
-        customerName: q.lead.contact.name,
-        number: q.number,
-        total: formatAgorot(total),
-        validUntil: row.validUntil ? ymd(row.validUntil)!.split('-').reverse().join('/') : null,
-        link: this.publicUrl(row.publicToken)!,
-      });
+      const mail = quoteTemplate(
+        {
+          businessName: row.business.name,
+          customerName: q.lead.contact.name,
+          number: q.number,
+          total: formatAgorot(total),
+          validUntil: row.validUntil ? ymd(row.validUntil)!.split('-').reverse().join('/') : null,
+          link: this.publicUrl(row.publicToken)!,
+        },
+        row.business.language === 'en' ? 'en' : 'he',
+      );
       await this.email.send({ to: q.lead.contact.email, ...mail });
     }
     return this.dto(row);
@@ -369,14 +372,17 @@ export class QuoteService {
       where: { businessId: q.businessId, status: 'ACTIVE', role: { in: ['OWNER', 'MANAGER'] } },
       select: { user: { select: { email: true, status: true } } },
     });
-    const mail = quoteDecisionTemplate({
-      businessName: q.business.name,
-      customerName: q.lead.contact.name,
-      number: q.number,
-      accepted,
-      total: formatAgorot(total),
-      link: `${this.config.APP_URL}/b/${q.businessId}/quotes/${q.id}`,
-    });
+    const mail = quoteDecisionTemplate(
+      {
+        businessName: q.business.name,
+        customerName: q.lead.contact.name,
+        number: q.number,
+        accepted,
+        total: formatAgorot(total),
+        link: `${this.config.APP_URL}/b/${q.businessId}/quotes/${q.id}`,
+      },
+      q.business.language === 'en' ? 'en' : 'he',
+    );
     for (const { user } of team) {
       if (user.status !== 'ACTIVE') continue;
       try {

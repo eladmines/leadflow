@@ -95,6 +95,7 @@ describe('business requests', () => {
     ).toEqual({
       name: 'מספרת שירן',
       industry: 'beauty',
+      language: 'he',
     });
     expect(createBusinessRequestSchema.safeParse({ name: 'א', industry: 'beauty' }).success).toBe(
       false,
