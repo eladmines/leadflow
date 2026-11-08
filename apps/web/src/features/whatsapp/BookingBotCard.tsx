@@ -15,9 +15,9 @@ import {
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
 } from '@leadflow/shared';
-import { ImagePlus, RotateCcw, X } from 'lucide-react';
+import { ImagePlus, Images, MessageSquareText, RotateCcw, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
-import { Alert, Button, Field, Textarea } from '../../components/ui';
+import { Alert, Button, DialogShell, Field, Textarea } from '../../components/ui';
 import { useAssets } from '../media/api';
 import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -41,6 +41,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
     flowChosen: boolean;
   } | null>(null);
   const [saved, setSaved] = useState(false);
+  const [editor, setEditor] = useState<'texts' | 'showcase' | null>(null);
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   const stored = bot.data.settings;
@@ -162,25 +163,40 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </>
         )}
       </div>
-      <details className="rounded-lg border border-surface-border p-3">
-        <summary className="cursor-pointer text-sm font-medium text-ink">
+      {/* The longer editors open in a pop-up, so the card stays short (D-148). */}
+      <div className="flex flex-wrap gap-2 border-t border-surface-border pt-4">
+        <Button variant="secondary" onClick={() => setEditor('texts')}>
+          <MessageSquareText aria-hidden className="h-4 w-4" />
           {tr('עריכת ההודעות של הבוט')}
-        </summary>
+        </Button>
+        <Button variant="secondary" onClick={() => setEditor('showcase')}>
+          <Images aria-hidden className="h-4 w-4" />
+          {tr('בינתיים, הצצה לעבודות שלנו')}
+          <span className="text-xs font-normal text-ink-muted">
+            · {bot.data.settings.showcase.enabled ? tr('פעיל') : tr('כבוי')}
+          </span>
+        </Button>
+      </div>
+      <DialogShell
+        open={editor === 'texts'}
+        onOpenChange={(o) => !o && setEditor(null)}
+        title={tr('עריכת ההודעות של הבוט')}
+        wide
+      >
         <BotTextsForm
           key={bot.data.settings.flow}
           businessId={businessId}
           settings={bot.data.settings}
         />
-      </details>
-      <details className="rounded-lg border border-surface-border p-3">
-        <summary className="cursor-pointer text-sm font-medium text-ink">
-          {tr('בינתיים, הצצה לעבודות שלנו')}
-          <span className="ms-2 text-xs font-normal text-ink-muted">
-            {bot.data.settings.showcase.enabled ? tr('פעיל') : tr('כבוי')}
-          </span>
-        </summary>
+      </DialogShell>
+      <DialogShell
+        open={editor === 'showcase'}
+        onOpenChange={(o) => !o && setEditor(null)}
+        title={tr('בינתיים, הצצה לעבודות שלנו')}
+        wide
+      >
         <ShowcaseForm businessId={businessId} settings={bot.data.settings} />
-      </details>
+      </DialogShell>
     </section>
   );
 }
