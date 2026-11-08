@@ -450,6 +450,52 @@ export class AppointmentService {
   }
 
   /**
+   * D-153: the customer cancels an upcoming appointment from WhatsApp. Cancelled (the time is
+   * free again), noted on the lead, and a task so the team notices.
+   */
+  async cancelFromWhatsApp(
+    db: Db,
+    input: { businessId: string; appointmentId: string; contactId: string },
+  ): Promise<{ leadId: string | null; staffId: string | null } | null> {
+    const appt = await db.appointment.findFirst({
+      where: {
+        id: input.appointmentId,
+        businessId: input.businessId,
+        contactId: input.contactId,
+        status: { in: ['REQUESTED', 'CONFIRMED'] },
+      },
+      include: { service: { select: { name: true } } },
+    });
+    if (!appt) return null;
+    await db.appointment.update({ where: { id: appt.id }, data: { status: 'CANCELLED' } });
+    if (appt.leadId) {
+      await db.activity.create({
+        data: {
+          businessId: input.businessId,
+          leadId: appt.leadId,
+          type: 'appointment.updated',
+          data: {
+            startsAt: appt.startsAt.toISOString(),
+            status: 'CANCELLED',
+            statusChanged: true,
+            source: 'whatsapp',
+          },
+        },
+      });
+      await this.awarenessTask(db, {
+        businessId: input.businessId,
+        contactId: input.contactId,
+        leadId: appt.leadId,
+        staffId: appt.staffId,
+        what: appt.service?.name ?? null,
+        startsAt: appt.startsAt,
+        kind: 'cancelled',
+      });
+    }
+    return { leadId: appt.leadId, staffId: appt.staffId };
+  }
+
+  /**
    * D-152: a customer's own booking (WhatsApp or the website) also becomes a task due now, so the
    * team notices it: who, what and when, linked to the lead. It goes to the staff member who has
    * it, or else the owner; no reminder email (the booking already notifies the team).
@@ -463,7 +509,7 @@ export class AppointmentService {
       staffId: string | null;
       what: string | null;
       startsAt: Date;
-      kind: 'booked' | 'request' | 'event';
+      kind: 'booked' | 'request' | 'event' | 'cancelled';
     },
   ) {
     const [business, contact, owner] = await Promise.all([
@@ -492,6 +538,7 @@ export class AppointmentService {
       booked: en ? 'New appointment' : 'תור חדש',
       request: en ? 'New appointment request' : 'בקשה חדשה לתור',
       event: en ? 'New event request' : 'בקשה חדשה לאירוע',
+      cancelled: en ? 'Appointment cancelled' : 'תור בוטל',
     }[x.kind];
     const title = [contact?.name, x.what, when].filter(Boolean).join(' · ');
     await db.task.create({
@@ -499,7 +546,7 @@ export class AppointmentService {
         businessId: x.businessId,
         title: `${label}: ${title}`.slice(0, 200),
         notes:
-          x.kind === 'booked'
+          x.kind === 'booked' || x.kind === 'cancelled'
             ? null
             : en
               ? 'Waiting for your approval on the Appointments page.'

@@ -53,7 +53,7 @@ const ABANDONED_UNTIL_MS = 20 * 60 * 60_000;
 const TRIGGER =
   /תור|לקבוע|פנוי|זמינ|אירוע|הזמנ|פגישה|שיעור|חתונה|appointment|book|event|available|slot|meeting|lesson|session|wedding/i;
 const CHOICE =
-  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|ok|other_time|other_day|other_date|ev_send|ev_edit|ev_start|cancel|human|showcase|book)$/;
+  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|xcl:[0-9a-f-]{36}|xpick:[0-9a-f-]{36}|xcl_no|ok|other_time|other_day|other_date|ev_send|ev_edit|ev_start|cancel|human|showcase|book)$/;
 /** Steps of a booking in progress (a conversation that stops in one of them gets the showcase). */
 const OPEN_STEPS = [
   'service',
@@ -81,7 +81,8 @@ interface EventData {
   guests?: string;
   area?: string;
 }
-const CANCEL_TEXT = /^\s*(ביטול|לבטל|cancel)\s*$/i;
+/** "Cancel" anywhere in the message (D-153): stops a booking in progress, or cancels one booked. */
+const CANCEL_TEXT = /בטל|ביטול|cancel/i;
 /** The customer wants a person (D-108): the bot steps aside. */
 const HUMAN_TEXT =
   /נציג|לדבר|להתקשר|תתקשר|תתקשרי|תחזור|תחזרי|שיחה|שאלה|בן אדם|אדם אמיתי|human|agent|call me|talk to/i;
@@ -143,6 +144,16 @@ const WORDS = {
     theEvent: 'האירוע',
     bookHere: 'כשתרצו, אפשר לקבוע תור כאן 👇',
     bookButton: '📅 לקביעת תור',
+    nothingToCancel: 'לא מצאנו תור קרוב לבטל 🙂 רוצים לקבוע תור?',
+    whichToCancel: 'איזה תור לבטל?',
+    chooseAppointment: 'בחירת תור',
+    confirmCancel: (service: string | null, at: string) =>
+      service ? `לבטל את התור ל${service} ב${at}?` : `לבטל את התור ב${at}?`,
+    yesCancel: 'כן, לבטל',
+    keepIt: 'לא, להשאיר',
+    kept: 'מעולה, התור נשאר 👍',
+    apptCancelled: 'התור בוטל ✅\nרוצים לקבוע מועד אחר? אפשר כאן 👇',
+    bookNew: '📅 תור חדש',
   },
   en: {
     intl: 'en-GB',
@@ -199,6 +210,19 @@ const WORDS = {
     theEvent: 'the event',
     bookHere: 'Whenever you like, you can book here 👇',
     bookButton: '📅 Book now',
+    nothingToCancel:
+      "We couldn't find an upcoming appointment to cancel 🙂 Would you like to book one?",
+    whichToCancel: 'Which appointment should we cancel?',
+    chooseAppointment: 'Choose',
+    confirmCancel: (service: string | null, at: string) =>
+      service
+        ? `Cancel your ${service} appointment on ${at}?`
+        : `Cancel your appointment on ${at}?`,
+    yesCancel: 'Yes, cancel',
+    keepIt: 'No, keep it',
+    kept: 'Great, your appointment stays 👍',
+    apptCancelled: 'Your appointment is cancelled ✅\nWant another time? You can book here 👇',
+    bookNew: '📅 New booking',
   },
 } satisfies Record<Language, unknown>;
 type Words = (typeof WORDS)['he'];
@@ -364,6 +388,15 @@ export class BookingBot {
     if (session?.step === 'handoff' && choice === 'book') {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
       session = chat.session = null;
+    }
+    // D-153: the customer cancels a booked appointment (its buttons, or "cancel" with no booking
+    // in progress) — even after asking for the team, unless a team member is writing.
+    if (choice?.startsWith('xcl') || choice?.startsWith('xpick')) {
+      return this.onCancelChoice(chat, choice, now);
+    }
+    if ((!session || session.step === 'handoff') && !choice && CANCEL_TEXT.test(msg.body)) {
+      if (await this.teamIsTalking(chat.numberId, now)) return 'none';
+      return this.askCancel(chat, now);
     }
     if (session?.step === 'handoff') return 'none';
     if (choice === 'showcase') {
@@ -1049,6 +1082,115 @@ export class BookingBot {
       data: { botShowcaseAt: chat.now },
     });
     return true;
+  }
+
+  // ---------------------------------------------------------------- cancelling (D-153)
+
+  /** The customer's upcoming bookings, soonest first. */
+  private async upcoming(chat: Chat, now: Date) {
+    if (!chat.link.contactId) return [];
+    return this.prisma.appointment.findMany({
+      where: {
+        businessId: chat.business.id,
+        contactId: chat.link.contactId,
+        status: { in: ['REQUESTED', 'CONFIRMED'] },
+        startsAt: { gt: now },
+      },
+      orderBy: { startsAt: 'asc' },
+      take: MAX_ROWS,
+      select: { id: true, startsAt: true, service: { select: { name: true } } },
+    });
+  }
+
+  /** "Thursday, 12 November at 13:00" in the business's time zone and language. */
+  private at(chat: Chat, d: Date) {
+    const tz = chat.business.timezone;
+    const date = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+    const time = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(d);
+    return when(wordsOf(chat), date, time);
+  }
+
+  private async askCancel(chat: Chat, now: Date): Promise<BotOutcome> {
+    const w = wordsOf(chat);
+    const list = await this.upcoming(chat, now);
+    if (!list.length) {
+      await this.say(chat, w.nothingToCancel, {
+        buttons: [{ id: 'book', title: w.bookButton }, human(chat)],
+      });
+      return 'handled';
+    }
+    if (list.length === 1) return this.confirmCancel(chat, list[0]!);
+    await this.say(chat, w.whichToCancel, {
+      button: w.chooseAppointment,
+      rows: list.map((a) => ({
+        id: `xpick:${a.id}`,
+        title: a.service?.name ?? w.appointment,
+        description: this.at(chat, a.startsAt),
+      })),
+    });
+    return 'handled';
+  }
+
+  private async confirmCancel(
+    chat: Chat,
+    a: { id: string; startsAt: Date; service: { name: string } | null },
+  ): Promise<BotOutcome> {
+    const w = wordsOf(chat);
+    await this.say(chat, w.confirmCancel(a.service?.name ?? null, this.at(chat, a.startsAt)), {
+      buttons: [
+        { id: `xcl:${a.id}`, title: w.yesCancel },
+        { id: 'xcl_no', title: w.keepIt },
+      ],
+    });
+    return 'handled';
+  }
+
+  private async onCancelChoice(chat: Chat, choice: string, now: Date): Promise<BotOutcome> {
+    const w = wordsOf(chat);
+    if (choice === 'xcl_no') {
+      await this.say(chat, w.kept);
+      return 'handled';
+    }
+    const id = choice.slice(choice.indexOf(':') + 1);
+    const appt = (await this.upcoming(chat, now)).find((a) => a.id === id);
+    // Already cancelled or past: show what's left to cancel.
+    if (!appt) return this.askCancel(chat, now);
+    if (choice.startsWith('xpick:')) return this.confirmCancel(chat, appt);
+
+    const done = await this.prisma.$transaction((tx) =>
+      this.appointments.cancelFromWhatsApp(tx, {
+        businessId: chat.business.id,
+        appointmentId: appt.id,
+        contactId: chat.link.contactId!,
+      }),
+    );
+    if (!done) return this.askCancel(chat, now);
+    await this.say(chat, w.apptCancelled, { buttons: [{ id: 'book', title: w.bookNew }] });
+    const contact = await this.prisma.contact.findUnique({
+      where: { id: chat.link.contactId! },
+      select: { name: true },
+    });
+    await notifySafe(this.prisma, this.log, {
+      businessId: chat.business.id,
+      type: 'appointment.cancelled',
+      data: {
+        leadId: done.leadId,
+        name: contact?.name ?? chat.phone,
+        when: `${appt.service?.name ?? w.appointment} · ${this.at(chat, appt.startsAt)}`,
+      },
+      to: { roles: MANAGERS, userIds: [done.staffId ?? undefined] },
+    });
+    return 'handled';
   }
 
   // ---------------------------------------------------------------- helpers
