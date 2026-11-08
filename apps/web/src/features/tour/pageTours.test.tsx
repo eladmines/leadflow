@@ -93,9 +93,8 @@ describe('page tours (D-096)', () => {
       'שיחות WhatsApp',
       'שלושה חלקים',
       'רענון',
-      // Booking mode: no status; the bot's settings follow the mode.
+      // Booking mode: no status, and one save button — the bot's (D-145).
       'מה קורה כשלקוח כותב',
-      'שמירת ההגדרות',
       'הגדרות הבוט',
       'איך לקוחות מזמינים',
       'אישור התורים',
