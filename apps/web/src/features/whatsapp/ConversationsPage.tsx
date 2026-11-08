@@ -322,9 +322,6 @@ function ShowcaseCard({
           <p className="text-sm text-ink-muted">
             {tr('אחרי המענה, הלקוח מקבל קישור ועד 3 תמונות מהעבודות שלכם. לכל היותר פעם ביום.')}
           </p>
-          <p className={cn('text-sm font-medium', on ? 'text-emerald-700' : 'text-ink-muted')}>
-            {on ? tr('פועל') : tr('כבוי')}
-          </p>
         </div>
         <Switch
           checked={on}
@@ -391,9 +388,6 @@ function ModeCard({
             {title}
           </h3>
           <p className="text-sm text-ink-muted">{description}</p>
-          <p className={cn('text-sm font-medium', on ? 'text-emerald-700' : 'text-ink-muted')}>
-            {on ? tr('פועל') : tr('כבוי')}
-          </p>
         </div>
         <Switch checked={on} onChange={onToggle} label={title} disabled={busy} />
       </div>
