@@ -302,7 +302,7 @@ function ShowcaseCard({
   const [editing, setEditing] = useState(false);
   const on = saved.showcase.enabled;
   const base = toRequest(saved);
-  const title = tr('בינתיים, הצצה לעבודות שלנו');
+  const title = tr('הצצה לעסק');
   return (
     <section
       aria-label={title}
@@ -320,7 +320,7 @@ function ShowcaseCard({
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-ink">{title}</h3>
           <p className="text-sm text-ink-muted">
-            {tr('אחרי המענה, הלקוח מקבל קישור ועד 3 תמונות מהעבודות שלכם. לכל היותר פעם ביום.')}
+            {tr('אחרי המענה, הלקוח מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.')}
           </p>
         </div>
         <Switch

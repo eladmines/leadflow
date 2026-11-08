@@ -100,7 +100,7 @@ describe('page tours (D-096)', () => {
       'אישור התורים',
       'שמירת ההגדרות',
       'ההודעות ללקוחות',
-      'בינתיים, הצצה לעבודות שלנו',
+      'הצצה לעסק',
     ]);
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'סיום' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

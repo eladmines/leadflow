@@ -612,15 +612,15 @@ export const enPart3: Record<string, string> = {
     'The time is held meanwhile. You approve it on the Appointments page.',
   'נשלחת אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור. לכל היותר פעם ביום ללקוח.':
     "Sent after the automatic reply, or to a customer who didn't finish booking. At most once a day per customer.",
-  'אחרי המענה, הלקוח מקבל קישור ועד 3 תמונות מהעבודות שלכם. לכל היותר פעם ביום.':
-    'After the reply, the customer gets a link and up to 3 photos of your work. At most once a day.',
+  'אחרי המענה, הלקוח מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
+    'After the reply, the customer gets a link, photos and a video of your business. At most once a day.',
   'עריכת ההצצה': 'Edit',
   '"תור בשעה פנויה": הלקוח בוחר שירות, יום ושעה. "בקשה לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
     '"An appointment at a free time": the customer picks a service, day and time. "An event request": the customer writes a date and tells you about the event, and you approve. The option that suits your field is marked.',
   '"התור מאושר מיד": התור נכנס ליומן כמאושר. "התור מחכה לאישור שלי": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד התורים.':
     '"It\'s confirmed straight away": it goes into the calendar as confirmed. "It waits for my approval": the time is held, and the appointment waits for you under "Requests waiting for approval" on the Appointments page.',
-  'אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעבודות שלכם. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
-    "After the automatic reply, or to a customer who didn't finish booking, a message goes out with a link, up to 3 photos and a video of your work. At most once a day per customer. The switch turns it on and off.",
+  'אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
+    "After the automatic reply, or to a customer who didn't finish booking, a message goes out with a link, up to 3 photos and a video of your business. At most once a day per customer. The switch turns it on and off.",
   'סרטון (לא חובה)': 'Video (optional)',
   'סרטון להצצה': 'Video for the showcase',
   סרטון: 'Video',
