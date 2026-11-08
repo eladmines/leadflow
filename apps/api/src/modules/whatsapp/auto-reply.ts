@@ -7,21 +7,19 @@ import {
   STATUS_PRESETS,
   statusPresetsFor,
   type Language,
-  STATUS_VIDEO_MAX_BYTES,
-  STATUS_VIDEOS_TOTAL_BYTES,
-  statusMessages,
+  SHOWCASE_VIDEO_MAX_BYTES,
+  showcaseMessages,
   type ReplyMode,
   type ReplyStatus,
 } from '@leadflow/shared';
 import { z } from 'zod';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
-import type { StorageProvider } from '../../integrations/storage';
 import { AppError } from '../../lib/errors';
 
 /**
  * Automatic replies and statuses (D-123). By default a customer's message gets one short, general
- * reply; when the business is "at an event" (or another status), the status's message — and its
- * video — goes instead. At most one automatic reply per customer per 12 hours, never to personal
+ * reply; when the business is "at an event" (or another status), the status's message goes
+ * instead (videos live in "meanwhile" since D-151). At most one automatic reply per customer per 12 hours, never to personal
  * numbers, paused customers, or a chat a team member wrote in recently.
  */
 
@@ -61,18 +59,9 @@ export function activeOf(raw: unknown, statuses: StoredStatus[], now: Date) {
 }
 
 const isPreset = (id: string) => STATUS_PRESETS.some((p) => p.id === id);
-export const videoBytesUsed = (statuses: StoredStatus[]) =>
-  statuses.reduce((sum, s) => sum + (s.videoBytes ?? 0), 0);
-
-/** The response shape: wording, whether it's ready-made, and the video's size. */
+/** The response shape: wording and whether it's ready-made (videos moved to "meanwhile", D-151). */
 export const statusDtos = (statuses: StoredStatus[]) =>
-  statuses.map((s) => ({
-    id: s.id,
-    label: s.label,
-    text: s.text,
-    preset: isPreset(s.id),
-    video: s.videoKey ? { sizeBytes: s.videoBytes ?? 0 } : null,
-  }));
+  statuses.map((s) => ({ id: s.id, label: s.label, text: s.text, preset: isPreset(s.id) }));
 
 /** A saved list: keeps each status's video by id; returns the videos to delete. */
 export function mergeStatuses(old: StoredStatus[], next: ReplyStatus[]) {
@@ -91,32 +80,31 @@ export function mergeStatuses(old: StoredStatus[], next: ReplyStatus[]) {
 /** MP4 (ISO media) files carry "ftyp" at byte 4. */
 const isMp4 = (b: Buffer) => b.length > 12 && b.subarray(4, 8).toString('latin1') === 'ftyp';
 
-/** Checks a status video and returns where to store it. */
-export function checkVideo(
-  businessId: string,
-  statuses: StoredStatus[],
-  id: string,
-  video: Buffer,
-) {
-  const status = statuses.find((s) => s.id === id);
-  if (!status) throw new AppError('NOT_FOUND');
+/** The stored showcase JSON as an object (null/invalid = empty). */
+export const showcaseObject = (raw: unknown): Record<string, unknown> =>
+  raw && typeof raw === 'object' && !Array.isArray(raw) ? { ...(raw as object) } : {};
+
+/** The "meanwhile" video kept next to the showcase settings (server-only fields). */
+export function showcaseVideoOf(raw: unknown): { key: string; bytes: number } | null {
+  const v = z
+    .object({ videoKey: z.string(), videoBytes: z.number().int() })
+    .safeParse(showcaseObject(raw));
+  return v.success ? { key: v.data.videoKey, bytes: v.data.videoBytes } : null;
+}
+
+/** Checks the "meanwhile" video (D-151) and returns where to store it. */
+export function checkShowcaseVideo(businessId: string, video: Buffer) {
   if (!isMp4(video)) {
-    throw new AppError('VALIDATION_ERROR', statusMessages.videoInvalid, {
-      video: statusMessages.videoInvalid,
+    throw new AppError('VALIDATION_ERROR', showcaseMessages.videoInvalid, {
+      video: showcaseMessages.videoInvalid,
     });
   }
-  if (video.length > STATUS_VIDEO_MAX_BYTES) {
-    throw new AppError('VALIDATION_ERROR', statusMessages.videoTooLarge, {
-      video: statusMessages.videoTooLarge,
+  if (video.length > SHOWCASE_VIDEO_MAX_BYTES) {
+    throw new AppError('VALIDATION_ERROR', showcaseMessages.videoTooLarge, {
+      video: showcaseMessages.videoTooLarge,
     });
   }
-  const others = videoBytesUsed(statuses.filter((s) => s.id !== id));
-  if (others + video.length > STATUS_VIDEOS_TOTAL_BYTES) {
-    throw new AppError('VALIDATION_ERROR', statusMessages.videosFull, {
-      video: statusMessages.videosFull,
-    });
-  }
-  return { status, key: `${businessId}/${randomUUID()}.mp4` };
+  return `${businessId}/${randomUUID()}.mp4`;
 }
 
 interface Log {
@@ -128,7 +116,6 @@ export class AutoReplier {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly sender: WhatsAppSender,
-    private readonly storage: StorageProvider,
     private readonly log: Log,
   ) {}
 
@@ -176,15 +163,6 @@ export class AutoReplier {
     await this.send(business.id, number, link, text, () =>
       this.sender.sendText(number.phone, text),
     );
-    const videoKey = active?.status.videoKey;
-    if (videoKey) {
-      const video = await this.storage.get(videoKey).catch(() => null);
-      if (video) {
-        await this.send(business.id, number, link, '[וידאו]', () =>
-          this.sender.sendVideo(number.phone, video),
-        );
-      }
-    }
     return true;
   }
 

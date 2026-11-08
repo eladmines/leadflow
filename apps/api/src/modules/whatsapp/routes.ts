@@ -11,8 +11,8 @@ import {
   whatsappBotResponseSchema,
   whatsappBotSettingsSchema,
   setStatusRequestSchema,
-  statusMessages,
-  STATUS_VIDEO_MAX_BYTES,
+  showcaseMessages,
+  SHOWCASE_VIDEO_MAX_BYTES,
   whatsappInboxResponseSchema,
   whatsappThreadResponseSchema,
 } from '@leadflow/shared';
@@ -283,7 +283,7 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
       async (req) => service.updateBotSettings(tenantOf(req), req.body),
     );
 
-    // D-123: the status on now, and each status's video.
+    // D-123: the status on now.
     app.put(
       '/whatsapp/status',
       {
@@ -297,40 +297,40 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
       async (req) => service.setStatus(tenantOf(req), req.body),
     );
 
-    const statusParams = params.extend({ statusId: z.string().regex(/^[a-z0-9-]{1,40}$/) });
+    // D-151: the "meanwhile" video (one MP4, sent after its photos).
     app.put(
-      '/whatsapp/statuses/:statusId/video',
+      '/whatsapp/showcase/video',
       {
         preValidation: requirePermission('whatsapp.inbox'),
-        schema: { params: statusParams, response: { 200: whatsappBotResponseSchema } },
+        schema: { params, response: { 200: whatsappBotResponseSchema } },
       },
       async (req) => {
         if (!req.isMultipart()) {
-          throw new AppError('VALIDATION_ERROR', statusMessages.videoInvalid);
+          throw new AppError('VALIDATION_ERROR', showcaseMessages.videoInvalid);
         }
-        const file = await req.file({ limits: { fileSize: STATUS_VIDEO_MAX_BYTES, files: 1 } });
-        if (!file) throw new AppError('VALIDATION_ERROR', statusMessages.videoInvalid);
+        const file = await req.file({ limits: { fileSize: SHOWCASE_VIDEO_MAX_BYTES, files: 1 } });
+        if (!file) throw new AppError('VALIDATION_ERROR', showcaseMessages.videoInvalid);
         let video: Buffer;
         try {
           video = await file.toBuffer();
         } catch {
-          throw new AppError('VALIDATION_ERROR', statusMessages.videoTooLarge, {
-            video: statusMessages.videoTooLarge,
+          throw new AppError('VALIDATION_ERROR', showcaseMessages.videoTooLarge, {
+            video: showcaseMessages.videoTooLarge,
           });
         }
         if (file.file.truncated) {
-          throw new AppError('VALIDATION_ERROR', statusMessages.videoTooLarge, {
-            video: statusMessages.videoTooLarge,
+          throw new AppError('VALIDATION_ERROR', showcaseMessages.videoTooLarge, {
+            video: showcaseMessages.videoTooLarge,
           });
         }
-        return service.setStatusVideo(tenantOf(req), req.params.statusId, video);
+        return service.setShowcaseVideo(tenantOf(req), video);
       },
     );
     app.get(
-      '/whatsapp/statuses/:statusId/video',
-      { preValidation: requirePermission('whatsapp.inbox'), schema: { params: statusParams } },
+      '/whatsapp/showcase/video',
+      { preValidation: requirePermission('whatsapp.inbox'), schema: { params } },
       async (req, reply) => {
-        const video = await service.statusVideo(tenantOf(req), req.params.statusId);
+        const video = await service.showcaseVideo(tenantOf(req));
         return reply
           .header('content-type', 'video/mp4')
           .header('cache-control', 'private, no-store')
@@ -339,12 +339,12 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
       },
     );
     app.delete(
-      '/whatsapp/statuses/:statusId/video',
+      '/whatsapp/showcase/video',
       {
         preValidation: requirePermission('whatsapp.inbox'),
-        schema: { params: statusParams, response: { 200: whatsappBotResponseSchema } },
+        schema: { params, response: { 200: whatsappBotResponseSchema } },
       },
-      async (req) => service.deleteStatusVideo(tenantOf(req), req.params.statusId),
+      async (req) => service.deleteShowcaseVideo(tenantOf(req)),
     );
 
     app.post(

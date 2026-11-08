@@ -165,7 +165,7 @@ export function SetupGuide({
 
       {step === 2 && mode === 'booking' && (
         <fieldset className="flex flex-col gap-3">
-          <legend className="mb-2 text-lg font-semibold text-ink">{tr('כשהבוט קובע תור:')}</legend>
+          <legend className="mb-2 text-lg font-semibold text-ink">{tr('כשלקוח קובע תור:')}</legend>
           {[
             { value: true, label: tr('התור מאושר מיד') },
             { value: false, label: tr('התור מחכה לאישור שלי') },
@@ -213,7 +213,7 @@ export function SetupGuide({
             {mode === 'off'
               ? tr('הודעות נכנסות בלי מענה אוטומטי. אפשר לשנות את זה כאן בכל זמן.')
               : tr(
-                  'מעכשיו לקוחות שכותבים מקבלים מענה לבד. כל השאר, כמו סטטוסים והודעות הבוט, נמצא כאן בהמשך העמוד.',
+                  'מעכשיו לקוחות שכותבים מקבלים מענה לבד. כל השאר, כמו סטטוסים וההודעות ללקוחות, נמצא כאן בהמשך העמוד.',
                 )}
           </p>
           <Button onClick={onClose}>{tr('סיום')}</Button>

@@ -24,7 +24,7 @@ import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
-import { AutoReplier, languageOf, modeOf } from './auto-reply';
+import { AutoReplier, languageOf, modeOf, showcaseVideoOf } from './auto-reply';
 import { AppointmentService } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 
@@ -227,6 +227,8 @@ type Business = {
   whatsappBotAutoConfirm: boolean;
   texts: BotTexts;
   showcase: z.output<typeof botShowcaseSchema>;
+  /** Storage key of the "meanwhile" video (D-151), sent after its photos. */
+  showcaseVideo: string | null;
   flow: BotFlow;
   /** Event requests hold their date until the owner decides. */
   holdDate: boolean;
@@ -308,7 +310,7 @@ export class BookingBot {
     ) => Promise<{ contactId: string; leadId: string }>,
   ) {
     this.appointments = new AppointmentService(prisma);
-    this.autoReplier = new AutoReplier(prisma, sender, storage, log);
+    this.autoReplier = new AutoReplier(prisma, sender, log);
   }
 
   async handle(businessId: string, msg: BotMessage, now = new Date()): Promise<BotOutcome> {
@@ -1032,6 +1034,10 @@ export class BookingBot {
         this.log.error({ errName: (err as Error)?.name }, 'whatsapp showcase image failed');
       }
     }
+    if (chat.business.showcaseVideo) {
+      const video = await this.storage.get(chat.business.showcaseVideo).catch(() => null);
+      if (video) await this.sayVideo(chat, video);
+    }
     if (offerBooking) {
       await this.say(chat, wordsOf(chat).bookHere, {
         buttons: [{ id: 'book', title: wordsOf(chat).bookButton }],
@@ -1084,6 +1090,7 @@ export class BookingBot {
       business: {
         ...business,
         language: languageOf(business.language),
+        showcaseVideo: showcaseVideoOf(business.whatsappBotShowcase)?.key ?? null,
         holdDate: business.whatsappBotHoldDate,
         flow,
         texts: texts.success ? texts.data : {},
@@ -1162,6 +1169,29 @@ export class BookingBot {
         direction: 'OUT',
         waMessageId: id,
         body: stored.slice(0, 4096),
+        status: 'sent',
+      },
+    });
+  }
+
+  /** Sends and stores a video (shown in LeadFlow as "[וידאו]"). */
+  private async sayVideo(chat: Chat, mp4: Buffer) {
+    let id: string;
+    try {
+      ({ id } = await this.sender.sendVideo(chat.phone, mp4));
+    } catch (err) {
+      this.log.error({ errName: (err as Error)?.name }, 'whatsapp showcase video failed');
+      return;
+    }
+    await this.prisma.whatsAppMessage.create({
+      data: {
+        businessId: chat.business.id,
+        numberId: chat.numberId,
+        contactId: chat.link.contactId,
+        leadId: chat.link.leadId,
+        direction: 'OUT',
+        waMessageId: id,
+        body: '[וידאו]',
         status: 'sent',
       },
     });
