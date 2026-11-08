@@ -597,7 +597,6 @@ export const enPart3: Record<string, string> = {
     'One click, for example "At an event", and below you see exactly what customers get now — and can change the message right there. You can choose for how long and add a video; "Available" brings back the general message.',
   'כל לקוח שכותב מקבל הודעה קצרה, לפי הסטטוס שלך.':
     'Every customer who writes gets a short message, based on your status.',
-  פועל: 'On',
   'הסתרת ההגדרות': 'Hide settings',
   'שתי דרכים לענות: מענה אוטומטי או בוט קביעת תורים. לכל אחת ההגדרות שלה, שנשמרות גם כשהיא כבויה. מדליקים את המתג של מה שרוצים — אחת בכל פעם.':
     'Two ways to answer: an automatic reply or the booking bot. Each keeps its own settings, even while off. Turn on the switch of the one you want — one at a time.',
