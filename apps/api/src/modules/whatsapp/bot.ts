@@ -334,13 +334,18 @@ export class BookingBot {
     const mode = modeOf(replies.whatsappReplyMode);
     if (mode === 'off') return 'none';
     if (mode === 'auto_reply') {
-      await this.autoReplier.reply(
+      const replied = await this.autoReplier.reply(
         replies,
         number,
         await this.linkOf(businessId, number.status, number.phone),
         await this.teamIsTalking(number.id, now),
         now,
       );
+      // "Meanwhile, a look at our work" follows the automatic reply too (D-149), once a day.
+      if (replied) {
+        const chat = await this.chatFor(businessId, number, now, { anyMode: true });
+        if (chat) await this.showcase(chat, {});
+      }
       // The message still reaches the team (bell and pop-up) like any other.
       return 'none';
     }
@@ -1047,6 +1052,8 @@ export class BookingBot {
     businessId: string,
     number: { id: string; phone: string; status: string; botShowcaseAt: Date | null },
     now: Date,
+    /** The showcase after an automatic reply needs the business even with the bot off. */
+    { anyMode = false }: { anyMode?: boolean } = {},
   ): Promise<Chat | null> {
     const business = await this.prisma.business.findUnique({
       where: { id: businessId },
@@ -1065,7 +1072,7 @@ export class BookingBot {
         language: true,
       },
     });
-    if (!business?.whatsappBotEnabled) return null;
+    if (!business || (!business.whatsappBotEnabled && !anyMode)) return null;
     const flow = (BOT_FLOWS as readonly string[]).includes(business.whatsappBotFlow ?? '')
       ? (business.whatsappBotFlow as BotFlow)
       : botFlowFor(business.industry);

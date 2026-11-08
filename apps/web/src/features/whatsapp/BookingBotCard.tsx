@@ -5,7 +5,6 @@ import {
   botPlaceholderLabels,
   BOT_FLOWS,
   BOT_TEXT_KEYS,
-  botFlowLabels,
   botTextKeysFor,
   type BotFlow,
   botTextLabels,
@@ -15,7 +14,7 @@ import {
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
 } from '@leadflow/shared';
-import { ImagePlus, Images, MessageSquareText, RotateCcw, X } from 'lucide-react';
+import { ImagePlus, MessageSquareText, RotateCcw, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { Alert, Button, DialogShell, Field, Textarea } from '../../components/ui';
 import { useAssets } from '../media/api';
@@ -41,7 +40,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
     flowChosen: boolean;
   } | null>(null);
   const [saved, setSaved] = useState(false);
-  const [editor, setEditor] = useState<'texts' | 'showcase' | null>(null);
+  const [editor, setEditor] = useState<'texts' | null>(null);
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   const stored = bot.data.settings;
@@ -87,21 +86,18 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         {tr('הגדרות הבוט')}
       </h3>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm text-ink-muted">{tr('איך לקוחות מזמינים:')}</legend>
+        <legend className="mb-1 text-sm font-medium text-ink">
+          {tr('מה לקוחות יכולים להזמין?')}
+        </legend>
         {BOT_FLOWS.map((f) => (
-          <label key={f} className="flex items-center gap-2 text-sm text-ink">
-            <input
-              type="radio"
-              name="bot-flow"
-              checked={settings.flow === f}
-              onChange={() => change({ flow: f })}
-              className="h-4 w-4 accent-brand-600"
-            />
-            {tr(botFlowLabels[f])}
-            {industryFlow === f && (
-              <span className="text-xs text-ink-muted">{tr('(מתאים לתחום שלכם)')}</span>
-            )}
-          </label>
+          <Choice
+            key={f}
+            name="bot-flow"
+            checked={settings.flow === f}
+            onChange={() => change({ flow: f })}
+            label={tr(FLOW_CHOICES[f].label)}
+            hint={`${tr(FLOW_CHOICES[f].hint)}${industryFlow === f ? ` · ${tr('מתאים לתחום שלכם')}` : ''}`}
+          />
         ))}
       </fieldset>
       {settings.flow === 'event' ? (
@@ -123,27 +119,21 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
         </>
       ) : (
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm text-ink-muted">{tr('תורים שנקבעים בבוט:')}</legend>
-          <label className="flex items-center gap-2 text-sm text-ink">
-            <input
-              type="radio"
-              name="bot-confirm"
-              checked={settings.autoConfirm}
-              onChange={() => change({ autoConfirm: true })}
-              className="h-4 w-4 accent-brand-600"
-            />
-            {tr('מאושרים מיד')}
-          </label>
-          <label className="flex items-center gap-2 text-sm text-ink">
-            <input
-              type="radio"
-              name="bot-confirm"
-              checked={!settings.autoConfirm}
-              onChange={() => change({ autoConfirm: false })}
-              className="h-4 w-4 accent-brand-600"
-            />
-            {tr('ממתינים לאישור שלכם (הזמן נשמר בינתיים)')}
-          </label>
+          <legend className="mb-1 text-sm font-medium text-ink">{tr('כשהבוט קובע תור:')}</legend>
+          <Choice
+            name="bot-confirm"
+            checked={settings.autoConfirm}
+            onChange={() => change({ autoConfirm: true })}
+            label={tr('התור מאושר מיד')}
+            hint={tr('הלקוח מקבל אישור, והתור נכנס ליומן.')}
+          />
+          <Choice
+            name="bot-confirm"
+            checked={!settings.autoConfirm}
+            onChange={() => change({ autoConfirm: false })}
+            label={tr('התור מחכה לאישור שלי')}
+            hint={tr('השעה שמורה בינתיים. מאשרים בעמוד התורים.')}
+          />
         </fieldset>
       )}
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
@@ -169,13 +159,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           <MessageSquareText aria-hidden className="h-4 w-4" />
           {tr('עריכת ההודעות של הבוט')}
         </Button>
-        <Button variant="secondary" onClick={() => setEditor('showcase')}>
-          <Images aria-hidden className="h-4 w-4" />
-          {tr('בינתיים, הצצה לעבודות שלנו')}
-          <span className="text-xs font-normal text-ink-muted">
-            · {bot.data.settings.showcase.enabled ? tr('פעיל') : tr('כבוי')}
-          </span>
-        </Button>
       </div>
       <DialogShell
         open={editor === 'texts'}
@@ -189,15 +172,44 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           settings={bot.data.settings}
         />
       </DialogShell>
-      <DialogShell
-        open={editor === 'showcase'}
-        onOpenChange={(o) => !o && setEditor(null)}
-        title={tr('בינתיים, הצצה לעבודות שלנו')}
-        wide
-      >
-        <ShowcaseForm businessId={businessId} settings={bot.data.settings} />
-      </DialogShell>
     </section>
+  );
+}
+
+/** What customers can book, said plainly (D-149). */
+const FLOW_CHOICES: Record<BotFlow, { label: string; hint: string }> = {
+  appointment: { label: 'תור בשעה פנויה', hint: 'הבוט מציע ימים ושעות פנויים מהיומן.' },
+  event: { label: 'בקשה לאירוע', hint: 'הלקוח כותב תאריך, מספר אורחים ואזור, ואתם מאשרים.' },
+};
+
+/** A radio answer with a short explanation under it. */
+function Choice({
+  name,
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  name: string;
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2.5">
+      <input
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className="mt-1 h-4 w-4 accent-brand-600"
+      />
+      <span className="flex flex-col">
+        <span className="text-sm font-medium text-ink">{label}</span>
+        <span className="text-xs text-ink-muted">{hint}</span>
+      </span>
+    </label>
   );
 }
 
@@ -391,12 +403,12 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
  * "In the meantime, take a look" (D-106): what a customer who doesn't book gets — a message, a
  * link (Instagram, a video, the website) and up to 3 photos from the media library.
  */
-function ShowcaseForm({ businessId, settings }: { businessId: string; settings: Saved }) {
+/** "Meanwhile, a look at our work" (D-106, for both modes since D-149); on/off is on its card. */
+export function ShowcaseForm({ businessId, settings }: { businessId: string; settings: Saved }) {
   const business = useCurrentBusiness();
   const update = useUpdateBotSettings(businessId);
   const assets = useAssets(businessId);
   const saved = settings.showcase;
-  const [enabled, setEnabled] = useState(saved.enabled);
   const [text, setText] = useState(toTags(saved.text ?? saved.defaultText, settings.flow));
   const [link, setLink] = useState(saved.link ?? '');
   const [assetIds, setAssetIds] = useState(saved.assetIds);
@@ -411,7 +423,7 @@ function ShowcaseForm({ businessId, settings }: { businessId: string; settings: 
     setDone(false);
     const own = toCodes(text).trim();
     const parsed = botShowcaseSchema.safeParse({
-      enabled,
+      enabled: saved.enabled,
       // The industry default isn't stored, so it can improve later.
       text: own === saved.defaultText ? null : own,
       link,
@@ -438,26 +450,13 @@ function ShowcaseForm({ businessId, settings }: { businessId: string; settings: 
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-4">
       <p className="text-xs text-ink-muted">
         {tr(
-          'לקוח שלא קבע תור — ביטל, ביקש לדבר עם הצוות, לא מצא זמן פנוי או הפסיק לענות חצי שעה — מקבל את ההצצה הזו, לכל היותר פעם ביום, ואחריה כפתור לקביעת תור. בנוסף מופיעה ברשימה של הבוט האפשרות "📸 העבודות שלנו".',
+          'נשלחת אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור בבוט. לכל היותר פעם ביום ללקוח.',
         )}
       </p>
-      <label className="flex items-center gap-2 text-sm font-medium text-ink">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => {
-            changed();
-            setEnabled(e.target.checked);
-          }}
-          className="h-4 w-4 accent-brand-600"
-        />
-        {tr('שליחת הצצה ללקוחות שלא קבעו')}
-      </label>
-      <fieldset disabled={!enabled} className="flex flex-col gap-4 disabled:opacity-60">
+      <fieldset className="flex flex-col gap-4">
         <Textarea
           label={tr('ההודעה')}
-          dir="rtl"
-          lang="he"
+          dir="auto"
           rows={2}
           value={text}
           error={errors.text}

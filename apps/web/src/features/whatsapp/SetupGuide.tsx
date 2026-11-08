@@ -165,12 +165,10 @@ export function SetupGuide({
 
       {step === 2 && mode === 'booking' && (
         <fieldset className="flex flex-col gap-3">
-          <legend className="mb-2 text-lg font-semibold text-ink">
-            {tr('תורים שנקבעים בבוט:')}
-          </legend>
+          <legend className="mb-2 text-lg font-semibold text-ink">{tr('כשהבוט קובע תור:')}</legend>
           {[
-            { value: true, label: tr('מאושרים מיד') },
-            { value: false, label: tr('ממתינים לאישור שלכם (הזמן נשמר בינתיים)') },
+            { value: true, label: tr('התור מאושר מיד') },
+            { value: false, label: tr('התור מחכה לאישור שלי') },
           ].map((o) => (
             <label
               key={String(o.value)}

@@ -7,7 +7,14 @@ import {
   type ReplyMode,
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
-import { Briefcase, CalendarCheck, MessageCircleReply, UserX, type LucideIcon } from 'lucide-react';
+import {
+  Briefcase,
+  CalendarCheck,
+  Images,
+  MessageCircleReply,
+  UserX,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,6 +22,7 @@ import {
   Alert,
   Button,
   Card,
+  DialogShell,
   EmptyState,
   RefreshButton,
   Spinner,
@@ -35,7 +43,7 @@ import {
   useWhatsAppInbox,
 } from './api';
 import { AutoReplyCard } from './AutoReplyCard';
-import { BookingBotCard, toRequest } from './BookingBotCard';
+import { BookingBotCard, ShowcaseForm, toRequest } from './BookingBotCard';
 import { SetupGuide, shouldOfferSetup } from './SetupGuide';
 import { tr } from '../../i18n';
 
@@ -273,8 +281,68 @@ function ModeCards({
       >
         <BookingBotCard businessId={businessId} />
       </ModeCard>
+      <ShowcaseCard businessId={businessId} saved={saved} />
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
     </div>
+  );
+}
+
+/**
+ * "Meanwhile, a look at our work" (D-149): shared by both ways to answer — after the automatic
+ * reply, or when a customer doesn't finish booking. Its own switch; the editor is a pop-up.
+ */
+function ShowcaseCard({
+  businessId,
+  saved,
+}: {
+  businessId: string;
+  saved: WhatsAppBotResponse['settings'];
+}) {
+  const update = useUpdateBotSettings(businessId);
+  const [editing, setEditing] = useState(false);
+  const on = saved.showcase.enabled;
+  const base = toRequest(saved);
+  const title = tr('בינתיים, הצצה לעבודות שלנו');
+  return (
+    <section
+      aria-label={title}
+      className="flex flex-col gap-3 rounded-2xl border border-dashed border-surface-border bg-surface p-4"
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white',
+            on ? 'bg-amber-500' : 'bg-slate-400',
+          )}
+        >
+          <Images className="h-5 w-5" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-ink">{title}</h3>
+          <p className="text-sm text-ink-muted">
+            {tr('אחרי המענה, הלקוח מקבל קישור ועד 3 תמונות מהעבודות שלכם. לכל היותר פעם ביום.')}
+          </p>
+          <p className={cn('text-sm font-medium', on ? 'text-emerald-700' : 'text-ink-muted')}>
+            {on ? tr('פועל') : tr('כבוי')}
+          </p>
+        </div>
+        <Switch
+          checked={on}
+          label={title}
+          disabled={update.isPending}
+          onChange={(enabled) =>
+            update.mutate({ ...base, showcase: { ...base.showcase, enabled } })
+          }
+        />
+      </div>
+      <Button variant="secondary" size="sm" className="self-start" onClick={() => setEditing(true)}>
+        {tr('עריכת ההצצה')}
+      </Button>
+      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+      <DialogShell open={editing} onOpenChange={setEditing} title={title} wide>
+        <ShowcaseForm businessId={businessId} settings={saved} />
+      </DialogShell>
+    </section>
   );
 }
 
