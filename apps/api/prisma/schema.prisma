@@ -297,6 +297,8 @@ enum LeadSource {
   website_form
   manual
   whatsapp
+  /// F23: a message to the business's Facebook Page (D-157).
+  facebook
 }
 
 /// A person who contacted the business. Matched by phone within the business.
@@ -310,10 +312,11 @@ model Contact {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  leads        Lead[]
-  appointments Appointment[]
-  whatsapp     WhatsAppMessage[]
+  business         Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  leads            Lead[]
+  appointments     Appointment[]
+  whatsapp         WhatsAppMessage[]
+  messengerSenders WhatsAppNumber[]  @relation("MessengerContact")
 
   @@index([businessId, phone])
   @@index([businessId, email])
@@ -635,8 +638,12 @@ enum WhatsAppNumberStatus {
 model WhatsAppNumber {
   id             String               @id @default(uuid()) @db.Uuid
   businessId     String               @map("business_id") @db.Uuid
-  /// E.164.
-  phone          String               @db.VarChar(20)
+  /// `whatsapp` (default) or `messenger` (F23, D-157).
+  channel        String               @default("whatsapp") @db.VarChar(20)
+  /// WhatsApp: E.164. Messenger: `fb:` + the sender's page-scoped id (PSID).
+  phone          String               @db.VarChar(64)
+  /// Messenger only: the contact this sender became (WhatsApp matches contacts by phone).
+  contactId      String?              @map("contact_id") @db.Uuid
   status         WhatsAppNumberStatus
   /// WhatsApp profile name while unclassified (cleared when marked personal).
   profileName    String?              @map("profile_name") @db.VarChar(80)
@@ -653,6 +660,7 @@ model WhatsAppNumber {
   updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   business     Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact      Contact?            @relation("MessengerContact", fields: [contactId], references: [id], onDelete: SetNull)
   classifiedBy User?               @relation("WhatsAppClassifiedBy", fields: [classifiedById], references: [id], onDelete: SetNull)
   messages     WhatsAppMessage[]
   botSession   WhatsAppBotSession?

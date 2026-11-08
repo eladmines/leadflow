@@ -36,7 +36,12 @@ import { quotePublicRoutes, quoteTenantRoutes } from './modules/quotes/routes';
 import { reportTenantRoutes } from './modules/reports/routes';
 import { registerMediaServing } from './modules/media/serve';
 import { createWhatsAppSender, type WhatsAppSender } from './integrations/whatsapp';
-import { whatsappTenantRoutes, whatsappWebhookRoutes } from './modules/whatsapp/routes';
+import { createMessengerSender, type MessengerSender } from './integrations/messenger';
+import {
+  messengerWebhookRoutes,
+  whatsappTenantRoutes,
+  whatsappWebhookRoutes,
+} from './modules/whatsapp/routes';
 import { notificationTenantRoutes } from './modules/notifications/routes';
 
 declare module 'fastify' {
@@ -51,6 +56,8 @@ declare module 'fastify' {
     storage: StorageProvider;
     /** Outbound WhatsApp (F12), also used by the booking bot's background job. */
     whatsappSender: WhatsAppSender;
+    /** Outbound Facebook Messenger (F23). */
+    messengerSender: MessengerSender;
   }
 }
 
@@ -67,6 +74,8 @@ export interface AppDeps {
   logStream?: LogStream;
   /** Defaults to the adapter chosen by `WHATSAPP_PROVIDER`. Tests inject a MemoryWhatsAppSender. */
   whatsappSender?: WhatsAppSender;
+  /** Defaults to the adapter chosen by `MESSENGER_PROVIDER`. Tests inject a MemoryMessengerSender. */
+  messengerSender?: MessengerSender;
   /** A server shared with the public-site app (one port, D-119); it calls `app.routing`. */
   serverFactory?: FastifyServerFactory;
 }
@@ -80,6 +89,7 @@ export async function buildApp({
   siteCache,
   storage,
   whatsappSender,
+  messengerSender,
   serverFactory,
 }: AppDeps) {
   const app = Fastify({
@@ -155,7 +165,10 @@ export async function buildApp({
   await app.register(quotePublicRoutes);
   const whatsapp = whatsappSender ?? createWhatsAppSender(config);
   app.decorate('whatsappSender', whatsapp);
+  const messenger = messengerSender ?? createMessengerSender(config);
+  app.decorate('messengerSender', messenger);
   await app.register(whatsappWebhookRoutes(whatsapp));
+  await app.register(messengerWebhookRoutes(whatsapp, messenger));
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(
     tenantScope(async (scope) => {

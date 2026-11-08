@@ -5,7 +5,7 @@ import { AppError } from '../lib/errors';
 const STATE_CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const HEADER = CSRF_HEADER_NAME.toLowerCase();
 /** Server-to-server webhooks: no cookies, authenticated by the sender's signature instead. */
-const EXEMPT = new Set<string>([apiPaths.whatsapp.webhook]);
+const EXEMPT = new Set<string>([apiPaths.whatsapp.webhook, apiPaths.whatsapp.messengerWebhook]);
 
 /**
  * CSRF guard for every state-changing request (authenticated or not):

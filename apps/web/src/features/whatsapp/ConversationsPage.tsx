@@ -416,7 +416,9 @@ function NumberCard({
   onDone: (d: { name: string; leadId: string | null }) => void;
 }) {
   const classify = useClassifyNumber(businessId);
-  const name = number.profileName || showPhone(number.phone);
+  // A Facebook sender (F23) has no phone to show: their name and the channel instead.
+  const fb = number.channel === 'messenger';
+  const name = number.profileName || (fb ? tr('משתמש/ת פייסבוק') : showPhone(number.phone));
   const act = (as: 'BUSINESS' | 'PERSONAL') =>
     classify.mutate(
       { numberId: number.id, as },
@@ -429,15 +431,22 @@ function NumberCard({
         <div className="flex flex-col">
           <h2 className="text-base font-semibold text-ink">{name}</h2>
           <p className="text-sm text-ink-muted">
-            <bdi dir="ltr">{showPhone(number.phone)}</bdi> ·{' '}
+            {fb ? tr('פייסבוק') : <bdi dir="ltr">{showPhone(number.phone)}</bdi>} ·{' '}
             <time dateTime={number.lastMessageAt} title={formatDateTime(number.lastMessageAt)}>
               {timeAgo(number.lastMessageAt)}
             </time>
           </p>
         </div>
-        <span className="rounded-full bg-surface-sunken px-2.5 py-1 text-xs font-medium text-ink-muted">
-          {tr('לא מסווג')}
-        </span>
+        <div className="flex gap-1.5">
+          {fb && (
+            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              {tr('פייסבוק')}
+            </span>
+          )}
+          <span className="rounded-full bg-surface-sunken px-2.5 py-1 text-xs font-medium text-ink-muted">
+            {tr('לא מסווג')}
+          </span>
+        </div>
       </header>
       <ol
         aria-label={tr('הודעות מ{0}', name)}
@@ -518,15 +527,24 @@ function PersonalNumbers({ businessId }: { businessId: string }) {
       >
         {personal.data.map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
-            <bdi dir="ltr" className="text-sm text-ink">
-              {showPhone(p.phone)}
-            </bdi>
+            {p.channel === 'messenger' ? (
+              <span className="text-sm text-ink">
+                {tr('משתמש/ת פייסבוק')} · {tr('פייסבוק')}
+              </span>
+            ) : (
+              <bdi dir="ltr" className="text-sm text-ink">
+                {showPhone(p.phone)}
+              </bdi>
+            )}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => forget.mutate(p.id)}
               loading={forget.isPending && forget.variables === p.id}
-              aria-label={tr('ביטול סימון פרטי ל-{0}', showPhone(p.phone))}
+              aria-label={tr(
+                'ביטול סימון פרטי ל-{0}',
+                p.channel === 'messenger' ? tr('משתמש/ת פייסבוק') : showPhone(p.phone),
+              )}
             >
               {tr('ביטול סימון')}
             </Button>

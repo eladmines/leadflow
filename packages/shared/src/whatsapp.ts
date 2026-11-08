@@ -32,7 +32,18 @@ export const whatsappMessages = {
   sendFailed: 'ההודעה לא נשלחה. נסו שוב בעוד רגע',
   alreadyCustomer: 'המספר כבר משויך ללקוח במערכת. כדי להסיר אותו, מחקו את הליד.',
   notPersonal: 'אפשר לבטל רק סימון של מספר פרטי',
+  messengerNotConnected: 'פייסבוק עדיין לא מחובר לעסק הזה',
+  messengerWindowClosed: 'אפשר לענות בפייסבוק רק עד 24 שעות אחרי ההודעה האחרונה של הלקוח.',
 } as const;
+
+/** Where a conversation happens (F23, D-157): WhatsApp or the business's Facebook Page. */
+export const CHANNELS = ['whatsapp', 'messenger'] as const;
+export const channelSchema = z.enum(CHANNELS);
+export type Channel = z.infer<typeof channelSchema>;
+export const channelLabels: Record<Channel, string> = {
+  whatsapp: 'WhatsApp',
+  messenger: 'פייסבוק',
+};
 
 export const WHATSAPP_DIRECTIONS = ['IN', 'OUT'] as const;
 /** Delivery status from Meta for outgoing messages; incoming ones are `received`. */
@@ -54,6 +65,8 @@ export const whatsappMessageSchema = z.object({
   /** Team member who sent an outgoing message. */
   sender: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
   createdAt: z.string().datetime(),
+  /** WhatsApp unless it came through Facebook Messenger (F23). */
+  channel: channelSchema.optional(),
 });
 export type WhatsAppMessage = z.infer<typeof whatsappMessageSchema>;
 
@@ -66,6 +79,8 @@ export const whatsappThreadResponseSchema = z.object({
   replyUntil: z.string().datetime().nullable(),
   /** The booking bot is paused for this customer (D-108). */
   botPaused: z.boolean(),
+  /** Where a reply goes: the channel of the customer's last message (F23). */
+  channel: channelSchema.optional(),
 });
 export type WhatsAppThreadResponse = z.infer<typeof whatsappThreadResponseSchema>;
 
@@ -95,7 +110,9 @@ export type SendWhatsAppResponse = z.infer<typeof sendWhatsAppResponseSchema>;
 export const WHATSAPP_NUMBER_STATUSES = ['UNCLASSIFIED', 'BUSINESS', 'PERSONAL'] as const;
 export const inboxNumberSchema = z.object({
   id: z.string().uuid(),
+  /** WhatsApp: E.164. Messenger: an internal id, never shown. */
   phone: z.string(),
+  channel: channelSchema.optional(),
   /** WhatsApp profile name, if the sender has one. */
   profileName: z.string().nullable(),
   /** Oldest first (up to the latest 20). */
@@ -116,6 +133,9 @@ export const personalNumbersResponseSchema = z.object({
     z.object({
       id: z.string().uuid(),
       phone: z.string(),
+      channel: channelSchema.optional(),
+      /** Messenger: the sender's Facebook name (the id isn't shown). */
+      name: z.string().nullable().optional(),
       classifiedAt: z.string().datetime().nullable(),
     }),
   ),
@@ -515,6 +535,8 @@ export type WhatsAppBotResponse = z.infer<typeof whatsappBotResponseSchema>;
 export const whatsappApiPaths = {
   /** Meta's webhook (verification GET + signed event POST). Public, not tenant-scoped. */
   webhook: '/api/v1/integrations/whatsapp/webhook',
+  /** Facebook Messenger's webhook (F23); same Meta app, same signature check. */
+  messengerWebhook: '/api/v1/integrations/messenger/webhook',
   /** PUT: the status on now (D-123). */
   status: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/status`,
   /** PUT (multipart MP4) / GET / DELETE: the "meanwhile" video (D-151). */

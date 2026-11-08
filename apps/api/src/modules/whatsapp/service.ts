@@ -21,6 +21,7 @@ import {
   autoReplyDefaultFor,
   setStatusRequestSchema,
   type WhatsAppThreadResponse,
+  type Channel,
 } from '@leadflow/shared';
 import type { z } from 'zod';
 import type { AppConfig } from '../../config/env';
@@ -36,6 +37,7 @@ import {
   statusesOf,
   languageOf,
 } from './auto-reply';
+import { MemoryMessengerSender, type MessengerSender } from '../../integrations/messenger';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -50,8 +52,10 @@ type Status = (typeof WHATSAPP_STATUSES)[number];
 /** A customer message from Meta's webhook, already normalised. */
 export interface InboundMessage {
   waMessageId: string;
-  /** E.164, e.g. +972501234567. */
+  /** WhatsApp: E.164, e.g. +972501234567. Messenger: `fb:` + the sender's PSID (F23). */
   from: string;
+  /** Default WhatsApp. */
+  channel?: Channel;
   /** WhatsApp profile name, if Meta sent one. */
   profileName: string | null;
   body: string;
@@ -80,10 +84,16 @@ const statusRank: Record<Status, number> = {
 };
 
 const sender = { select: { id: true, fullName: true } } as const;
+/** Messenger senders are stored as `fb:<psid>` (F23). */
+const MESSENGER_PREFIX = 'fb:';
+const psidOf = (address: string) => address.slice(MESSENGER_PREFIX.length);
+/** A Messenger sender without a shared profile name. */
+const FACEBOOK_USER = 'משתמש/ת פייסבוק';
 type Row = MessageRow & { sender: { id: string; fullName: string } | null };
 
-function toDto(row: Row): WhatsAppMessage {
+function toDto(row: Row, channel?: string): WhatsAppMessage {
   return {
+    ...(channel === 'messenger' ? { channel: 'messenger' as const } : {}),
     id: row.id,
     direction: row.direction,
     body: row.body,
@@ -113,6 +123,7 @@ export class WhatsAppService {
     private readonly sender: WhatsAppSender,
     private readonly log: Log,
     private readonly storage: StorageProvider,
+    private readonly messenger: MessengerSender = new MemoryMessengerSender(),
   ) {
     this.leads = new LeadService(prisma);
     this.bot = new BookingBot(prisma, sender, log, storage, (tx, businessId, numberId) =>
@@ -130,6 +141,16 @@ export class WhatsAppService {
     return this.config.WHATSAPP_BUSINESS_ID ?? null;
   }
 
+  /** The business a channel is connected to (F23: the Facebook Page has its own setting). */
+  businessFor(channel: Channel): string | null {
+    return channel === 'messenger' ? (this.config.MESSENGER_BUSINESS_ID ?? null) : this.businessId;
+  }
+
+  /** Any channel connected to this business. */
+  private connectedTo(businessId: string) {
+    return this.businessId === businessId || this.businessFor('messenger') === businessId;
+  }
+
   /**
    * Routes an incoming message by what the business decided about the sender's number:
    * business → the contact's open lead (or a new `whatsapp` lead); personal → dropped, nothing
@@ -137,13 +158,22 @@ export class WhatsAppService {
    * inbox. Meta retries are ignored by message id.
    */
   async receive(msg: InboundMessage): Promise<ReceiveResult | null> {
-    const businessId = this.businessId;
+    const channel = msg.channel ?? 'whatsapp';
+    const businessId = this.businessFor(channel);
     if (!businessId) return null;
     const seen = await this.prisma.whatsAppMessage.findUnique({
       where: { waMessageId: msg.waMessageId },
       select: { id: true },
     });
     if (seen) return null;
+    // A new Facebook sender: their name comes from their profile (F23).
+    if (channel === 'messenger' && !msg.profileName) {
+      const known = await this.prisma.whatsAppNumber.findUnique({
+        where: { businessId_phone: { businessId, phone: msg.from } },
+        select: { id: true },
+      });
+      if (!known) msg = { ...msg, profileName: await this.messenger.profileName(psidOf(msg.from)) };
+    }
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
@@ -154,13 +184,18 @@ export class WhatsAppService {
         const firstMessage = !number;
 
         if (!number) {
-          const known = await tx.contact.findFirst({
-            where: { businessId, phone: msg.from },
-            select: { id: true },
-          });
+          // WhatsApp matches an existing contact by phone; Messenger has no phone to match.
+          const known =
+            channel === 'whatsapp'
+              ? await tx.contact.findFirst({
+                  where: { businessId, phone: msg.from },
+                  select: { id: true },
+                })
+              : null;
           number = await tx.whatsAppNumber.create({
             data: {
               businessId,
+              channel,
               phone: msg.from,
               status: known ? 'BUSINESS' : 'UNCLASSIFIED',
               profileName: known ? null : (msg.profileName?.trim().slice(0, 80) ?? null),
@@ -190,7 +225,7 @@ export class WhatsAppService {
         }
 
         const { contactId, leadId, created } = await this.attachToLead(tx, businessId, {
-          phone: msg.from,
+          number,
           name: msg.profileName,
           firstMessage: msg.body,
         });
@@ -209,7 +244,11 @@ export class WhatsAppService {
         });
         return { kind: 'lead', leadId, created } as const;
       });
-      const bot = result.kind === 'ignored' ? 'none' : await this.runBot(businessId, msg);
+      // Automatic replies and booking are WhatsApp only (F23).
+      const bot =
+        result.kind === 'ignored' || channel !== 'whatsapp'
+          ? 'none'
+          : await this.runBot(businessId, msg);
       await this.notifyReceived(businessId, result, msg, bot);
       return result;
     } catch (err) {
@@ -254,7 +293,10 @@ export class WhatsAppService {
         type: 'whatsapp.new_number',
         data: {
           numberId: result.numberId,
-          name: msg.profileName?.trim() || formatIsraeliPhone(msg.from),
+          name:
+            msg.profileName?.trim() ||
+            (msg.channel === 'messenger' ? FACEBOOK_USER : formatIsraeliPhone(msg.from)),
+          ...(msg.channel === 'messenger' ? { channel: 'messenger' } : {}),
         },
         to: { roles: MANAGERS },
       });
@@ -269,7 +311,11 @@ export class WhatsAppService {
       ...(result.created
         ? {
             type: 'lead.new' as const,
-            data: { leadId: result.leadId, name: lead.contact.name, source: 'whatsapp' },
+            data: {
+              leadId: result.leadId,
+              name: lead.contact.name,
+              source: msg.channel === 'messenger' ? 'facebook' : 'whatsapp',
+            },
           }
         : {
             type: 'whatsapp.message' as const,
@@ -284,27 +330,48 @@ export class WhatsAppService {
   }
 
   /**
-   * The contact for this phone (reused, or created with the WhatsApp name) and its latest open
-   * lead, or a new `whatsapp` lead in the first stage.
+   * The contact for this sender (reused, or created with their name) and its latest open lead, or
+   * a new lead in the first stage. WhatsApp finds the contact by phone (`whatsapp` lead); a
+   * Facebook sender is linked to its contact directly (`facebook` lead, no phone; F23).
    */
   private async attachToLead(
     tx: Db,
     businessId: string,
-    input: { phone: string; name: string | null; firstMessage: string; actorId?: string },
+    input: {
+      number: { id: string; phone: string; channel: string; contactId: string | null };
+      name: string | null;
+      firstMessage: string;
+      actorId?: string;
+    },
   ): Promise<{ contactId: string; leadId: string; created: boolean }> {
-    const existing = await tx.contact.findFirst({
-      where: { businessId, phone: input.phone },
-      orderBy: { createdAt: 'asc' },
-    });
+    const messenger = input.number.channel === 'messenger';
+    const source = messenger ? 'facebook' : 'whatsapp';
+    const existing = messenger
+      ? input.number.contactId
+        ? await tx.contact.findFirst({ where: { id: input.number.contactId, businessId } })
+        : null
+      : await tx.contact.findFirst({
+          where: { businessId, phone: input.number.phone },
+          orderBy: { createdAt: 'asc' },
+        });
     const contact =
       existing ??
       (await tx.contact.create({
         data: {
           businessId,
-          name: (input.name?.trim() || formatIsraeliPhone(input.phone)).slice(0, 80),
-          phone: input.phone,
+          name: (
+            input.name?.trim() ||
+            (messenger ? FACEBOOK_USER : formatIsraeliPhone(input.number.phone))
+          ).slice(0, 80),
+          phone: messenger ? null : input.number.phone,
         },
       }));
+    if (messenger && !existing) {
+      await tx.whatsAppNumber.update({
+        where: { id: input.number.id },
+        data: { contactId: contact.id },
+      });
+    }
     const open = existing
       ? await tx.lead.findFirst({
           where: { businessId, contactId: contact.id, stage: { kind: 'OPEN' } },
@@ -320,7 +387,7 @@ export class WhatsAppService {
         businessId,
         contactId: contact.id,
         stageId: first!.id,
-        source: 'whatsapp',
+        source,
         message: input.firstMessage.slice(0, 1000) || null,
       },
     });
@@ -330,7 +397,7 @@ export class WhatsAppService {
         leadId: lead.id,
         type: 'lead.created',
         actorId: input.actorId ?? null,
-        data: { source: 'whatsapp', contactReused: Boolean(existing) },
+        data: { source, contactReused: Boolean(existing) },
       },
     });
     await recordAudit(tx, {
@@ -339,7 +406,7 @@ export class WhatsAppService {
       actorUserId: input.actorId ?? null,
       entityType: 'lead',
       entityId: lead.id,
-      metadata: { source: 'whatsapp' },
+      metadata: { source },
     });
     return { contactId: contact.id, leadId: lead.id, created: true };
   }
@@ -363,14 +430,15 @@ export class WhatsAppService {
       take: 200,
     });
     return {
-      connected: this.businessId === ctx.businessId,
+      connected: this.connectedTo(ctx.businessId),
       numbers: numbers
         .filter((n) => n.messages.length > 0)
         .map((n) => ({
           id: n.id,
           phone: n.phone,
+          ...(n.channel === 'messenger' ? { channel: 'messenger' as const } : {}),
           profileName: n.profileName,
-          messages: n.messages.map(toDto).reverse(),
+          messages: n.messages.map((m) => toDto(m, n.channel)).reverse(),
           lastMessageAt: n.messages[0]!.createdAt.toISOString(),
         }))
         .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)),
@@ -381,11 +449,18 @@ export class WhatsAppService {
     const rows = await this.prisma.whatsAppNumber.findMany({
       where: { businessId: ctx.businessId, status: 'PERSONAL' },
       orderBy: { classifiedAt: 'desc' },
-      select: { id: true, phone: true, classifiedAt: true },
+      select: { id: true, phone: true, channel: true, classifiedAt: true },
       take: 500,
     });
     return {
-      numbers: rows.map((r) => ({ ...r, classifiedAt: r.classifiedAt?.toISOString() ?? null })),
+      numbers: rows.map((r) => ({
+        id: r.id,
+        phone: r.phone,
+        ...(r.channel === 'messenger'
+          ? { channel: 'messenger' as const, name: FACEBOOK_USER }
+          : {}),
+        classifiedAt: r.classifiedAt?.toISOString() ?? null,
+      })),
     };
   }
 
@@ -443,7 +518,13 @@ export class WhatsAppService {
   private async promote(
     tx: Db,
     businessId: string,
-    number: { id: string; phone: string; profileName: string | null },
+    number: {
+      id: string;
+      phone: string;
+      channel: string;
+      contactId: string | null;
+      profileName: string | null;
+    },
     actorId: string | null,
   ) {
     const waiting = await tx.whatsAppMessage.findMany({
@@ -452,7 +533,7 @@ export class WhatsAppService {
       select: { body: true },
     });
     const { contactId, leadId } = await this.attachToLead(tx, businessId, {
-      phone: number.phone,
+      number,
       name: number.profileName,
       firstMessage: waiting.map((m) => m.body).join('\n'),
       actorId: actorId ?? undefined,
@@ -487,7 +568,7 @@ export class WhatsAppService {
     if (!number || number.status === 'PERSONAL') throw new AppError('NOT_FOUND');
     if (number.status === 'UNCLASSIFIED') return this.promote(tx, businessId, number, null);
     const { contactId, leadId } = await this.attachToLead(tx, businessId, {
-      phone: number.phone,
+      number,
       name: null,
       firstMessage: '',
     });
@@ -751,7 +832,7 @@ export class WhatsAppService {
     const lead = await this.leads.findVisible(ctx, leadId);
     const rows = await this.prisma.whatsAppMessage.findMany({
       where: { businessId: ctx.businessId, contactId: lead.contactId },
-      include: { sender },
+      include: { sender, number: { select: { channel: true } } },
       orderBy: { createdAt: 'asc' },
       take: 500,
     });
@@ -764,10 +845,11 @@ export class WhatsAppService {
         })
       : null;
     return {
-      connected: this.businessId === ctx.businessId,
-      messages: rows.map(toDto),
+      connected: this.connectedTo(ctx.businessId),
+      messages: rows.map((r) => toDto(r, r.number.channel)),
       replyUntil: until > Date.now() ? new Date(until).toISOString() : null,
       botPaused: number?.botPaused ?? false,
+      ...(lastIn?.number.channel === 'messenger' ? { channel: 'messenger' as const } : {}),
     };
   }
 
@@ -798,29 +880,43 @@ export class WhatsAppService {
 
   /** Free-form reply; only inside the 24-hour window that the customer's last message opened. */
   async send(ctx: TenantContext, leadId: string, text: string): Promise<WhatsAppMessage> {
-    if (this.businessId !== ctx.businessId) {
-      throw new AppError('CONFLICT', whatsappMessages.notConnected);
-    }
     const lead = await this.leads.findVisible(ctx, leadId);
-    const phone = lead.contact.phone;
-    if (!phone) throw new AppError('CONFLICT', whatsappMessages.noPhone);
     const lastIn = await this.prisma.whatsAppMessage.findFirst({
       where: { businessId: ctx.businessId, contactId: lead.contactId, direction: 'IN' },
       orderBy: { createdAt: 'desc' },
-      select: { createdAt: true, numberId: true },
+      select: {
+        createdAt: true,
+        numberId: true,
+        number: { select: { channel: true, phone: true } },
+      },
     });
+    // The reply goes where the customer last wrote (F23): WhatsApp or the Facebook Page.
+    const messenger = lastIn?.number.channel === 'messenger';
+    if (this.businessFor(messenger ? 'messenger' : 'whatsapp') !== ctx.businessId) {
+      throw new AppError(
+        'CONFLICT',
+        messenger ? whatsappMessages.messengerNotConnected : whatsappMessages.notConnected,
+      );
+    }
+    const phone = lead.contact.phone;
+    if (!messenger && !phone) throw new AppError('CONFLICT', whatsappMessages.noPhone);
     if (!lastIn || Date.now() - lastIn.createdAt.getTime() > WHATSAPP_WINDOW_MS) {
-      throw new AppError('CONFLICT', whatsappMessages.windowClosed);
+      throw new AppError(
+        'CONFLICT',
+        messenger ? whatsappMessages.messengerWindowClosed : whatsappMessages.windowClosed,
+      );
     }
 
     let id: string;
     try {
-      ({ id } = await this.sender.sendText(phone, text));
+      ({ id } = messenger
+        ? await this.messenger.sendText(psidOf(lastIn.number.phone), text)
+        : await this.sender.sendText(phone!, text));
     } catch (err) {
       const e = err as { name?: string; status?: number; code?: number | null };
       this.log.error(
         { errName: e?.name, status: e?.status, code: e?.code },
-        'whatsapp send failed',
+        messenger ? 'messenger send failed' : 'whatsapp send failed',
       );
       throw new AppError('INTERNAL_ERROR', whatsappMessages.sendFailed);
     }
@@ -838,6 +934,6 @@ export class WhatsAppService {
       },
       include: { sender },
     });
-    return toDto(row);
+    return toDto(row, lastIn.number.channel);
   }
 }
