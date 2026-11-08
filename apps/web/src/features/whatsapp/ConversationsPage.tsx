@@ -1,6 +1,6 @@
 import { businessWebPaths, can, formatIsraeliPhone, type InboxNumber } from '@leadflow/shared';
-import { Briefcase, UserX } from 'lucide-react';
-import { useState } from 'react';
+import { Briefcase, UserX, Wand2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Card, EmptyState, RefreshButton, Spinner } from '../../components/ui';
@@ -10,9 +10,16 @@ import { formatDateTime, timeAgo } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
-import { useClassifyNumber, useForgetPersonal, usePersonalNumbers, useWhatsAppInbox } from './api';
+import {
+  useBotSettings,
+  useClassifyNumber,
+  useForgetPersonal,
+  usePersonalNumbers,
+  useWhatsAppInbox,
+} from './api';
 import { AutoReplyCard } from './AutoReplyCard';
 import { BookingBotCard } from './BookingBotCard';
+import { SetupGuide, shouldOfferSetup } from './SetupGuide';
 import { tr } from '../../i18n';
 
 /** Phone in local form when it is Israeli, otherwise as received. */
@@ -169,15 +176,44 @@ function Inbox({ businessId }: { businessId: string }) {
             )}
           </>
         )}
-        {tab === 'auto' && (
-          <>
-            <AutoReplyCard businessId={businessId} />
-            <BookingBotCard businessId={businessId} />
-          </>
-        )}
+        {tab === 'auto' && <AutoTab businessId={businessId} />}
         {tab === 'personal' && <PersonalNumbers businessId={businessId} />}
       </div>
     </section>
+  );
+}
+
+/** Automatic replies: the step-by-step guide the first time (D-144), then the full settings. */
+function AutoTab({ businessId }: { businessId: string }) {
+  const bot = useBotSettings(businessId);
+  // Decided once, when the settings arrive: open by itself when nothing is set up yet.
+  const [guide, setGuide] = useState<boolean | null>(null);
+  const ready = bot.isSuccess;
+  useEffect(() => {
+    if (ready && guide === null) setGuide(shouldOfferSetup(businessId, bot.data!.settings));
+  }, [ready, guide, businessId, bot.data]);
+  if (bot.isPending || (ready && guide === null)) return <Spinner />;
+  const open = guide === true;
+  if (open && bot.isSuccess) {
+    return (
+      <SetupGuide
+        businessId={businessId}
+        saved={bot.data.settings}
+        onClose={() => setGuide(false)}
+      />
+    );
+  }
+  return (
+    <>
+      <div className="flex justify-end">
+        <Button variant="secondary" size="sm" onClick={() => setGuide(true)}>
+          <Wand2 className="h-4 w-4" aria-hidden />
+          {tr('הגדרה בשלבים')}
+        </Button>
+      </div>
+      <AutoReplyCard businessId={businessId} />
+      <BookingBotCard businessId={businessId} />
+    </>
   );
 }
 

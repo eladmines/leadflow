@@ -602,4 +602,12 @@ export const enPart3: Record<string, string> = {
   'שפת הלקוחות': 'Customer language',
   'ההודעות בוואטסאפ, המיילים ללקוחות ואתר חדש יהיו בשפה הזו.':
     'WhatsApp messages, emails to customers and a new website will be in this language.',
+  'מה קורה כשלקוח כותב לכם בוואטסאפ?': 'What happens when a customer writes to you on WhatsApp?',
+  'מה הלקוח יקבל?': 'What will the customer get?',
+  'הכול מוכן!': 'All set!',
+  'הודעות נכנסות בלי מענה אוטומטי. אפשר לשנות את זה כאן בכל זמן.':
+    'Messages come in with no automatic reply. You can change this here any time.',
+  'מעכשיו לקוחות שכותבים מקבלים מענה לבד. כל השאר, כמו סטטוסים והודעות הבוט, נמצא כאן בהמשך העמוד.':
+    "From now on, customers who write get a reply automatically. Everything else, like statuses and the bot's messages, is further down this page.",
+  'הגדרה בשלבים': 'Set up step by step',
 };

@@ -9,10 +9,13 @@ import {
   type WhatsAppInboxResponse,
 } from '@leadflow/shared';
 import { screen, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { callsTo, json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
+// Most tests drive the full settings page: the first-time guide (D-144) counts as done.
+const guideKey = `leadflow.whatsapp.setup.${testBusiness.id}`;
+beforeEach(() => localStorage.setItem(guideKey, '1'));
 
 const id = testBusiness.id;
 const wp = apiPaths.whatsapp;
@@ -105,6 +108,35 @@ function routes(inbox: WhatsAppInboxResponse, extra = {}) {
 }
 
 describe('WhatsApp conversations inbox', () => {
+  it('first time: sets up the automatic reply in three steps (D-144)', async () => {
+    localStorage.removeItem(guideKey);
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () =>
+            json(200, { connected: true, settings: botSettings('auto_reply') }),
+          [`PUT ${wp.bot(id)}`]: echoBot,
+        },
+      ),
+    );
+    const { user } = renderApp(autoTab);
+    expect(await screen.findByText('שלב 1 מתוך 3')).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: /בוט קביעת תורים/ }));
+    await user.click(screen.getByRole('button', { name: 'המשך' }));
+    expect(screen.getByText('שלב 2 מתוך 3')).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: /ממתינים לאישור/ }));
+    await user.click(screen.getByRole('button', { name: 'שמירה' }));
+    expect(await screen.findByRole('heading', { name: 'הכול מוכן!' })).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
+      expect.objectContaining({ mode: 'booking', enabled: true, autoConfirm: false }),
+    ]);
+    expect(localStorage.getItem(guideKey)).toBe('1');
+    await user.click(screen.getByRole('button', { name: 'סיום' }));
+    // Then the full page, with a way back to the guide.
+    expect(await screen.findByRole('button', { name: 'הגדרה בשלבים' })).toBeInTheDocument();
+  });
+
   it('booking bot: picks the approval, saved together with "Save bot settings"', async () => {
     const fetchMock = mockApi(
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),

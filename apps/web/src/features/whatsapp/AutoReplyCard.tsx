@@ -21,11 +21,11 @@ type Saved = WhatsAppBotResponse['settings'];
 type DraftStatus = { id: string; label: string; text: string };
 
 /** "{business}" in stored texts ↔ a readable tag while editing (like the bot's messages). */
-const businessTag = () => `[${tr('שם העסק')}]`;
-const toTag = (text: string) => text.replaceAll('{business}', businessTag());
-const toCode = (text: string) => text.replaceAll(businessTag(), '{business}');
+export const businessTag = () => `[${tr('שם העסק')}]`;
+export const toTag = (text: string) => text.replaceAll('{business}', businessTag());
+export const toCode = (text: string) => text.replaceAll(businessTag(), '{business}');
 
-const modeHelp: Record<ReplyMode, string> = {
+export const modeHelp: Record<ReplyMode, string> = {
   off: 'הודעות נכנסות בלי שום מענה אוטומטי.',
   auto_reply:
     'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות). כשסטטוס פעיל — נשלחת הודעת הסטטוס, עם הסרטון שלו אם יש.',
