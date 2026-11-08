@@ -9,11 +9,14 @@ export function DialogShell({
   onOpenChange,
   title,
   children,
+  wide = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   children: ReactNode;
+  /** Room for longer editors (e.g. messages with a preview). */
+  wide?: boolean;
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -21,7 +24,7 @@ export function DialogShell({
         <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed start-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-lg -translate-y-1/2 flex-col gap-5 overflow-y-auto rounded-3xl bg-surface p-6 shadow-lift focus:outline-none rtl:translate-x-1/2 ltr:-translate-x-1/2 sm:p-8"
+          className={`fixed start-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] ${wide ? 'max-w-2xl' : 'max-w-lg'} -translate-y-1/2 flex-col gap-5 overflow-y-auto rounded-3xl bg-surface p-6 shadow-lift focus:outline-none rtl:translate-x-1/2 ltr:-translate-x-1/2 sm:p-8`}
         >
           <div className="flex items-start justify-between gap-4">
             <Dialog.Title className="text-xl font-semibold text-ink">{title}</Dialog.Title>

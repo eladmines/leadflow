@@ -301,7 +301,7 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    await user.click(await screen.findByText('עריכת ההודעות של הבוט'));
+    await user.click(await screen.findByRole('button', { name: 'עריכת ההודעות של הבוט' }));
     // Placeholders read as tags in the owner's language, not codes.
     expect(screen.getByLabelText('הודעת פתיחה')).toHaveValue(
       'שלום! כאן [שם העסק] 👋\nרוצים לקבוע תור? בחרו שירות:',
@@ -347,7 +347,7 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    await user.click(await screen.findByText('בינתיים, הצצה לעבודות שלנו'));
+    await user.click(await screen.findByRole('button', { name: /^בינתיים, הצצה לעבודות שלנו/ }));
     // The industry's default message, ready to edit.
     expect(screen.getByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
     await user.click(screen.getByRole('checkbox', { name: 'שליחת הצצה ללקוחות שלא קבעו' }));
@@ -400,7 +400,7 @@ describe('WhatsApp conversations inbox', () => {
     );
     expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד התורים/)).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: 'מאושרים מיד' })).not.toBeInTheDocument();
-    await user.click(screen.getByText('עריכת ההודעות של הבוט'));
+    await user.click(screen.getByRole('button', { name: 'עריכת ההודעות של הבוט' }));
     expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();
     expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();
   });
