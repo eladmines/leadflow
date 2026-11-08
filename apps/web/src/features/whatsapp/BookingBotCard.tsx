@@ -44,8 +44,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   if (bot.isPending) return null;
   if (bot.isError) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   const stored = bot.data.settings;
-  // Its settings matter only when the booking bot is the reply mode (D-123).
-  if (stored.mode !== 'booking') return null;
   const settings = { ...stored, ...draft };
   const dirty =
     draft !== null &&
@@ -82,14 +80,12 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
   const industryFlow = bot.data.settings.flowIsDefault ? bot.data.settings.flow : null;
 
   return (
-    <section
-      aria-labelledby="bot-settings-title"
-      className="flex flex-col gap-3 border-t border-surface-border pt-5"
-    >
-      <h3 id="bot-settings-title" className="text-sm font-semibold text-ink">
+    <section aria-labelledby="bot-settings-title" className="flex flex-col gap-3">
+      {/* The card around it carries the visible title and the on/off switch (D-147). */}
+      <h3 id="bot-settings-title" className="sr-only">
         {tr('הגדרות הבוט')}
       </h3>
-      <fieldset disabled={!settings.enabled} className="flex flex-col gap-2">
+      <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm text-ink-muted">{tr('איך לקוחות מזמינים:')}</legend>
         {BOT_FLOWS.map((f) => (
           <label key={f} className="flex items-center gap-2 text-sm text-ink">
@@ -113,7 +109,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
             <input
               type="checkbox"
               checked={settings.holdDate}
-              disabled={!settings.enabled}
               onChange={(e) => change({ holdDate: e.target.checked })}
               className="h-4 w-4 accent-brand-600"
             />
@@ -126,7 +121,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </p>
         </>
       ) : (
-        <fieldset disabled={!settings.enabled} className="flex flex-col gap-2">
+        <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-sm text-ink-muted">{tr('תורים שנקבעים בבוט:')}</legend>
           <label className="flex items-center gap-2 text-sm text-ink">
             <input
