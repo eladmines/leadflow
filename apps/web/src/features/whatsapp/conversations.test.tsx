@@ -134,7 +134,8 @@ describe('WhatsApp conversations inbox', () => {
     expect(localStorage.getItem(guideKey)).toBe('1');
     await user.click(screen.getByRole('button', { name: 'סיום' }));
     // Then the full page, with a way back to the guide.
-    expect(await screen.findByRole('button', { name: 'הגדרה בשלבים' })).toBeInTheDocument();
+    const summary = await screen.findByRole('region', { name: 'מה קורה כשלקוח כותב' });
+    expect(within(summary).getByRole('button', { name: 'שינוי' })).toBeInTheDocument();
   });
 
   it('booking bot: picks the approval, saved together with "Save bot settings"', async () => {
@@ -186,7 +187,12 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    expect(await screen.findByRole('radio', { name: 'מענה אוטומטי' })).toBeChecked();
+    // One line says what happens (D-145); "Change" opens the guide.
+    const summary = await screen.findByRole('region', { name: 'מה קורה כשלקוח כותב' });
+    expect(within(summary).getByText('מענה אוטומטי')).toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    // Editing statuses is folded away until opened.
+    await user.click(screen.getByText('עריכת הסטטוסים (4)'));
     expect(screen.queryByRole('button', { name: 'שמירת הגדרות הבוט' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('ההודעה הכללית')).toHaveValue(
       AUTO_REPLY_DEFAULT.replace('{business}', '[שם העסק]'),

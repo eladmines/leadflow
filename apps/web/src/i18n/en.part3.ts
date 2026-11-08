@@ -495,8 +495,8 @@ export const enPart3: Record<string, string> = {
   'לחיצה אחת, למשל "באירוע", ומעכשיו לקוחות שכותבים מקבלים את הודעת הסטטוס במקום ההודעה הכללית, עם הסרטון שלו אם יש. אפשר לבחור לכמה זמן, ו"זמין" מחזיר את ההודעה הכללית.':
     'One click, for example "At an event", and from now on customers who write get the status message instead of the general one, with its video if it has one. Choose for how long; "Available" brings the general message back.',
   'מה קורה כשלקוח כותב': 'When a customer writes',
-  '"מענה אוטומטי" שולח את ההודעה הכללית או את הסטטוס. "בוט קביעת תורים" מציע זמנים פנויים וקובע תורים. "כבוי" משאיר את ההודעות בלי מענה.':
-    '"Automatic reply" sends the general message or your status. "Booking bot" offers free times and books appointments. "Off" leaves messages without a reply.',
+  '"מענה אוטומטי" שולח את ההודעה הכללית או את הסטטוס. "בוט קביעת תורים" מציע זמנים פנויים וקובע תורים. "כבוי" משאיר את ההודעות בלי מענה. "שינוי" פותח הגדרה קצרה בשלבים.':
+    '"Automatic reply" sends the general message or your status. "Booking bot" offers free times and books appointments. "Off" leaves messages without a reply. "Change" opens a short step-by-step setup.',
   'כל סטטוס עם שם והודעה משלו, ואפשר להוסיף סרטון קצר (MP4 עד 16MB) — למשל קטע מהאירוע. "הוספת סטטוס" יוצר סטטוס משלכם.':
     'Each status has its own name and message, and you can add a short video (MP4 up to 16MB) — a clip from the event, for example. "Add a status" creates your own.',
   'השינויים במענה האוטומטי נכנסים לתוקף רק אחרי לחיצה כאן. עד אז מופיע "יש שינויים שעוד לא נשמרו", ו"ביטול השינויים" מחזיר את מה שהיה. הסטטוס עצמו נשמר מיד.':
@@ -610,4 +610,7 @@ export const enPart3: Record<string, string> = {
   'מעכשיו לקוחות שכותבים מקבלים מענה לבד. כל השאר, כמו סטטוסים והודעות הבוט, נמצא כאן בהמשך העמוד.':
     "From now on, customers who write get a reply automatically. Everything else, like statuses and the bot's messages, is further down this page.",
   'הגדרה בשלבים': 'Set up step by step',
+  'כשלקוח כותב:': 'When a customer writes:',
+  'עריכת הסטטוסים ({0})': 'Edit statuses ({0})',
+  'עריכת הסטטוסים': 'Edit statuses',
 };

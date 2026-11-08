@@ -1,7 +1,5 @@
 import {
   apiPaths,
-  REPLY_MODES,
-  replyModeLabels,
   replyStatusSchema,
   STATUS_VIDEOS_TOTAL_BYTES,
   MAX_STATUSES,
@@ -72,13 +70,16 @@ export function AutoReplyCard({ businessId }: { businessId: string }) {
       {bot.data.settings.mode === 'auto_reply' && (
         <StatusNow businessId={businessId} settings={bot.data.settings} />
       )}
-      <ReplySettings
-        key={settingsKey(bot.data.settings)}
-        businessId={businessId}
-        saved={bot.data.settings}
-        justSaved={justSaved}
-        onSaved={setJustSaved}
-      />
+      {/* The mode is chosen with "Change" at the top (D-145); here only its own settings. */}
+      {bot.data.settings.mode === 'auto_reply' && (
+        <ReplySettings
+          key={settingsKey(bot.data.settings)}
+          businessId={businessId}
+          saved={bot.data.settings}
+          justSaved={justSaved}
+          onSaved={setJustSaved}
+        />
+      )}
     </div>
   );
 }
@@ -164,7 +165,7 @@ function StatusNow({ businessId, settings }: { businessId: string; settings: Sav
   );
 }
 
-/** Mode, general message and statuses — a draft saved with "Save settings" (D-109). */
+/** General message and statuses — a draft saved with "Save settings" (D-109). */
 function ReplySettings({
   businessId,
   saved,
@@ -178,11 +179,9 @@ function ReplySettings({
 }) {
   const update = useUpdateBotSettings(businessId);
   const initial = {
-    mode: saved.mode,
     text: toTag(saved.autoReplyText ?? saved.autoReplyDefault),
     statuses: saved.statuses.map((s) => ({ id: s.id, label: s.label, text: toTag(s.text) })),
   };
-  const [mode, setMode] = useState<ReplyMode>(initial.mode);
   const [text, setText] = useState(initial.text);
   const [statuses, setStatuses] = useState<DraftStatus[]>(initial.statuses);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -190,7 +189,7 @@ function ReplySettings({
   const [editing, setEditing] = useState<string | null>(null);
   const done = justSaved;
   const setDone = onSaved;
-  const dirty = JSON.stringify({ mode, text, statuses }) !== JSON.stringify(initial);
+  const dirty = JSON.stringify({ text, statuses }) !== JSON.stringify(initial);
 
   const save = () => {
     const next: Record<string, string> = {};
@@ -207,8 +206,6 @@ function ReplySettings({
     update.mutate(
       {
         ...toRequest(saved),
-        mode,
-        enabled: mode === 'booking',
         autoReplyText: general === saved.autoReplyDefault ? null : general,
         statuses: statuses.map((s) => ({ ...s, text: toCode(s.text) })),
       },
@@ -222,147 +219,120 @@ function ReplySettings({
 
   return (
     <div className="flex flex-col gap-5">
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium text-ink">{tr('מה קורה כשלקוח כותב:')}</legend>
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {REPLY_MODES.map((m) => (
-            <label key={m} className="flex items-center gap-2 text-sm font-medium text-ink">
-              <input
-                type="radio"
-                name="reply-mode"
-                checked={mode === m}
-                aria-describedby="reply-mode-help"
-                onChange={() => {
-                  setDone(false);
-                  setMode(m);
-                }}
-                className="h-4 w-4 accent-brand-600"
-              />
-              {tr(replyModeLabels[m])}
-            </label>
-          ))}
-        </div>
-        <p id="reply-mode-help" className="text-xs text-ink-muted">
-          {tr(modeHelp[mode])}
-        </p>
-      </fieldset>
-
-      {mode === 'auto_reply' && (
-        <>
-          <Textarea
-            label={tr('ההודעה הכללית')}
-            // Customer messages are in Hebrew whatever the app's language: direction by content.
-            dir="auto"
-            hint={tr('{0} מוחלף בשם העסק.', businessTag())}
-            value={text}
-            rows={3}
-            error={errors.text}
-            onChange={(e) => {
-              setDone(false);
-              setText(e.target.value);
-            }}
-          />
-          <section className="flex flex-col gap-3" aria-labelledby="statuses-title">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 id="statuses-title" className="text-sm font-semibold text-ink">
-                {tr('הסטטוסים שלך')}
-              </h3>
-              <span className="text-xs text-ink-muted">
-                {tr(
-                  'מקום לסרטונים: {0} מתוך {1}',
-                  mb(saved.videoBytesUsed),
-                  mb(STATUS_VIDEOS_TOTAL_BYTES),
-                )}
-              </span>
-            </div>
-            <ul className="flex flex-col divide-y divide-surface-border rounded-xl border border-surface-border">
-              {statuses.map((s, i) => {
-                const stored = saved.statuses.find((x) => x.id === s.id);
-                const open =
-                  editing === s.id || Boolean(errors[`${i}.label`] || errors[`${i}.text`]);
-                return (
-                  <li key={s.id} className="flex flex-col gap-3 p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-ink" dir="auto">
-                          {s.label || tr('סטטוס חדש')}
+      <Textarea
+        label={tr('ההודעה הכללית')}
+        // Customer messages are in Hebrew whatever the app's language: direction by content.
+        dir="auto"
+        hint={tr('{0} מוחלף בשם העסק.', businessTag())}
+        value={text}
+        rows={3}
+        error={errors.text}
+        onChange={(e) => {
+          setDone(false);
+          setText(e.target.value);
+        }}
+      />
+      <details
+        className="group flex flex-col gap-3 rounded-xl border border-surface-border p-3"
+        aria-labelledby="statuses-title"
+      >
+        <summary id="statuses-title" className="cursor-pointer text-sm font-medium text-ink">
+          {tr('עריכת הסטטוסים ({0})', statuses.length)}
+        </summary>
+        <div className="mt-3 flex flex-col gap-3">
+          <span className="text-xs text-ink-muted">
+            {tr(
+              'מקום לסרטונים: {0} מתוך {1}',
+              mb(saved.videoBytesUsed),
+              mb(STATUS_VIDEOS_TOTAL_BYTES),
+            )}
+          </span>
+          <ul className="flex flex-col divide-y divide-surface-border rounded-xl border border-surface-border">
+            {statuses.map((s, i) => {
+              const stored = saved.statuses.find((x) => x.id === s.id);
+              const open = editing === s.id || Boolean(errors[`${i}.label`] || errors[`${i}.text`]);
+              return (
+                <li key={s.id} className="flex flex-col gap-3 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-ink" dir="auto">
+                        {s.label || tr('סטטוס חדש')}
+                      </p>
+                      {!open && (
+                        <p className="truncate text-xs text-ink-muted" dir="auto">
+                          {s.text || tr('עוד אין הודעה')}
                         </p>
-                        {!open && (
-                          <p className="truncate text-xs text-ink-muted" dir="auto">
-                            {s.text || tr('עוד אין הודעה')}
-                          </p>
-                        )}
-                      </div>
-                      {stored?.video && (
-                        <span className="flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-xs text-ink-muted">
-                          <Video aria-hidden className="h-3.5 w-3.5" />
-                          {tr('סרטון')}
-                        </span>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-expanded={open}
-                        aria-label={tr('עריכת הסטטוס {0}', s.label || tr('חדש'))}
-                        onClick={() => setEditing(open ? null : s.id)}
-                      >
-                        {open ? tr('סגירה') : tr('עריכה')}
-                      </Button>
-                      {!stored?.preset && (
-                        <button
-                          type="button"
-                          aria-label={tr('מחיקת הסטטוס {0}', s.label || tr('חדש'))}
-                          onClick={() => setStatuses((list) => list.filter((_, j) => j !== i))}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-danger-50 hover:text-danger-600"
-                        >
-                          <Trash2 aria-hidden className="h-4 w-4" />
-                        </button>
                       )}
                     </div>
-                    {open && (
-                      <div className="flex flex-col gap-3">
-                        <Field
-                          label={tr('שם הסטטוס')}
-                          dir="auto"
-                          value={s.label}
-                          maxLength={40}
-                          error={errors[`${i}.label`]}
-                          onChange={(e) => edit(i, { label: e.target.value })}
-                        />
-                        <Textarea
-                          label={tr('ההודעה ללקוח')}
-                          dir="auto"
-                          value={s.text}
-                          rows={2}
-                          error={errors[`${i}.text`]}
-                          onChange={(e) => edit(i, { text: e.target.value })}
-                        />
-                        <StatusVideo businessId={businessId} statusId={s.id} stored={stored} />
-                      </div>
+                    {stored?.video && (
+                      <span className="flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-xs text-ink-muted">
+                        <Video aria-hidden className="h-3.5 w-3.5" />
+                        {tr('סרטון')}
+                      </span>
                     )}
-                  </li>
-                );
-              })}
-            </ul>
-            {statuses.length < MAX_STATUSES && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="self-start"
-                onClick={() => {
-                  setDone(false);
-                  const id = `c-${Date.now().toString(36)}`;
-                  setStatuses((list) => [...list, { id, label: '', text: '' }]);
-                  setEditing(id);
-                }}
-              >
-                <Plus aria-hidden className="h-4 w-4" />
-                {tr('הוספת סטטוס')}
-              </Button>
-            )}
-          </section>
-        </>
-      )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-expanded={open}
+                      aria-label={tr('עריכת הסטטוס {0}', s.label || tr('חדש'))}
+                      onClick={() => setEditing(open ? null : s.id)}
+                    >
+                      {open ? tr('סגירה') : tr('עריכה')}
+                    </Button>
+                    {!stored?.preset && (
+                      <button
+                        type="button"
+                        aria-label={tr('מחיקת הסטטוס {0}', s.label || tr('חדש'))}
+                        onClick={() => setStatuses((list) => list.filter((_, j) => j !== i))}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-danger-50 hover:text-danger-600"
+                      >
+                        <Trash2 aria-hidden className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {open && (
+                    <div className="flex flex-col gap-3">
+                      <Field
+                        label={tr('שם הסטטוס')}
+                        dir="auto"
+                        value={s.label}
+                        maxLength={40}
+                        error={errors[`${i}.label`]}
+                        onChange={(e) => edit(i, { label: e.target.value })}
+                      />
+                      <Textarea
+                        label={tr('ההודעה ללקוח')}
+                        dir="auto"
+                        value={s.text}
+                        rows={2}
+                        error={errors[`${i}.text`]}
+                        onChange={(e) => edit(i, { text: e.target.value })}
+                      />
+                      <StatusVideo businessId={businessId} statusId={s.id} stored={stored} />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {statuses.length < MAX_STATUSES && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="self-start"
+              onClick={() => {
+                setDone(false);
+                const id = `c-${Date.now().toString(36)}`;
+                setStatuses((list) => [...list, { id, label: '', text: '' }]);
+                setEditing(id);
+              }}
+            >
+              <Plus aria-hidden className="h-4 w-4" />
+              {tr('הוספת סטטוס')}
+            </Button>
+          )}
+        </div>
+      </details>
 
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {done && !dirty && <Alert tone="success">{tr('ההגדרות נשמרו.')}</Alert>}
@@ -379,7 +349,6 @@ function ReplySettings({
               variant="ghost"
               size="sm"
               onClick={() => {
-                setMode(initial.mode);
                 setText(initial.text);
                 setStatuses(initial.statuses);
                 setErrors({});

@@ -1,5 +1,11 @@
-import { businessWebPaths, can, formatIsraeliPhone, type InboxNumber } from '@leadflow/shared';
-import { Briefcase, UserX, Wand2 } from 'lucide-react';
+import {
+  businessWebPaths,
+  can,
+  formatIsraeliPhone,
+  replyModeLabels,
+  type InboxNumber,
+} from '@leadflow/shared';
+import { Briefcase, MessageCircleReply, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -205,12 +211,23 @@ function AutoTab({ businessId }: { businessId: string }) {
   }
   return (
     <>
-      <div className="flex justify-end">
-        <Button variant="secondary" size="sm" onClick={() => setGuide(true)}>
-          <Wand2 className="h-4 w-4" aria-hidden />
-          {tr('הגדרה בשלבים')}
-        </Button>
-      </div>
+      {bot.isSuccess && (
+        <section
+          aria-label={tr('מה קורה כשלקוח כותב')}
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
+            <MessageCircleReply className="h-5 w-5" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-ink-muted">{tr('כשלקוח כותב:')}</p>
+            <p className="font-semibold text-ink">{tr(replyModeLabels[bot.data.settings.mode])}</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setGuide(true)}>
+            {tr('שינוי')}
+          </Button>
+        </section>
+      )}
       <AutoReplyCard businessId={businessId} />
       <BookingBotCard businessId={businessId} />
     </>
