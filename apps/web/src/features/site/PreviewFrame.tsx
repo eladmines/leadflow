@@ -25,7 +25,7 @@ export function PreviewFrame({
           srcDoc={html}
           sandbox=""
           tabIndex={-1}
-          className="pointer-events-none absolute start-0 top-0 origin-top-right border-0 bg-white"
+          className="pointer-events-none absolute start-0 top-0 border-0 ltr:origin-top-left rtl:origin-top-right bg-white"
           style={{
             width: `${100 / scale}%`,
             height: `${100 / scale}%`,
