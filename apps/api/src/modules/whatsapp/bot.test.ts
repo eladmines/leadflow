@@ -6,7 +6,7 @@ import { MemoryWhatsAppSender, signWebhookBody } from '../../integrations/whatsa
 import { MemoryEmailSender } from '../../integrations/email';
 import { buildApp } from '../../app';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
-import { parseEventDate } from './bot';
+import { parseEventDate, withHebrewLayout } from './bot';
 import { WhatsAppService } from './service';
 import { zonedTimeToUtc } from '../../lib/time';
 import { randomUUID } from 'node:crypto';
@@ -275,14 +275,14 @@ describe('WhatsApp booking bot (D-102)', () => {
     expect(last().text).toBe('לא מצאנו תור קרוב לבטל 🙂 רוצים לקבוע תור?');
   });
 
-  it("greets a new number's first message, but not its next ones", async () => {
+  it('answers every message, not only the first one or booking words (D-154)', async () => {
     await setup();
     await post(text('היי'));
     expect(last().text).toContain('רוצים לקבוע תור?');
     await post(tap('cancel'));
-    const before = whatsapp.sent.length;
-    await post(text('שאלה על מחירים'));
-    expect(whatsapp.sent).toHaveLength(before);
+    await post(text('כמה עולה צבע?'));
+    expect(last().text).toContain('רוצים לקבוע תור?');
+    expect(last().choices!.at(-1)!.id).toBe('human');
   });
 
   it('a single service skips straight to the days; "pending approval" books as a request', async () => {
@@ -325,14 +325,20 @@ describe('WhatsApp booking bot (D-102)', () => {
     expect(await ctx.prisma.appointment.count()).toBe(1);
   });
 
-  it('hands the chat to the team and then keeps quiet', async () => {
+  it('after "talk to the team", the next message is answered again (D-154)', async () => {
     await setup();
     await post(text('תור'));
     await post(tap('human'));
     expect(last().text).toMatch(/^בסדר! העברנו את השיחה לצוות/);
-    const before = whatsapp.sent.length;
-    await post(text('אז מתי יש תור?'));
-    expect(whatsapp.sent).toHaveLength(before);
+    // Even typed with the keyboard on English ("היי תור").
+    await post(text('vhh ,ur'));
+    expect(last().text).toMatch(/^שלום! כאן עיצוב שיער סיגלית/);
+  });
+
+  it('reads Hebrew typed with the keyboard on English (D-154)', () => {
+    expect(withHebrewLayout('vhh ,ur')).toBe('vhh ,ur היי תור');
+    expect(withHebrewLayout('היי')).toBe('היי');
+    expect(withHebrewLayout('book please')).toContain('book please');
   });
 
   it('a message that is not a choice repeats the question; "ביטול" ends it', async () => {
@@ -346,7 +352,7 @@ describe('WhatsApp booking bot (D-102)', () => {
     expect(await ctx.prisma.whatsAppBotSession.count()).toBe(0);
   });
 
-  it('never answers personal numbers, ordinary chats, or a chat the team is in', async () => {
+  it('never answers personal numbers or a chat the team is in', async () => {
     const { owner } = await setup();
     await ctx.prisma.whatsAppNumber.create({
       data: { businessId: BUSINESS_ID, phone: '+972507770000', status: 'PERSONAL' },
@@ -354,13 +360,9 @@ describe('WhatsApp booking bot (D-102)', () => {
     await post(text('בא לך לקבוע תור לקפה?', '972507770000'));
     expect(whatsapp.sent).toHaveLength(0);
 
-    // A known customer chatting (no booking words) gets no menu.
     const number = await ctx.prisma.whatsAppNumber.create({
       data: { businessId: BUSINESS_ID, phone: `+${FROM}`, status: 'BUSINESS' },
     });
-    await post(text('תודה רבה!'));
-    await post(text('נתראה'));
-    expect(whatsapp.sent).toHaveLength(0);
 
     // The owner replied in the chat: the bot doesn't interrupt, even when asked for a time.
     await ctx.prisma.whatsAppMessage.create({
@@ -735,9 +737,9 @@ describe('WhatsApp booking bot (D-102)', () => {
         'בסדר! העברנו את השיחה לצוות, נחזור אליכם כאן בהקדם 🙂',
       ]);
       expect(last().choices).toBeUndefined();
-      // And it stays quiet afterwards.
+      // The next message is answered again (D-154).
       await post(text('אז מה, יש תאריך?'));
-      expect(whatsapp.sent).toHaveLength(1);
+      expect(whatsapp.sent).toHaveLength(2);
     });
 
     it('"personal chat" on the first reply hands over too', async () => {
@@ -754,9 +756,9 @@ describe('WhatsApp booking bot (D-102)', () => {
       expect(last().text).toMatch(/^לא הבנתי/);
       await post(text('לא ברור לי'));
       expect(last().text).toMatch(/^בסדר! העברנו את השיחה לצוות/);
-      const before = whatsapp.sent.length;
+      // The next message is answered again, from the start (D-154).
       await post(text('הלו?'));
-      expect(whatsapp.sent).toHaveLength(before);
+      expect(last().text).toContain('רוצים לקבוע תור?');
     });
 
     it("an event request doesn't hold the date unless the owner chose to", async () => {
