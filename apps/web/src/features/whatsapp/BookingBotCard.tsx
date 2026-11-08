@@ -15,7 +15,7 @@ import {
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
 } from '@leadflow/shared';
-import { ImagePlus, MessageSquareText, RotateCcw, Video, X } from 'lucide-react';
+import { Eye, ImagePlus, MessageSquareText, RotateCcw, Video, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { Alert, Button, DialogShell, Field, Textarea } from '../../components/ui';
 import { useAssets } from '../media/api';
@@ -487,6 +487,7 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
   const [link, setLink] = useState(saved.link ?? '');
   const [assetIds, setAssetIds] = useState(saved.assetIds);
   const [picking, setPicking] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
   const urlOf = (id: string) => assets.data?.assets.find((a) => a.id === id)?.url;
@@ -593,42 +594,56 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
           {errors.assetIds && <p className="text-xs text-danger-600">{tr(errors.assetIds)}</p>}
         </div>
         <ShowcaseVideo businessId={businessId} video={saved.video ?? null} />
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-ink-muted">{tr('כך הלקוח יראה את זה:')}</span>
-          <div dir="auto" className="flex max-w-md flex-col gap-1.5">
-            <p className="whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
-              {filled || '—'}
-              {link && (
-                <>
-                  {'\n'}
-                  <bdi dir="ltr" className="text-brand-700 underline">
-                    {link}
-                  </bdi>
-                </>
-              )}
-            </p>
-            {assetIds.length > 0 && (
-              <div className="flex gap-1.5">
-                {assetIds.map((id) =>
-                  urlOf(id) ? (
-                    <img
-                      key={id}
-                      src={urlOf(id)}
-                      alt=""
-                      className="h-16 w-16 rounded-xl object-cover"
-                    />
-                  ) : null,
+        {/* The customer's view, on request (D-155). */}
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="self-start"
+          aria-expanded={previewing}
+          onClick={() => setPreviewing((v) => !v)}
+        >
+          <Eye aria-hidden className="h-4 w-4" />
+          {previewing ? tr('הסתרת התצוגה המקדימה') : tr('תצוגה מקדימה')}
+        </Button>
+        {previewing && (
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-ink-muted">{tr('כך הלקוח יראה את זה:')}</span>
+            <div dir="auto" className="flex max-w-md flex-col gap-1.5">
+              <p className="whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
+                {filled || '—'}
+                {link && (
+                  <>
+                    {'\n'}
+                    <bdi dir="ltr" className="text-brand-700 underline">
+                      {link}
+                    </bdi>
+                  </>
                 )}
-              </div>
-            )}
-            {saved.video && (
-              <p className="flex items-center gap-1.5 rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
-                <Video aria-hidden className="h-4 w-4" />
-                {tr('סרטון')}
               </p>
-            )}
+              {assetIds.length > 0 && (
+                <div className="flex gap-1.5">
+                  {assetIds.map((id) =>
+                    urlOf(id) ? (
+                      <img
+                        key={id}
+                        src={urlOf(id)}
+                        alt=""
+                        className="h-16 w-16 rounded-xl object-cover"
+                      />
+                    ) : null,
+                  )}
+                </div>
+              )}
+              {saved.video && (
+                <p className="flex items-center gap-1.5 rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
+                  <Video aria-hidden className="h-4 w-4" />
+                  {tr('סרטון')}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </fieldset>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {done && <Alert tone="success">{tr('ההצצה נשמרה.')}</Alert>}

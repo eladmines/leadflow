@@ -357,6 +357,10 @@ describe('WhatsApp conversations inbox', () => {
     expect(await screen.findByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
     // Photos and a video (D-151), uploaded on its own.
     expect(screen.getByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
+    // The customer's view only on request (D-155).
+    expect(screen.queryByText('כך הלקוח יראה את זה:')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'תצוגה מקדימה' }));
+    expect(screen.getByText('כך הלקוח יראה את זה:')).toBeInTheDocument();
     await user.type(screen.getByLabelText('קישור (לא חובה)'), 'instagram.com/sigalit');
     await user.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByText('יש להזין קישור מלא שמתחיל ב־https://')).toBeInTheDocument();
