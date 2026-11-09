@@ -5,7 +5,7 @@ import {
   type ChannelStatus,
   type ConnectWhatsAppRequest,
 } from '@leadflow/shared';
-import { Facebook, MessageCircle, Plug } from 'lucide-react';
+import { Facebook, Instagram, Mail, MessageCircle, Plug } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
@@ -75,6 +75,27 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
               status={channels.data.messenger}
               canEdit={canEdit}
               available={channels.data.facebookLogin}
+            />
+          </li>
+          {/* Not connectable yet (UI only, D-160). */}
+          <li>
+            <ComingSoonRow
+              icon={Instagram}
+              tone="bg-pink-500"
+              title="Instagram"
+              description={tr(
+                'הודעות ישירות מאינסטגרם יגיעו לתיבת השיחות. החשבון מתחבר דרך דף הפייסבוק של העסק.',
+              )}
+              action={tr('חיבור Instagram')}
+            />
+          </li>
+          <li>
+            <ComingSoonRow
+              icon={Mail}
+              tone="bg-sky-500"
+              title={tr('אימייל')}
+              description={tr('מיילים מלקוחות יגיעו לתיבת השיחות, ותוכלו לענות להם משם.')}
+              action={tr('חיבור אימייל')}
             />
           </li>
         </ul>
@@ -264,6 +285,46 @@ function FacebookRow({
       {start.isError && <Alert tone="danger">{errorMessage(start.error)}</Alert>}
       {disconnect.isError && <Alert tone="danger">{errorMessage(disconnect.error)}</Alert>}
     </ChannelRow>
+  );
+}
+
+/** A channel that's on its way: what it will do, and a connect button that isn't active yet. */
+function ComingSoonRow({
+  icon: Icon,
+  tone,
+  title,
+  description,
+  action,
+}: {
+  icon: typeof MessageCircle;
+  tone: string;
+  title: string;
+  description: string;
+  action: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-dashed border-surface-border p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <span
+          aria-hidden
+          className={cn('flex h-10 w-10 items-center justify-center rounded-xl text-white', tone)}
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="flex items-center gap-2 font-semibold text-ink">
+            {title}
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+              {tr('בקרוב')}
+            </span>
+          </h3>
+          <p className="text-sm text-ink-muted">{description}</p>
+        </div>
+        <Button size="sm" variant="secondary" disabled>
+          {action}
+        </Button>
+      </div>
+    </div>
   );
 }
 
