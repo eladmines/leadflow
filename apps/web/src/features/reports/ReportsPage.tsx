@@ -11,6 +11,7 @@ import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { durationLabel, shortDate, useReportSummary } from './api';
 import { CustomerSources } from './CustomerSources';
+import { LeadSourceIcon } from '../leads/SourceIcon';
 import { tr } from '../../i18n';
 
 const rangeLabels: Record<number, string> = { 7: tr('7 ימים'), 30: tr('30 יום'), 90: tr('90 יום') };
@@ -135,6 +136,7 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
             rows={r.bySource.map((s) => ({
               key: s.source,
               name: tr(leadSourceLabels[s.source]),
+              icon: <LeadSourceIcon source={s.source} />,
               count: s.count,
             }))}
           />
@@ -277,7 +279,7 @@ function HBars({
   rows,
 }: {
   label: string;
-  rows: { key: string; name: string; count: number; extra?: string }[];
+  rows: { key: string; name: string; icon?: React.ReactNode; count: number; extra?: string }[];
 }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
@@ -285,7 +287,10 @@ function HBars({
       {rows.map((r) => (
         <li key={r.key} className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-2 text-sm">
-            <span className="text-ink">{r.name}</span>
+            <span className="flex items-center gap-2 text-ink">
+              {r.icon}
+              {r.name}
+            </span>
             <span className="tabular-nums text-ink-muted">
               {r.count}
               {r.extra && (

@@ -133,24 +133,39 @@ function TagYourAds() {
       <ol className="mt-3 flex list-decimal flex-col gap-2 ps-5 text-ink">
         <li>
           {tr(
-            'Google Ads: הפעילו "תיוג אוטומטי" (Auto-tagging) בהגדרות החשבון. כל לחיצה על מודעה תסומן לבד.',
-          )}
-        </li>
-        <li>
-          {tr(
-            'פייסבוק, אינסטגרם, ניוזלטר וכל קישור אחר: הוסיפו לכתובת האתר את שם המקור והקמפיין, למשל:',
+            'Google Ads: בהגדרות הקמפיין, תחת "אפשרויות כתובת URL של הקמפיין", הוסיפו ל"סיומת כתובת URL סופית" את שם הקמפיין, למשל:',
           )}
           <code
             dir="ltr"
             className="mt-1 block overflow-x-auto rounded-lg bg-surface px-2 py-1 text-xs text-ink"
           >
-            ?utm_source=facebook&amp;utm_medium=paid&amp;utm_campaign=summer
+            utm_source=google&amp;utm_medium=cpc&amp;utm_campaign=summer&amp;utm_term={'{keyword}'}
+          </code>
+        </li>
+        <li>
+          {tr(
+            'פייסבוק ואינסטגרם: במודעה, תחת "פרמטרים של כתובת URL", הדביקו (פייסבוק ממלא את שם הקמפיין לבד):',
+          )}
+          <code
+            dir="ltr"
+            className="mt-1 block overflow-x-auto rounded-lg bg-surface px-2 py-1 text-xs text-ink"
+          >
+            utm_source=facebook&amp;utm_medium=paid&amp;utm_campaign={'{{campaign.name}}'}
           </code>
         </li>
         <li>
           {tr(
             'מודעות "לחיצה לוואטסאפ" בפייסבוק ובאינסטגרם מסומנות לבד. ממודעות גוגל לוואטסאפ: כתבו הודעה פתוחה אחרת לכל קמפיין.',
           )}
+        </li>
+        <li>
+          {tr('כל קישור אחר (ניוזלטר, ביו באינסטגרם, ברקוד): הוסיפו בסוף כתובת האתר, למשל:')}
+          <code
+            dir="ltr"
+            className="mt-1 block overflow-x-auto rounded-lg bg-surface px-2 py-1 text-xs text-ink"
+          >
+            ?utm_source=newsletter&amp;utm_campaign=november
+          </code>
         </li>
       </ol>
       <p className="mt-3 text-xs text-ink-muted">
