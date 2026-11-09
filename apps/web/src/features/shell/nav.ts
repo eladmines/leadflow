@@ -1,6 +1,7 @@
 import type { Permission } from '@leadflow/shared';
 import {
   CalendarDays,
+  Crown,
   ChartColumn,
   FileText,
   Globe,
@@ -56,8 +57,16 @@ export const navItems: NavItem[] = [
     segment: 'leads',
     color: { icon: 'text-violet-500', tile: 'bg-violet-500' },
     group: 'sales',
-    label: tr('לקוחות ולידים'),
+    label: tr('לידים'),
     icon: Users,
+  },
+  // Paying customers (D-163): people who bought, one row each.
+  {
+    segment: 'customers',
+    color: { icon: 'text-amber-500', tile: 'bg-amber-500' },
+    group: 'sales',
+    label: tr('לקוחות'),
+    icon: Crown,
   },
   // WhatsApp inbox of unclassified numbers (D-092); conversations with customers live on the lead.
   {

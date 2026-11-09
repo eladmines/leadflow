@@ -164,8 +164,7 @@ export const enPart2: Record<string, string> = {
   'טוענים הצעות…': 'Loading quotes…',
   'אין הצעות בסטטוס הזה': 'No quotes with this status',
   'עדיין אין הצעות מחיר': 'No quotes yet',
-  'פתחו ליד מ"לקוחות ולידים" ובחרו "הצעת מחיר חדשה".':
-    'Open a lead from "Customers & leads" and choose "New quote".',
+  'פתחו ליד מ"לידים" ובחרו "הצעת מחיר חדשה".': 'Open a lead from "Leads" and choose "New quote".',
   כותרת: 'Title',
   סטטוס: 'Status',
   '7 ימים': '7 days',

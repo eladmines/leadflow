@@ -62,7 +62,7 @@ describe('product tour', () => {
     expect(titles('MANAGER')).toEqual(expect.arrayContaining(['שיחות', 'דוחות']));
     expect(titles('EMPLOYEE')).not.toContain('שיחות');
     expect(titles('EMPLOYEE')).not.toContain('דוחות');
-    expect(titles('EMPLOYEE')).toContain('לקוחות ולידים');
+    expect(titles('EMPLOYEE')).toContain('לידים');
   });
 
   it('does not open for a business still in onboarding', async () => {

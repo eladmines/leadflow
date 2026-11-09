@@ -4,6 +4,8 @@ import {
   activitySchema,
   addNoteRequestSchema,
   createLeadRequestSchema,
+  customerListQuerySchema,
+  customerListResponseSchema,
   duplicateQuerySchema,
   duplicatesResponseSchema,
   leadDetailResponseSchema,
@@ -38,6 +40,20 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (req) => ({ leads: await service.list(tenantOf(req), req.query) }),
+  );
+
+  // Paying customers (D-163): one row per contact who bought.
+  app.get(
+    '/customers',
+    {
+      preValidation: requirePermission('leads.view'),
+      schema: {
+        params,
+        querystring: customerListQuerySchema,
+        response: { 200: customerListResponseSchema },
+      },
+    },
+    async (req) => ({ customers: await service.customers(tenantOf(req), req.query) }),
   );
 
   // Registered before `/leads/:leadId`; Fastify prefers the static segment anyway.

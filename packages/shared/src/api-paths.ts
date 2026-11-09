@@ -6,6 +6,7 @@ import { teamApiPaths } from './team';
 import { mediaApiPaths } from './media';
 import { tasksApiPaths } from './tasks';
 import { reportsApiPaths } from './reports';
+import { customersApiPaths } from './customers';
 import { appointmentsApiPaths } from './appointments';
 import { quotesApiPaths } from './quotes';
 import { whatsappApiPaths } from './whatsapp';
@@ -26,6 +27,7 @@ export const apiPaths = {
   media: mediaApiPaths,
   tasks: tasksApiPaths,
   reports: reportsApiPaths,
+  customers: customersApiPaths,
   appointments: appointmentsApiPaths,
   quotes: quotesApiPaths,
   whatsapp: whatsappApiPaths,

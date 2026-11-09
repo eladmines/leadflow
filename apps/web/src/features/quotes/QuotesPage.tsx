@@ -79,14 +79,14 @@ export function QuotesPage() {
             icon={FileText}
             tone="bg-orange-500"
             title={status ? tr('אין הצעות בסטטוס הזה') : tr('עדיין אין הצעות מחיר')}
-            description={tr('פתחו ליד מ"לקוחות ולידים" ובחרו "הצעת מחיר חדשה".')}
+            description={tr('פתחו ליד מ"לידים" ובחרו "הצעת מחיר חדשה".')}
             action={
               !status && (
                 <Link
                   to={businessWebPaths.section(business.id, 'leads')}
                   className={buttonClasses('primary', 'md')}
                 >
-                  {tr('ללקוחות ולידים')}
+                  {tr('ללידים')}
                 </Link>
               )
             }

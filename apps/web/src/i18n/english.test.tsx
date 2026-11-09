@@ -32,13 +32,7 @@ describe('English app', () => {
     ).toBeInTheDocument();
     expect(document.documentElement.dir).toBe('ltr');
     const nav = screen.getAllByRole('navigation', { name: 'Main navigation' })[0]!;
-    for (const name of [
-      'Dashboard',
-      'My website',
-      'Customers & leads',
-      'Tasks',
-      'Settings & billing',
-    ]) {
+    for (const name of ['Dashboard', 'My website', 'Leads', 'Tasks', 'Settings & billing']) {
       expect(await within(nav).findByRole('link', { name })).toBeInTheDocument();
     }
     expect(within(nav).getByRole('list', { name: 'Sales & marketing' })).toBeInTheDocument();
