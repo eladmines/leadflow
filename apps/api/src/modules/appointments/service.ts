@@ -59,6 +59,9 @@ const DEFAULT_DURATION = 30;
 const invalid = (field: string, message: string) =>
   new AppError('VALIDATION_ERROR', message, { [field]: message });
 
+/** How long a WhatsApp call-back holds in the calendar (D-171). */
+export const CALL_BACK_MINUTES = 15;
+
 export class AppointmentService {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -387,6 +390,53 @@ export class AppointmentService {
       what: input.serviceName,
       startsAt: input.startsAt,
       kind: input.confirmed ? 'booked' : 'request',
+    });
+    return created;
+  }
+
+  /**
+   * A call-back the customer chose in WhatsApp (D-171): 15 minutes in the owner's calendar,
+   * confirmed, so that hour isn't offered again. The bot adds its own task.
+   */
+  async callBackFromWhatsApp(
+    db: Db,
+    input: {
+      businessId: string;
+      contactId: string;
+      leadId: string;
+      staffId: string;
+      startsAt: Date;
+      notes: string;
+    },
+  ): Promise<{ id: string }> {
+    const endsAt = new Date(input.startsAt.getTime() + CALL_BACK_MINUTES * 60_000);
+    await this.assertFree(db, input.businessId, input.staffId, input.startsAt, endsAt);
+    const created = await db.appointment.create({
+      data: {
+        businessId: input.businessId,
+        contactId: input.contactId,
+        leadId: input.leadId,
+        staffId: input.staffId,
+        startsAt: input.startsAt,
+        endsAt,
+        status: 'CONFIRMED',
+        notes: input.notes,
+        source: 'whatsapp',
+      },
+      select: { id: true },
+    });
+    await db.activity.create({
+      data: {
+        businessId: input.businessId,
+        leadId: input.leadId,
+        type: 'appointment.created',
+        data: {
+          startsAt: input.startsAt.toISOString(),
+          service: input.notes,
+          staff: null,
+          source: 'whatsapp',
+        },
+      },
     });
     return created;
   }
