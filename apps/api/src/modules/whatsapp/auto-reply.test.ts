@@ -407,6 +407,10 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     }).format(task!.dueAt);
     expect(local).toBe('09:00');
     expect(task!.dueAt.getTime()).toBeGreaterThan(Date.now());
+
+    // Another decision the same day: "A peek" again, right after it (D-168).
+    await post(tapRow('cb:aft'));
+    expect(whatsapp.sent.at(-1)!.text).toBe('https://example.com/work');
   });
 
   it('"Another time": the customer writes it, and it goes into the task (D-165)', async () => {
