@@ -11,6 +11,7 @@ describe('logged addresses', () => {
       '/api/v1/integrations/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=[REDACTED]&hub.challenge=9',
     );
     expect(redactUrl('/invite?token=secret')).toBe('/invite?token=[REDACTED]');
+    expect(redactUrl('/cb?code=abc&state=xyz')).toBe('/cb?code=[REDACTED]&state=[REDACTED]');
     expect(redactUrl('/api/v1/health')).toBe('/api/v1/health');
   });
 });

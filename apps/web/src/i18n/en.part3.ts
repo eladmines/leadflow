@@ -554,8 +554,8 @@ export const enPart3: Record<string, string> = {
     "Notes & history (everything that happened with the lead), WhatsApp (you can reply up to 24 hours after the customer's last message), tasks, appointments and quotes. Click a tab to see that part.",
   'חלקי ההגדרות': 'Settings sections',
   'ההגדרות, בלשוניות': 'Settings, in tabs',
-  'פרטי העסק (מופיעים באתר, בכפתור החיוג ובמיילים), אזורי שירות, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ומנוי. כל לשונית נשמרת בכפתור משלה.':
-    'Business details (shown on your website, the call button and emails), service areas, opening hours (they decide which times are offered for appointments) and your plan. Each tab has its own save button.',
+  'פרטי העסק (מופיעים באתר, בכפתור החיוג ובמיילים), אזורי שירות, שעות פעילות (קובעות אילו שעות מוצעות לתורים), ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי. כל לשונית נשמרת בכפתור משלה.':
+    "Business details (shown on the website, the call button and in emails), service areas, opening hours (they decide which times are offered for appointments), channels (connecting the business's WhatsApp and Facebook Page) and your plan. Each tab saves with its own button.",
   'שפת הלקוחות': 'Customer language',
   'ההודעות בוואטסאפ, המיילים ללקוחות ואתר חדש יהיו בשפה הזו.':
     'WhatsApp messages, emails to customers and a new website will be in this language.',
@@ -648,4 +648,38 @@ export const enPart3: Record<string, string> = {
   'חזרה לשיחות': 'Back to conversations',
   'כל ההודעות מוואטסאפ ומפייסבוק במקום אחד, ותשובה אוטומטית ללקוחות כשאתם עסוקים.':
     'All your messages from WhatsApp and Facebook in one place, plus an automatic reply when you are busy.',
+  ערוצים: 'Channels',
+  'חברו את הוואטסאפ ואת דף הפייסבוק של העסק, וכל ההודעות יגיעו לתיבת השיחות.':
+    "Connect the business's WhatsApp and Facebook Page, and every message reaches your conversations inbox.",
+  'החיבור לפייסבוק בוטל.': 'Connecting Facebook was cancelled.',
+  'מחובר דרך הגדרות המערכת': 'Connected through the system settings',
+  'מחובר · {0}': 'Connected · {0}',
+  'לא מחובר': 'Not connected',
+  ניתוק: 'Disconnect',
+  'לנתק? הודעות חדשות כבר לא יגיעו לתיבת השיחות. השיחות הקיימות נשארות.':
+    'Disconnect? New messages will no longer reach your inbox. Existing conversations stay.',
+  'כן, לנתק': 'Yes, disconnect',
+  'חיבור WhatsApp': 'Connect WhatsApp',
+  'את הפרטים מוצאים ב-Meta for Developers: האפליקציה של העסק → WhatsApp → API Setup. מעתיקים את ה-Phone number ID ואת טוקן הגישה.':
+    "You'll find these in Meta for Developers: the business's app → WhatsApp → API Setup. Copy the Phone number ID and the access token.",
+  'טוקן גישה': 'Access token',
+  'נשמר מוצפן, ולא מוצג שוב.': 'Stored encrypted, and never shown again.',
+  חיבור: 'Connect',
+  'חיבור פייסבוק': 'Connect Facebook',
+  'איזה דף לחבר?': 'Which Page should we connect?',
+  'טוענים את הדפים…': 'Loading your Pages…',
+  'ההודעות לדף הזה יגיעו לתיבת השיחות של העסק.':
+    "Messages to this Page will reach the business's inbox.",
+  'חיבור הדף': 'Connect Page',
+  'יש להזין את ה-Phone number ID (מספרים בלבד)': 'Enter the Phone number ID (digits only)',
+  'יש להדביק את טוקן הגישה': 'Paste the access token',
+  'לא הצלחנו להגיע למספר עם הפרטים האלה. בדקו את ה-Phone number ID ואת טוקן הגישה.':
+    "We couldn't reach the number with these details. Check the Phone number ID and the access token.",
+  'המספר או הדף כבר מחוברים לעסק אחר.':
+    'This number or Page is already connected to another business.',
+  'חיבור לפייסבוק עוד לא הוגדר במערכת.': "Connecting Facebook isn't set up in the system yet.",
+  'החיבור לפייסבוק לא הצליח. נסו שוב.': "Connecting Facebook didn't work. Please try again.",
+  'החיבור לפייסבוק פג תוקף. התחילו שוב.': 'The Facebook sign-in expired. Please start again.',
+  'לא מצאנו דפי פייסבוק שאתם מנהלים בחשבון הזה.':
+    "We didn't find any Facebook Pages you manage on this account.",
 };

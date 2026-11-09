@@ -133,6 +133,18 @@ const envSchema = z
     /** The Facebook Page's id. */
     MESSENGER_PAGE_ID: optionalSetting(z.string().min(1)),
     MESSENGER_PAGE_ACCESS_TOKEN: optionalSetting(z.string().min(1)),
+
+    // F25 — channels each business connects itself (D-159).
+    /** 32 bytes, base64: encrypts the stored access tokens. Unset = derived from FORM_TOKEN_SECRET. */
+    CHANNEL_SECRETS_KEY: optionalSetting(
+      z
+        .string()
+        .refine((v) => Buffer.from(v, 'base64').length === 32, 'must be 32 bytes in base64'),
+    ),
+    /** The Meta app's id: "Connect Facebook" (Facebook Login). Unset = the button is hidden. */
+    META_APP_ID: optionalSetting(z.string().regex(/^\d+$/)),
+    /** Facebook Login for Business configuration id; unset = classic scopes. */
+    META_LOGIN_CONFIG_ID: optionalSetting(z.string().regex(/^\d+$/)),
   })
   .superRefine((env, ctx) => {
     if (env.WHATSAPP_BUSINESS_ID) {

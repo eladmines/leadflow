@@ -18,4 +18,5 @@ export * from './quotes';
 export * from './whatsapp';
 export * from './whatsapp-en';
 export * from './conversations';
+export * from './channels';
 export * from './notifications';

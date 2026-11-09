@@ -69,7 +69,7 @@ export class ConversationService {
     const page = rows.slice(0, CONVERSATIONS_PAGE);
     const last = page.at(-1);
     return {
-      connected: this.whatsapp.connectedTo(ctx.businessId),
+      connected: await this.whatsapp.connectedTo(ctx.businessId),
       conversations: await this.summaries(ctx.businessId, page),
       nextCursor:
         rows.length > CONVERSATIONS_PAGE && last

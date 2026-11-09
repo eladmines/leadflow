@@ -11,6 +11,7 @@ import { quotesApiPaths } from './quotes';
 import { whatsappApiPaths } from './whatsapp';
 import { notificationsApiPaths } from './notifications';
 import { conversationsApiPaths } from './conversations';
+import { channelsApiPaths } from './channels';
 
 /**
  * Every API path, grouped by feature. Neither the API nor the web hardcodes path strings.
@@ -30,4 +31,5 @@ export const apiPaths = {
   whatsapp: whatsappApiPaths,
   notifications: notificationsApiPaths,
   conversations: conversationsApiPaths,
+  channels: channelsApiPaths,
 } as const;

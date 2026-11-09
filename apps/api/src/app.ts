@@ -38,6 +38,8 @@ import { registerMediaServing } from './modules/media/serve';
 import { createWhatsAppSender, type WhatsAppSender } from './integrations/whatsapp';
 import { createMessengerSender, type MessengerSender } from './integrations/messenger';
 import { conversationTenantRoutes } from './modules/conversations/routes';
+import { channelPublicRoutes, channelTenantRoutes } from './modules/channels/routes';
+import { createMetaApi, type MetaApi } from './integrations/meta';
 import {
   messengerWebhookRoutes,
   whatsappTenantRoutes,
@@ -59,6 +61,8 @@ declare module 'fastify' {
     whatsappSender: WhatsAppSender;
     /** Outbound Facebook Messenger (F23). */
     messengerSender: MessengerSender;
+    /** Meta's Graph API for connecting channels (F25). */
+    metaApi: MetaApi;
   }
 }
 
@@ -77,6 +81,8 @@ export interface AppDeps {
   whatsappSender?: WhatsAppSender;
   /** Defaults to the adapter chosen by `MESSENGER_PROVIDER`. Tests inject a MemoryMessengerSender. */
   messengerSender?: MessengerSender;
+  /** Defaults to Meta's Graph API with a cloud provider, else a stand-in. Tests inject one. */
+  metaApi?: MetaApi;
   /** A server shared with the public-site app (one port, D-119); it calls `app.routing`. */
   serverFactory?: FastifyServerFactory;
 }
@@ -91,6 +97,7 @@ export async function buildApp({
   storage,
   whatsappSender,
   messengerSender,
+  metaApi,
   serverFactory,
 }: AppDeps) {
   const app = Fastify({
@@ -170,6 +177,8 @@ export async function buildApp({
   app.decorate('messengerSender', messenger);
   await app.register(whatsappWebhookRoutes(whatsapp));
   await app.register(messengerWebhookRoutes(whatsapp, messenger));
+  app.decorate('metaApi', metaApi ?? createMetaApi(config));
+  await app.register(channelPublicRoutes);
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(
     tenantScope(async (scope) => {
@@ -185,6 +194,7 @@ export async function buildApp({
       await scope.register(whatsappTenantRoutes(whatsapp));
       await scope.register(notificationTenantRoutes);
       await scope.register(conversationTenantRoutes);
+      await scope.register(channelTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

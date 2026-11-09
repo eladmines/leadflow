@@ -270,6 +270,8 @@ type Business = {
 };
 interface Chat {
   business: Business;
+  /** This business's WhatsApp (F25). */
+  sender: WhatsAppSender;
   numberId: string;
   phone: string;
   /** When this customer last got the showcase. */
@@ -334,7 +336,8 @@ export class BookingBot {
 
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly sender: WhatsAppSender,
+    /** Each business's WhatsApp (F25); null when it isn't connected. */
+    private readonly senders: (businessId: string) => Promise<WhatsAppSender | null>,
     private readonly log: Log,
     private readonly storage: StorageProvider,
     /** The contact and open lead for a number; an unclassified number becomes a business one. */
@@ -345,7 +348,7 @@ export class BookingBot {
     ) => Promise<{ contactId: string; leadId: string }>,
   ) {
     this.appointments = new AppointmentService(prisma);
-    this.autoReplier = new AutoReplier(prisma, sender, log);
+    this.autoReplier = new AutoReplier(prisma, log);
   }
 
   async handle(businessId: string, msg: BotMessage, now = new Date()): Promise<BotOutcome> {
@@ -371,12 +374,15 @@ export class BookingBot {
     const mode = modeOf(replies.whatsappReplyMode);
     if (mode === 'off') return 'none';
     if (mode === 'auto_reply') {
+      const sender = await this.senders(businessId);
+      if (!sender) return 'none';
       const replied = await this.autoReplier.reply(
         replies,
         number,
         await this.linkOf(businessId, number.status, number.phone),
         await this.teamIsTalking(number.id, now),
         now,
+        sender,
       );
       // "Meanwhile, a look at our work" follows the automatic reply too (D-149), once a day.
       if (replied) {
@@ -1235,6 +1241,8 @@ export class BookingBot {
       },
     });
     if (!business || (!business.whatsappBotEnabled && !anyMode)) return null;
+    const sender = await this.senders(businessId);
+    if (!sender) return null;
     const flow = (BOT_FLOWS as readonly string[]).includes(business.whatsappBotFlow ?? '')
       ? (business.whatsappBotFlow as BotFlow)
       : botFlowFor(business.industry);
@@ -1254,6 +1262,7 @@ export class BookingBot {
           ? showcase.data
           : { enabled: false, text: undefined, link: null, assetIds: [] },
       },
+      sender,
       numberId: number.id,
       phone: number.phone,
       showcaseAt: number.botShowcaseAt,
@@ -1303,10 +1312,10 @@ export class BookingBot {
     let id: string;
     try {
       ({ id } = !choices
-        ? await this.sender.sendText(chat.phone, body, opts)
+        ? await chat.sender.sendText(chat.phone, body, opts)
         : 'buttons' in choices
-          ? await this.sender.sendButtons(chat.phone, body, choices.buttons)
-          : await this.sender.sendList(chat.phone, body, choices.button, choices.rows));
+          ? await chat.sender.sendButtons(chat.phone, body, choices.buttons)
+          : await chat.sender.sendList(chat.phone, body, choices.button, choices.rows));
     } catch (err) {
       const e = err as { name?: string; status?: number; code?: number | null };
       this.log.error(
@@ -1334,7 +1343,7 @@ export class BookingBot {
   private async sayVideo(chat: Chat, mp4: Buffer) {
     let id: string;
     try {
-      ({ id } = await this.sender.sendVideo(chat.phone, mp4));
+      ({ id } = await chat.sender.sendVideo(chat.phone, mp4));
     } catch (err) {
       this.log.error({ errName: (err as Error)?.name }, 'whatsapp showcase video failed');
       return;
@@ -1355,7 +1364,7 @@ export class BookingBot {
 
   /** Sends and stores a photo (shown in LeadFlow as "[תמונה]"). */
   private async sayImage(chat: Chat, jpeg: Buffer) {
-    const { id } = await this.sender.sendImage(chat.phone, jpeg);
+    const { id } = await chat.sender.sendImage(chat.phone, jpeg);
     await this.prisma.whatsAppMessage.create({
       data: {
         businessId: chat.business.id,
