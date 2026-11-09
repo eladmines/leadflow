@@ -15,7 +15,6 @@ import {
   type BotTextKey,
   type BotTexts,
   type Language,
-  type ReplyMode,
 } from '@leadflow/shared';
 import type { z } from 'zod';
 import type { StorageProvider } from '../../integrations/storage';
@@ -443,9 +442,9 @@ export class BookingBot {
       session = chat.session = null;
     }
     // D-165, both modes: the customer chose when to talk, or wrote it after "another time".
-    if (choice?.startsWith('cb:')) return this.onCallbackChoice(chat, choice.slice(3), mode, now);
+    if (choice?.startsWith('cb:')) return this.onCallbackChoice(chat, choice.slice(3), now);
     if (session?.step === 'callback' && !choice && msg.body.trim()) {
-      return this.callBack(chat, msg.body.trim().slice(0, 80), now, mode, false);
+      return this.callBack(chat, msg.body.trim().slice(0, 80), now, false);
     }
 
     // D-166: one automatic answer. Without "customers book by themselves" it's only the message
@@ -538,12 +537,7 @@ export class BookingBot {
     return 'handled';
   }
 
-  private async onCallbackChoice(
-    chat: Chat,
-    slot: string,
-    mode: ReplyMode,
-    now: Date,
-  ): Promise<BotOutcome> {
+  private async onCallbackChoice(chat: Chat, slot: string, now: Date): Promise<BotOutcome> {
     if (slot === 'other') {
       await this.setSession(chat, { step: 'callback', serviceId: null, date: null, time: null });
       await this.say(chat, wordsOf(chat).askOtherTime);
@@ -559,7 +553,7 @@ export class BookingBot {
       return 'handled';
     }
     const when = callbackLabel(wordsOf(chat), todayIn(tz, now), m[1]!, m[2]!);
-    return this.callBack(chat, when, at, mode, true);
+    return this.callBack(chat, when, at, true);
   }
 
   /**
@@ -571,7 +565,6 @@ export class BookingBot {
     when: string,
     /** The task's due time (now when the customer wrote their own time). */
     dueAt: Date,
-    mode: ReplyMode,
     /** A chosen hour (true) or the customer's own words (false). */
     chosen: boolean,
   ): Promise<BotOutcome> {
@@ -603,8 +596,8 @@ export class BookingBot {
     chat.link = customer;
     chat.session = null;
     await this.say(chat, chosen ? w.callbackSet(when) : w.callbackThanks);
-    // The decision is made: "A peek" right after, every time (D-168).
-    await this.showcase(chat, { force: true, offerBooking: mode === 'booking' });
+    // The decision is made: "A peek" right after, every time (D-168), and nothing after it (D-170).
+    await this.showcase(chat, { force: true });
     return 'handled';
   }
 

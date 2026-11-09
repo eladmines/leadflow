@@ -488,6 +488,21 @@ describe('WhatsApp booking bot (D-102)', () => {
       expect(texts()).toEqual(['בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂']);
     });
 
+    it('after choosing a time: "A peek" ends the conversation, no booking offer (D-170)', async () => {
+      await withShowcase();
+      await post(text('היי'));
+      const hour = last().choices!.find((c) => c.id.startsWith('cb:2'))!;
+      whatsapp.clear();
+      await post(tap(hour.id, hour.title));
+      expect(texts()[0]).toMatch(/^מעולה! נחזור אליכם/);
+      expect(texts()[1]).toBe(
+        'בינתיים, הנה הצצה לעבודות שלנו ✂️\nhttps://instagram.com/sigalit.hair',
+      );
+      // The photo is the last thing sent.
+      expect(last().imageBytes).toBeGreaterThan(0);
+      expect(texts()).not.toContain('כשתרצו, אפשר לקבוע תור כאן 👇');
+    });
+
     it('"See our work" sends it on request, even if it was sent today', async () => {
       await withShowcase({ text: 'הצצה ל[שם העסק]: {business} 🎧', link: null });
       await ctx.prisma.whatsAppNumber.create({
