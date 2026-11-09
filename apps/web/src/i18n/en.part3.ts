@@ -786,4 +786,5 @@ export const enPart3: Record<string, string> = {
   'הוספת אימוג׳י': 'Add emoji',
   'אימוג׳י': 'Emoji',
   'הוספת {0}': 'Add {0}',
+  'ההודעה': 'Message',
 };
