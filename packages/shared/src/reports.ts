@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { LEAD_SOURCES, STAGE_KINDS } from './leads';
+import { ATTRIBUTION_SOURCES } from './attribution';
 
 /** F20 (lite) — basic reports from real CRM data (PRD §10). */
 export const REPORT_RANGES = [7, 30, 90] as const;
@@ -10,6 +11,19 @@ export const reportQuerySchema = z.object({
     .refine((d) => (REPORT_RANGES as readonly number[]).includes(d))
     .default(30),
 });
+const attributionRow = z.object({
+  source: z.enum([...ATTRIBUTION_SOURCES, 'unknown']),
+  /** utm_source / referring host when the source is `utm` / `referral`. */
+  name: z.string().nullable(),
+  leads: z.number().int(),
+  /** Leads in a Won stage ("became customers"). */
+  won: z.number().int(),
+  lost: z.number().int(),
+  /** Sum of the won leads' deal values (whole units). */
+  wonValue: z.number().int(),
+});
+export type AttributionReportRow = z.infer<typeof attributionRow>;
+
 export const reportSummarySchema = z.object({
   range: z.object({
     from: z.string().datetime(),
@@ -40,6 +54,9 @@ export const reportSummarySchema = z.object({
     }),
   ),
   bySource: z.array(z.object({ source: z.enum(LEAD_SOURCES), count: z.number().int() })),
+  /** F26: where customers come from, per source and per campaign (leads created in the range). */
+  byAttribution: z.array(attributionRow),
+  byCampaign: z.array(attributionRow.extend({ campaign: z.string() })),
 });
 export type ReportSummary = z.infer<typeof reportSummarySchema>;
 

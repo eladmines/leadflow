@@ -15,6 +15,7 @@ import {
   SHOWCASE_VIDEO_MAX_BYTES,
   whatsappInboxResponseSchema,
   whatsappThreadResponseSchema,
+  attributionFromMetaReferral,
 } from '@leadflow/shared';
 import type { FastifyInstance } from 'fastify';
 import type { MessengerSender } from '../../integrations/messenger';
@@ -190,6 +191,7 @@ export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyn
             profileName: names.get(from) ?? null,
             body: messageText(m),
             replyId: replyId(m),
+            attribution: adReferral(m.referral),
             receivedAt:
               Number.isFinite(seconds) && seconds > 0 ? new Date(seconds * 1000) : new Date(),
           };
@@ -224,14 +226,22 @@ const messengerSchema = z.object({
                 text: z.string().optional(),
                 is_echo: z.boolean().optional(),
                 attachments: z.array(z.object({ type: z.string().optional() })).optional(),
+                referral: z.record(z.unknown()).optional(),
               })
               .optional(),
+            referral: z.record(z.unknown()).optional(),
           }),
         )
         .default([]),
     }),
   ),
 });
+
+/** F26: Meta's ad referral on a message ("Click to WhatsApp" / Messenger ads), if it's an ad. */
+function adReferral(referral: unknown) {
+  if (!referral || typeof referral !== 'object') return null;
+  return attributionFromMetaReferral(referral as Record<string, unknown>);
+}
 
 /** A Messenger message as text: its words, or a label for a photo, video, file… */
 function messengerText(m: { text?: string; attachments?: { type?: string }[] }): string {
@@ -313,6 +323,7 @@ export function messengerWebhookRoutes(
           from: `fb:${psid}`,
           profileName: null,
           body: messengerText(m),
+          attribution: adReferral(m.referral ?? event.referral),
           receivedAt: event.timestamp ? new Date(event.timestamp) : new Date(),
         });
       }

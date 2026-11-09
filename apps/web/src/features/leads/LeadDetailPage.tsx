@@ -46,6 +46,7 @@ import {
   useUpdateLead,
 } from './api';
 import { stageColor } from './stageColors';
+import { WhereFrom } from './Attribution';
 import { NewTaskForm } from '../tasks/NewTaskForm';
 import { TaskItem } from '../tasks/TaskItem';
 import { useTasks, toLocalInput } from '../tasks/api';
@@ -459,6 +460,7 @@ export function LeadDetailPage() {
         <LeadTabs lead={lead} activities={activities} />
         <div className="flex flex-col gap-6 lg:order-first">
           <Details key={lead.updatedAt} lead={lead} />
+          <WhereFrom attribution={lead.attribution} />
         </div>
       </div>
       {can(business.role, 'leads.delete') && <DeleteLead lead={lead} />}

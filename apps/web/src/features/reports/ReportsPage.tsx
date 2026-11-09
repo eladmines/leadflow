@@ -10,6 +10,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { durationLabel, shortDate, useReportSummary } from './api';
+import { CustomerSources } from './CustomerSources';
 import { tr } from '../../i18n';
 
 const rangeLabels: Record<number, string> = { 7: tr('7 ימים'), 30: tr('30 יום'), 90: tr('90 יום') };
@@ -60,13 +61,13 @@ function Reports({ businessId }: { businessId: string }) {
       ) : report.isError ? (
         <Alert tone="danger">{errorMessage(report.error)}</Alert>
       ) : (
-        <ReportBody r={report.data} />
+        <ReportBody r={report.data} businessId={businessId} />
       )}
     </>
   );
 }
 
-function ReportBody({ r }: { r: ReportSummary }) {
+function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string }) {
   const delta = r.leads.current - r.leads.previous;
   const decided = r.byStage.filter((s) => s.kind !== 'OPEN').reduce((a, s) => a + s.count, 0);
   return (
@@ -139,6 +140,7 @@ function ReportBody({ r }: { r: ReportSummary }) {
           />
         </Card>
       </div>
+      <CustomerSources businessId={businessId} report={r} />
     </>
   );
 }

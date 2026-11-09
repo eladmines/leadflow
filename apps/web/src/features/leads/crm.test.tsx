@@ -248,6 +248,30 @@ describe('lead page', () => {
     ]);
   });
 
+  it('shows where the lead came from: the ad, campaign and keyword (F26)', async () => {
+    const fromAd = lead({
+      attribution: {
+        source: 'google_ads',
+        campaign: 'תספורת קיץ',
+        term: 'מספרה בחיפה',
+        landingPath: '/about',
+        clickIdType: 'gclid',
+        seenAt: new Date().toISOString(),
+      },
+    });
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.detail(id, lead().id)}`]: () => json(200, { ...detail, lead: fromAd }),
+    });
+    renderApp(`${leadsPath}/${lead().id}`);
+    expect(await screen.findByRole('heading', { name: 'מאיפה הגיע' })).toBeInTheDocument();
+    expect(screen.getByText('Google Ads')).toBeInTheDocument();
+    expect(screen.getByText('תספורת קיץ')).toBeInTheDocument();
+    expect(screen.getByText('מספרה בחיפה')).toBeInTheDocument();
+    expect(screen.getByText('/about')).toBeInTheDocument();
+  });
+
   it('employees cannot reassign (plain text instead of a menu)', async () => {
     mockApi({
       [meKey]: me(testUser),

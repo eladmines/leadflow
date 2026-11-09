@@ -24,10 +24,14 @@ const redactPaths = [
 
 /**
  * Hides secret query values in a logged address: Meta's webhook check sends the verify token, and
- * Facebook sign-in comes back with a one-time `code` and our signed `state` (F25).
+ * Facebook sign-in comes back with a one-time `code` and our signed `state` (F25); ad click ids
+ * on site visits are never logged (F26).
  */
 export const redactUrl = (url: string) =>
-  url.replace(/([?&](?:hub\.verify_token|[a-z_]*token|code|state)=)[^&]*/gi, '$1[REDACTED]');
+  url.replace(
+    /([?&](?:hub\.verify_token|[a-z_]*token|code|state|gclid|gbraid|wbraid|fbclid|ttclid|msclkid)=)[^&]*/gi,
+    '$1[REDACTED]',
+  );
 
 /** The request as logged: Fastify's usual fields, with the address's secrets hidden. */
 const serializers = {

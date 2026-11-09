@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import Fastify, { type FastifyReply } from 'fastify';
+import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
 import type { PrismaClient } from '@prisma/client';
 import {
@@ -29,12 +29,13 @@ import { zonedTimeToUtc } from '../lib/time';
 import { PublishedSiteCache, type PublishedPage } from './cache';
 import type { StorageProvider } from '../integrations/storage';
 import { registerMediaServing } from '../modules/media/serve';
+import { readAttributionCookie, rememberVisit } from './attribution';
 
 /**
  * Public-site server (F06): serves each business's *published* version by Host header,
  * e.g. http://shiran.lvh.me:4100 — or, with PUBLIC_SITE_MODE=path, under APP_URL/s/<subdomain>
- * on the app's own port (hosting without a domain, D-119). Read-only, no cookies, no auth, no
- * scripts.
+ * on the app's own port (hosting without a domain, D-119). Read-only, no auth, no scripts; one
+ * cookie, `lf_src`, remembers which ad or site brought the visitor (F26, D-162).
  * Production will move this to a Cloudflare Worker reading snapshots from R2 (D-036).
  */
 
@@ -172,7 +173,12 @@ export async function buildPublicApp({
   if (storage) registerMediaServing(app, storage);
 
   /** One site's page, robots.txt or sitemap; `path` is inside the site (`/`, `/about`). */
-  const serveSite = async (reply: FastifyReply, subdomain: string | null, path: string) => {
+  const serveSite = async (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    subdomain: string | null,
+    path: string,
+  ) => {
     if (!subdomain) return siteNotFound(reply);
     const site = await lookup(subdomain);
     if (!site.html) return siteNotFound(reply);
@@ -191,6 +197,11 @@ export async function buildPublicApp({
         ),
         subdomain,
       );
+      rememberVisit(req, reply, {
+        landingPath: path,
+        cookiePath: byPath ? `/s/${subdomain}` : '/',
+        secure: (byPath ? config.APP_URL : origin).startsWith('https:'),
+      });
       return send(reply, 200, 'text/html', html, 'no-store');
     }
     if (path === '/robots.txt') {
@@ -227,13 +238,15 @@ export async function buildPublicApp({
 
   if (byPath) {
     app.get<{ Params: { sub: string } }>('/s/:sub', (req, reply) =>
-      serveSite(reply, validSubdomain(req.params.sub), '/'),
+      serveSite(req, reply, validSubdomain(req.params.sub), '/'),
     );
     app.get<{ Params: { sub: string; '*': string } }>('/s/:sub/*', (req, reply) =>
-      serveSite(reply, validSubdomain(req.params.sub), `/${req.params['*'].split('?')[0]}`),
+      serveSite(req, reply, validSubdomain(req.params.sub), `/${req.params['*'].split('?')[0]}`),
     );
   } else {
-    app.get('/*', (req, reply) => serveSite(reply, subdomainOf(req.host), req.url.split('?')[0]!));
+    app.get('/*', (req, reply) =>
+      serveSite(req, reply, subdomainOf(req.host), req.url.split('?')[0]!),
+    );
   }
 
   /** A result page in the site's own look. */
@@ -343,6 +356,7 @@ export async function buildPublicApp({
         idempotencyKey: token.nonce,
         ipHash: sha256Hex(`${req.ip}|${config.FORM_TOKEN_SECRET}`),
         sourceUrl: `${siteOrigin(subdomain)}/${pageSlug}`,
+        attribution: readAttributionCookie(req),
         data: data.data,
       });
       if (created) {
