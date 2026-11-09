@@ -38,6 +38,7 @@ import {
   languageOf,
 } from './auto-reply';
 import { MemoryMessengerSender, type MessengerSender } from '../../integrations/messenger';
+import { ChannelRegistry } from '../channels/registry';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -51,6 +52,8 @@ type Status = (typeof WHATSAPP_STATUSES)[number];
 
 /** A customer message from Meta's webhook, already normalised. */
 export interface InboundMessage {
+  /** Meta's phone number id (WhatsApp) or Page id (Messenger) it was sent to (F25 routing). */
+  to?: string;
   waMessageId: string;
   /** WhatsApp: E.164, e.g. +972501234567. Messenger: `fb:` + the sender's PSID (F23). */
   from: string;
@@ -120,35 +123,33 @@ export class WhatsAppService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly config: AppConfig,
-    private readonly sender: WhatsAppSender,
+    sender: WhatsAppSender,
     private readonly log: Log,
     private readonly storage: StorageProvider,
-    private readonly messenger: MessengerSender = new MemoryMessengerSender(),
+    messenger: MessengerSender = new MemoryMessengerSender(),
   ) {
     this.leads = new LeadService(prisma);
-    this.bot = new BookingBot(prisma, sender, log, storage, (tx, businessId, numberId) =>
-      this.ensureCustomer(tx, businessId, numberId),
+    // Each business's own channels (F25), with the environment's as the fallback.
+    this.channels = new ChannelRegistry(prisma, config, sender, messenger);
+    this.bot = new BookingBot(
+      prisma,
+      (businessId) => this.channels.whatsapp(businessId),
+      log,
+      storage,
+      (tx, businessId, numberId) => this.ensureCustomer(tx, businessId, numberId),
     );
   }
 
+  readonly channels: ChannelRegistry;
+
   /** Showcase for booking conversations that stopped in the middle (D-106; background job). */
   nudgeAbandonedBookings(now = new Date()) {
-    return this.businessId ? this.bot.nudgeAbandoned(now) : Promise.resolve(0);
-  }
-
-  /** The business the number is connected to, or null when WhatsApp is off. */
-  get businessId(): string | null {
-    return this.config.WHATSAPP_BUSINESS_ID ?? null;
-  }
-
-  /** The business a channel is connected to (F23: the Facebook Page has its own setting). */
-  businessFor(channel: Channel): string | null {
-    return channel === 'messenger' ? (this.config.MESSENGER_BUSINESS_ID ?? null) : this.businessId;
+    return this.bot.nudgeAbandoned(now);
   }
 
   /** Any channel connected to this business. */
   connectedTo(businessId: string) {
-    return this.businessId === businessId || this.businessFor('messenger') === businessId;
+    return this.channels.isConnected(businessId);
   }
 
   /**
@@ -159,7 +160,8 @@ export class WhatsAppService {
    */
   async receive(msg: InboundMessage): Promise<ReceiveResult | null> {
     const channel = msg.channel ?? 'whatsapp';
-    const businessId = this.businessFor(channel);
+    // The business that connected this number or Page (F25).
+    const businessId = await this.channels.businessFor(channel, msg.to);
     if (!businessId) return null;
     const seen = await this.prisma.whatsAppMessage.findUnique({
       where: { waMessageId: msg.waMessageId },
@@ -172,7 +174,8 @@ export class WhatsAppService {
         where: { businessId_phone: { businessId, phone: msg.from } },
         select: { id: true },
       });
-      if (!known) msg = { ...msg, profileName: await this.messenger.profileName(psidOf(msg.from)) };
+      const messenger = known ? null : await this.channels.messenger(businessId);
+      if (messenger) msg = { ...msg, profileName: await messenger.profileName(psidOf(msg.from)) };
     }
 
     try {
@@ -430,7 +433,7 @@ export class WhatsAppService {
       take: 200,
     });
     return {
-      connected: this.connectedTo(ctx.businessId),
+      connected: await this.connectedTo(ctx.businessId),
       numbers: numbers
         .filter((n) => n.messages.length > 0)
         .map((n) => ({
@@ -605,7 +608,7 @@ export class WhatsAppService {
     const showcase = sc.success ? sc.data : { enabled: false, link: null, assetIds: [] };
     const video = showcaseVideoOf(b.whatsappBotShowcase);
     return {
-      connected: this.businessId === ctx.businessId,
+      connected: await this.channels.isConnected(ctx.businessId, 'whatsapp'),
       settings: {
         mode: modeOf(b.whatsappReplyMode),
         autoReplyText: b.whatsappAutoReplyText,
@@ -845,7 +848,7 @@ export class WhatsAppService {
         })
       : null;
     return {
-      connected: this.connectedTo(ctx.businessId),
+      connected: await this.connectedTo(ctx.businessId),
       messages: rows.map((r) => toDto(r, r.number.channel)),
       replyUntil: until > Date.now() ? new Date(until).toISOString() : null,
       botPaused: number?.botPaused ?? false,
@@ -892,7 +895,7 @@ export class WhatsAppService {
     });
     // The reply goes where the customer last wrote (F23): WhatsApp or the Facebook Page.
     if (!lastIn) {
-      if (this.businessId !== ctx.businessId) {
+      if (!(await this.channels.isConnected(ctx.businessId, 'whatsapp'))) {
         throw new AppError('CONFLICT', whatsappMessages.notConnected);
       }
       throw new AppError(
@@ -982,7 +985,10 @@ export class WhatsAppService {
     text: string,
   ): Promise<WhatsAppMessage> {
     const messenger = to.channel === 'messenger';
-    if (this.businessFor(messenger ? 'messenger' : 'whatsapp') !== ctx.businessId) {
+    const via = messenger
+      ? await this.channels.messenger(ctx.businessId)
+      : await this.channels.whatsapp(ctx.businessId);
+    if (!via) {
       throw new AppError(
         'CONFLICT',
         messenger ? whatsappMessages.messengerNotConnected : whatsappMessages.notConnected,
@@ -996,9 +1002,7 @@ export class WhatsAppService {
     }
     let id: string;
     try {
-      ({ id } = messenger
-        ? await this.messenger.sendText(psidOf(to.phone), text)
-        : await this.sender.sendText(to.phone, text));
+      ({ id } = await via.sendText(messenger ? psidOf(to.phone) : to.phone, text));
     } catch (err) {
       const e = err as { name?: string; status?: number; code?: number | null };
       this.log.error(

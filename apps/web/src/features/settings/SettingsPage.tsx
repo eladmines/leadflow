@@ -33,10 +33,11 @@ import { ServiceAreasEditor } from '../businesses/ServiceAreasEditor';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { tr } from '../../i18n';
+import { ChannelsSection } from './ChannelsSection';
 
 const industryOptions = INDUSTRIES.map((value) => ({ value, label: tr(industryLabels[value]) }));
 
-function Section({
+export function Section({
   title,
   description,
   icon: Icon,
@@ -72,7 +73,7 @@ function Section({
   );
 }
 
-const TABS = ['details', 'areas', 'hours', 'billing'] as const;
+const TABS = ['details', 'areas', 'hours', 'channels', 'billing'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Save feedback for one section: success is announced politely, errors as an alert. */
@@ -96,6 +97,7 @@ export function SettingsPage() {
     details: tr('פרטי העסק'),
     areas: tr('אזורי שירות'),
     hours: tr('שעות פעילות'),
+    channels: tr('ערוצים'),
     billing: tr('מנוי וחיוב'),
   };
 
@@ -142,6 +144,7 @@ export function SettingsPage() {
         {tab === 'details' && <DetailsSection canEdit={canEdit} />}
         {tab === 'areas' && <ServiceAreasSection canEdit={canEdit} />}
         {tab === 'hours' && <HoursSection canEdit={canEdit} />}
+        {tab === 'channels' && <ChannelsSection canEdit={canEdit} />}
         {tab === 'billing' && (
           <Section title={tr('מנוי וחיוב')} icon={CreditCard} tone="bg-violet-500">
             <p className="text-sm text-ink-muted">

@@ -115,7 +115,6 @@ interface Log {
 export class AutoReplier {
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly sender: WhatsAppSender,
     private readonly log: Log,
   ) {}
 
@@ -132,6 +131,8 @@ export class AutoReplier {
     link: { contactId: string | null; leadId: string | null },
     teamIsTalking: boolean,
     now: Date,
+    /** This business's WhatsApp (F25). */
+    sender: WhatsAppSender,
   ): Promise<boolean> {
     if (teamIsTalking) return false;
     if (number.autoReplyAt && now.getTime() - number.autoReplyAt.getTime() < AUTO_REPLY_GAP_MS) {
@@ -160,9 +161,7 @@ export class AutoReplier {
     )
       .replaceAll('{business}', business.name)
       .slice(0, 4096);
-    await this.send(business.id, number, link, text, () =>
-      this.sender.sendText(number.phone, text),
-    );
+    await this.send(business.id, number, link, text, () => sender.sendText(number.phone, text));
     return true;
   }
 

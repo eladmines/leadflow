@@ -178,6 +178,8 @@ model Business {
   updatedAt              DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   memberships         Membership[]
+  channelConnections  ChannelConnection[]
+  oauthPending        OAuthPending[]
   auditLogs           AuditLog[]
   site                Site?
   contacts            Contact[]
@@ -750,4 +752,43 @@ model Notification {
 
   @@index([userId, businessId, createdAt])
   @@map("notifications")
+}
+
+/// F25: a channel a business connected itself (D-159): its WhatsApp number or Facebook Page.
+/// The access token is encrypted (AES-256-GCM, lib/secret-box) and never returned or logged.
+model ChannelConnection {
+  id             String   @id @default(uuid()) @db.Uuid
+  businessId     String   @map("business_id") @db.Uuid
+  /// whatsapp | messenger
+  channel        String   @db.VarChar(20)
+  /// WhatsApp: Meta's phone number id. Messenger: the Facebook Page id.
+  externalId     String   @map("external_id") @db.VarChar(64)
+  /// The number or the Page's name, for the settings screen.
+  displayName    String   @map("display_name") @db.VarChar(120)
+  tokenEncrypted String   @map("token_encrypted")
+  connectedById  String?  @map("connected_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  /// A number or Page belongs to one business; a business has one of each channel.
+  @@unique([channel, externalId])
+  @@unique([businessId, channel])
+  @@map("channel_connections")
+}
+
+/// F25: Facebook sign-in in progress — the Pages the owner may pick from, for 15 minutes.
+model OAuthPending {
+  id            String   @id @default(uuid()) @db.Uuid
+  businessId    String   @map("business_id") @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  /// The Pages with their tokens, encrypted like ChannelConnection.tokenEncrypted.
+  dataEncrypted String   @map("data_encrypted")
+  expiresAt     DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_pending")
 }

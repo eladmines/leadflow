@@ -156,7 +156,8 @@ export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyn
 
     app.post(apiPaths.whatsapp.webhook, async (req, reply) => {
       const secret = config.WHATSAPP_APP_SECRET;
-      if (!config.WHATSAPP_BUSINESS_ID || !secret) throw new AppError('NOT_FOUND');
+      // Which business it's for is decided per message, by the number it was sent to (F25).
+      if (!secret) throw new AppError('NOT_FOUND');
       const signature = req.headers['x-hub-signature-256'];
       if (
         !verifyWebhookSignature(
@@ -172,11 +173,8 @@ export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyn
       if (!parsed.success) return reply.send({ ok: true });
       for (const change of parsed.data.entry.flatMap((e) => e.changes)) {
         const v = change.value;
-        // Only events for our number (the app may have test and real numbers).
+        // The number it was sent to decides the business (F25); unknown numbers are ignored.
         const numberId = v.metadata?.phone_number_id;
-        if (config.WHATSAPP_PHONE_NUMBER_ID && numberId !== config.WHATSAPP_PHONE_NUMBER_ID) {
-          continue;
-        }
         const names = new Map(
           (v.contacts ?? []).map((c) => [c.wa_id ?? '', c.profile?.name ?? null]),
         );
@@ -186,6 +184,7 @@ export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyn
           if (!from || !id) continue;
           const seconds = Number(m.timestamp);
           const inbound: InboundMessage = {
+            to: numberId,
             waMessageId: id.slice(0, 128),
             from: `+${from}`,
             profileName: names.get(from) ?? null,
@@ -287,7 +286,7 @@ export function messengerWebhookRoutes(
 
     app.post(apiPaths.whatsapp.messengerWebhook, async (req, reply) => {
       const secret = config.WHATSAPP_APP_SECRET;
-      if (!config.MESSENGER_BUSINESS_ID || !secret) throw new AppError('NOT_FOUND');
+      if (!secret) throw new AppError('NOT_FOUND');
       const signature = req.headers['x-hub-signature-256'];
       if (
         !verifyWebhookSignature(
@@ -304,11 +303,12 @@ export function messengerWebhookRoutes(
         const m = event.message;
         // Only customers' messages to our Page (not the Page's own echoes, reads or deliveries).
         if (!m || m.is_echo) continue;
-        if (config.MESSENGER_PAGE_ID && event.recipient?.id !== config.MESSENGER_PAGE_ID) continue;
+        // The Page it was sent to decides the business (F25); unknown Pages are ignored.
         const psid = event.sender.id.replace(/[^\d]/g, '').slice(0, 40);
         if (!psid) continue;
         await service.receive({
           channel: 'messenger',
+          to: event.recipient?.id,
           waMessageId: m.mid.slice(0, 128),
           from: `fb:${psid}`,
           profileName: null,
