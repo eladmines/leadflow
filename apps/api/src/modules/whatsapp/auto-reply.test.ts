@@ -381,22 +381,31 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     });
     await post(text('היי'));
     expect(whatsapp.sent).toHaveLength(1);
-    const ids = whatsapp.sent[0]!.choices!.map((c) => c.id);
-    expect(ids).toEqual(expect.arrayContaining(['cb:mor', 'cb:aft', 'cb:other']));
-    // The automatic reply doesn't offer booking.
-    expect(ids).not.toContain('book');
+    const rows = whatsapp.sent[0]!.choices!;
+    // Real hours (D-169): up to 8, today or tomorrow, then "another time"; no booking here.
+    expect(rows.at(-1)).toEqual({ id: 'cb:other', title: 'זמן אחר' });
+    const hours = rows.slice(0, -1);
+    expect(hours.length).toBeGreaterThan(0);
+    expect(hours.length).toBeLessThanOrEqual(8);
+    for (const r of hours) {
+      expect(r.id).toMatch(/^cb:\d{4}-\d{2}-\d{2}T(09|1\d|20):00$/);
+      expect(r.title).toMatch(/^(היום|מחר) ב־\d{2}:00$/);
+    }
 
-    await post(tapRow('cb:mor'));
+    const tomorrow = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(
+      new Date(Date.now() + 86_400_000),
+    );
+    await post(tapRow(`cb:${tomorrow}T09:00`));
     expect(whatsapp.sent.map((m) => m.text).slice(1)).toEqual([
-      'מעולה! נחזור אליכם מחר בבוקר 🙏',
-      // "A peek" is only the link, photos and video now (D-166).
-      'https://example.com/work',
+      'מעולה! נחזור אליכם מחר ב־09:00 🙏',
+      // "A peek": its message with the link (D-169).
+      'בינתיים, תציצו 👇\nhttps://example.com/work',
     ]);
     // The sender is now a customer with a lead, and the owner has a task for tomorrow 09:00.
     const lead = await ctx.prisma.lead.findFirstOrThrow({ include: { contact: true } });
     const [task] = await ctx.prisma.task.findMany();
     expect(task).toMatchObject({
-      title: 'לחזור לנועה — מחר בבוקר',
+      title: 'לחזור לנועה — מחר ב־09:00',
       assigneeId: owner.userId,
       leadId: lead.id,
     });
@@ -409,8 +418,14 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(task!.dueAt.getTime()).toBeGreaterThan(Date.now());
 
     // Another decision the same day: "A peek" again, right after it (D-168).
-    await post(tapRow('cb:aft'));
-    expect(whatsapp.sent.at(-1)!.text).toBe('https://example.com/work');
+    await post(tapRow(`cb:${tomorrow}T14:00`));
+    expect(whatsapp.sent.at(-1)!.text).toBe('בינתיים, תציצו 👇\nhttps://example.com/work');
+
+    // A time from an old list that has already passed: asked again, no task.
+    const tasks = await ctx.prisma.task.count();
+    await post(tapRow('cb:2020-01-01T09:00'));
+    expect(whatsapp.sent.at(-1)!.text).toBe('מתי נוח לכם? כתבו יום ושעה 🙂');
+    expect(await ctx.prisma.task.count()).toBe(tasks);
   });
 
   it('"Another time": the customer writes it, and it goes into the task (D-165)', async () => {

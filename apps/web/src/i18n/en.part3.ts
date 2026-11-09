@@ -781,15 +781,15 @@ export const enPart3: Record<string, string> = {
   ההודעה: 'Message',
   'כל לקוח שכותב מקבל הודעה לפי הסטטוס שלך, ובוחר מתי נוח לדבר.':
     'Every customer who writes gets a message based on your status, and chooses when to talk.',
-  'מתחת להודעה הלקוח בוחר מתי נוח לדבר (היום בערב · מחר בבוקר · מחר אחה״צ · זמן אחר), ואתם מקבלים משימה לחזור אליו.':
-    'Under the message, the customer chooses when to talk (this evening · tomorrow morning · tomorrow afternoon · another time), and you get a task to call them back.',
   'לקוחות קובעים לבד': 'Customers book by themselves',
   'מוסיף "לקביעת תור" להודעה: לקוחות רואים זמנים פנויים וקובעים תור או בקשה לאירוע.':
     'Adds "Book now" to the message: customers see free times and book an appointment or an event request.',
   'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
     'Right after the customer decides (a time to talk, an appointment or an event), they get a link, photos and a video from the business. At most once a day.',
-  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): הקישור, התמונות והסרטון. לכל היותר פעם ביום ללקוח.':
-    'Sent right after the customer decides (a time to talk, an appointment or an event): the link, photos and video. At most once a day per customer.',
   'כל הודעה של לקוח מקבלת מענה קצר, והלקוח בוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
     'Every customer message gets a short answer, and the customer chooses when to talk. When a status is on, its message is sent.',
+  'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר, ואתם מקבלים משימה לחזור אליו.':
+    'Under the message, the customer picks an hour to talk (today or tomorrow, 09:00–20:00) or another time, and you get a task to call them back.',
+  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
+    'Sent right after the customer decides (a time to talk, an appointment or an event): the message with the link, then the video and photos.',
 };

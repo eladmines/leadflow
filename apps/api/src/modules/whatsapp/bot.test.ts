@@ -280,7 +280,8 @@ describe('WhatsApp booking bot (D-102)', () => {
     await post(text('היי'));
     expect(last().text).toMatch(/^היי! תודה שכתבת לעיצוב שיער סיגלית/);
     const ids = () => last().choices!.map((c) => c.id);
-    expect(ids()).toEqual(expect.arrayContaining(['cb:mor', 'cb:aft', 'cb:other', 'book']));
+    expect(ids().slice(-2)).toEqual(['cb:other', 'book']);
+    expect(ids()[0]).toMatch(/^cb:\d{4}-\d{2}-\d{2}T\d{2}:00$/);
     await post(text('כמה עולה צבע?'));
     expect(ids()).toContain('cb:other');
     // Booking is one tap away, and booking words go straight to it.
@@ -469,8 +470,8 @@ describe('WhatsApp booking bot (D-102)', () => {
       await post(text('ביטול'));
       expect(texts()).toEqual([
         'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂',
-        // Only the link, photos and video (D-166).
-        'https://instagram.com/sigalit.hair',
+        // The message with its link, then the photo (D-169).
+        'בינתיים, הנה הצצה לעבודות שלנו ✂️\nhttps://instagram.com/sigalit.hair',
         '',
         'כשתרצו, אפשר לקבוע תור כאן 👇',
       ]);
@@ -500,8 +501,7 @@ describe('WhatsApp booking bot (D-102)', () => {
       await post(text('תור'));
       whatsapp.clear();
       await post(tap('showcase'));
-      // No link: just the photo (D-166).
-      expect(whatsapp.sent[0]!.imageBytes).toBeGreaterThan(0);
+      expect(texts()[0]).toBe('הצצה ל[שם העסק]: עיצוב שיער סיגלית 🎧');
       expect(last().choices![0]!.id).toBe('book');
     });
 
@@ -531,7 +531,7 @@ describe('WhatsApp booking bot (D-102)', () => {
         ctx.app.storage,
       );
       expect(await service.nudgeAbandonedBookings()).toBe(1);
-      expect(texts()[0]).toBe('https://instagram.com/sigalit.hair');
+      expect(texts()[0]).toMatch(/^בינתיים, הנה הצצה לעבודות שלנו/);
       expect(await ctx.prisma.whatsAppBotSession.count()).toBe(0);
       expect(await service.nudgeAbandonedBookings()).toBe(0);
 
