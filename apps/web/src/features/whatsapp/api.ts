@@ -122,12 +122,9 @@ export function useSetStatus(businessId: string) {
 }
 
 /** Uploads (replacing) or removes the "meanwhile" video (D-151). */
-/** "A peek"'s video, or a status's own video (D-164) when `statusId` is given. */
-export function useShowcaseVideo(businessId: string, statusId?: string) {
+export function useShowcaseVideo(businessId: string) {
   const queryClient = useQueryClient();
-  const path = statusId
-    ? apiPaths.whatsapp.statusVideo(businessId, statusId)
-    : apiPaths.whatsapp.showcaseVideo(businessId);
+  const path = apiPaths.whatsapp.showcaseVideo(businessId);
   const upload = useMutation({
     mutationFn: (file: File) => {
       const body = new FormData();

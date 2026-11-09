@@ -336,7 +336,6 @@ export function messengerWebhookRoutes(
 const leadParams = z.object({ businessId: z.string(), leadId: z.string() });
 const params = z.object({ businessId: z.string() });
 const numberParams = z.object({ businessId: z.string(), numberId: z.string() });
-const statusParams = z.object({ businessId: z.string(), statusId: z.string().max(40) });
 
 /**
  * The conversation on a lead and replies; the inbox of unclassified numbers and their
@@ -492,31 +491,6 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
         schema: { params, response: { 200: whatsappBotResponseSchema } },
       },
       async (req) => service.deleteShowcaseVideo(tenantOf(req)),
-    );
-
-    // D-164: each status's own video (e.g. "At event"), sent after its photos.
-    app.put(
-      '/whatsapp/statuses/:statusId/video',
-      {
-        preValidation: requirePermission('whatsapp.inbox'),
-        schema: { params: statusParams, response: { 200: whatsappBotResponseSchema } },
-      },
-      async (req) =>
-        service.setStatusVideo(tenantOf(req), req.params.statusId, await readVideo(req)),
-    );
-    app.get(
-      '/whatsapp/statuses/:statusId/video',
-      { preValidation: requirePermission('whatsapp.inbox'), schema: { params: statusParams } },
-      async (req, reply) =>
-        sendVideo(reply, await service.statusVideo(tenantOf(req), req.params.statusId)),
-    );
-    app.delete(
-      '/whatsapp/statuses/:statusId/video',
-      {
-        preValidation: requirePermission('whatsapp.inbox'),
-        schema: { params: statusParams, response: { 200: whatsappBotResponseSchema } },
-      },
-      async (req) => service.deleteStatusVideo(tenantOf(req), req.params.statusId),
     );
 
     app.post(

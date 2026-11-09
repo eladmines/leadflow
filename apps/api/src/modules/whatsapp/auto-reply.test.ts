@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-import sharp from 'sharp';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { apiPaths, AUTO_REPLY_DEFAULT, AUTO_REPLY_DEFAULT_EN } from '@leadflow/shared';
 import {
@@ -155,7 +153,7 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     });
   };
 
-  it('answers with the general reply by default, once per 12 hours, and still tells the team', async () => {
+  it('answers every message with the general reply by default, and still tells the team', async () => {
     const owner = await setup();
     const s = await settings(owner.token);
     expect(s.mode).toBe('auto_reply');
@@ -174,18 +172,11 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(await ctx.prisma.whatsAppMessage.count({ where: { direction: 'OUT' } })).toBe(1);
     expect(await ctx.prisma.notification.count()).toBeGreaterThan(0);
 
-    // A second message within 12 hours gets a short "got it" with the time choices (D-166).
+    // Every message gets the full message with the time choices — no 12-hour limit (D-166).
     await post(text('עוד שאלה'));
     expect(whatsapp.sent).toHaveLength(2);
-    expect(whatsapp.sent[1]!.text).toBe('קיבלנו את ההודעה 🙏 נחזור אליכם בהקדם.');
+    expect(whatsapp.sent[1]!.text).toBe(AUTO_REPLY_DEFAULT.replace('{business}', 'די ג׳יי רון'));
     expect(whatsapp.sent[1]!.choices!.map((c) => c.id)).toContain('cb:other');
-
-    // 13 hours later, the full message again.
-    await ctx.prisma.whatsAppNumber.updateMany({
-      data: { autoReplyAt: new Date(Date.now() - 13 * 3600_000) },
-    });
-    await post(text('שוב היי'));
-    expect(whatsapp.sent[2]!.text).toBe(AUTO_REPLY_DEFAULT.replace('{business}', 'די ג׳יי רון'));
   });
 
   it('"A peek at the business" no longer follows the automatic reply (D-164)', async () => {
@@ -305,22 +296,8 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     const s = saved.json().settings;
     expect(s.autoReplyText).toBe('שלום מ{business}! נחזור בקרוב');
     expect(s.statuses).toEqual([
-      {
-        id: 'event',
-        label: 'באירוע',
-        text: 'אני באירוע, אחזור אחרי 23:00',
-        assetIds: [],
-        preset: true,
-        video: null,
-      },
-      {
-        id: 'c-studio',
-        label: 'באולפן',
-        text: 'באולפן עד הערב 🎧',
-        assetIds: [],
-        preset: false,
-        video: null,
-      },
+      { id: 'event', label: 'באירוע', text: 'אני באירוע, אחזור אחרי 23:00', preset: true },
+      { id: 'c-studio', label: 'באולפן', text: 'באולפן עד הערב 🎧', preset: false },
     ]);
     expect(s.activeStatus).toBeNull();
 
@@ -350,90 +327,6 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     });
     expect(denied.statusCode).toBe(403);
     expect((await uploadVideo(employee.token, mp4())).statusCode).toBe(403);
-  });
-
-  it('"At event" sends its own photos and video after its message (D-164)', async () => {
-    const owner = await setup();
-    const statusVideo = wp.statusVideo(BUSINESS_ID, 'event');
-    const notMp4 = await uploadVideo(
-      owner.token,
-      Buffer.from('not a video'),
-      'video/mp4',
-      statusVideo,
-    );
-    expect(notMp4.statusCode).toBe(400);
-    expect(notMp4.json().error.message).toBe('אפשר להעלות רק סרטון MP4');
-    expect(
-      (await uploadVideo(owner.token, mp4(), 'video/mp4', wp.statusVideo(BUSINESS_ID, 'nope')))
-        .statusCode,
-    ).toBe(404);
-
-    const up = await uploadVideo(owner.token, mp4(4096), 'video/mp4', statusVideo);
-    expect(up.statusCode).toBe(200);
-    const event = () => up.json().settings.statuses.find((x: { id: string }) => x.id === 'event');
-    expect(event().video).toEqual({ sizeBytes: 4096 });
-
-    // A photo from the library; saving the statuses keeps the video.
-    const key = `${BUSINESS_ID}/${randomUUID()}.webp`;
-    const webp = await sharp({
-      create: { width: 40, height: 30, channels: 3, background: '#2c837d' },
-    })
-      .webp()
-      .toBuffer();
-    await ctx.app.storage.put(key, webp, 'image/webp');
-    const asset = await ctx.prisma.asset.create({
-      data: {
-        businessId: BUSINESS_ID,
-        key,
-        mime: 'image/webp',
-        sizeBytes: webp.length,
-        width: 40,
-        height: 30,
-      },
-    });
-    const s = await settings(owner.token);
-    const saved = await save(owner.token, {
-      statuses: s.statuses.map((x: { id: string; label: string; text: string }) => ({
-        id: x.id,
-        label: x.label,
-        text: x.text,
-        assetIds: x.id === 'event' ? [asset.id] : [],
-      })),
-    });
-    expect(saved.statusCode).toBe(200);
-    expect(
-      saved.json().settings.statuses.find((x: { id: string }) => x.id === 'event'),
-    ).toMatchObject({ assetIds: [asset.id], video: { sizeBytes: 4096 } });
-    // Another business's photo can't go into a status.
-    const foreign = await save(owner.token, {
-      statuses: [
-        {
-          id: 'event',
-          label: 'באירוע',
-          text: 'היי',
-          assetIds: ['00000000-0000-4000-8000-000000000000'],
-        },
-      ],
-    });
-    expect(foreign.statusCode).toBe(400);
-
-    await req(ctx.app, 'PUT', wp.status(BUSINESS_ID), owner.token, { id: 'event', until: null });
-    await post(text('היי'));
-    // The status message, its photo, then its video.
-    expect(whatsapp.sent).toHaveLength(3);
-    expect(whatsapp.sent[1]!.imageBytes).toBeGreaterThan(0);
-    expect(whatsapp.sent[2]!.videoBytes).toBe(4096);
-    const stored = await ctx.prisma.whatsAppMessage.findMany({ where: { direction: 'OUT' } });
-    expect(stored.map((m) => m.body)).toEqual(expect.arrayContaining(['[תמונה]', '[וידאו]']));
-
-    // The owner can watch it; then remove it.
-    const watch = await req(ctx.app, 'GET', statusVideo, owner.token);
-    expect(watch.headers['content-type']).toBe('video/mp4');
-    const removed = await req(ctx.app, 'DELETE', statusVideo, owner.token);
-    expect(
-      removed.json().settings.statuses.find((x: { id: string }) => x.id === 'event').video,
-    ).toBeNull();
-    expect((await req(ctx.app, 'GET', statusVideo, owner.token)).statusCode).toBe(404);
   });
 
   it('"A peek" keeps its own video for the booking bot (D-151)', async () => {

@@ -217,20 +217,15 @@ function Choice({
 const mb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 
 /** The "meanwhile" video (D-151): preview, replace or remove; saved as soon as it's chosen. */
-export function ShowcaseVideo({
+function ShowcaseVideo({
   businessId,
   video,
-  statusId,
 }: {
   businessId: string;
   video: { sizeBytes: number } | null;
-  /** A status's own video (D-164) instead of "A peek"'s. */
-  statusId?: string;
 }) {
-  const { upload, remove } = useShowcaseVideo(businessId, statusId);
-  const src = statusId
-    ? apiPaths.whatsapp.statusVideo(businessId, statusId)
-    : apiPaths.whatsapp.showcaseVideo(businessId);
+  const { upload, remove } = useShowcaseVideo(businessId);
+  const src = apiPaths.whatsapp.showcaseVideo(businessId);
   const input = useRef<HTMLInputElement>(null);
   const busy = upload.isPending || remove.isPending;
   return (
@@ -264,7 +259,7 @@ export function ShowcaseVideo({
           type="file"
           accept="video/mp4"
           className="sr-only"
-          aria-label={statusId ? tr('סרטון לסטטוס') : tr('סרטון להצצה')}
+          aria-label={tr('סרטון להצצה')}
           onChange={(e) => {
             const file = e.target.files?.[0];
             e.target.value = '';
