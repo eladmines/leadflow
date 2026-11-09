@@ -4,14 +4,16 @@ import {
   type ReplyMode,
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
+import { Eye, Plus, Trash2 } from 'lucide-react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 import { Alert, Button, EmojiPicker, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useBotSettings, useSetStatus, useUpdateBotSettings } from './api';
 import { toRequest } from './BookingBotCard';
+import { ConversationPreview } from './ConversationPreview';
+import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
 type Saved = WhatsAppBotResponse['settings'];
 
@@ -57,6 +59,7 @@ export function AutoReplyCard({ businessId }: { businessId: string }) {
 }
 
 function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Saved }) {
+  const business = useCurrentBusiness();
   const setStatus = useSetStatus(businessId);
   const update = useUpdateBotSettings(businessId);
   const [adding, setAdding] = useState(false);
@@ -185,6 +188,13 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
         initial={toTag(current ? current.text : (saved.autoReplyText ?? saved.autoReplyDefault))}
         saving={update.isPending}
         onSave={saveMessage}
+        preview={(text) => (
+          <ConversationPreview
+            businessId={businessId}
+            saved={saved}
+            message={toCode(text).replaceAll('{business}', business.name)}
+          />
+        )}
       />
       <p className="-mt-3 text-xs text-ink-muted">
         {tr(
@@ -218,13 +228,17 @@ function Message({
   initial,
   saving,
   onSave,
+  preview,
 }: {
   label: string;
   initial: string;
   saving: boolean;
   onSave: (text: string, onDone: () => void) => void;
+  /** The whole conversation with this message, as the customer sees it (D-172). */
+  preview: (text: string) => ReactNode;
 }) {
   const [text, setText] = useState(initial);
+  const [previewing, setPreviewing] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -253,30 +267,41 @@ function Message({
           setText(next);
         }}
       />
-      {dirty ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            loading={saving}
-            onClick={() => {
-              if (!text.trim()) return setError(tr('יש לכתוב את ההודעה'));
-              setError(null);
-              onSave(text, () => setSaved(true));
-            }}
-          >
-            {tr('שמירת ההודעה')}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setText(initial)}>
-            {tr('ביטול השינויים')}
-          </Button>
-        </div>
-      ) : (
-        saved && (
+      <div className="flex flex-wrap items-center gap-2">
+        {dirty && (
+          <>
+            <Button
+              size="sm"
+              loading={saving}
+              onClick={() => {
+                if (!text.trim()) return setError(tr('יש לכתוב את ההודעה'));
+                setError(null);
+                onSave(text, () => setSaved(true));
+              }}
+            >
+              {tr('שמירת ההודעה')}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setText(initial)}>
+              {tr('ביטול השינויים')}
+            </Button>
+          </>
+        )}
+        <Button
+          variant="secondary"
+          size="sm"
+          aria-expanded={previewing}
+          onClick={() => setPreviewing((v) => !v)}
+        >
+          <Eye aria-hidden className="h-4 w-4" />
+          {previewing ? tr('הסתרת התצוגה המקדימה') : tr('תצוגה מקדימה')}
+        </Button>
+        {!dirty && saved && (
           <p role="status" className="text-sm text-emerald-700">
             {tr('ההודעה נשמרה.')}
           </p>
-        )
-      )}
+        )}
+      </div>
+      {previewing && preview(text)}
     </div>
   );
 }

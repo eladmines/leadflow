@@ -792,4 +792,18 @@ export const enPart3: Record<string, string> = {
     'Under the message, the customer picks an hour to talk (today or tomorrow, 09:00–20:00) or another time. A chosen hour goes into your appointments calendar, and you get a task to call them back.',
   'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
     'Sent right after the customer decides (a time to talk, an appointment or an event): the message with the link, then the video and photos.',
+  'כך תיראה השיחה': 'How the conversation looks',
+  'היי, אפשר לשאול משהו?': 'Hi, can I ask something?',
+  'מתי נוח לדבר?': 'When can we talk?',
+  'האפשרויות ברשימה': 'The list options',
+  'היום ב־18:00': 'Today at 18:00',
+  'היום ב־19:00': 'Today at 19:00',
+  'מחר ב־09:00': 'Tomorrow at 09:00',
+  'זמן אחר': 'Another time',
+  '📅 לקביעת תור': '📅 Book now',
+  'מעולה! נחזור אליכם {0} 🙏': "Great! We'll get back to you {0} 🙏",
+  '"הצצה לעסק" כבויה, אז השיחה מסתיימת כאן.':
+    '"A peek at the business" is off, so the conversation ends here.',
+  'השעות הן דוגמה: הלקוח רואה את השעות הפנויות הקרובות.':
+    'The hours are an example: the customer sees the next free hours.',
 };
