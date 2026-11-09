@@ -17,7 +17,7 @@ import {
 } from '@leadflow/shared';
 import { Eye, ImagePlus, MessageSquareText, RotateCcw, Video, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
-import { Alert, Button, DialogShell, EmojiPicker, Field, Textarea } from '../../components/ui';
+import { Alert, Button, DialogShell, Field, Textarea } from '../../components/ui';
 import { useAssets } from '../media/api';
 import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -485,12 +485,9 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
  */
 /** "Meanwhile, a look at our work" (D-106, for both modes since D-149); on/off is on its card. */
 export function ShowcaseForm({ businessId, settings }: { businessId: string; settings: Saved }) {
-  const business = useCurrentBusiness();
   const update = useUpdateBotSettings(businessId);
   const assets = useAssets(businessId);
   const saved = settings.showcase;
-  const [text, setText] = useState(toTags(saved.text ?? saved.defaultText, settings.flow));
-  const textBox = useRef<HTMLTextAreaElement>(null);
   const [link, setLink] = useState(saved.link ?? '');
   const [assetIds, setAssetIds] = useState(saved.assetIds);
   const [picking, setPicking] = useState(false);
@@ -503,11 +500,10 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setDone(false);
-    const own = toCodes(text).trim();
+    // Only the link, photos and video are sent; no message (D-166).
     const parsed = botShowcaseSchema.safeParse({
       enabled: saved.enabled,
-      // The industry default isn't stored, so it can improve later.
-      text: own === saved.defaultText ? null : own,
+      text: null,
       link,
       assetIds,
     });
@@ -522,42 +518,14 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
     );
   };
 
-  const filled = fillBotText(toCodes(text), {
-    business: business.name,
-    service: 'תור',
-    when: '',
-  });
-
   return (
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-4">
       <p className="text-xs text-ink-muted">
         {tr(
-          'נשלחת אחרי שהלקוח בוחר מתי נוח לדבר, או כשלא סיים לקבוע תור. לכל היותר פעם ביום ללקוח.',
+          'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): הקישור, התמונות והסרטון. לכל היותר פעם ביום ללקוח.',
         )}
       </p>
       <fieldset className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <Textarea
-            ref={textBox}
-            label={tr('ההודעה')}
-            dir="auto"
-            rows={2}
-            value={text}
-            error={errors.text}
-            onChange={(e) => {
-              changed();
-              setText(e.target.value);
-            }}
-          />
-          <EmojiPicker
-            target={textBox}
-            value={text}
-            onInsert={(next) => {
-              changed();
-              setText(next);
-            }}
-          />
-        </div>
         <Field
           label={tr('קישור (לא חובה)')}
           hint={tr(
@@ -618,17 +586,13 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
           <div className="flex flex-col gap-1">
             <span className="text-xs text-ink-muted">{tr('כך הלקוח יראה את זה:')}</span>
             <div dir="auto" className="flex max-w-md flex-col gap-1.5">
-              <p className="whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20">
-                {filled || '—'}
-                {link && (
-                  <>
-                    {'\n'}
-                    <bdi dir="ltr" className="text-brand-700 underline">
-                      {link}
-                    </bdi>
-                  </>
-                )}
-              </p>
+              {link && (
+                <p className="break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm ring-1 ring-success-600/20">
+                  <bdi dir="ltr" className="text-brand-700 underline">
+                    {link}
+                  </bdi>
+                </p>
+              )}
               {assetIds.length > 0 && (
                 <div className="flex gap-1.5">
                   {assetIds.map((id) =>

@@ -11,7 +11,6 @@ import {
   type BotFlow,
   botTextsSchema,
   fillBotText,
-  showcaseDefaultText,
   type BotTextKey,
   type BotTexts,
   type Language,
@@ -175,6 +174,7 @@ const WORDS = {
     apptCancelled: 'התור בוטל ✅\nרוצים לקבוע מועד אחר? אפשר כאן 👇',
     bookNew: '📅 תור חדש',
     talkButton: 'מתי נוח לדבר?',
+    gotIt: 'קיבלנו את ההודעה 🙏 נחזור אליכם בהקדם.',
     slots: { eve: 'היום בערב', mor: 'מחר בבוקר', aft: 'מחר אחה״צ', other: 'זמן אחר' },
     askOtherTime: 'מתי נוח לכם? כתבו יום ושעה 🙂',
     callbackSet: (when: string) => `מעולה! נחזור אליכם ${when} 🙏`,
@@ -250,6 +250,7 @@ const WORDS = {
     apptCancelled: 'Your appointment is cancelled ✅\nWant another time? You can book here 👇',
     bookNew: '📅 New booking',
     talkButton: 'When can we talk?',
+    gotIt: "Got your message 🙏 We'll get back to you soon.",
     slots: {
       eve: 'This evening',
       mor: 'Tomorrow morning',
@@ -444,18 +445,11 @@ export class BookingBot {
       return this.callBack(chat, msg.body.trim().slice(0, 80), now, mode, null);
     }
 
+    // D-166: one automatic answer. Without "customers book by themselves" it's only the message
+    // and "when can we talk?"; the team still gets the customer's message (bell and pop-up).
     if (mode === 'auto_reply') {
-      // The message (status or general) asks when's a good time to talk; the status's photos and
-      // video follow (D-164). Once per 12 hours; the team still gets the message.
-      await this.autoReplier.reply(
-        replies,
-        number,
-        chat.link,
-        await this.teamIsTalking(number.id, now),
-        now,
-        chat.sender,
-        callbackChoices(wordsOf(chat), chat.business.timezone, now, false),
-      );
+      if (await this.teamIsTalking(chat.numberId, now)) return 'none';
+      await this.answer(chat, replies, now, false);
       return 'none';
     }
     // D-154: every message gets an answer, also after "talk to the team" — the bot starts again
@@ -495,7 +489,7 @@ export class BookingBot {
       }
       // Booking words go straight to booking; anything else first asks when to talk (D-165).
       if (!choice && BOOK_TEXT.test(text)) return this.start(chat, now);
-      return this.askCallback(chat, replies, now);
+      return this.answer(chat, replies, now, true);
     }
 
     if (choice === 'human' || (!choice && HUMAN_TEXT.test(text))) {
@@ -526,14 +520,24 @@ export class BookingBot {
 
   // ------------------------------------------------------- when to talk (D-165)
 
-  /** "Not available right now — when's a good time to talk?" (booking mode's first answer). */
-  private async askCallback(
+  /**
+   * The automatic answer (D-165, D-166): every message gets one. The full message — the status's
+   * or the general one, with the status's photos and video — at most once per 12 hours; in between
+   * a short "got it". Both come with "when can we talk?" (and "Book now" when customers book).
+   */
+  private async answer(
     chat: Chat,
     business: Parameters<typeof replyTextOf>[0] & { id: string },
     now: Date,
+    withBooking: boolean,
   ): Promise<BotOutcome> {
+    const choices = callbackChoices(wordsOf(chat), chat.business.timezone, now, withBooking);
+    if (!(await this.autoReplier.claimFullReply(chat.numberId, now))) {
+      await this.say(chat, wordsOf(chat).gotIt, choices);
+      return 'handled';
+    }
     const { text, active } = replyTextOf(business, now);
-    await this.say(chat, text, callbackChoices(wordsOf(chat), chat.business.timezone, now, true));
+    await this.say(chat, text, choices);
     if (active) {
       await this.autoReplier.sendStatusMedia(
         chat.business.id,
@@ -788,6 +792,8 @@ export class BookingBot {
       },
       to: { roles: MANAGERS, userIds: [slot.staffId] },
     });
+    // The decision is made: "A peek at the business" right after (D-166).
+    await this.showcase(chat, {});
     return 'handled';
   }
 
@@ -1152,6 +1158,8 @@ export class BookingBot {
       },
       to: { roles: MANAGERS },
     });
+    // The decision is made: "A peek at the business" right after (D-166).
+    await this.showcase(chat, {});
     return 'handled';
   }
 
@@ -1197,17 +1205,8 @@ export class BookingBot {
     ) {
       return false;
     }
-    const text = fillBotText(
-      sc.text ?? showcaseDefaultText(chat.business.industry, chat.business.language),
-      {
-        business: chat.business.name,
-        service: wordsOf(chat).appointment,
-        when: '',
-      },
-    );
-    await this.say(chat, sc.link ? `${text}\n${sc.link}` : text, undefined, {
-      preview: Boolean(sc.link),
-    });
+    // Only the link (with WhatsApp's preview), photos and video — no message (D-166).
+    if (sc.link) await this.say(chat, sc.link, undefined, { preview: true });
 
     const assets = sc.assetIds.length
       ? await this.prisma.asset.findMany({

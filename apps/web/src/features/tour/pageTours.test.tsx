@@ -98,7 +98,8 @@ describe('page tours (D-096)', () => {
       'שיחות',
       'שלושה חלקים',
       'רענון',
-      // Booking mode: no status, and one save button — the bot's (D-145).
+      // One automatic answer (D-166): the status first, then booking's settings inside it.
+      'הסטטוס שלך',
       'מה קורה כשלקוח כותב',
       'הגדרות קביעת התורים',
       'מה לקוחות יכולים להזמין',

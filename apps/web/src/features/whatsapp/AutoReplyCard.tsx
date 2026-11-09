@@ -6,8 +6,8 @@ import {
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
 import { ImagePlus, Plus, Trash2, X } from 'lucide-react';
-import { useId, useState } from 'react';
-import { Alert, Button, Field, Textarea } from '../../components/ui';
+import { useId, useRef, useState } from 'react';
+import { Alert, Button, EmojiPicker, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -319,12 +319,14 @@ function Message({
   onSave: (text: string, onDone: () => void) => void;
 }) {
   const [text, setText] = useState(initial);
+  const box = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const dirty = text !== initial;
   return (
     <div className="flex flex-col gap-2">
       <Textarea
+        ref={box}
         label={label}
         // Customer messages follow the business's language: direction by content.
         dir="auto"
@@ -335,6 +337,14 @@ function Message({
         onChange={(e) => {
           setSaved(false);
           setText(e.target.value);
+        }}
+      />
+      <EmojiPicker
+        target={box}
+        value={text}
+        onInsert={(next) => {
+          setSaved(false);
+          setText(next);
         }}
       />
       {dirty ? (

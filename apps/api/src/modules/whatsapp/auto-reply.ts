@@ -15,7 +15,7 @@ import {
 } from '@leadflow/shared';
 import { z } from 'zod';
 import type { StorageProvider } from '../../integrations/storage';
-import type { WhatsAppChoice, WhatsAppSender } from '../../integrations/whatsapp';
+import type { WhatsAppSender } from '../../integrations/whatsapp';
 import { AppError } from '../../lib/errors';
 
 /**
@@ -157,32 +157,11 @@ export class AutoReplier {
     private readonly storage: StorageProvider,
   ) {}
 
-  async reply(
-    business: {
-      id: string;
-      name: string;
-      whatsappAutoReplyText: string | null;
-      whatsappStatuses: unknown;
-      whatsappActiveStatus: unknown;
-      language: string;
-    },
-    number: { id: string; phone: string; status: string; autoReplyAt: Date | null },
-    link: { contactId: string | null; leadId: string | null },
-    teamIsTalking: boolean,
-    now: Date,
-    /** This business's WhatsApp (F25). */
-    sender: WhatsAppSender,
-    /** "When's a good time to talk?" choices under the message (D-165). */
-    choices?: { button: string; rows: WhatsAppChoice[] },
-  ): Promise<boolean> {
-    if (teamIsTalking) return false;
-    if (number.autoReplyAt && now.getTime() - number.autoReplyAt.getTime() < AUTO_REPLY_GAP_MS) {
-      return false;
-    }
-    // Claim the slot first, so two messages arriving together get one reply.
+  /** Claims this customer's full automatic message (at most once per 12 hours, D-123). */
+  async claimFullReply(numberId: string, now: Date): Promise<boolean> {
     const claimed = await this.prisma.whatsAppNumber.updateMany({
       where: {
-        id: number.id,
+        id: numberId,
         OR: [
           { autoReplyAt: null },
           { autoReplyAt: { lt: new Date(now.getTime() - AUTO_REPLY_GAP_MS) } },
@@ -190,22 +169,7 @@ export class AutoReplier {
       },
       data: { autoReplyAt: now },
     });
-    if (!claimed.count) return false;
-
-    const { text, active } = replyTextOf(business, now);
-    await this.send(
-      business.id,
-      number,
-      link,
-      choices ? [text, ...choices.rows.map((r) => `• ${r.title}`)].join('\n') : text,
-      () =>
-        choices
-          ? sender.sendList(number.phone, text, choices.button, choices.rows)
-          : sender.sendText(number.phone, text),
-    );
-    // The status's own photos and video (D-164), e.g. "At event".
-    if (active) await this.sendStatusMedia(business.id, number, link, active, sender);
-    return true;
+    return claimed.count > 0;
   }
 
   async sendStatusMedia(
