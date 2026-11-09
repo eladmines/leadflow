@@ -7,6 +7,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bot, MessageCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { useScrollToLatest } from '../../lib/useScrollToLatest';
 import { Alert, Button, Card, Spinner, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
@@ -24,6 +25,7 @@ const timeFmt = new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute:
 export function WhatsAppThread({ leadId }: { leadId: string }) {
   const business = useCurrentBusiness();
   const thread = useWhatsAppThread(business.id, leadId);
+  const listRef = useScrollToLatest<HTMLOListElement>(thread.data?.messages.at(-1)?.id);
   const send = useSendWhatsApp(business.id, leadId);
   const pause = usePauseBot(business.id, leadId);
   const form = useForm<SendWhatsAppRequest>({
@@ -96,6 +98,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         </p>
       ) : (
         <ol
+          ref={listRef}
           aria-label={tr('שיחת וואטסאפ')}
           className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto"
         >
