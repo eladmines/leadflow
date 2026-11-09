@@ -32,6 +32,7 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F23 | Facebook Messenger → leads (D-157)                      | Medium             | F12               | F16           | Full pipeline                       | **Built** |
 | F24 | Unified inbox: all channels, one screen (D-158)         | High               | F12, F23          | F16           | Full pipeline                       | **Built** |
 | F25 | Channels each business connects (D-159)                 | High               | F12, F23, F24     | F16           | Full pipeline                       | **Built** |
+| F26 | Lead attribution: source, ad, campaign (D-162)          | High               | F06, F07, F12     | F20           | Full pipeline                       | Proposed |
 
 ## Dependency graph (core journey)
 
