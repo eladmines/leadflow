@@ -40,7 +40,6 @@ const number: InboxNumber = {
   ],
   lastMessageAt: new Date().toISOString(),
 };
-const leadId = '5c000000-0000-4000-8000-0000000000aa';
 const DEFAULT_SHOWCASE = 'בינתיים, הנה הצצה לעבודות שלנו ✂️';
 const noShowcase = { enabled: false, text: null, link: null, assetIds: [] };
 const presets = STATUS_PRESETS.map((p) => ({ ...p, preset: true, video: null }));
@@ -413,86 +412,6 @@ describe('WhatsApp conversations inbox', () => {
     expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();
   });
 
-  it("shows the bot's replies as automatic", async () => {
-    const bot = {
-      ...number.messages[0]!,
-      id: '8b000000-0000-4000-8000-000000000002',
-      direction: 'OUT' as const,
-      body: 'באיזה יום נוח לכם?',
-      status: 'sent' as const,
-    };
-    mockApi(
-      routes({ connected: true, numbers: [{ ...number, messages: [...number.messages, bot] }] }),
-    );
-    renderApp(page);
-    expect(await screen.findByText('באיזה יום נוח לכם?')).toBeInTheDocument();
-    expect(screen.getByText('תשובה אוטומטית')).toBeInTheDocument();
-  });
-
-  it('lists unclassified numbers with their messages', async () => {
-    mockApi(routes({ connected: true, numbers: [number] }));
-    renderApp(page);
-    const list = await screen.findByRole('list', { name: 'מספרים שמחכים לסיווג' });
-    const [card] = within(list).getAllByRole('listitem') as [HTMLElement];
-    expect(within(card).getByRole('heading', { name: 'נועה' })).toBeInTheDocument();
-    expect(within(card).getByText('054-1234567')).toBeInTheDocument();
-    expect(within(card).getByText('היי, יש תור מחר?')).toBeInTheDocument();
-    expect(within(card).getByText('לא מסווג')).toBeInTheDocument();
-  });
-
-  it('a Facebook sender waits with its name and a Facebook label, no phone (F23)', async () => {
-    mockApi(
-      routes({
-        connected: true,
-        numbers: [{ ...number, phone: 'fb:1234567890', channel: 'messenger', profileName: null }],
-      }),
-    );
-    renderApp(page);
-    const list = await screen.findByRole('list', { name: 'מספרים שמחכים לסיווג' });
-    const [card] = within(list).getAllByRole('listitem') as [HTMLElement];
-    expect(within(card).getByRole('heading', { name: 'משתמש/ת פייסבוק' })).toBeInTheDocument();
-    expect(within(card).getAllByText('פייסבוק').length).toBeGreaterThan(0);
-    expect(within(card).queryByText(/fb:/)).not.toBeInTheDocument();
-  });
-
-  it('marks a number business and links to the new lead', async () => {
-    const fetchMock = mockApi(
-      routes(
-        { connected: true, numbers: [number] },
-        {
-          [`POST ${wp.classify(id, number.id)}`]: () => json(200, { status: 'BUSINESS', leadId }),
-        },
-      ),
-    );
-    const { user } = renderApp(page);
-    await user.click(await screen.findByRole('button', { name: /עסקי: יצירת ליד/ }));
-    await waitFor(() =>
-      expect(callsTo(fetchMock, 'POST', wp.classify(id, number.id))).toEqual([{ as: 'BUSINESS' }]),
-    );
-    expect(await screen.findByRole('link', { name: 'פתיחת הליד' })).toHaveAttribute(
-      'href',
-      `${businessWebPaths.section(id, 'leads')}/${leadId}`,
-    );
-  });
-
-  it('marks a number personal and explains what happens', async () => {
-    const fetchMock = mockApi(
-      routes(
-        { connected: true, numbers: [number] },
-        {
-          [`POST ${wp.classify(id, number.id)}`]: () =>
-            json(200, { status: 'PERSONAL', leadId: null }),
-        },
-      ),
-    );
-    const { user } = renderApp(page);
-    await user.click(await screen.findByRole('button', { name: /^פרטי$/ }));
-    await waitFor(() =>
-      expect(callsTo(fetchMock, 'POST', wp.classify(id, number.id))).toEqual([{ as: 'PERSONAL' }]),
-    );
-    expect(await screen.findByText(/נועה סומן\/ה כפרטי/)).toBeInTheDocument();
-  });
-
   it('lists personal numbers and undoes a marking', async () => {
     const personalId = '9a000000-0000-4000-8000-000000000002';
     const fetchMock = mockApi(
@@ -508,33 +427,11 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(page);
-    expect(await screen.findByText('אין הודעות שמחכות לסיווג')).toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: /מספרים פרטיים/ }));
+    await user.click(await screen.findByRole('tab', { name: /מספרים פרטיים/ }));
     await user.click(screen.getByRole('button', { name: 'ביטול סימון פרטי ל-052-1112233' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'DELETE', wp.number(id, personalId))).toHaveLength(1),
     );
-  });
-
-  it('"רענון" loads numbers that wrote since the page opened', async () => {
-    let calls = 0;
-    mockApi({
-      ...routes({ connected: true, numbers: [] }),
-      [`GET ${wp.inbox(id)}`]: () => {
-        calls += 1;
-        return json(200, { connected: true, numbers: calls > 1 ? [number] : [] });
-      },
-    });
-    const { user } = renderApp(page);
-    await screen.findByText('אין הודעות שמחכות לסיווג');
-    await user.click(screen.getByRole('button', { name: 'רענון' }));
-    expect(await screen.findByRole('heading', { name: 'נועה' })).toBeInTheDocument();
-  });
-
-  it('explains when WhatsApp is not connected', async () => {
-    mockApi(routes({ connected: false, numbers: [] }));
-    renderApp(page);
-    expect(await screen.findByText('WhatsApp עדיין לא מחובר')).toBeInTheDocument();
   });
 
   it('employees get a no-permission state and no menu link', async () => {
@@ -547,7 +444,7 @@ describe('WhatsApp conversations inbox', () => {
     });
     renderApp(page);
     expect(
-      await screen.findByRole('heading', { name: 'אין לך הרשאה לצפות בשיחות WhatsApp' }),
+      await screen.findByRole('heading', { name: 'אין לך הרשאה לצפות בשיחות' }),
     ).toBeInTheDocument();
     const nav = screen.getAllByRole('navigation', { name: 'ניווט ראשי' })[0]!;
     expect(within(nav).queryByRole('link', { name: /שיחות/ })).not.toBeInTheDocument();

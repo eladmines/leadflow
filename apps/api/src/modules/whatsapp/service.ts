@@ -91,7 +91,7 @@ const psidOf = (address: string) => address.slice(MESSENGER_PREFIX.length);
 const FACEBOOK_USER = 'משתמש/ת פייסבוק';
 type Row = MessageRow & { sender: { id: string; fullName: string } | null };
 
-function toDto(row: Row, channel?: string): WhatsAppMessage {
+export function toDto(row: Row, channel?: string): WhatsAppMessage {
   return {
     ...(channel === 'messenger' ? { channel: 'messenger' as const } : {}),
     id: row.id,
@@ -147,7 +147,7 @@ export class WhatsAppService {
   }
 
   /** Any channel connected to this business. */
-  private connectedTo(businessId: string) {
+  connectedTo(businessId: string) {
     return this.businessId === businessId || this.businessFor('messenger') === businessId;
   }
 
@@ -891,27 +891,114 @@ export class WhatsAppService {
       },
     });
     // The reply goes where the customer last wrote (F23): WhatsApp or the Facebook Page.
-    const messenger = lastIn?.number.channel === 'messenger';
+    if (!lastIn) {
+      if (this.businessId !== ctx.businessId) {
+        throw new AppError('CONFLICT', whatsappMessages.notConnected);
+      }
+      throw new AppError(
+        'CONFLICT',
+        lead.contact.phone ? whatsappMessages.windowClosed : whatsappMessages.noPhone,
+      );
+    }
+    return this.deliver(
+      ctx,
+      {
+        numberId: lastIn.numberId,
+        channel: lastIn.number.channel,
+        phone: lastIn.number.phone,
+        contactId: lead.contactId,
+        leadId: lead.id,
+      },
+      lastIn.createdAt,
+      text,
+    );
+  }
+
+  /**
+   * F24 inbox: a reply in one conversation, through its channel. A new sender becomes a customer
+   * first (Business: contact and lead), so the reply is never lost.
+   */
+  async sendOnNumber(
+    ctx: TenantContext,
+    numberId: string,
+    text: string,
+  ): Promise<{ message: WhatsAppMessage; leadId: string | null }> {
+    let number = await this.requireNumber(this.prisma, ctx, numberId);
+    if (number.status === 'PERSONAL') throw new AppError('NOT_FOUND');
+    let leadId: string | null = null;
+    if (number.status === 'UNCLASSIFIED') {
+      leadId = (await this.classify(ctx, numberId, 'BUSINESS')).leadId;
+      number = await this.requireNumber(this.prisma, ctx, numberId);
+    }
+    const contactId =
+      number.channel === 'messenger'
+        ? number.contactId
+        : ((
+            await this.prisma.contact.findFirst({
+              where: { businessId: ctx.businessId, phone: number.phone },
+              orderBy: { createdAt: 'asc' },
+              select: { id: true },
+            })
+          )?.id ?? null);
+    if (!leadId && contactId) {
+      const lead =
+        (await this.prisma.lead.findFirst({
+          where: { businessId: ctx.businessId, contactId, stage: { kind: 'OPEN' } },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true },
+        })) ??
+        (await this.prisma.lead.findFirst({
+          where: { businessId: ctx.businessId, contactId },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true },
+        }));
+      leadId = lead?.id ?? null;
+    }
+    const lastIn = await this.prisma.whatsAppMessage.findFirst({
+      where: { numberId: number.id, direction: 'IN' },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+    const message = await this.deliver(
+      ctx,
+      { numberId: number.id, channel: number.channel, phone: number.phone, contactId, leadId },
+      lastIn?.createdAt ?? null,
+      text,
+    );
+    return { message, leadId };
+  }
+
+  /** Sends through the conversation's channel inside the 24-hour window, and stores the reply. */
+  private async deliver(
+    ctx: TenantContext,
+    to: {
+      numberId: string;
+      channel: string;
+      phone: string;
+      contactId: string | null;
+      leadId: string | null;
+    },
+    lastInAt: Date | null,
+    text: string,
+  ): Promise<WhatsAppMessage> {
+    const messenger = to.channel === 'messenger';
     if (this.businessFor(messenger ? 'messenger' : 'whatsapp') !== ctx.businessId) {
       throw new AppError(
         'CONFLICT',
         messenger ? whatsappMessages.messengerNotConnected : whatsappMessages.notConnected,
       );
     }
-    const phone = lead.contact.phone;
-    if (!messenger && !phone) throw new AppError('CONFLICT', whatsappMessages.noPhone);
-    if (!lastIn || Date.now() - lastIn.createdAt.getTime() > WHATSAPP_WINDOW_MS) {
+    if (!lastInAt || Date.now() - lastInAt.getTime() > WHATSAPP_WINDOW_MS) {
       throw new AppError(
         'CONFLICT',
         messenger ? whatsappMessages.messengerWindowClosed : whatsappMessages.windowClosed,
       );
     }
-
     let id: string;
     try {
       ({ id } = messenger
-        ? await this.messenger.sendText(psidOf(lastIn.number.phone), text)
-        : await this.sender.sendText(phone!, text));
+        ? await this.messenger.sendText(psidOf(to.phone), text)
+        : await this.sender.sendText(to.phone, text));
     } catch (err) {
       const e = err as { name?: string; status?: number; code?: number | null };
       this.log.error(
@@ -923,9 +1010,9 @@ export class WhatsAppService {
     const row = await this.prisma.whatsAppMessage.create({
       data: {
         businessId: ctx.businessId,
-        numberId: lastIn.numberId,
-        contactId: lead.contactId,
-        leadId: lead.id,
+        numberId: to.numberId,
+        contactId: to.contactId,
+        leadId: to.leadId,
         direction: 'OUT',
         waMessageId: id,
         body: text,
@@ -934,6 +1021,6 @@ export class WhatsAppService {
       },
       include: { sender },
     });
-    return toDto(row, lastIn.number.channel);
+    return toDto(row, to.channel);
   }
 }

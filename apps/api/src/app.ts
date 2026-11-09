@@ -37,6 +37,7 @@ import { reportTenantRoutes } from './modules/reports/routes';
 import { registerMediaServing } from './modules/media/serve';
 import { createWhatsAppSender, type WhatsAppSender } from './integrations/whatsapp';
 import { createMessengerSender, type MessengerSender } from './integrations/messenger';
+import { conversationTenantRoutes } from './modules/conversations/routes';
 import {
   messengerWebhookRoutes,
   whatsappTenantRoutes,
@@ -183,6 +184,7 @@ export async function buildApp({
       await scope.register(reportTenantRoutes);
       await scope.register(whatsappTenantRoutes(whatsapp));
       await scope.register(notificationTenantRoutes);
+      await scope.register(conversationTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );
