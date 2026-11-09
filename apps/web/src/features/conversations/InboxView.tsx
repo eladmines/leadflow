@@ -13,6 +13,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { Briefcase, ChevronLeft, ChevronRight, MessagesSquare, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useScrollToLatest } from '../../lib/useScrollToLatest';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Alert, Button, EmptyState, Spinner, Textarea } from '../../components/ui';
@@ -65,7 +66,9 @@ export function InboxView({ businessId }: { businessId: string }) {
   ];
 
   return (
-    <div className="grid min-h-[32rem] overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card md:h-[70vh] md:grid-cols-[22rem_1fr]">
+    // Fits the screen under the page's title and tabs (D-174): the list and the open chat scroll
+    // inside it, the page doesn't, and the reply box stays in view — on phones too.
+    <div className="grid h-[calc(100dvh-11rem)] min-h-[24rem] overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card md:h-[calc(100dvh-14rem)] md:grid-cols-[22rem_1fr]">
       <div
         className={cn(
           'flex min-h-0 flex-col border-surface-border md:border-e',
@@ -254,6 +257,7 @@ function ConversationPane({
 }) {
   const queryClient = useQueryClient();
   const convo = useConversation(businessId, id);
+  const listRef = useScrollToLatest<HTMLOListElement>(convo.data?.messages.at(-1)?.id);
   const markRead = useMarkRead(businessId);
   const classify = useClassifyNumber(businessId);
   const reply = useReply(businessId, id);
@@ -356,6 +360,7 @@ function ConversationPane({
       )}
 
       <ol
+        ref={listRef}
         aria-label={tr('הודעות בשיחה')}
         className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3"
       >
