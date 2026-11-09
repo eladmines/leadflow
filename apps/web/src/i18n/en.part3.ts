@@ -280,8 +280,8 @@ export const enPart3: Record<string, string> = {
   'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות.':
     'The stage, the owner, estimated value, when to follow up, and tags.',
   'שיחת וואטסאפ': 'WhatsApp conversation',
-  'שיחות WhatsApp': 'WhatsApp conversations',
-  'מחכים לסיווג': 'Waiting to be classified',
+  שיחות: 'Conversations',
+  השיחות: 'Conversations',
   'עסקי: יצירת ליד': 'Business: create lead',
   עסקי: 'Business',
   פרטי: 'Personal',
@@ -330,22 +330,11 @@ export const enPart3: Record<string, string> = {
   'אחרי שינוי סיסמה, החיבור במכשירים האחרים מתנתק ונשלח אליכם מייל.':
     'After a password change, your other devices are signed out and you get an email.',
   'בוחרים אם לקבל מייל על כל פנייה חדשה.': 'Choose whether to get an email for every new inquiry.',
-  'נוסף/ה כליד.': 'was added as a lead.',
   'פתיחת הליד': 'Open the lead',
   '{0} סומן/ה כפרטי. ההודעות נמחקו, והודעות הבאות מהמספר הזה לא ייכנסו למערכת.':
     '{0} was marked as personal. The messages were deleted, and later messages from this number will stay out.',
-  'טוענים את השיחות…': 'Loading conversations…',
   'WhatsApp עדיין לא מחובר': "WhatsApp isn't connected yet",
-  'אחרי חיבור מספר WhatsApp לעסק, הודעות ממספרים חדשים יופיעו כאן לסיווג.':
-    'Once a WhatsApp number is connected to the business, messages from new numbers will show up here to classify.',
-  'אין הודעות שמחכות לסיווג': 'No messages waiting to be classified',
-  'הודעות מלקוחות מוכרים נכנסות ישר לליד שלהם. כשמספר חדש יכתוב, הוא יופיע כאן.':
-    'Messages from known customers go straight to their lead. When a new number writes, it shows up here.',
-  'מספרים שמחכים לסיווג': 'Numbers waiting to be classified',
-  'לא מסווג': 'Unclassified',
   'הודעות מ{0}': 'Messages from {0}',
-  'פרטי: ההודעות יימחקו, והמספר לא ייכנס למערכת גם בהמשך.':
-    'Personal: the messages are deleted, and the number stays out from now on.',
   'מספרים פרטיים (': 'Personal numbers (',
   'הודעות מהמספרים האלה לא נשמרות. ביטול הסימון מחזיר את ההודעה הבאה מהמספר לתיבה.':
     "Messages from these numbers aren't saved. Undoing a marking sends the number's next message back to the inbox.",
@@ -365,8 +354,8 @@ export const enPart3: Record<string, string> = {
   מקרא: 'Legend',
   'הודעות חדשות מגיעות לבד כל כמה שניות. הכפתור מביא אותן מיד.':
     'New messages arrive on their own every few seconds. This button fetches them right away.',
-  'מספר שכותב בפעם הראשונה מחכה כאן עם ההודעות שלו, עד שתחליטו מי זה. תשובות של הבוט מסומנות "תשובה אוטומטית".':
-    'A number writing for the first time waits here with its messages until you decide who it is. The bot\'s replies are marked "Automatic reply".',
+  'החדשות למעלה. נקודה ירוקה: וואטסאפ, כחולה: פייסבוק. "חדש": פונה שעוד לא החלטתם מי הוא. "לא נקראו" ו"חדשים" מסננים את הרשימה.':
+    'Newest first. Green dot: WhatsApp, blue: Facebook. "New": a sender you haven\'t decided about yet. "Unread" and "New" filter the list.',
   'יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו, ושם גם עונים לו.':
     'Creates a lead from the messages. From now on every message from this number goes to its lead, where you also reply.',
   'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שלא מבינים אותו פעמיים, עובר אליכם מיד. לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
@@ -510,20 +499,16 @@ export const enPart3: Record<string, string> = {
   'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.':
     'The customer answers a few questions about the event (type, date, guests and area), and the request waits for your approval on the Appointments page.',
   הודעות: 'Messages',
-  'הודעות ממספרים חדשים, ותשובה אוטומטית ללקוחות כשאתם עסוקים.':
-    "Messages from new numbers, and an automatic reply to customers when you're busy.",
   'חלקי העמוד': 'Page sections',
-  'מספרים חדשים שכתבו לכם. החליטו: לקוח (נוצר ליד) או פרטי (ההודעות נמחקות).':
-    'New numbers that wrote to you. Decide: customer (a lead is created) or personal (the messages are deleted).',
   'טוענים…': 'Loading…',
   'אין מספרים פרטיים': 'No personal numbers',
   'מספר שתסמנו כפרטי (חברים, משפחה) יופיע כאן, וההודעות שלו לא יישמרו.':
     "A number you mark as personal (friends, family) shows here, and its messages aren't saved.",
-  'כאן מנהלים את הוואטסאפ של העסק: מספרים חדשים שכתבו לכם, והתשובה האוטומטית ללקוחות. לקוחות מוכרים לא מגיעים לכאן — ההודעות שלהם נכנסות ישר לליד שלהם.':
-    "Your business's WhatsApp: new numbers that wrote to you, and the automatic reply to customers. Known customers don't come here — their messages go straight to their lead.",
+  'כל ההודעות מלקוחות, מוואטסאפ ומפייסבוק, במקום אחד. פותחים שיחה ועונים מכאן, בערוץ שבו הלקוח כתב.':
+    "All your customers' messages, from WhatsApp and Facebook, in one place. Open a conversation and reply from here, on the channel the customer wrote on.",
   'שלושה חלקים': 'Three parts',
-  '"הודעות": מספרים חדשים שמחכים להחלטה שלכם. "מענה אוטומטי": מה הלקוח מקבל כשהוא כותב, והסטטוס שלכם. "מספרים פרטיים": מספרים שסימנתם כפרטיים.':
-    '"Messages": new numbers waiting for your decision. "Automatic reply": what customers get when they write, and your status. "Personal numbers": numbers you marked as personal.',
+  '"הודעות": כל השיחות. "מענה אוטומטי": מה הלקוח מקבל כשהוא כותב, והסטטוס שלכם. "מספרים פרטיים": מספרים שסימנתם כפרטיים.':
+    '"Messages": all your conversations. "Automatic reply": what customers get when they write, and your status. "Personal numbers": numbers you marked personal.',
   // My website: two choices (D-130)
   'יש לכם כבר אתר?': 'Already have a website?',
   'בוחרים תבנית מוכנה, והיא מתמלאת בפרטי העסק.':
@@ -638,4 +623,29 @@ export const enPart3: Record<string, string> = {
   'פייסבוק עדיין לא מחובר לעסק הזה': 'Facebook is not connected to this business yet',
   'אפשר לענות בפייסבוק רק עד 24 שעות אחרי ההודעה האחרונה של הלקוח.':
     "You can reply on Facebook only up to 24 hours after the customer's last message.",
+  'לא נקראו': 'Unread',
+  חדשים: 'New',
+  'סינון שיחות': 'Filter conversations',
+  'ערוץ:': 'Channel:',
+  'כל הערוצים': 'All channels',
+  'טוענים שיחות…': 'Loading conversations…',
+  'עדיין אין שיחות': 'No conversations yet',
+  'אין שיחות כאן': 'No conversations here',
+  'השיחות יופיעו כאן אחרי חיבור WhatsApp או פייסבוק לעסק.':
+    'Conversations will appear here once WhatsApp or Facebook is connected to the business.',
+  'הודעות מלקוחות בוואטסאפ ובפייסבוק יופיעו כאן.':
+    'Messages from customers on WhatsApp and Facebook will appear here.',
+  'עוד שיחות': 'More conversations',
+  'בחרו שיחה': 'Choose a conversation',
+  'לחיצה על שיחה ברשימה פותחת אותה כאן, עם אפשרות לענות.':
+    'Click a conversation in the list to open it here and reply.',
+  'אתם:': 'You:',
+  'לא נקראה': 'Unread',
+  'טוענים את השיחה…': 'Loading the conversation…',
+  'פונה חדש. לקוח? נפתח לו ליד. פרטי? ההודעות יימחקו.':
+    'A new sender. A customer? A lead is opened. Personal? The messages are deleted.',
+  'הודעות בשיחה': 'Messages in the conversation',
+  'חזרה לשיחות': 'Back to conversations',
+  'כל ההודעות מוואטסאפ ומפייסבוק במקום אחד, ותשובה אוטומטית ללקוחות כשאתם עסוקים.':
+    'All your messages from WhatsApp and Facebook in one place, plus an automatic reply when you are busy.',
 };

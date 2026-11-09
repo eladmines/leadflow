@@ -90,7 +90,7 @@ describe('page tours (D-096)', () => {
       await user.click(next);
     }
     expect(titles).toEqual([
-      'שיחות WhatsApp',
+      'שיחות',
       'שלושה חלקים',
       'רענון',
       // Booking mode: no status, and one save button — the bot's (D-145).

@@ -2,6 +2,7 @@ import { businessWebPaths, can, roleLabels, type Business } from '@leadflow/shar
 import { LogOut, Search } from 'lucide-react';
 import { useId } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useUnreadConversations } from '../conversations/api';
 import { Alert, Logo } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { useMe } from '../auth/api';
@@ -95,6 +96,20 @@ export function UserCard({
  * page on a light blue row (D-131). Sections not built yet stay out of the menu. On desktop search, the bell,
  * the flags and the user live in the top bar; the drawer carries them itself.
  */
+/** Unread conversations next to "Conversations" (F24); owners and managers only. */
+function UnreadBadge({ business }: { business: Business }) {
+  const count =
+    useUnreadConversations(business.id, can(business.role, 'whatsapp.inbox')).data?.unreadCount ??
+    0;
+  if (!count) return null;
+  return (
+    <span className="rounded-full bg-emerald-500 px-1.5 text-xs font-semibold text-white">
+      {count > 99 ? '99+' : count}
+      <span className="sr-only"> {tr('לא נקראו')}</span>
+    </span>
+  );
+}
+
 export function Sidebar({
   business,
   onNavigate,
@@ -170,6 +185,7 @@ export function Sidebar({
                   >
                     <Icon aria-hidden className={cn('h-[18px] w-[18px] shrink-0', color.icon)} />
                     <span className="flex-1">{label}</span>
+                    {segment === 'conversations' && <UnreadBadge business={business} />}
                   </NavLink>
                 </li>
               ))}

@@ -122,6 +122,9 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.quotes.list(testBusiness.id)}`]: () => json(200, { quotes: [] }),
     [`GET ${apiPaths.whatsapp.inbox(testBusiness.id)}`]: () =>
       json(200, { connected: false, numbers: [] }),
+    [`GET ${apiPaths.conversations.list(testBusiness.id)}`]: () =>
+      json(200, { connected: false, conversations: [], nextCursor: null, unreadCount: 0 }),
+    [`GET ${apiPaths.conversations.unread(testBusiness.id)}`]: () => json(200, { unreadCount: 0 }),
     [`GET ${apiPaths.notifications.list(testBusiness.id)}`]: () =>
       json(200, { notifications: [], unreadCount: 0 }),
     [`GET ${apiPaths.media.assets(testBusiness.id)}`]: () =>
