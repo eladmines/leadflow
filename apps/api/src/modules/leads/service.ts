@@ -1,11 +1,13 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import {
   ACTIVITY_TYPES,
+  attributionSchema,
   can,
   crmMessages,
   DEFAULT_PIPELINE_STAGES,
   normalizeIsraeliPhone,
   type Activity,
+  type Attribution,
   type createLeadRequestSchema,
   type DuplicateContact,
   type Lead,
@@ -48,6 +50,7 @@ function toLeadDto(row: LeadRow): Lead {
     stage: row.stage,
     source: row.source,
     sourceUrl: row.sourceUrl,
+    attribution: readAttribution(row.attribution),
     message: row.message,
     owner: row.owner ? { id: row.owner.id, name: row.owner.fullName } : null,
     expectedValue: row.expectedValue,
@@ -60,6 +63,16 @@ function toLeadDto(row: LeadRow): Lead {
     updatedAt: row.updatedAt.toISOString(),
   };
 }
+
+/** Stored JSON → the contract; anything unexpected reads as "unknown". */
+function readAttribution(value: Prisma.JsonValue): Attribution | null {
+  const parsed = attributionSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+/** Columns for a lead's attribution (F26). */
+export const attributionData = (a: Attribution | null | undefined) =>
+  a ? { attribution: a as Prisma.InputJsonObject, attributionSource: a.source } : {};
 
 type ListQuery = z.output<typeof leadListQuerySchema>;
 type CreateInput = z.output<typeof createLeadRequestSchema>;
@@ -90,6 +103,8 @@ export interface WebsiteSubmission {
   idempotencyKey: string;
   ipHash: string;
   sourceUrl: string;
+  /** F26: from the site's `lf_src` cookie; none = a direct visit. */
+  attribution?: Attribution | null;
   data: LeadSubmission;
 }
 
@@ -128,6 +143,7 @@ export class LeadService {
             stageId: first!.id,
             source: 'website_form',
             sourceUrl: input.sourceUrl,
+            ...attributionData(input.attribution),
             message,
           },
           include: leadInclude,
@@ -229,6 +245,12 @@ export class LeadService {
               ? [{ ownerId: query.ownerId }]
               : []),
           ...(query.source ? [{ source: query.source }] : []),
+          ...(query.from
+            ? [{ attributionSource: query.from === 'unknown' ? null : query.from }]
+            : []),
+          ...(query.campaign
+            ? [{ attribution: { path: ['campaign'], equals: query.campaign } }]
+            : []),
           ...(query.tag ? [{ tags: { has: query.tag } }] : []),
         ],
       },

@@ -342,22 +342,26 @@ model PipelineStage {
 }
 
 model Lead {
-  id            String     @id @default(uuid()) @db.Uuid
-  businessId    String     @map("business_id") @db.Uuid
-  contactId     String     @map("contact_id") @db.Uuid
-  stageId       String     @map("stage_id") @db.Uuid
+  id                String     @id @default(uuid()) @db.Uuid
+  businessId        String     @map("business_id") @db.Uuid
+  contactId         String     @map("contact_id") @db.Uuid
+  stageId           String     @map("stage_id") @db.Uuid
   /// Assigned team member (F08). Employees only see leads assigned to them.
-  ownerId       String?    @map("owner_id") @db.Uuid
-  source        LeadSource
-  sourceUrl     String?    @map("source_url") @db.VarChar(300)
-  message       String?    @db.VarChar(1000)
+  ownerId           String?    @map("owner_id") @db.Uuid
+  source            LeadSource
+  sourceUrl         String?    @map("source_url") @db.VarChar(300)
+  /// F26: source, ad and campaign behind the lead (shared `attributionSchema`); null = unknown.
+  attribution       Json?
+  /// F26: `attribution.source`, for filters and reports.
+  attributionSource String?    @map("attribution_source") @db.VarChar(20)
+  message           String?    @db.VarChar(1000)
   /// Expected deal value in whole shekels (F08).
-  expectedValue Int?       @map("expected_value")
-  nextActionAt  DateTime?  @map("next_action_at") @db.Timestamptz(3)
+  expectedValue     Int?       @map("expected_value")
+  nextActionAt      DateTime?  @map("next_action_at") @db.Timestamptz(3)
   /// Free labels (max 10 × 30 chars, validated in shared).
-  tags          String[]   @default([])
-  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  tags              String[]   @default([])
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
   contact      Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
@@ -374,6 +378,7 @@ model Lead {
   @@index([businessId, stageId])
   @@index([businessId, ownerId])
   @@index([businessId, nextActionAt])
+  @@index([businessId, attributionSource])
   @@map("leads")
 }
 
@@ -658,6 +663,8 @@ model WhatsAppNumber {
   botPaused      Boolean              @default(false) @map("bot_paused")
   /// Last automatic reply to this number (D-123): at most one per 12 hours.
   autoReplyAt    DateTime?            @map("auto_reply_at") @db.Timestamptz(3)
+  /// F26: the latest Meta ad this sender came from, given to their lead when it's created.
+  attribution    Json?
   /// F24 inbox: the latest message in or out, and whether a customer message waits unread.
   /// Kept by a database trigger on whatsapp_messages (see the migration), never by app code.
   lastMessageAt  DateTime?            @map("last_message_at") @db.Timestamptz(3)

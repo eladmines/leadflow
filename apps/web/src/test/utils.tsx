@@ -99,6 +99,8 @@ const emptyReport: ReportSummary = {
   series: { unit: 'day', points: [] },
   byStage: [],
   bySource: [],
+  byAttribution: [],
+  byCampaign: [],
 };
 
 export function mockApi(routes: Record<string, Handler>) {

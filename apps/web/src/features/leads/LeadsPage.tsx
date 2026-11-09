@@ -3,6 +3,7 @@ import {
   businessWebPaths,
   can,
   formatIsraeliPhone,
+  ATTRIBUTION_SOURCES,
   LEAD_SOURCES,
   leadSourceLabels,
   type Lead,
@@ -53,6 +54,7 @@ import {
   useUpdateLead,
 } from './api';
 import { NewLeadDialog } from './NewLeadDialog';
+import { sourceName } from './Attribution';
 import { stageColor } from './stageColors';
 import { useWhatsAppInbox } from '../whatsapp/api';
 import { tr, intlLocale } from '../../i18n';
@@ -445,6 +447,8 @@ export function LeadsPage() {
     stageId: params.get('stageId') ?? undefined,
     ownerId: (params.get('ownerId') as LeadListQuery['ownerId']) ?? undefined,
     source: (params.get('source') as LeadListQuery['source']) ?? undefined,
+    from: (params.get('from') as LeadListQuery['from']) ?? undefined,
+    campaign: params.get('campaign') ?? undefined,
     tag: params.get('tag') ?? undefined,
   };
   const leads = useLeads(business.id, query);
@@ -468,17 +472,30 @@ export function LeadsPage() {
     }
   };
   const tags = useLeadTags(business.id).data ?? [];
-  const filtered = Boolean(query.q || query.stageId || query.ownerId || query.source || query.tag);
-  const activeFilters = [query.stageId, query.ownerId, query.source, query.tag].filter(
-    Boolean,
-  ).length;
+  const filtered = Boolean(
+    query.q ||
+    query.stageId ||
+    query.ownerId ||
+    query.source ||
+    query.from ||
+    query.campaign ||
+    query.tag,
+  );
+  const activeFilters = [
+    query.stageId,
+    query.ownerId,
+    query.source,
+    query.from,
+    query.campaign,
+    query.tag,
+  ].filter(Boolean).length;
   // Filters sit behind one button (D-138); open on arrival when some are already on.
   const [filtersOpen, setFiltersOpen] = useState(activeFilters > 0);
   const clearFilters = () =>
     setParams(
       (p) => {
         const next = new URLSearchParams(p);
-        for (const k of ['stageId', 'ownerId', 'source', 'tag']) next.delete(k);
+        for (const k of ['stageId', 'ownerId', 'source', 'from', 'campaign', 'tag']) next.delete(k);
         return next;
       },
       { replace: true },
@@ -681,6 +698,30 @@ export function LeadsPage() {
                 </option>
               ))}
             </select>
+            <select
+              aria-label={tr('סינון לפי מאיפה הגיע')}
+              value={query.from ?? ''}
+              onChange={(e) => setParam('from', e.target.value || undefined)}
+              className={selectClass}
+            >
+              <option value="">{tr('מכל מקום')}</option>
+              {[...ATTRIBUTION_SOURCES, 'unknown' as const].map((s) => (
+                <option key={s} value={s}>
+                  {sourceName(s)}
+                </option>
+              ))}
+            </select>
+            {query.campaign && (
+              <button
+                type="button"
+                onClick={() => setParam('campaign', undefined)}
+                aria-label={tr('הסרת הסינון לפי קמפיין')}
+                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-900 ring-1 ring-inset ring-amber-200"
+              >
+                {tr('קמפיין')}: <bdi>{query.campaign}</bdi>
+                <X aria-hidden className="h-3.5 w-3.5" />
+              </button>
+            )}
             {(tags.length > 0 || query.tag) && (
               <select
                 aria-label={tr('סינון לפי תגית')}

@@ -20,3 +20,4 @@ export * from './whatsapp-en';
 export * from './conversations';
 export * from './channels';
 export * from './notifications';
+export * from './attribution';

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { phoneSchema } from './business';
+import { ATTRIBUTION_SOURCES, attributionSchema } from './attribution';
 
 /**
  * F07 — Lead capture. Visitors submit the contact-section form on a published site (a plain HTML
@@ -119,6 +120,8 @@ export const leadSchema = z.object({
   stage: z.object({ id: z.string().uuid(), name: z.string(), kind: z.enum(STAGE_KINDS) }),
   source: z.enum(LEAD_SOURCES),
   sourceUrl: z.string().nullable(),
+  /** F26: the source, ad and campaign behind the lead; null/absent for older leads ("Unknown"). */
+  attribution: attributionSchema.nullable().optional(),
   message: z.string().nullable(),
   /** Assigned team member (F08). */
   owner: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
@@ -182,6 +185,9 @@ export const leadListQuerySchema = z.object({
   stageId: optionalUuidParam,
   ownerId: z.union([z.literal('none'), uuid]).optional(),
   source: z.enum(LEAD_SOURCES).optional(),
+  /** F26: where it came from; `unknown` = no attribution recorded. */
+  from: z.enum([...ATTRIBUTION_SOURCES, 'unknown']).optional(),
+  campaign: z.string().trim().max(100).optional(),
   tag: z.string().trim().max(30).optional(),
 });
 export type LeadListQuery = z.input<typeof leadListQuerySchema>;

@@ -2,6 +2,7 @@ import { apiPaths, businessWebPaths, type ReportSummary } from '@leadflow/shared
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { shekel } from '../leads/api';
 import { json, me, mockApi, renderApp, testBusiness, testStages, testUser } from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -30,6 +31,22 @@ const summary: ReportSummary = {
     { source: 'manual', count: 5 },
     { source: 'whatsapp', count: 0 },
   ],
+  byAttribution: [
+    { source: 'google_ads', name: null, leads: 6, won: 2, lost: 2, wonValue: 3000 },
+    { source: 'utm', name: 'newsletter', leads: 2, won: 0, lost: 0, wonValue: 0 },
+    { source: 'unknown', name: null, leads: 4, won: 1, lost: 0, wonValue: 1500 },
+  ],
+  byCampaign: [
+    {
+      source: 'google_ads',
+      name: null,
+      campaign: 'summer',
+      leads: 6,
+      won: 2,
+      lost: 2,
+      wonValue: 3000,
+    },
+  ],
 };
 
 describe('reports page', () => {
@@ -47,13 +64,41 @@ describe('reports page', () => {
     expect(screen.getByRole('listitem', { name: '28.10: 5 פניות' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'הצגה כטבלה' }));
-    const table = screen.getByRole('table');
+    // The chart's table comes first (the sources tables follow).
+    const table = screen.getAllByRole('table')[0]!;
     expect(within(table).getByRole('row', { name: /27\.10 0/ })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '90 יום' }));
     expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith('/reports/summary?days=90'))).toBe(
       true,
     );
+  });
+
+  it('shows where customers come from, each row opening those leads (F26)', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.reports.summary(id)}`]: () => json(200, summary),
+    });
+    renderApp(page);
+    const bySource = await screen.findByRole('table', { name: 'לקוחות לפי מקור' });
+    const google = within(bySource).getByRole('row', { name: /Google Ads/ });
+    expect(
+      within(google)
+        .getAllByRole('cell')
+        .map((c) => c.textContent),
+    ).toEqual(['Google Ads', '6', '2', shekel.format(3000), '50%']);
+    expect(within(bySource).getByText('newsletter')).toBeInTheDocument();
+    expect(within(bySource).getByText('לא ידוע')).toBeInTheDocument();
+    expect(within(google).getByRole('link')).toHaveAttribute(
+      'href',
+      `${businessWebPaths.section(id, 'leads')}?view=list&from=google_ads`,
+    );
+    const campaigns = screen.getByRole('table', { name: 'הקמפיינים המובילים' });
+    expect(within(campaigns).getByRole('link')).toHaveAttribute(
+      'href',
+      `${businessWebPaths.section(id, 'leads')}?view=list&from=google_ads&campaign=summer`,
+    );
+    expect(screen.getByText('איך מסמנים מודעות כדי לראות אותן כאן?')).toBeInTheDocument();
   });
 
   it('employees see a no-permission state and no nav link', async () => {

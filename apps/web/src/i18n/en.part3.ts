@@ -692,4 +692,43 @@ export const enPart3: Record<string, string> = {
     'WhatsApp messages from customers reach your conversations inbox, along with the automatic reply and booking.',
   'הודעות לדף הפייסבוק של העסק יגיעו לתיבת השיחות, ותוכלו לענות להם משם.':
     "Messages to the business's Facebook Page reach your conversations inbox, and you reply from there.",
+  'גוגל (חיפוש)': 'Google (search)',
+  'מודעות פייסבוק / אינסטגרם': 'Facebook / Instagram ads',
+  'פייסבוק / אינסטגרם': 'Facebook / Instagram',
+  'קמפיין אחר': 'Other campaign',
+  'אתר אחר': 'Other site',
+  ישיר: 'Direct',
+  'לא ידוע': 'Unknown',
+  קמפיין: 'Campaign',
+  מודעה: 'Ad',
+  'מילת חיפוש': 'Keyword',
+  'מודעה / גרסה': 'Ad version',
+  סוג: 'Type',
+  'הגיע מהאתר': 'Came from site',
+  'עמוד ראשון באתר': 'Landing page',
+  'מאיפה הגיע': 'Where it came from',
+  'לליד הזה לא נשמר מקור. לידים חדשים מהאתר ומהמודעות יראו כאן מאיפה הגיעו.':
+    'No source was saved for this lead. New leads from your website and ads show here where they came from.',
+  'סינון לפי מאיפה הגיע': 'Filter by where it came from',
+  'מכל מקום': 'From anywhere',
+  'הסרת הסינון לפי קמפיין': 'Remove the campaign filter',
+  'מאיפה מגיעים הלקוחות': 'Where your customers come from',
+  'לפי מקור ולפי קמפיין: כמה פניות, כמה הפכו ללקוחות (שלב "נסגר" או הצעת מחיר שאושרה) וכמה כסף.':
+    'By source and by campaign: how many leads, how many became customers (the Won stage or an accepted quote), and how much money.',
+  'אין פניות בתקופה הזו.': 'No leads in this period.',
+  'לקוחות לפי מקור': 'Customers by source',
+  מקור: 'Source',
+  'הקמפיינים המובילים': 'Top campaigns',
+  'הפכו ללקוחות': 'Became customers',
+  'שווי עסקאות': 'Deal value',
+  'אחוז סגירה': 'Close rate',
+  'איך מסמנים מודעות כדי לראות אותן כאן?': 'How do I tag my ads so they show here?',
+  'Google Ads: הפעילו "תיוג אוטומטי" (Auto-tagging) בהגדרות החשבון. כל לחיצה על מודעה תסומן לבד.':
+    'Google Ads: turn on Auto-tagging in your account settings. Every ad click is tagged automatically.',
+  'פייסבוק, אינסטגרם, ניוזלטר וכל קישור אחר: הוסיפו לכתובת האתר את שם המקור והקמפיין, למשל:':
+    'Facebook, Instagram, newsletters and any other link: add the source and campaign to your website address, for example:',
+  'מודעות "לחיצה לוואטסאפ" בפייסבוק ובאינסטגרם מסומנות לבד. ממודעות גוגל לוואטסאפ: כתבו הודעה פתוחה אחרת לכל קמפיין.':
+    'Facebook and Instagram "Click to WhatsApp" ads are tagged automatically. For Google ads that open WhatsApp: use a different pre-filled message per campaign.',
+  'האתר שומר את המקור בעוגייה קטנה ל-30 יום, בלי פרטים אישיים, עד שהמבקר משאיר פרטים.':
+    'Your website keeps the source in a small cookie for 30 days, with no personal details, until the visitor leaves their details.',
 };

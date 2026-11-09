@@ -1,5 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
-import { LEAD_SOURCES, type ReportSummary } from '@leadflow/shared';
+import {
+  attributionName,
+  attributionSchema,
+  LEAD_SOURCES,
+  type AttributionReportRow,
+  type ReportSummary,
+} from '@leadflow/shared';
 import type { TenantContext } from '../../plugins/tenant';
 import { ensureStages } from '../leads/service';
 
@@ -45,7 +51,15 @@ export class ReportService {
     const [leads, previous] = await Promise.all([
       this.prisma.lead.findMany({
         where: { businessId: ctx.businessId, createdAt: { gte: from, lt: to } },
-        select: { id: true, createdAt: true, source: true, stageId: true, expectedValue: true },
+        select: {
+          id: true,
+          createdAt: true,
+          source: true,
+          stageId: true,
+          expectedValue: true,
+          attribution: true,
+          quotes: { where: { status: 'ACCEPTED' }, select: { id: true }, take: 1 },
+        },
       }),
       this.prisma.lead.count({
         where: { businessId: ctx.businessId, createdAt: { gte: prevFrom, lt: from } },
@@ -73,6 +87,44 @@ export class ReportService {
       source,
       count: leads.filter((l) => l.source === source).length,
     }));
+
+    // F26: where customers come from. A customer = a Won stage or an accepted quote.
+    const isCustomer = (l: (typeof leads)[number]) =>
+      kindOf.get(l.stageId) === 'WON' || l.quotes.length > 0;
+    const rows = new Map<string, AttributionReportRow>();
+    const campaigns = new Map<string, AttributionReportRow & { campaign: string }>();
+    const add = (row: AttributionReportRow, l: (typeof leads)[number]) => {
+      row.leads += 1;
+      if (isCustomer(l)) {
+        row.won += 1;
+        row.wonValue += l.expectedValue ?? 0;
+      } else if (kindOf.get(l.stageId) === 'LOST') row.lost += 1;
+    };
+    const empty = (source: AttributionReportRow['source'], name: string | null) => ({
+      source,
+      name,
+      leads: 0,
+      won: 0,
+      lost: 0,
+      wonValue: 0,
+    });
+    for (const l of leads) {
+      const a = attributionSchema.safeParse(l.attribution);
+      const source = a.success ? a.data.source : 'unknown';
+      const name =
+        a.success && (source === 'utm' || source === 'referral') ? attributionName(a.data) : null;
+      const key = `${source}|${name ?? ''}`;
+      if (!rows.has(key)) rows.set(key, empty(source, name));
+      add(rows.get(key)!, l);
+      const campaign = a.success ? (a.data.campaign ?? a.data.adHeadline) : undefined;
+      if (campaign) {
+        const ck = `${key}|${campaign}`;
+        if (!campaigns.has(ck)) campaigns.set(ck, { ...empty(source, name), campaign });
+        add(campaigns.get(ck)!, l);
+      }
+    }
+    const byLeads = (a: AttributionReportRow, b: AttributionReportRow) =>
+      b.won - a.won || b.leads - a.leads;
 
     // Time series in the business's local days.
     const toLocal = localDate(business.timezone);
@@ -124,6 +176,8 @@ export class ReportService {
       series: { unit, points: [...counts].map(([date, count]) => ({ date, count })) },
       byStage,
       bySource,
+      byAttribution: [...rows.values()].sort(byLeads),
+      byCampaign: [...campaigns.values()].sort(byLeads).slice(0, 10),
     };
   }
 }

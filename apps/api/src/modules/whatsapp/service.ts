@@ -22,6 +22,8 @@ import {
   setStatusRequestSchema,
   type WhatsAppThreadResponse,
   type Channel,
+  attributionSchema,
+  type Attribution,
 } from '@leadflow/shared';
 import type { z } from 'zod';
 import type { AppConfig } from '../../config/env';
@@ -44,7 +46,7 @@ import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
-import { ensureStages, LeadService } from '../leads/service';
+import { attributionData, ensureStages, LeadService } from '../leads/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 import { BookingBot, type BotOutcome } from './bot';
 
@@ -64,6 +66,8 @@ export interface InboundMessage {
   body: string;
   /** Id of the tapped button or list row (interactive replies). */
   replyId?: string | null;
+  /** F26: the Meta ad the customer tapped ("Click to WhatsApp" / Messenger ad). */
+  attribution?: Attribution | null;
   receivedAt: Date;
 }
 
@@ -205,6 +209,13 @@ export class WhatsAppService {
             },
           });
         }
+        // A new ad click replaces an earlier one; the lead gets it when it's created (F26).
+        if (msg.attribution) {
+          number = await tx.whatsAppNumber.update({
+            where: { id: number.id },
+            data: { attribution: msg.attribution as Prisma.InputJsonObject },
+          });
+        }
 
         if (number.status === 'UNCLASSIFIED') {
           if (msg.profileName && msg.profileName !== number.profileName) {
@@ -341,7 +352,13 @@ export class WhatsAppService {
     tx: Db,
     businessId: string,
     input: {
-      number: { id: string; phone: string; channel: string; contactId: string | null };
+      number: {
+        id: string;
+        phone: string;
+        channel: string;
+        contactId: string | null;
+        attribution?: Prisma.JsonValue;
+      };
       name: string | null;
       firstMessage: string;
       actorId?: string;
@@ -391,6 +408,12 @@ export class WhatsAppService {
         contactId: contact.id,
         stageId: first!.id,
         source,
+        ...attributionData(
+          attributionSchema
+            .nullable()
+            .catch(null)
+            .parse(input.number.attribution ?? null),
+        ),
         message: input.firstMessage.slice(0, 1000) || null,
       },
     });
@@ -527,6 +550,7 @@ export class WhatsAppService {
       channel: string;
       contactId: string | null;
       profileName: string | null;
+      attribution?: Prisma.JsonValue;
     },
     actorId: string | null,
   ) {
