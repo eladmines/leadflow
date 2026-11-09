@@ -1,20 +1,17 @@
 import {
   replyStatusSchema,
   MAX_STATUSES,
-  SHOWCASE_MAX_IMAGES,
   type ReplyMode,
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
-import { ImagePlus, Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
 import { Alert, Button, EmojiPicker, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useBotSettings, useSetStatus, useUpdateBotSettings } from './api';
-import { ShowcaseVideo, toRequest } from './BookingBotCard';
-import { useAssets } from '../media/api';
-import { MediaPicker } from '../media/MediaPicker';
+import { toRequest } from './BookingBotCard';
 
 type Saved = WhatsAppBotResponse['settings'];
 
@@ -26,7 +23,7 @@ export const toCode = (text: string) => text.replaceAll(businessTag(), '{busines
 export const modeHelp: Record<ReplyMode, string> = {
   off: 'הודעות נכנסות בלי שום מענה אוטומטי.',
   auto_reply:
-    'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות) ובוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.',
+    'כל הודעה של לקוח מקבלת מענה קצר, והלקוח בוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.',
   booking: 'לקוחות רואים זמנים פנויים וקובעים לבד תור או בקשה לאירוע.',
 };
 
@@ -195,16 +192,6 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
         )}
       </p>
 
-      {current && (
-        <StatusMedia
-          key={current.id}
-          businessId={businessId}
-          saved={saved}
-          status={current}
-          label={label(current)}
-        />
-      )}
-
       {current && !current.preset && (
         <button
           type="button"
@@ -222,87 +209,6 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
       )}
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
     </div>
-  );
-}
-
-/**
- * A status's photos and video (D-164), sent right after its message — e.g. "At event" photos.
- * Each change is saved at once.
- */
-function StatusMedia({
-  businessId,
-  saved,
-  status,
-  label,
-}: {
-  businessId: string;
-  saved: Saved;
-  status: Saved['statuses'][number];
-  label: string;
-}) {
-  const update = useUpdateBotSettings(businessId);
-  const assets = useAssets(businessId);
-  const [picking, setPicking] = useState(false);
-  const urlOf = (id: string) => assets.data?.assets.find((a) => a.id === id)?.url;
-  const setPhotos = (assetIds: string[]) =>
-    update.mutate({
-      ...toRequest(saved),
-      statuses: saved.statuses.map((x) => (x.id === status.id ? { ...x, assetIds } : x)),
-    });
-  return (
-    <section
-      aria-label={tr('תמונות וסרטון לסטטוס "{0}"', label)}
-      className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface-muted p-4"
-    >
-      <p className="text-sm text-ink-muted">{tr('נשלחים מיד אחרי ההודעה, כל עוד הסטטוס פעיל.')}</p>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink">
-          {tr('תמונות (עד {0})', SHOWCASE_MAX_IMAGES)}
-        </span>
-        <ul aria-label={tr('תמונות בסטטוס')} className="flex flex-wrap gap-2">
-          {status.assetIds.map((id, i) => (
-            <li
-              key={id}
-              className="relative h-20 w-20 overflow-hidden rounded-lg bg-surface-sunken"
-            >
-              {urlOf(id) && <img src={urlOf(id)} alt="" className="h-full w-full object-cover" />}
-              <button
-                type="button"
-                aria-label={tr('הסרת תמונה {0}', i + 1)}
-                disabled={update.isPending}
-                onClick={() => setPhotos(status.assetIds.filter((x) => x !== id))}
-                className="absolute end-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-surface/90 text-ink shadow"
-              >
-                <X aria-hidden className="h-3.5 w-3.5" />
-              </button>
-            </li>
-          ))}
-          {status.assetIds.length < SHOWCASE_MAX_IMAGES && (
-            <li>
-              <button
-                type="button"
-                onClick={() => setPicking(true)}
-                className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-surface-border bg-surface text-xs text-ink-muted hover:bg-surface-sunken"
-              >
-                <ImagePlus aria-hidden className="h-5 w-5" />
-                {tr('הוספת תמונה')}
-              </button>
-            </li>
-          )}
-        </ul>
-      </div>
-      <ShowcaseVideo businessId={businessId} video={status.video} statusId={status.id} />
-      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
-      <MediaPicker
-        open={picking}
-        onOpenChange={setPicking}
-        title={tr('בחירת תמונה לסטטוס')}
-        onSelect={(asset) => {
-          if (!status.assetIds.includes(asset.id)) setPhotos([...status.assetIds, asset.id]);
-          setPicking(false);
-        }}
-      />
-    </section>
   );
 }
 

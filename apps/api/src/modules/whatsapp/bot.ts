@@ -23,14 +23,7 @@ import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
-import {
-  AutoReplier,
-  languageOf,
-  modeOf,
-  replyTextOf,
-  showcaseVideoOf,
-  toWhatsAppJpeg,
-} from './auto-reply';
+import { languageOf, modeOf, replyTextOf, showcaseVideoOf, toWhatsAppJpeg } from './auto-reply';
 import { AppointmentService } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 
@@ -174,7 +167,6 @@ const WORDS = {
     apptCancelled: 'התור בוטל ✅\nרוצים לקבוע מועד אחר? אפשר כאן 👇',
     bookNew: '📅 תור חדש',
     talkButton: 'מתי נוח לדבר?',
-    gotIt: 'קיבלנו את ההודעה 🙏 נחזור אליכם בהקדם.',
     slots: { eve: 'היום בערב', mor: 'מחר בבוקר', aft: 'מחר אחה״צ', other: 'זמן אחר' },
     askOtherTime: 'מתי נוח לכם? כתבו יום ושעה 🙂',
     callbackSet: (when: string) => `מעולה! נחזור אליכם ${when} 🙏`,
@@ -250,7 +242,6 @@ const WORDS = {
     apptCancelled: 'Your appointment is cancelled ✅\nWant another time? You can book here 👇',
     bookNew: '📅 New booking',
     talkButton: 'When can we talk?',
-    gotIt: "Got your message 🙏 We'll get back to you soon.",
     slots: {
       eve: 'This evening',
       mor: 'Tomorrow morning',
@@ -387,7 +378,6 @@ function spread<T>(items: T[], max: number): T[] {
 
 export class BookingBot {
   private readonly appointments: AppointmentService;
-  private readonly autoReplier: AutoReplier;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -403,7 +393,6 @@ export class BookingBot {
     ) => Promise<{ contactId: string; leadId: string }>,
   ) {
     this.appointments = new AppointmentService(prisma);
-    this.autoReplier = new AutoReplier(prisma, log, storage);
   }
 
   async handle(businessId: string, msg: BotMessage, now = new Date()): Promise<BotOutcome> {
@@ -521,32 +510,17 @@ export class BookingBot {
   // ------------------------------------------------------- when to talk (D-165)
 
   /**
-   * The automatic answer (D-165, D-166): every message gets one. The full message — the status's
-   * or the general one, with the status's photos and video — at most once per 12 hours; in between
-   * a short "got it". Both come with "when can we talk?" (and "Book now" when customers book).
+   * The automatic answer (D-165, D-166): every message gets the status's or the general message
+   * with "when can we talk?" (and "Book now" when customers book). Photos and video are "A peek"'s.
    */
   private async answer(
     chat: Chat,
-    business: Parameters<typeof replyTextOf>[0] & { id: string },
+    business: Parameters<typeof replyTextOf>[0],
     now: Date,
     withBooking: boolean,
   ): Promise<BotOutcome> {
     const choices = callbackChoices(wordsOf(chat), chat.business.timezone, now, withBooking);
-    if (!(await this.autoReplier.claimFullReply(chat.numberId, now))) {
-      await this.say(chat, wordsOf(chat).gotIt, choices);
-      return 'handled';
-    }
-    const { text, active } = replyTextOf(business, now);
-    await this.say(chat, text, choices);
-    if (active) {
-      await this.autoReplier.sendStatusMedia(
-        chat.business.id,
-        { id: chat.numberId, phone: chat.phone },
-        chat.link,
-        active,
-        chat.sender,
-      );
-    }
+    await this.say(chat, replyTextOf(business, now), choices);
     return 'handled';
   }
 

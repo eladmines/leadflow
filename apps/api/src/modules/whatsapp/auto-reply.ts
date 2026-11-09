@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
-import type { PrismaClient } from '@prisma/client';
 import {
   autoReplyDefaultFor,
   languageSchema,
@@ -14,24 +13,18 @@ import {
   type ReplyStatus,
 } from '@leadflow/shared';
 import { z } from 'zod';
-import type { StorageProvider } from '../../integrations/storage';
-import type { WhatsAppSender } from '../../integrations/whatsapp';
 import { AppError } from '../../lib/errors';
 
 /**
- * Automatic replies and statuses (D-123). By default a customer's message gets one short, general
- * reply; when the business is "at an event" (or another status), the status's message goes
- * instead, followed by its own photos and video (D-164). At most one automatic reply per customer per 12 hours, never to personal
- * numbers, paused customers, or a chat a team member wrote in recently.
+ * Automatic replies and statuses (D-123, D-166). Every customer message gets the general reply;
+ * when the business is "at an event" (or another status), the status's message instead. Never to
+ * personal numbers, paused customers, or a chat a team member wrote in recently.
  */
-
-const AUTO_REPLY_GAP_MS = 12 * 60 * 60 * 1000;
 
 const storedStatus = z.object({
   id: z.string(),
   label: z.string(),
   text: z.string(),
-  assetIds: z.array(z.string()).default([]),
   videoKey: z.string().optional(),
   videoBytes: z.number().int().optional(),
 });
@@ -44,7 +37,7 @@ export const modeOf = (raw: string): ReplyMode =>
 /** The business's statuses; the ready-made ones (in its language) until it saves its own list. */
 export function statusesOf(raw: unknown, lang: Language = 'he'): StoredStatus[] {
   const parsed = z.array(storedStatus).safeParse(raw);
-  return parsed.success ? parsed.data : statusPresetsFor(lang).map((p) => ({ ...p, assetIds: [] }));
+  return parsed.success ? parsed.data : statusPresetsFor(lang).map((p) => ({ ...p }));
 }
 
 /** A business's language as stored (D-143); anything else is Hebrew. */
@@ -62,16 +55,9 @@ export function activeOf(raw: unknown, statuses: StoredStatus[], now: Date) {
 }
 
 const isPreset = (id: string) => STATUS_PRESETS.some((p) => p.id === id);
-/** The response shape: wording, photos, video size and whether it's ready-made (D-164). */
+/** The response shape: wording and whether it's ready-made (photos and video live in "A peek"). */
 export const statusDtos = (statuses: StoredStatus[]) =>
-  statuses.map((s) => ({
-    id: s.id,
-    label: s.label,
-    text: s.text,
-    assetIds: s.assetIds,
-    preset: isPreset(s.id),
-    video: s.videoKey && s.videoBytes ? { sizeBytes: s.videoBytes } : null,
-  }));
+  statuses.map((s) => ({ id: s.id, label: s.label, text: s.text, preset: isPreset(s.id) }));
 
 /** A saved list: keeps each status's video by id; returns the videos to delete. */
 export function mergeStatuses(old: StoredStatus[], next: ReplyStatus[]) {
@@ -125,10 +111,6 @@ export function checkShowcaseVideo(businessId: string, video: Buffer) {
   return `${businessId}/${randomUUID()}.mp4`;
 }
 
-interface Log {
-  error: (obj: object, msg: string) => void;
-}
-
 /** The message a customer gets now: the active status's, else the general reply (D-123). */
 export function replyTextOf(
   business: {
@@ -143,103 +125,7 @@ export function replyTextOf(
   const lang = languageOf(business.language);
   const statuses = statusesOf(business.whatsappStatuses, lang);
   const active = activeOf(business.whatsappActiveStatus, statuses, now)?.status ?? null;
-  const text = (active?.text ?? business.whatsappAutoReplyText ?? autoReplyDefaultFor(lang))
+  return (active?.text ?? business.whatsappAutoReplyText ?? autoReplyDefaultFor(lang))
     .replaceAll('{business}', business.name)
     .slice(0, 4096);
-  return { text, active };
-}
-
-/** Sends the automatic reply for one incoming message, when it's due; true when it did. */
-export class AutoReplier {
-  constructor(
-    private readonly prisma: PrismaClient,
-    private readonly log: Log,
-    private readonly storage: StorageProvider,
-  ) {}
-
-  /** Claims this customer's full automatic message (at most once per 12 hours, D-123). */
-  async claimFullReply(numberId: string, now: Date): Promise<boolean> {
-    const claimed = await this.prisma.whatsAppNumber.updateMany({
-      where: {
-        id: numberId,
-        OR: [
-          { autoReplyAt: null },
-          { autoReplyAt: { lt: new Date(now.getTime() - AUTO_REPLY_GAP_MS) } },
-        ],
-      },
-      data: { autoReplyAt: now },
-    });
-    return claimed.count > 0;
-  }
-
-  async sendStatusMedia(
-    businessId: string,
-    number: { id: string; phone: string },
-    link: { contactId: string | null; leadId: string | null },
-    status: StoredStatus,
-    sender: WhatsAppSender,
-  ) {
-    const assets = status.assetIds.length
-      ? await this.prisma.asset.findMany({
-          where: { id: { in: status.assetIds }, businessId },
-          select: { id: true, key: true },
-        })
-      : [];
-    for (const id of status.assetIds) {
-      const asset = assets.find((a) => a.id === id);
-      const file = asset ? await this.storage.get(asset.key).catch(() => null) : null;
-      if (!file) continue;
-      let jpeg: Buffer;
-      try {
-        jpeg = await toWhatsAppJpeg(file);
-      } catch (err) {
-        this.log.error({ errName: (err as Error)?.name }, 'whatsapp status image failed');
-        continue;
-      }
-      await this.send(businessId, number, link, '[תמונה]', () =>
-        sender.sendImage(number.phone, jpeg),
-      );
-    }
-    if (status.videoKey) {
-      const video = await this.storage.get(status.videoKey).catch(() => null);
-      if (video) {
-        await this.send(businessId, number, link, '[וידאו]', () =>
-          sender.sendVideo(number.phone, video),
-        );
-      }
-    }
-  }
-
-  /** Sends and files the message under the customer (a failure is logged, never thrown). */
-  private async send(
-    businessId: string,
-    number: { id: string },
-    link: { contactId: string | null; leadId: string | null },
-    body: string,
-    go: () => Promise<{ id: string }>,
-  ) {
-    let id: string;
-    try {
-      ({ id } = await go());
-    } catch (err) {
-      const e = err as { name?: string; status?: number; code?: number | null };
-      this.log.error(
-        { errName: e?.name, status: e?.status, code: e?.code },
-        'whatsapp auto-reply failed',
-      );
-      return;
-    }
-    await this.prisma.whatsAppMessage.create({
-      data: {
-        businessId,
-        numberId: number.id,
-        contactId: link.contactId,
-        leadId: link.leadId,
-        direction: 'OUT',
-        waMessageId: id,
-        body,
-        status: 'sent',
-      },
-    });
-  }
 }
