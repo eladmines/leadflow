@@ -225,6 +225,12 @@ describe('WhatsApp conversations inbox', () => {
     );
     // Photos and video live only in "A peek" (D-166).
     expect(screen.queryByRole('button', { name: 'הוספת סרטון' })).not.toBeInTheDocument();
+    // The whole conversation with this status, as the customer sees it (D-172).
+    await user.click(screen.getByRole('button', { name: 'תצוגה מקדימה' }));
+    const chat = screen.getByRole('group', { name: 'כך תיראה השיחה' });
+    expect(within(chat).getByText(presets[0]!.text)).toBeInTheDocument();
+    expect(within(chat).getByText('מעולה! נחזור אליכם מחר ב־09:00 🙏')).toBeInTheDocument();
+    expect(within(chat).getByText('"הצצה לעסק" כבויה, אז השיחה מסתיימת כאן.')).toBeInTheDocument();
     // How long, once you're away.
     await user.selectOptions(screen.getByLabelText('לכמה זמן:'), 'לשעה');
     const sent = callsTo(fetchMock, 'PUT', wp.status(id))[1] as { id: string; until: string };
