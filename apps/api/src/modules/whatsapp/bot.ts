@@ -585,7 +585,8 @@ export class BookingBot {
     chat.link = customer;
     chat.session = null;
     await this.say(chat, slot ? w.callbackSet(when) : w.callbackThanks);
-    await this.showcase(chat, { offerBooking: mode === 'booking' });
+    // The decision is made: "A peek" right after, every time (D-168).
+    await this.showcase(chat, { force: true, offerBooking: mode === 'booking' });
     return 'handled';
   }
 
@@ -766,8 +767,8 @@ export class BookingBot {
       },
       to: { roles: MANAGERS, userIds: [slot.staffId] },
     });
-    // The decision is made: "A peek at the business" right after (D-166).
-    await this.showcase(chat, {});
+    // The decision is made: "A peek at the business" right after, every time (D-168).
+    await this.showcase(chat, { force: true });
     return 'handled';
   }
 
@@ -1132,8 +1133,8 @@ export class BookingBot {
       },
       to: { roles: MANAGERS },
     });
-    // The decision is made: "A peek at the business" right after (D-166).
-    await this.showcase(chat, {});
+    // The decision is made: "A peek at the business" right after, every time (D-168).
+    await this.showcase(chat, { force: true });
     return 'handled';
   }
 
