@@ -416,6 +416,20 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     }).format(task!.dueAt);
     expect(local).toBe('09:00');
     expect(task!.dueAt.getTime()).toBeGreaterThan(Date.now());
+    // …and a 15-minute call-back in the owner's calendar (D-171).
+    const [appt] = await ctx.prisma.appointment.findMany();
+    expect(appt).toMatchObject({
+      staffId: owner.userId,
+      leadId: lead.id,
+      status: 'CONFIRMED',
+      source: 'whatsapp',
+      notes: 'שיחה חוזרת (נקבעה בוואטסאפ)',
+      startsAt: task!.dueAt,
+    });
+    expect(appt!.endsAt.getTime() - appt!.startsAt.getTime()).toBe(15 * 60_000);
+    // That hour isn't offered again.
+    await post(text('עוד משהו'));
+    expect(whatsapp.sent.at(-1)!.choices!.map((c) => c.id)).not.toContain(`cb:${tomorrow}T09:00`);
 
     // Another decision the same day: "A peek" again, right after it (D-168).
     await post(tapRow(`cb:${tomorrow}T14:00`));
@@ -437,5 +451,7 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(whatsapp.sent.at(-1)!.text).toBe('תודה! נחזור אליכם בזמן שכתבתם 🙏');
     const [task] = await ctx.prisma.task.findMany();
     expect(task!.title).toBe('לחזור לנועה — ביום חמישי אחרי 16:00');
+    // Words, not an hour: a task only, nothing in the calendar.
+    expect(await ctx.prisma.appointment.count()).toBe(0);
   });
 });

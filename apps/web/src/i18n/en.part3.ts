@@ -788,8 +788,8 @@ export const enPart3: Record<string, string> = {
     'Right after the customer decides (a time to talk, an appointment or an event), they get a link, photos and a video from the business. At most once a day.',
   'כל הודעה של לקוח מקבלת מענה קצר, והלקוח בוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
     'Every customer message gets a short answer, and the customer chooses when to talk. When a status is on, its message is sent.',
-  'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר, ואתם מקבלים משימה לחזור אליו.':
-    'Under the message, the customer picks an hour to talk (today or tomorrow, 09:00–20:00) or another time, and you get a task to call them back.',
+  'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר. שעה שנבחרה נכנסת ליומן התורים, ואתם מקבלים משימה לחזור אליו.':
+    'Under the message, the customer picks an hour to talk (today or tomorrow, 09:00–20:00) or another time. A chosen hour goes into your appointments calendar, and you get a task to call them back.',
   'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
     'Sent right after the customer decides (a time to talk, an appointment or an event): the message with the link, then the video and photos.',
 };

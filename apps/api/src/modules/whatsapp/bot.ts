@@ -24,7 +24,7 @@ import { AppError } from '../../lib/errors';
 import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
 import { languageOf, modeOf, replyTextOf, showcaseVideoOf, toWhatsAppJpeg } from './auto-reply';
-import { AppointmentService } from '../appointments/service';
+import { AppointmentService, CALL_BACK_MINUTES } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 
 /**
@@ -174,6 +174,7 @@ const WORDS = {
     callbackSet: (when: string) => `מעולה! נחזור אליכם ${when} 🙏`,
     callbackThanks: 'תודה! נחזור אליכם בזמן שכתבתם 🙏',
     callbackTask: (name: string, when: string) => `לחזור ל${name} — ${when}`,
+    callbackNote: 'שיחה חוזרת (נקבעה בוואטסאפ)',
   },
   en: {
     intl: 'en-GB',
@@ -251,6 +252,7 @@ const WORDS = {
     callbackSet: (when: string) => `Great! We'll get back to you ${when.toLowerCase()} 🙏`,
     callbackThanks: "Thanks! We'll get back to you at the time you wrote 🙏",
     callbackTask: (name: string, when: string) => `Call back ${name} — ${when}`,
+    callbackNote: 'Call back (set in WhatsApp)',
   },
 } satisfies Record<Language, unknown>;
 type Words = (typeof WORDS)['he'];
@@ -326,7 +328,7 @@ const callbackLabel = (w: Words, today: string, date: string, time: string) =>
   date === today ? w.todayAt(time) : w.tomorrowAt(time);
 
 /** The next whole hours from an hour from now, within the window, today and tomorrow. */
-function callbackSlots(timezone: string, now: Date) {
+function callbackSlots(timezone: string, now: Date, busy: { startsAt: Date; endsAt: Date }[]) {
   const today = todayIn(timezone, now);
   const slots: { date: string; time: string; at: Date }[] = [];
   for (const date of [today, addDaysTo(today, 1)]) {
@@ -334,6 +336,10 @@ function callbackSlots(timezone: string, now: Date) {
       const time = `${String(h).padStart(2, '0')}:00`;
       const at = zonedTimeToUtc(date, time, timezone);
       if (at.getTime() - now.getTime() < 60 * 60_000) continue;
+      // The owner already has something then (D-171).
+      const end = at.getTime() + CALL_BACK_MINUTES * 60_000;
+      if (busy.some((b) => b.startsAt.getTime() < end && b.endsAt.getTime() > at.getTime()))
+        continue;
       slots.push({ date, time, at });
       if (slots.length === CALLBACK_SLOTS) return { today, slots };
     }
@@ -342,8 +348,14 @@ function callbackSlots(timezone: string, now: Date) {
 }
 
 /** "When can we talk?" rows: real hours, "another time", and "Book now" when customers book. */
-function callbackChoices(w: Words, timezone: string, now: Date, withBooking: boolean) {
-  const { today, slots } = callbackSlots(timezone, now);
+function callbackChoices(
+  w: Words,
+  timezone: string,
+  now: Date,
+  withBooking: boolean,
+  busy: { startsAt: Date; endsAt: Date }[],
+) {
+  const { today, slots } = callbackSlots(timezone, now, busy);
   return {
     button: w.talkButton,
     rows: [
@@ -532,9 +544,39 @@ export class BookingBot {
     now: Date,
     withBooking: boolean,
   ): Promise<BotOutcome> {
-    const choices = callbackChoices(wordsOf(chat), chat.business.timezone, now, withBooking);
-    await this.say(chat, replyTextOf(business, now), choices);
+    await this.say(
+      chat,
+      replyTextOf(business, now),
+      await this.talkChoices(chat, now, withBooking),
+    );
     return 'handled';
+  }
+
+  /** "When can we talk?" without hours the owner is already busy (D-171). */
+  private async talkChoices(chat: Chat, now: Date, withBooking: boolean) {
+    const owner = await this.ownerOf(chat.business.id);
+    const busy = owner
+      ? await this.prisma.appointment.findMany({
+          where: {
+            businessId: chat.business.id,
+            staffId: owner,
+            status: { in: BLOCKING_STATUSES },
+            startsAt: { lt: new Date(now.getTime() + 3 * 86_400_000) },
+            endsAt: { gt: now },
+          },
+          select: { startsAt: true, endsAt: true },
+        })
+      : [];
+    return callbackChoices(wordsOf(chat), chat.business.timezone, now, withBooking, busy);
+  }
+
+  private async ownerOf(businessId: string, db: Db = this.prisma) {
+    const owner = await db.membership.findFirst({
+      where: { businessId, role: 'OWNER', status: 'ACTIVE' },
+      orderBy: { createdAt: 'asc' },
+      select: { userId: true },
+    });
+    return owner?.userId ?? null;
   }
 
   private async onCallbackChoice(chat: Chat, slot: string, now: Date): Promise<BotOutcome> {
@@ -569,30 +611,50 @@ export class BookingBot {
     chosen: boolean,
   ): Promise<BotOutcome> {
     const w = wordsOf(chat);
-    const customer = await this.prisma.$transaction(async (tx) => {
-      const c = await this.ensureCustomer(tx, chat.business.id, chat.numberId);
-      const [contact, owner] = await Promise.all([
-        tx.contact.findUnique({ where: { id: c.contactId }, select: { name: true } }),
-        tx.membership.findFirst({
-          where: { businessId: chat.business.id, role: 'OWNER', status: 'ACTIVE' },
-          orderBy: { createdAt: 'asc' },
-          select: { userId: true },
-        }),
-      ]);
-      if (owner) {
-        await tx.task.create({
-          data: {
-            businessId: chat.business.id,
-            title: w.callbackTask(contact?.name ?? chat.phone, when).slice(0, 200),
-            dueAt,
-            assigneeId: owner.userId,
-            leadId: c.leadId,
-          },
-        });
+    let customer: { contactId: string; leadId: string };
+    try {
+      customer = await this.prisma.$transaction(async (tx) => {
+        const c = await this.ensureCustomer(tx, chat.business.id, chat.numberId);
+        const [contact, owner] = await Promise.all([
+          tx.contact.findUnique({ where: { id: c.contactId }, select: { name: true } }),
+          this.ownerOf(chat.business.id, tx),
+        ]);
+        if (owner) {
+          // A chosen hour goes into the calendar too (D-171).
+          if (chosen) {
+            await this.appointments.callBackFromWhatsApp(tx, {
+              businessId: chat.business.id,
+              ...c,
+              staffId: owner,
+              startsAt: dueAt,
+              notes: w.callbackNote,
+            });
+          }
+          await tx.task.create({
+            data: {
+              businessId: chat.business.id,
+              title: w.callbackTask(contact?.name ?? chat.phone, when).slice(0, 200),
+              dueAt,
+              assigneeId: owner,
+              leadId: c.leadId,
+            },
+          });
+        }
+        await tx.whatsAppBotSession.deleteMany({ where: { numberId: chat.numberId } });
+        return c;
+      });
+    } catch (err) {
+      // Someone took that hour a moment ago: offer the others.
+      if (err instanceof AppError && err.code === 'CONFLICT') {
+        await this.say(
+          chat,
+          `${w.timeTaken}${w.talkButton}`,
+          await this.talkChoices(chat, chat.now, false),
+        );
+        return 'handled';
       }
-      await tx.whatsAppBotSession.deleteMany({ where: { numberId: chat.numberId } });
-      return c;
-    });
+      throw err;
+    }
     chat.link = customer;
     chat.session = null;
     await this.say(chat, chosen ? w.callbackSet(when) : w.callbackThanks);
