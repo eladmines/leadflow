@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import sharp from 'sharp';
 import type { PrismaClient } from '@prisma/client';
 import {
   autoReplyDefaultFor,
@@ -13,13 +14,14 @@ import {
   type ReplyStatus,
 } from '@leadflow/shared';
 import { z } from 'zod';
-import type { WhatsAppSender } from '../../integrations/whatsapp';
+import type { StorageProvider } from '../../integrations/storage';
+import type { WhatsAppChoice, WhatsAppSender } from '../../integrations/whatsapp';
 import { AppError } from '../../lib/errors';
 
 /**
  * Automatic replies and statuses (D-123). By default a customer's message gets one short, general
  * reply; when the business is "at an event" (or another status), the status's message goes
- * instead (videos live in "meanwhile" since D-151). At most one automatic reply per customer per 12 hours, never to personal
+ * instead, followed by its own photos and video (D-164). At most one automatic reply per customer per 12 hours, never to personal
  * numbers, paused customers, or a chat a team member wrote in recently.
  */
 
@@ -29,6 +31,7 @@ const storedStatus = z.object({
   id: z.string(),
   label: z.string(),
   text: z.string(),
+  assetIds: z.array(z.string()).default([]),
   videoKey: z.string().optional(),
   videoBytes: z.number().int().optional(),
 });
@@ -41,7 +44,7 @@ export const modeOf = (raw: string): ReplyMode =>
 /** The business's statuses; the ready-made ones (in its language) until it saves its own list. */
 export function statusesOf(raw: unknown, lang: Language = 'he'): StoredStatus[] {
   const parsed = z.array(storedStatus).safeParse(raw);
-  return parsed.success ? parsed.data : statusPresetsFor(lang).map((p) => ({ ...p }));
+  return parsed.success ? parsed.data : statusPresetsFor(lang).map((p) => ({ ...p, assetIds: [] }));
 }
 
 /** A business's language as stored (D-143); anything else is Hebrew. */
@@ -59,9 +62,16 @@ export function activeOf(raw: unknown, statuses: StoredStatus[], now: Date) {
 }
 
 const isPreset = (id: string) => STATUS_PRESETS.some((p) => p.id === id);
-/** The response shape: wording and whether it's ready-made (videos moved to "meanwhile", D-151). */
+/** The response shape: wording, photos, video size and whether it's ready-made (D-164). */
 export const statusDtos = (statuses: StoredStatus[]) =>
-  statuses.map((s) => ({ id: s.id, label: s.label, text: s.text, preset: isPreset(s.id) }));
+  statuses.map((s) => ({
+    id: s.id,
+    label: s.label,
+    text: s.text,
+    assetIds: s.assetIds,
+    preset: isPreset(s.id),
+    video: s.videoKey && s.videoBytes ? { sizeBytes: s.videoBytes } : null,
+  }));
 
 /** A saved list: keeps each status's video by id; returns the videos to delete. */
 export function mergeStatuses(old: StoredStatus[], next: ReplyStatus[]) {
@@ -76,6 +86,14 @@ export function mergeStatuses(old: StoredStatus[], next: ReplyStatus[]) {
     .map((o) => o.videoKey!);
   return { merged, dropped };
 }
+
+/** A library photo as WhatsApp takes it: JPEG, at most 1600 px (the library keeps WebP). */
+export const toWhatsAppJpeg = (file: Buffer) =>
+  sharp(file)
+    .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+    .flatten({ background: '#ffffff' })
+    .jpeg({ quality: 85 })
+    .toBuffer();
 
 /** MP4 (ISO media) files carry "ftyp" at byte 4. */
 const isMp4 = (b: Buffer) => b.length > 12 && b.subarray(4, 8).toString('latin1') === 'ftyp';
@@ -111,11 +129,32 @@ interface Log {
   error: (obj: object, msg: string) => void;
 }
 
+/** The message a customer gets now: the active status's, else the general reply (D-123). */
+export function replyTextOf(
+  business: {
+    name: string;
+    whatsappAutoReplyText: string | null;
+    whatsappStatuses: unknown;
+    whatsappActiveStatus: unknown;
+    language: string;
+  },
+  now: Date,
+) {
+  const lang = languageOf(business.language);
+  const statuses = statusesOf(business.whatsappStatuses, lang);
+  const active = activeOf(business.whatsappActiveStatus, statuses, now)?.status ?? null;
+  const text = (active?.text ?? business.whatsappAutoReplyText ?? autoReplyDefaultFor(lang))
+    .replaceAll('{business}', business.name)
+    .slice(0, 4096);
+  return { text, active };
+}
+
 /** Sends the automatic reply for one incoming message, when it's due; true when it did. */
 export class AutoReplier {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly log: Log,
+    private readonly storage: StorageProvider,
   ) {}
 
   async reply(
@@ -133,6 +172,8 @@ export class AutoReplier {
     now: Date,
     /** This business's WhatsApp (F25). */
     sender: WhatsAppSender,
+    /** "When's a good time to talk?" choices under the message (D-165). */
+    choices?: { button: string; rows: WhatsAppChoice[] },
   ): Promise<boolean> {
     if (teamIsTalking) return false;
     if (number.autoReplyAt && now.getTime() - number.autoReplyAt.getTime() < AUTO_REPLY_GAP_MS) {
@@ -151,18 +192,58 @@ export class AutoReplier {
     });
     if (!claimed.count) return false;
 
-    const lang = languageOf(business.language);
-    const statuses = statusesOf(business.whatsappStatuses, lang);
-    const active = activeOf(business.whatsappActiveStatus, statuses, now);
-    const text = (
-      active?.status.text ??
-      business.whatsappAutoReplyText ??
-      autoReplyDefaultFor(lang)
-    )
-      .replaceAll('{business}', business.name)
-      .slice(0, 4096);
-    await this.send(business.id, number, link, text, () => sender.sendText(number.phone, text));
+    const { text, active } = replyTextOf(business, now);
+    await this.send(
+      business.id,
+      number,
+      link,
+      choices ? [text, ...choices.rows.map((r) => `• ${r.title}`)].join('\n') : text,
+      () =>
+        choices
+          ? sender.sendList(number.phone, text, choices.button, choices.rows)
+          : sender.sendText(number.phone, text),
+    );
+    // The status's own photos and video (D-164), e.g. "At event".
+    if (active) await this.sendStatusMedia(business.id, number, link, active, sender);
     return true;
+  }
+
+  async sendStatusMedia(
+    businessId: string,
+    number: { id: string; phone: string },
+    link: { contactId: string | null; leadId: string | null },
+    status: StoredStatus,
+    sender: WhatsAppSender,
+  ) {
+    const assets = status.assetIds.length
+      ? await this.prisma.asset.findMany({
+          where: { id: { in: status.assetIds }, businessId },
+          select: { id: true, key: true },
+        })
+      : [];
+    for (const id of status.assetIds) {
+      const asset = assets.find((a) => a.id === id);
+      const file = asset ? await this.storage.get(asset.key).catch(() => null) : null;
+      if (!file) continue;
+      let jpeg: Buffer;
+      try {
+        jpeg = await toWhatsAppJpeg(file);
+      } catch (err) {
+        this.log.error({ errName: (err as Error)?.name }, 'whatsapp status image failed');
+        continue;
+      }
+      await this.send(businessId, number, link, '[תמונה]', () =>
+        sender.sendImage(number.phone, jpeg),
+      );
+    }
+    if (status.videoKey) {
+      const video = await this.storage.get(status.videoKey).catch(() => null);
+      if (video) {
+        await this.send(businessId, number, link, '[וידאו]', () =>
+          sender.sendVideo(number.phone, video),
+        );
+      }
+    }
   }
 
   /** Sends and files the message under the customer (a failure is logged, never thrown). */

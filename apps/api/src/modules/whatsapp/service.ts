@@ -38,6 +38,7 @@ import {
   statusDtos,
   statusesOf,
   languageOf,
+  type StoredStatus,
 } from './auto-reply';
 import { MemoryMessengerSender, type MessengerSender } from '../../integrations/messenger';
 import { ChannelRegistry } from '../channels/registry';
@@ -727,6 +728,18 @@ export class WhatsAppService {
           });
         }
       }
+      // …and into a status (D-164).
+      const statusAssets = [...new Set((input.statuses ?? []).flatMap((st) => st.assetIds))];
+      if (statusAssets.length) {
+        const owned = await tx.asset.count({
+          where: { id: { in: statusAssets }, businessId: ctx.businessId },
+        });
+        if (owned !== statusAssets.length) {
+          throw new AppError('VALIDATION_ERROR', showcaseMessages.imageMissing, {
+            statuses: showcaseMessages.imageMissing,
+          });
+        }
+      }
       await recordAudit(tx, {
         action: 'whatsapp.bot_updated',
         businessId: ctx.businessId,
@@ -822,6 +835,61 @@ export class WhatsAppService {
     });
     await this.storage.delete(old.key).catch(() => undefined);
     return this.botSettings(ctx);
+  }
+
+  /** A status's video (D-164); the status must be in the business's list. */
+  async setStatusVideo(ctx: TenantContext, statusId: string, video: Buffer) {
+    const { statuses, status } = await this.statusFor(ctx, statusId);
+    const key = checkShowcaseVideo(ctx.businessId, video);
+    await this.storage.put(key, video, 'video/mp4');
+    const old = status.videoKey;
+    await this.saveStatuses(
+      ctx,
+      statuses.map((s) =>
+        s.id === statusId ? { ...s, videoKey: key, videoBytes: video.length } : s,
+      ),
+    );
+    if (old) await this.storage.delete(old).catch(() => undefined);
+    return this.botSettings(ctx);
+  }
+
+  async deleteStatusVideo(ctx: TenantContext, statusId: string) {
+    const { statuses, status } = await this.statusFor(ctx, statusId);
+    if (!status.videoKey) return this.botSettings(ctx);
+    await this.saveStatuses(
+      ctx,
+      statuses.map((s) =>
+        s.id === statusId ? { ...s, videoKey: undefined, videoBytes: undefined } : s,
+      ),
+    );
+    await this.storage.delete(status.videoKey).catch(() => undefined);
+    return this.botSettings(ctx);
+  }
+
+  /** A status's video bytes, for the owner's preview. */
+  async statusVideo(ctx: TenantContext, statusId: string): Promise<Buffer> {
+    const { status } = await this.statusFor(ctx, statusId);
+    const video = status.videoKey ? await this.storage.get(status.videoKey) : null;
+    if (!video) throw new AppError('NOT_FOUND');
+    return video;
+  }
+
+  private async statusFor(ctx: TenantContext, statusId: string) {
+    const b = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+      select: { whatsappStatuses: true, language: true },
+    });
+    const statuses = statusesOf(b.whatsappStatuses, languageOf(b.language));
+    const status = statuses.find((s) => s.id === statusId);
+    if (!status) throw new AppError('NOT_FOUND');
+    return { statuses, status };
+  }
+
+  private saveStatuses(ctx: TenantContext, statuses: StoredStatus[]) {
+    return this.prisma.business.update({
+      where: { id: ctx.businessId },
+      data: { whatsappStatuses: statuses as Prisma.InputJsonValue },
+    });
   }
 
   /** The video's bytes, for the owner's preview (this business's only). */

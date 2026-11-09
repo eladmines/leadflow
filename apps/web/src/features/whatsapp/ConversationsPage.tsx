@@ -194,7 +194,7 @@ function ModeCards({
       )}
       <ModeCard
         title={tr(replyModeLabels.auto_reply)}
-        description={tr('כל לקוח שכותב מקבל הודעה קצרה, לפי הסטטוס שלך.')}
+        description={tr('כל לקוח שכותב מקבל הודעה לפי הסטטוס שלך, ובוחר מתי נוח לדבר.')}
         icon={MessageCircleReply}
         tone="bg-emerald-500"
         on={saved.mode === 'auto_reply'}
@@ -205,7 +205,7 @@ function ModeCards({
       </ModeCard>
       <ModeCard
         title={tr(replyModeLabels.booking)}
-        description={tr('לקוחות רואים זמנים פנויים וקובעים לבד תור או בקשה לאירוע.')}
+        description={tr('לקוח בוחר מתי נוח לדבר, או קובע לבד תור או בקשה לאירוע.')}
         icon={CalendarCheck}
         tone="bg-violet-500"
         on={saved.mode === 'booking'}
@@ -221,8 +221,8 @@ function ModeCards({
 }
 
 /**
- * "Meanwhile, a look at our work" (D-149): shared by both ways to answer — after the automatic
- * reply, or when a customer doesn't finish booking. Its own switch; the editor is a pop-up.
+ * "A peek at the business" (D-149), shared by both ways to answer: sent once the customer chose
+ * when to talk (D-165), or didn't finish booking. Its own switch; the editor is a pop-up.
  */
 function ShowcaseCard({
   businessId,
@@ -253,7 +253,9 @@ function ShowcaseCard({
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-ink">{title}</h3>
           <p className="text-sm text-ink-muted">
-            {tr('אחרי המענה, הלקוח מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.')}
+            {tr(
+              'אחרי שהלקוח בוחר מתי נוח לדבר, הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.',
+            )}
           </p>
         </div>
         <Switch

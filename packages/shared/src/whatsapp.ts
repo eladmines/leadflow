@@ -456,6 +456,11 @@ export const replyStatusSchema = z.object({
     .trim()
     .min(1, statusMessages.textRequired)
     .max(1000, statusMessages.textTooLong),
+  /** Photos from the media library sent after the message (D-164), e.g. "At event" photos. */
+  assetIds: z
+    .array(z.string().uuid())
+    .max(SHOWCASE_MAX_IMAGES, showcaseMessages.tooManyImages)
+    .default([]),
 });
 export type ReplyStatus = z.infer<typeof replyStatusSchema>;
 
@@ -495,7 +500,13 @@ export const whatsappBotResponseSchema = z.object({
     mode: z.enum(REPLY_MODES),
     autoReplyText: z.string().nullable(),
     autoReplyDefault: z.string(),
-    statuses: z.array(replyStatusSchema.extend({ preset: z.boolean() })),
+    statuses: z.array(
+      replyStatusSchema.extend({
+        preset: z.boolean(),
+        /** Its video (D-164), if one was uploaded; sent after the photos. */
+        video: z.object({ sizeBytes: z.number().int() }).nullable(),
+      }),
+    ),
     /** The status on now (expired ones come back as null). */
     activeStatus: z.object({ id: z.string(), until: z.string().datetime().nullable() }).nullable(),
     enabled: z.boolean(),
@@ -541,6 +552,9 @@ export const whatsappApiPaths = {
   status: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/status`,
   /** PUT (multipart MP4) / GET / DELETE: the "meanwhile" video (D-151). */
   showcaseVideo: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/showcase/video`,
+  /** PUT (multipart MP4) / GET / DELETE: a status's video (D-164). */
+  statusVideo: (businessId: string, statusId: string) =>
+    `/api/v1/businesses/${businessId}/whatsapp/statuses/${statusId}/video`,
   thread: (businessId: string, leadId: string) =>
     `/api/v1/businesses/${businessId}/leads/${leadId}/whatsapp`,
   inbox: (businessId: string) => `/api/v1/businesses/${businessId}/whatsapp/inbox`,

@@ -63,7 +63,12 @@ describe('page tours (D-096)', () => {
             mode: 'booking',
             autoReplyText: null,
             autoReplyDefault: AUTO_REPLY_DEFAULT,
-            statuses: STATUS_PRESETS.map((p) => ({ ...p, preset: true, video: null })),
+            statuses: STATUS_PRESETS.map((p) => ({
+              ...p,
+              assetIds: [],
+              preset: true,
+              video: null,
+            })),
             activeStatus: null,
             videoBytesUsed: 0,
             enabled: true,

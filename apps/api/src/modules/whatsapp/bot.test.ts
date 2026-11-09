@@ -275,14 +275,17 @@ describe('WhatsApp booking bot (D-102)', () => {
     expect(last().text).toBe('לא מצאנו תור קרוב לבטל 🙂 רוצים לקבוע תור?');
   });
 
-  it('answers every message, not only the first one or booking words (D-154)', async () => {
+  it('answers every message: first "when\'s a good time to talk?", with booking a tap away (D-154, D-165)', async () => {
     await setup();
     await post(text('היי'));
-    expect(last().text).toContain('רוצים לקבוע תור?');
-    await post(tap('cancel'));
+    expect(last().text).toMatch(/^היי! תודה שכתבת לעיצוב שיער סיגלית/);
+    const ids = () => last().choices!.map((c) => c.id);
+    expect(ids()).toEqual(expect.arrayContaining(['cb:mor', 'cb:aft', 'cb:other', 'book']));
     await post(text('כמה עולה צבע?'));
+    expect(ids()).toContain('cb:other');
+    // Booking is one tap away, and booking words go straight to it.
+    await post(tap('book'));
     expect(last().text).toContain('רוצים לקבוע תור?');
-    expect(last().choices!.at(-1)!.id).toBe('human');
   });
 
   it('a single service skips straight to the days; "pending approval" books as a request', async () => {
@@ -756,9 +759,9 @@ describe('WhatsApp booking bot (D-102)', () => {
       expect(last().text).toMatch(/^לא הבנתי/);
       await post(text('לא ברור לי'));
       expect(last().text).toMatch(/^בסדר! העברנו את השיחה לצוות/);
-      // The next message is answered again, from the start (D-154).
+      // The next message is answered again, from the start (D-154, D-165).
       await post(text('הלו?'));
-      expect(last().text).toContain('רוצים לקבוע תור?');
+      expect(last().choices!.map((c) => c.id)).toContain('cb:other');
     });
 
     it("an event request doesn't hold the date unless the owner chose to", async () => {
