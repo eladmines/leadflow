@@ -574,8 +574,6 @@ export const enPart3: Record<string, string> = {
   'ההודעה נשמרה.': 'Message saved.',
   'לחיצה אחת, למשל "באירוע", ומתחת רואים בדיוק מה לקוחות מקבלים עכשיו — ואפשר לשנות את ההודעה שם. אפשר לבחור לכמה זמן ולהוסיף סרטון, ו"זמין" מחזיר את ההודעה הכללית.':
     'One click, for example "At an event", and below you see exactly what customers get now — and can change the message right there. You can choose for how long and add a video; "Available" brings back the general message.',
-  'כל לקוח שכותב מקבל הודעה קצרה, לפי הסטטוס שלך.':
-    'Every customer who writes gets a short message, based on your status.',
   'הסתרת ההגדרות': 'Hide settings',
   'שתי דרכים לענות: מענה אוטומטי או קביעת תורים אוטומטית. לכל אחת ההגדרות שלה, שנשמרות גם כשהיא כבויה. מדליקים את המתג של מה שרוצים — אחת בכל פעם.':
     'Two ways to answer: an automatic reply or automatic booking. Each keeps its own settings, even while off. Turn on the switch of the one you want — one at a time.',
@@ -595,10 +593,6 @@ export const enPart3: Record<string, string> = {
   'התור מחכה לאישור שלי': 'It waits for my approval',
   'השעה שמורה בינתיים. מאשרים בעמוד התורים.':
     'The time is held meanwhile. You approve it on the Appointments page.',
-  'נשלחת אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור. לכל היותר פעם ביום ללקוח.':
-    "Sent after the automatic reply, or to a customer who didn't finish booking. At most once a day per customer.",
-  'אחרי המענה, הלקוח מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
-    'After the reply, the customer gets a link, photos and a video of your business. At most once a day.',
   'עריכת ההצצה': 'Edit',
   '"תור בשעה פנויה": הלקוח בוחר שירות, יום ושעה. "בקשה לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
     '"An appointment at a free time": the customer picks a service, day and time. "An event request": the customer writes a date and tells you about the event, and you approve. The option that suits your field is marked.',
@@ -609,8 +603,6 @@ export const enPart3: Record<string, string> = {
   'סרטון (לא חובה)': 'Video (optional)',
   'סרטון להצצה': 'Video for the showcase',
   סרטון: 'Video',
-  'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות). כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
-    'Every customer who writes gets one short message (at most once every 12 hours). While a status is on, its message is sent instead.',
   'לקוח ביטל תור בוואטסאפ': 'A customer cancelled on WhatsApp',
   'הסתרת התצוגה המקדימה': 'Hide preview',
   'משתמש/ת פייסבוק': 'Facebook user',
@@ -786,5 +778,23 @@ export const enPart3: Record<string, string> = {
   'הוספת אימוג׳י': 'Add emoji',
   'אימוג׳י': 'Emoji',
   'הוספת {0}': 'Add {0}',
-  'ההודעה': 'Message',
+  ההודעה: 'Message',
+  'סרטון לסטטוס': 'Status video',
+  'נשלחת אחרי שהלקוח בוחר מתי נוח לדבר, או כשלא סיים לקבוע תור. לכל היותר פעם ביום ללקוח.':
+    "Sent after the customer chooses when to talk, or when they didn't finish booking. At most once a day per customer.",
+  'תמונות וסרטון לסטטוס "{0}"': 'Photos and video for "{0}"',
+  'נשלחים מיד אחרי ההודעה, כל עוד הסטטוס פעיל.':
+    'Sent right after the message, while this status is on.',
+  'תמונות בסטטוס': 'Status photos',
+  'בחירת תמונה לסטטוס': 'Choose a photo for the status',
+  'אחרי שהלקוח בוחר מתי נוח לדבר, הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
+    'After the customer chooses when to talk, they get a link, photos and a video from the business. At most once a day.',
+  'כל לקוח שכותב מקבל הודעה לפי הסטטוס שלך, ובוחר מתי נוח לדבר.':
+    'Every customer who writes gets a message based on your status, and chooses when to talk.',
+  'לקוח בוחר מתי נוח לדבר, או קובע לבד תור או בקשה לאירוע.':
+    'Customers choose when to talk, or book an appointment or event request themselves.',
+  'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות) ובוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
+    'Every customer who writes gets one short message (at most once every 12 hours) and chooses when to talk. When a status is on, its message is sent.',
+  'מתחת להודעה הלקוח בוחר מתי נוח לדבר (היום בערב · מחר בבוקר · מחר אחה״צ · זמן אחר), ואתם מקבלים משימה לחזור אליו.':
+    'Under the message, the customer chooses when to talk (this evening · tomorrow morning · tomorrow afternoon · another time), and you get a task to call them back.',
 };

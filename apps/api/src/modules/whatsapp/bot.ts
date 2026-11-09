@@ -15,8 +15,8 @@ import {
   type BotTextKey,
   type BotTexts,
   type Language,
+  type ReplyMode,
 } from '@leadflow/shared';
-import sharp from 'sharp';
 import type { z } from 'zod';
 import type { StorageProvider } from '../../integrations/storage';
 import type { WhatsAppChoice, WhatsAppSender } from '../../integrations/whatsapp';
@@ -24,7 +24,14 @@ import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
-import { AutoReplier, languageOf, modeOf, showcaseVideoOf } from './auto-reply';
+import {
+  AutoReplier,
+  languageOf,
+  modeOf,
+  replyTextOf,
+  showcaseVideoOf,
+  toWhatsAppJpeg,
+} from './auto-reply';
 import { AppointmentService } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 
@@ -50,7 +57,7 @@ const ABANDONED_AFTER_MS = 30 * 60_000;
 const ABANDONED_UNTIL_MS = 20 * 60 * 60_000;
 
 const CHOICE =
-  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|xcl:[0-9a-f-]{36}|xpick:[0-9a-f-]{36}|xcl_no|ok|other_time|other_day|other_date|ev_send|ev_edit|ev_start|cancel|human|showcase|book)$/;
+  /^(svc:[0-9a-f-]{36}|day:\d{4}-\d{2}-\d{2}|time:\d{2}:\d{2}|evt:(svc:[0-9a-f-]{36}|t\d{1,2})|part:(day|evening|unknown)|guests:\d|xcl:[0-9a-f-]{36}|xpick:[0-9a-f-]{36}|xcl_no|ok|other_time|other_day|other_date|ev_send|ev_edit|ev_start|cancel|human|showcase|book|cb:(eve|mor|aft|other))$/;
 /** Steps of a booking in progress (a conversation that stops in one of them gets the showcase). */
 const OPEN_STEPS = [
   'service',
@@ -78,6 +85,8 @@ interface EventData {
   guests?: string;
   area?: string;
 }
+/** Booking words (D-165): straight to booking, past "when's a good time to talk?". */
+const BOOK_TEXT = /תור|לקבוע|להזמין|הזמנה|אירוע|תאריך|book|appointment|event/i;
 /** "Cancel" anywhere in the message (D-153): stops a booking in progress, or cancels one booked. */
 const CANCEL_TEXT = /בטל|ביטול|cancel/i;
 /** The customer wants a person (D-108): the bot steps aside. */
@@ -165,6 +174,12 @@ const WORDS = {
     kept: 'מעולה, התור נשאר 👍',
     apptCancelled: 'התור בוטל ✅\nרוצים לקבוע מועד אחר? אפשר כאן 👇',
     bookNew: '📅 תור חדש',
+    talkButton: 'מתי נוח לדבר?',
+    slots: { eve: 'היום בערב', mor: 'מחר בבוקר', aft: 'מחר אחה״צ', other: 'זמן אחר' },
+    askOtherTime: 'מתי נוח לכם? כתבו יום ושעה 🙂',
+    callbackSet: (when: string) => `מעולה! נחזור אליכם ${when} 🙏`,
+    callbackThanks: 'תודה! נחזור אליכם בזמן שכתבתם 🙏',
+    callbackTask: (name: string, when: string) => `לחזור ל${name} — ${when}`,
   },
   en: {
     intl: 'en-GB',
@@ -234,6 +249,17 @@ const WORDS = {
     kept: 'Great, your appointment stays 👍',
     apptCancelled: 'Your appointment is cancelled ✅\nWant another time? You can book here 👇',
     bookNew: '📅 New booking',
+    talkButton: 'When can we talk?',
+    slots: {
+      eve: 'This evening',
+      mor: 'Tomorrow morning',
+      aft: 'Tomorrow afternoon',
+      other: 'Another time',
+    },
+    askOtherTime: 'When suits you? Write a day and time 🙂',
+    callbackSet: (when: string) => `Great! We'll get back to you ${when.toLowerCase()} 🙏`,
+    callbackThanks: "Thanks! We'll get back to you at the time you wrote 🙏",
+    callbackTask: (name: string, when: string) => `Call back ${name} — ${when}`,
   },
 } satisfies Record<Language, unknown>;
 type Words = (typeof WORDS)['he'];
@@ -298,6 +324,34 @@ const seeOurWork = (chat: Chat): WhatsAppChoice => ({
   title: wordsOf(chat).seeOurWork,
 });
 
+type CallbackSlot = 'eve' | 'mor' | 'aft';
+/** When each "good time to talk" is, in the business's time zone (D-165). */
+const CALLBACK_AT: Record<CallbackSlot, { days: number; time: string }> = {
+  eve: { days: 0, time: '18:00' },
+  mor: { days: 1, time: '09:00' },
+  aft: { days: 1, time: '14:00' },
+};
+const callbackDue = (slot: CallbackSlot, timezone: string, now: Date) =>
+  zonedTimeToUtc(
+    addDaysTo(todayIn(timezone, now), CALLBACK_AT[slot].days),
+    CALLBACK_AT[slot].time,
+    timezone,
+  );
+/** "When's a good time to talk?" rows: this evening (until 17:00), tomorrow, another time. */
+function callbackChoices(w: Words, timezone: string, now: Date, withBooking: boolean) {
+  const slots: CallbackSlot[] = (['eve', 'mor', 'aft'] as const).filter(
+    (slot) => callbackDue(slot, timezone, now).getTime() - now.getTime() > 60 * 60_000,
+  );
+  return {
+    button: w.talkButton,
+    rows: [
+      ...slots.map((slot) => ({ id: `cb:${slot}`, title: w.slots[slot] })),
+      { id: 'cb:other', title: w.slots.other },
+      ...(withBooking ? [{ id: 'book', title: w.bookButton }] : []),
+    ],
+  };
+}
+
 /**
  * A date the customer typed — "14.2.2027", "14/2/27", "14-02" (the next 14 February) — as
  * YYYY-MM-DD, from today up to two years ahead; null if it isn't one.
@@ -348,7 +402,7 @@ export class BookingBot {
     ) => Promise<{ contactId: string; leadId: string }>,
   ) {
     this.appointments = new AppointmentService(prisma);
-    this.autoReplier = new AutoReplier(prisma, log);
+    this.autoReplier = new AutoReplier(prisma, log, storage);
   }
 
   async handle(businessId: string, msg: BotMessage, now = new Date()): Promise<BotOutcome> {
@@ -373,26 +427,7 @@ export class BookingBot {
     if (!replies) return 'none';
     const mode = modeOf(replies.whatsappReplyMode);
     if (mode === 'off') return 'none';
-    if (mode === 'auto_reply') {
-      const sender = await this.senders(businessId);
-      if (!sender) return 'none';
-      const replied = await this.autoReplier.reply(
-        replies,
-        number,
-        await this.linkOf(businessId, number.status, number.phone),
-        await this.teamIsTalking(number.id, now),
-        now,
-        sender,
-      );
-      // "Meanwhile, a look at our work" follows the automatic reply too (D-149), once a day.
-      if (replied) {
-        const chat = await this.chatFor(businessId, number, now, { anyMode: true });
-        if (chat) await this.showcase(chat, {});
-      }
-      // The message still reaches the team (bell and pop-up) like any other.
-      return 'none';
-    }
-    const chat = await this.chatFor(businessId, number, now);
+    const chat = await this.chatFor(businessId, number, now, { anyMode: true });
     if (!chat) return 'none';
     const choice = msg.replyId && CHOICE.test(msg.replyId) ? msg.replyId : null;
     // For recognising words only (the message itself is kept as written).
@@ -402,6 +437,26 @@ export class BookingBot {
     if (session && session.expiresAt <= now) {
       await this.prisma.whatsAppBotSession.delete({ where: { id: session.id } });
       session = chat.session = null;
+    }
+    // D-165, both modes: the customer chose when to talk, or wrote it after "another time".
+    if (choice?.startsWith('cb:')) return this.onCallbackChoice(chat, choice.slice(3), mode, now);
+    if (session?.step === 'callback' && !choice && msg.body.trim()) {
+      return this.callBack(chat, msg.body.trim().slice(0, 80), now, mode, null);
+    }
+
+    if (mode === 'auto_reply') {
+      // The message (status or general) asks when's a good time to talk; the status's photos and
+      // video follow (D-164). Once per 12 hours; the team still gets the message.
+      await this.autoReplier.reply(
+        replies,
+        number,
+        chat.link,
+        await this.teamIsTalking(number.id, now),
+        now,
+        chat.sender,
+        callbackChoices(wordsOf(chat), chat.business.timezone, now, false),
+      );
+      return 'none';
     }
     // D-154: every message gets an answer, also after "talk to the team" — the bot starts again
     // (its greeting keeps the "talk to the team" button). Only a team member writing keeps it quiet.
@@ -435,10 +490,12 @@ export class BookingBot {
       // unless a team member is talking in this chat.
       if (await this.teamIsTalking(chat.numberId, now)) return 'none';
       // "Can I talk to you about…": straight to the team, no questions first.
-      if (!choice && HUMAN_TEXT.test(text)) {
+      if (choice === 'human' || (!choice && HUMAN_TEXT.test(text))) {
         return this.handoff(chat, now, this.text(chat, 'handoff'));
       }
-      return this.start(chat, now);
+      // Booking words go straight to booking; anything else first asks when to talk (D-165).
+      if (!choice && BOOK_TEXT.test(text)) return this.start(chat, now);
+      return this.askCallback(chat, replies, now);
     }
 
     if (choice === 'human' || (!choice && HUMAN_TEXT.test(text))) {
@@ -465,6 +522,93 @@ export class BookingBot {
       return this.book(chat, session.date, session.time, now);
     }
     return this.repeat(chat, now);
+  }
+
+  // ------------------------------------------------------- when to talk (D-165)
+
+  /** "Not available right now — when's a good time to talk?" (booking mode's first answer). */
+  private async askCallback(
+    chat: Chat,
+    business: Parameters<typeof replyTextOf>[0] & { id: string },
+    now: Date,
+  ): Promise<BotOutcome> {
+    const { text, active } = replyTextOf(business, now);
+    await this.say(chat, text, callbackChoices(wordsOf(chat), chat.business.timezone, now, true));
+    if (active) {
+      await this.autoReplier.sendStatusMedia(
+        chat.business.id,
+        { id: chat.numberId, phone: chat.phone },
+        chat.link,
+        active,
+        chat.sender,
+      );
+    }
+    return 'handled';
+  }
+
+  private async onCallbackChoice(
+    chat: Chat,
+    slot: string,
+    mode: ReplyMode,
+    now: Date,
+  ): Promise<BotOutcome> {
+    if (slot === 'other') {
+      await this.setSession(chat, { step: 'callback', serviceId: null, date: null, time: null });
+      await this.say(chat, wordsOf(chat).askOtherTime);
+      return 'handled';
+    }
+    const s = slot as CallbackSlot;
+    return this.callBack(
+      chat,
+      wordsOf(chat).slots[s],
+      callbackDue(s, chat.business.timezone, now),
+      mode,
+      s,
+    );
+  }
+
+  /**
+   * Files the customer (a new number becomes a business contact with a lead), gives the owner a
+   * task to call back at that time, confirms, then sends "A peek at the business".
+   */
+  private async callBack(
+    chat: Chat,
+    when: string,
+    /** The task's due time (now when the customer wrote their own time). */
+    dueAt: Date,
+    mode: ReplyMode,
+    slot: CallbackSlot | null,
+  ): Promise<BotOutcome> {
+    const w = wordsOf(chat);
+    const customer = await this.prisma.$transaction(async (tx) => {
+      const c = await this.ensureCustomer(tx, chat.business.id, chat.numberId);
+      const [contact, owner] = await Promise.all([
+        tx.contact.findUnique({ where: { id: c.contactId }, select: { name: true } }),
+        tx.membership.findFirst({
+          where: { businessId: chat.business.id, role: 'OWNER', status: 'ACTIVE' },
+          orderBy: { createdAt: 'asc' },
+          select: { userId: true },
+        }),
+      ]);
+      if (owner) {
+        await tx.task.create({
+          data: {
+            businessId: chat.business.id,
+            title: w.callbackTask(contact?.name ?? chat.phone, when).slice(0, 200),
+            dueAt,
+            assigneeId: owner.userId,
+            leadId: c.leadId,
+          },
+        });
+      }
+      await tx.whatsAppBotSession.deleteMany({ where: { numberId: chat.numberId } });
+      return c;
+    });
+    chat.link = customer;
+    chat.session = null;
+    await this.say(chat, slot ? w.callbackSet(when) : w.callbackThanks);
+    await this.showcase(chat, { offerBooking: mode === 'booking' });
+    return 'handled';
   }
 
   // ------------------------------------------------------------------ steps
@@ -1076,13 +1220,7 @@ export class BookingBot {
       const file = asset ? await this.storage.get(asset.key) : null;
       if (!file) continue;
       try {
-        // WhatsApp takes JPEG or PNG; the library keeps WebP.
-        const jpeg = await sharp(file)
-          .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-          .flatten({ background: '#ffffff' })
-          .jpeg({ quality: 85 })
-          .toBuffer();
-        await this.sayImage(chat, jpeg);
+        await this.sayImage(chat, await toWhatsAppJpeg(file));
       } catch (err) {
         this.log.error({ errName: (err as Error)?.name }, 'whatsapp showcase image failed');
       }
@@ -1220,7 +1358,7 @@ export class BookingBot {
     businessId: string,
     number: { id: string; phone: string; status: string; botShowcaseAt: Date | null },
     now: Date,
-    /** The showcase after an automatic reply needs the business even with the bot off. */
+    /** The automatic reply (D-165) uses the chat with the booking bot off. */
     { anyMode = false }: { anyMode?: boolean } = {},
   ): Promise<Chat | null> {
     const business = await this.prisma.business.findUnique({

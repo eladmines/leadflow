@@ -42,7 +42,7 @@ const number: InboxNumber = {
 };
 const DEFAULT_SHOWCASE = 'בינתיים, הנה הצצה לעבודות שלנו ✂️';
 const noShowcase = { enabled: false, text: null, link: null, assetIds: [] };
-const presets = STATUS_PRESETS.map((p) => ({ ...p, preset: true, video: null }));
+const presets = STATUS_PRESETS.map((p) => ({ ...p, assetIds: [], preset: true, video: null }));
 /** Saved settings: the booking bot by default here (most tests drive its card). */
 const botSettings = (mode: 'off' | 'auto_reply' | 'booking' = 'booking') => ({
   mode,
@@ -70,6 +70,7 @@ const echoBot = (body: unknown) => {
       ...b,
       statuses: (b as unknown as { statuses?: object[] }).statuses
         ? (b as unknown as { statuses: object[] }).statuses.map((x) => ({
+            assetIds: [],
             ...x,
             preset: true,
             video: null,
@@ -222,6 +223,10 @@ describe('WhatsApp conversations inbox', () => {
     expect(await screen.findByLabelText('מה לקוחות מקבלים כשאתם "באירוע"')).toHaveValue(
       presets[0]!.text,
     );
+    // The status's own photos and video (D-164).
+    const media = screen.getByRole('region', { name: 'תמונות וסרטון לסטטוס "באירוע"' });
+    expect(within(media).getByRole('button', { name: 'הוספת תמונה' })).toBeInTheDocument();
+    expect(within(media).getByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
     // How long, once you're away.
     await user.selectOptions(screen.getByLabelText('לכמה זמן:'), 'לשעה');
     const sent = callsTo(fetchMock, 'PUT', wp.status(id))[1] as { id: string; until: string };
