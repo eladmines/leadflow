@@ -17,7 +17,7 @@ import {
 } from '@leadflow/shared';
 import { Eye, ImagePlus, MessageSquareText, RotateCcw, Video, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
-import { Alert, Button, DialogShell, Field, Textarea } from '../../components/ui';
+import { Alert, Button, DialogShell, EmojiPicker, Field, Textarea } from '../../components/ui';
 import { useAssets } from '../media/api';
 import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -484,6 +484,7 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
   const assets = useAssets(businessId);
   const saved = settings.showcase;
   const [text, setText] = useState(toTags(saved.text ?? saved.defaultText, settings.flow));
+  const textBox = useRef<HTMLTextAreaElement>(null);
   const [link, setLink] = useState(saved.link ?? '');
   const [assetIds, setAssetIds] = useState(saved.assetIds);
   const [picking, setPicking] = useState(false);
@@ -527,17 +528,28 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
         {tr('נשלחת אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור. לכל היותר פעם ביום ללקוח.')}
       </p>
       <fieldset className="flex flex-col gap-4">
-        <Textarea
-          label={tr('ההודעה')}
-          dir="auto"
-          rows={2}
-          value={text}
-          error={errors.text}
-          onChange={(e) => {
-            changed();
-            setText(e.target.value);
-          }}
-        />
+        <div className="flex flex-col gap-1">
+          <Textarea
+            ref={textBox}
+            label={tr('ההודעה')}
+            dir="auto"
+            rows={2}
+            value={text}
+            error={errors.text}
+            onChange={(e) => {
+              changed();
+              setText(e.target.value);
+            }}
+          />
+          <EmojiPicker
+            target={textBox}
+            value={text}
+            onInsert={(next) => {
+              changed();
+              setText(next);
+            }}
+          />
+        </div>
         <Field
           label={tr('קישור (לא חובה)')}
           hint={tr(

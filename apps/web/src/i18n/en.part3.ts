@@ -783,4 +783,7 @@ export const enPart3: Record<string, string> = {
   'הרכישות של {0}': "{0}'s purchases",
   'הצעת מחיר שאושרה': 'Accepted quote',
   נסגר: 'Won',
+  'הוספת אימוג׳י': 'Add emoji',
+  'אימוג׳י': 'Emoji',
+  'הוספת {0}': 'Add {0}',
 };
