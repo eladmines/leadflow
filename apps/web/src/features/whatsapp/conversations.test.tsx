@@ -143,10 +143,13 @@ describe('WhatsApp conversations inbox', () => {
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(autoTab);
-    const pending = await screen.findByRole('radio', { name: /מחכה לאישור שלי/ });
+    // Dropdowns, the chosen option explained under each (D-173).
+    const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע תור:' });
+    expect(screen.getByText('הלקוח מקבל אישור, והתור נכנס ליומן.')).toBeInTheDocument();
     const saveButton = screen.getByRole('button', { name: 'שמירת ההגדרות' });
     expect(saveButton).toBeDisabled();
-    await user.click(pending);
+    await user.selectOptions(confirm, 'approve');
+    expect(screen.getByText('השעה שמורה בינתיים. מאשרים בעמוד התורים.')).toBeInTheDocument();
     // Nothing is sent until saving.
     expect(screen.getByText('יש שינויים שעוד לא נשמרו')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
@@ -169,9 +172,10 @@ describe('WhatsApp conversations inbox', () => {
   it('"Discard changes" puts the saved settings back', async () => {
     mockApi(routes({ connected: true, numbers: [] }));
     const { user } = renderApp(autoTab);
-    await user.click(await screen.findByRole('radio', { name: /מחכה לאישור שלי/ }));
+    const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע תור:' });
+    await user.selectOptions(confirm, 'approve');
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
-    expect(screen.getByRole('radio', { name: /מאושר מיד/ })).toBeChecked();
+    expect(screen.getByRole('combobox', { name: 'כשלקוח קובע תור:' })).toHaveValue('confirm');
     expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeDisabled();
   });
 
@@ -404,16 +408,16 @@ describe('WhatsApp conversations inbox', () => {
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(autoTab);
-    const events = await screen.findByRole('radio', { name: /בקשה לאירוע/ });
-    expect(screen.getByRole('radio', { name: /תור בשעה פנויה/ })).toBeChecked();
-    expect(screen.getByText(/מתאים לתחום שלכם/)).toBeInTheDocument();
-    await user.click(events);
+    const flow = await screen.findByRole('combobox', { name: 'מה לקוחות יכולים להזמין?' });
+    expect(flow).toHaveValue('appointment');
+    expect(screen.getByRole('option', { name: /מתאים לתחום שלכם/ })).toBeInTheDocument();
+    await user.selectOptions(flow, 'event');
     await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );
     expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד התורים/)).toBeInTheDocument();
-    expect(screen.queryByRole('radio', { name: /מאושר מיד/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'כשלקוח קובע תור:' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
     expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();
     expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();

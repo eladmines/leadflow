@@ -17,7 +17,15 @@ import {
 } from '@leadflow/shared';
 import { Eye, ImagePlus, MessageSquareText, RotateCcw, Video, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
-import { Alert, Button, DialogShell, EmojiPicker, Field, Textarea } from '../../components/ui';
+import {
+  Alert,
+  Button,
+  DialogShell,
+  EmojiPicker,
+  Field,
+  Select,
+  Textarea,
+} from '../../components/ui';
 import { useAssets } from '../media/api';
 import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -86,21 +94,19 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
       <h3 id="bot-settings-title" className="sr-only">
         {tr('הגדרות קביעת התורים')}
       </h3>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium text-ink">
-          {tr('מה לקוחות יכולים להזמין?')}
-        </legend>
-        {BOT_FLOWS.map((f) => (
-          <Choice
-            key={f}
-            name="bot-flow"
-            checked={settings.flow === f}
-            onChange={() => change({ flow: f })}
-            label={tr(FLOW_CHOICES[f].label)}
-            hint={`${tr(FLOW_CHOICES[f].hint)}${industryFlow === f ? ` · ${tr('מתאים לתחום שלכם')}` : ''}`}
-          />
-        ))}
-      </fieldset>
+      {/* Dropdowns with the chosen option explained under each (D-173): calmer than radio lists. */}
+      <div role="group" aria-label={tr('מה לקוחות יכולים להזמין?')} className="max-w-md">
+        <Select
+          label={tr('מה לקוחות יכולים להזמין?')}
+          value={settings.flow}
+          onChange={(e) => change({ flow: e.target.value as BotFlow })}
+          options={BOT_FLOWS.map((f) => ({
+            value: f,
+            label: `${tr(FLOW_CHOICES[f].label)}${industryFlow === f ? ` (${tr('מתאים לתחום שלכם')})` : ''}`,
+          }))}
+          hint={tr(FLOW_CHOICES[settings.flow].hint)}
+        />
+      </div>
       {settings.flow === 'event' ? (
         <>
           <label className="flex items-center gap-2 text-sm text-ink">
@@ -119,23 +125,22 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </p>
         </>
       ) : (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-medium text-ink">{tr('כשלקוח קובע תור:')}</legend>
-          <Choice
-            name="bot-confirm"
-            checked={settings.autoConfirm}
-            onChange={() => change({ autoConfirm: true })}
-            label={tr('התור מאושר מיד')}
-            hint={tr('הלקוח מקבל אישור, והתור נכנס ליומן.')}
+        <div role="group" aria-label={tr('כשלקוח קובע תור:')} className="max-w-md">
+          <Select
+            label={tr('כשלקוח קובע תור:')}
+            value={settings.autoConfirm ? 'confirm' : 'approve'}
+            onChange={(e) => change({ autoConfirm: e.target.value === 'confirm' })}
+            options={[
+              { value: 'confirm', label: tr('התור מאושר מיד') },
+              { value: 'approve', label: tr('התור מחכה לאישור שלי') },
+            ]}
+            hint={
+              settings.autoConfirm
+                ? tr('הלקוח מקבל אישור, והתור נכנס ליומן.')
+                : tr('השעה שמורה בינתיים. מאשרים בעמוד התורים.')
+            }
           />
-          <Choice
-            name="bot-confirm"
-            checked={!settings.autoConfirm}
-            onChange={() => change({ autoConfirm: false })}
-            label={tr('התור מחכה לאישור שלי')}
-            hint={tr('השעה שמורה בינתיים. מאשרים בעמוד התורים.')}
-          />
-        </fieldset>
+        </div>
       )}
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {saved && !dirty && <Alert tone="success">{tr('ההגדרות נשמרו.')}</Alert>}
@@ -182,37 +187,6 @@ const FLOW_CHOICES: Record<BotFlow, { label: string; hint: string }> = {
   appointment: { label: 'תור בשעה פנויה', hint: 'הלקוח רואה ימים ושעות פנויים מהיומן.' },
   event: { label: 'בקשה לאירוע', hint: 'הלקוח כותב תאריך, מספר אורחים ואזור, ואתם מאשרים.' },
 };
-
-/** A radio answer with a short explanation under it. */
-function Choice({
-  name,
-  checked,
-  onChange,
-  label,
-  hint,
-}: {
-  name: string;
-  checked: boolean;
-  onChange: () => void;
-  label: string;
-  hint: string;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-2.5">
-      <input
-        type="radio"
-        name={name}
-        checked={checked}
-        onChange={onChange}
-        className="mt-1 h-4 w-4 accent-brand-600"
-      />
-      <span className="flex flex-col">
-        <span className="text-sm font-medium text-ink">{label}</span>
-        <span className="text-xs text-ink-muted">{hint}</span>
-      </span>
-    </label>
-  );
-}
 
 const mb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 
