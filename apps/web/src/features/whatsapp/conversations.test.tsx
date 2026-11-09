@@ -354,9 +354,9 @@ describe('WhatsApp conversations inbox', () => {
       showcase: { enabled: true },
     });
     await user.click(screen.getByRole('button', { name: 'עריכת ההצצה' }));
-    // Only a link, photos and a video (D-151) — no message (D-166).
-    expect(await screen.findByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('ההודעה')).not.toBeInTheDocument();
+    // Its message (the industry's default, ready to edit), then a link, photos and a video (D-169).
+    expect(await screen.findByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
+    expect(screen.getByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
     // The customer's view only on request (D-155).
     expect(screen.queryByText('כך הלקוח יראה את זה:')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'תצוגה מקדימה' }));
