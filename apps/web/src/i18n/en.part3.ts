@@ -652,8 +652,6 @@ export const enPart3: Record<string, string> = {
   'חברו את הוואטסאפ ואת דף הפייסבוק של העסק, וכל ההודעות יגיעו לתיבת השיחות.':
     "Connect the business's WhatsApp and Facebook Page, and every message reaches your conversations inbox.",
   'החיבור לפייסבוק בוטל.': 'Connecting Facebook was cancelled.',
-  'מחובר דרך הגדרות המערכת': 'Connected through the system settings',
-  'מחובר · {0}': 'Connected · {0}',
   'לא מחובר': 'Not connected',
   ניתוק: 'Disconnect',
   'לנתק? הודעות חדשות כבר לא יגיעו לתיבת השיחות. השיחות הקיימות נשארות.':
@@ -688,4 +686,10 @@ export const enPart3: Record<string, string> = {
   'מיילים מלקוחות יגיעו לתיבת השיחות, ותוכלו לענות להם משם.':
     "Customers' emails will reach your conversations inbox, and you'll reply from there.",
   'חיבור אימייל': 'Connect email',
+  מחובר: 'Connected',
+  'דרך הגדרות המערכת': 'Through the system settings',
+  'הודעות מלקוחות בוואטסאפ יגיעו לתיבת השיחות, ושם גם המענה האוטומטי וקביעת התורים.':
+    'WhatsApp messages from customers reach your conversations inbox, along with the automatic reply and booking.',
+  'הודעות לדף הפייסבוק של העסק יגיעו לתיבת השיחות, ותוכלו לענות להם משם.':
+    "Messages to the business's Facebook Page reach your conversations inbox, and you reply from there.",
 };

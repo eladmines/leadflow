@@ -90,6 +90,7 @@ F06 ─► F11 (after spike)
 - 2026-11-03 — Booking-bot showcase (D-106): message + link + up to 3 photos for customers who don't book (cancel, team, no times, stopped mid-way), "See our work" option, once a day.
 - 2026-11-03 — Bot per industry (D-107): 5 new industries, industry default messages, and an event-request flow (type → date → part of day → guests → area) for DJs, catering and photographers.
 - 2026-11-04 — Bot personal touch (D-108): event businesses ask "check a date or personal chat" first, wanting a person or two misunderstandings hand over, dates not held unless chosen, pause the bot per customer from the lead.
+- 2026-11-09 — Channels: one box template for every channel (D-161).
 - 2026-11-09 — Channels: Instagram and Email rows marked "Coming soon" (UI only, D-160).
 - 2026-11-09 — F25 Settings → Channels: each business connects its WhatsApp (form) and Facebook Page (sign-in); tokens encrypted; messages routed by number/Page (D-159).
 - 2026-11-09 — F24 unified inbox: WhatsApp and Facebook conversations in one list, open and reply on one screen, unread, filters, phone layout (D-158).
