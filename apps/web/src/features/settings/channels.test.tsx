@@ -32,7 +32,8 @@ describe('Settings → Channels (F25)', () => {
         }),
     });
     const { user } = renderApp(page);
-    expect(await screen.findByRole('heading', { name: 'WhatsApp' })).toBeInTheDocument();
+    // Every channel in the same box: name with its status (D-161).
+    expect(await screen.findByRole('heading', { name: /^WhatsApp/ })).toHaveTextContent('לא מחובר');
     expect(screen.getAllByText('לא מחובר')).toHaveLength(2);
     // Instagram and email are on their way (D-160): shown, not connectable yet.
     expect(screen.getByRole('heading', { name: /Instagram/ })).toHaveTextContent('בקרוב');
@@ -47,7 +48,7 @@ describe('Settings → Channels (F25)', () => {
         { phoneNumberId: '555000111', accessToken: 'EAA-whatsapp-token-0123456789' },
       ]),
     );
-    expect(await screen.findByText('מחובר · +1 555-000-1111')).toBeInTheDocument();
+    expect(await screen.findByText('+1 555-000-1111')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ניתוק' })).toBeInTheDocument();
   });
 
@@ -93,7 +94,7 @@ describe('Settings → Channels (F25)', () => {
     await waitFor(() =>
       expect(callsTo(fetchMock, 'POST', ch.facebook(id))).toEqual([{ pendingId, pageId: '222' }]),
     );
-    expect(await screen.findByText('מחובר · דף אחר')).toBeInTheDocument();
+    expect(await screen.findByText('דף אחר')).toBeInTheDocument();
   });
 
   it('explains a failed sign-in; non-owners only see the status', async () => {
@@ -119,7 +120,7 @@ describe('Settings → Channels (F25)', () => {
         }),
     });
     renderApp(page);
-    expect(await screen.findByText('מחובר דרך הגדרות המערכת')).toBeInTheDocument();
+    expect(await screen.findByText('דרך הגדרות המערכת')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'חיבור פייסבוק' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'ניתוק' })).not.toBeInTheDocument();
   });

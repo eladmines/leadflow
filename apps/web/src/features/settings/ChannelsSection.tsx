@@ -2,11 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   channelsMessages,
   connectWhatsAppRequestSchema,
+  type Channel,
   type ChannelStatus,
   type ConnectWhatsAppRequest,
 } from '@leadflow/shared';
 import { Facebook, Instagram, Mail, MessageCircle, Plug } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Button, DialogShell, Field, PasswordField, Spinner } from '../../components/ui';
@@ -105,60 +106,96 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-function ChannelRow({
+type BoxState = 'connected' | 'off' | 'soon';
+
+const STATE_PILL: Record<BoxState, { label: string; className: string }> = {
+  connected: { label: 'מחובר', className: 'bg-emerald-50 text-emerald-700' },
+  off: { label: 'לא מחובר', className: 'bg-slate-100 text-slate-600' },
+  soon: { label: 'בקרוב', className: 'bg-amber-50 text-amber-700' },
+};
+
+/**
+ * One box per channel, the same for every channel (D-161): its icon in its colour, the name with a
+ * status pill, what it does, the connected number or Page, and the main button on the same side.
+ * Forms and confirmations open below, inside the box.
+ */
+function ChannelBox({
   icon: Icon,
   tone,
   title,
-  status,
-  canEdit,
-  onDisconnect,
-  disconnecting,
+  description,
+  state,
+  detail,
+  action,
   children,
 }: {
   icon: typeof MessageCircle;
   tone: string;
   title: string;
-  status: ChannelStatus;
-  canEdit: boolean;
-  onDisconnect: () => void;
-  disconnecting: boolean;
-  children?: React.ReactNode;
+  description: string;
+  state: BoxState;
+  /** When connected: the number or the Page's name. */
+  detail?: string | null;
+  action?: ReactNode;
+  children?: ReactNode;
 }) {
-  const [confirm, setConfirm] = useState(false);
+  const pill = STATE_PILL[state];
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-surface-border p-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         <span
           aria-hidden
           className={cn(
-            'flex h-10 w-10 items-center justify-center rounded-xl text-white',
-            status.connected ? tone : 'bg-slate-400',
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white',
+            tone,
           )}
         >
           <Icon className="h-5 w-5" />
         </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-ink">{title}</h3>
-          <p className="text-sm text-ink-muted" dir="auto">
-            {status.connected
-              ? status.source === 'environment'
-                ? tr('מחובר דרך הגדרות המערכת')
-                : tr('מחובר · {0}', status.name ?? '')
-              : tr('לא מחובר')}
-          </p>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <h3 className="flex flex-wrap items-center gap-2 font-semibold text-ink">
+            {title}
+            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', pill.className)}>
+              {tr(pill.label)}
+            </span>
+          </h3>
+          <p className="text-sm text-ink-muted">{description}</p>
+          {state === 'connected' && detail && (
+            <p className="text-sm font-medium text-ink" dir="auto">
+              {detail}
+            </p>
+          )}
         </div>
-        {canEdit && status.source === 'business' && !confirm && (
-          <Button variant="secondary" size="sm" onClick={() => setConfirm(true)}>
-            {tr('ניתוק')}
-          </Button>
-        )}
+        {action && <div className="shrink-0">{action}</div>}
       </div>
+      {children}
+    </div>
+  );
+}
+
+/** "Disconnect", then a short confirmation inside the box. */
+function useDisconnectFlow(channel: Channel) {
+  const business = useCurrentBusiness();
+  const disconnect = useDisconnect(business.id);
+  const [confirm, setConfirm] = useState(false);
+  const button = (
+    <Button variant="secondary" size="sm" onClick={() => setConfirm(true)}>
+      {tr('ניתוק')}
+    </Button>
+  );
+  const panel = (
+    <>
       {confirm && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-muted p-3 text-sm">
           <span className="flex-1 text-ink">
             {tr('לנתק? הודעות חדשות כבר לא יגיעו לתיבת השיחות. השיחות הקיימות נשארות.')}
           </span>
-          <Button size="sm" variant="danger" loading={disconnecting} onClick={onDisconnect}>
+          <Button
+            size="sm"
+            variant="danger"
+            loading={disconnect.isPending}
+            onClick={() => disconnect.mutate(channel, { onSuccess: () => setConfirm(false) })}
+          >
             {tr('כן, לנתק')}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setConfirm(false)}>
@@ -166,15 +203,20 @@ function ChannelRow({
           </Button>
         </div>
       )}
-      {children}
-    </div>
+      {disconnect.isError && <Alert tone="danger">{errorMessage(disconnect.error)}</Alert>}
+    </>
   );
+  return { button: confirm ? null : button, panel };
 }
+
+const stateOf = (status: ChannelStatus): BoxState => (status.connected ? 'connected' : 'off');
+const detailOf = (status: ChannelStatus) =>
+  status.source === 'environment' ? tr('דרך הגדרות המערכת') : status.name;
 
 function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: boolean }) {
   const business = useCurrentBusiness();
   const connect = useConnectWhatsApp(business.id);
-  const disconnect = useDisconnect(business.id);
+  const off = useDisconnectFlow('whatsapp');
   const [open, setOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const form = useForm<ConnectWhatsAppRequest>({
@@ -192,21 +234,28 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
     }
   });
   const errors = form.formState.errors;
+  const action = !canEdit
+    ? null
+    : status.source === 'business'
+      ? off.button
+      : !open && (
+          <Button size="sm" onClick={() => setOpen(true)}>
+            {tr('חיבור WhatsApp')}
+          </Button>
+        );
   return (
-    <ChannelRow
+    <ChannelBox
       icon={MessageCircle}
       tone="bg-emerald-500"
       title="WhatsApp"
-      status={status}
-      canEdit={canEdit}
-      onDisconnect={() => disconnect.mutate('whatsapp')}
-      disconnecting={disconnect.isPending}
-    >
-      {canEdit && status.source !== 'business' && !open && (
-        <Button size="sm" className="self-start" onClick={() => setOpen(true)}>
-          {tr('חיבור WhatsApp')}
-        </Button>
+      description={tr(
+        'הודעות מלקוחות בוואטסאפ יגיעו לתיבת השיחות, ושם גם המענה האוטומטי וקביעת התורים.',
       )}
+      state={stateOf(status)}
+      detail={detailOf(status)}
+      action={action}
+    >
+      {off.panel}
       {open && (
         <form noValidate onSubmit={submit} className="flex flex-col gap-3">
           <p className="text-sm text-ink-muted">
@@ -241,8 +290,7 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
           </div>
         </form>
       )}
-      {disconnect.isError && <Alert tone="danger">{errorMessage(disconnect.error)}</Alert>}
-    </ChannelRow>
+    </ChannelBox>
   );
 }
 
@@ -257,45 +305,40 @@ function FacebookRow({
 }) {
   const business = useCurrentBusiness();
   const start = useFacebookStart(business.id);
-  const disconnect = useDisconnect(business.id);
+  const off = useDisconnectFlow('messenger');
+  const action = !canEdit ? null : status.source === 'business' ? (
+    off.button
+  ) : (
+    <Button
+      size="sm"
+      loading={start.isPending}
+      disabled={!available}
+      onClick={() => start.mutate()}
+    >
+      {tr('חיבור פייסבוק')}
+    </Button>
+  );
   return (
-    <ChannelRow
+    <ChannelBox
       icon={Facebook}
       tone="bg-blue-600"
       title={tr('פייסבוק')}
-      status={status}
-      canEdit={canEdit}
-      onDisconnect={() => disconnect.mutate('messenger')}
-      disconnecting={disconnect.isPending}
+      description={tr('הודעות לדף הפייסבוק של העסק יגיעו לתיבת השיחות, ותוכלו לענות להם משם.')}
+      state={stateOf(status)}
+      detail={detailOf(status)}
+      action={action}
     >
-      {canEdit &&
-        status.source !== 'business' &&
-        (available ? (
-          <Button
-            size="sm"
-            className="self-start"
-            loading={start.isPending}
-            onClick={() => start.mutate()}
-          >
-            {tr('חיבור פייסבוק')}
-          </Button>
-        ) : (
-          <p className="text-sm text-ink-muted">{tr(channelsMessages.facebookUnavailable)}</p>
-        ))}
+      {off.panel}
+      {canEdit && !available && status.source !== 'business' && (
+        <p className="text-sm text-ink-muted">{tr(channelsMessages.facebookUnavailable)}</p>
+      )}
       {start.isError && <Alert tone="danger">{errorMessage(start.error)}</Alert>}
-      {disconnect.isError && <Alert tone="danger">{errorMessage(disconnect.error)}</Alert>}
-    </ChannelRow>
+    </ChannelBox>
   );
 }
 
-/** A channel that's on its way: what it will do, and a connect button that isn't active yet. */
-function ComingSoonRow({
-  icon: Icon,
-  tone,
-  title,
-  description,
-  action,
-}: {
+/** A channel on its way (D-160): the same box, its button not active yet. */
+function ComingSoonRow(props: {
   icon: typeof MessageCircle;
   tone: string;
   title: string;
@@ -303,28 +346,15 @@ function ComingSoonRow({
   action: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-dashed border-surface-border p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <span
-          aria-hidden
-          className={cn('flex h-10 w-10 items-center justify-center rounded-xl text-white', tone)}
-        >
-          <Icon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="flex items-center gap-2 font-semibold text-ink">
-            {title}
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-              {tr('בקרוב')}
-            </span>
-          </h3>
-          <p className="text-sm text-ink-muted">{description}</p>
-        </div>
-        <Button size="sm" variant="secondary" disabled>
-          {action}
+    <ChannelBox
+      {...props}
+      state="soon"
+      action={
+        <Button size="sm" disabled>
+          {props.action}
         </Button>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
