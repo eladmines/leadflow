@@ -1,7 +1,9 @@
 import { businessWebPaths, type AttributionReportRow, type ReportSummary } from '@leadflow/shared';
-import { Megaphone } from 'lucide-react';
+import { Megaphone, Plug } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '../../components/ui';
+import { Button, Card } from '../../components/ui';
+import { AdsGuideDialog } from './AdsGuideDialog';
 import { shekel } from '../leads/api';
 import { SourceBadge } from '../leads/Attribution';
 import { tr } from '../../i18n';
@@ -20,6 +22,7 @@ export function CustomerSources({
   businessId: string;
   report: Pick<ReportSummary, 'byAttribution' | 'byCampaign'>;
 }) {
+  const [guideOpen, setGuideOpen] = useState(false);
   const leadsLink = (r: AttributionReportRow, campaign?: string) => {
     const q = new URLSearchParams({ view: 'list', from: r.source });
     if (campaign) q.set('campaign', campaign);
@@ -27,16 +30,23 @@ export function CustomerSources({
   };
   return (
     <Card className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
-          <Megaphone aria-hidden className="h-5 w-5 text-accent-600" />
-          {tr('מאיפה מגיעים הלקוחות')}
-        </h2>
-        <p className="text-sm text-ink-muted">
-          {tr(
-            'לפי מקור ולפי קמפיין: כמה פניות, כמה הפכו ללקוחות (שלב "נסגר" או הצעת מחיר שאושרה) וכמה כסף.',
-          )}
-        </p>
+      <AdsGuideDialog businessId={businessId} open={guideOpen} onOpenChange={setGuideOpen} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+            <Megaphone aria-hidden className="h-5 w-5 text-accent-600" />
+            {tr('מאיפה מגיעים הלקוחות')}
+          </h2>
+          <p className="text-sm text-ink-muted">
+            {tr(
+              'לפי מקור ולפי קמפיין: כמה פניות, כמה הפכו ללקוחות (שלב "נסגר" או הצעת מחיר שאושרה) וכמה כסף.',
+            )}
+          </p>
+        </div>
+        <Button variant="secondary" onClick={() => setGuideOpen(true)}>
+          <Plug aria-hidden className="h-4 w-4" />
+          {tr('חיבור המודעות שלכם')}
+        </Button>
       </div>
       {report.byAttribution.length === 0 ? (
         <p className="text-sm text-ink-muted">{tr('אין פניות בתקופה הזו.')}</p>
@@ -69,7 +79,6 @@ export function CustomerSources({
           }))}
         />
       )}
-      <TagYourAds />
     </Card>
   );
 }
@@ -120,57 +129,5 @@ function Table({
         </tbody>
       </table>
     </div>
-  );
-}
-
-/** How to make ads show up here (F26 help). */
-function TagYourAds() {
-  return (
-    <details className="rounded-2xl bg-surface-muted p-4 text-sm">
-      <summary className="cursor-pointer font-medium text-brand-700">
-        {tr('איך מסמנים מודעות כדי לראות אותן כאן?')}
-      </summary>
-      <ol className="mt-3 flex list-decimal flex-col gap-2 ps-5 text-ink">
-        <li>
-          {tr(
-            'Google Ads: בהגדרות הקמפיין, תחת "אפשרויות כתובת URL של הקמפיין", הוסיפו ל"סיומת כתובת URL סופית" את שם הקמפיין, למשל:',
-          )}
-          <code
-            dir="ltr"
-            className="mt-1 block overflow-x-auto rounded-lg bg-surface px-2 py-1 text-xs text-ink"
-          >
-            utm_source=google&amp;utm_medium=cpc&amp;utm_campaign=summer&amp;utm_term={'{keyword}'}
-          </code>
-        </li>
-        <li>
-          {tr(
-            'פייסבוק ואינסטגרם: במודעה, תחת "פרמטרים של כתובת URL", הדביקו (פייסבוק ממלא את שם הקמפיין לבד):',
-          )}
-          <code
-            dir="ltr"
-            className="mt-1 block overflow-x-auto rounded-lg bg-surface px-2 py-1 text-xs text-ink"
-          >
-            utm_source=facebook&amp;utm_medium=paid&amp;utm_campaign={'{{campaign.name}}'}
-          </code>
-        </li>
-        <li>
-          {tr(
-            'מודעות "לחיצה לוואטסאפ" בפייסבוק ובאינסטגרם מסומנות לבד. ממודעות גוגל לוואטסאפ: כתבו הודעה פתוחה אחרת לכל קמפיין.',
-          )}
-        </li>
-        <li>
-          {tr('כל קישור אחר (ניוזלטר, ביו באינסטגרם, ברקוד): הוסיפו בסוף כתובת האתר, למשל:')}
-          <code
-            dir="ltr"
-            className="mt-1 block overflow-x-auto rounded-lg bg-surface px-2 py-1 text-xs text-ink"
-          >
-            ?utm_source=newsletter&amp;utm_campaign=november
-          </code>
-        </li>
-      </ol>
-      <p className="mt-3 text-xs text-ink-muted">
-        {tr('האתר שומר את המקור בעוגייה קטנה ל-30 יום, בלי פרטים אישיים, עד שהמבקר משאיר פרטים.')}
-      </p>
-    </details>
   );
 }

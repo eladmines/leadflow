@@ -722,15 +722,48 @@ export const enPart3: Record<string, string> = {
   'הפכו ללקוחות': 'Became customers',
   'שווי עסקאות': 'Deal value',
   'אחוז סגירה': 'Close rate',
-  'איך מסמנים מודעות כדי לראות אותן כאן?': 'How do I tag my ads so they show here?',
-  'Google Ads: בהגדרות הקמפיין, תחת "אפשרויות כתובת URL של הקמפיין", הוסיפו ל"סיומת כתובת URL סופית" את שם הקמפיין, למשל:':
-    'Google Ads: in the campaign\'s settings, under "Campaign URL options", add the campaign name to the "Final URL suffix", for example:',
-  'כל קישור אחר (ניוזלטר, ביו באינסטגרם, ברקוד): הוסיפו בסוף כתובת האתר, למשל:':
-    'Any other link (newsletter, Instagram bio, QR code): add to the end of your website address, for example:',
-  'פייסבוק ואינסטגרם: במודעה, תחת "פרמטרים של כתובת URL", הדביקו (פייסבוק ממלא את שם הקמפיין לבד):':
-    'Facebook and Instagram: in the ad, under "URL parameters", paste (Facebook fills in the campaign name itself):',
-  'מודעות "לחיצה לוואטסאפ" בפייסבוק ובאינסטגרם מסומנות לבד. ממודעות גוגל לוואטסאפ: כתבו הודעה פתוחה אחרת לכל קמפיין.':
-    'Facebook and Instagram "Click to WhatsApp" ads are tagged automatically. For Google ads that open WhatsApp: use a different pre-filled message per campaign.',
   'האתר שומר את המקור בעוגייה קטנה ל-30 יום, בלי פרטים אישיים, עד שהמבקר משאיר פרטים.':
     'Your website keeps the source in a small cookie for 30 days, with no personal details, until the visitor leaves their details.',
+  'כתובת-האתר-שלכם': 'your-website-address',
+  'פייסבוק ואינסטגרם': 'Facebook & Instagram',
+  'קישורים אחרים': 'Other links',
+  'חיבור המודעות שלכם': 'Connect your ads',
+  'כך כל ליד יגיע עם המקור והקמפיין שהביאו אותו. אין צורך בסיסמה או בחיבור חשבון: מוסיפים סימון קטן לקישור של המודעה, ו-LeadFlow קורא אותו.':
+    "This way every lead arrives with the source and campaign that brought it. No password or account connection needed: you add a small tag to the ad's link, and LeadFlow reads it.",
+  'המעקב עובד באתר שנבנה ב-LeadFlow ופורסם.':
+    'Tracking works on a website built in LeadFlow and published.',
+  'לאתר שלי': 'Go to My website',
+  'מערכת מודעות': 'Ad system',
+  'היכנסו ל-Google Ads ופתחו את הקמפיין.': 'Sign in to Google Ads and open the campaign.',
+  'לחצו על "הגדרות", ואז על "אפשרויות כתובת URL של הקמפיין" (Campaign URL options).':
+    'Click "Settings", then "Campaign URL options".',
+  'בשדה "סיומת כתובת URL סופית" (Final URL suffix) הדביקו את השורה הזו, והחליפו את summer בשם הקמפיין:':
+    'In the "Final URL suffix" field, paste this line and replace summer with the campaign\'s name:',
+  'שמרו. חזרו על זה בכל קמפיין, עם שם אחר לכל אחד.':
+    'Save. Repeat for each campaign, with a different name for each.',
+  'מומלץ: בהגדרות החשבון הפעילו "תיוג אוטומטי" (Auto-tagging). כך גם קליק בלי שם קמפיין יסומן כ-Google Ads.':
+    'Recommended: turn on "Auto-tagging" in your account settings, so even a click without a campaign name is marked as Google Ads.',
+  'היכנסו למנהל המודעות של Meta (Ads Manager) ופתחו את המודעה.':
+    'Open Meta Ads Manager and open the ad.',
+  'גללו למטה עד "מעקב" (Tracking) ← "פרמטרים של כתובת URL" (URL parameters).':
+    'Scroll down to "Tracking" → "URL parameters".',
+  'הדביקו את השורה הזו כמו שהיא. פייסבוק ממלא את שם הקמפיין לבד:':
+    'Paste this line as is. Facebook fills in the campaign name itself:',
+  'פרסמו את המודעה. זה עובד גם למודעות באינסטגרם.':
+    'Publish the ad. This works for Instagram ads too.',
+  'מודעות "לחיצה לוואטסאפ" בפייסבוק ובאינסטגרם: לא צריך לעשות כלום. כשלקוח לוחץ על המודעה וכותב, הליד יגיע עם המודעה וכותרתה.':
+    'Facebook and Instagram "Click to WhatsApp" ads: nothing to do. When a customer taps the ad and writes, the lead arrives with the ad and its headline.',
+  'צריך רק שוואטסאפ יהיה מחובר בהגדרות ← ערוצים.':
+    'WhatsApp just needs to be connected in Settings → Channels.',
+  'מודעות גוגל שפותחות וואטסאפ: גוגל לא מוסר מאיזו מודעה הגיעו. טיפ: כתבו בכל קמפיין הודעה פתוחה אחרת, למשל "היי, ראיתי את מבצע הקיץ".':
+    'Google ads that open WhatsApp: Google doesn\'t say which ad it was. Tip: use a different pre-filled message per campaign, e.g. "Hi, I saw the summer sale".',
+  'לכל קישור לאתר (ניוזלטר, ביו באינסטגרם, ברקוד על פלייר) הוסיפו בסוף את המקור והקמפיין:':
+    'For any link to your website (newsletter, Instagram bio, a QR code on a flyer), add the source and campaign at the end:',
+  'החליפו את newsletter ו-november בשמות שלכם. כך הם יופיעו בדוחות.':
+    "Replace newsletter and november with your own names. That's how they'll show in Reports.",
+  'איך בודקים שזה עובד?': 'How do I check it works?',
+  'לחצו על המודעה (או פתחו את הקישור עם הסימון), השאירו פרטים בטופס באתר, ובדקו בליד את "מאיפה הגיע". הליד יופיע גם כאן, בדוחות.':
+    'Click the ad (or open the tagged link), leave your details in the website form, and check "Where it came from" on the lead. It will show here in Reports too.',
+  הועתק: 'Copied',
+  העתקה: 'Copy',
 };

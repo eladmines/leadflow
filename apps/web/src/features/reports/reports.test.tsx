@@ -98,7 +98,33 @@ describe('reports page', () => {
       'href',
       `${businessWebPaths.section(id, 'leads')}?view=list&from=google_ads&campaign=summer`,
     );
-    expect(screen.getByText('איך מסמנים מודעות כדי לראות אותן כאן?')).toBeInTheDocument();
+  });
+
+  it('opens the ads guide: a tab per ad system with the text to paste (F26)', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.reports.summary(id)}`]: () => json(200, summary),
+    });
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('button', { name: 'חיבור המודעות שלכם' }));
+    const dialog = await screen.findByRole('dialog', { name: 'חיבור המודעות שלכם' });
+    expect(within(dialog).getByRole('tab', { name: 'Google Ads' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(
+      within(dialog).getByText(
+        'utm_source=google&utm_medium=cpc&utm_campaign=summer&utm_term={keyword}',
+      ),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('tab', { name: 'פייסבוק ואינסטגרם' }));
+    expect(
+      within(dialog).getByText(
+        'utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}',
+      ),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('tab', { name: 'WhatsApp' }));
+    expect(within(dialog).getByText(/לא צריך לעשות כלום/)).toBeInTheDocument();
   });
 
   it('employees see a no-permission state and no nav link', async () => {
