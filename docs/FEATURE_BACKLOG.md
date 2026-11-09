@@ -30,6 +30,7 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F20 | Reports & analytics                                     | Medium             | F08               | F16           | Full pipeline                       | **Lite** |
 | F21 | Platform admin console (audited support access)         | Medium             | F02, F15          | any           | Full pipeline                       | Planned  |
 | F23 | Facebook Messenger → leads (D-157)                      | Medium             | F12               | F16           | Full pipeline                       | **Built** |
+| F24 | Unified inbox: all channels, one screen (D-158)         | High               | F12, F23          | F16           | Full pipeline                       | Proposed |
 
 ## Dependency graph (core journey)
 
