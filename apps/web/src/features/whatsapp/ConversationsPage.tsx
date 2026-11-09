@@ -1,7 +1,6 @@
 import {
   can,
   formatIsraeliPhone,
-  replyModeLabels,
   type ReplyMode,
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
@@ -168,8 +167,8 @@ function AutoTab({ businessId }: { businessId: string }) {
 }
 
 /**
- * The two ways to answer (D-147): automatic reply and the booking bot, each with its own saved
- * settings and an on/off switch. One at a time: turning one on turns the other off.
+ * One automatic answer (D-166): the status message with "when can we talk?" for every customer,
+ * and — when switched on inside it — customers book by themselves. "A peek" follows any decision.
  */
 function ModeCards({
   businessId,
@@ -181,10 +180,11 @@ function ModeCards({
   connected: boolean;
 }) {
   const update = useUpdateBotSettings(businessId);
-  const turn = (mode: ReplyMode, on: boolean) => {
-    const next = on ? mode : 'off';
-    update.mutate({ ...toRequest(saved), mode: next, enabled: next === 'booking' });
-  };
+  const on = saved.mode !== 'off';
+  const booking = saved.mode === 'booking';
+  const setMode = (mode: ReplyMode) =>
+    update.mutate({ ...toRequest(saved), mode, enabled: mode === 'booking' });
+  const title = tr('מענה אוטומטי');
   return (
     <div role="group" aria-label={tr('מה קורה כשלקוח כותב')} className="flex flex-col gap-4">
       {!connected && (
@@ -193,26 +193,46 @@ function ModeCards({
         </p>
       )}
       <ModeCard
-        title={tr(replyModeLabels.auto_reply)}
+        title={title}
         description={tr('כל לקוח שכותב מקבל הודעה לפי הסטטוס שלך, ובוחר מתי נוח לדבר.')}
         icon={MessageCircleReply}
         tone="bg-emerald-500"
-        on={saved.mode === 'auto_reply'}
+        on={on}
         busy={update.isPending}
-        onToggle={(on) => turn('auto_reply', on)}
+        // Off → on comes back the way it was left (booking or not); a new business starts simple.
+        onToggle={(next) => setMode(next ? (saved.enabled ? 'booking' : 'auto_reply') : 'off')}
       >
         <AutoReplyCard businessId={businessId} />
-      </ModeCard>
-      <ModeCard
-        title={tr(replyModeLabels.booking)}
-        description={tr('לקוח בוחר מתי נוח לדבר, או קובע לבד תור או בקשה לאירוע.')}
-        icon={CalendarCheck}
-        tone="bg-violet-500"
-        on={saved.mode === 'booking'}
-        busy={update.isPending}
-        onToggle={(on) => turn('booking', on)}
-      >
-        <BookingBotCard businessId={businessId} />
+        <section
+          aria-label={tr('לקוחות קובעים לבד')}
+          className="flex flex-col gap-3 rounded-xl border border-surface-border p-4"
+        >
+          <div className="flex items-start gap-3">
+            <span
+              className={cn(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white',
+                booking ? 'bg-violet-500' : 'bg-slate-400',
+              )}
+            >
+              <CalendarCheck className="h-4 w-4" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-medium text-ink">{tr('לקוחות קובעים לבד')}</h4>
+              <p className="text-sm text-ink-muted">
+                {tr(
+                  'מוסיף "לקביעת תור" להודעה: לקוחות רואים זמנים פנויים וקובעים תור או בקשה לאירוע.',
+                )}
+              </p>
+            </div>
+            <Switch
+              checked={booking}
+              label={tr('לקוחות קובעים לבד')}
+              disabled={update.isPending}
+              onChange={(next) => setMode(next ? 'booking' : 'auto_reply')}
+            />
+          </div>
+          {booking && <BookingBotCard businessId={businessId} />}
+        </section>
       </ModeCard>
       <ShowcaseCard businessId={businessId} saved={saved} />
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
@@ -221,8 +241,8 @@ function ModeCards({
 }
 
 /**
- * "A peek at the business" (D-149), shared by both ways to answer: sent once the customer chose
- * when to talk (D-165), or didn't finish booking. Its own switch; the editor is a pop-up.
+ * "A peek at the business" (D-149): a link, photos and a video, sent right after the customer
+ * decides — a time to talk, a booking, an event request (D-166). Its own switch; editor in a pop-up.
  */
 function ShowcaseCard({
   businessId,
@@ -254,7 +274,7 @@ function ShowcaseCard({
           <h3 className="font-semibold text-ink">{title}</h3>
           <p className="text-sm text-ink-muted">
             {tr(
-              'אחרי שהלקוח בוחר מתי נוח לדבר, הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.',
+              'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.',
             )}
           </p>
         </div>

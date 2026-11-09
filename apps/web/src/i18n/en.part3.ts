@@ -780,21 +780,22 @@ export const enPart3: Record<string, string> = {
   'הוספת {0}': 'Add {0}',
   ההודעה: 'Message',
   'סרטון לסטטוס': 'Status video',
-  'נשלחת אחרי שהלקוח בוחר מתי נוח לדבר, או כשלא סיים לקבוע תור. לכל היותר פעם ביום ללקוח.':
-    "Sent after the customer chooses when to talk, or when they didn't finish booking. At most once a day per customer.",
   'תמונות וסרטון לסטטוס "{0}"': 'Photos and video for "{0}"',
   'נשלחים מיד אחרי ההודעה, כל עוד הסטטוס פעיל.':
     'Sent right after the message, while this status is on.',
   'תמונות בסטטוס': 'Status photos',
   'בחירת תמונה לסטטוס': 'Choose a photo for the status',
-  'אחרי שהלקוח בוחר מתי נוח לדבר, הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
-    'After the customer chooses when to talk, they get a link, photos and a video from the business. At most once a day.',
   'כל לקוח שכותב מקבל הודעה לפי הסטטוס שלך, ובוחר מתי נוח לדבר.':
     'Every customer who writes gets a message based on your status, and chooses when to talk.',
-  'לקוח בוחר מתי נוח לדבר, או קובע לבד תור או בקשה לאירוע.':
-    'Customers choose when to talk, or book an appointment or event request themselves.',
   'כל לקוח שכותב מקבל הודעה קצרה אחת (לכל היותר פעם ב־12 שעות) ובוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
     'Every customer who writes gets one short message (at most once every 12 hours) and chooses when to talk. When a status is on, its message is sent.',
   'מתחת להודעה הלקוח בוחר מתי נוח לדבר (היום בערב · מחר בבוקר · מחר אחה״צ · זמן אחר), ואתם מקבלים משימה לחזור אליו.':
     'Under the message, the customer chooses when to talk (this evening · tomorrow morning · tomorrow afternoon · another time), and you get a task to call them back.',
+  'לקוחות קובעים לבד': 'Customers book by themselves',
+  'מוסיף "לקביעת תור" להודעה: לקוחות רואים זמנים פנויים וקובעים תור או בקשה לאירוע.':
+    'Adds "Book now" to the message: customers see free times and book an appointment or an event request.',
+  'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
+    'Right after the customer decides (a time to talk, an appointment or an event), they get a link, photos and a video from the business. At most once a day.',
+  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): הקישור, התמונות והסרטון. לכל היותר פעם ביום ללקוח.':
+    'Sent right after the customer decides (a time to talk, an appointment or an event): the link, photos and video. At most once a day per customer.',
 };

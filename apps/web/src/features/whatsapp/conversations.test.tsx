@@ -133,9 +133,11 @@ describe('WhatsApp conversations inbox', () => {
     ]);
     expect(localStorage.getItem(guideKey)).toBe('1');
     await user.click(screen.getByRole('button', { name: 'סיום' }));
-    // Then the full page, with a way back to the guide.
-    // Then the two cards, the bot's switch on (D-147).
-    expect(await screen.findByRole('switch', { name: 'קביעת תורים אוטומטית' })).toBeInTheDocument();
+    // Then the full page: one automatic answer, with booking on inside it (D-166).
+    expect(await screen.findByRole('switch', { name: 'לקוחות קובעים לבד' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
   });
 
   it('booking bot: picks the approval, saved together with "Save bot settings"', async () => {
@@ -191,12 +193,12 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    // Two switches (D-147): the automatic reply is on, the bot's settings stay folded.
+    // One automatic answer (D-166): on, with booking off inside it and its settings hidden.
     expect(await screen.findByRole('switch', { name: 'מענה אוטומטי' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
-    expect(screen.getByRole('switch', { name: 'קביעת תורים אוטומטית' })).toHaveAttribute(
+    expect(screen.getByRole('switch', { name: 'לקוחות קובעים לבד' })).toHaveAttribute(
       'aria-checked',
       'false',
     );
@@ -236,7 +238,7 @@ describe('WhatsApp conversations inbox', () => {
     expect(ahead).toBeLessThan(61 * 60_000);
   });
 
-  it('two switches, one at a time; each keeps its settings (D-147)', async () => {
+  it('one automatic answer; customers booking by themselves is a switch inside it (D-166)', async () => {
     const fetchMock = mockApi(
       routes(
         { connected: true, numbers: [] },
@@ -248,23 +250,22 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
-    const bot = await screen.findByRole('switch', { name: 'קביעת תורים אוטומטית' });
-    // The bot can be set up while it's off.
-    await user.click(screen.getByRole('button', { name: 'הגדרות' }));
-    expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeInTheDocument();
-    // Turning it on turns the automatic reply off.
-    await user.click(bot);
+    const booking = await screen.findByRole('switch', { name: 'לקוחות קובעים לבד' });
+    expect(screen.queryByRole('button', { name: 'שמירת ההגדרות' })).not.toBeInTheDocument();
+    // Booking on: same answer, plus booking and its settings.
+    await user.click(booking);
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))[0]).toMatchObject({
       mode: 'booking',
       enabled: true,
     });
-    await waitFor(() => expect(bot).toHaveAttribute('aria-checked', 'true'));
+    await waitFor(() => expect(booking).toHaveAttribute('aria-checked', 'true'));
     expect(screen.getByRole('switch', { name: 'מענה אוטומטי' })).toHaveAttribute(
       'aria-checked',
-      'false',
+      'true',
     );
-    // And off again: nothing answers.
-    await user.click(bot);
+    expect(await screen.findByRole('button', { name: 'שמירת ההגדרות' })).toBeInTheDocument();
+    // The main switch off: nothing answers.
+    await user.click(screen.getByRole('switch', { name: 'מענה אוטומטי' }));
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))[1]).toMatchObject({ mode: 'off', enabled: false });
   });
 
@@ -357,10 +358,9 @@ describe('WhatsApp conversations inbox', () => {
       showcase: { enabled: true },
     });
     await user.click(screen.getByRole('button', { name: 'עריכת ההצצה' }));
-    // The industry's default message, ready to edit.
-    expect(await screen.findByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
-    // Photos and a video (D-151), uploaded on its own.
-    expect(screen.getByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
+    // Only a link, photos and a video (D-151) — no message (D-166).
+    expect(await screen.findByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('ההודעה')).not.toBeInTheDocument();
     // The customer's view only on request (D-155).
     expect(screen.queryByText('כך הלקוח יראה את זה:')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'תצוגה מקדימה' }));

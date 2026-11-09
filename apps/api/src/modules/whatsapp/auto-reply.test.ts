@@ -174,15 +174,18 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     expect(await ctx.prisma.whatsAppMessage.count({ where: { direction: 'OUT' } })).toBe(1);
     expect(await ctx.prisma.notification.count()).toBeGreaterThan(0);
 
+    // A second message within 12 hours gets a short "got it" with the time choices (D-166).
     await post(text('עוד שאלה'));
-    expect(whatsapp.sent).toHaveLength(1);
+    expect(whatsapp.sent).toHaveLength(2);
+    expect(whatsapp.sent[1]!.text).toBe('קיבלנו את ההודעה 🙏 נחזור אליכם בהקדם.');
+    expect(whatsapp.sent[1]!.choices!.map((c) => c.id)).toContain('cb:other');
 
-    // 13 hours later, a new reply.
+    // 13 hours later, the full message again.
     await ctx.prisma.whatsAppNumber.updateMany({
       data: { autoReplyAt: new Date(Date.now() - 13 * 3600_000) },
     });
     await post(text('שוב היי'));
-    expect(whatsapp.sent).toHaveLength(2);
+    expect(whatsapp.sent[2]!.text).toBe(AUTO_REPLY_DEFAULT.replace('{business}', 'די ג׳יי רון'));
   });
 
   it('"A peek at the business" no longer follows the automatic reply (D-164)', async () => {
@@ -493,7 +496,8 @@ describe('WhatsApp automatic replies and statuses (D-123)', () => {
     await post(tapRow('cb:mor'));
     expect(whatsapp.sent.map((m) => m.text).slice(1)).toEqual([
       'מעולה! נחזור אליכם מחר בבוקר 🙏',
-      'בינתיים, תציצו 👇\nhttps://example.com/work',
+      // "A peek" is only the link, photos and video now (D-166).
+      'https://example.com/work',
     ]);
     // The sender is now a customer with a lead, and the owner has a task for tomorrow 09:00.
     const lead = await ctx.prisma.lead.findFirstOrThrow({ include: { contact: true } });
