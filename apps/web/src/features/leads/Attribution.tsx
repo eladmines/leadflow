@@ -9,6 +9,7 @@ import { Megaphone } from 'lucide-react';
 import { Card } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';
+import { AttributionIcon } from './SourceIcon';
 
 /** One colour per source, so the badge reads at a glance (the name is always written too). */
 const TONES: Record<AttributionSource | 'unknown', string> = {
@@ -43,11 +44,12 @@ export function SourceBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset',
         TONES[source],
         className,
       )}
     >
+      <AttributionIcon source={source} />
       <bdi>{sourceName(source, name)}</bdi>
     </span>
   );

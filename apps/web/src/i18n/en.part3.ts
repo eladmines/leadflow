@@ -723,10 +723,12 @@ export const enPart3: Record<string, string> = {
   'שווי עסקאות': 'Deal value',
   'אחוז סגירה': 'Close rate',
   'איך מסמנים מודעות כדי לראות אותן כאן?': 'How do I tag my ads so they show here?',
-  'Google Ads: הפעילו "תיוג אוטומטי" (Auto-tagging) בהגדרות החשבון. כל לחיצה על מודעה תסומן לבד.':
-    'Google Ads: turn on Auto-tagging in your account settings. Every ad click is tagged automatically.',
-  'פייסבוק, אינסטגרם, ניוזלטר וכל קישור אחר: הוסיפו לכתובת האתר את שם המקור והקמפיין, למשל:':
-    'Facebook, Instagram, newsletters and any other link: add the source and campaign to your website address, for example:',
+  'Google Ads: בהגדרות הקמפיין, תחת "אפשרויות כתובת URL של הקמפיין", הוסיפו ל"סיומת כתובת URL סופית" את שם הקמפיין, למשל:':
+    'Google Ads: in the campaign\'s settings, under "Campaign URL options", add the campaign name to the "Final URL suffix", for example:',
+  'כל קישור אחר (ניוזלטר, ביו באינסטגרם, ברקוד): הוסיפו בסוף כתובת האתר, למשל:':
+    'Any other link (newsletter, Instagram bio, QR code): add to the end of your website address, for example:',
+  'פייסבוק ואינסטגרם: במודעה, תחת "פרמטרים של כתובת URL", הדביקו (פייסבוק ממלא את שם הקמפיין לבד):':
+    'Facebook and Instagram: in the ad, under "URL parameters", paste (Facebook fills in the campaign name itself):',
   'מודעות "לחיצה לוואטסאפ" בפייסבוק ובאינסטגרם מסומנות לבד. ממודעות גוגל לוואטסאפ: כתבו הודעה פתוחה אחרת לכל קמפיין.':
     'Facebook and Instagram "Click to WhatsApp" ads are tagged automatically. For Google ads that open WhatsApp: use a different pre-filled message per campaign.',
   'האתר שומר את המקור בעוגייה קטנה ל-30 יום, בלי פרטים אישיים, עד שהמבקר משאיר פרטים.':
