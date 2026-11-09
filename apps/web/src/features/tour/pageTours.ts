@@ -93,14 +93,6 @@ const section = (text: string) => () =>
     ),
   );
 
-/** A group of options by its legend. */
-const group = (legend: string) => () =>
-  pick(
-    [...document.querySelectorAll<HTMLElement>('main fieldset')].filter(
-      (f) => f.querySelector('legend')?.textContent?.trim() === legend,
-    ),
-  );
-
 /** The card whose heading starts with a text (headings that end with a count). */
 const cardStarting = (title: string) => () => {
   const heading = pick(
@@ -319,14 +311,14 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       ),
     },
     {
-      target: group(tr('מה לקוחות יכולים להזמין?')),
+      target: `[role="group"][aria-label="${tr('מה לקוחות יכולים להזמין?')}"]`,
       title: tr('מה לקוחות יכולים להזמין'),
       body: tr(
         '"תור בשעה פנויה": הלקוח בוחר שירות, יום ושעה. "בקשה לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.',
       ),
     },
     {
-      target: group(tr('כשלקוח קובע תור:')),
+      target: `[role="group"][aria-label="${tr('כשלקוח קובע תור:')}"]`,
       title: tr('אישור התורים'),
       body: tr(
         '"התור מאושר מיד": התור נכנס ליומן כמאושר. "התור מחכה לאישור שלי": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד התורים.',
