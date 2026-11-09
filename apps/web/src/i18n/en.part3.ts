@@ -513,8 +513,8 @@ export const enPart3: Record<string, string> = {
   'יש לכם כבר אתר?': 'Already have a website?',
   'בוחרים תבנית מוכנה, והיא מתמלאת בפרטי העסק.':
     'Pick a ready-made template and it fills in with your business details.',
-  'האתר הוא הכרטיס של העסק באינטרנט: לקוחות רואים מה אתם מציעים, איך להגיע ואיך ליצור קשר. כל מי שממלא בו את הטופס מגיע ישר ל"לקוחות ולידים", כך שאף פנייה לא הולכת לאיבוד.':
-    'Your website is your business card online: customers see what you offer, where to find you and how to get in touch. Everyone who fills in its form lands straight in "Customers & leads", so no inquiry gets lost.',
+  'האתר הוא הכרטיס של העסק באינטרנט: לקוחות רואים מה אתם מציעים, איך להגיע ואיך ליצור קשר. כל מי שממלא בו את הטופס מגיע ישר ל"לידים", כך שאף פנייה לא הולכת לאיבוד.':
+    'Your website is your business card online: customers see what you offer, where to find you and how to get in touch. Everyone who fills in its form lands straight in "Leads", so no inquiry gets lost.',
   המשך: 'Continue',
   חזרה: 'Back',
   'מה הכתובת של האתר שלכם?': "What's your website's address?",
@@ -545,7 +545,7 @@ export const enPart3: Record<string, string> = {
     'Start by setting up your services (under "More"), then book a first appointment.',
   'כשייקבעו לך תורים, הם יופיעו כאן.':
     'When appointments are booked for you, they will appear here.',
-  'ללקוחות ולידים': 'Go to Customers & leads',
+  ללידים: 'Go to Leads',
   'חלקי הליד': 'Lead sections',
   'אין שיחת וואטסאפ עם הליד. אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.':
     'No WhatsApp conversation with this lead. Once a WhatsApp number is connected to the business, messages will appear here.',
@@ -766,4 +766,21 @@ export const enPart3: Record<string, string> = {
     'Click the ad (or open the tagged link), leave your details in the website form, and check "Where it came from" on the lead. It will show here in Reports too.',
   הועתק: 'Copied',
   העתקה: 'Copy',
+  לקוחות: 'Customers',
+  'מי שקנה מכם: ליד שהגיע לשלב "נסגר" או הצעת מחיר שאושרה.':
+    'Everyone who bought from you: a lead that reached the Won stage or an accepted quote.',
+  'חיפוש לקוחות': 'Search customers',
+  'טוענים לקוחות…': 'Loading customers…',
+  'לא הצלחנו לטעון את הלקוחות': "We couldn't load your customers",
+  'לא נמצאו לקוחות': 'No customers found',
+  'עוד אין לקוחות': 'No customers yet',
+  'נסו שם או מספר אחר.': 'Try another name or number.',
+  'כשליד יעבור לשלב "נסגר" או יאשר הצעת מחיר, הוא יופיע כאן.':
+    'When a lead moves to the Won stage or accepts a quote, they show up here.',
+  '{0} לקוחות · סך הכול {1}': '{0} customers · {1} in total',
+  'רכישה אחת': '1 purchase',
+  '{0} רכישות': '{0} purchases',
+  'הרכישות של {0}': "{0}'s purchases",
+  'הצעת מחיר שאושרה': 'Accepted quote',
+  נסגר: 'Won',
 };

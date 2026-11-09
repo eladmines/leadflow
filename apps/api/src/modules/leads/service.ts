@@ -8,6 +8,7 @@ import {
   normalizeIsraeliPhone,
   type Activity,
   type Attribution,
+  type Customer,
   type createLeadRequestSchema,
   type DuplicateContact,
   type Lead,
@@ -259,6 +260,85 @@ export class LeadService {
       take,
     });
     return rows.map(toLeadDto);
+  }
+
+  /**
+   * Paying customers (D-163): contacts with a lead in a Won stage or an accepted quote, the same
+   * rule as Reports. Employees see only customers from leads assigned to them.
+   */
+  async customers(ctx: TenantContext, query: { q?: string } = {}): Promise<Customer[]> {
+    const q = query.q?.trim();
+    const digits = q?.replace(/\D/g, '') ?? '';
+    const rows = await this.prisma.lead.findMany({
+      where: {
+        AND: [
+          this.visible(ctx),
+          { OR: [{ stage: { kind: 'WON' } }, { quotes: { some: { status: 'ACCEPTED' } } }] },
+          ...(q
+            ? [
+                {
+                  contact: {
+                    OR: [
+                      { name: { contains: q, mode: 'insensitive' as const } },
+                      { email: { contains: q, mode: 'insensitive' as const } },
+                      ...(digits.length >= 3
+                        ? [{ phone: { contains: digits.replace(/^0/, '') } }]
+                        : []),
+                    ],
+                  },
+                },
+              ]
+            : []),
+        ],
+      },
+      select: {
+        id: true,
+        expectedValue: true,
+        attribution: true,
+        createdAt: true,
+        updatedAt: true,
+        stage: { select: { kind: true } },
+        contact: { select: { id: true, name: true, phone: true, email: true } },
+        quotes: {
+          where: { status: 'ACCEPTED' },
+          select: { decidedAt: true },
+          orderBy: { decidedAt: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 5000,
+    });
+    const byContact = new Map<string, Customer>();
+    for (const r of rows) {
+      const at = (r.quotes[0]?.decidedAt ?? r.updatedAt).toISOString();
+      let c = byContact.get(r.contact.id);
+      if (!c) {
+        c = {
+          contactId: r.contact.id,
+          name: r.contact.name,
+          phone: r.contact.phone,
+          email: r.contact.email,
+          totalValue: 0,
+          lastPurchaseAt: at,
+          // Oldest lead first: where they first came from.
+          attribution: readAttribution(r.attribution),
+          purchases: [],
+        };
+        byContact.set(r.contact.id, c);
+      }
+      c.totalValue += r.expectedValue ?? 0;
+      if (at > c.lastPurchaseAt) c.lastPurchaseAt = at;
+      c.purchases.unshift({
+        leadId: r.id,
+        at,
+        value: r.expectedValue,
+        via: r.stage.kind === 'WON' ? 'won' : 'quote',
+      });
+    }
+    const customers = [...byContact.values()];
+    for (const c of customers) c.purchases.sort((a, b) => b.at.localeCompare(a.at));
+    return customers.sort((a, b) => b.lastPurchaseAt.localeCompare(a.lastPurchaseAt));
   }
 
   /** Tags on the leads this member can see, most used first. */

@@ -21,3 +21,4 @@ export * from './conversations';
 export * from './channels';
 export * from './notifications';
 export * from './attribution';
+export * from './customers';

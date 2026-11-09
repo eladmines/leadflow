@@ -207,7 +207,7 @@ export const pageTours: Record<PageKey, TourStep[]> = {
   ],
   leads: [
     {
-      title: tr('לקוחות ולידים'),
+      title: tr('לידים'),
       body: tr(
         'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט התורים או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.',
       ),

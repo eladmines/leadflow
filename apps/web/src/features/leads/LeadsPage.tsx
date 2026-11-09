@@ -545,7 +545,7 @@ export function LeadsPage() {
       >
         <PageHeader
           inPanel
-          title={tr('לקוחות ולידים')}
+          title={tr('לידים')}
           description={
             seesAll ? tr('כל הפניות של העסק, לפי שלב בתהליך המכירה.') : tr('הפניות שהוקצו לך.')
           }

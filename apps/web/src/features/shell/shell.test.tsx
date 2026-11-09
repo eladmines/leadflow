@@ -34,7 +34,8 @@ describe('app shell', () => {
     expect(links.map((l) => l.textContent)).toEqual([
       'דשבורד',
       'האתר שלי',
-      'לקוחות ולידים',
+      'לידים',
+      'לקוחות',
       'שיחות',
       'משימות',
       'תורים',

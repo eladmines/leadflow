@@ -359,7 +359,7 @@ export const enPart1: Record<string, string> = {
   לשלב: 'to stage',
   'לוח לידים': 'Leads board',
   '{0}: {1} לידים': '{0}: {1} leads',
-  'לקוחות ולידים': 'Customers & leads',
+  לידים: 'Leads',
   'כל הפניות של העסק, לפי שלב בתהליך המכירה.': "All of the business's inquiries, by sales stage.",
   'הפניות שהוקצו לך.': 'Inquiries assigned to you.',
   'ייצוא לאקסל': 'Export to Excel',

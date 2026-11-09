@@ -39,7 +39,7 @@ describe('page tours (D-096)', () => {
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('leads'));
     await openPageTour(user);
-    const first = await screen.findByRole('dialog', { name: 'לקוחות ולידים' });
+    const first = await screen.findByRole('dialog', { name: 'לידים' });
     expect(within(first).getByText(/^1 מתוך \d+$/)).toBeInTheDocument();
     await user.click(within(first).getByRole('button', { name: 'הבא' }));
     expect(await screen.findByRole('dialog', { name: 'ליד חדש' })).toBeInTheDocument();
