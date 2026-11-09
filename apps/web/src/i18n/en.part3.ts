@@ -682,4 +682,10 @@ export const enPart3: Record<string, string> = {
   'החיבור לפייסבוק פג תוקף. התחילו שוב.': 'The Facebook sign-in expired. Please start again.',
   'לא מצאנו דפי פייסבוק שאתם מנהלים בחשבון הזה.':
     "We didn't find any Facebook Pages you manage on this account.",
+  'הודעות ישירות מאינסטגרם יגיעו לתיבת השיחות. החשבון מתחבר דרך דף הפייסבוק של העסק.':
+    "Instagram direct messages will reach your conversations inbox. The account connects through the business's Facebook Page.",
+  'חיבור Instagram': 'Connect Instagram',
+  'מיילים מלקוחות יגיעו לתיבת השיחות, ותוכלו לענות להם משם.':
+    "Customers' emails will reach your conversations inbox, and you'll reply from there.",
+  'חיבור אימייל': 'Connect email',
 };

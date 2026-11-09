@@ -34,6 +34,10 @@ describe('Settings → Channels (F25)', () => {
     const { user } = renderApp(page);
     expect(await screen.findByRole('heading', { name: 'WhatsApp' })).toBeInTheDocument();
     expect(screen.getAllByText('לא מחובר')).toHaveLength(2);
+    // Instagram and email are on their way (D-160): shown, not connectable yet.
+    expect(screen.getByRole('heading', { name: /Instagram/ })).toHaveTextContent('בקרוב');
+    expect(screen.getByRole('button', { name: 'חיבור Instagram' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'חיבור אימייל' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'חיבור WhatsApp' }));
     await user.type(screen.getByLabelText('Phone number ID'), '555000111');
     await user.type(screen.getByLabelText('טוקן גישה'), 'EAA-whatsapp-token-0123456789');
