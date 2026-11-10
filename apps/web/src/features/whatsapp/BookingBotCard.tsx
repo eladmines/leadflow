@@ -292,26 +292,35 @@ const placeholderName = (flow: BotFlow, p: Placeholder) =>
 const chipLabel = (flow: BotFlow, p: Placeholder) => tr(placeholderName(flow, p));
 
 /**
- * In the editor, placeholders read as tags in the owner's language — "[שם העסק]" or
- * "[Business name]" — instead of codes; they become `{business}` etc. again when saved. Every
- * variant (either language, either flow) is understood, so switching never breaks a message.
+ * In the editor the business's name is written as itself, and the two details that change with
+ * every booking (the service and the time) read as tags in the owner's language — "[שירות]" or
+ * "[Service]" — instead of codes. On saving the name and the tags become `{business}`,
+ * `{service}` and `{time}` again, so a renamed business keeps its messages right. Every variant
+ * (either language, either flow, the old "[שם העסק]" tag) is understood.
  */
 const tagOf = (flow: BotFlow, p: Placeholder) => `[${chipLabel(flow, p)}]`;
-const toTags = (text: string, flow: BotFlow) =>
-  BOT_PLACEHOLDERS.reduce((t, p) => t.replaceAll(p, tagOf(flow, p)), text);
-const toCodes = (text: string) =>
+/** What the owner can still insert: the name is just typed. */
+const INSERTABLE = BOT_PLACEHOLDERS.filter((p) => p !== '{business}');
+const toTags = (text: string, flow: BotFlow, name: string) =>
   BOT_PLACEHOLDERS.reduce(
-    (t, p) =>
+    (t, p) => t.replaceAll(p, p === '{business}' ? name : tagOf(flow, p)),
+    text,
+  );
+const toCodes = (text: string, name: string) => {
+  const t = BOT_PLACEHOLDERS.reduce(
+    (acc, p) =>
       BOT_FLOWS.reduce(
         (u, f) => u.replaceAll(tagOf(f, p), p).replaceAll(`[${placeholderName(f, p)}]`, p),
-        t,
+        acc,
       ),
     text,
   );
+  return name.trim().length >= 2 ? t.replaceAll(name.trim(), '{business}') : t;
+};
 
-const initialTexts = (saved: Saved) =>
+const initialTexts = (saved: Saved, name: string) =>
   Object.fromEntries(
-    BOT_TEXT_KEYS.map((k) => [k, toTags(saved.texts[k] ?? saved.defaults[k], saved.flow)]),
+    BOT_TEXT_KEYS.map((k) => [k, toTags(saved.texts[k] ?? saved.defaults[k], saved.flow, name)]),
   ) as Record<BotTextKey, string>;
 
 /** An example date for the preview: next week at 10:00. */
@@ -333,7 +342,7 @@ function exampleWhen() {
 function BotTextsForm({ businessId, settings }: { businessId: string; settings: Saved }) {
   const business = useCurrentBusiness();
   const update = useUpdateBotSettings(businessId);
-  const [texts, setTexts] = useState(() => initialTexts(settings));
+  const [texts, setTexts] = useState(() => initialTexts(settings, business.name));
   const [errors, setErrors] = useState<Partial<Record<BotTextKey, string>>>({});
   const [saved, setSaved] = useState(false);
   const boxes = useRef<Partial<Record<BotTextKey, HTMLTextAreaElement | null>>>({});
@@ -360,7 +369,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
     // Unchanged defaults aren't stored, so later improvements to the defaults still reach them.
     const custom = Object.fromEntries(
       BOT_TEXT_KEYS.map((k) => {
-        const text = toCodes(texts[k]);
+        const text = toCodes(texts[k], business.name);
         return [k, text.trim() === settings.defaults[k] ? null : text];
       }),
     );
@@ -380,7 +389,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-5">
       <p className="text-xs text-ink-muted">
         {tr(
-          'הלקוחות מקבלים את ההודעות בעברית. פרטים בסוגריים, כמו [שם העסק], מתמלאים אוטומטית בפרטים האמיתיים. מוסיפים אותם בכפתורים שמתחת לכל הודעה. הכפתורים והרשימות בוואטסאפ נשארים קבועים.',
+          'הלקוחות מקבלים את ההודעות בעברית. שם העסק נכתב כמו שהוא. השירות ומועד התור משתנים מלקוח ללקוח, ולכן מוסיפים אותם בכפתורים שמתחת לכל הודעה והם מתמלאים לפי מה שהלקוח בחר. הכפתורים והרשימות בוואטסאפ נשארים קבועים.',
         )}
       </p>
       {botTextKeysFor(settings.flow).map((k) => (
@@ -399,7 +408,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
           />
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
             <span>{tr('הוספה:')}</span>
-            {BOT_PLACEHOLDERS.map((p) => (
+            {INSERTABLE.map((p) => (
               <button
                 key={p}
                 type="button"
@@ -419,15 +428,15 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
                 lang="he"
                 className="max-w-md whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20"
               >
-                {fillBotText(toCodes(texts[k]), values) || '—'}
+                {fillBotText(toCodes(texts[k], business.name), values) || '—'}
               </p>
             </div>
-            {toCodes(texts[k]) !== settings.defaults[k] && (
+            {toCodes(texts[k], business.name) !== settings.defaults[k] && (
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => edit(k, toTags(settings.defaults[k], settings.flow))}
+                onClick={() => edit(k, toTags(settings.defaults[k], settings.flow, business.name))}
                 aria-label={tr('החזרת ברירת המחדל: {0}', tr(botTextLabels[k]))}
               >
                 <RotateCcw aria-hidden className="h-4 w-4" />
@@ -458,7 +467,9 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
   const update = useUpdateBotSettings(businessId);
   const assets = useAssets(businessId);
   const saved = settings.showcase;
-  const [text, setText] = useState(toTags(saved.text ?? saved.defaultText, settings.flow));
+  const [text, setText] = useState(
+    toTags(saved.text ?? saved.defaultText, settings.flow, business.name),
+  );
   const textBox = useRef<HTMLTextAreaElement>(null);
   const [link, setLink] = useState(saved.link ?? '');
   const [assetIds, setAssetIds] = useState(saved.assetIds);
@@ -472,7 +483,7 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setDone(false);
-    const own = toCodes(text).trim();
+    const own = toCodes(text, business.name).trim();
     const parsed = botShowcaseSchema.safeParse({
       enabled: saved.enabled,
       // The industry default isn't stored, so it can improve later.
@@ -491,7 +502,11 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
     );
   };
 
-  const filled = fillBotText(toCodes(text), { business: business.name, service: 'תור', when: '' });
+  const filled = fillBotText(toCodes(text, business.name), {
+    business: business.name,
+    service: 'תור',
+    when: '',
+  });
 
   return (
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-4">

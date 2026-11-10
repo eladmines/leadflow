@@ -19,7 +19,9 @@ same way, joins the same conversation.
 
 1. Open [script.google.com](https://script.google.com) → **New project**, replace the code with
    [`Code.gs`](./Code.gs), and fill in `URL`, `SECRET` and `TO` at the top.
-2. Run **`install`** once and allow the permissions (it reads your Gmail and sends requests). Google may
+2. In Project settings turn on **Show "appsscript.json" manifest file**, open it, and replace its
+   content with [`appsscript.json`](./appsscript.json) (it lists the permissions the script needs, so
+   Google asks for all of them at once). Then run **`install`** once and allow the permissions (it reads your Gmail and sends requests). Google may
    warn that the app isn't verified: it is your own script, so choose Advanced → continue.
 3. In Gmail create a filter for the mail you want in LeadFlow (for example `to:you+leads@gmail.com`,
    or mail from your website form's address) → **Apply the label** → new label `LeadFlow`.

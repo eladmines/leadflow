@@ -208,11 +208,12 @@ describe('WhatsApp conversations inbox', () => {
 
     // Available: the general message, no save button until it changes, no "how long".
     const message = screen.getByLabelText('מה לקוחות מקבלים עכשיו');
-    expect(message).toHaveValue(AUTO_REPLY_DEFAULT.replace('{business}', '[שם העסק]'));
+    // The business's name is written as itself, not as a tag.
+    expect(message).toHaveValue(AUTO_REPLY_DEFAULT.replace('{business}', testBusiness.name));
     expect(screen.queryByRole('button', { name: 'שמירת ההודעה' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('לכמה זמן:')).not.toBeInTheDocument();
     await user.clear(message);
-    await user.type(message, 'שלום מ[[שם העסק]!');
+    await user.type(message, `שלום מ${testBusiness.name}!`);
     await user.click(screen.getByRole('button', { name: 'שמירת ההודעה' }));
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))[0]).toMatchObject({
       mode: 'auto_reply',
@@ -313,9 +314,15 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(autoTab);
     await user.click(await screen.findByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
-    // Placeholders read as tags in the owner's language, not codes.
+    // The business's name is written as itself; only what changes per booking is a tag.
     expect(screen.getByLabelText('הודעת פתיחה')).toHaveValue(
-      'שלום! כאן [שם העסק] 👋\nרוצים לקבוע תור? בחרו שירות:',
+      `שלום! כאן ${testBusiness.name} 👋\nרוצים לקבוע תור? בחרו שירות:`,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'הוספה: שם העסק (אישור תור)' }),
+    ).not.toBeInTheDocument();
+    expect((screen.getByLabelText('אישור תור') as HTMLTextAreaElement).value).toContain(
+      '[שירות] ל[מועד התור]',
     );
     const confirmed = screen.getByLabelText('אישור תור');
     await user.clear(confirmed);
@@ -325,11 +332,9 @@ describe('WhatsApp conversations inbox', () => {
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
 
     await user.clear(confirmed);
-    await user.type(confirmed, 'נתראה ב!');
-    await user.keyboard('{ArrowLeft}');
-    await user.click(screen.getByRole('button', { name: 'הוספה: שם העסק (אישור תור)' }));
-    expect(confirmed).toHaveValue('נתראה ב[שם העסק]!');
-    expect(screen.getByText(`נתראה ב${testBusiness.name}!`)).toBeInTheDocument();
+    await user.type(confirmed, `נתראה ב${testBusiness.name}!`);
+    // The box and the preview now read the same.
+    expect(screen.getAllByText(`נתראה ב${testBusiness.name}!`)).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
     expect(await screen.findByText('ההודעות נשמרו.')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([

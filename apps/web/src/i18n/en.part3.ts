@@ -362,8 +362,8 @@ export const enPart3: Record<string, string> = {
     "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or isn't understood twice, is passed to you at once. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
   'אישור התורים': 'Confirming bookings',
   'ההודעות ללקוחות': 'Messages to customers',
-  'פתחו כדי לכתוב את ההודעות במילים שלכם. פרטים בסוגריים, כמו [שם העסק], מתמלאים לבד, ומתחת לכל הודעה רואים בדיוק מה הלקוח יקבל. "ברירת מחדל" מחזיר את הנוסח המקורי.':
-    'Open this to write the messages in your own words. Details in brackets, like [Business name], fill in by themselves, and under each message you see exactly what the customer gets. "Default" restores the original wording.',
+  'פתחו כדי לכתוב את ההודעות במילים שלכם. שם העסק נכתב כמו שהוא, והשירות ומועד התור מתמלאים לבד לפי מה שהלקוח בחר. מתחת לכל הודעה רואים בדיוק מה הלקוח יקבל. "ברירת מחדל" מחזיר את הנוסח המקורי.':
+    'Open this to write the messages in your own words. The business name is written as it is, and the service and the time fill in by themselves from what the customer chose. Under each message you see exactly what the customer gets. "Default" restores the original wording.',
   'כל עמודה היא יום וכל שורה חצי שעה. תור מופיע כבלוק בגודל הזמן שהוא תופס; לחיצה עליו פותחת אותו לשינוי, לשיבוץ איש צוות או לביטול.':
     'Each column is a day and each row half an hour. An appointment shows as a block the size of the time it takes; click it to change it, assign a staff member or cancel.',
   'שעה פנויה': 'A free time',
