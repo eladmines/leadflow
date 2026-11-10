@@ -3,14 +3,18 @@ import { cn } from '../../lib/cn';
 
 /**
  * LeadFlow wordmark (D-115): a bullseye with a dart that has just landed — a lead caught — drawn
- * open, without a tile, in blue with a coral centre. The name is always LTR.
+ * open, without a tile, in blue with a coral centre. The name is always LTR; in Hebrew the icon
+ * sits on the right of it, where reading starts.
  */
 export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
   // Unique per instance: a gradient defined inside a hidden copy (e.g. the desktop sidebar on
   // mobile) can't be referenced by a visible one.
   const id = `lf-mark-${useId().replace(/:/g, '')}`;
   return (
-    <span dir="ltr" className={cn('inline-flex items-center gap-2', className)}>
+    <span
+      dir="ltr"
+      className={cn('inline-flex items-center gap-2 rtl:flex-row-reverse', className)}
+    >
       <svg aria-hidden viewBox="0 0 64 64" className="h-8 w-8 shrink-0">
         <defs>
           <linearGradient id={`${id}b`} x1="0" y1="0" x2="1" y2="1">
