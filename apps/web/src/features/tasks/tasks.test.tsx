@@ -33,6 +33,40 @@ const task = (over: Partial<Task> = {}): Task => ({
 });
 
 describe('tasks page', () => {
+  it('ticks a whole group done with one button, and only that group', async () => {
+    const late1 = task({
+      id: '9b000000-0000-4000-8000-0000000000a1',
+      title: 'להתקשר לרון',
+      dueAt: hours(-3),
+    });
+    const late2 = task({
+      id: '9b000000-0000-4000-8000-0000000000a2',
+      title: 'לחזור לדנה',
+      dueAt: hours(-2),
+    });
+    const later = task({
+      id: '9b000000-0000-4000-8000-0000000000a3',
+      title: 'פגישה',
+      dueAt: hours(24 * 6),
+    });
+    const done = (t: Task) => ({ task: { ...t, status: 'DONE' } });
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`GET ${tp.list(id)}`]: () => json(200, { tasks: [late1, late2, later] }),
+      [`PATCH ${tp.task(id, late1.id)}`]: () => json(200, done(late1)),
+      [`PATCH ${tp.task(id, late2.id)}`]: () => json(200, done(late2)),
+    });
+    const { user } = renderApp(tasksPath);
+    await screen.findByRole('list', { name: 'באיחור' });
+    await user.click(screen.getByRole('button', { name: 'סימון כל המשימות כבוצעו: באיחור' }));
+    await waitFor(() => {
+      expect(callsTo(fetchMock, 'PATCH', tp.task(id, late1.id))).toEqual([{ status: 'DONE' }]);
+      expect(callsTo(fetchMock, 'PATCH', tp.task(id, late2.id))).toEqual([{ status: 'DONE' }]);
+    });
+    // The other group is untouched.
+    expect(callsTo(fetchMock, 'PATCH', tp.task(id, later.id))).toHaveLength(0);
+  });
+
   it('groups open tasks by urgency and marks overdue ones', async () => {
     const endOfDay = new Date();
     endOfDay.setHours(23, 0, 0, 0);

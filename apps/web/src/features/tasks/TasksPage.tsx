@@ -1,13 +1,13 @@
 import { can, type Task } from '@leadflow/shared';
-import { ListTodo } from 'lucide-react';
+import { CheckCheck, ListTodo } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Card, EmptyState, Spinner } from '../../components/ui';
+import { Alert, Button, Card, EmptyState, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
-import { groupTasks, useTasks } from './api';
+import { groupTasks, useCompleteTasks, useTasks } from './api';
 import { NewTaskForm } from './NewTaskForm';
 import { TaskItem } from './TaskItem';
 import { tr } from '../../i18n';
@@ -26,6 +26,7 @@ export function TasksPage() {
   const [params, setParams] = useSearchParams();
   const scope = seesAll && params.get('scope') === 'all' ? 'all' : 'mine';
   const tasks = useTasks(business.id, scope === 'mine' ? { assigneeId: 'me' } : {});
+  const complete = useCompleteTasks(business.id);
   const [showDone, setShowDone] = useState(false);
   const groups = groupTasks(tasks.data ?? []);
   const openCount = groups.overdue.length + groups.today.length + groups.upcoming.length;
@@ -70,6 +71,7 @@ export function TasksPage() {
         <Alert tone="danger">{errorMessage(tasks.error)}</Alert>
       ) : (
         <>
+          {complete.isError && <Alert tone="danger">{errorMessage(complete.error)}</Alert>}
           {openCount === 0 && (
             <EmptyState
               icon={ListTodo}
@@ -85,11 +87,26 @@ export function TasksPage() {
           {sections.map(({ key, title, dot }) =>
             groups[key].length > 0 ? (
               <Card key={key} className="py-3">
-                <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
-                  <span aria-hidden className={cn('h-2.5 w-2.5 rounded-full', dot)} />
-                  {title}{' '}
-                  <span className="text-sm font-normal text-ink-muted">({groups[key].length})</span>
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+                    <span aria-hidden className={cn('h-2.5 w-2.5 rounded-full', dot)} />
+                    {title}{' '}
+                    <span className="text-sm font-normal text-ink-muted">
+                      ({groups[key].length})
+                    </span>
+                  </h2>
+                  {/* One tap for the whole group; each task can still be put back. */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    loading={complete.isPending}
+                    onClick={() => complete.mutate(groups[key].map((t: Task) => t.id))}
+                    aria-label={tr('סימון כל המשימות כבוצעו: {0}', title)}
+                  >
+                    <CheckCheck aria-hidden className="h-4 w-4" />
+                    {tr('סימון הכול כבוצע')}
+                  </Button>
+                </div>
                 <ul aria-label={title} className="divide-y divide-surface-border">
                   {groups[key].map((t: Task) => (
                     <TaskItem
