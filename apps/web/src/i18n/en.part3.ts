@@ -854,4 +854,7 @@ export const enPart3: Record<string, string> = {
   'הסרת השיוך ללקוח': 'Remove the customer link',
   'לקוחות שנמצאו': 'Customers found',
   'מחפשים…': 'Searching…',
+  'עריכת משימה': 'Edit task',
+  'מה צריך לעשות': 'What needs doing',
+  'עריכת המשימה: {0}': 'Edit task: {0}',
 };

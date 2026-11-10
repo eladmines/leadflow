@@ -1,8 +1,10 @@
 import { businessWebPaths, isOverdue, type Task } from '@leadflow/shared';
-import { AlarmClock, Trash2, UserRound } from 'lucide-react';
+import { AlarmClock, Pencil, Trash2, UserRound } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '../../lib/cn';
 import { dueLabel, useDeleteTask, useUpdateTask } from './api';
+import { EditTaskDialog } from './EditTaskDialog';
 import { tr } from '../../i18n';
 
 /** One task row: tick to complete, due time (red when overdue), lead link, assignee, delete. */
@@ -19,6 +21,7 @@ export function TaskItem({
 }) {
   const update = useUpdateTask(businessId);
   const remove = useDeleteTask(businessId);
+  const [editing, setEditing] = useState(false);
   const done = task.status === 'DONE';
   const late = isOverdue(task);
 
@@ -64,12 +67,21 @@ export function TaskItem({
       </div>
       <button
         type="button"
+        onClick={() => setEditing(true)}
+        aria-label={tr('עריכת המשימה: {0}', task.title)}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-subtle hover:bg-surface-sunken hover:text-ink"
+      >
+        <Pencil aria-hidden className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
         onClick={() => remove.mutate(task.id)}
         aria-label={tr('מחיקת המשימה: {0}', task.title)}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-subtle opacity-0 hover:bg-surface-sunken hover:text-danger-600 focus:opacity-100 group-hover:opacity-100"
       >
         <Trash2 aria-hidden className="h-4 w-4" />
       </button>
+      {editing && <EditTaskDialog task={task} open onOpenChange={setEditing} />}
     </li>
   );
 }

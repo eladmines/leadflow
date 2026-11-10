@@ -48,6 +48,8 @@ export const updateTaskRequestSchema = z.object({
   notes: notes.optional(),
   dueAt: dueAt.optional(),
   assigneeId: z.string().uuid().optional(),
+  /** Link to a lead, or null to unlink. */
+  leadId: z.string().uuid().nullable().optional(),
   status: taskStatusSchema.optional(),
   remind: z.boolean().optional(),
 });

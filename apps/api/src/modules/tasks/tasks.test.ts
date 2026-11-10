@@ -174,6 +174,42 @@ describe('tasks (F10)', () => {
     ).toBe(400);
   });
 
+  it('edits a task: title, notes, due time, and linking or unlinking a lead', async () => {
+    const t = await team();
+    const ron = await lead(t.id, t.owner.token);
+    const made = (await create(t.id, t.owner.token, { title: 'להתקשר', dueAt: inHours(5) })).json()
+      .task;
+    const patch = (token: string, body: object) =>
+      req(ctx.app, 'PATCH', tp.task(t.id, made.id), token, body);
+
+    const linked = await patch(t.owner.token, {
+      title: 'להתקשר לרון',
+      notes: 'אחרי הצהריים',
+      dueAt: inHours(30),
+      leadId: ron.id,
+    });
+    expect(linked.statusCode).toBe(200);
+    expect(linked.json().task).toMatchObject({
+      title: 'להתקשר לרון',
+      notes: 'אחרי הצהריים',
+      lead: { id: ron.id, name: 'רון לוי' },
+    });
+
+    const unlinked = await patch(t.owner.token, { leadId: null });
+    expect(unlinked.json().task.lead).toBeNull();
+
+    // Another business's lead can't be linked, and an employee can't link a lead they don't own.
+    const other = await ownerWithBusiness(ctx.app, 'other-edit');
+    const foreign = await lead(other.business.id, other.token, { phone: '052-9998811' });
+    expect((await patch(t.owner.token, { leadId: foreign.id })).statusCode).toBe(400);
+    const empTask = (await create(t.id, t.emp.token, { title: 'שלי', dueAt: inHours(2) })).json()
+      .task;
+    const denied = await req(ctx.app, 'PATCH', tp.task(t.id, empTask.id), t.emp.token, {
+      leadId: ron.id,
+    });
+    expect(denied.statusCode).toBe(400);
+  });
+
   describe('reminders', () => {
     const service = () => new TaskService(ctx.prisma);
     const send = (now = new Date()) =>
