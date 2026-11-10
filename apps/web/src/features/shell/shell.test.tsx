@@ -174,6 +174,42 @@ describe('dashboard', () => {
     expect(within(today).queryByRole('link', { name: /האתר שלי|הגדרות/ })).not.toBeInTheDocument();
   });
 
+  it("shows the week's leads, their sources and stages to owners (reports.view)", async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.reports.summary(testBusiness.id)}?days=7`]: () =>
+        json(200, {
+          range: { from: '2030-01-01T00:00:00.000Z', to: '2030-01-08T00:00:00.000Z', days: 7 },
+          leads: { current: 5, previous: 3 },
+          closeRate: null,
+          wonValue: 0,
+          openValue: 0,
+          avgResponseMinutes: 45,
+          respondedLeads: 2,
+          series: {
+            unit: 'day',
+            points: [
+              { date: '2030-01-01', count: 1 },
+              { date: '2030-01-02', count: 4 },
+            ],
+          },
+          byStage: [{ id: testStages[0]!.id, name: 'חדש', kind: 'OPEN', count: 5, value: 0 }],
+          bySource: [
+            { source: 'whatsapp', count: 3 },
+            { source: 'facebook', count: 2 },
+          ],
+          byAttribution: [],
+          byCampaign: [],
+        }),
+    });
+    renderApp(home);
+    const overview = await screen.findByRole('region', { name: 'הפניות ב-7 הימים האחרונים' });
+    expect(await within(overview).findByText('+2 לעומת השבוע שעבר')).toBeInTheDocument();
+    expect(within(overview).getByText('WhatsApp')).toBeInTheDocument();
+    expect(within(overview).getByText('פייסבוק')).toBeInTheDocument();
+    expect(within(overview).getByRole('link', { name: 'חדש' })).toBeInTheDocument();
+  });
+
   it("names today's next appointment", async () => {
     mockApi({
       [meKey]: me(testUser),

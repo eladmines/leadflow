@@ -476,8 +476,8 @@ export const enPart3: Record<string, string> = {
   '{0} מחכות לתשובה': '{0} awaiting a reply',
   'מה צריך לעשות ומתי': 'What needs doing, and when',
   'מה מחכה לכם היום': 'What needs you today',
-  'פניות פתוחות, תורים היום, משימות באיחור והודעות ממספרים חדשים. לחיצה על קופסה פותחת את העמוד שלה; כל שאר החלקים נמצאים בתפריט.':
-    'Open leads, today’s appointments, late tasks and messages from new numbers. Click a box to open its page; everything else is in the menu.',
+  'פניות פתוחות, תורים היום, משימות באיחור ושיחות שלא נקראו. לחיצה על קופסה פותחת את העמוד שלה; כל שאר החלקים נמצאים בתפריט.':
+    'Open leads, today’s appointments, late tasks and unread conversations. Click a box to open its page; everything else is in the menu.',
   'פניות פתוחות': 'Open leads',
   '{0} חדשות השבוע': '{0} new this week',
   'תורים היום': 'Appointments today',
@@ -811,4 +811,13 @@ export const enPart3: Record<string, string> = {
   'מענה אוטומטי: כבוי': 'Auto-reply: off',
   'מה קורה כשלקוח כותב לכם בוואטסאפ: מענה אוטומטי, קביעת תורים והצצה לעסק.':
     'What happens when a customer writes to you on WhatsApp: auto-reply, booking and a peek at the business.',
+  'הפניות ב-7 הימים האחרונים': 'Leads in the last 7 days',
+  'לכל הדוחות': 'All reports',
+  'כמו בשבוע שעבר': 'Same as last week',
+  '{0} לעומת השבוע שעבר': '{0} vs last week',
+  'פניות חדשות לפי יום': 'New leads by day',
+  'זמן תגובה ממוצע: {0}': 'Average response time: {0}',
+  'עוד אין פניות בטווח הזה.': 'No leads in this range yet.',
+  'איפה הפניות עומדות': 'Where leads stand',
+  'שיחות שלא נקראו': 'Unread conversations',
 };

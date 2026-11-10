@@ -3,9 +3,10 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { tr } from '../../i18n';
 
-export function useReportSummary(businessId: string, days: number) {
+export function useReportSummary(businessId: string, days: number, enabled = true) {
   return useQuery({
     queryKey: ['businesses', businessId, 'reports', days] as const,
+    enabled,
     queryFn: () => apiFetch<ReportSummary>(`${apiPaths.reports.summary(businessId)}?days=${days}`),
     // Switching ranges keeps the old numbers on screen instead of flashing a spinner.
     placeholderData: keepPreviousData,
