@@ -55,6 +55,7 @@ import { useAppointments } from '../appointments/api';
 import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
+import { LeadSourceIcon } from './SourceIcon';
 import { tr, intlLocale } from '../../i18n';
 
 const fieldLabels: Record<string, string> = {
@@ -373,6 +374,9 @@ function LeadTasks({ leadId }: { leadId: string }) {
 }
 
 /** `/b/:businessId/leads/:leadId`: contact, stage, owner, value, next action, notes, history. */
+/** Sources whose first message already shows in the lead's conversation. */
+const CONVERSATION_SOURCES: readonly string[] = ['whatsapp', 'facebook', 'email'];
+
 export function LeadDetailPage() {
   const business = useCurrentBusiness();
   const { leadId = '' } = useParams();
@@ -412,47 +416,70 @@ export function LeadDetailPage() {
           {tr('כל הלידים')}
         </Link>
       </div>
-      <section className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-surface-border bg-surface p-6 shadow-card">
-        <div className="flex items-center gap-4">
+      <section className="flex flex-col gap-4 rounded-3xl border border-surface-border bg-surface p-5 shadow-card sm:p-6">
+        <div className="flex items-start gap-4">
           <span
             aria-hidden
-            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 text-xl font-semibold text-accent-700"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 text-xl font-semibold text-accent-700"
           >
             {lead.contact.name.trim().charAt(0)}
           </span>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-ink">{lead.contact.name}</h1>
-            <p className="text-sm text-ink-muted">
-              {tr(leadSourceLabels[lead.source])} · {formatDateTime(lead.createdAt)}
-              {lead.expectedValue !== null && ` · ${shekel.format(lead.expectedValue)}`}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h1 className="truncate text-2xl font-semibold text-ink" dir="auto">
+              {lead.contact.name}
+            </h1>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <LeadSourceIcon source={lead.source} className="h-4 w-4" />
+                {tr(leadSourceLabels[lead.source])}
+              </span>
+              <span aria-hidden>·</span>
+              <span>{formatDateTime(lead.createdAt)}</span>
+              {lead.expectedValue !== null && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{shekel.format(lead.expectedValue)}</span>
+                </>
+              )}
             </p>
           </div>
+          <span
+            className={cn(
+              'shrink-0 rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset',
+              tone,
+            )}
+          >
+            {tr(lead.stage.name)}
+          </span>
         </div>
-        <span className={cn('rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset', tone)}>
-          {tr(lead.stage.name)}
-        </span>
-        <div className="flex w-full flex-wrap gap-2">
-          {phone && (
-            <a
-              href={`tel:${phone}`}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              <Phone aria-hidden className="h-4 w-4" />
-              <bdi dir="ltr">{formatIsraeliPhone(phone)}</bdi>
-            </a>
-          )}
-          {lead.contact.email && (
-            <a
-              href={`mailto:${lead.contact.email}`}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-surface px-4 py-2 text-sm text-ink ring-1 ring-surface-border hover:bg-surface-muted"
-            >
-              <Mail aria-hidden className="h-4 w-4" />
-              <bdi dir="ltr">{lead.contact.email}</bdi>
-            </a>
-          )}
-        </div>
-        {lead.message && (
-          <p className="w-full whitespace-pre-line rounded-2xl bg-surface/80 p-4 text-sm text-ink">
+        {(phone || lead.contact.email) && (
+          <div className="flex flex-wrap gap-2 border-t border-surface-border pt-4">
+            {phone && (
+              <a
+                href={`tel:${phone}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              >
+                <Phone aria-hidden className="h-4 w-4" />
+                <bdi dir="ltr">{formatIsraeliPhone(phone)}</bdi>
+              </a>
+            )}
+            {lead.contact.email && (
+              <a
+                href={`mailto:${lead.contact.email}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-surface px-4 py-2 text-sm text-ink ring-1 ring-surface-border hover:bg-surface-muted"
+              >
+                <Mail aria-hidden className="h-4 w-4" />
+                <bdi dir="ltr">{lead.contact.email}</bdi>
+              </a>
+            )}
+          </div>
+        )}
+        {/* A conversation lead's first message is the start of its conversation (the WhatsApp tab). */}
+        {lead.message && !CONVERSATION_SOURCES.includes(lead.source) && (
+          <p
+            className="whitespace-pre-line rounded-xl border-s-4 border-brand-200 bg-surface-muted px-4 py-3 text-sm text-ink"
+            dir="auto"
+          >
             {lead.message}
           </p>
         )}
