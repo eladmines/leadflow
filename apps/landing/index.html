@@ -183,12 +183,79 @@
             פניות מכל מקום מגיעות למקום אחד
           </h2>
           <ul class="chips">
-            <li><span class="dot site"></span><span data-i18n="chSite">האתר</span></li>
-            <li><span class="dot wa"></span>WhatsApp</li>
-            <li><span class="dot fb"></span><span data-i18n="chFb">פייסבוק</span></li>
-            <li><span class="dot em"></span><span data-i18n="chMail">מייל</span></li>
+            <li>
+              <svg class="brand" aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#7c3aed" />
+                <g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="6.4" />
+                  <path
+                    d="M5.6 12h12.8M12 5.6c2 1.7 3 3.9 3 6.4s-1 4.7-3 6.4c-2-1.7-3-3.9-3-6.4s1-4.7 3-6.4z"
+                  />
+                </g>
+              </svg>
+              <span data-i18n="chSite">האתר</span>
+            </li>
+            <li>
+              <svg class="brand" aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#25d366" />
+                <path
+                  d="M12 5.4a6.6 6.6 0 0 0-5.7 9.9l-.9 3.3 3.4-.9A6.6 6.6 0 1 0 12 5.4z"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                />
+                <path
+                  fill="#fff"
+                  d="M9.5 8.9c.2-.4.4-.4.6-.4h.4c.1 0 .3 0 .4.3l.6 1.4c.1.2 0 .3-.1.5l-.3.4c-.1.1-.2.3-.1.4.4.8 1.3 1.6 2.2 2 .2.1.3 0 .4-.1l.5-.6c.1-.2.3-.2.5-.1l1.4.7c.2.1.3.2.2.5-.1.6-.7 1.2-1.5 1.2-2.5-.2-5-2.7-5.1-5 0-.7.2-1.2.4-1.6z"
+                />
+              </svg>
+              WhatsApp
+            </li>
+            <li>
+              <svg class="brand" aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#1877f2" />
+                <path
+                  fill="#fff"
+                  d="M13.5 21v-7h2.4l.4-2.8h-2.8V9.6c0-.8.3-1.4 1.4-1.4h1.5V5.7c-.3 0-1.2-.1-2.2-.1-2.2 0-3.6 1.3-3.6 3.7v2H8.2V14h2.4v7h2.9z"
+                />
+              </svg>
+              <span data-i18n="chFb">פייסבוק</span>
+            </li>
+            <li>
+              <svg class="brand" aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#0ea5e9" />
+                <g
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                >
+                  <rect x="5.4" y="7.4" width="13.2" height="9.2" rx="2" />
+                  <path d="M6 8.4l6 4.4 6-4.4" />
+                </g>
+              </svg>
+              <span data-i18n="chMail">מייל</span>
+            </li>
             <li class="soon">
-              <span class="dot ig"></span>Instagram <small data-i18n="soon">בקרוב</small>
+              <svg class="brand" aria-hidden="true" viewBox="0 0 24 24">
+                <defs>
+                  <linearGradient id="ig-g" x1="0" y1="1" x2="1" y2="0">
+                    <stop offset="0" stop-color="#feda75" />
+                    <stop offset=".35" stop-color="#fa7e1e" />
+                    <stop offset=".65" stop-color="#d62976" />
+                    <stop offset="1" stop-color="#4f5bd5" />
+                  </linearGradient>
+                </defs>
+                <rect width="24" height="24" rx="7" fill="url(#ig-g)" />
+                <g fill="none" stroke="#fff" stroke-width="1.7">
+                  <rect x="6" y="6" width="12" height="12" rx="3.6" />
+                  <circle cx="12" cy="12" r="2.9" />
+                </g>
+                <circle cx="15.6" cy="8.4" r=".9" fill="#fff" />
+              </svg>
+              Instagram <small data-i18n="soon">בקרוב</small>
             </li>
           </ul>
         </div>
@@ -287,34 +354,32 @@
             </li>
             <li>
               <span class="num">2</span>
-              <h3 data-i18n="s2t">כל פנייה הופכת לליד</h3>
+              <h3 data-i18n="s2t">כל פנייה נכנסת לבד</h3>
               <p data-i18n="s2p">
-                מי שכותב נכנס לתיבת השיחות וגם לרשימת הלידים, עם המקור שממנו הגיע.
+                מי שכותב נכנס לתיבת השיחות ולרשימת הלידים, עם המקור שממנו הגיע, בלי מיון ידני.
               </p>
             </li>
             <li>
               <span class="num">3</span>
-              <h3 data-i18n="s3t">עונים וסוגרים</h3>
+              <h3 data-i18n="s3t">מנהלים את היום</h3>
               <p data-i18n="s3p">
-                עונים מהר, קובעים תור, שולחים הצעת מחיר ועוקבים עד שהעסקה נסגרת.
+                עונים, קובעים תורים, מסמנים משימות, שולחים הצעות מחיר ורואים בדוחות איך הולך.
               </p>
             </li>
           </ol>
 
-          <div
-            class="stages"
-            role="img"
-            aria-label="שלבי הליד: חדש, נוצר קשר, הצעת מחיר, נסגר"
+          <ol
+            class="cycle"
+            aria-label="מחזור העבודה בעסק: פנייה, ליד, תור, הצעת מחיר, לקוח, דוח"
             data-i18n-aria="stagesLabel"
           >
-            <span class="stage" data-i18n="st1">חדש</span>
-            <span class="line" aria-hidden="true"></span>
-            <span class="stage" data-i18n="st2">נוצר קשר</span>
-            <span class="line" aria-hidden="true"></span>
-            <span class="stage" data-i18n="st3">הצעת מחיר</span>
-            <span class="line" aria-hidden="true"></span>
-            <span class="stage won" data-i18n="st4">נסגר ✓</span>
-          </div>
+            <li><span aria-hidden="true">💬</span><b data-i18n="st1">פנייה</b></li>
+            <li><span aria-hidden="true">👥</span><b data-i18n="st2">ליד</b></li>
+            <li><span aria-hidden="true">📅</span><b data-i18n="st3">תור</b></li>
+            <li><span aria-hidden="true">🧾</span><b data-i18n="st4">הצעת מחיר</b></li>
+            <li class="won"><span aria-hidden="true">✅</span><b data-i18n="st5">לקוח</b></li>
+            <li><span aria-hidden="true">📈</span><b data-i18n="st6">דוח</b></li>
+          </ol>
         </div>
       </section>
 
