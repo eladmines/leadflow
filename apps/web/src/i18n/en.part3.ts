@@ -847,4 +847,6 @@ export const enPart3: Record<string, string> = {
   'הכתובת {0} תוסר מ-LeadFlow. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.':
     '{0} will be removed from LeadFlow. The website itself isn’t affected and keeps working. You can add it again any time.',
   'כן, להסיר': 'Yes, remove',
+  'סימון הכול כבוצע': 'Mark all done',
+  'סימון כל המשימות כבוצעו: {0}': 'Mark all tasks done: {0}',
 };

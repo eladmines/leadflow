@@ -81,6 +81,43 @@ export function useUpdateTask(businessId: string) {
   });
 }
 
+/** Ticks a whole group done at once: each task is updated, and the list shows it straight away. */
+export function useCompleteTasks(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      Promise.all(
+        ids.map((id) =>
+          apiFetch<{ task: Task }>(tp.task(businessId, id), {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'DONE' }),
+          }),
+        ),
+      ),
+    onMutate: async (ids) => {
+      const key = tasksQueryKey(businessId);
+      await queryClient.cancelQueries({ queryKey: key });
+      const snapshot = queryClient.getQueriesData<TaskListResponse>({ queryKey: key });
+      const set = new Set(ids);
+      queryClient.setQueriesData<TaskListResponse>({ queryKey: key }, (old) =>
+        old
+          ? { tasks: old.tasks.map((t) => (set.has(t.id) ? { ...t, status: 'DONE' as const } : t)) }
+          : old,
+      );
+      return { snapshot };
+    },
+    onError: (_e, _v, ctx) => {
+      for (const [k, d] of ctx?.snapshot ?? []) queryClient.setQueryData(k, d);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: tasksQueryKey(businessId) });
+      void queryClient.invalidateQueries({
+        queryKey: ['businesses', businessId, 'leads', 'detail'],
+      });
+    },
+  });
+}
+
 export const useDeleteTask = (businessId: string) =>
   useTaskMutation(businessId, (id: string) =>
     apiFetch(tp.task(businessId, id), { method: 'DELETE' }),
