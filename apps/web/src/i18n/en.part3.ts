@@ -835,4 +835,11 @@ export const enPart3: Record<string, string> = {
   'שליחת מייל עוד לא הוגדרה בשרת, ולכן אי אפשר לענות כאן.':
     'Sending email isn’t set up on the server, so replies can’t go out from here.',
   'ליד חדש ממייל': 'New lead from email',
+  'מי שקנה מכם (ליד בשלב "נסגר" או הצעת מחיר שאושרה) ומי שקבע תור, גם אם ביטל.':
+    'People who bought (a lead in "Won" or an accepted quote) and people who booked, even if they cancelled.',
+  'כשליד יעבור לשלב "נסגר", יאשר הצעת מחיר או יקבע תור, הוא יופיע כאן.':
+    'When a lead reaches "Won", accepts a quote or books an appointment, they appear here.',
+  'תור אחד': 'One booking',
+  '{0} תורים': '{0} bookings',
+  'התורים של {0}': '{0}’s bookings',
 };
