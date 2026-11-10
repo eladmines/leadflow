@@ -205,8 +205,9 @@ function ConversationRow({
       />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-baseline justify-between gap-2">
-          <span className={cn('truncate text-sm text-ink', c.unread && 'font-semibold')} dir="auto">
-            {nameOf(c)}
+          {/* The name follows the page's side; <bdi> keeps a Latin name readable inside it. */}
+          <span className={cn('truncate text-sm text-ink', c.unread && 'font-semibold')}>
+            <bdi>{nameOf(c)}</bdi>
           </span>
           <time
             dateTime={c.lastMessageAt}
@@ -292,8 +293,8 @@ function ConversationPane({
       <header className="flex flex-wrap items-center gap-2 border-b border-surface-border p-3">
         <BackButton onBack={onBack} />
         <div className="min-w-0 flex-1">
-          <h2 id={`convo-${id}`} className="truncate font-semibold text-ink" dir="auto">
-            {nameOf(c)}
+          <h2 id={`convo-${id}`} className="truncate font-semibold text-ink">
+            <bdi>{nameOf(c)}</bdi>
           </h2>
           <p className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
             <span className={cn('rounded-full px-1.5 py-px font-medium', style.chip)}>
