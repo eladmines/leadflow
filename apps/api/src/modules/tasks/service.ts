@@ -161,6 +161,10 @@ export class TaskService {
         await this.requireAssignee(tx, ctx, input.assigneeId);
         data.assigneeId = input.assigneeId;
       }
+      if (input.leadId !== undefined && input.leadId !== task.leadId) {
+        if (input.leadId) await this.requireLead(tx, ctx, input.leadId);
+        data.leadId = input.leadId;
+      }
       const completing = input.status === 'DONE' && task.status !== 'DONE';
       if (input.status !== undefined && input.status !== task.status) {
         data.status = input.status;

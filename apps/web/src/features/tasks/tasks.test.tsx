@@ -159,6 +159,54 @@ describe('tasks page', () => {
     expect(callsTo(fetchMock, 'POST', tp.list(id))[0]).toMatchObject({ title: 'להתקשר', leadId });
   });
 
+  it('edits a task: new title, notes and a linked customer', async () => {
+    const t = task({ title: 'להתקשר', notes: null });
+    const leadId = '5c000000-0000-4000-8000-0000000000bb';
+    const lead = {
+      id: leadId,
+      contact: {
+        id: '5d000000-0000-4000-8000-0000000000bb',
+        name: 'דנה לוי',
+        phone: '+972522222222',
+        email: null,
+      },
+      stage: { id: '1a000000-0000-4000-8000-000000000001', name: 'חדש', kind: 'OPEN' },
+      source: 'manual',
+      sourceUrl: null,
+      message: null,
+      owner: null,
+      expectedValue: null,
+      nextActionAt: null,
+      tags: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`GET ${tp.list(id)}`]: () => json(200, { tasks: [t] }),
+      [`GET ${apiPaths.leads.list(id)}`]: () => json(200, { leads: [lead] }),
+      [`GET ${apiPaths.leads.list(id)}?q=%D7%93%D7%A0%D7%94`]: () => json(200, { leads: [lead] }),
+      [`PATCH ${tp.task(id, t.id)}`]: () => json(200, { task: { ...t, title: 'להתקשר לדנה' } }),
+    });
+    const { user } = renderApp(tasksPath);
+    await user.click(await screen.findByRole('button', { name: 'עריכת המשימה: להתקשר' }));
+    const dialog = await screen.findByRole('dialog', { name: 'עריכת משימה' });
+    const title = within(dialog).getByLabelText('מה צריך לעשות');
+    await user.clear(title);
+    await user.type(title, 'להתקשר לדנה');
+    await user.type(within(dialog).getByLabelText('הערות'), 'אחרי 5');
+    await user.type(within(dialog).getByLabelText('שיוך ללקוח (לא חובה)'), 'דנה');
+    await user.click(await within(dialog).findByRole('button', { name: /דנה לוי/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'שמירה' }));
+    await waitFor(() => expect(callsTo(fetchMock, 'PATCH', tp.task(id, t.id))).toHaveLength(1));
+    expect(callsTo(fetchMock, 'PATCH', tp.task(id, t.id))[0]).toMatchObject({
+      title: 'להתקשר לדנה',
+      notes: 'אחרי 5',
+      leadId,
+    });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
   it('ticks a task done (optimistic) and saves it', async () => {
     const t = task({ title: 'לשלוח הצעה' });
     const fetchMock = mockApi({
