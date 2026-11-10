@@ -434,11 +434,22 @@ describe('WhatsApp conversations inbox', () => {
               numbers: [{ id: personalId, phone: '+972521112233', classifiedAt: null }],
             }),
           [`DELETE ${wp.number(id, personalId)}`]: () => new Response(null, { status: 204 }),
+          [`GET ${apiPaths.channels.list(id)}`]: () =>
+            json(200, {
+              whatsapp: {
+                channel: 'whatsapp',
+                connected: true,
+                name: '+972 52',
+                source: 'business',
+              },
+              messenger: { channel: 'messenger', connected: false, name: null, source: null },
+              facebookLogin: true,
+            }),
         },
       ),
     );
-    const { user } = renderApp(page);
-    await user.click(await screen.findByRole('tab', { name: /מספרים פרטיים/ }));
+    const { user } = renderApp(`${businessWebPaths.section(id, 'settings')}?tab=channels`);
+    await user.click(await screen.findByRole('button', { name: /מספרים פרטיים/ }));
     await user.click(screen.getByRole('button', { name: 'ביטול סימון פרטי ל-052-1112233' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'DELETE', wp.number(id, personalId))).toHaveLength(1),

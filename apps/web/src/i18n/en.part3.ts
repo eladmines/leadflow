@@ -806,4 +806,9 @@ export const enPart3: Record<string, string> = {
     '"A peek at the business" is off, so the conversation ends here.',
   'השעות הן דוגמה: הלקוח רואה את השעות הפנויות הקרובות.':
     'The hours are an example: the customer sees the next free hours.',
+  אוטומציות: 'Automations',
+  'מענה אוטומטי: פועל': 'Auto-reply: on',
+  'מענה אוטומטי: כבוי': 'Auto-reply: off',
+  'מה קורה כשלקוח כותב לכם בוואטסאפ: מענה אוטומטי, קביעת תורים והצצה לעסק.':
+    'What happens when a customer writes to you on WhatsApp: auto-reply, booking and a peek at the business.',
 };

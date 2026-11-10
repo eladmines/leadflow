@@ -95,8 +95,6 @@ describe('unified inbox (F24)', () => {
     expect(second).toHaveTextContent('משתמש/ת פייסבוק');
     expect(second).toHaveTextContent('פייסבוק');
     expect(second).toHaveTextContent('חדש');
-    // The unread count on the tab and next to "Conversations" in the menu.
-    expect(screen.getByRole('tab', { name: /הודעות/ })).toHaveTextContent('1');
     expect(screen.getByRole('button', { name: 'לא נקראו (1)' })).toBeInTheDocument();
   });
 

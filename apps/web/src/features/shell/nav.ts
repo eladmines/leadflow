@@ -77,6 +77,15 @@ export const navItems: NavItem[] = [
     icon: MessageCircle,
     permission: 'whatsapp.inbox',
   },
+  // The automatic answer on WhatsApp (D-175): status, booking, "A peek".
+  {
+    segment: 'automations',
+    color: { icon: 'text-violet-500', tile: 'bg-violet-500' },
+    group: 'sales',
+    label: tr('אוטומציות'),
+    icon: Zap,
+    permission: 'whatsapp.inbox',
+  },
   {
     segment: 'tasks',
     color: { icon: 'text-amber-500', tile: 'bg-amber-500' },
@@ -97,19 +106,6 @@ export const navItems: NavItem[] = [
     group: 'operations',
     label: tr('הצעות מחיר'),
     icon: FileText,
-  },
-  {
-    segment: 'automations',
-    color: { icon: 'text-slate-400', tile: 'bg-slate-400' },
-    group: 'operations',
-    label: tr('אוטומציות'),
-    icon: Zap,
-    comingSoon: {
-      title: tr('אוטומציות בדרך'),
-      description: tr(
-        'תהליכים מוכנים עם הפעלה וכיבוי, למשל התראה על פנייה חדשה או משימת מעקב אחרי הצעה.',
-      ),
-    },
   },
   {
     segment: 'reports',

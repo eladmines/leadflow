@@ -32,7 +32,8 @@ describe('page tours (D-096)', () => {
     expect(pageKeyFor(`/b/${id}/quotes/123`)).toBe('quote');
     expect(pageKeyFor(`/b/${id}/settings`)).toBe('settings');
     expect(pageKeyFor(`/b/${id}/account`)).toBe('account');
-    expect(pageKeyFor(`/b/${id}/automations`)).toBeNull();
+    expect(pageKeyFor(`/b/${id}/automations`)).toBe('automations');
+    expect(pageKeyFor(`/b/${id}/customers`)).toBeNull();
   });
 
   it('runs the leads page tour from the help menu', async () => {
@@ -51,7 +52,7 @@ describe('page tours (D-096)', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it("explains every part of the conversations page, skipping what isn't there", async () => {
+  it("explains every part of the automations page, skipping what isn't there", async () => {
     mockApi({
       [meKey]: me(testUser),
       [`GET ${apiPaths.whatsapp.inbox(id)}`]: () => json(200, { connected: false, numbers: [] }),
@@ -77,10 +78,9 @@ describe('page tours (D-096)', () => {
           },
         }),
     });
-    const { user } = renderApp(`${section('conversations')}?tab=auto`);
+    const { user } = renderApp(section('automations'));
     await screen.findByRole('heading', { name: 'הגדרות קביעת התורים' });
     await openPageTour(user);
-    // Nothing to classify and no personal numbers: those steps are skipped.
     const titles: string[] = [];
     for (;;) {
       const step = await screen.findByRole('dialog');
@@ -90,9 +90,7 @@ describe('page tours (D-096)', () => {
       await user.click(next);
     }
     expect(titles).toEqual([
-      'שיחות',
-      'שלושה חלקים',
-      'רענון',
+      'אוטומציות',
       // One automatic answer (D-166): the status first, then booking's settings inside it.
       'הסטטוס שלך',
       'מה קורה כשלקוח כותב',
@@ -135,7 +133,7 @@ describe('page tours (D-096)', () => {
 
   it('screens without a tour leave it out of the help menu', async () => {
     mockApi({ [meKey]: me(testUser) });
-    const { user } = renderApp(section('automations'));
+    const { user } = renderApp(section('customers'));
     await screen.findByRole('heading', { level: 1 });
     await user.click(screen.getByRole('button', { name: 'עזרה' }));
     const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של LeadFlow' });
