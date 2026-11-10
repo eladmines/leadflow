@@ -4,6 +4,7 @@ import {
   attributionSchema,
   can,
   crmMessages,
+  CUSTOMER_BOOKING_STATUSES,
   DEFAULT_PIPELINE_STAGES,
   normalizeIsraeliPhone,
   type Activity,
@@ -66,7 +67,7 @@ function toLeadDto(row: LeadRow): Lead {
 }
 
 /** Stored JSON → the contract; anything unexpected reads as "unknown". */
-function readAttribution(value: Prisma.JsonValue): Attribution | null {
+function readAttribution(value: Prisma.JsonValue | null): Attribution | null {
   const parsed = attributionSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 }
@@ -263,32 +264,28 @@ export class LeadService {
   }
 
   /**
-   * Paying customers (D-163): contacts with a lead in a Won stage or an accepted quote, the same
-   * rule as Reports. Employees see only customers from leads assigned to them.
+   * Customers (D-163, D-178): contacts with a lead in a Won stage or an accepted quote (the same
+   * rule as Reports), plus contacts with a booked appointment (confirmed, done, missed or
+   * cancelled). Employees see customers from leads assigned to them and appointments they hold.
    */
   async customers(ctx: TenantContext, query: { q?: string } = {}): Promise<Customer[]> {
     const q = query.q?.trim();
     const digits = q?.replace(/\D/g, '') ?? '';
+    const contactFilter: Prisma.ContactWhereInput | undefined = q
+      ? {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' as const } },
+            { email: { contains: q, mode: 'insensitive' as const } },
+            ...(digits.length >= 3 ? [{ phone: { contains: digits.replace(/^0/, '') } }] : []),
+          ],
+        }
+      : undefined;
     const rows = await this.prisma.lead.findMany({
       where: {
         AND: [
           this.visible(ctx),
           { OR: [{ stage: { kind: 'WON' } }, { quotes: { some: { status: 'ACCEPTED' } } }] },
-          ...(q
-            ? [
-                {
-                  contact: {
-                    OR: [
-                      { name: { contains: q, mode: 'insensitive' as const } },
-                      { email: { contains: q, mode: 'insensitive' as const } },
-                      ...(digits.length >= 3
-                        ? [{ phone: { contains: digits.replace(/^0/, '') } }]
-                        : []),
-                    ],
-                  },
-                },
-              ]
-            : []),
+          ...(contactFilter ? [{ contact: contactFilter }] : []),
         ],
       },
       select: {
@@ -321,14 +318,17 @@ export class LeadService {
           email: r.contact.email,
           totalValue: 0,
           lastPurchaseAt: at,
+          lastActivityAt: at,
           // Oldest lead first: where they first came from.
           attribution: readAttribution(r.attribution),
           purchases: [],
+          bookings: [],
         };
         byContact.set(r.contact.id, c);
       }
       c.totalValue += r.expectedValue ?? 0;
-      if (at > c.lastPurchaseAt) c.lastPurchaseAt = at;
+      if (!c.lastPurchaseAt || at > c.lastPurchaseAt) c.lastPurchaseAt = at;
+      if (at > c.lastActivityAt) c.lastActivityAt = at;
       c.purchases.unshift({
         leadId: r.id,
         at,
@@ -336,9 +336,61 @@ export class LeadService {
         via: r.stage.kind === 'WON' ? 'won' : 'quote',
       });
     }
+
+    // People who booked: anything but a request still waiting for approval.
+    const appointments = await this.prisma.appointment.findMany({
+      where: {
+        businessId: ctx.businessId,
+        status: { in: [...CUSTOMER_BOOKING_STATUSES] },
+        ...(can(ctx.role, 'appointments.view.all') ? {} : { staffId: ctx.userId }),
+        ...(contactFilter ? { contact: contactFilter } : {}),
+      },
+      select: {
+        id: true,
+        startsAt: true,
+        status: true,
+        leadId: true,
+        service: { select: { name: true } },
+        lead: { select: { attribution: true } },
+        contact: { select: { id: true, name: true, phone: true, email: true } },
+      },
+      orderBy: { startsAt: 'asc' },
+      take: 5000,
+    });
+    for (const a of appointments) {
+      const at = a.startsAt.toISOString();
+      let c = byContact.get(a.contact.id);
+      if (!c) {
+        c = {
+          contactId: a.contact.id,
+          name: a.contact.name,
+          phone: a.contact.phone,
+          email: a.contact.email,
+          totalValue: 0,
+          lastPurchaseAt: null,
+          lastActivityAt: at,
+          attribution: readAttribution(a.lead?.attribution ?? null),
+          purchases: [],
+          bookings: [],
+        };
+        byContact.set(a.contact.id, c);
+      }
+      if (at > c.lastActivityAt) c.lastActivityAt = at;
+      c.bookings.push({
+        appointmentId: a.id,
+        startsAt: at,
+        status: a.status,
+        serviceName: a.service?.name ?? null,
+        leadId: a.leadId,
+      });
+    }
+
     const customers = [...byContact.values()];
-    for (const c of customers) c.purchases.sort((a, b) => b.at.localeCompare(a.at));
-    return customers.sort((a, b) => b.lastPurchaseAt.localeCompare(a.lastPurchaseAt));
+    for (const c of customers) {
+      c.purchases.sort((x, y) => y.at.localeCompare(x.at));
+      c.bookings.sort((x, y) => y.startsAt.localeCompare(x.startsAt));
+    }
+    return customers.sort((x, y) => y.lastActivityAt.localeCompare(x.lastActivityAt));
   }
 
   /** Tags on the leads this member can see, most used first. */
