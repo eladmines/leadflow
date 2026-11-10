@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LeadFlow — האתר, הלידים והשיחות של העסק, במקום אחד</title>
+    <meta
+      name="description"
+      content="LeadFlow מרכזת את כל הפניות של העסק: מהאתר, מוואטסאפ, מפייסבוק ומהמייל. כל פנייה הופכת לליד, עונים מהר, קובעים תורים וסוגרים עסקאות."
+    />
+    <meta property="og:title" content="LeadFlow" />
+    <meta
+      property="og:description"
+      content="לא מפספסים לקוח בגלל הודעה שלא נענתה. האתר, הלידים והשיחות של העסק, במקום אחד."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#1d4ed8" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main" data-i18n="skip">דילוג לתוכן הראשי</a>
+
+    <header class="header">
+      <div class="wrap header-row">
+        <a class="logo" href="#top" aria-label="LeadFlow">
+          <svg aria-hidden="true" viewBox="0 0 64 64" width="32" height="32">
+            <defs>
+              <linearGradient id="lb" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#4f8ff7" />
+                <stop offset="1" stop-color="#1d4ed8" />
+              </linearGradient>
+              <linearGradient id="lc" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ff8a5c" />
+                <stop offset="1" stop-color="#f2564a" />
+              </linearGradient>
+            </defs>
+            <circle
+              cx="29"
+              cy="35"
+              r="23"
+              fill="none"
+              stroke="url(#lb)"
+              stroke-opacity=".35"
+              stroke-width="5"
+            />
+            <circle cx="29" cy="35" r="13.5" fill="none" stroke="url(#lb)" stroke-width="5" />
+            <circle cx="29" cy="35" r="6" fill="url(#lc)" />
+            <path
+              d="M30.5 33.5L51 13"
+              stroke="url(#lb)"
+              stroke-width="3.6"
+              stroke-linecap="round"
+            />
+            <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill="url(#lb)" />
+          </svg>
+          <span class="logo-name">Lead<b>Flow</b></span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="ניווט ראשי" data-i18n-aria="navLabel">
+          <a href="#features" data-i18n="navFeatures">תכונות</a>
+          <a href="#how" data-i18n="navHow">איך זה עובד</a>
+          <a href="#faq" data-i18n="navFaq">שאלות נפוצות</a>
+        </nav>
+
+        <div class="header-actions">
+          <div class="lang" role="group" aria-label="שפה" data-i18n-aria="langLabel">
+            <button type="button" data-lang="he" aria-pressed="true">עב</button>
+            <button type="button" data-lang="en" aria-pressed="false">EN</button>
+          </div>
+          <a
+            class="btn btn-ghost hide-sm"
+            data-app="/login"
+            href="https://leadflow-55gt.onrender.com/login"
+            data-i18n="signIn"
+            >כניסה</a
+          >
+          <a
+            class="btn btn-primary"
+            data-app="/register"
+            href="https://leadflow-55gt.onrender.com/register"
+            data-i18n="start"
+            >התחילו עכשיו</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="hero" id="top">
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="heroEyebrow">מערכת אחת לאתר, ללידים ולשיחות</p>
+            <h1 data-i18n="heroTitle">לא מפספסים לקוח בגלל הודעה שלא נענתה.</h1>
+            <p class="lead" data-i18n="heroText">
+              LeadFlow מרכזת את כל הפניות של העסק: מהאתר, מוואטסאפ, מפייסבוק ומהמייל. כל פנייה הופכת
+              לליד, עונים מהר, קובעים תורים וסוגרים עסקאות — הכול במקום אחד.
+            </p>
+            <div class="cta-row">
+              <a
+                class="btn btn-primary btn-lg"
+                data-app="/register"
+                href="https://leadflow-55gt.onrender.com/register"
+                data-i18n="start"
+                >התחילו עכשיו</a
+              >
+              <a class="btn btn-secondary btn-lg" href="#how" data-i18n="seeHow">איך זה עובד</a>
+            </div>
+            <p class="note" data-i18n="heroNote">
+              בעברית ובאנגלית, מימין לשמאל ומשמאל לימין, ומותאם גם לנייד.
+            </p>
+          </div>
+
+          <!-- A picture of the inbox -->
+          <div
+            class="mock"
+            role="img"
+            aria-label="תצוגה של תיבת השיחות של LeadFlow"
+            data-i18n-aria="mockLabel"
+          >
+            <div class="mock-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="mock-body" aria-hidden="true">
+              <ul class="mock-list">
+                <li class="active">
+                  <span class="dot wa"></span>
+                  <span class="who"
+                    ><b data-i18n="mockN1">דנה כהן</b
+                    ><small data-i18n="mockM1">אפשר תור ליום חמישי?</small></span
+                  >
+                  <span class="tag" data-i18n="mockNew">חדש</span>
+                </li>
+                <li>
+                  <span class="dot fb"></span>
+                  <span class="who"
+                    ><b data-i18n="mockN2">יוסי לוי</b
+                    ><small data-i18n="mockM2">כמה עולה צבע?</small></span
+                  >
+                </li>
+                <li>
+                  <span class="dot em"></span>
+                  <span class="who"
+                    ><b data-i18n="mockN3">מיכל אברהם</b
+                    ><small data-i18n="mockM3">הצעת מחיר לאירוע</small></span
+                  >
+                </li>
+              </ul>
+              <div class="mock-chat">
+                <p class="bubble in" data-i18n="mockIn">היי, אפשר תור ליום חמישי?</p>
+                <p class="bubble out">
+                  <span data-i18n="mockOut"
+                    >שלום דנה! יש לנו שעות פנויות: 10:00, 12:30 ו-17:00.</span
+                  ><small data-i18n="mockAuto">תשובה אוטומטית</small>
+                </p>
+                <p class="bubble in" data-i18n="mockIn2">12:30 מתאים 🙏</p>
+                <p class="bubble out">
+                  <span data-i18n="mockOut2">קבענו לכם תור ליום חמישי ב-12:30 ✅</span
+                  ><small data-i18n="mockAuto">תשובה אוטומטית</small>
+                </p>
+              </div>
+            </div>
+            <div class="mock-toast" aria-hidden="true">
+              <span class="check">✓</span>
+              <span
+                ><b data-i18n="toastTitle">ליד חדש נוצר</b
+                ><small data-i18n="toastText">דנה כהן · מוואטסאפ</small></span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Channels -->
+      <section class="channels" aria-labelledby="channels-title">
+        <div class="wrap">
+          <h2 id="channels-title" class="channels-title" data-i18n="channelsTitle">
+            פניות מכל מקום מגיעות למקום אחד
+          </h2>
+          <ul class="chips">
+            <li><span class="dot site"></span><span data-i18n="chSite">האתר</span></li>
+            <li><span class="dot wa"></span>WhatsApp</li>
+            <li><span class="dot fb"></span><span data-i18n="chFb">פייסבוק</span></li>
+            <li><span class="dot em"></span><span data-i18n="chMail">מייל</span></li>
+            <li class="soon">
+              <span class="dot ig"></span>Instagram <small data-i18n="soon">בקרוב</small>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="section" id="features" aria-labelledby="features-title">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow" data-i18n="featEyebrow">הכול במקום אחד</p>
+            <h2 id="features-title" data-i18n="featTitle">כל מה שצריך כדי לא לאבד פנייה</h2>
+          </header>
+          <ul class="cards">
+            <li class="card">
+              <span class="icon i-violet" aria-hidden="true">🌐</span>
+              <h3 data-i18n="f1t">אתר לעסק בכמה דקות</h3>
+              <p data-i18n="f1p">
+                בוחרים תבנית, מעדכנים טקסטים ותמונות ומפרסמים. הטופס באתר מזין ישר את הלידים.
+              </p>
+            </li>
+            <li class="card">
+              <span class="icon i-blue" aria-hidden="true">💬</span>
+              <h3 data-i18n="f2t">תיבת שיחות אחת</h3>
+              <p data-i18n="f2p">
+                וואטסאפ, פייסבוק ומייל במקום אחד. עונים מאותו מסך, והצוות רואה מה כבר טופל.
+              </p>
+            </li>
+            <li class="card">
+              <span class="icon i-emerald" aria-hidden="true">👥</span>
+              <h3 data-i18n="f3t">לידים ולקוחות</h3>
+              <p data-i18n="f3p">
+                שלבים, תגיות, הערות והיסטוריה לכל ליד. מי שקנה או קבע תור מופיע בלקוחות.
+              </p>
+            </li>
+            <li class="card">
+              <span class="icon i-amber" aria-hidden="true">🤖</span>
+              <h3 data-i18n="f4t">מענה אוטומטי וקביעת תורים</h3>
+              <p data-i18n="f4p">
+                הודעת סטטוס לפי המצב שלכם, והלקוחות בוחרים זמן או קובעים תור בעצמם בוואטסאפ.
+              </p>
+            </li>
+            <li class="card">
+              <span class="icon i-rose" aria-hidden="true">✅</span>
+              <h3 data-i18n="f5t">משימות, תורים והצעות מחיר</h3>
+              <p data-i18n="f5p">
+                תזכורות מעקב, יומן תורים עם שעות פנויות, והצעות מחיר שהלקוח מאשר בלחיצה.
+              </p>
+            </li>
+            <li class="card">
+              <span class="icon i-sky" aria-hidden="true">📈</span>
+              <h3 data-i18n="f6t">דוחות ומקורות</h3>
+              <p data-i18n="f6p">
+                רואים כמה פניות הגיעו, מאיפה (גוגל, פייסבוק, האתר) וכמה מהן נסגרו.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="section section-tint" id="how" aria-labelledby="how-title">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow" data-i18n="howEyebrow">איך זה עובד</p>
+            <h2 id="how-title" data-i18n="howTitle">שלושה צעדים, בלי מיון ידני</h2>
+          </header>
+          <ol class="steps">
+            <li>
+              <span class="num">1</span>
+              <h3 data-i18n="s1t">מחברים</h3>
+              <p data-i18n="s1p">בונים אתר, ומחברים וואטסאפ, פייסבוק או מייל של העסק.</p>
+            </li>
+            <li>
+              <span class="num">2</span>
+              <h3 data-i18n="s2t">כל פנייה הופכת לליד</h3>
+              <p data-i18n="s2p">
+                מי שכותב נכנס לתיבת השיחות וגם לרשימת הלידים, עם המקור שממנו הגיע.
+              </p>
+            </li>
+            <li>
+              <span class="num">3</span>
+              <h3 data-i18n="s3t">עונים וסוגרים</h3>
+              <p data-i18n="s3p">
+                עונים מהר, קובעים תור, שולחים הצעת מחיר ועוקבים עד שהעסקה נסגרת.
+              </p>
+            </li>
+          </ol>
+
+          <div
+            class="stages"
+            role="img"
+            aria-label="שלבי הליד: חדש, נוצר קשר, הצעת מחיר, נסגר"
+            data-i18n-aria="stagesLabel"
+          >
+            <span class="stage" data-i18n="st1">חדש</span>
+            <span class="line" aria-hidden="true"></span>
+            <span class="stage" data-i18n="st2">נוצר קשר</span>
+            <span class="line" aria-hidden="true"></span>
+            <span class="stage" data-i18n="st3">הצעת מחיר</span>
+            <span class="line" aria-hidden="true"></span>
+            <span class="stage won" data-i18n="st4">נסגר ✓</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Team and safety -->
+      <section class="section" aria-labelledby="team-title">
+        <div class="wrap two">
+          <div>
+            <p class="eyebrow" data-i18n="teamEyebrow">לכל הצוות</p>
+            <h2 id="team-title" data-i18n="teamTitle">כל אחד רואה מה שמתאים לו</h2>
+            <p class="lead" data-i18n="teamText">
+              בעלים, מנהלים ועובדים, כל אחד עם הרשאות לפי התפקיד. נתוני כל עסק נשמרים בנפרד מעסקים
+              אחרים.
+            </p>
+          </div>
+          <ul class="ticks">
+            <li data-i18n="t1">הרשאות לפי תפקיד: בעלים, מנהל ועובד</li>
+            <li data-i18n="t2">עובדים רואים רק את הלידים שמוקצים אליהם</li>
+            <li data-i18n="t3">התראות על פנייה חדשה ועל הודעה מלקוח</li>
+            <li data-i18n="t4">עברית ואנגלית, בכל מכשיר</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="section section-tint" id="faq" aria-labelledby="faq-title">
+        <div class="wrap narrow">
+          <header class="section-head">
+            <p class="eyebrow" data-i18n="faqEyebrow">שאלות נפוצות</p>
+            <h2 id="faq-title" data-i18n="faqTitle">מה שרצית לדעת</h2>
+          </header>
+          <div class="faq">
+            <details>
+              <summary data-i18n="q1">צריך כבר אתר כדי להתחיל?</summary>
+              <p data-i18n="a1">
+                לא. אפשר לבנות אתר ב-LeadFlow, או להתחיל ישר מוואטסאפ, מפייסבוק ומהמייל.
+              </p>
+            </details>
+            <details>
+              <summary data-i18n="q2">אילו ערוצים אפשר לחבר?</summary>
+              <p data-i18n="a2">
+                טופס באתר, WhatsApp, פייסבוק (הודעות לדף העסק) ומייל. Instagram בדרך.
+              </p>
+            </details>
+            <details>
+              <summary data-i18n="q3">האם המערכת בעברית ובאנגלית?</summary>
+              <p data-i18n="a3">
+                כן. מחליפים שפה בכל רגע, והמסך מתהפך אוטומטית בין ימין לשמאל ושמאל לימין.
+              </p>
+            </details>
+            <details>
+              <summary data-i18n="q4">איך מתחילים?</summary>
+              <p data-i18n="a4">
+                נרשמים, מגדירים את פרטי העסק, ובונים אתר או מחברים ערוץ. משם כל פנייה נכנסת לבד.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final call -->
+      <section class="final" aria-labelledby="final-title">
+        <div class="wrap">
+          <h2 id="final-title" data-i18n="finalTitle">מוכנים לא לפספס אף פנייה?</h2>
+          <p data-i18n="finalText">פותחים חשבון ורואים את כל הפניות של העסק במקום אחד.</p>
+          <a
+            class="btn btn-light btn-lg"
+            data-app="/register"
+            href="https://leadflow-55gt.onrender.com/register"
+            data-i18n="start"
+            >התחילו עכשיו</a
+          >
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <span class="logo-name">Lead<b>Flow</b></span>
+        <nav aria-label="קישורים" data-i18n-aria="footLabel">
+          <a data-app="/login" href="https://leadflow-55gt.onrender.com/login" data-i18n="signIn"
+            >כניסה</a
+          >
+          <a
+            data-app="/register"
+            href="https://leadflow-55gt.onrender.com/register"
+            data-i18n="register"
+            >הרשמה</a
+          >
+        </nav>
+        <small dir="ltr">© <span id="year">2026</span> LeadFlow</small>
+      </div>
+    </footer>
+
+    <script src="main.js"></script>
+  </body>
+</html>
