@@ -24,6 +24,7 @@ import {
   Field,
   PhoneField,
   Select,
+  ScrollTabs,
 } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { applyServerErrors, errorMessage } from '../auth/serverErrors';
@@ -110,10 +111,10 @@ export function SettingsPage() {
       {!canEdit && (
         <Alert tone="info">{tr('רק בעל/ת העסק יכול/ה לשנות את ההגדרות. אפשר לצפות בפרטים.')}</Alert>
       )}
-      <div
-        role="tablist"
-        aria-label={tr('חלקי ההגדרות')}
-        className="flex gap-1 overflow-x-auto border-b border-surface-border"
+      <ScrollTabs
+        label={tr('חלקי ההגדרות')}
+        activeKey={tab}
+        className="border-b border-surface-border"
       >
         {TABS.map((t) => (
           <button
@@ -134,7 +135,7 @@ export function SettingsPage() {
             {labels[t]}
           </button>
         ))}
-      </div>
+      </ScrollTabs>
       <div
         id={`settings-panel-${tab}`}
         role="tabpanel"

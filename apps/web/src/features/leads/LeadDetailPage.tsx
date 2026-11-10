@@ -27,6 +27,7 @@ import {
   Field,
   Spinner,
   Textarea,
+  ScrollTabs,
 } from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
@@ -496,10 +497,10 @@ function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) 
   };
   return (
     <section className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card">
-      <div
-        role="tablist"
-        aria-label={tr('חלקי הליד')}
-        className="flex gap-1 overflow-x-auto border-b border-surface-border px-3"
+      <ScrollTabs
+        label={tr('חלקי הליד')}
+        activeKey={tab}
+        className="border-b border-surface-border px-3"
       >
         {LEAD_TABS.map((t) => (
           <button
@@ -529,7 +530,7 @@ function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) 
             {labels[t]}
           </button>
         ))}
-      </div>
+      </ScrollTabs>
       {/* The parts keep their own cards; inside the tab they lose the frame. */}
       <div
         id={`lead-panel-${tab}`}

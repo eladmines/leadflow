@@ -2,7 +2,7 @@ import { businessWebPaths } from '@leadflow/shared';
 import { Check, Copy, Globe, MessageCircle } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, DialogShell } from '../../components/ui';
+import { Alert, DialogShell, ScrollTabs } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { AttributionIcon } from '../leads/SourceIcon';
 import { useSite } from '../site/api';
@@ -60,10 +60,10 @@ export function AdsGuideDialog({
           </Link>
         </Alert>
       )}
-      <div
-        role="tablist"
-        aria-label={tr('מערכת מודעות')}
-        className="flex gap-1 overflow-x-auto rounded-xl bg-surface-sunken p-1"
+      <ScrollTabs
+        label={tr('מערכת מודעות')}
+        activeKey={tab}
+        className="rounded-xl bg-surface-sunken p-1"
       >
         {TABS.map((t) => (
           <button
@@ -83,7 +83,7 @@ export function AdsGuideDialog({
             {labels[t].name}
           </button>
         ))}
-      </div>
+      </ScrollTabs>
       <div role="tabpanel" id={`ads-panel-${tab}`} aria-labelledby={`ads-tab-${tab}`}>
         {tab === 'google' && (
           <Steps>
