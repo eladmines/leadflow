@@ -511,26 +511,35 @@ h3 {
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  font-size: 1.4rem;
   margin-bottom: 1rem;
+}
+.icon svg {
+  width: 24px;
+  height: 24px;
 }
 .i-violet {
   background: #ede9fe;
+  color: #6d28d9;
 }
 .i-blue {
   background: #dbeafe;
+  color: #1d4ed8;
 }
 .i-emerald {
   background: #d1fae5;
+  color: #047857;
 }
 .i-amber {
   background: #fef3c7;
+  color: #b45309;
 }
 .i-rose {
   background: #ffe4e6;
+  color: #be123c;
 }
 .i-sky {
   background: #e0f2fe;
+  color: #0369a1;
 }
 
 /* Steps */
@@ -591,11 +600,16 @@ h3 {
   height: 52px;
   border-radius: 16px;
   background: #fff;
-  font-size: 1.5rem;
+  color: var(--brand-700);
   box-shadow: 0 8px 18px -8px rgba(15, 23, 42, 0.5);
+}
+.cycle li span svg {
+  width: 26px;
+  height: 26px;
 }
 .cycle li.won span {
   background: #34d399;
+  color: #064e3b;
 }
 .cycle b {
   font-size: 0.9rem;
@@ -612,44 +626,6 @@ h3 {
 }
 [dir='rtl'] .cycle li:not(:last-child)::after {
   content: '←';
-}
-
-/* Team */
-.two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  align-items: center;
-}
-.ticks {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
-}
-.ticks li {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  background: var(--canvas);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 0.9rem 1rem;
-  font-weight: 500;
-}
-.ticks li::before {
-  content: '✓';
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--green);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.85rem;
 }
 
 /* FAQ */
@@ -726,9 +702,103 @@ h3 {
   color: var(--ink);
 }
 
+/* Motion: things ease in as they come into view, and the inbox picture plays its little story.
+   Everything is visible without JavaScript, and nothing moves for people who asked for less. */
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(37, 99, 235, 0);
+  }
+}
+.mock-chat .bubble {
+  animation: pop 0.5s both;
+}
+.mock-chat .bubble:nth-child(1) {
+  animation-delay: 0.5s;
+}
+.mock-chat .bubble:nth-child(2) {
+  animation-delay: 1.5s;
+}
+.mock-chat .bubble:nth-child(3) {
+  animation-delay: 2.6s;
+}
+.mock-chat .bubble:nth-child(4) {
+  animation-delay: 3.6s;
+}
+.mock-list li {
+  animation: pop 0.5s both;
+}
+.mock-list li:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.mock-list li:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.mock-list .tag {
+  animation: pulse 2.2s ease-in-out 1s infinite;
+}
+.mock-toast {
+  animation:
+    pop 0.5s 4.4s both,
+    float 4s ease-in-out 5s infinite;
+}
+.hero-copy > * {
+  animation: pop 0.6s both;
+}
+.hero-copy > :nth-child(2) {
+  animation-delay: 0.08s;
+}
+.hero-copy > :nth-child(3) {
+  animation-delay: 0.16s;
+}
+.hero-copy > :nth-child(4) {
+  animation-delay: 0.24s;
+}
+.hero-copy > :nth-child(5) {
+  animation-delay: 0.32s;
+}
+
+.js .reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.js .reveal.in {
+  opacity: 1;
+  transform: none;
+}
+/* The business cycle lights up step by step. */
+.js .cycle.reveal li {
+  opacity: 0;
+  transform: scale(0.85);
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
+}
+.js .cycle.reveal.in li {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(var(--n, 0) * 160ms + 200ms);
+}
+
 @media (max-width: 960px) {
-  .hero-grid,
-  .two {
+  .hero-grid {
     grid-template-columns: 1fr;
   }
   .cards,
@@ -779,11 +849,15 @@ h3 {
   html {
     scroll-behavior: auto;
   }
-  .mock-toast {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
-  .btn,
-  .card {
-    transition: none;
+  .js .reveal,
+  .js .cycle.reveal li {
+    opacity: 1;
+    transform: none;
   }
 }
