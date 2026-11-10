@@ -43,19 +43,19 @@ export function ConversationPreview({
     <div
       role="group"
       aria-label={tr('כך תיראה השיחה')}
-      className="flex flex-col gap-2 rounded-2xl bg-[#efeae2] p-3 sm:p-4"
+      className="flex flex-col gap-2 rounded-2xl border border-surface-border bg-surface p-3 sm:p-4"
     >
       <Bubble from="customer">{tr('היי, אפשר לשאול משהו?')}</Bubble>
       <Bubble from="business">
         <span className="whitespace-pre-line">{message || '—'}</span>
-        <span className="mt-2 flex items-center justify-center gap-1.5 border-t border-black/10 pt-2 text-sm font-medium text-[#008069]">
+        <span className="mt-2 flex items-center justify-center gap-1.5 border-t border-success-600/20 pt-2 text-sm font-medium text-brand-700">
           <List aria-hidden className="h-4 w-4" />
           {tr('מתי נוח לדבר?')}
         </span>
       </Bubble>
       <ul
         aria-label={tr('האפשרויות ברשימה')}
-        className="ms-4 flex max-w-xs flex-col divide-y divide-black/5 rounded-xl bg-white/80 text-sm text-ink shadow-sm"
+        className="flex max-w-[85%] flex-col divide-y divide-surface-border self-end rounded-xl border border-surface-border bg-surface text-sm text-ink"
       >
         {[
           ...EXAMPLE_HOURS.map((h) => tr(h)),
@@ -74,7 +74,7 @@ export function ConversationPreview({
           <Bubble from="business">
             <span className="whitespace-pre-line">{peekText}</span>
             {peek.link && (
-              <bdi dir="ltr" className="block break-all text-[#027eb5] underline">
+              <bdi dir="ltr" className="block break-all text-brand-700 underline">
                 {peek.link}
               </bdi>
             )}
@@ -88,7 +88,7 @@ export function ConversationPreview({
             </Bubble>
           )}
           {photos.length > 0 && (
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 self-end">
               {photos.map((url) => (
                 <img key={url} src={url} alt="" className="h-16 w-16 rounded-xl object-cover" />
               ))}
@@ -107,19 +107,24 @@ export function ConversationPreview({
   );
 }
 
+/**
+ * Looks like the inbox (Conversations): the customer's messages on the start side, grey; the
+ * business's replies on the other, green, marked as automatic.
+ */
 function Bubble({ from, children }: { from: 'customer' | 'business'; children: ReactNode }) {
+  const business = from === 'business';
   return (
     <div
       dir="auto"
       className={cn(
-        'flex max-w-xs flex-col rounded-2xl px-3 py-2 text-sm text-ink shadow-sm',
-        // The business's own messages on one side, the customer's on the other, as in WhatsApp.
-        from === 'customer'
-          ? 'self-end rounded-ee-sm bg-[#d9fdd3]'
-          : 'self-start rounded-es-sm bg-white',
+        'flex max-w-[85%] flex-col gap-1 rounded-2xl px-3.5 py-2 text-sm text-ink',
+        business
+          ? 'self-end rounded-ee-sm bg-success-50 ring-1 ring-success-600/20'
+          : 'self-start rounded-es-sm bg-surface-muted',
       )}
     >
       {children}
+      {business && <span className="text-xs text-ink-muted">{tr('תשובה אוטומטית')}</span>}
     </div>
   );
 }
