@@ -67,7 +67,7 @@ export function ScrollTabs({
       aria-label={label}
       onScroll={measure}
       style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
-      className={cn('flex gap-1 overflow-x-auto', className)}
+      className={cn('scrollbar-visible flex gap-1 overflow-x-auto', className)}
     >
       {children}
     </div>

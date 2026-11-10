@@ -105,7 +105,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         <ol
           ref={listRef}
           aria-label={tr('שיחת וואטסאפ')}
-          className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto"
+          className="scrollbar-visible flex max-h-[28rem] flex-col gap-2 overflow-y-auto"
         >
           {messages.map((m) => {
             const out = m.direction === 'OUT';

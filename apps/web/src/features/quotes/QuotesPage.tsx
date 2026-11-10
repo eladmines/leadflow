@@ -92,7 +92,7 @@ export function QuotesPage() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="scrollbar-visible overflow-x-auto">
             <table className="w-full min-w-[40rem] text-sm">
               <thead className="bg-surface-muted text-xs text-ink-muted">
                 <tr>
