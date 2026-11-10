@@ -1,12 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  can,
   channelsMessages,
   connectWhatsAppRequestSchema,
   type Channel,
   type ChannelStatus,
   type ConnectWhatsAppRequest,
 } from '@leadflow/shared';
-import { Facebook, Instagram, Mail, MessageCircle, Plug } from 'lucide-react';
+import { ChevronLeft, Facebook, Instagram, Mail, MessageCircle, Plug } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
@@ -24,6 +25,8 @@ import {
   useFacebookStart,
 } from './channelsApi';
 import { Section } from './SettingsPage';
+import { PersonalNumbers } from '../whatsapp/PersonalNumbers';
+import { usePersonalNumbers } from '../whatsapp/api';
 
 /** What came back from Facebook's sign-in (`?facebook=`): a sign-in to finish, or why not. */
 const FACEBOOK_RESULTS: Record<string, string> = {
@@ -218,6 +221,9 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
   const connect = useConnectWhatsApp(business.id);
   const off = useDisconnectFlow('whatsapp');
   const [open, setOpen] = useState(false);
+  const [showPersonal, setShowPersonal] = useState(false);
+  const seesPersonal = can(business.role, 'whatsapp.inbox');
+  const personal = usePersonalNumbers(business.id, seesPersonal);
   const [formError, setFormError] = useState<string | null>(null);
   const form = useForm<ConnectWhatsAppRequest>({
     resolver: zodResolver(connectWhatsAppRequestSchema),
@@ -256,6 +262,21 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
       action={action}
     >
       {off.panel}
+      {/* Numbers marked personal live with the WhatsApp connection (D-175). */}
+      {seesPersonal && (
+        <button
+          type="button"
+          onClick={() => setShowPersonal(true)}
+          className="inline-flex items-center gap-1 self-start text-sm font-medium text-brand-700 hover:underline"
+        >
+          {tr('מספרים פרטיים')}
+          {personal.data && personal.data.length > 0 && ` (${personal.data.length})`}
+          <ChevronLeft aria-hidden className="h-4 w-4 ltr:rotate-180" />
+        </button>
+      )}
+      <DialogShell open={showPersonal} onOpenChange={setShowPersonal} title={tr('מספרים פרטיים')}>
+        <PersonalNumbers businessId={business.id} />
+      </DialogShell>
       {open && (
         <form noValidate onSubmit={submit} className="flex flex-col gap-3">
           <p className="text-sm text-ink-muted">

@@ -14,6 +14,7 @@ export type PageKey =
   | 'leads'
   | 'lead'
   | 'conversations'
+  | 'automations'
   | 'tasks'
   | 'appointments'
   | 'quotes'
@@ -32,6 +33,7 @@ export function pageKeyFor(pathname: string): PageKey | null {
   const known: PageKey[] = [
     'site',
     'conversations',
+    'automations',
     'tasks',
     'appointments',
     'reports',
@@ -84,14 +86,6 @@ const cardOf = (css: string) => () => {
   const el = pick([...document.querySelectorAll<HTMLElement>(css)]);
   return el?.closest<HTMLElement>('.shadow-card') ?? el;
 };
-
-/** A collapsible section (`<details>`) by the text of its summary. */
-const section = (text: string) => () =>
-  pick(
-    [...document.querySelectorAll<HTMLElement>('main details')].filter((d) =>
-      d.querySelector('summary')?.textContent?.includes(text),
-    ),
-  );
 
 /** The card whose heading starts with a text (headings that end with a count). */
 const cardStarting = (title: string) => () => {
@@ -261,13 +255,6 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       ),
     },
     {
-      target: `[aria-label="${tr('חלקי העמוד')}"]`,
-      title: tr('שלושה חלקים'),
-      body: tr(
-        '"הודעות": כל השיחות. "מענה אוטומטי": מה הלקוח מקבל כשהוא כותב, והסטטוס שלכם. "מספרים פרטיים": מספרים שסימנתם כפרטיים.',
-      ),
-    },
-    {
       target: button(tr('רענון')),
       title: tr('רענון'),
       body: tr('הודעות חדשות מגיעות לבד כל כמה שניות. הכפתור מביא אותן מיד.'),
@@ -288,6 +275,12 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       target: button(tr('פרטי'), true),
       title: tr('פרטי'),
       body: tr('ההודעות נמחקות, והמספר לא ייכנס למערכת גם בהמשך. מתאים לבני משפחה וחברים.'),
+    },
+  ],
+  automations: [
+    {
+      title: tr('אוטומציות'),
+      body: tr('מה קורה כשלקוח כותב לכם בוואטסאפ: מענה אוטומטי, קביעת תורים והצצה לעסק.'),
     },
     {
       target: `[aria-label="${tr('בחירת סטטוס')}"]`,
@@ -344,11 +337,6 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       body: tr(
         'אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.',
       ),
-    },
-    {
-      target: section(tr('מספרים פרטיים (')),
-      title: tr('מספרים פרטיים'),
-      body: tr('המספרים שסימנתם כפרטיים. אפשר לבטל סימון אם טעיתם.'),
     },
   ],
   tasks: [

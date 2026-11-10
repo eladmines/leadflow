@@ -21,6 +21,7 @@ import { navItems } from '../features/shell/nav';
 import { LeadDetailPage } from '../features/leads/LeadDetailPage';
 import { LeadsPage } from '../features/leads/LeadsPage';
 import { CustomersPage } from '../features/customers/CustomersPage';
+import { AutomationsPage } from '../features/whatsapp/AutomationsPage';
 import { ConversationsPage } from '../features/whatsapp/ConversationsPage';
 import { SitePage } from '../features/site/SitePage';
 import { AcceptInvitePage } from '../features/team/AcceptInvitePage';
@@ -120,6 +121,7 @@ export function AppRoutes() {
         <Route path="leads" element={<LeadsPage />} />
         <Route path="leads/:leadId" element={<LeadDetailPage />} />
         <Route path="customers" element={<CustomersPage />} />
+        <Route path="automations" element={<AutomationsPage />} />
         <Route path="conversations" element={<ConversationsPage />} />
         <Route path="tasks" element={<TasksPage />} />
         <Route path="reports" element={<ReportsPage />} />

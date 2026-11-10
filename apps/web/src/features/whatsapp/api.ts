@@ -67,9 +67,10 @@ export function useWhatsAppInbox(businessId: string, enabled = true) {
   });
 }
 
-export function usePersonalNumbers(businessId: string) {
+export function usePersonalNumbers(businessId: string, enabled = true) {
   return useQuery({
     queryKey: personalKey(businessId),
+    enabled,
     queryFn: () => apiFetch<PersonalNumbersResponse>(apiPaths.whatsapp.personal(businessId)),
     select: (d) => d.numbers,
   });

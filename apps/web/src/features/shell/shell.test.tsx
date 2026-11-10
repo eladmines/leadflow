@@ -37,6 +37,7 @@ describe('app shell', () => {
       'לידים',
       'לקוחות',
       'שיחות',
+      'אוטומציות',
       'משימות',
       'תורים',
       'הצעות מחיר',
@@ -61,13 +62,6 @@ describe('app shell', () => {
     );
     expect(within(mainNav()).getByRole('list', { name: 'שיווק ומכירות' })).toBeVisible();
     expect(within(mainNav()).queryByRole('button')).not.toBeInTheDocument();
-  });
-
-  it('renders a "coming soon" page for sections that are not built yet', async () => {
-    mockApi({ [meKey]: me(testUser) });
-    renderApp(section('automations'));
-    expect(await screen.findByRole('heading', { name: 'אוטומציות בדרך' })).toBeInTheDocument();
-    expect(within(mainNav()).queryByRole('link', { name: /אוטומציות/ })).not.toBeInTheDocument();
   });
 
   it('shows a not-found state for an unknown section', async () => {
