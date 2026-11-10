@@ -300,7 +300,7 @@ export function QuoteEditorPage() {
           onChange={(e) => setTitle(e.target.value)}
           error={errors.title}
         />
-        <div className="overflow-x-auto">
+        <div className="scrollbar-visible overflow-x-auto">
           <table className="w-full min-w-[34rem] text-sm">
             <thead className="text-start text-xs text-ink-muted">
               <tr>

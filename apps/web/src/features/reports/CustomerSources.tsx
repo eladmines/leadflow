@@ -93,7 +93,7 @@ function Table({
   rows: { key: string; row: AttributionReportRow; label: React.ReactNode; to: string }[];
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="scrollbar-visible overflow-x-auto">
       <table className="w-full min-w-[520px] text-sm">
         <caption className="pb-2 text-start text-sm font-medium text-ink">{caption}</caption>
         <thead className="text-ink-muted">

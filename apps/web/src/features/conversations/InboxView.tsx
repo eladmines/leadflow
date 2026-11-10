@@ -108,7 +108,7 @@ export function InboxView({ businessId }: { businessId: string }) {
           </label>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="scrollbar-visible min-h-0 flex-1 overflow-y-auto">
           {list.isPending ? (
             <div className="p-4">
               <Spinner size="sm" label={tr('טוענים שיחות…')} />
@@ -318,7 +318,7 @@ function ConversationPane({
       <ol
         ref={listRef}
         aria-label={tr('הודעות בשיחה')}
-        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3"
+        className="scrollbar-visible flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3"
       >
         {messages.map((m) => {
           const out = m.direction === 'OUT';

@@ -209,7 +209,7 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
         </button>
       </div>
       {asTable ? (
-        <div className="max-h-80 overflow-y-auto">
+        <div className="scrollbar-visible max-h-80 overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="text-ink-muted">
               <tr>

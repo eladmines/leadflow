@@ -65,7 +65,7 @@ export function PagesBar({
       <div
         role="tablist"
         aria-label={tr('עמודי האתר')}
-        className="flex max-w-[30rem] items-center gap-0.5 overflow-x-auto rounded-lg bg-surface-sunken p-0.5"
+        className="scrollbar-visible flex max-w-[30rem] items-center gap-0.5 overflow-x-auto rounded-lg bg-surface-sunken p-0.5"
       >
         {[{ id: '', title: tr('ראשי'), inMenu: true }, ...pages].map((p) => (
           <button
