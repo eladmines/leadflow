@@ -188,25 +188,11 @@ export class WhatsAppService {
           where: { businessId_phone: { businessId, phone: msg.from } },
         });
         if (number?.status === 'PERSONAL') return { kind: 'ignored' } as const;
-        const firstMessage = !number;
 
         if (!number) {
-          // WhatsApp matches an existing contact by phone; Messenger has no phone to match.
-          const known =
-            channel === 'whatsapp'
-              ? await tx.contact.findFirst({
-                  where: { businessId, phone: msg.from },
-                  select: { id: true },
-                })
-              : null;
+          // The number is the business's own: every sender is a customer (D-176).
           number = await tx.whatsAppNumber.create({
-            data: {
-              businessId,
-              channel,
-              phone: msg.from,
-              status: known ? 'BUSINESS' : 'UNCLASSIFIED',
-              profileName: known ? null : (msg.profileName?.trim().slice(0, 80) ?? null),
-            },
+            data: { businessId, channel, phone: msg.from, status: 'BUSINESS' },
           });
         }
         // A new ad click replaces an earlier one; the lead gets it when it's created (F26).
@@ -216,26 +202,10 @@ export class WhatsAppService {
             data: { attribution: msg.attribution as Prisma.InputJsonObject },
           });
         }
-
+        // A sender who was waiting from before D-176 joins their lead with this message.
         if (number.status === 'UNCLASSIFIED') {
-          if (msg.profileName && msg.profileName !== number.profileName) {
-            await tx.whatsAppNumber.update({
-              where: { id: number.id },
-              data: { profileName: msg.profileName.trim().slice(0, 80) },
-            });
-          }
-          await tx.whatsAppMessage.create({
-            data: {
-              businessId,
-              numberId: number.id,
-              direction: 'IN',
-              waMessageId: msg.waMessageId,
-              body: msg.body.slice(0, 4096),
-              status: 'received',
-              createdAt: msg.receivedAt,
-            },
-          });
-          return { kind: 'inbox', numberId: number.id, isNew: firstMessage } as const;
+          await this.promote(tx, businessId, number, null);
+          number = { ...number, status: 'BUSINESS' };
         }
 
         const { contactId, leadId, created } = await this.attachToLead(tx, businessId, {

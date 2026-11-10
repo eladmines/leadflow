@@ -94,7 +94,6 @@ describe('unified inbox (F24)', () => {
     expect(first).toHaveTextContent('לא נקראה');
     expect(second).toHaveTextContent('משתמש/ת פייסבוק');
     expect(second).toHaveTextContent('פייסבוק');
-    expect(second).toHaveTextContent('חדש');
     expect(screen.getByRole('button', { name: 'לא נקראו (1)' })).toBeInTheDocument();
   });
 
@@ -132,22 +131,14 @@ describe('unified inbox (F24)', () => {
     );
   });
 
-  it('a new Facebook sender can be marked business from the conversation', async () => {
-    const fetchMock = mockApi(
-      routes({
-        [`POST ${apiPaths.whatsapp.classify(id, yossi.id)}`]: () =>
-          json(200, { status: 'BUSINESS', leadId }),
-      }),
-    );
+  it('a new Facebook sender needs no classifying: just the chat to answer in', async () => {
+    mockApi(routes());
     const { user } = renderApp(`${page}?c=${yossi.id}`);
     const pane = await screen.findByRole('region', { name: 'משתמש/ת פייסבוק' });
     expect(within(pane).getByLabelText('תשובה בפייסבוק')).toBeInTheDocument();
-    await user.click(within(pane).getByRole('button', { name: /עסקי: יצירת ליד/ }));
-    await waitFor(() =>
-      expect(callsTo(fetchMock, 'POST', apiPaths.whatsapp.classify(id, yossi.id))).toEqual([
-        { as: 'BUSINESS' },
-      ]),
-    );
+    expect(within(pane).queryByRole('button', { name: /עסקי: יצירת ליד|פרטי/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /חדשים/ })).toBeNull();
+    expect(user).toBeTruthy();
   });
 
   it('after 24 hours explains why it can’t reply; empty and not-connected states', async () => {

@@ -354,8 +354,8 @@ export const enPart3: Record<string, string> = {
   מקרא: 'Legend',
   'הודעות חדשות מגיעות לבד כל כמה שניות. הכפתור מביא אותן מיד.':
     'New messages arrive on their own every few seconds. This button fetches them right away.',
-  'החדשות למעלה. נקודה ירוקה: וואטסאפ, כחולה: פייסבוק. "חדש": פונה שעוד לא החלטתם מי הוא. "לא נקראו" ו"חדשים" מסננים את הרשימה.':
-    'Newest first. Green dot: WhatsApp, blue: Facebook. "New": a sender you haven\'t decided about yet. "Unread" and "New" filter the list.',
+  'החדשות למעלה. נקודה ירוקה: וואטסאפ, כחולה: פייסבוק. כל פונה חדש נכנס כליד. "לא נקראו" מסנן את הרשימה.':
+    'Newest first. Green dot: WhatsApp, blue: Facebook. Every new sender becomes a lead. "Unread" filters the list.',
   'יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו, ושם גם עונים לו.':
     'Creates a lead from the messages. From now on every message from this number goes to its lead, where you also reply.',
   'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שלא מבינים אותו פעמיים, עובר אליכם מיד. לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':

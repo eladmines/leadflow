@@ -263,14 +263,14 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
     >
       {off.panel}
       {/* Numbers marked personal live with the WhatsApp connection (D-175). */}
-      {seesPersonal && (
+      {seesPersonal && personal.data && personal.data.length > 0 && (
         <button
           type="button"
           onClick={() => setShowPersonal(true)}
           className="inline-flex items-center gap-1 self-start text-sm font-medium text-brand-700 hover:underline"
         >
           {tr('מספרים פרטיים')}
-          {personal.data && personal.data.length > 0 && ` (${personal.data.length})`}
+          {` (${personal.data.length})`}
           <ChevronLeft aria-hidden className="h-4 w-4 ltr:rotate-180" />
         </button>
       )}

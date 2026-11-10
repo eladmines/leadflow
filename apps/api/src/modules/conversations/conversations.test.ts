@@ -145,13 +145,10 @@ describe('unified inbox (F24)', () => {
     await post(whatsappText('היי, יש תור?'));
     await post(facebookText('כמה עולה צבע?'));
     // A personal number never shows.
+    await ctx.prisma.whatsAppNumber.create({
+      data: { businessId: BUSINESS_ID, phone: '+972509998877', status: 'PERSONAL' },
+    });
     await post(whatsappText('מה נשמע', '972509998877', 'אמא'));
-    const mom = await ctx.prisma.whatsAppNumber.findFirstOrThrow({
-      where: { phone: '+972509998877' },
-    });
-    await req(ctx.app, 'POST', apiPaths.whatsapp.classify(BUSINESS_ID, mom.id), owner.token, {
-      as: 'PERSONAL',
-    });
 
     const all = await list(owner.token);
     expect(all.connected).toBe(true);
@@ -163,16 +160,16 @@ describe('unified inbox (F24)', () => {
       ['נועה', 'whatsapp'],
     ]);
     expect(all.conversations[0]).toMatchObject({
-      status: 'UNCLASSIFIED',
+      status: 'BUSINESS',
       phone: null,
       unread: true,
-      leadId: null,
+      leadId: expect.any(String),
       lastMessage: { body: 'כמה עולה צבע?', direction: 'IN' },
     });
     expect(all.conversations[1].phone).toBe('+972501112233');
 
     expect((await list(owner.token, '?channel=whatsapp')).conversations).toHaveLength(1);
-    expect((await list(owner.token, '?filter=new')).conversations).toHaveLength(2);
+    expect((await list(owner.token, '?filter=new')).conversations).toHaveLength(0);
     const whatsappId = all.conversations[1].id;
     await req(ctx.app, 'POST', cp.read(BUSINESS_ID, whatsappId), owner.token);
     const unread = await list(owner.token, '?filter=unread');
