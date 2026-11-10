@@ -9,7 +9,6 @@ import { useSite } from './api';
 import { ExistingWebsite } from './ExistingWebsite';
 import { SiteStart } from './SiteStart';
 import { SiteEditor } from './SiteEditor';
-import { TemplatePicker } from './TemplatePicker';
 import { clearBackup, readBackup, type Draft } from './useDraftAutosave';
 import { tr } from '../../i18n';
 
@@ -20,8 +19,6 @@ export function SitePage() {
   const [restored, setRestored] = useState<Draft | 'dismissed' | null>(null);
   // Bumped when the server replaces the draft (template change), so the editor starts over.
   const [reloads, setReloads] = useState(0);
-  // The templates stay out of the way for a business that already has a website; one click opens them.
-  const [showTemplates, setShowTemplates] = useState(false);
 
   if (site.isPending) return <Spinner label={tr('טוענים את האתר…')} />;
   if (site.isError) {
@@ -37,21 +34,8 @@ export function SitePage() {
     if (business.websiteUrl) {
       return (
         <>
-          <PageHeader
-            title={tr('האתר שלי')}
-            description={tr('האתר הקיים של העסק, לצפייה בלבד. אפשר גם לבנות אתר חדש ב-LeadFlow.')}
-          />
+          <PageHeader title={tr('האתר שלי')} description={tr('האתר הקיים של העסק, לצפייה בלבד.')} />
           <ExistingWebsite business={business} canEdit={canEdit} />
-          {canEdit &&
-            (showTemplates ? (
-              <TemplatePicker secondary />
-            ) : (
-              <div>
-                <Button variant="secondary" onClick={() => setShowTemplates(true)}>
-                  {tr('בניית אתר חדש ב-LeadFlow')}
-                </Button>
-              </div>
-            ))}
         </>
       );
     }
