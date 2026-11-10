@@ -1,3 +1,4 @@
+import { Globe, MessageCircle, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Logo } from './Logo';
 import { tr } from '../../i18n';
@@ -10,6 +11,24 @@ interface AuthLayoutProps {
   /** Shown under the form, e.g. "already have an account?" links. */
   footer?: ReactNode;
 }
+
+const benefits = [
+  {
+    icon: Globe,
+    title: tr('אתר לעסק בכמה דקות'),
+    text: tr('בוחרים תבנית, מעדכנים טקסטים ותמונות ומפרסמים.'),
+  },
+  {
+    icon: Users,
+    title: tr('כל הפניות במקום אחד'),
+    text: tr('כל השארת פרטים באתר נכנסת אוטומטית כליד.'),
+  },
+  {
+    icon: MessageCircle,
+    title: tr('עונים ללקוחות ב־WhatsApp'),
+    text: tr('תיבת שיחות משותפת לכל הצוות.'),
+  },
+];
 
 /** Signed-out screens: the form on one side, a warm brand panel on the other (desktop only). */
 export function AuthLayout({ title, description, children, footer }: AuthLayoutProps) {
@@ -34,19 +53,44 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
 
       <aside
         aria-hidden
-        className="hidden bg-brand-700 p-12 text-white lg:flex lg:flex-col lg:justify-center xl:p-20"
+        className="relative hidden overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 p-12 text-white lg:flex lg:flex-col lg:justify-center"
       >
-        <div className="mx-auto flex w-full max-w-md flex-col gap-10">
-          <div className="flex flex-col gap-4">
-            <p className="text-4xl font-semibold leading-tight tracking-tight xl:text-5xl">
-              {tr('לא מפספסים לקוח בגלל הודעה שלא נענתה.')}
-            </p>
-            <p className="text-lg text-brand-100">
-              {tr('מקבלים כל פנייה, עוקבים אחריה וסוגרים עסקה.')}
+        <div className="absolute -end-24 -top-24 h-72 w-72 rounded-full bg-brand-300/25 blur-3xl" />
+        <div className="absolute -bottom-32 -start-20 h-80 w-80 rounded-full bg-brand-400/25 blur-3xl" />
+        <div className="relative mx-auto flex max-w-md flex-col gap-10">
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-medium text-brand-100">{tr('לעסקים מכל סוג')}</p>
+            <p className="text-4xl font-semibold leading-tight">
+              {tr('האתר, הלידים והשיחות של העסק — במקום אחד.')}
             </p>
           </div>
-          {/* Leads from every channel meeting in one place (the same in both languages). */}
-          <img src="/auth-pipeline.svg" alt="" className="w-full max-w-sm" />
+          <ul className="flex flex-col gap-5">
+            {benefits.map(({ icon: Icon, title: t, text }) => (
+              <li key={t} className="flex items-start gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="font-medium">{t}</span>
+                  <span className="text-sm text-brand-100/80">{text}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="rounded-2xl bg-white p-4 text-ink shadow-lift">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 font-semibold text-brand-700">
+                {tr('ד')}
+              </span>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{tr('פנייה חדשה מהאתר')}</p>
+                <p className="text-xs text-ink-muted">{tr('דנה · מעוניינת בתור ליום חמישי')}</p>
+              </div>
+              <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+                {tr('חדש')}
+              </span>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
