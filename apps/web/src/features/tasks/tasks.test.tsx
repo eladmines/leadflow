@@ -113,6 +113,52 @@ describe('tasks page', () => {
     expect(new Date(body.dueAt).getHours()).toBe(9); // default: tomorrow 09:00 local
   });
 
+  it('links a new task to a customer found by search, and can unlink before saving', async () => {
+    const leadId = '5c000000-0000-4000-8000-0000000000aa';
+    const lead = {
+      id: leadId,
+      contact: {
+        id: '5d000000-0000-4000-8000-0000000000aa',
+        name: 'רונית כהן',
+        phone: '+972521111111',
+        email: null,
+      },
+      stage: { id: '1a000000-0000-4000-8000-000000000001', name: 'חדש', kind: 'OPEN' },
+      source: 'manual',
+      sourceUrl: null,
+      message: null,
+      owner: null,
+      expectedValue: null,
+      nextActionAt: null,
+      tags: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`GET ${apiPaths.leads.list(id)}`]: () => json(200, { leads: [lead] }),
+      [`GET ${apiPaths.leads.list(id)}?q=%D7%A8%D7%95%D7%A0%D7%99%D7%AA`]: () =>
+        json(200, { leads: [lead] }),
+      [`POST ${tp.list(id)}`]: () => json(201, { task: task() }),
+    });
+    const { user } = renderApp(tasksPath);
+    const form = await screen.findByRole('form', { name: 'משימה חדשה' });
+    await user.type(within(form).getByLabelText('משימה חדשה'), 'להתקשר');
+    await user.type(within(form).getByLabelText('שיוך ללקוח (לא חובה)'), 'רונית');
+    const found = await within(form).findByRole('button', { name: /רונית כהן/ });
+    await user.click(found);
+    // Picked: shown with a way to remove it.
+    expect(within(form).getByText('רונית כהן')).toBeInTheDocument();
+    await user.click(within(form).getByRole('button', { name: 'הסרת השיוך ללקוח' }));
+    expect(within(form).getByLabelText('שיוך ללקוח (לא חובה)')).toBeInTheDocument();
+    await user.type(within(form).getByLabelText('שיוך ללקוח (לא חובה)'), 'רונית');
+    await user.click(await within(form).findByRole('button', { name: /רונית כהן/ }));
+
+    await user.click(within(form).getByRole('button', { name: 'הוספה' }));
+    await waitFor(() => expect(callsTo(fetchMock, 'POST', tp.list(id))).toHaveLength(1));
+    expect(callsTo(fetchMock, 'POST', tp.list(id))[0]).toMatchObject({ title: 'להתקשר', leadId });
+  });
+
   it('ticks a task done (optimistic) and saves it', async () => {
     const t = task({ title: 'לשלוח הצעה' });
     const fetchMock = mockApi({
