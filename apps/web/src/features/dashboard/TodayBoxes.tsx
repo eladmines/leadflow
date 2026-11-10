@@ -6,7 +6,7 @@ import { intlLocale, tr } from '../../i18n';
 import { useAppointments } from '../appointments/api';
 import { useLeads } from '../leads/api';
 import { groupTasks, useTasks } from '../tasks/api';
-import { useWhatsAppInbox } from '../whatsapp/api';
+import { useUnreadConversations } from '../conversations/api';
 
 const WEEK_MS = 7 * 86_400_000;
 
@@ -31,7 +31,7 @@ interface Box {
 
 /**
  * The dashboard's "today" (D-131): only what needs the viewer now — open leads, today's
- * appointments, late tasks and new WhatsApp numbers — each opening its page. Every other section
+ * appointments, late tasks and unread conversations — each opening its page. Every other section
  * is one click away in the menu.
  */
 export function TodayBoxes({ business }: { business: Business }) {
@@ -40,7 +40,7 @@ export function TodayBoxes({ business }: { business: Business }) {
   const leads = useLeads(id).data;
   const tasks = useTasks(id, { assigneeId: 'me', status: 'OPEN' }).data;
   const appointments = useAppointments(id, today()).data;
-  const inbox = useWhatsAppInbox(id, canInbox).data;
+  const unread = useUnreadConversations(id, canInbox).data?.unreadCount;
 
   const now = Date.now();
   const open = leads?.filter((l) => l.stage.kind === 'OPEN');
@@ -86,11 +86,11 @@ export function TodayBoxes({ business }: { business: Business }) {
       ? [
           {
             segment: 'conversations',
-            label: tr('הודעות ממספרים חדשים'),
+            label: tr('שיחות שלא נקראו'),
             icon: MessageCircle,
-            value: inbox?.numbers.length,
+            value: unread,
             detail: null,
-            attention: (inbox?.numbers.length ?? 0) > 0,
+            attention: (unread ?? 0) > 0,
           },
         ]
       : []),

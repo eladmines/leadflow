@@ -5,6 +5,7 @@ import { useMe } from '../auth/api';
 import { useSite } from '../site/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useWhatsAppInbox } from '../whatsapp/api';
+import { LeadsOverview } from './LeadsOverview';
 import { TodayBoxes } from './TodayBoxes';
 import { tr } from '../../i18n';
 
@@ -137,6 +138,7 @@ export function DashboardPage() {
       </section>
 
       <TodayBoxes business={business} />
+      <LeadsOverview />
     </>
   );
 }
