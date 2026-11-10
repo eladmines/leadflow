@@ -4,6 +4,8 @@
  */
 
 // Where the sign-up and sign-in buttons lead. Change this one line when the app moves.
+document.documentElement.classList.add('js');
+
 const APP_URL = 'https://leadflow-55gt.onrender.com';
 const STORAGE_KEY = 'leadflow.landing.lang';
 
@@ -43,26 +45,26 @@ const en = {
   chFb: 'Facebook',
   chMail: 'Email',
   soon: 'soon',
-  featEyebrow: 'All in one place',
-  featTitle: 'Everything you need to run a business',
-  f1t: 'Customers and leads',
-  f1p: 'Everyone who contacted or bought, in one place: stages, tags, notes and history. Anyone who bought or booked shows up under customers.',
-  f2t: 'One inbox',
-  f2p: 'WhatsApp, Facebook and email in one place. Answer from the same screen, and the team sees what’s handled.',
+  featEyebrow: 'Features',
+  featTitle: 'One platform to run your business',
+  f1t: 'Customer and lead management',
+  f1p: 'One customer database with sales stages, tags, notes and a complete activity history for every contact.',
+  f2t: 'Unified inbox',
+  f2p: 'WhatsApp, Facebook and email on one screen. Reply from any channel in one place, with a view shared by the whole team.',
   f3t: 'Appointment calendar',
-  f3p: 'Services, free hours and bookings by staff member. Customers book themselves, and you approve.',
+  f3p: 'Manage services, availability and bookings by staff member, with self-service booking for customers and approval in the system.',
   f4t: 'Tasks and follow-up',
-  f4p: 'Who needs to call, who gets a quote, and when. A reminder arrives on time, and every task can be linked to a customer.',
+  f4p: 'Follow-up reminders with an owner and a due time for each task, linked to the relevant customer.',
   f5t: 'Quotes',
-  f5p: 'Create a quote from a lead, send it as a link, and the customer approves or declines in one tap.',
-  f6t: 'A website in minutes',
-  f6p: 'Pick a template, edit the text and photos, and publish. The form on your site feeds your leads directly.',
-  f7t: 'Auto-replies and booking',
-  f7p: 'A status message that follows your day, and customers pick a time or book an appointment themselves on WhatsApp.',
+  f5p: 'Create quotes from a lead, send them as a link and get the customer’s approval online.',
+  f6t: 'Business website',
+  f6p: 'Build a site from ready-made templates, publish in one click, and capture inquiries with a form that feeds your leads directly.',
+  f7t: 'Automatic replies and booking',
+  f7p: 'Instant WhatsApp replies that follow your business status, and self-service booking by your customers.',
   f8t: 'Reports and sources',
-  f8p: 'See how many inquiries came in, from where (Google, Facebook, your site), and how many closed.',
+  f8p: 'Metrics on inquiry volume, lead sources (Google, Facebook, your site) and close rate.',
   f9t: 'Team and permissions',
-  f9p: 'Owners, managers and employees, each with permissions for their role and the data that fits them.',
+  f9p: 'Role-based permissions (owner, manager, employee) and strict separation between businesses’ data.',
   howEyebrow: 'How it works',
   howTitle: 'Three steps to start',
   s1t: 'Set up your business',
@@ -79,14 +81,6 @@ const en = {
   st4: 'Quote',
   st5: 'Customer',
   st6: 'Report',
-  teamEyebrow: 'For the whole team',
-  teamTitle: 'Everyone sees what fits them',
-  teamText:
-    'Owners, managers and employees, each with permissions for their role. Every business’s data is kept apart from all others.',
-  t1: 'Permissions by role: owner, manager and employee',
-  t2: 'Employees only see the leads assigned to them',
-  t3: 'Alerts for a new inquiry and for a customer’s message',
-  t4: 'English and Hebrew, on any device',
   faqEyebrow: 'FAQ',
   faqTitle: 'What you wanted to know',
   q1: 'Do I need a website to start?',
@@ -158,3 +152,31 @@ const saved = readSaved();
 const wanted =
   saved === 'he' || saved === 'en' ? saved : /^he\b/i.test(navigator.language) ? 'he' : 'en';
 if (wanted !== 'he') apply(wanted);
+
+// Things ease in as they scroll into view; the business cycle's steps light up one after another.
+const revealed = [
+  ...document.querySelectorAll(
+    '.section-head, .cards .card, .steps li, .cycle, .chips li, .channels-title, .faq details, .final .wrap > *',
+  ),
+];
+revealed.forEach((el) => {
+  el.classList.add('reveal');
+  const group = el.parentElement ? [...el.parentElement.children].indexOf(el) : 0;
+  el.style.setProperty('--i', String(group % 6));
+});
+document.querySelectorAll('.cycle li').forEach((li, n) => li.style.setProperty('--n', String(n)));
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    },
+    { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
+  );
+  revealed.forEach((el) => io.observe(el));
+} else {
+  revealed.forEach((el) => el.classList.add('in'));
+}
