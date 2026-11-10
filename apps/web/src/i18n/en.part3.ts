@@ -849,4 +849,9 @@ export const enPart3: Record<string, string> = {
   'כן, להסיר': 'Yes, remove',
   'סימון הכול כבוצע': 'Mark all done',
   'סימון כל המשימות כבוצעו: {0}': 'Mark all tasks done: {0}',
+  'שיוך ללקוח': 'Linked customer',
+  'שיוך ללקוח (לא חובה)': 'Link to a customer (optional)',
+  'הסרת השיוך ללקוח': 'Remove the customer link',
+  'לקוחות שנמצאו': 'Customers found',
+  'מחפשים…': 'Searching…',
 };

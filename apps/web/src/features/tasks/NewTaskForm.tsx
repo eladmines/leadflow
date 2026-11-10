@@ -9,6 +9,7 @@ import { applyServerErrors } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { defaultDueLocal, useCreateTask } from './api';
+import { LeadPicker, type PickedLead } from './LeadPicker';
 import { tr } from '../../i18n';
 
 /** Form values: due time as the `datetime-local` string; converted to ISO on submit. */
@@ -25,6 +26,8 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
   const members = useMembers(business.id, canAssign);
   const create = useCreateTask(business.id);
   const [formError, setFormError] = useState<string | null>(null);
+  // Only on the tasks page: on a lead's own page the task is already linked to it.
+  const [picked, setPicked] = useState<PickedLead | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { title: '', dueLocal: defaultDueLocal(), assigneeId: '' },
@@ -37,8 +40,9 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
         title: v.title,
         dueAt: new Date(v.dueLocal).toISOString(),
         assigneeId: v.assigneeId || undefined,
-        leadId: leadId ?? null,
+        leadId: leadId ?? picked?.id ?? null,
       });
+      setPicked(null);
       form.reset({ title: '', dueLocal: defaultDueLocal(), assigneeId: v.assigneeId });
     } catch (err) {
       setFormError(applyServerErrors(err, form.setError, ['title']));
@@ -89,6 +93,7 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
           {tr('הוספה')}
         </Button>
       </div>
+      {!leadId && <LeadPicker value={picked} onChange={setPicked} />}
     </form>
   );
 }
