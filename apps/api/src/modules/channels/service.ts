@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import {
   apiPaths,
@@ -52,7 +52,9 @@ export class ChannelService {
       const env =
         channel === 'whatsapp'
           ? this.config.WHATSAPP_BUSINESS_ID
-          : this.config.MESSENGER_BUSINESS_ID;
+          : channel === 'messenger'
+            ? this.config.MESSENGER_BUSINESS_ID
+            : undefined;
       return env === ctx.businessId
         ? { channel, connected: true, name: null, source: 'environment' as const }
         : { channel, connected: false, name: null, source: null };
@@ -60,6 +62,8 @@ export class ChannelService {
     return {
       whatsapp: one('whatsapp'),
       messenger: one('messenger'),
+      email: one('email'),
+      emailInbound: Boolean(this.config.EMAIL_INBOUND_DOMAIN && this.config.EMAIL_INBOUND_SECRET),
       facebookLogin: Boolean(this.config.META_APP_ID),
     };
   }
@@ -78,6 +82,26 @@ export class ChannelService {
       displayName: found ?? input.phoneNumberId,
       token: input.accessToken,
     });
+    return this.status(ctx);
+  }
+
+  /**
+   * F27: the business's forwarding address, `<random>@<EMAIL_INBOUND_DOMAIN>`. Creating it again
+   * returns the same one. The random part is the only secret: it isn't derived from anything.
+   */
+  async createEmailAddress(ctx: TenantContext) {
+    const domain = this.config.EMAIL_INBOUND_DOMAIN;
+    if (!domain || !this.config.EMAIL_INBOUND_SECRET) {
+      throw new AppError('CONFLICT', channelsMessages.emailUnavailable);
+    }
+    const existing = await this.prisma.channelConnection.findUnique({
+      where: { businessId_channel: { businessId: ctx.businessId, channel: 'email' } },
+    });
+    if (existing) return this.status(ctx);
+    const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
+    const slug = Array.from({ length: 10 }, () => alphabet[randomInt(alphabet.length)]).join('');
+    const address = `${slug}@${domain}`;
+    await this.save(ctx, 'email', { externalId: address, displayName: address, token: '-' });
     return this.status(ctx);
   }
 

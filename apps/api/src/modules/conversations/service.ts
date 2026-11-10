@@ -159,7 +159,7 @@ export class ConversationService {
         .map((c) => [c.phone!, c] as const),
     );
     const contactOf = (r: NumberRow) =>
-      r.channel === 'messenger' ? r.contact : (byPhone.get(r.phone) ?? null);
+      r.channel === 'whatsapp' ? (byPhone.get(r.phone) ?? null) : r.contact;
     const contactIds = [
       ...new Set(
         rows
@@ -186,10 +186,11 @@ export class ConversationService {
       const last = r.messages[0];
       return {
         id: r.id,
-        channel: r.channel === 'messenger' ? 'messenger' : 'whatsapp',
+        channel: r.channel === 'messenger' || r.channel === 'email' ? r.channel : 'whatsapp',
         status: r.status === 'UNCLASSIFIED' ? 'UNCLASSIFIED' : 'BUSINESS',
         name: contact?.name ?? r.profileName ?? null,
         phone: r.channel === 'whatsapp' ? r.phone : null,
+        ...(r.channel === 'email' ? { email: r.phone.replace(/^mail:/, '') } : {}),
         leadId: contact ? leadOf(contact.id) : null,
         lastMessage: last
           ? {

@@ -97,12 +97,13 @@ export const DEFAULT_PIPELINE_STAGES: { name: string; kind: (typeof STAGE_KINDS)
   { name: 'אבוד', kind: 'LOST' },
 ];
 
-export const LEAD_SOURCES = ['website_form', 'manual', 'whatsapp', 'facebook'] as const;
+export const LEAD_SOURCES = ['website_form', 'manual', 'whatsapp', 'facebook', 'email'] as const;
 export const leadSourceLabels: Record<(typeof LEAD_SOURCES)[number], string> = {
   website_form: 'טופס באתר',
   manual: 'הוזן ידנית',
   whatsapp: 'WhatsApp',
   facebook: 'פייסבוק',
+  email: 'מייל',
 };
 
 // ---------------------------------------------------------------------------

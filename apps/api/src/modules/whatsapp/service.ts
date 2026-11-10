@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { Prisma, type PrismaClient, type WhatsAppMessage as MessageRow } from '@prisma/client';
 import {
   BOT_FLOWS,
@@ -13,6 +14,7 @@ import {
   WHATSAPP_WINDOW_MS,
   whatsappMessages,
   type ClassifyNumberResponse,
+  type EmailInbound,
   type PersonalNumbersResponse,
   type WhatsAppInboxResponse,
   type WhatsAppMessage,
@@ -41,6 +43,7 @@ import {
 } from './auto-reply';
 import { MemoryMessengerSender, type MessengerSender } from '../../integrations/messenger';
 import { ChannelRegistry } from '../channels/registry';
+import { MemoryEmailSender, type EmailSender } from '../../integrations/email';
 import type { WhatsAppSender } from '../../integrations/whatsapp';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -64,6 +67,8 @@ export interface InboundMessage {
   /** WhatsApp profile name, if Meta sent one. */
   profileName: string | null;
   body: string;
+  /** Email only: the subject line (F27). */
+  subject?: string;
   /** Id of the tapped button or list row (interactive replies). */
   replyId?: string | null;
   /** F26: the Meta ad the customer tapped ("Click to WhatsApp" / Messenger ad). */
@@ -94,13 +99,35 @@ const sender = { select: { id: true, fullName: true } } as const;
 /** Messenger senders are stored as `fb:<psid>` (F23). */
 const MESSENGER_PREFIX = 'fb:';
 const psidOf = (address: string) => address.slice(MESSENGER_PREFIX.length);
+/** Email senders are stored as `mail:<address>` (F27). */
+const EMAIL_PREFIX = 'mail:';
+const addressOf = (address: string) => address.slice(EMAIL_PREFIX.length);
+/** A message id that fits the column: kept as is when short, else hashed (then it can't be quoted back). */
+const storedMailId = (messageId: string) =>
+  messageId.length <= 120
+    ? `m:${messageId}`
+    : `h:${createHash('sha1').update(messageId).digest('hex')}`;
+const quotedMailId = (stored: string) => (stored.startsWith('m:') ? stored.slice(2) : undefined);
+/** Quoted earlier messages (`>` lines and "On … wrote:") are cut; what is new stays. */
+function cleanEmailText(text: string): string {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  const out: string[] = [];
+  for (const line of lines) {
+    if (/^\s*>/.test(line)) continue;
+    if (/^(on .+ wrote:|ב-.+(כתב|כתבה)[^:]*:)\s*$/i.test(line.trim())) break;
+    out.push(line);
+  }
+  return out.join('\n').trim();
+}
+const mailName = (address: string) => address.split('@')[0]!.slice(0, 80);
 /** A Messenger sender without a shared profile name. */
 const FACEBOOK_USER = 'משתמש/ת פייסבוק';
 type Row = MessageRow & { sender: { id: string; fullName: string } | null };
 
 export function toDto(row: Row, channel?: string): WhatsAppMessage {
   return {
-    ...(channel === 'messenger' ? { channel: 'messenger' as const } : {}),
+    ...(channel === 'messenger' || channel === 'email' ? { channel } : {}),
+    ...(row.subject ? { subject: row.subject } : {}),
     id: row.id,
     direction: row.direction,
     body: row.body,
@@ -131,6 +158,7 @@ export class WhatsAppService {
     private readonly log: Log,
     private readonly storage: StorageProvider,
     messenger: MessengerSender = new MemoryMessengerSender(),
+    private readonly email: EmailSender = new MemoryEmailSender(),
   ) {
     this.leads = new LeadService(prisma);
     // Each business's own channels (F25), with the environment's as the fallback.
@@ -222,6 +250,7 @@ export class WhatsAppService {
             direction: 'IN',
             waMessageId: msg.waMessageId,
             body: msg.body.slice(0, 4096),
+            ...(msg.subject ? { subject: msg.subject.slice(0, 300) } : {}),
             status: 'received',
             createdAt: msg.receivedAt,
           },
@@ -241,6 +270,29 @@ export class WhatsAppService {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') return null;
       throw err;
     }
+  }
+
+  /**
+   * F27: an email to a business's forwarding address (already verified and parsed by the webhook).
+   * Auto-generated mail, loops (our own address or domain) and unknown recipients are dropped;
+   * the rest goes the same way as any other channel: contact, lead, conversation.
+   */
+  async receiveEmail(mail: EmailInbound): Promise<ReceiveResult | null> {
+    const domain = this.config.EMAIL_INBOUND_DOMAIN;
+    if (mail.autoSubmitted || mail.from === mail.to) return null;
+    if (domain && mail.from.endsWith(`@${domain}`)) return null;
+    const subject = mail.subject.replace(/[\r\n]+/g, ' ').trim();
+    const text = cleanEmailText(mail.text);
+    return this.receive({
+      channel: 'email',
+      to: mail.to,
+      waMessageId: storedMailId(mail.messageId),
+      from: `${EMAIL_PREFIX}${mail.from}`,
+      profileName: mail.fromName?.trim().slice(0, 80) || null,
+      body: text || subject || '[מייל ללא טקסט]',
+      subject,
+      receivedAt: mail.receivedAt ? new Date(mail.receivedAt) : new Date(),
+    });
   }
 
   /** The booking bot's turn (D-102); a bot failure never loses the customer's message. */
@@ -298,7 +350,12 @@ export class WhatsAppService {
             data: {
               leadId: result.leadId,
               name: lead.contact.name,
-              source: msg.channel === 'messenger' ? 'facebook' : 'whatsapp',
+              source:
+                msg.channel === 'messenger'
+                  ? 'facebook'
+                  : msg.channel === 'email'
+                    ? 'email'
+                    : 'whatsapp',
             },
           }
         : {
@@ -334,16 +391,28 @@ export class WhatsAppService {
       actorId?: string;
     },
   ): Promise<{ contactId: string; leadId: string; created: boolean }> {
-    const messenger = input.number.channel === 'messenger';
-    const source = messenger ? 'facebook' : 'whatsapp';
+    const channel = input.number.channel;
+    const messenger = channel === 'messenger';
+    const email = channel === 'email';
+    const address = email ? addressOf(input.number.phone) : null;
+    const source = messenger ? 'facebook' : email ? 'email' : 'whatsapp';
+    // Messenger and email senders are linked to their contact directly; WhatsApp ones are matched
+    // by phone.
     const existing = messenger
       ? input.number.contactId
         ? await tx.contact.findFirst({ where: { id: input.number.contactId, businessId } })
         : null
-      : await tx.contact.findFirst({
-          where: { businessId, phone: input.number.phone },
-          orderBy: { createdAt: 'asc' },
-        });
+      : email
+        ? input.number.contactId
+          ? await tx.contact.findFirst({ where: { id: input.number.contactId, businessId } })
+          : await tx.contact.findFirst({
+              where: { businessId, email: { equals: address!, mode: 'insensitive' } },
+              orderBy: { createdAt: 'asc' },
+            })
+        : await tx.contact.findFirst({
+            where: { businessId, phone: input.number.phone },
+            orderBy: { createdAt: 'asc' },
+          });
     const contact =
       existing ??
       (await tx.contact.create({
@@ -351,12 +420,17 @@ export class WhatsAppService {
           businessId,
           name: (
             input.name?.trim() ||
-            (messenger ? FACEBOOK_USER : formatIsraeliPhone(input.number.phone))
+            (messenger
+              ? FACEBOOK_USER
+              : email
+                ? mailName(address!)
+                : formatIsraeliPhone(input.number.phone))
           ).slice(0, 80),
-          phone: messenger ? null : input.number.phone,
+          phone: messenger || email ? null : input.number.phone,
+          ...(email ? { email: address! } : {}),
         },
       }));
-    if (messenger && !existing) {
+    if ((messenger || email) && input.number.contactId !== contact.id) {
       await tx.whatsAppNumber.update({
         where: { id: input.number.id },
         data: { contactId: contact.id },
@@ -846,7 +920,9 @@ export class WhatsAppService {
       messages: rows.map((r) => toDto(r, r.number.channel)),
       replyUntil: until > Date.now() ? new Date(until).toISOString() : null,
       botPaused: number?.botPaused ?? false,
-      ...(lastIn?.number.channel === 'messenger' ? { channel: 'messenger' as const } : {}),
+      ...(lastIn?.number.channel === 'messenger' || lastIn?.number.channel === 'email'
+        ? { channel: lastIn.number.channel }
+        : {}),
     };
   }
 
@@ -928,7 +1004,7 @@ export class WhatsAppService {
       number = await this.requireNumber(this.prisma, ctx, numberId);
     }
     const contactId =
-      number.channel === 'messenger'
+      number.channel !== 'whatsapp'
         ? number.contactId
         : ((
             await this.prisma.contact.findFirst({
@@ -978,6 +1054,7 @@ export class WhatsAppService {
     lastInAt: Date | null,
     text: string,
   ): Promise<WhatsAppMessage> {
+    if (to.channel === 'email') return this.deliverEmail(ctx, to, text);
     const messenger = to.channel === 'messenger';
     const via = messenger
       ? await this.channels.messenger(ctx.businessId)
@@ -1020,5 +1097,69 @@ export class WhatsAppService {
       include: { sender },
     });
     return toDto(row, to.channel);
+  }
+
+  /**
+   * F27: a reply by email, from the business's forwarding address (so the customer's answer comes
+   * back to the same conversation). No 24-hour window. Sent as plain text, quoting nothing.
+   */
+  private async deliverEmail(
+    ctx: TenantContext,
+    to: { numberId: string; phone: string; contactId: string | null; leadId: string | null },
+    text: string,
+  ): Promise<WhatsAppMessage> {
+    const from = await this.channels.emailAddress(ctx.businessId);
+    if (!from) throw new AppError('CONFLICT', whatsappMessages.emailNotConnected);
+    if (this.config.EMAIL_TRANSPORT === 'disabled') {
+      throw new AppError('CONFLICT', whatsappMessages.emailNotConfigured);
+    }
+    const [business, lastIn] = await Promise.all([
+      this.prisma.business.findUnique({ where: { id: ctx.businessId }, select: { name: true } }),
+      this.prisma.whatsAppMessage.findFirst({
+        where: { numberId: to.numberId, direction: 'IN' },
+        orderBy: { createdAt: 'desc' },
+        select: { subject: true, waMessageId: true },
+      }),
+    ]);
+    const name = (business?.name ?? '').replace(/["<>,\r\n]/g, ' ').trim();
+    const base = (lastIn?.subject ?? '').replace(/^(\s*re:\s*)+/i, '').trim() || name || '-';
+    const subject = `Re: ${base}`.slice(0, 300);
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+    try {
+      await this.email.send({
+        to: addressOf(to.phone),
+        from: name ? `${name} <${from}>` : from,
+        replyTo: from,
+        ...(lastIn && quotedMailId(lastIn.waMessageId)
+          ? { inReplyTo: `<${quotedMailId(lastIn.waMessageId)!.replace(/^<|>$/g, '')}>` }
+          : {}),
+        subject,
+        text,
+        html: `<div dir="auto">${escaped}</div>`,
+      });
+    } catch (err) {
+      this.log.error({ errName: (err as Error)?.name }, 'email send failed');
+      throw new AppError('INTERNAL_ERROR', whatsappMessages.sendFailed);
+    }
+    const row = await this.prisma.whatsAppMessage.create({
+      data: {
+        businessId: ctx.businessId,
+        numberId: to.numberId,
+        contactId: to.contactId,
+        leadId: to.leadId,
+        direction: 'OUT',
+        waMessageId: `o:${randomUUID()}`,
+        body: text.slice(0, 4096),
+        subject,
+        status: 'sent',
+        senderId: ctx.userId,
+      },
+      include: { sender },
+    });
+    return toDto(row, 'email');
   }
 }

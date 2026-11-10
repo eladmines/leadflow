@@ -23,8 +23,10 @@ export class BrevoEmailSender implements EmailSender {
         accept: 'application/json',
       },
       body: JSON.stringify({
-        sender: parseSender(this.opts.from),
+        sender: parseSender(message.from ?? this.opts.from),
         to: [{ email: message.to }],
+        ...(message.replyTo ? { replyTo: parseSender(message.replyTo) } : {}),
+        ...(message.inReplyTo ? { headers: { 'In-Reply-To': message.inReplyTo } } : {}),
         subject: message.subject,
         htmlContent: message.html,
         textContent: message.text,

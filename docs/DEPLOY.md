@@ -52,12 +52,62 @@ Every push to `main` deploys again automatically.
 
 ## 4. WhatsApp (optional, later)
 
-In Render → the service → **Environment**, add the `WHATSAPP_*` values from your local
-`apps/api/.env` (`WHATSAPP_PROVIDER=cloud`, `WHATSAPP_BUSINESS_ID` = the business id from the
-online app's address, phone number id, access token, app secret, verify token). Then in Meta set
-the webhook to `https://<service>.onrender.com/api/v1/integrations/whatsapp/webhook` — no tunnel
-needed any more. Meta's temporary token expires every 24 hours; create a permanent System User
-token for anything longer than a test.
+Your own number, connected by hand. Two parts: the server once, then the number.
+
+**A. The server (once).** In Render → the service → **Environment**, fill in:
+
+| Variable                | Value                                                       |
+| ----------------------- | ----------------------------------------------------------- |
+| `WHATSAPP_PROVIDER`     | `cloud`                                                     |
+| `WHATSAPP_APP_SECRET`   | Meta app → App settings → Basic → App secret                |
+| `WHATSAPP_VERIFY_TOKEN` | any word you choose; the same word goes into Meta's webhook |
+| `META_APP_ID`           | Meta app → App settings → Basic → App ID                    |
+
+Without `cloud` and the app secret the Channels form accepts anything without asking Meta, and
+messages are recorded here but never delivered. Save, and let Render redeploy.
+
+**B. Meta.**
+
+1. [developers.facebook.com](https://developers.facebook.com) → create an app (type Business), add the
+   **WhatsApp** product, and add your number. A number that is already in the regular WhatsApp or
+   WhatsApp Business app can't be used until it is removed from there; a number of its own is best.
+2. WhatsApp → API setup: copy the **Phone number ID**.
+3. A permanent token (the temporary one expires after 24 hours): Business settings → Users →
+   System users → add one, give it full control of the app and the WhatsApp account, and generate a
+   token with `whatsapp_business_messaging` (and `whatsapp_business_management`).
+4. WhatsApp → Configuration → Webhook: callback URL
+   `https://<service>.onrender.com/api/v1/integrations/whatsapp/webhook`, the verify token from
+   part A, then subscribe to the **messages** field.
+
+**C. In LeadFlow.** Settings → Channels → **Connect WhatsApp**: paste the Phone number ID and the
+token. They are checked with Meta first, and the token is stored encrypted.
+
+**D. Try it.** Send a message to the number from another phone: it appears in Conversations and
+becomes a lead. Until the Meta app is live and the business verified, Meta only lets test numbers
+message you, and caps the number of conversations.
+
+Good to know: the webhook is signed with one app secret, so the number must belong to the Meta app
+named in part A. One-click connection for other businesses (Embedded Signup) needs LeadFlow to be a
+Meta Tech Provider and isn't built yet (D-159). Customers can be answered freely for 24 hours after
+their last message; later messages need an approved template, which isn't supported yet.
+
+## 5. Email conversations (optional, later)
+
+Customers write to a forwarding address, and your team answers from the inbox (F27, D-177). It needs
+three things that are yours to choose, so nothing is switched on until you set them:
+
+1. A domain for the addresses (for example `mail.example.com`) and an inbound-email service on it
+   (MX records) that can post each message to
+   `https://<service>.onrender.com/api/v1/integrations/email/inbound` as JSON, signed with
+   `X-LeadFlow-Signature: sha256=<HMAC-SHA256 of the body>`. The JSON shape is `emailInboundSchema` in
+   `packages/shared/src/channels.ts`; a small adapter per provider turns its own format into it.
+2. In Render → Environment: `EMAIL_INBOUND_DOMAIN` (that domain) and `EMAIL_INBOUND_SECRET` (a long
+   random string, the same one the service signs with).
+3. For replies: `EMAIL_TRANSPORT` other than `disabled` (see step 2), with the sending domain verified
+   (SPF/DKIM) at the email provider so replies from `…@mail.example.com` are accepted.
+
+Then Settings → Channels → Email → **Create address**. Locally, `pnpm --filter @leadflow/api
+mail:simulate --to <address>` stands in for the inbound service.
 
 ## Good to know
 

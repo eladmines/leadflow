@@ -141,6 +141,67 @@ describe('unified inbox (F24)', () => {
     expect(user).toBeTruthy();
   });
 
+  it('an email conversation shows its address and subject, and replies need no 24-hour window (F27)', async () => {
+    const dana: ConversationSummary = {
+      id: '9a000000-0000-4000-8000-000000000003',
+      channel: 'email',
+      status: 'BUSINESS',
+      name: 'דנה כהן',
+      phone: null,
+      email: 'dana@example.com',
+      leadId,
+      lastMessage: { body: 'אפשר תור ליום חמישי?', direction: 'IN', at: now },
+      lastMessageAt: now,
+      unread: false,
+    };
+    const fetchMock = mockApi(
+      routes({
+        [`GET ${cp.list(id)}`]: () => json(200, listOf([dana])),
+        [`GET ${cp.detail(id, dana.id)}`]: () =>
+          json(
+            200,
+            detailOf(dana, {
+              replyUntil: null,
+              messages: [
+                {
+                  id: '8a000000-0000-4000-8000-000000000003',
+                  direction: 'IN',
+                  body: 'אפשר תור ליום חמישי?',
+                  subject: 'תור ליום חמישי',
+                  channel: 'email',
+                  status: 'received',
+                  sender: null,
+                  createdAt: now,
+                },
+              ],
+            }),
+          ),
+        [`POST ${cp.messages(id, dana.id)}`]: () =>
+          json(201, {
+            message: {
+              id: '8a000000-0000-4000-8000-000000000004',
+              direction: 'OUT',
+              body: 'בטח!',
+              status: 'sent',
+              sender: null,
+              createdAt: now,
+            },
+            leadId,
+          }),
+      }),
+    );
+    const { user } = renderApp(`${page}?c=${dana.id}`);
+    const pane = await screen.findByRole('region', { name: 'דנה כהן' });
+    expect(within(pane).getByText('dana@example.com')).toBeInTheDocument();
+    expect(within(pane).getByText('תור ליום חמישי')).toBeInTheDocument();
+    // No window notice: the reply box is there even though no window is open.
+    await user.type(within(pane).getByLabelText('תשובה במייל'), 'בטח!');
+    await user.click(within(pane).getByRole('button', { name: 'שליחה במייל' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'POST', cp.messages(id, dana.id))).toEqual([{ text: 'בטח!' }]),
+    );
+  });
+
   it('after 24 hours explains why it can’t reply; empty and not-connected states', async () => {
     mockApi(
       routes({

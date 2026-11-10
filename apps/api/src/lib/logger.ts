@@ -18,6 +18,7 @@ const redactPaths = [
   '*["api-key"]',
   // WhatsApp (F12): Meta's webhook signature and message texts.
   'req.headers["x-hub-signature-256"]',
+  'req.headers["x-leadflow-signature"]',
   '*.body',
   '*.text',
 ];

@@ -167,7 +167,12 @@ describe('Facebook Messenger → leads (F23)', () => {
   it('a sender marked personal earlier stays ignored', async () => {
     const owner = await setup();
     await ctx.prisma.whatsAppNumber.create({
-      data: { businessId: BUSINESS_ID, channel: 'messenger', phone: `fb:${PSID}`, status: 'PERSONAL' },
+      data: {
+        businessId: BUSINESS_ID,
+        channel: 'messenger',
+        phone: `fb:${PSID}`,
+        status: 'PERSONAL',
+      },
     });
     await post(fbText('עוד משהו'));
     expect(await ctx.prisma.whatsAppMessage.count()).toBe(0);

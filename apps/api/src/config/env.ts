@@ -57,6 +57,16 @@ const envSchema = z
     /** TLS from the first byte (port 465). Port 587 upgrades with STARTTLS on its own. */
     SMTP_SECURE: booleanString.default('false'),
     EMAIL_FROM: z.string().min(1).default('LeadFlow <no-reply@leadflow.local>'),
+    /** F27: the domain business forwarding addresses live on (`<random>@<this>`); unset = email conversations are off. */
+    EMAIL_INBOUND_DOMAIN: optionalSetting(
+      z
+        .string()
+        .min(3)
+        .regex(/^[a-z0-9.-]+$/i)
+        .transform((v) => v.toLowerCase()),
+    ),
+    /** F27: signs the inbound-email webhook (HMAC-SHA256 of the raw body). */
+    EMAIL_INBOUND_SECRET: optionalSetting(z.string().min(16)),
     /** Requests per client IP per route per window, on rate-limited auth routes. */
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
     /** Rate-limit window in milliseconds. */

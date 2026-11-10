@@ -33,16 +33,19 @@ export const whatsappMessages = {
   alreadyCustomer: 'המספר כבר משויך ללקוח במערכת. כדי להסיר אותו, מחקו את הליד.',
   notPersonal: 'אפשר לבטל רק סימון של מספר פרטי',
   messengerNotConnected: 'פייסבוק עדיין לא מחובר לעסק הזה',
+  emailNotConnected: 'המייל עדיין לא מחובר לעסק הזה',
+  emailNotConfigured: 'שליחת מייל עוד לא הוגדרה בשרת, ולכן אי אפשר לענות כאן.',
   messengerWindowClosed: 'אפשר לענות בפייסבוק רק עד 24 שעות אחרי ההודעה האחרונה של הלקוח.',
 } as const;
 
-/** Where a conversation happens (F23, D-157): WhatsApp or the business's Facebook Page. */
-export const CHANNELS = ['whatsapp', 'messenger'] as const;
+/** Where a conversation happens: WhatsApp, the business's Facebook Page (F23) or its email address (F27). */
+export const CHANNELS = ['whatsapp', 'messenger', 'email'] as const;
 export const channelSchema = z.enum(CHANNELS);
 export type Channel = z.infer<typeof channelSchema>;
 export const channelLabels: Record<Channel, string> = {
   whatsapp: 'WhatsApp',
   messenger: 'פייסבוק',
+  email: 'מייל',
 };
 
 export const WHATSAPP_DIRECTIONS = ['IN', 'OUT'] as const;
@@ -62,6 +65,8 @@ export const whatsappMessageSchema = z.object({
   direction: z.enum(WHATSAPP_DIRECTIONS),
   body: z.string(),
   status: z.enum(WHATSAPP_STATUSES),
+  /** Email only: the subject line. */
+  subject: z.string().nullable().optional(),
   /** Team member who sent an outgoing message. */
   sender: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
   createdAt: z.string().datetime(),
