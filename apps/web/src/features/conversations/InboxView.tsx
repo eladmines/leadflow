@@ -10,8 +10,7 @@ import {
   type ConversationSummary,
   type SendWhatsAppRequest,
 } from '@leadflow/shared';
-import { useQueryClient } from '@tanstack/react-query';
-import { Briefcase, ChevronLeft, ChevronRight, MessagesSquare, UserX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessagesSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useScrollToLatest } from '../../lib/useScrollToLatest';
 import { useForm } from 'react-hook-form';
@@ -21,8 +20,7 @@ import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
-import { useClassifyNumber } from '../whatsapp/api';
-import { refreshInbox, useConversation, useConversations, useMarkRead, useReply } from './api';
+import { useConversation, useConversations, useMarkRead, useReply } from './api';
 
 /** WhatsApp green, Facebook blue: the channel's colour on its chip and dot. */
 const CHANNEL_STYLE: Record<Channel, { label: string; chip: string; dot: string }> = {
@@ -62,7 +60,6 @@ export function InboxView({ businessId }: { businessId: string }) {
   const filters: { key: ConversationFilter; label: string }[] = [
     { key: 'all', label: tr('הכול') },
     { key: 'unread', label: tr('לא נקראו') },
-    { key: 'new', label: tr('חדשים') },
   ];
 
   return (
@@ -162,7 +159,6 @@ export function InboxView({ businessId }: { businessId: string }) {
             businessId={businessId}
             id={selected}
             onBack={() => open(null)}
-            onGone={() => open(null)}
           />
         ) : (
           <div className="m-auto p-6">
@@ -233,11 +229,6 @@ function ConversationRow({
           <span className={cn('rounded-full px-1.5 py-px font-medium', style.chip)}>
             {tr(style.label)}
           </span>
-          {c.status === 'UNCLASSIFIED' && (
-            <span className="rounded-full bg-amber-50 px-1.5 py-px font-medium text-amber-700">
-              {tr('חדש')}
-            </span>
-          )}
         </span>
       </span>
     </button>
@@ -248,18 +239,14 @@ function ConversationPane({
   businessId,
   id,
   onBack,
-  onGone,
 }: {
   businessId: string;
   id: string;
   onBack: () => void;
-  onGone: () => void;
 }) {
-  const queryClient = useQueryClient();
   const convo = useConversation(businessId, id);
   const listRef = useScrollToLatest<HTMLOListElement>(convo.data?.messages.at(-1)?.id);
   const markRead = useMarkRead(businessId);
-  const classify = useClassifyNumber(businessId);
   const reply = useReply(businessId, id);
   const form = useForm<SendWhatsAppRequest>({
     resolver: zodResolver(sendWhatsAppRequestSchema),
@@ -296,16 +283,6 @@ function ConversationPane({
     minute: '2-digit',
   });
   const submit = form.handleSubmit((v) => reply.mutate(v, { onSuccess: () => form.reset() }));
-  const classifyAs = (as: 'BUSINESS' | 'PERSONAL') =>
-    classify.mutate(
-      { numberId: id, as },
-      {
-        onSuccess: () => {
-          void refreshInbox(queryClient, businessId);
-          if (as === 'PERSONAL') onGone();
-        },
-      },
-    );
 
   return (
     <section aria-labelledby={`convo-${id}`} className="flex min-h-0 flex-1 flex-col">
@@ -332,32 +309,6 @@ function ConversationPane({
           </Link>
         )}
       </header>
-
-      {c.status === 'UNCLASSIFIED' && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-surface-border bg-amber-50 p-3 text-sm">
-          <span className="flex-1 text-ink">
-            {tr('פונה חדש. לקוח? נפתח לו ליד. פרטי? ההודעות יימחקו.')}
-          </span>
-          <Button size="sm" loading={classify.isPending} onClick={() => classifyAs('BUSINESS')}>
-            <Briefcase aria-hidden className="h-4 w-4" />
-            {tr('עסקי: יצירת ליד')}
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={classify.isPending}
-            onClick={() => classifyAs('PERSONAL')}
-          >
-            <UserX aria-hidden className="h-4 w-4" />
-            {tr('פרטי')}
-          </Button>
-        </div>
-      )}
-      {classify.isError && (
-        <div className="p-3">
-          <Alert tone="danger">{errorMessage(classify.error)}</Alert>
-        </div>
-      )}
 
       <ol
         ref={listRef}

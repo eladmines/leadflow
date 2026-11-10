@@ -204,7 +204,7 @@ describe('WhatsApp booking bot (D-102)', () => {
 
     // One notification for the booking, not one per tap.
     const notes = await ctx.prisma.notification.findMany({ where: { userId: owner.userId } });
-    expect(notes.map((n) => n.type).sort()).toEqual(['appointment.booked', 'whatsapp.new_number']);
+    expect(notes.map((n) => n.type).sort()).toEqual(['appointment.booked', 'lead.new']);
 
     // And a task due now, so the team notices it (D-152).
     const [task] = await ctx.prisma.task.findMany();

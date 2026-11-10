@@ -104,7 +104,7 @@ describe('Facebook Messenger → leads (F23)', () => {
     expect(bad.statusCode).toBe(403);
   });
 
-  it('a new sender waits in the inbox with their Facebook name; "business" makes a Facebook lead', async () => {
+  it('a new sender is a Facebook lead right away, with their Facebook name', async () => {
     const owner = await setup();
     messenger.names.set(PSID, 'דנה כהן');
     expect((await post(fbText('היי, יש תור למחר?'))).statusCode).toBe(200);
@@ -114,27 +114,9 @@ describe('Facebook Messenger → leads (F23)', () => {
     expect((await post(again)).statusCode).toBe(200);
 
     const inbox = (await req(ctx.app, 'GET', wp.inbox(BUSINESS_ID), owner.token)).json();
-    expect(inbox.connected).toBe(true);
-    expect(inbox.numbers).toHaveLength(1);
-    const waiting = inbox.numbers[0];
-    expect(waiting).toMatchObject({ channel: 'messenger', profileName: 'דנה כהן' });
-    expect(waiting.messages.map((m: { body: string }) => m.body)).toEqual([
-      'היי, יש תור למחר?',
-      'x',
-    ]);
-    expect(await ctx.prisma.lead.count()).toBe(0);
-    // The owner hears about the new sender.
-    const note = await ctx.prisma.notification.findFirst({
-      where: { userId: owner.userId, type: 'whatsapp.new_number' },
-    });
-    expect(note?.data).toMatchObject({ name: 'דנה כהן', channel: 'messenger' });
-
-    const res = await req(ctx.app, 'POST', wp.classify(BUSINESS_ID, waiting.id), owner.token, {
-      as: 'BUSINESS',
-    });
-    expect(res.statusCode).toBe(200);
+    expect(inbox.numbers).toHaveLength(0);
     const lead = await ctx.prisma.lead.findFirstOrThrow({ include: { contact: true } });
-    expect(lead).toMatchObject({ source: 'facebook', id: res.json().leadId });
+    expect(lead.source).toBe('facebook');
     expect(lead.contact).toMatchObject({ name: 'דנה כהן', phone: null });
 
     // Later messages join the same lead.
@@ -182,12 +164,10 @@ describe('Facebook Messenger → leads (F23)', () => {
     expect(late.json().error.message).toMatch(/בפייסבוק רק עד 24 שעות/);
   });
 
-  it('"personal" deletes the messages and ignores the sender from then on', async () => {
+  it('a sender marked personal earlier stays ignored', async () => {
     const owner = await setup();
-    await post(fbText('מה נשמע?'));
-    const number = await ctx.prisma.whatsAppNumber.findFirstOrThrow();
-    await req(ctx.app, 'POST', wp.classify(BUSINESS_ID, number.id), owner.token, {
-      as: 'PERSONAL',
+    await ctx.prisma.whatsAppNumber.create({
+      data: { businessId: BUSINESS_ID, channel: 'messenger', phone: `fb:${PSID}`, status: 'PERSONAL' },
     });
     await post(fbText('עוד משהו'));
     expect(await ctx.prisma.whatsAppMessage.count()).toBe(0);
@@ -196,7 +176,7 @@ describe('Facebook Messenger → leads (F23)', () => {
   });
 
   it('rejects unsigned events, and skips echoes and other Pages', async () => {
-    const owner = await setup();
+    await setup();
     expect((await post(fbText('hi'), 'sha256=00')).statusCode).toBe(401);
     // The Page's own message (echo) and a message to another Page are ignored.
     await post(fbText('from the page', PSID, { is_echo: true }));
@@ -206,8 +186,7 @@ describe('Facebook Messenger → leads (F23)', () => {
     expect(await ctx.prisma.whatsAppMessage.count()).toBe(0);
     // A photo arrives as a label.
     await post(fbText('', PSID, { text: undefined, attachments: [{ type: 'image' }] }));
-    const inbox = (await req(ctx.app, 'GET', wp.inbox(BUSINESS_ID), owner.token)).json();
-    expect(inbox.numbers[0].messages[0].body).toBe('[תמונה]');
+    expect((await ctx.prisma.whatsAppMessage.findFirstOrThrow()).body).toBe('[תמונה]');
   });
 
   it('only owners and managers see the inbox; employees only their leads', async () => {
