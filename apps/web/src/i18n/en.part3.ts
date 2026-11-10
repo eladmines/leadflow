@@ -843,4 +843,8 @@ export const enPart3: Record<string, string> = {
   '{0} תורים': '{0} bookings',
   'התורים של {0}': '{0}’s bookings',
   'בניית אתר חדש ב-LeadFlow': 'Build a new website in LeadFlow',
+  'להסיר את האתר מהמערכת?': 'Remove the website from LeadFlow?',
+  'הכתובת {0} תוסר מ-LeadFlow. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.':
+    '{0} will be removed from LeadFlow. The website itself isn’t affected and keeps working. You can add it again any time.',
+  'כן, להסיר': 'Yes, remove',
 };

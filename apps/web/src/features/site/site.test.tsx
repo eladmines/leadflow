@@ -180,7 +180,7 @@ describe('existing website (D-094)', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('the owner removes the address', async () => {
+  it('the owner removes the address only after confirming', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
       ...withWebsite(),
@@ -190,6 +190,18 @@ describe('existing website (D-094)', () => {
     });
     const { user } = renderApp(sitePath);
     await user.click(await screen.findByRole('button', { name: 'הסרת האתר מהמערכת' }));
+    // A pop-up asks first; cancelling changes nothing.
+    const dialog = await screen.findByRole('dialog', { name: 'להסיר את האתר מהמערכת?' });
+    await user.click(within(dialog).getByRole('button', { name: 'ביטול' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(callsTo(fetchMock, 'PATCH', apiPaths.businesses.detail(testBusiness.id))).toHaveLength(
+      0,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'הסרת האתר מהמערכת' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'כן, להסיר' }),
+    );
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PATCH', apiPaths.businesses.detail(testBusiness.id))).toEqual([
         { websiteUrl: null },

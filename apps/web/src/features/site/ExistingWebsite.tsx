@@ -4,7 +4,7 @@ import { ExternalLink, Info } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Alert, Button, Card, Field } from '../../components/ui';
+import { Alert, Button, Card, DialogShell, Field } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
 import { tr } from '../../i18n';
@@ -78,6 +78,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
   const url = business.websiteUrl!;
   const update = useUpdateBusiness(business.id);
   const [editing, setEditing] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   return (
     <Card className="flex flex-col gap-4">
@@ -133,17 +134,38 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
             <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
               {tr('שינוי הכתובת')}
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              loading={update.isPending}
-              onClick={() => update.mutate({ websiteUrl: null })}
-            >
+            <Button variant="danger" size="sm" onClick={() => setConfirmRemove(true)}>
               {tr('הסרת האתר מהמערכת')}
             </Button>
           </div>
         ))}
       {update.isError && <Alert tone="danger">{tr('שמירת השינוי נכשלה. נסו שוב.')}</Alert>}
+      <DialogShell
+        open={confirmRemove}
+        onOpenChange={setConfirmRemove}
+        title={tr('להסיר את האתר מהמערכת?')}
+      >
+        <p className="text-sm text-ink-muted">
+          {tr(
+            'הכתובת {0} תוסר מ-LeadFlow. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.',
+            displayUrl(url),
+          )}
+        </p>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" onClick={() => setConfirmRemove(false)}>
+            {tr('ביטול')}
+          </Button>
+          <Button
+            variant="danger"
+            loading={update.isPending}
+            onClick={() =>
+              update.mutate({ websiteUrl: null }, { onSuccess: () => setConfirmRemove(false) })
+            }
+          >
+            {tr('כן, להסיר')}
+          </Button>
+        </div>
+      </DialogShell>
     </Card>
   );
 }
