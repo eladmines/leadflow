@@ -116,7 +116,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
           loading="lazy"
           referrerPolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin allow-popups"
-          className="block h-[28rem] w-full bg-white"
+          className="block h-[calc(100dvh-14rem)] min-h-[34rem] w-full bg-white"
         />
       </div>
       <p className="text-xs text-ink-muted">
@@ -134,7 +134,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
               {tr('שינוי הכתובת')}
             </Button>
             <Button
-              variant="ghost"
+              variant="danger"
               size="sm"
               loading={update.isPending}
               onClick={() => update.mutate({ websiteUrl: null })}
