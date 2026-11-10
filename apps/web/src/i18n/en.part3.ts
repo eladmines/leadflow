@@ -842,4 +842,5 @@ export const enPart3: Record<string, string> = {
   'תור אחד': 'One booking',
   '{0} תורים': '{0} bookings',
   'התורים של {0}': '{0}’s bookings',
+  'בניית אתר חדש ב-LeadFlow': 'Build a new website in LeadFlow',
 };
