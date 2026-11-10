@@ -159,9 +159,9 @@ describe('existing website (D-094)', () => {
     expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
   });
 
-  it('shows the site with a "not managed by LeadFlow" note, and still offers templates', async () => {
+  it('shows the site with a "not managed by LeadFlow" note, and keeps templates behind a button', async () => {
     mockApi({ [meKey]: me(testUser), ...withWebsite(), ...getSite(null) });
-    renderApp(sitePath);
+    const { user } = renderApp(sitePath);
     expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
     expect(screen.getByText('לא מנוהל ב-LeadFlow')).toBeInTheDocument();
     expect(screen.getByText(/לא נבנה ב-LeadFlow ולא מנוהל כאן/)).toBeInTheDocument();
@@ -173,6 +173,9 @@ describe('existing website (D-094)', () => {
       'src',
       'https://www.shiran.co.il',
     );
+    // No templates until they are asked for.
+    expect(screen.queryByRole('button', { name: 'בחירת התבנית' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'בניית אתר חדש ב-LeadFlow' }));
     expect(screen.getByRole('heading', { name: 'רוצים אתר חדש ב-LeadFlow?' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'בחירת התבנית' }).length).toBeGreaterThan(0);
   });
