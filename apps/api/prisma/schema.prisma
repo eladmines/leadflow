@@ -301,6 +301,8 @@ enum LeadSource {
   whatsapp
   /// F23: a message to the business's Facebook Page (D-157).
   facebook
+  /// F27: an email to the business's forwarding address (D-177).
+  email
 }
 
 /// A person who contacted the business. Matched by phone within the business.
@@ -645,11 +647,11 @@ enum WhatsAppNumberStatus {
 model WhatsAppNumber {
   id             String               @id @default(uuid()) @db.Uuid
   businessId     String               @map("business_id") @db.Uuid
-  /// `whatsapp` (default) or `messenger` (F23, D-157).
+  /// `whatsapp` (default), `messenger` (F23, D-157) or `email` (F27, D-177).
   channel        String               @default("whatsapp") @db.VarChar(20)
-  /// WhatsApp: E.164. Messenger: `fb:` + the sender's page-scoped id (PSID).
-  phone          String               @db.VarChar(64)
-  /// Messenger only: the contact this sender became (WhatsApp matches contacts by phone).
+  /// WhatsApp: E.164. Messenger: `fb:` + the sender's page-scoped id (PSID). Email: `mail:` + address.
+  phone          String               @db.VarChar(260)
+  /// Messenger and email: the contact this sender became (WhatsApp matches contacts by phone).
   contactId      String?              @map("contact_id") @db.Uuid
   status         WhatsAppNumberStatus
   /// WhatsApp profile name while unclassified (cleared when marked personal).
@@ -722,6 +724,8 @@ model WhatsAppMessage {
   /// Meta's message id (wamid.*).
   waMessageId String            @unique @map("wa_message_id") @db.VarChar(128)
   body        String            @db.VarChar(4096)
+  /// Email only: the subject line.
+  subject     String?           @db.VarChar(300)
   /// received | sent | delivered | read | failed (shared WHATSAPP_STATUSES).
   status      String            @db.VarChar(20)
   senderId    String?           @map("sender_id") @db.Uuid
@@ -766,9 +770,9 @@ model Notification {
 model ChannelConnection {
   id             String   @id @default(uuid()) @db.Uuid
   businessId     String   @map("business_id") @db.Uuid
-  /// whatsapp | messenger
+  /// whatsapp | messenger | email
   channel        String   @db.VarChar(20)
-  /// WhatsApp: Meta's phone number id. Messenger: the Facebook Page id.
+  /// WhatsApp: Meta's phone number id. Messenger: the Facebook Page id. Email: the forwarding address.
   externalId     String   @map("external_id") @db.VarChar(64)
   /// The number or the Page's name, for the settings screen.
   displayName    String   @map("display_name") @db.VarChar(120)

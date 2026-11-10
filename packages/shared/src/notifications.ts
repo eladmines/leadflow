@@ -66,7 +66,9 @@ export function notificationText(n: Pick<Notification, 'type' | 'data'>): {
             ? 'ליד חדש מוואטסאפ'
             : d.source === 'facebook'
               ? 'ליד חדש מפייסבוק'
-              : 'ליד חדש מהאתר',
+              : d.source === 'email'
+                ? 'ליד חדש ממייל'
+                : 'ליד חדש מהאתר',
         body: str(d.appointment)
           ? `${str(d.name)} · בקשה לתור: ${str(d.appointment)}`
           : str(d.name),

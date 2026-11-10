@@ -38,6 +38,12 @@ export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => channels.connectWhatsApp(tenantOf(req), req.body),
   );
 
+  app.post(
+    '/channels/email',
+    { preValidation: owner, schema: { response: { 200: channelsResponseSchema } } },
+    async (req) => channels.createEmailAddress(tenantOf(req)),
+  );
+
   app.get(
     '/channels/facebook/start',
     { preValidation: owner, schema: { response: { 200: facebookStartResponseSchema } } },
@@ -70,7 +76,10 @@ export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
     {
       preValidation: owner,
       schema: {
-        params: z.object({ businessId: z.string(), channel: z.enum(['whatsapp', 'messenger']) }),
+        params: z.object({
+          businessId: z.string(),
+          channel: z.enum(['whatsapp', 'messenger', 'email']),
+        }),
         response: { 200: channelsResponseSchema },
       },
     },

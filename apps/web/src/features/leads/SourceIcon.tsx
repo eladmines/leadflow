@@ -4,6 +4,7 @@ import {
   Facebook,
   Globe,
   Link2,
+  Mail,
   Megaphone,
   MessageCircle,
   MousePointerClick,
@@ -81,6 +82,8 @@ export function LeadSourceIcon({
       return <Facebook aria-hidden className={cn(className, 'text-[#1877F2]')} />;
     case 'website_form':
       return <Globe aria-hidden className={cn(className, 'text-sky-600')} />;
+    case 'email':
+      return <Mail aria-hidden className={cn(className, 'text-sky-600')} />;
     default:
       return <PenLine aria-hidden className={cn(className, 'text-slate-500')} />;
   }

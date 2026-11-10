@@ -36,8 +36,10 @@ export class SmtpEmailSender implements EmailSender {
 
   async send(message: EmailMessage): Promise<void> {
     await this.transporter.sendMail({
-      from: this.opts.from,
+      from: message.from ?? this.opts.from,
       to: message.to,
+      ...(message.replyTo ? { replyTo: message.replyTo } : {}),
+      ...(message.inReplyTo ? { inReplyTo: message.inReplyTo, references: message.inReplyTo } : {}),
       subject: message.subject,
       html: message.html,
       text: message.text,

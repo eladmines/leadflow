@@ -95,11 +95,9 @@ describe('app shell', () => {
     const switcher = (await screen.findAllByLabelText('העסק הנוכחי'))[0]!;
     await user.selectOptions(switcher, second.id);
     await waitFor(() => expect(location()).toBe(businessWebPaths.home(second.id)));
-    // The name sits in its own <bdi>, so match the whole line.
+    // The dashboard header shows the business name only, without the role.
     expect(
-      await screen.findByText(
-        (_, el) => el?.tagName === 'P' && /^מוסך הצפון · /.test(el.textContent ?? ''),
-      ),
+      await screen.findByText((_, el) => el?.tagName === 'P' && el.textContent === 'מוסך הצפון'),
     ).toBeInTheDocument();
   });
 });

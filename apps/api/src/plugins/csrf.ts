@@ -1,11 +1,15 @@
 import type { FastifyInstance } from 'fastify';
-import { apiPaths, CSRF_HEADER_NAME } from '@leadflow/shared';
+import { apiPaths, CSRF_HEADER_NAME, emailInboundPath } from '@leadflow/shared';
 import { AppError } from '../lib/errors';
 
 const STATE_CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const HEADER = CSRF_HEADER_NAME.toLowerCase();
 /** Server-to-server webhooks: no cookies, authenticated by the sender's signature instead. */
-const EXEMPT = new Set<string>([apiPaths.whatsapp.webhook, apiPaths.whatsapp.messengerWebhook]);
+const EXEMPT = new Set<string>([
+  apiPaths.whatsapp.webhook,
+  apiPaths.whatsapp.messengerWebhook,
+  emailInboundPath,
+]);
 
 /**
  * CSRF guard for every state-changing request (authenticated or not):

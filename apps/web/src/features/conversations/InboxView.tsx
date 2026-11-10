@@ -26,12 +26,13 @@ import { useConversation, useConversations, useMarkRead, useReply } from './api'
 const CHANNEL_STYLE: Record<Channel, { label: string; chip: string; dot: string }> = {
   whatsapp: { label: 'WhatsApp', chip: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
   messenger: { label: 'פייסבוק', chip: 'bg-blue-50 text-blue-700', dot: 'bg-blue-600' },
+  email: { label: 'מייל', chip: 'bg-sky-50 text-sky-700', dot: 'bg-sky-500' },
 };
 
 const showPhone = (e164: string) => (e164.startsWith('+972') ? formatIsraeliPhone(e164) : e164);
-/** A name to show: the person's, else the phone, else "Facebook user". */
+/** A name to show: the person's, else the phone or email address, else "Facebook user". */
 const nameOf = (c: ConversationSummary) =>
-  c.name || (c.phone ? showPhone(c.phone) : tr('משתמש/ת פייסבוק'));
+  c.name || (c.phone ? showPhone(c.phone) : c.email || tr('משתמש/ת פייסבוק'));
 
 /**
  * F24 unified inbox (D-158): every conversation — WhatsApp and Facebook — in one list, the open one
@@ -102,6 +103,7 @@ export function InboxView({ businessId }: { businessId: string }) {
               <option value="">{tr('כל הערוצים')}</option>
               <option value="whatsapp">WhatsApp</option>
               <option value="messenger">{tr('פייסבוק')}</option>
+              <option value="email">{tr('מייל')}</option>
             </select>
           </label>
         </div>
@@ -277,6 +279,7 @@ function ConversationPane({
   const { conversation: c, messages, replyUntil } = convo.data;
   const style = CHANNEL_STYLE[c.channel];
   const fb = c.channel === 'messenger';
+  const mail = c.channel === 'email';
   const time = new Intl.DateTimeFormat(intlLocale(), {
     weekday: 'short',
     hour: '2-digit',
@@ -297,6 +300,7 @@ function ConversationPane({
               {tr(style.label)}
             </span>
             {c.phone && <bdi dir="ltr">{showPhone(c.phone)}</bdi>}
+            {c.email && <bdi dir="ltr">{c.email}</bdi>}
           </p>
         </div>
         {c.leadId && (
@@ -332,6 +336,11 @@ function ConversationPane({
                     ? tr('נשלחה{0}:', m.sender ? tr(' על ידי {0}', m.sender.name) : '')
                     : tr('הלקוח כתב:')}
                 </span>
+                {m.subject && (
+                  <p className="text-xs font-semibold" dir="auto">
+                    {m.subject}
+                  </p>
+                )}
                 <p className="whitespace-pre-line break-words" dir="auto">
                   {m.body}
                 </p>
@@ -341,7 +350,7 @@ function ConversationPane({
                   </time>
                   {out && !m.sender && <span>· {tr('תשובה אוטומטית')}</span>}
                   {out && m.sender && <span>· {m.sender.name}</span>}
-                  {out && !fb && (
+                  {out && c.channel === 'whatsapp' && (
                     <span className={cn(m.status === 'failed' && 'font-medium text-danger-700')}>
                       · {tr(whatsappStatusLabels[m.status])}
                     </span>
@@ -354,22 +363,26 @@ function ConversationPane({
       </ol>
 
       <div className="border-t border-surface-border p-3">
-        {replyUntil ? (
+        {replyUntil || mail ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
-              label={fb ? tr('תשובה בפייסבוק') : tr('תשובה בוואטסאפ')}
+              label={mail ? tr('תשובה במייל') : fb ? tr('תשובה בפייסבוק') : tr('תשובה בוואטסאפ')}
               rows={2}
               dir="auto"
-              hint={tr(
-                'אפשר לענות עד {0} (24 שעות מההודעה האחרונה של הלקוח).',
-                time.format(new Date(replyUntil)),
-              )}
+              hint={
+                mail || !replyUntil
+                  ? tr('התשובה נשלחת במייל, מכתובת ההעברה של העסק.')
+                  : tr(
+                      'אפשר לענות עד {0} (24 שעות מההודעה האחרונה של הלקוח).',
+                      time.format(new Date(replyUntil)),
+                    )
+              }
               error={form.formState.errors.text?.message}
               {...form.register('text')}
             />
             {reply.isError && <Alert tone="danger">{errorMessage(reply.error)}</Alert>}
             <Button type="submit" size="sm" loading={reply.isPending} className="self-end">
-              {fb ? tr('שליחה בפייסבוק') : tr('שליחה בוואטסאפ')}
+              {mail ? tr('שליחה במייל') : fb ? tr('שליחה בפייסבוק') : tr('שליחה בוואטסאפ')}
             </Button>
           </form>
         ) : (

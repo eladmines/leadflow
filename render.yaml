@@ -45,3 +45,17 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
+      # WhatsApp and Facebook (docs/DEPLOY.md, step 4). Leave empty while they are off.
+      - key: WHATSAPP_PROVIDER
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: META_APP_ID
+        sync: false
+      # Email conversations (docs/features/F27.md). Leave empty while they are off.
+      - key: EMAIL_INBOUND_DOMAIN
+        sync: false
+      - key: EMAIL_INBOUND_SECRET
+        sync: false

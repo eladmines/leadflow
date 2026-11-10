@@ -35,6 +35,8 @@ export class ChannelRegistry {
       if (row) return row.businessId;
     }
     const c = this.config;
+    // Email has no environment fallback: only addresses a business created (F27).
+    if (channel === 'email') return null;
     if (channel === 'whatsapp') {
       if (!c.WHATSAPP_BUSINESS_ID) return null;
       return !c.WHATSAPP_PHONE_NUMBER_ID || c.WHATSAPP_PHONE_NUMBER_ID === externalId
@@ -75,8 +77,13 @@ export class ChannelRegistry {
     return this.config.MESSENGER_BUSINESS_ID === businessId ? this.envMessenger : null;
   }
 
+  /** The business's forwarding address (F27), or null. */
+  async emailAddress(businessId: string): Promise<string | null> {
+    return (await this.connection('email', { businessId }))?.externalId ?? null;
+  }
+
   async isConnected(businessId: string, channel?: Channel): Promise<boolean> {
-    const channels: Channel[] = channel ? [channel] : ['whatsapp', 'messenger'];
+    const channels: Channel[] = channel ? [channel] : ['whatsapp', 'messenger', 'email'];
     for (const ch of channels) {
       if (ch === 'whatsapp' && this.config.WHATSAPP_BUSINESS_ID === businessId) return true;
       if (ch === 'messenger' && this.config.MESSENGER_BUSINESS_ID === businessId) return true;

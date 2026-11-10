@@ -5,34 +5,35 @@ Updated by the orchestrator after every completed task. Specs: `docs/features/Fx
 
 Smallest complete customer journey: **register → onboard → build site → publish → lead → CRM** (F01–F08).
 
-| ID  | Feature                                                 | Value              | Depends on        | Parallel with | Pipeline                            | Status   |
-| --- | ------------------------------------------------------- | ------------------ | ----------------- | ------------- | ----------------------------------- | -------- |
-| F00 | [Platform foundation](features/F00.md)                  | Prerequisite       | —                 | —             | Orchestrator                        | **Done** |
-| F01 | [Authentication & sessions](features/F01.md)            | Core               | F00               | —             | Architect → Backend ∥ Frontend → QA | **Done** |
-| F02 | [Business onboarding, tenancy & RBAC](features/F02.md)  | Core               | F01               | —             | Architect → Backend ∥ Frontend → QA | **Done** |
-| F03 | [App shell, navigation & dashboard](features/F03.md)    | Core               | F02 contract      | F02 backend   | Frontend → QA                       | **Done** |
-| F04 | [Site builder](features/F04.md)                         | Core               | F02, F03          | F05 backend   | Full pipeline                       | **Done** |
-| F05 | [Media & file storage](features/F05.md)                 | Core-adjacent      | F02               | F04           | Architect → Backend → Frontend → QA | **Done** |
-| F06 | [Publishing & public serving](features/F06.md)          | Core               | F04 (+F05 images) | F07 backend   | Full pipeline                       | **Done** |
-| F07 | [Lead capture forms](features/F07.md)                   | Core               | F06, F02          | F06           | Full pipeline                       | **Done** |
-| F08 | [CRM core](features/F08.md)                             | Core (journey end) | F07               | —             | Full pipeline                       | **Done** |
-| F09 | [Team invitations & member management](features/F09.md) | High               | F02               | F04–F08       | Backend ∥ Frontend → QA             | **Done** |
-| F10 | [Tasks / follow-ups](features/F10.md)                   | High               | F08               | F11 spike     | Full pipeline                       | **Done** |
-| F11 | Custom domains + HTTPS                                  | High               | F06 + POC spike   | F12           | Spike → full pipeline               | Planned  |
-| F12 | WhatsApp connection & inbox                             | High               | F08 + POC spike   | F11           | Spike → full pipeline               | POC      |
-| F13 | Plans, trial, billing & quotas                          | High               | F02, O-004        | F14           | Full pipeline                       | Planned  |
-| F14 | Data export, deletion & retention                       | Beta-required      | F08, O-007        | F13           | Full pipeline                       | Planned  |
-| F15 | Ops hardening: monitoring, backups, audit views         | Beta-required      | F00               | any           | Backend → QA                        | Planned  |
-| F16 | AI agent (suggestions first) + hard budget              | Medium             | F12, F13          | F17–F19       | Full pipeline                       | Planned  |
-| F17 | Appointments / calendar                                 | Medium             | F08               | F16           | Full pipeline                       | **Done** |
-| F18 | Quotes                                                  | Medium             | F08               | F16           | Full pipeline                       | **Done** |
-| F19 | Preset automations                                      | Medium             | F08, F10          | F16           | Full pipeline                       | Planned  |
-| F20 | Reports & analytics                                     | Medium             | F08               | F16           | Full pipeline                       | **Lite** |
-| F21 | Platform admin console (audited support access)         | Medium             | F02, F15          | any           | Full pipeline                       | Planned  |
-| F23 | Facebook Messenger → leads (D-157)                      | Medium             | F12               | F16           | Full pipeline                       | **Built** |
-| F24 | Unified inbox: all channels, one screen (D-158)         | High               | F12, F23          | F16           | Full pipeline                       | **Built** |
-| F25 | Channels each business connects (D-159)                 | High               | F12, F23, F24     | F16           | Full pipeline                       | **Built** |
-| F26 | Lead attribution: source, ad, campaign (D-162)          | High               | F06, F07, F12     | F20           | Full pipeline                       | Built    |
+| ID  | Feature                                                 | Value              | Depends on        | Parallel with | Pipeline                            | Status                |
+| --- | ------------------------------------------------------- | ------------------ | ----------------- | ------------- | ----------------------------------- | --------------------- |
+| F00 | [Platform foundation](features/F00.md)                  | Prerequisite       | —                 | —             | Orchestrator                        | **Done**              |
+| F01 | [Authentication & sessions](features/F01.md)            | Core               | F00               | —             | Architect → Backend ∥ Frontend → QA | **Done**              |
+| F02 | [Business onboarding, tenancy & RBAC](features/F02.md)  | Core               | F01               | —             | Architect → Backend ∥ Frontend → QA | **Done**              |
+| F03 | [App shell, navigation & dashboard](features/F03.md)    | Core               | F02 contract      | F02 backend   | Frontend → QA                       | **Done**              |
+| F04 | [Site builder](features/F04.md)                         | Core               | F02, F03          | F05 backend   | Full pipeline                       | **Done**              |
+| F05 | [Media & file storage](features/F05.md)                 | Core-adjacent      | F02               | F04           | Architect → Backend → Frontend → QA | **Done**              |
+| F06 | [Publishing & public serving](features/F06.md)          | Core               | F04 (+F05 images) | F07 backend   | Full pipeline                       | **Done**              |
+| F07 | [Lead capture forms](features/F07.md)                   | Core               | F06, F02          | F06           | Full pipeline                       | **Done**              |
+| F08 | [CRM core](features/F08.md)                             | Core (journey end) | F07               | —             | Full pipeline                       | **Done**              |
+| F09 | [Team invitations & member management](features/F09.md) | High               | F02               | F04–F08       | Backend ∥ Frontend → QA             | **Done**              |
+| F10 | [Tasks / follow-ups](features/F10.md)                   | High               | F08               | F11 spike     | Full pipeline                       | **Done**              |
+| F11 | Custom domains + HTTPS                                  | High               | F06 + POC spike   | F12           | Spike → full pipeline               | Planned               |
+| F12 | WhatsApp connection & inbox                             | High               | F08 + POC spike   | F11           | Spike → full pipeline               | POC                   |
+| F13 | Plans, trial, billing & quotas                          | High               | F02, O-004        | F14           | Full pipeline                       | Planned               |
+| F14 | Data export, deletion & retention                       | Beta-required      | F08, O-007        | F13           | Full pipeline                       | Planned               |
+| F15 | Ops hardening: monitoring, backups, audit views         | Beta-required      | F00               | any           | Backend → QA                        | Planned               |
+| F16 | AI agent (suggestions first) + hard budget              | Medium             | F12, F13          | F17–F19       | Full pipeline                       | Planned               |
+| F17 | Appointments / calendar                                 | Medium             | F08               | F16           | Full pipeline                       | **Done**              |
+| F18 | Quotes                                                  | Medium             | F08               | F16           | Full pipeline                       | **Done**              |
+| F19 | Preset automations                                      | Medium             | F08, F10          | F16           | Full pipeline                       | Planned               |
+| F20 | Reports & analytics                                     | Medium             | F08               | F16           | Full pipeline                       | **Lite**              |
+| F21 | Platform admin console (audited support access)         | Medium             | F02, F15          | any           | Full pipeline                       | Planned               |
+| F23 | Facebook Messenger → leads (D-157)                      | Medium             | F12               | F16           | Full pipeline                       | **Built**             |
+| F24 | Unified inbox: all channels, one screen (D-158)         | High               | F12, F23          | F16           | Full pipeline                       | **Built**             |
+| F25 | Channels each business connects (D-159)                 | High               | F12, F23, F24     | F16           | Full pipeline                       | **Built**             |
+| F26 | Lead attribution: source, ad, campaign (D-162)          | High               | F06, F07, F12     | F20           | Full pipeline                       | Built                 |
+| F27 | Email conversations (D-177)                             | High               | F24, F25          | F16           | Full pipeline                       | Built (provider open) |
 
 ## Dependency graph (core journey)
 

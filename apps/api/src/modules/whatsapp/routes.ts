@@ -16,6 +16,9 @@ import {
   whatsappInboxResponseSchema,
   whatsappThreadResponseSchema,
   attributionFromMetaReferral,
+  EMAIL_SIGNATURE_HEADER,
+  emailInboundPath,
+  emailInboundSchema,
 } from '@leadflow/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { MessengerSender } from '../../integrations/messenger';
@@ -350,6 +353,7 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
       app.log,
       app.storage,
       app.messengerSender,
+      app.email,
     );
 
     app.get(
@@ -516,3 +520,41 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
     );
   };
 }
+
+/**
+ * F27 (D-177): the inbound-email webhook. Whatever service receives mail for the forwarding
+ * domain posts each message here as JSON (`emailInboundSchema`), signed with
+ * `EMAIL_INBOUND_SECRET` over the raw body. Valid requests always get 200 (the sender retries
+ * anything else); what can't be used (unknown address, auto-replies) is dropped quietly.
+ */
+export const emailWebhookRoutes: FastifyPluginAsyncZod = async (app) => {
+  const service = new WhatsAppService(
+    app.prisma,
+    app.config,
+    app.whatsappSender,
+    app.log,
+    app.storage,
+    app.messengerSender,
+    app.email,
+  );
+  keepRawJson(app);
+
+  app.post(emailInboundPath, async (req, reply) => {
+    const secret = app.config.EMAIL_INBOUND_SECRET;
+    if (!secret || !app.config.EMAIL_INBOUND_DOMAIN) throw new AppError('NOT_FOUND');
+    const signature = req.headers[EMAIL_SIGNATURE_HEADER];
+    if (
+      !verifyWebhookSignature(
+        req.rawBody ?? '',
+        typeof signature === 'string' ? signature : undefined,
+        secret,
+      )
+    ) {
+      throw new AppError('UNAUTHENTICATED');
+    }
+    const parsed = emailInboundSchema.safeParse(req.body);
+    if (!parsed.success) return reply.send({ ok: true });
+    await service.receiveEmail(parsed.data);
+    return reply.send({ ok: true });
+  });
+};

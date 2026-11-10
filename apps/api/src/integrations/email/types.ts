@@ -4,6 +4,11 @@ export interface EmailMessage {
   subject: string;
   html: string;
   text: string;
+  /** Sender override ("Name <address>"); default is the server's `EMAIL_FROM` (F27: a business replies as itself). */
+  from?: string;
+  replyTo?: string;
+  /** Message-ID this answers, so the customer's mail program threads it (F27). */
+  inReplyTo?: string;
 }
 
 /**

@@ -443,6 +443,8 @@ describe('WhatsApp conversations inbox', () => {
                 source: 'business',
               },
               messenger: { channel: 'messenger', connected: false, name: null, source: null },
+              email: { channel: 'email', connected: false, name: null, source: null },
+              emailInbound: false,
               facebookLogin: true,
             }),
         },

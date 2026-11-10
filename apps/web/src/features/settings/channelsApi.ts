@@ -48,6 +48,11 @@ export const useConnectFacebook = (businessId: string) =>
     }),
   );
 
+export const useCreateEmailAddress = (businessId: string) =>
+  useChannelMutation(businessId, () =>
+    apiFetch<ChannelsResponse>(apiPaths.channels.email(businessId), { method: 'POST' }),
+  );
+
 export const useDisconnect = (businessId: string) =>
   useChannelMutation(businessId, (channel: Channel) =>
     apiFetch<ChannelsResponse>(apiPaths.channels.channel(businessId, channel), {

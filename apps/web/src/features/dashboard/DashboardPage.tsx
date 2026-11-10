@@ -1,4 +1,4 @@
-import { businessWebPaths, can, roleLabels } from '@leadflow/shared';
+import { businessWebPaths, can } from '@leadflow/shared';
 import { Link } from 'react-router-dom';
 import { buttonClasses } from '../../components/ui';
 import { useMe } from '../auth/api';
@@ -89,7 +89,7 @@ export function DashboardPage() {
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-brand-700">
-              <bdi>{business.name}</bdi> · {tr(roleLabels[business.role])}
+              <bdi>{business.name}</bdi>
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
               {greeting()}, <bdi>{firstName}</bdi>

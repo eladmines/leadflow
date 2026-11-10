@@ -25,6 +25,7 @@ export const conversationTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       app.log,
       app.storage,
       app.messengerSender,
+      app.email,
     ),
   );
   const guard = requirePermission('whatsapp.inbox');

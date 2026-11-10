@@ -11,6 +11,8 @@ const page = `${businessWebPaths.section(id, 'settings')}?tab=channels`;
 const off: ChannelsResponse = {
   whatsapp: { channel: 'whatsapp', connected: false, name: null, source: null },
   messenger: { channel: 'messenger', connected: false, name: null, source: null },
+  email: { channel: 'email', connected: false, name: null, source: null },
+  emailInbound: true,
   facebookLogin: true,
 };
 const pendingId = '6f000000-0000-4000-8000-000000000001';
@@ -34,11 +36,10 @@ describe('Settings → Channels (F25)', () => {
     const { user } = renderApp(page);
     // Every channel in the same box: name with its status (D-161).
     expect(await screen.findByRole('heading', { name: /^WhatsApp/ })).toHaveTextContent('לא מחובר');
-    expect(screen.getAllByText('לא מחובר')).toHaveLength(2);
+    expect(screen.getAllByText('לא מחובר')).toHaveLength(3);
     // Instagram and email are on their way (D-160): shown, not connectable yet.
     expect(screen.getByRole('heading', { name: /Instagram/ })).toHaveTextContent('בקרוב');
     expect(screen.getByRole('button', { name: 'חיבור Instagram' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'חיבור אימייל' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'חיבור WhatsApp' }));
     await user.type(screen.getByLabelText('Phone number ID'), '555000111');
     await user.type(screen.getByLabelText('טוקן גישה'), 'EAA-whatsapp-token-0123456789');
@@ -50,6 +51,39 @@ describe('Settings → Channels (F25)', () => {
     );
     expect(await screen.findByText('+1 555-000-1111')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ניתוק' })).toBeInTheDocument();
+  });
+
+  it('creates the forwarding address for email and shows it to copy (F27)', async () => {
+    const connected: ChannelsResponse = {
+      ...off,
+      email: {
+        channel: 'email',
+        connected: true,
+        name: 'k7m2q9x4pa@mail.example.com',
+        source: 'business',
+      },
+    };
+    const fetchMock = mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${ch.list(id)}`]: () => json(200, off),
+      [`POST ${ch.email(id)}`]: () => json(200, connected),
+    });
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('button', { name: 'יצירת כתובת' }));
+    await waitFor(() => expect(callsTo(fetchMock, 'POST', ch.email(id))).toHaveLength(1));
+    expect(await screen.findByText('k7m2q9x4pa@mail.example.com')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'העתקה' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ניתוק' })).toBeInTheDocument();
+  });
+
+  it('says email is not set up when the server cannot receive it', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${ch.list(id)}`]: () => json(200, { ...off, emailInbound: false }),
+    });
+    renderApp(page);
+    expect(await screen.findByRole('button', { name: 'יצירת כתובת' })).toBeDisabled();
+    expect(screen.getByText('קבלת מייל עוד לא הוגדרה בשרת.')).toBeInTheDocument();
   });
 
   it('"Connect Facebook" goes to Facebook’s sign-in', async () => {

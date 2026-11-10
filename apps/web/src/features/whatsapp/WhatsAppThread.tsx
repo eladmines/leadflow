@@ -52,7 +52,9 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
   const { connected, messages, replyUntil, botPaused } = thread.data;
   // A Facebook Messenger conversation (F23): replies go there; no booking bot.
   const fb = thread.data.channel === 'messenger';
-  const title = fb ? 'Facebook Messenger' : 'WhatsApp';
+  // An email conversation (F27): replies go out by email, with no 24-hour window or booking bot.
+  const mail = thread.data.channel === 'email';
+  const title = mail ? tr('מייל') : fb ? 'Facebook Messenger' : 'WhatsApp';
   // Its own tab on the lead page (D-140), so say why it's empty rather than show nothing.
   if (!connected && messages.length === 0) {
     return (
@@ -71,11 +73,14 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
           <MessageCircle
             aria-hidden
-            className={cn('h-5 w-5', fb ? 'text-blue-600' : 'text-success-600')}
+            className={cn(
+              'h-5 w-5',
+              mail ? 'text-sky-600' : fb ? 'text-blue-600' : 'text-success-600',
+            )}
           />
           {title}
         </h2>
-        {connected && !fb && (
+        {connected && !fb && !mail && (
           // The booking bot for this customer only (D-108): pause it to talk yourself.
           <div className="flex items-center gap-2 text-xs text-ink-muted">
             <Bot aria-hidden className="h-4 w-4" />
@@ -119,6 +124,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
                       ? tr('נשלחה{0}:', m.sender ? tr(' על ידי {0}', m.sender.name) : '')
                       : tr('הלקוח כתב:')}
                   </span>
+                  {m.subject && <p className="text-xs font-semibold">{m.subject}</p>}
                   <p className="whitespace-pre-line break-words">{m.body}</p>
                   <p className="flex items-center gap-1.5 text-xs text-ink-muted">
                     <time dateTime={m.createdAt} title={formatDateTime(m.createdAt)}>
@@ -138,21 +144,25 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         </ol>
       )}
       {connected &&
-        (replyUntil ? (
+        (replyUntil || mail ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
-              label={fb ? tr('תשובה בפייסבוק') : tr('תשובה בוואטסאפ')}
+              label={mail ? tr('תשובה במייל') : fb ? tr('תשובה בפייסבוק') : tr('תשובה בוואטסאפ')}
               rows={2}
-              hint={tr(
-                'אפשר לענות עד {0} (24 שעות מההודעה האחרונה של הלקוח).',
-                timeFmt.format(new Date(replyUntil)),
-              )}
+              hint={
+                mail || !replyUntil
+                  ? tr('התשובה נשלחת במייל, מכתובת ההעברה של העסק.')
+                  : tr(
+                      'אפשר לענות עד {0} (24 שעות מההודעה האחרונה של הלקוח).',
+                      timeFmt.format(new Date(replyUntil)),
+                    )
+              }
               error={form.formState.errors.text?.message}
               {...form.register('text')}
             />
             {send.isError && <Alert tone="danger">{errorMessage(send.error)}</Alert>}
             <Button type="submit" size="sm" loading={send.isPending} className="self-end">
-              {fb ? tr('שליחה בפייסבוק') : tr('שליחה בוואטסאפ')}
+              {mail ? tr('שליחה במייל') : fb ? tr('שליחה בפייסבוק') : tr('שליחה בוואטסאפ')}
             </Button>
           </form>
         ) : (

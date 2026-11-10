@@ -41,6 +41,7 @@ import { conversationTenantRoutes } from './modules/conversations/routes';
 import { channelPublicRoutes, channelTenantRoutes } from './modules/channels/routes';
 import { createMetaApi, type MetaApi } from './integrations/meta';
 import {
+  emailWebhookRoutes,
   messengerWebhookRoutes,
   whatsappTenantRoutes,
   whatsappWebhookRoutes,
@@ -177,6 +178,7 @@ export async function buildApp({
   app.decorate('messengerSender', messenger);
   await app.register(whatsappWebhookRoutes(whatsapp));
   await app.register(messengerWebhookRoutes(whatsapp, messenger));
+  await app.register(emailWebhookRoutes);
   app.decorate('metaApi', metaApi ?? createMetaApi(config));
   await app.register(channelPublicRoutes);
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).

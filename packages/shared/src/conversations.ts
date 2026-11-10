@@ -28,8 +28,10 @@ export const conversationSummarySchema = z.object({
   status: z.enum(['UNCLASSIFIED', 'BUSINESS']),
   /** The contact's name, the sender's profile name, or null (then show the phone). */
   name: z.string().nullable(),
-  /** WhatsApp only (E.164); null on Facebook. */
+  /** WhatsApp only (E.164); null on Facebook and email. */
   phone: z.string().nullable(),
+  /** Email only: the sender's address. */
+  email: z.string().nullable().optional(),
   leadId: z.string().uuid().nullable(),
   lastMessage: z
     .object({ body: z.string(), direction: z.enum(['IN', 'OUT']), at: z.string().datetime() })

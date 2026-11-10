@@ -820,4 +820,19 @@ export const enPart3: Record<string, string> = {
   'עוד אין פניות בטווח הזה.': 'No leads in this range yet.',
   'איפה הפניות עומדות': 'Where leads stand',
   'שיחות שלא נקראו': 'Unread conversations',
+  מייל: 'Email',
+  'יצירת כתובת': 'Create address',
+  'לכל עסק כתובת משלו. מיילים שנשלחים אליה מגיעים לתיבת השיחות, והתשובות יוצאות ממנה.':
+    'Every business gets its own address. Emails sent to it arrive in the inbox, and replies go out from it.',
+  'אפשר לשים אותה באתר ובחתימה, או להעביר אליה מיילים מהתיבה הרגילה.':
+    'Put it on your website and in your signature, or forward mail to it from your usual inbox.',
+  'התשובה נשלחת במייל, מכתובת ההעברה של העסק.':
+    'The reply is sent by email, from the business’s own address.',
+  'תשובה במייל': 'Email reply',
+  'שליחה במייל': 'Send by email',
+  'קבלת מייל עוד לא הוגדרה בשרת.': 'Receiving email isn’t set up on the server yet.',
+  'המייל עדיין לא מחובר לעסק הזה': 'Email isn’t connected to this business yet',
+  'שליחת מייל עוד לא הוגדרה בשרת, ולכן אי אפשר לענות כאן.':
+    'Sending email isn’t set up on the server, so replies can’t go out from here.',
+  'ליד חדש ממייל': 'New lead from email',
 };
