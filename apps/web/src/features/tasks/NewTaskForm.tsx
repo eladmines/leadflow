@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Alert, Button, Field, Select } from '../../components/ui';
+import { cn } from '../../lib/cn';
 import { applyServerErrors } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -33,6 +34,15 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
     defaultValues: { title: '', dueLocal: defaultDueLocal(), assigneeId: '' },
   });
 
+  // One row: what, when, (who), (which customer), add. The assignee is the narrow one.
+  const columns = canAssign
+    ? !leadId
+      ? 'md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1.5fr)_auto]'
+      : 'md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]'
+    : !leadId
+      ? 'md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_auto]'
+      : 'md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]';
+
   const submit = form.handleSubmit(async (v) => {
     setFormError(null);
     try {
@@ -57,13 +67,7 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
       aria-label={tr('משימה חדשה')}
     >
       {formError && <Alert tone="danger">{formError}</Alert>}
-      <div
-        className={
-          compact
-            ? 'flex flex-col gap-3'
-            : 'grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end'
-        }
-      >
+      <div className={compact ? 'flex flex-col gap-3' : cn('grid gap-3 md:items-end', columns)}>
         <Field
           label={tr('משימה חדשה')}
           placeholder={tr('למשל: להתקשר לגבי ההצעה')}
@@ -85,15 +89,14 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
             ]}
             {...form.register('assigneeId')}
           />
-        ) : (
-          !compact && <span />
-        )}
+        ) : null}
+        {/* Same row as the rest; only on the tasks page (a lead's page already knows the lead). */}
+        {!leadId && <LeadPicker value={picked} onChange={setPicked} floating />}
         <Button type="submit" loading={form.formState.isSubmitting} className="self-end">
           <Plus aria-hidden className="h-4 w-4" />
           {tr('הוספה')}
         </Button>
       </div>
-      {!leadId && <LeadPicker value={picked} onChange={setPicked} />}
     </form>
   );
 }

@@ -16,9 +16,12 @@ export type PickedLead = Pick<Lead, 'id'> & { name: string };
 export function LeadPicker({
   value,
   onChange,
+  floating = false,
 }: {
   value: PickedLead | null;
   onChange: (lead: PickedLead | null) => void;
+  /** The matches float over what is below (for a form row), instead of pushing it down. */
+  floating?: boolean;
 }) {
   const business = useCurrentBusiness();
   const uid = useId();
@@ -53,7 +56,7 @@ export function LeadPicker({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="relative flex flex-col gap-1.5">
       <label htmlFor={uid} className="text-sm font-medium text-ink">
         {tr('שיוך ללקוח (לא חובה)')}
       </label>
@@ -75,7 +78,10 @@ export function LeadPicker({
       {q && (
         <ul
           aria-label={tr('לקוחות שנמצאו')}
-          className="flex flex-col divide-y divide-surface-border overflow-hidden rounded-xl border border-surface-border"
+          className={cn(
+            'flex flex-col divide-y divide-surface-border overflow-hidden rounded-xl border border-surface-border bg-surface',
+            floating && 'absolute inset-x-0 top-full z-20 mt-1 shadow-lift',
+          )}
         >
           {matches.length === 0 ? (
             <li className="px-3 py-2 text-sm text-ink-muted">
