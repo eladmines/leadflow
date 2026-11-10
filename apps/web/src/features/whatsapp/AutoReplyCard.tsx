@@ -17,10 +17,16 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
 type Saved = WhatsAppBotResponse['settings'];
 
-/** "{business}" in stored texts ↔ a readable tag while editing (like the bot's messages). */
-export const businessTag = () => `[${tr('שם העסק')}]`;
-export const toTag = (text: string) => text.replaceAll('{business}', businessTag());
-export const toCode = (text: string) => text.replaceAll(businessTag(), '{business}');
+/**
+ * "{business}" in stored texts ↔ the business's real name while editing: the owner writes the
+ * name like any other word. On saving, the name (or an older "[שם העסק]" tag) goes back to
+ * `{business}`, so a renamed business keeps its messages right.
+ */
+export const toTag = (text: string, name: string) => text.replaceAll('{business}', name);
+export const toCode = (text: string, name: string) => {
+  const t = text.replaceAll('[שם העסק]', '{business}').replaceAll('[Business name]', '{business}');
+  return name.trim().length >= 2 ? t.replaceAll(name.trim(), '{business}') : t;
+};
 
 export const modeHelp: Record<ReplyMode, string> = {
   off: 'הודעות נכנסות בלי שום מענה אוטומטי.',
@@ -76,7 +82,7 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
 
   /** Saves the general message or one status's message, keeping everything else. */
   const saveMessage = (text: string, onDone: () => void) => {
-    const code = toCode(text.trim());
+    const code = toCode(text.trim(), business.name);
     update.mutate(
       current
         ? {
@@ -185,14 +191,17 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
             ? tr('מה לקוחות מקבלים כשאתם "{0}"', label(current))
             : tr('מה לקוחות מקבלים עכשיו')
         }
-        initial={toTag(current ? current.text : (saved.autoReplyText ?? saved.autoReplyDefault))}
+        initial={toTag(
+          current ? current.text : (saved.autoReplyText ?? saved.autoReplyDefault),
+          business.name,
+        )}
         saving={update.isPending}
         onSave={saveMessage}
         preview={(text) => (
           <ConversationPreview
             businessId={businessId}
             saved={saved}
-            message={toCode(text).replaceAll('{business}', business.name)}
+            message={toCode(text, business.name).replaceAll('{business}', business.name)}
           />
         )}
       />
@@ -250,7 +259,6 @@ function Message({
         label={label}
         // Customer messages follow the business's language: direction by content.
         dir="auto"
-        hint={tr('{0} מוחלף בשם העסק.', businessTag())}
         value={text}
         rows={3}
         error={error ?? undefined}
@@ -316,11 +324,16 @@ function NewStatus({
   onAdd: (status: { id: string; label: string; text: string }) => void;
   onCancel: () => void;
 }) {
+  const business = useCurrentBusiness();
   const [name, setName] = useState('');
   const [text, setText] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const add = () => {
-    const status = { id: `c-${Date.now().toString(36)}`, label: name, text: toCode(text) };
+    const status = {
+      id: `c-${Date.now().toString(36)}`,
+      label: name,
+      text: toCode(text, business.name),
+    };
     const r = replyStatusSchema.safeParse(status);
     if (!r.success) {
       setErrors(Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message])));

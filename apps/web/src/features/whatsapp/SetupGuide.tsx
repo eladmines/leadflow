@@ -6,7 +6,8 @@ import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useUpdateBotSettings } from './api';
-import { businessTag, modeHelp, toCode, toTag } from './AutoReplyCard';
+import { modeHelp, toCode, toTag } from './AutoReplyCard';
+import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { toRequest } from './BookingBotCard';
 
 type Saved = WhatsAppBotResponse['settings'];
@@ -45,10 +46,13 @@ export function SetupGuide({
   saved: Saved;
   onClose: () => void;
 }) {
+  const business = useCurrentBusiness();
   const update = useUpdateBotSettings(businessId);
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<ReplyMode>(saved.mode);
-  const [text, setText] = useState(toTag(saved.autoReplyText ?? saved.autoReplyDefault));
+  const [text, setText] = useState(
+    toTag(saved.autoReplyText ?? saved.autoReplyDefault, business.name),
+  );
   const [autoConfirm, setAutoConfirm] = useState(saved.autoConfirm);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +62,7 @@ export function SetupGuide({
       return;
     }
     setError(null);
-    const general = toCode(text.trim());
+    const general = toCode(text.trim(), business.name);
     update.mutate(
       {
         ...toRequest(saved),
@@ -154,7 +158,6 @@ export function SetupGuide({
           <Textarea
             label={tr('ההודעה הכללית')}
             dir="auto"
-            hint={tr('{0} מוחלף בשם העסק.', businessTag())}
             value={text}
             rows={3}
             error={error ?? undefined}

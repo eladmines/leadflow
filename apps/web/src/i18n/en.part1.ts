@@ -348,8 +348,8 @@ export const enPart1: Record<string, string> = {
   'אחת התמונות כבר לא קיימת בספריית התמונות. בחרו תמונה אחרת.':
     'One of the photos is no longer in the media library. Choose another one.',
   'עריכת ההודעות ללקוחות': 'Edit the messages to customers',
-  'הלקוחות מקבלים את ההודעות בעברית. פרטים בסוגריים, כמו [שם העסק], מתמלאים אוטומטית בפרטים האמיתיים. מוסיפים אותם בכפתורים שמתחת לכל הודעה. הכפתורים והרשימות בוואטסאפ נשארים קבועים.':
-    'Customers get these messages in Hebrew. Details in brackets, like [Business name], are filled in automatically with the real details. Add them with the buttons under each message. WhatsApp buttons and lists stay fixed.',
+  'הלקוחות מקבלים את ההודעות בעברית. שם העסק נכתב כמו שהוא. השירות ומועד התור משתנים מלקוח ללקוח, ולכן מוסיפים אותם בכפתורים שמתחת לכל הודעה והם מתמלאים לפי מה שהלקוח בחר. הכפתורים והרשימות בוואטסאפ נשארים קבועים.':
+    'Customers get these messages in Hebrew. The business name is written as it is. The service and the time change from customer to customer, so add them with the buttons under each message: they are filled in with what the customer chose. WhatsApp buttons and lists stay fixed.',
   'כך הלקוח יראה את זה:': 'What the customer sees:',
   'החזרת ברירת המחדל: {0}': 'Restore the default: {0}',
   'ברירת מחדל': 'Default',
