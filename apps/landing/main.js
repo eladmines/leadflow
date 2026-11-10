@@ -94,6 +94,32 @@ const en = {
   finalTitle: 'Ready to run your business in one place?',
   finalText:
     'Open an account and see your customers, conversations, appointments and tasks in one place.',
+  tourLabel: 'A short tour of the product',
+  tabChats: 'Chats',
+  tabAppts: 'Appointments',
+  tabTasks: 'Tasks',
+  tabReports: 'Reports',
+  apDay: 'Thursday',
+  apSub: 'Appointments and free hours',
+  apFree: 'Free',
+  apSvc: 'Haircut · 30 min',
+  apN2: 'Ron Shemesh',
+  apSvc2: 'Consultation · 45 min',
+  apOk: 'Confirmed',
+  tkTitle: 'Today’s tasks',
+  tkSub: 'Customer follow-up',
+  tk1: 'Call Dana Cohen',
+  tk1s: 'Reminder before the appointment',
+  tk2: 'Send a quote',
+  tk2s: 'Event in Holon',
+  tk3: 'Approve an appointment request',
+  tk3s: 'Waiting for approval',
+  rpTitle: 'Last 7 days',
+  rpSub: 'Inquiries by source',
+  rp1: 'New inquiries',
+  rp2: 'Appointments booked',
+  rp3: 'Closed',
+  rpGoogle: 'Google',
   navLabel: 'Main navigation',
   langLabel: 'Language',
   mockLabel: 'A view of the LeadFlow inbox',
@@ -179,4 +205,60 @@ if ('IntersectionObserver' in window) {
   revealed.forEach((el) => io.observe(el));
 } else {
   revealed.forEach((el) => el.classList.add('in'));
+}
+
+// The product tour in the hero: four scenes that play in turn. A tab (or the arrow keys) picks one;
+// it stops while the pointer or keyboard is on it, and doesn't autoplay for reduced motion.
+const tour = document.getElementById('tour');
+if (tour) {
+  const tabs = [...tour.querySelectorAll('[role="tab"]')];
+  const scenes = tabs.map((t) => document.getElementById(t.getAttribute('aria-controls')));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DURATION = 7000;
+  tour.style.setProperty('--dur', DURATION + 'ms');
+  let index = 0;
+  let timer = null;
+  let paused = false;
+
+  const play = () => {
+    clearTimeout(timer);
+    tour.classList.remove('playing');
+    if (paused || reduce || document.hidden) return;
+    void tour.offsetWidth; // restart the progress bar
+    tour.classList.add('playing');
+    timer = setTimeout(() => show((index + 1) % tabs.length), DURATION);
+  };
+  const show = (i, focus = false) => {
+    index = i;
+    tabs.forEach((t, n) => {
+      const on = n === i;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      scenes[n].hidden = !on;
+      scenes[n].classList.toggle('on', on);
+    });
+    if (focus) tabs[i].focus();
+    play();
+  };
+
+  tabs.forEach((t, n) => t.addEventListener('click', () => show(n)));
+  tour.addEventListener('keydown', (e) => {
+    const rtl = document.documentElement.dir === 'rtl';
+    const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1 }[e.key];
+    if (step) show((index + step + tabs.length) % tabs.length, true);
+    else if (e.key === 'Home') show(0, true);
+    else if (e.key === 'End') show(tabs.length - 1, true);
+    else return;
+    e.preventDefault();
+  });
+  const hold = (on) => {
+    paused = on;
+    play();
+  };
+  tour.addEventListener('pointerenter', () => hold(true));
+  tour.addEventListener('pointerleave', () => hold(tour.matches(':focus-within')));
+  tour.addEventListener('focusin', () => hold(true));
+  tour.addEventListener('focusout', () => hold(tour.matches(':hover')));
+  document.addEventListener('visibilitychange', play);
+  show(0);
 }
