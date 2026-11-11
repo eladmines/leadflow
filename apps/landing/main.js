@@ -25,7 +25,6 @@ const en = {
   heroTitle: 'Run your whole business in one place.',
   heroText:
     'Website, customers, conversations, appointments, tasks and quotes — together, for the whole team. Every inquiry arrives by itself, and no customer falls through the cracks.',
-  heroNote: 'In English and Hebrew, left-to-right and right-to-left, and made for phones too.',
   mockN1: 'Dana Cohen',
   mockM1: 'Can I book Thursday?',
   mockN2: 'Yossi Levi',
@@ -73,14 +72,6 @@ const en = {
   s2p: 'Whoever writes lands in the inbox and in your leads, with the source they came from, with no manual sorting.',
   s3t: 'Run your day',
   s3p: 'Answer, book appointments, tick off tasks, send quotes and see in the reports how it’s going.',
-  stagesLabel:
-    'How work flows in your business: inquiry, lead, appointment, quote, customer, report',
-  st1: 'Inquiry',
-  st2: 'Lead',
-  st3: 'Appointment',
-  st4: 'Quote',
-  st5: 'Customer',
-  st6: 'Report',
   faqEyebrow: 'FAQ',
   faqTitle: 'What you wanted to know',
   q1: 'Do I need a website to start?',
@@ -91,6 +82,20 @@ const en = {
   a3: 'Yes. Switch language any time, and the screen flips between right-to-left and left-to-right.',
   q4: 'How do I start?',
   a4: 'Sign up, set up your business details, then build a website or connect a channel. From there every inquiry arrives by itself.',
+  q5: 'How do I connect my business’s WhatsApp number?',
+  a5: 'The number is connected through Meta’s official API. A dedicated business number is recommended, and a number registered in the regular WhatsApp app must be freed from it first.',
+  q6: 'How do customers’ emails reach the system?',
+  a6: 'Each business gets its own address in the system. Emails sent to it arrive in the inbox, and you can reply from that same address.',
+  q7: 'Can a whole team work in the system?',
+  a7: 'Yes. Invite employees and managers by email, and each one gets permissions for their role. Employees only see the leads and appointments assigned to them.',
+  q8: 'Can customers book an appointment themselves?',
+  a8: 'Yes. On WhatsApp customers see free hours from your calendar and pick one, and you choose whether a booking is confirmed at once or waits for your approval.',
+  q9: 'What happens to an inquiry when I’m not available?',
+  a9: 'The automatic reply answers the customer according to the status you chose, and the inquiry is kept in your inbox and leads, waiting for you.',
+  q10: 'Who can see my business’s data?',
+  a10: 'Each business works in its own separate space. Customer, conversation and lead data is only available to that business’s team members, according to their permissions.',
+  q11: 'Can I export my data?',
+  a11: 'Yes. Owners can export the lead list to a CSV file that opens in Excel.',
   finalTitle: 'Ready to run your business in one place?',
   finalText:
     'Open an account and see your customers, conversations, appointments and tasks in one place.',
@@ -120,6 +125,8 @@ const en = {
   rp2: 'Appointments booked',
   rp3: 'Closed',
   rpGoogle: 'Google',
+  pipeInLabel: 'Where inquiries come from',
+  pipeHubText: 'Every inquiry in one place',
   navLabel: 'Main navigation',
   langLabel: 'Language',
   mockLabel: 'A view of the LeadFlow inbox',
@@ -179,10 +186,10 @@ const wanted =
   saved === 'he' || saved === 'en' ? saved : /^he\b/i.test(navigator.language) ? 'he' : 'en';
 if (wanted !== 'he') apply(wanted);
 
-// Things ease in as they scroll into view; the business cycle's steps light up one after another.
+// Things ease in as they scroll into view.
 const revealed = [
   ...document.querySelectorAll(
-    '.section-head, .cards .card, .steps li, .cycle, .chips li, .channels-title, .faq details, .final .wrap > *',
+    '.section-head, .cards .card, .steps li, .chips li, .channels-title, .faq details, .final .wrap > *',
   ),
 ];
 revealed.forEach((el) => {
@@ -190,7 +197,6 @@ revealed.forEach((el) => {
   const group = el.parentElement ? [...el.parentElement.children].indexOf(el) : 0;
   el.style.setProperty('--i', String(group % 6));
 });
-document.querySelectorAll('.cycle li').forEach((li, n) => li.style.setProperty('--n', String(n)));
 if ('IntersectionObserver' in window) {
   const io = new IntersectionObserver(
     (entries) => {
