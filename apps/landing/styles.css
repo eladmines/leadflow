@@ -850,6 +850,164 @@ h3 {
 .section-tint {
   background: #eef2f7;
 }
+/* Lead analysis */
+.section-blue {
+  background: radial-gradient(50% 50% at 100% 0%, rgba(37, 99, 235, 0.1), transparent 70%), #eff6ff;
+}
+.an-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+.ticks2 {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+.ticks2 li {
+  position: relative;
+  padding-inline-start: 2rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+.ticks2 li::before {
+  content: '✓';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.1rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--brand-600);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.an-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 1.4rem 1.5rem 1rem;
+}
+.an-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.an-head b {
+  font-size: 1.1rem;
+}
+.an-head small {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.an-kpis,
+.an-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.an-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+}
+.an-kpis li {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+}
+.an-kpis b {
+  font-size: 1.55rem;
+  line-height: 1.1;
+  color: var(--brand-700);
+}
+.an-kpis small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.an-kpis em {
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.an-kpis .up {
+  color: var(--green);
+}
+.an-bars {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+.an-bars li {
+  display: grid;
+  grid-template-columns: 4.4rem 1fr 2rem;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.an-bars i {
+  display: block;
+  height: 12px;
+  width: var(--w);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand-600), #60a5fa);
+  transform-origin: left;
+}
+[dir='rtl'] .an-bars i {
+  transform-origin: right;
+}
+.an-bars em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink);
+}
+.js .an-card.reveal:not(.in) .an-bars i {
+  transform: scaleX(0);
+}
+.an-card .an-bars i {
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s;
+}
+.an-table {
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+.an-row {
+  display: grid;
+  grid-template-columns: 1.9fr 0.7fr 0.7fr 1fr;
+  gap: 0.5rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  color: var(--ink);
+}
+.an-row span:not(:first-child) {
+  text-align: end;
+  direction: ltr;
+}
+.an-th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.an-note {
+  margin: 0.6rem 0 0;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
 /* One dark band in the middle of the page, so the sections don't blur into one another. */
 .section-dark {
   background:
@@ -1168,6 +1326,10 @@ h3 {
   }
 }
 @media (max-width: 960px) {
+  .an-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
   .hero-grid {
     grid-template-columns: 1fr;
   }
