@@ -141,10 +141,11 @@ describe('leads page', () => {
     expect(await screen.findByText('salon.lvh.me:4100')).toBeInTheDocument();
   });
 
-  it('empty state links an owner to build the site when nothing is published', async () => {
+  it('empty state has no build-the-site button when nothing is published', async () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(businessWebPaths.section(id, 'leads'));
-    expect(await screen.findByRole('link', { name: 'לבניית האתר' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'עדיין אין פניות' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'לבניית האתר' })).not.toBeInTheDocument();
   });
 
   it('employees are told they see their assigned leads', async () => {

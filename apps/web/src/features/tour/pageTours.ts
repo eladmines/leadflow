@@ -70,13 +70,17 @@ const card = (title: string) => () => {
   return heading?.closest<HTMLElement>('.shadow-card, section, article') ?? heading;
 };
 
-/** A button or link by its visible text (`exact` for short labels like "פרטי"). */
+/**
+ * A button or link by its visible text (`exact` for short labels like "פרטי"). An icon-only
+ * button (like the "more" menu) is found by its accessible label.
+ */
 const button =
   (text: string, exact = false) =>
   () =>
     pick(
       [...document.querySelectorAll<HTMLElement>('main button, main a')].filter((b) => {
         const t = b.textContent?.trim() ?? '';
+        if (b.getAttribute('aria-label') === text) return true;
         return exact ? t === text : t.includes(text);
       }),
     );

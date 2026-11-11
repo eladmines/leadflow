@@ -779,21 +779,21 @@ export function LeadsPage() {
                   {tr('— כל פנייה תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.')}
                 </p>
               ) : (
-                <>
-                  <p className="max-w-md text-sm text-ink-muted">
+                <p className="max-w-md text-sm text-ink-muted">
+                  {tr(
+                    'אחרי שהאתר יפורסם, כל פנייה מהטופס באתר תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.',
+                  )}
+                </p>
+              )}
+              {seesAll && (
+                <div className="mt-2 max-w-md rounded-xl bg-surface-muted p-4 text-start">
+                  <h3 className="text-sm font-semibold text-ink">{tr('מאיפה מגיעים הלידים?')}</h3>
+                  <p className="mt-1 text-sm text-ink-muted">
                     {tr(
-                      'אחרי שהאתר יפורסם, כל פנייה מהטופס באתר תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.',
+                      'ליד חדש נוצר אוטומטית כשמישהו משאיר פרטים בטופס באתר, או פונה אליך ב־WhatsApp, בפייסבוק או במייל. אפשר גם להוסיף ליד ידנית, למשל אחרי שיחת טלפון.',
                     )}
                   </p>
-                  {can(business.role, 'site.edit') && (
-                    <Link
-                      to={businessWebPaths.section(business.id, 'site')}
-                      className={buttonClasses('secondary', 'md')}
-                    >
-                      {tr('לבניית האתר')}
-                    </Link>
-                  )}
-                </>
+                </div>
               )}
             </div>
           ) : view === 'board' ? (

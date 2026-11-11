@@ -232,6 +232,9 @@ export const enPart2: Record<string, string> = {
   'מחפשים…': 'Searching…',
   'לא נמצאו תוצאות': 'No results',
   חיפוש: 'Search',
+  'מאיפה מגיעים הלידים?': 'Where do leads come from?',
+  'ליד חדש נוצר אוטומטית כשמישהו משאיר פרטים בטופס באתר, או פונה אליך ב־WhatsApp, בפייסבוק או במייל. אפשר גם להוסיף ליד ידנית, למשל אחרי שיחת טלפון.':
+    'A new lead is created automatically when someone leaves their details in your website form, or contacts you on WhatsApp, Facebook or email. You can also add a lead by hand, for example after a phone call.',
   'אין לך הרשאה לצפות ב': "You don't have permission to view ",
   'אם צריך גישה, פנו לבעל/ת העסק.': 'If you need access, ask the business owner.',
   'ניווט ראשי': 'Main navigation',

@@ -32,11 +32,11 @@ export function MoreMenu({ children }: { children: ReactNode }) {
         type="button"
         aria-expanded={open}
         aria-controls={id}
+        aria-label={tr('עוד')}
         onClick={() => setOpen((o) => !o)}
         className={buttonClasses('secondary', 'md')}
       >
         <MoreHorizontal aria-hidden className="h-4 w-4" />
-        {tr('עוד')}
       </button>
       {open && (
         <div
