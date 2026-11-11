@@ -162,7 +162,8 @@ const en = {
   autoTitle: 'Every inquiry gets a reply, even while you’re at work',
   autoSub:
     'Everything between the inquiry and the appointment runs automatically, and you step in only when needed.',
-  mascotMsg: 'Hi! Want to see how it works?',
+  mascotHi: 'Welcome to LeadFlow! 👋',
+  mascotMsg: 'Want to see how it works?',
   mascotLabel: 'The LeadFlow helper: how it works',
   flAuto: 'Automatic',
   flYou: 'You',
@@ -321,4 +322,15 @@ if (tour) {
   tour.addEventListener('focusout', () => hold(tour.matches(':hover')));
   document.addEventListener('visibilitychange', play);
   show(0);
+}
+
+// The helper greets a visitor once per visit, not on every page load.
+{
+  const mascot = document.querySelector('.mascot');
+  try {
+    if (sessionStorage.getItem('lf-greeted')) mascot?.classList.add('quiet');
+    else sessionStorage.setItem('lf-greeted', '1');
+  } catch {
+    // Storage blocked: it just greets every time.
+  }
 }
