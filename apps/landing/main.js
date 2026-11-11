@@ -61,7 +61,7 @@ const en = {
   f7t: 'Automatic replies and booking',
   f7p: 'Instant WhatsApp replies that follow your business status, and self-service booking by your customers.',
   f8t: 'Reports and sources',
-  f8p: 'Metrics on inquiry volume, lead sources (Google, Facebook, your site) and close rate.',
+  f8p: 'Lead analysis by source and campaign, close rate, response time and comparison with the previous period.',
   f9t: 'Team and permissions',
   f9p: 'Role-based permissions (owner, manager, employee) and strict separation between businesses’ data.',
   howEyebrow: 'How it works',
@@ -127,6 +127,29 @@ const en = {
   rpGoogle: 'Google',
   pipeInLabel: 'Where inquiries come from',
   pipeHubText: 'Every inquiry in one place',
+  anEyebrow: 'Lead analysis',
+  anTitle: 'Know where your customers come from, and what brings them',
+  anText:
+    'Every lead is recorded with its source: your website, WhatsApp, Facebook, Google or a specific ad. See what works and what doesn’t, and decide where to invest.',
+  an1: 'Automatic source detection: Google and Facebook ads, your website and campaigns',
+  an2: 'Close rate and deal value by source and campaign',
+  an3: 'Comparison with the previous period and a trend over time',
+  an4: 'Average response time: how fast you answer a customer',
+  anLabel: 'A sample lead analysis report',
+  anCardT: 'Inquiries by source',
+  anCardS: 'Last 30 days',
+  anK1: 'New inquiries',
+  anK2: 'Close rate',
+  anK3: 'Response time',
+  anK3v: '12 min',
+  anCamp: 'Campaign',
+  anLeads: 'Leads',
+  anWon: 'Closed',
+  anVal: 'Value',
+  anC1: 'Summer campaign · Google',
+  anC2: 'Friends offer · Facebook',
+  anC3: 'Website form',
+  anNote: 'Sample data',
   navLabel: 'Main navigation',
   langLabel: 'Language',
   mockLabel: 'A view of the LeadFlow inbox',
@@ -189,7 +212,7 @@ if (wanted !== 'he') apply(wanted);
 // Things ease in as they scroll into view.
 const revealed = [
   ...document.querySelectorAll(
-    '.section-head, .cards .card, .steps li, .chips li, .channels-title, .faq details, .final .wrap > *',
+    '.section-head, .cards .card, .steps li, .an-card, .an-copy, .chips li, .channels-title, .faq details, .final .wrap > *',
   ),
 ];
 revealed.forEach((el) => {

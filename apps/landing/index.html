@@ -623,7 +623,7 @@
               ></span>
               <h3 data-i18n="f8t">דוחות ומקורות</h3>
               <p data-i18n="f8p">
-                מדדים על היקף הפניות, מקורות ההגעה (גוגל, פייסבוק, האתר) ושיעור הסגירה.
+                ניתוח לידים לפי מקור וקמפיין, שיעור סגירה, זמן תגובה והשוואה לתקופה הקודמת.
               </p>
             </li>
             <li class="card">
@@ -645,6 +645,75 @@
               </p>
             </li>
           </ul>
+        </div>
+      </section>
+
+      <!-- Lead analysis -->
+      <section class="section section-blue" id="analytics" aria-labelledby="an-title">
+        <div class="wrap an-grid">
+          <div class="an-copy">
+            <p class="eyebrow" data-i18n="anEyebrow">ניתוח לידים</p>
+            <h2 id="an-title" data-i18n="anTitle">יודעים מאיפה מגיעים הלקוחות, ומה מביא אותם</h2>
+            <p class="lead" data-i18n="anText">
+              כל ליד נרשם עם המקור שלו: האתר, וואטסאפ, פייסבוק, גוגל או מודעה מסוימת. רואים מה עובד
+              ומה לא, ומחליטים איפה להשקיע.
+            </p>
+            <ul class="ticks2">
+              <li data-i18n="an1">
+                זיהוי אוטומטי של מקור הפנייה: מודעות גוגל ופייסבוק, האתר וקמפיינים
+              </li>
+              <li data-i18n="an2">שיעור סגירה וערך עסקאות לפי מקור וקמפיין</li>
+              <li data-i18n="an3">השוואה לתקופה הקודמת ומגמה לאורך זמן</li>
+              <li data-i18n="an4">זמן תגובה ממוצע: כמה מהר עונים ללקוח</li>
+            </ul>
+          </div>
+
+          <div
+            class="an-card"
+            role="img"
+            aria-label="דוח ניתוח לידים לדוגמה"
+            data-i18n-aria="anLabel"
+          >
+            <div class="an-head">
+              <b data-i18n="anCardT">פניות לפי מקור</b
+              ><small data-i18n="anCardS">30 הימים האחרונים</small>
+            </div>
+            <ul class="an-kpis" aria-hidden="true">
+              <li>
+                <b>128</b><small data-i18n="anK1">פניות חדשות</small><em class="up">▲ 18%</em>
+              </li>
+              <li><b>21%</b><small data-i18n="anK2">שיעור סגירה</small><em class="up">▲ 3%</em></li>
+              <li>
+                <b data-i18n="anK3v">12 דק׳</b><small data-i18n="anK3">זמן תגובה</small
+                ><em class="up">▼ 4</em>
+              </li>
+            </ul>
+            <ul class="an-bars" aria-hidden="true">
+              <li><span data-i18n="chSite">האתר</span><i style="--w: 74%"></i><em>46</em></li>
+              <li><span>WhatsApp</span><i style="--w: 58%"></i><em>34</em></li>
+              <li><span data-i18n="chFb">פייסבוק</span><i style="--w: 44%"></i><em>26</em></li>
+              <li><span data-i18n="rpGoogle">גוגל</span><i style="--w: 30%"></i><em>22</em></li>
+            </ul>
+            <div class="an-table" aria-hidden="true">
+              <div class="an-row an-th">
+                <span data-i18n="anCamp">קמפיין</span><span data-i18n="anLeads">לידים</span
+                ><span data-i18n="anWon">נסגרו</span><span data-i18n="anVal">ערך</span>
+              </div>
+              <div class="an-row">
+                <span data-i18n="anC1">קמפיין קיץ · גוגל</span><span>22</span><span>7</span
+                ><span>₪18,400</span>
+              </div>
+              <div class="an-row">
+                <span data-i18n="anC2">מבצע חברים · פייסבוק</span><span>26</span><span>5</span
+                ><span>₪9,800</span>
+              </div>
+              <div class="an-row">
+                <span data-i18n="anC3">טופס באתר</span><span>46</span><span>11</span
+                ><span>₪21,300</span>
+              </div>
+            </div>
+            <p class="an-note" data-i18n="anNote">נתוני דוגמה</p>
+          </div>
         </div>
       </section>
 
