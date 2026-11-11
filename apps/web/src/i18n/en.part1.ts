@@ -11,11 +11,11 @@ export const enPart1: Record<string, string> = {
   'כל הפניות במקום אחד': 'Every inquiry in one place',
   'כל השארת פרטים באתר נכנסת אוטומטית כליד.':
     'Every contact form on your site becomes a lead automatically.',
-  'עונים ללקוחות ב־WhatsApp': 'Reply to customers on WhatsApp',
-  'תיבת שיחות משותפת לכל הצוות.': 'A shared inbox for the whole team.',
+  'כל פנייה מקבלת מענה, גם כשאתם לא זמינים':
+    "Every inquiry gets a reply, even when you're unavailable",
+  'תיבת שיחות אחת לכל הערוצים ולכל הצוות.': 'One inbox for every channel and the whole team.',
   'לעסקים מכל סוג': 'For every kind of business',
-  'האתר, הלידים והשיחות של העסק — במקום אחד.':
-    "Your business's website, leads and conversations — in one place.",
+  'מנהלים את כל העסק במקום אחד.': 'Run your whole business in one place.',
   ד: 'D',
   'פנייה חדשה מהאתר': 'New inquiry from the website',
   אתר: 'Website',
