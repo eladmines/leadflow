@@ -113,7 +113,7 @@ export function BusinessLayout() {
                 <Menu aria-hidden className="h-5 w-5" />
               </button>
             </Dialog.Trigger>
-            <Logo />
+            <Logo to="/" />
             <span className="ms-auto truncate text-sm font-medium text-ink-muted">{b.name}</span>
             <NotificationBell businessId={b.id} />
             <button

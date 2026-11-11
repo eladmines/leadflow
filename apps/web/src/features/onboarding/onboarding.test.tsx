@@ -74,7 +74,9 @@ describe('onboarding wizard', () => {
     expect(screen.getByText('יש לבחור תחום פעילות')).toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/שם העסק/), 'מספרת שירן');
-    await user.selectOptions(screen.getByLabelText(/תחום פעילות/), 'beauty');
+    await user.click(screen.getByLabelText(/תחום פעילות/));
+    await user.type(await screen.findByRole('searchbox'), 'ספרה');
+    await user.click(await screen.findByRole('option', { name: 'מספרה וקוסמטיקה' }));
     await user.click(screen.getByRole('button', { name: 'המשך' }));
 
     expect(

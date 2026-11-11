@@ -51,7 +51,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
     <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       <div className="flex flex-col px-5 py-8 sm:px-10">
         <header className="flex items-center justify-between gap-4">
-          <Logo />
+          <Logo to="/" />
           <LanguageSwitch />
         </header>
         <main className="flex flex-1 flex-col justify-center py-10">

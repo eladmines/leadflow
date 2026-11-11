@@ -231,6 +231,7 @@ export const enPart2: Record<string, string> = {
   תוצאות: 'Results',
   'מחפשים…': 'Searching…',
   'לא נמצאו תוצאות': 'No results',
+  חיפוש: 'Search',
   'אין לך הרשאה לצפות ב': "You don't have permission to view ",
   'אם צריך גישה, פנו לבעל/ת העסק.': 'If you need access, ask the business owner.',
   'ניווט ראשי': 'Main navigation',
