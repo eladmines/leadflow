@@ -11,6 +11,7 @@ import {
   Check,
   ChevronLeft,
   Copy,
+  ExternalLink,
   Facebook,
   Instagram,
   Mail,
@@ -283,6 +284,56 @@ const stateOf = (status: ChannelStatus): BoxState => (status.connected ? 'connec
 const detailOf = (status: ChannelStatus) =>
   status.source === 'environment' ? tr('דרך הגדרות המערכת') : status.name;
 
+const META_APPS_URL = 'https://developers.facebook.com/apps';
+const META_GUIDE_URL = 'https://developers.facebook.com/docs/whatsapp/cloud-api/get-started';
+const META_SYSTEM_USERS_URL = 'https://business.facebook.com/settings/system-users';
+
+function GuideLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline"
+    >
+      <bdi dir="ltr">{children}</bdi>
+      <ExternalLink aria-hidden className="h-3.5 w-3.5 shrink-0" />
+    </a>
+  );
+}
+
+/** Where the two details come from, step by step (opens by itself: most owners need it). */
+function WhatsAppGuide() {
+  return (
+    <details open className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted">
+      <summary className="cursor-pointer font-medium text-ink">
+        {tr('איך משיגים את הפרטים?')}
+      </summary>
+      <ol className="mt-2 flex list-decimal flex-col gap-2 ps-5">
+        <li>
+          {tr('נכנסים ל-')}
+          <GuideLink href={META_APPS_URL}>Meta for Developers</GuideLink>
+          {tr(', פותחים את האפליקציה של העסק (או יוצרים אחת) ומוסיפים אליה את המוצר WhatsApp.')}
+        </li>
+        <li>{tr('ב-WhatsApp ← API Setup מעתיקים את ה-Phone number ID של המספר.')}</li>
+        <li>
+          {tr('לטוקן קבוע: ב-')}
+          <GuideLink href={META_SYSTEM_USERS_URL}>Business Settings → System users</GuideLink>
+          {tr(
+            ' יוצרים משתמש מערכת, משייכים לו את האפליקציה ויוצרים טוקן עם ההרשאות whatsapp_business_messaging ו-whatsapp_business_management.',
+          )}
+        </li>
+      </ol>
+      <p className="mt-2">
+        {tr('הטוקן הזמני שמופיע ב-API Setup פג אחרי 24 שעות, ואז החיבור מפסיק לעבוד.')}
+      </p>
+      <p className="mt-2">
+        <GuideLink href={META_GUIDE_URL}>{tr('המדריך המלא של Meta')}</GuideLink>
+      </p>
+    </details>
+  );
+}
+
 function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: boolean }) {
   const business = useCurrentBusiness();
   const connect = useConnectWhatsApp(business.id);
@@ -345,11 +396,7 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
       </DialogShell>
       {open && (
         <form noValidate onSubmit={submit} className="flex flex-col gap-3">
-          <p className="text-sm text-ink-muted">
-            {tr(
-              'את הפרטים מוצאים ב-Meta for Developers: האפליקציה של העסק → WhatsApp → API Setup. מעתיקים את ה-Phone number ID ואת טוקן הגישה.',
-            )}
-          </p>
+          <WhatsAppGuide />
           {formError && <Alert tone="danger">{formError}</Alert>}
           <Field
             label="Phone number ID"
