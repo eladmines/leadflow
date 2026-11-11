@@ -43,7 +43,6 @@ import { errorMessage } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
-import { useSite } from '../site/api';
 import {
   leadsQueryKey,
   shekel,
@@ -455,7 +454,6 @@ export function LeadsPage() {
   const queryClient = useQueryClient();
   const stages = usePipeline(business.id);
   const members = useMembers(business.id, can(business.role, 'members.view'));
-  const site = useSite(business.id);
   // `?new=1` (from quick search) opens the new-lead dialog.
   const [newOpen, setNewOpenState] = useState(params.get('new') === '1');
   const setNewOpen = (open: boolean) => {
@@ -770,30 +768,20 @@ export function LeadsPage() {
                 <p className="max-w-md text-sm text-ink-muted">
                   {tr('כשיוקצו לך פניות, הן יופיעו כאן.')}
                 </p>
-              ) : site.data?.published ? (
-                <p className="max-w-md text-sm text-ink-muted">
-                  {tr('האתר באוויר עם טופס פנייה. שתפו את הכתובת')}{' '}
-                  <bdi dir="ltr" className="font-medium text-ink">
-                    {site.data.publicUrl?.replace(/^https?:\/\//, '')}
-                  </bdi>{' '}
-                  {tr('— כל פנייה תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.')}
-                </p>
               ) : (
-                <p className="max-w-md text-sm text-ink-muted">
-                  {tr(
-                    'אחרי שהאתר יפורסם, כל פנייה מהטופס באתר תופיע כאן ותגיע אליך באימייל. אפשר גם להוסיף ליד ידנית.',
-                  )}
-                </p>
-              )}
-              {seesAll && (
-                <div className="mt-2 max-w-md rounded-xl bg-surface-muted p-4 text-start">
-                  <h3 className="text-sm font-semibold text-ink">{tr('מאיפה מגיעים הלידים?')}</h3>
-                  <p className="mt-1 text-sm text-ink-muted">
-                    {tr(
-                      'ליד חדש נוצר אוטומטית כשמישהו משאיר פרטים בטופס באתר, או פונה אליך ב־WhatsApp, בפייסבוק או במייל. אפשר גם להוסיף ליד ידנית, למשל אחרי שיחת טלפון.',
-                    )}
+                <>
+                  <p className="max-w-md text-sm text-ink-muted">
+                    {tr('הלידים מגיעים מהערוצים שהוגדרו לעסק, או שמוסיפים אותם ידנית.')}
                   </p>
-                </div>
+                  {can(business.role, 'business.update') && (
+                    <Link
+                      to={`${businessWebPaths.section(business.id, 'settings')}?tab=channels`}
+                      className={buttonClasses('secondary', 'md')}
+                    >
+                      {tr('להגדרת הערוצים')}
+                    </Link>
+                  )}
+                </>
               )}
             </div>
           ) : view === 'board' ? (

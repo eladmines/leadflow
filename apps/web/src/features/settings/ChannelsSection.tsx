@@ -16,6 +16,7 @@ import {
   Mail,
   MessageCircle,
   Plug,
+  Unplug,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -100,7 +101,6 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
               description={tr(
                 'הודעות ישירות מאינסטגרם יגיעו לתיבת השיחות. החשבון מתחבר דרך דף הפייסבוק של העסק.',
               )}
-              action={tr('חיבור Instagram')}
             />
           </li>
           <li>
@@ -124,6 +124,68 @@ const STATE_PILL: Record<BoxState, { label: string; className: string }> = {
   off: { label: 'לא מחובר', className: 'bg-slate-100 text-slate-600' },
   soon: { label: 'בקרוב', className: 'bg-amber-50 text-amber-700' },
 };
+
+/**
+ * The connect / disconnect control (a button with role="switch"): the plug is in the socket when
+ * the channel is connected and pulled out when it isn't. The words beside it say the same, so the
+ * colour is never the only signal.
+ */
+function PlugSwitch({
+  title,
+  connected,
+  onToggle,
+  disabled,
+  busy,
+  hideLabel,
+}: {
+  title: string;
+  connected: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+  /** For a channel that isn't available yet: just the (disabled) plug. */
+  hideLabel?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={connected}
+      aria-label={title}
+      aria-busy={busy || undefined}
+      disabled={disabled || busy}
+      onClick={onToggle}
+      className="group inline-flex items-center gap-2 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors',
+          connected ? 'bg-emerald-500' : 'bg-slate-300',
+        )}
+      >
+        <span
+          className={cn(
+            'flex h-6 w-6 items-center justify-center rounded-full bg-white shadow transition-transform',
+            connected
+              ? 'text-emerald-600 ltr:translate-x-7 rtl:-translate-x-7'
+              : 'text-slate-500 ltr:translate-x-1 rtl:-translate-x-1',
+          )}
+        >
+          {connected ? <Plug className="h-3.5 w-3.5" /> : <Unplug className="h-3.5 w-3.5" />}
+        </span>
+      </span>
+      {!hideLabel && (
+        <span
+          aria-hidden
+          className={cn('text-sm font-medium', connected ? 'text-emerald-700' : 'text-ink-muted')}
+        >
+          {connected ? tr('מחובר') : tr('לא מחובר')}
+        </span>
+      )}
+    </button>
+  );
+}
 
 /**
  * One box per channel, the same for every channel (D-161): its icon in its colour, the name with a
@@ -166,9 +228,11 @@ function ChannelBox({
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h3 className="flex flex-wrap items-center gap-2 font-semibold text-ink">
             {title}
-            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', pill.className)}>
-              {tr(pill.label)}
-            </span>
+            {state === 'soon' && (
+              <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', pill.className)}>
+                {tr(pill.label)}
+              </span>
+            )}
           </h3>
           <p className="text-sm text-ink-muted">{description}</p>
           {state === 'connected' && detail && (
@@ -184,16 +248,11 @@ function ChannelBox({
   );
 }
 
-/** "Disconnect", then a short confirmation inside the box. */
+/** Turning the plug off asks for a short confirmation inside the box. */
 function useDisconnectFlow(channel: Channel) {
   const business = useCurrentBusiness();
   const disconnect = useDisconnect(business.id);
   const [confirm, setConfirm] = useState(false);
-  const button = (
-    <Button variant="secondary" size="sm" onClick={() => setConfirm(true)}>
-      {tr('ניתוק')}
-    </Button>
-  );
   const panel = (
     <>
       {confirm && (
@@ -217,7 +276,7 @@ function useDisconnectFlow(channel: Channel) {
       {disconnect.isError && <Alert tone="danger">{errorMessage(disconnect.error)}</Alert>}
     </>
   );
-  return { button: confirm ? null : button, panel };
+  return { request: () => setConfirm(true), panel };
 }
 
 const stateOf = (status: ChannelStatus): BoxState => (status.connected ? 'connected' : 'off');
@@ -248,15 +307,14 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
     }
   });
   const errors = form.formState.errors;
-  const action = !canEdit
-    ? null
-    : status.source === 'business'
-      ? off.button
-      : !open && (
-          <Button size="sm" onClick={() => setOpen(true)}>
-            {tr('חיבור WhatsApp')}
-          </Button>
-        );
+  const action = (
+    <PlugSwitch
+      title="WhatsApp"
+      connected={status.connected}
+      disabled={!canEdit || status.source === 'environment'}
+      onToggle={() => (status.connected ? off.request() : setOpen((o) => !o))}
+    />
+  );
   return (
     <ChannelBox
       icon={MessageCircle}
@@ -349,17 +407,14 @@ function EmailRow({
       // No clipboard access (an insecure page): the address is on screen to copy by hand.
     }
   };
-  const action = !canEdit ? null : status.connected ? (
-    off.button
-  ) : (
-    <Button
-      size="sm"
-      loading={create.isPending}
-      disabled={!available}
-      onClick={() => create.mutate()}
-    >
-      {tr('יצירת כתובת')}
-    </Button>
+  const action = (
+    <PlugSwitch
+      title={tr('אימייל')}
+      connected={status.connected}
+      disabled={!canEdit || (!status.connected && !available)}
+      busy={create.isPending}
+      onToggle={() => (status.connected ? off.request() : create.mutate())}
+    />
   );
   return (
     <ChannelBox
@@ -413,17 +468,14 @@ function FacebookRow({
   const business = useCurrentBusiness();
   const start = useFacebookStart(business.id);
   const off = useDisconnectFlow('messenger');
-  const action = !canEdit ? null : status.source === 'business' ? (
-    off.button
-  ) : (
-    <Button
-      size="sm"
-      loading={start.isPending}
-      disabled={!available}
-      onClick={() => start.mutate()}
-    >
-      {tr('חיבור פייסבוק')}
-    </Button>
+  const action = (
+    <PlugSwitch
+      title={tr('פייסבוק')}
+      connected={status.connected}
+      disabled={!canEdit || status.source === 'environment' || (!status.connected && !available)}
+      busy={start.isPending}
+      onToggle={() => (status.connected ? off.request() : start.mutate())}
+    />
   );
   return (
     <ChannelBox
@@ -450,16 +502,13 @@ function ComingSoonRow(props: {
   tone: string;
   title: string;
   description: string;
-  action: string;
 }) {
   return (
     <ChannelBox
       {...props}
       state="soon"
       action={
-        <Button size="sm" disabled>
-          {props.action}
-        </Button>
+        <PlugSwitch title={props.title} connected={false} disabled hideLabel onToggle={() => {}} />
       }
     />
   );
