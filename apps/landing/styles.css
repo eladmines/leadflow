@@ -719,8 +719,9 @@ h3 {
 
 /* Channels */
 .channels {
-  padding-block: 1.5rem 2.5rem;
-  background: var(--surface);
+  padding-block: 2.5rem 3rem;
+  background: #eef4ff;
+  border-block: 1px solid #dbeafe;
 }
 .channels-title {
   margin: 0 0 1rem;
@@ -847,7 +848,29 @@ h3 {
   padding-block: 5rem;
 }
 .section-tint {
-  background: var(--canvas);
+  background: #eef2f7;
+}
+/* One dark band in the middle of the page, so the sections don't blur into one another. */
+.section-dark {
+  background:
+    radial-gradient(50% 60% at 15% 0%, rgba(59, 130, 246, 0.28), transparent 70%),
+    linear-gradient(180deg, #0b1736, #10245a);
+  color: #fff;
+}
+.section-dark .eyebrow {
+  color: #93c5fd;
+}
+.section-dark .steps li {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+}
+.section-dark .steps p {
+  color: #cbd5e1;
+}
+.section-dark .num {
+  background: #fff;
+  color: var(--brand-700);
 }
 .section-head {
   text-align: center;

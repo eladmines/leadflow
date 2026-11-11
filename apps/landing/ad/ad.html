@@ -1,0 +1,1488 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>LeadFlow ad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --brand: #2563eb;
+        --brand-dark: #1e40af;
+        --ink: #0f172a;
+        --muted: #475569;
+        --line: #e2e8f0;
+        --coral: #f2564a;
+        --green: #16a34a;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      body {
+        font-family: 'Heebo', system-ui, sans-serif;
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        overflow: hidden;
+      }
+      .abs {
+        position: absolute;
+      }
+      .center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      /* backgrounds */
+      .dark {
+        background: radial-gradient(70% 60% at 50% 40%, #16295e, #0b1736);
+        color: #fff;
+      }
+      .light {
+        background:
+          radial-gradient(60% 50% at 85% 0%, #dbeafe, transparent 70%),
+          radial-gradient(45% 45% at 0% 100%, #fde4e1, transparent 70%), #f6f8fc;
+      }
+      .brandbg {
+        background: linear-gradient(135deg, #2563eb, #1e3a8a);
+        color: #fff;
+      }
+
+      .h1 {
+        font-size: 112px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        text-align: center;
+      }
+      .h2 {
+        font-size: 84px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        text-align: center;
+      }
+      .sub {
+        font-size: 40px;
+        font-weight: 500;
+        color: var(--muted);
+        text-align: center;
+      }
+      .coral {
+        color: var(--coral);
+      }
+      .brandc {
+        color: var(--brand);
+      }
+      .cap {
+        position: absolute;
+        top: 70px;
+        inset-inline: 0;
+      }
+      .cap .sub {
+        margin-top: 14px;
+      }
+
+      .card {
+        background: #fff;
+        border: 2px solid var(--line);
+        border-radius: 36px;
+        box-shadow: 0 40px 90px -30px rgba(15, 23, 42, 0.35);
+      }
+      .logo-name {
+        direction: ltr;
+        unicode-bidi: isolate;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      .logo-name b {
+        color: var(--brand);
+      }
+
+      /* S1 */
+      .notif {
+        position: absolute;
+        left: 50%;
+        top: 150px;
+        width: 880px;
+        margin-left: -440px;
+        background: rgba(255, 255, 255, 0.97);
+        color: var(--ink);
+        border-radius: 36px;
+        padding: 34px 40px;
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.6);
+      }
+      .notif .wa {
+        width: 96px;
+        height: 96px;
+        border-radius: 26px;
+        background: #25d366;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .notif b {
+        font-size: 38px;
+        display: block;
+      }
+      .notif span {
+        font-size: 34px;
+        color: var(--muted);
+      }
+      .notif time {
+        margin-inline-start: auto;
+        font-size: 28px;
+        color: #94a3b8;
+        white-space: nowrap;
+      }
+      .badge {
+        position: absolute;
+        top: -18px;
+        inset-inline-end: -18px;
+        min-width: 56px;
+        height: 56px;
+        border-radius: 28px;
+        background: var(--coral);
+        color: #fff;
+        font-size: 34px;
+        font-weight: 800;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 10px 24px rgba(242, 86, 74, 0.55);
+      }
+
+      /* S2 */
+      .chan {
+        position: absolute;
+        width: 360px;
+        height: 96px;
+        border-radius: 48px;
+        background: #fff;
+        border: 2px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        padding-inline: 16px 34px;
+        font-size: 38px;
+        font-weight: 700;
+        box-shadow: 0 18px 40px -22px rgba(15, 23, 42, 0.4);
+      }
+      .chan svg {
+        width: 64px;
+        height: 64px;
+        flex: none;
+      }
+      .chan small {
+        font-size: 24px;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 2px 14px;
+        border-radius: 999px;
+        margin-inline-start: 10px;
+      }
+      .app {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 80px;
+        background: #fff;
+        border: 2px solid #dbeafe;
+        display: grid;
+        place-items: center;
+        box-shadow:
+          0 50px 110px -30px rgba(37, 99, 235, 0.7),
+          0 0 0 22px rgba(37, 99, 235, 0.07);
+      }
+      .ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 6px solid var(--brand);
+      }
+
+      /* mocks */
+      .mockwin {
+        position: absolute;
+        background: #fff;
+        border: 2px solid var(--line);
+        border-radius: 36px;
+        box-shadow: 0 50px 110px -34px rgba(15, 23, 42, 0.45);
+        overflow: hidden;
+      }
+      .bar {
+        height: 76px;
+        background: #f6f8fc;
+        border-bottom: 2px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-inline: 28px;
+      }
+      .bar i {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #cbd5e1;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .wa {
+        background: #25d366;
+      }
+      .fb {
+        background: #1877f2;
+      }
+      .em {
+        background: #0ea5e9;
+      }
+      .chatlist {
+        width: 520px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border-inline-end: 2px solid var(--line);
+      }
+      .conv {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 24px 22px;
+        border-radius: 22px;
+        font-size: 30px;
+      }
+      .conv.active {
+        background: #eff6ff;
+      }
+      .conv small {
+        display: block;
+        font-size: 24px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .conv b {
+        font-weight: 700;
+        display: block;
+      }
+      .tag {
+        margin-inline-start: auto;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 22px;
+        font-weight: 800;
+        padding: 4px 16px;
+        border-radius: 999px;
+      }
+      .chatpane {
+        flex: 1;
+        padding: 34px 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .bub {
+        max-width: 78%;
+        padding: 22px 32px;
+        border-radius: 30px;
+        font-size: 34px;
+        line-height: 1.35;
+      }
+      .bub small {
+        display: block;
+        font-size: 22px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .in {
+        align-self: flex-start;
+        background: #f1f5f9;
+        border-end-start-radius: 8px;
+      }
+      .out {
+        align-self: flex-end;
+        background: #ecfdf3;
+        box-shadow: inset 0 0 0 2px rgba(22, 163, 74, 0.25);
+        border-end-end-radius: 8px;
+      }
+      .toast {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        background: #fff;
+        border: 2px solid var(--line);
+        border-radius: 28px;
+        padding: 24px 34px;
+        font-size: 32px;
+        box-shadow: 0 30px 70px -24px rgba(15, 23, 42, 0.5);
+      }
+      .toast .ck {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 38px;
+        font-weight: 800;
+      }
+      .toast small {
+        display: block;
+        color: var(--muted);
+        font-size: 24px;
+      }
+
+      .slot {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        height: 112px;
+        padding-inline: 36px;
+        border: 3px dashed var(--line);
+        border-radius: 26px;
+        font-size: 34px;
+        color: #94a3b8;
+      }
+      .slot time {
+        font-weight: 800;
+        color: var(--ink);
+        width: 130px;
+        direction: ltr;
+      }
+      .slot.filled {
+        border: 3px solid #bfdbfe;
+        background: #eff6ff;
+        color: var(--ink);
+      }
+      .slot .who {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+      .slot .who small {
+        font-size: 24px;
+        color: var(--muted);
+      }
+      .pill {
+        background: #dcfce7;
+        color: #166534;
+        font-size: 24px;
+        font-weight: 800;
+        padding: 6px 22px;
+        border-radius: 999px;
+      }
+
+      .task {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 30px 34px;
+        border: 2px solid var(--line);
+        border-radius: 26px;
+        font-size: 36px;
+      }
+      .box {
+        width: 52px;
+        height: 52px;
+        border: 5px solid #cbd5e1;
+        border-radius: 14px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 34px;
+        font-weight: 800;
+      }
+      .task small {
+        display: block;
+        font-size: 24px;
+        color: var(--muted);
+      }
+      .chip {
+        margin-inline-start: auto;
+        font-size: 26px;
+        font-weight: 700;
+        color: #1d4ed8;
+        background: #eff6ff;
+        padding: 8px 24px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      .kpi {
+        flex: 1;
+        border: 2px solid var(--line);
+        border-radius: 28px;
+        padding: 28px 34px;
+      }
+      .kpi b {
+        display: block;
+        font-size: 96px;
+        line-height: 1;
+        color: #1d4ed8;
+        font-weight: 900;
+      }
+      .kpi span {
+        font-size: 28px;
+        color: var(--muted);
+      }
+      .bar2 {
+        display: grid;
+        grid-template-columns: 200px 1fr 60px;
+        align-items: center;
+        gap: 24px;
+        font-size: 30px;
+        color: var(--muted);
+      }
+      .bar2 .track {
+        height: 30px;
+        border-radius: 999px;
+        background: #eef2f7;
+        overflow: hidden;
+      }
+      .bar2 .fill {
+        height: 100%;
+        width: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #2563eb, #60a5fa);
+      }
+      .bar2 em {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--ink);
+      }
+
+      .phone {
+        position: absolute;
+        left: 640px;
+        top: 215px;
+        width: 640px;
+        height: 830px;
+        border-radius: 72px;
+        background: #0f172a;
+        padding: 16px;
+        box-shadow: 0 60px 120px -30px rgba(15, 23, 42, 0.6);
+      }
+      .phone > * {
+        background: #fff;
+      }
+      .phone-head {
+        height: 110px;
+        border-radius: 58px 58px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding-inline: 34px;
+        border-bottom: 2px solid var(--line);
+      }
+      .phone-head b {
+        display: block;
+        font-size: 32px;
+      }
+      .phone-head small {
+        font-size: 22px;
+        color: var(--muted);
+      }
+      .avatar {
+        width: 62px;
+        height: 62px;
+        border-radius: 50%;
+        background: #fde4e1;
+        color: #be123c;
+        display: grid;
+        place-items: center;
+        font-size: 30px;
+        font-weight: 800;
+      }
+      .chat {
+        height: 672px;
+        border-radius: 0 0 58px 58px;
+        padding: 22px 26px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        overflow: hidden;
+        background: #f8fafc !important;
+      }
+      .msg {
+        flex: none;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .msg > * {
+        flex: none;
+      }
+      .msg .bub {
+        font-size: 29px;
+        padding: 16px 24px;
+        margin-block: 7px;
+        max-width: 86%;
+      }
+      .msg .auto {
+        display: block;
+        font-size: 19px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .peek .tiles {
+        display: flex;
+        gap: 10px;
+        margin: 12px 0 10px;
+      }
+      .peek .tiles i {
+        display: block;
+        flex: 1;
+        height: 92px;
+        border-radius: 16px;
+      }
+      .peek .lnk {
+        display: block;
+        font-size: 25px;
+        font-weight: 700;
+        color: var(--brand);
+      }
+      .cta2 {
+        display: block;
+        margin-top: 12px;
+        text-align: center;
+        font-size: 27px;
+        font-weight: 700;
+        color: var(--brand);
+        padding-top: 12px;
+        border-top: 2px solid #d1fae5;
+      }
+      .times {
+        list-style: none;
+        padding: 0;
+        align-self: flex-end;
+        width: 74%;
+        margin-block: 7px;
+        background: #fff;
+        border: 2px solid var(--line);
+        border-radius: 22px;
+        overflow: hidden;
+      }
+      .times li {
+        padding: 14px 22px;
+        font-size: 27px;
+        border-bottom: 2px solid #f1f5f9;
+      }
+      .times li:last-child {
+        border-bottom: 0;
+      }
+      .switch {
+        width: 74px;
+        height: 42px;
+        border-radius: 21px;
+        background: #cbd5e1;
+        position: relative;
+        flex: none;
+      }
+      .switch i {
+        position: absolute;
+        top: 5px;
+        inset-inline-start: 5px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      }
+      .btn {
+        position: absolute;
+        padding: 30px 80px;
+        border-radius: 40px;
+        background: #fff;
+        color: var(--brand-dark);
+        font-size: 54px;
+        font-weight: 800;
+        box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- S1: the hook -->
+    <section class="scene dark" id="s1">
+      <div class="notif" id="notif">
+        <div class="wa" style="position: relative">
+          <svg viewBox="0 0 24 24" width="62" height="62" fill="none">
+            <path
+              d="M12 3.6a8.4 8.4 0 0 0-7.2 12.7l-1.1 4.1 4.2-1.1A8.4 8.4 0 1 0 12 3.6z"
+              stroke="#fff"
+              stroke-width="1.8"
+              stroke-linejoin="round"
+            />
+            <path
+              fill="#fff"
+              d="M9.2 8.4c.2-.5.5-.5.7-.5h.5c.2 0 .4 0 .5.4l.8 1.8c.1.2 0 .4-.1.6l-.4.5c-.1.2-.2.3-.1.5.5 1 1.6 2 2.8 2.5.2.1.4 0 .5-.1l.6-.8c.2-.2.4-.3.6-.1l1.8.9c.3.1.3.3.2.6-.1.8-.9 1.5-1.9 1.5-3.1-.3-6.3-3.4-6.4-6.4 0-.9.3-1.5.5-2z"
+            />
+          </svg>
+          <span class="badge" id="badge">1</span>
+        </div>
+        <div><b id="n1">הודעה חדשה</b><span id="n2">היי, אפשר תור ליום חמישי?</span></div>
+        <time id="n3">לפני 3 שעות</time>
+      </div>
+      <div class="abs" style="inset-inline: 0; top: 470px">
+        <p class="h1" id="l1">הודעה אחת שלא נענתה.</p>
+      </div>
+      <div class="abs" style="inset-inline: 0; top: 640px">
+        <p class="h1 coral" id="l2">לקוח אחד שהלך למתחרה.</p>
+      </div>
+    </section>
+
+    <!-- S2: everything flows into one app -->
+    <section class="scene light" id="s2">
+      <div class="cap">
+        <p class="h2" id="c2">כל הפניות. <span class="brandc">מקום אחד.</span></p>
+      </div>
+      <svg
+        class="abs"
+        id="wires"
+        style="left: 0; top: 0"
+        width="1920"
+        height="1080"
+        viewBox="0 0 1920 1080"
+      ></svg>
+      <div id="chans"></div>
+      <div class="ring" id="ring1"></div>
+      <div class="ring" id="ring2"></div>
+      <div class="app" id="app">
+        <svg viewBox="0 0 64 64" width="190" height="190">
+          <defs>
+            <linearGradient id="ab" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4f8ff7" />
+              <stop offset="1" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="ac" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff8a5c" />
+              <stop offset="1" stop-color="#f2564a" />
+            </linearGradient>
+          </defs>
+          <circle
+            cx="29"
+            cy="35"
+            r="23"
+            fill="none"
+            stroke="url(#ab)"
+            stroke-opacity=".35"
+            stroke-width="5"
+          />
+          <circle cx="29" cy="35" r="13.5" fill="none" stroke="url(#ab)" stroke-width="5" />
+          <circle cx="29" cy="35" r="6" fill="url(#ac)" />
+          <path d="M30.5 33.5L51 13" stroke="url(#ab)" stroke-width="3.6" stroke-linecap="round" />
+          <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill="url(#ab)" />
+        </svg>
+      </div>
+      <div
+        class="abs"
+        id="appname"
+        style="width: 400px; left: 0; text-align: center; font-size: 64px"
+      >
+        <span class="logo-name">Lead<b>Flow</b></span>
+      </div>
+    </section>
+
+    <!-- S3: nobody can answer -> the system answers, shows the work, books the appointment -->
+    <section class="scene light" id="s3">
+      <div class="cap">
+        <p class="h2" id="c3">כשאי אפשר לענות — <span class="brandc">המערכת עונה.</span></p>
+      </div>
+
+      <div
+        class="card abs"
+        id="statusCard"
+        style="left: 1280px; top: 380px; width: 520px; padding: 34px 38px"
+      >
+        <small style="font-size: 26px; color: var(--muted)" id="stLabel">הסטטוס שלך</small>
+        <div class="row" style="margin-top: 16px; gap: 18px">
+          <span style="font-size: 52px">🎤</span
+          ><b style="font-size: 44px; line-height: 1.15" id="stText">במפגש עד 18:00</b>
+        </div>
+        <div class="row" style="margin-top: 22px; gap: 14px">
+          <span class="switch" id="sw"><i id="swk"></i></span
+          ><span style="font-size: 26px; color: var(--muted)" id="stAuto">מענה אוטומטי פועל</span>
+        </div>
+      </div>
+
+      <div class="phone" id="phone">
+        <div class="phone-head">
+          <span class="avatar">ש</span
+          ><span><b id="phName">סלון שירן</b><small id="phSub">עסק</small></span>
+        </div>
+        <div class="chat" id="chat">
+          <div class="msg" id="m1"><p class="bub in" id="m1t">היי, אפשר תור ליום חמישי?</p></div>
+          <div class="msg" id="m2">
+            <p class="bub out">
+              <span id="m2t">היי! כאן סלון שירן 💇‍♀️ אנחנו במפגש עד 18:00 וחוזרים אליכם בהקדם.</span
+              ><small class="auto">תשובה אוטומטית</small>
+            </p>
+          </div>
+          <div class="msg" id="m3">
+            <div class="bub out peek">
+              <span id="m3t">בינתיים, הציצו בעבודות שלנו 👇</span>
+              <div class="tiles">
+                <i style="background: linear-gradient(135deg, #f9a8d4, #c084fc)"></i
+                ><i style="background: linear-gradient(135deg, #fcd34d, #fb923c)"></i
+                ><i style="background: linear-gradient(135deg, #7dd3fc, #818cf8)"></i>
+              </div>
+              <span class="lnk" id="m3l">הצצה לעבודות שלנו ↗</span
+              ><small class="auto">תשובה אוטומטית</small>
+            </div>
+          </div>
+          <div class="msg" id="m4">
+            <div class="bub out">
+              <span id="m4t">רוצים לקבוע תור?</span><span class="cta2" id="m4b">📅 לקביעת תור</span>
+            </div>
+          </div>
+          <div class="msg" id="m5">
+            <ul class="times">
+              <li id="tm1">מחר ב־09:00</li>
+              <li id="tm2">מחר ב־10:30</li>
+              <li id="tm3">היום ב־18:30</li>
+            </ul>
+          </div>
+          <div class="msg" id="m6"><p class="bub in" id="m6t">מחר ב־09:00</p></div>
+          <div class="msg" id="m7">
+            <p class="bub out">
+              <span id="m7t">קבענו לכם תור למחר ב־09:00 ✅</span
+              ><small class="auto">תשובה אוטומטית</small>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast3" style="left: 110px; top: 640px">
+        <span class="ck">✓</span
+        ><span
+          ><b id="t3a">ליד חדש נוצר + תור ביומן</b><small id="t3b">דנה כהן · מוואטסאפ</small></span
+        >
+      </div>
+    </section>
+
+    <!-- S4: appointments -->
+    <section class="scene light" id="s4">
+      <div class="cap">
+        <p class="h2" id="c4">קובעים תורים. <span class="brandc">בלי טלפונים.</span></p>
+      </div>
+      <div class="mockwin" style="left: 460px; top: 250px; width: 1000px; height: 790px">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div style="padding: 36px 44px; display: grid; gap: 22px">
+          <div class="row" style="justify-content: space-between">
+            <b style="font-size: 44px" id="apDay">יום חמישי</b
+            ><span style="font-size: 28px; color: var(--muted)" id="apSub">תורים ושעות פנויות</span>
+          </div>
+          <div class="slot"><time>10:00</time><span id="free1">פנוי</span></div>
+          <div class="slot" id="slotBook"><time>12:30</time><span id="free2">פנוי</span></div>
+          <div class="slot filled" id="slotOther">
+            <time>14:00</time
+            ><span class="who"><b id="o1">רון שמש</b><small id="o2">ייעוץ · 45 דק׳</small></span
+            ><span class="pill" id="okp2">מאושר</span>
+          </div>
+          <div class="slot"><time>17:00</time><span id="free3">פנוי</span></div>
+        </div>
+      </div>
+      <div class="abs" id="booked" style="left: 505px; width: 910px"></div>
+    </section>
+
+    <!-- S5: tasks -->
+    <section class="scene light" id="s5">
+      <div class="cap">
+        <p class="h2" id="c5">לא שוכחים <span class="brandc">אף לקוח.</span></p>
+      </div>
+      <div class="mockwin" style="left: 460px; top: 250px; width: 1000px; height: 760px">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div style="padding: 36px 44px; display: grid; gap: 22px">
+          <div class="row" style="justify-content: space-between">
+            <b style="font-size: 44px" id="tkT">משימות להיום</b
+            ><span style="font-size: 28px; color: var(--muted)" id="tkS">מעקב אחרי לקוחות</span>
+          </div>
+          <div class="task" id="tk1">
+            <span class="box" id="bx1"></span
+            ><span><b id="tk1t">להתקשר לדנה כהן</b><small id="tk1s">תזכורת לפני התור</small></span
+            ><span class="chip" id="ch1">דנה כהן</span>
+          </div>
+          <div class="task" id="tk2">
+            <span class="box" id="bx2"></span
+            ><span><b id="tk2t">לשלוח הצעת מחיר</b><small id="tk2s">אירוע בחולון</small></span
+            ><span class="chip" id="ch2">יוסי לוי</span>
+          </div>
+          <div class="task" id="tk3">
+            <span class="box" id="bx3"></span
+            ><span><b id="tk3t">לאשר בקשת תור</b><small id="tk3s">ממתינה לאישור</small></span
+            ><span class="chip" id="ch3">מיכל אברהם</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S6: reports -->
+    <section class="scene light" id="s6">
+      <div class="cap">
+        <p class="h2" id="c6">רואים <span class="brandc">מה עובד.</span></p>
+      </div>
+      <div class="mockwin" style="left: 360px; top: 280px; width: 1200px; height: 720px">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div style="padding: 36px 48px; display: grid; gap: 28px">
+          <div class="row" style="justify-content: space-between">
+            <b style="font-size: 44px" id="rpT">7 הימים האחרונים</b
+            ><span style="font-size: 28px; color: var(--muted)" id="rpS">פניות לפי מקור</span>
+          </div>
+          <div class="row" style="gap: 22px">
+            <div class="kpi" id="k1"><b id="k1v">0</b><span id="k1l">פניות חדשות</span></div>
+            <div class="kpi" id="k2"><b id="k2v">0</b><span id="k2l">תורים שנקבעו</span></div>
+            <div class="kpi" id="k3"><b id="k3v">0</b><span id="k3l">נסגרו</span></div>
+          </div>
+          <div style="display: grid; gap: 22px; margin-top: 8px" id="bars"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S7: call to action -->
+    <section class="scene brandbg" id="s7">
+      <div
+        class="app"
+        id="app7"
+        style="
+          left: 840px;
+          top: 130px;
+          width: 240px;
+          height: 240px;
+          border-radius: 64px;
+          box-shadow:
+            0 40px 90px -20px rgba(0, 0, 0, 0.5),
+            0 0 0 18px rgba(255, 255, 255, 0.12);
+        "
+      >
+        <svg viewBox="0 0 64 64" width="150" height="150">
+          <circle
+            cx="29"
+            cy="35"
+            r="23"
+            fill="none"
+            stroke="url(#ab)"
+            stroke-opacity=".35"
+            stroke-width="5"
+          />
+          <circle cx="29" cy="35" r="13.5" fill="none" stroke="url(#ab)" stroke-width="5" />
+          <circle cx="29" cy="35" r="6" fill="url(#ac)" />
+          <path d="M30.5 33.5L51 13" stroke="url(#ab)" stroke-width="3.6" stroke-linecap="round" />
+          <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill="url(#ab)" />
+        </svg>
+      </div>
+      <div class="abs" style="inset-inline: 0; top: 430px">
+        <p class="h1" id="f1" style="font-size: 130px">
+          <span class="logo-name" style="color: #fff">Lead<b style="color: #93c5fd">Flow</b></span>
+        </p>
+      </div>
+      <div class="abs" style="inset-inline: 0; top: 620px">
+        <p class="h2" id="f2" style="font-size: 72px">מנהלים את כל העסק במקום אחד.</p>
+      </div>
+      <div
+        class="btn"
+        id="cta"
+        style="
+          left: 50%;
+          top: 790px;
+          margin-left: -230px;
+          width: 460px;
+          text-align: center;
+          padding: 28px 0;
+        "
+      >
+        התחילו עכשיו
+      </div>
+      <div
+        class="abs"
+        style="
+          inset-inline: 0;
+          top: 960px;
+          text-align: center;
+          font-size: 34px;
+          color: #bfdbfe;
+          direction: ltr;
+        "
+        id="url"
+      >
+        leadflow-55gt.onrender.com
+      </div>
+    </section>
+
+    <script>
+      const params = new URLSearchParams(location.search);
+      const LANG = params.get('lang') === 'en' ? 'en' : 'he';
+      const T = {
+        he: {
+          n1: 'הודעה חדשה',
+          n2: 'היי, אפשר תור ליום חמישי?',
+          n3: 'לפני 3 שעות',
+          l1: 'הודעה אחת שלא נענתה.',
+          l2: 'לקוח אחד שהלך למתחרה.',
+          c2: 'כל הפניות. <span class="brandc">מקום אחד.</span>',
+          c3: 'כשאי אפשר לענות — <span class="brandc">המערכת עונה.</span>',
+          stLabel: 'הסטטוס שלך',
+          stText: 'במפגש עד 18:00',
+          stAuto: 'מענה אוטומטי פועל',
+          phName: 'סלון שירן',
+          phSub: 'עסק',
+          m1t: 'היי, אפשר תור ליום חמישי?',
+          m2t: 'היי! כאן סלון שירן 💇‍♀️ אנחנו במפגש עד 18:00 וחוזרים אליכם בהקדם.',
+          m3t: 'בינתיים, הציצו בעבודות שלנו 👇',
+          m3l: 'הצצה לעבודות שלנו ↗',
+          m4t: 'רוצים לקבוע תור?',
+          m4b: '📅 לקביעת תור',
+          tm1: 'מחר ב־09:00',
+          tm2: 'מחר ב־10:30',
+          tm3: 'היום ב־18:30',
+          m6t: 'מחר ב־09:00',
+          m7t: 'קבענו לכם תור למחר ב־09:00 ✅',
+          c4: 'קובעים תורים. <span class="brandc">בלי טלפונים.</span>',
+          c5: 'לא שוכחים <span class="brandc">אף לקוח.</span>',
+          c6: 'רואים <span class="brandc">מה עובד.</span>',
+          site: 'האתר',
+          fb: 'פייסבוק',
+          mail: 'מייל',
+          soon: 'בקרוב',
+          m1n: 'דנה כהן',
+          m1m: 'אפשר תור ליום חמישי?',
+          m2n: 'יוסי לוי',
+          m2m: 'כמה עולה צבע?',
+          m3n: 'מיכל אברהם',
+          m3m: 'הצעת מחיר לאירוע',
+          mnew: 'חדש',
+          b1: 'היי, אפשר תור ליום חמישי?',
+          b2t: 'שלום דנה! יש לנו שעות פנויות: 10:00, 12:30 ו-17:00.',
+          b3: '12:30 מתאים 🙏',
+          b4t: 'קבענו לכם תור ליום חמישי ב-12:30 ✅',
+          auto: 'תשובה אוטומטית',
+          t3a: 'ליד חדש נוצר + תור ביומן',
+          t3b: 'דנה כהן · מוואטסאפ',
+          apDay: 'יום חמישי',
+          apSub: 'תורים ושעות פנויות',
+          free: 'פנוי',
+          o1: 'רון שמש',
+          o2: 'ייעוץ · 45 דק׳',
+          ok: 'מאושר',
+          svc: 'תספורת · 30 דק׳',
+          tkT: 'משימות להיום',
+          tkS: 'מעקב אחרי לקוחות',
+          tk1t: 'להתקשר לדנה כהן',
+          tk1s: 'תזכורת לפני התור',
+          tk2t: 'לשלוח הצעת מחיר',
+          tk2s: 'אירוע בחולון',
+          tk3t: 'לאשר בקשת תור',
+          tk3s: 'ממתינה לאישור',
+          rpT: '7 הימים האחרונים',
+          rpS: 'פניות לפי מקור',
+          k1l: 'פניות חדשות',
+          k2l: 'תורים שנקבעו',
+          k3l: 'נסגרו',
+          google: 'גוגל',
+          f2: 'מנהלים את כל העסק במקום אחד.',
+          cta: 'התחילו עכשיו',
+        },
+        en: {
+          n1: 'New message',
+          n2: 'Hi, can I book Thursday?',
+          n3: '3 hours ago',
+          l1: 'One message left unanswered.',
+          l2: 'One customer gone to a competitor.',
+          c2: 'Every inquiry. <span class="brandc">One place.</span>',
+          c3: 'When you can’t reply — <span class="brandc">the system does.</span>',
+          stLabel: 'Your status',
+          stText: 'In a session until 6 pm',
+          stAuto: 'Auto-reply is on',
+          phName: 'Shiran Salon',
+          phSub: 'Business',
+          m1t: 'Hi, can I book Thursday?',
+          m2t: 'Hi! Shiran Salon here 💇‍♀️ We’re in a session until 6 pm and will get back to you shortly.',
+          m3t: 'Meanwhile, take a look at our work 👇',
+          m3l: 'A peek at our work ↗',
+          m4t: 'Want to book an appointment?',
+          m4b: '📅 Book an appointment',
+          tm1: 'Tomorrow at 09:00',
+          tm2: 'Tomorrow at 10:30',
+          tm3: 'Today at 18:30',
+          m6t: 'Tomorrow at 09:00',
+          m7t: 'You’re booked for tomorrow at 09:00 ✅',
+          c4: 'Book appointments. <span class="brandc">No phone calls.</span>',
+          c5: 'Never forget <span class="brandc">a customer.</span>',
+          c6: 'See <span class="brandc">what works.</span>',
+          site: 'Website',
+          fb: 'Facebook',
+          mail: 'Email',
+          soon: 'soon',
+          m1n: 'Dana Cohen',
+          m1m: 'Can I book Thursday?',
+          m2n: 'Yossi Levi',
+          m2m: 'How much is a colour?',
+          m3n: 'Michal Avraham',
+          m3m: 'A quote for an event',
+          mnew: 'New',
+          b1: 'Hi, can I book Thursday?',
+          b2t: 'Hi Dana! We have 10:00, 12:30 and 17:00 free.',
+          b3: '12:30 works 🙏',
+          b4t: 'You’re booked for Thursday at 12:30 ✅',
+          auto: 'Automatic reply',
+          t3a: 'New lead + appointment booked',
+          t3b: 'Dana Cohen · from WhatsApp',
+          apDay: 'Thursday',
+          apSub: 'Appointments and free hours',
+          free: 'Free',
+          o1: 'Ron Shemesh',
+          o2: 'Consultation · 45 min',
+          ok: 'Confirmed',
+          svc: 'Haircut · 30 min',
+          tkT: 'Today’s tasks',
+          tkS: 'Customer follow-up',
+          tk1t: 'Call Dana Cohen',
+          tk1s: 'Reminder before the appointment',
+          tk2t: 'Send a quote',
+          tk2s: 'Event in Holon',
+          tk3t: 'Approve an appointment request',
+          tk3s: 'Waiting for approval',
+          rpT: 'Last 7 days',
+          rpS: 'Inquiries by source',
+          k1l: 'New inquiries',
+          k2l: 'Appointments booked',
+          k3l: 'Closed',
+          google: 'Google',
+          f2: 'Run your whole business in one place.',
+          cta: 'Get started',
+        },
+      }[LANG];
+      document.documentElement.lang = LANG;
+      document.documentElement.dir = LANG === 'he' ? 'rtl' : 'ltr';
+      const $ = (id) => document.getElementById(id);
+      const set = (id, html) => {
+        const el = $(id);
+        if (el) el.innerHTML = html;
+      };
+      for (const [id, key] of Object.entries({
+        n1: 'n1',
+        n2: 'n2',
+        n3: 'n3',
+        l1: 'l1',
+        l2: 'l2',
+        c2: 'c2',
+        c3: 'c3',
+        c4: 'c4',
+        c5: 'c5',
+        c6: 'c6',
+        t3a: 't3a',
+        t3b: 't3b',
+        apDay: 'apDay',
+        apSub: 'apSub',
+        o1: 'o1',
+        o2: 'o2',
+        tkT: 'tkT',
+        tkS: 'tkS',
+        tk1t: 'tk1t',
+        tk1s: 'tk1s',
+        tk2t: 'tk2t',
+        tk2s: 'tk2s',
+        tk3t: 'tk3t',
+        tk3s: 'tk3s',
+        rpT: 'rpT',
+        rpS: 'rpS',
+        k1l: 'k1l',
+        k2l: 'k2l',
+        k3l: 'k3l',
+        f2: 'f2',
+      }))
+        set(id, T[key]);
+      set('okp2', T.ok);
+      for (const k of [
+        'stLabel',
+        'stText',
+        'stAuto',
+        'phName',
+        'phSub',
+        'm1t',
+        'm2t',
+        'm3t',
+        'm3l',
+        'm4t',
+        'm4b',
+        'tm1',
+        'tm2',
+        'tm3',
+        'm6t',
+        'm7t',
+      ])
+        set(k, T[k]);
+      set('free1', T.free);
+      set('free2', T.free);
+      set('free3', T.free);
+      set('ch1', T.m1n);
+      set('ch2', T.m2n);
+      set('ch3', T.m3n);
+      $('cta').textContent = T.cta;
+      $('l1').parentElement.style.direction = $('l2').parentElement.style.direction =
+        LANG === 'he' ? 'rtl' : 'ltr';
+
+      /* Channels in scene 2 */
+      const ICON = {
+        site: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#7c3aed"/><g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="6.4"/><path d="M5.6 12h12.8M12 5.6c2 1.7 3 3.9 3 6.4s-1 4.7-3 6.4c-2-1.7-3-3.9-3-6.4s1-4.7 3-6.4z"/></g></svg>',
+        wa: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#25d366"/><path d="M12 5.4a6.6 6.6 0 0 0-5.7 9.9l-.9 3.3 3.4-.9A6.6 6.6 0 1 0 12 5.4z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path fill="#fff" d="M9.5 8.9c.2-.4.4-.4.6-.4h.4c.1 0 .3 0 .4.3l.6 1.4c.1.2 0 .3-.1.5l-.3.4c-.1.1-.2.3-.1.4.4.8 1.3 1.6 2.2 2 .2.1.3 0 .4-.1l.5-.6c.1-.2.3-.2.5-.1l1.4.7c.2.1.3.2.2.5-.1.6-.7 1.2-1.5 1.2-2.5-.2-5-2.7-5.1-5 0-.7.2-1.2.4-1.6z"/></svg>',
+        fb: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877f2"/><path fill="#fff" d="M13.5 21v-7h2.4l.4-2.8h-2.8V9.6c0-.8.3-1.4 1.4-1.4h1.5V5.7c-.3 0-1.2-.1-2.2-.1-2.2 0-3.6 1.3-3.6 3.7v2H8.2V14h2.4v7h2.9z"/></svg>',
+        mail: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#0ea5e9"/><g fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><rect x="5.4" y="7.4" width="13.2" height="9.2" rx="2"/><path d="M6 8.4l6 4.4 6-4.4"/></g></svg>',
+        ig: '<svg viewBox="0 0 24 24"><defs><linearGradient id="ig2" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".65" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect width="24" height="24" rx="7" fill="url(#ig2)"/><g fill="none" stroke="#fff" stroke-width="1.7"><rect x="6" y="6" width="12" height="12" rx="3.6"/><circle cx="12" cy="12" r="2.9"/></g><circle cx="15.6" cy="8.4" r=".9" fill="#fff"/></svg>',
+      };
+      const channels = [
+        ['site', T.site],
+        ['wa', 'WhatsApp'],
+        ['fb', T.fb],
+        ['mail', T.mail],
+        ['ig', 'Instagram'],
+      ];
+      const RTL = LANG === 'he';
+      const hub = { x: RTL ? 560 : 1360, y: 620 };
+      const chanX = RTL ? 1180 : 380; // left edge of the chips
+      const ys = [380, 500, 620, 740, 860];
+      const chansEl = $('chans');
+      const wires = $('wires');
+      const NS = 'http://www.w3.org/2000/svg';
+      const wirePaths = [];
+      channels.forEach(([k, label], i) => {
+        const d = document.createElement('div');
+        d.className = 'chan';
+        d.style.left = chanX + 'px';
+        d.style.top = ys[i] - 48 + 'px';
+        d.dataset.i = i;
+        d.innerHTML =
+          ICON[k] +
+          '<span>' +
+          label +
+          '</span>' +
+          (k === 'ig' ? '<small>' + T.soon + '</small>' : '');
+        chansEl.appendChild(d);
+        const x0 = RTL ? chanX : chanX + 360;
+        const y0 = ys[i];
+        const x1 = hub.x + (RTL ? 150 : -150);
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute(
+          'd',
+          `M${x0} ${y0} C${(x0 + x1) / 2} ${y0}, ${(x0 + x1) / 2} ${hub.y}, ${x1} ${hub.y}`,
+        );
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#cbd5e1');
+        path.setAttribute('stroke-width', '4');
+        path.setAttribute('stroke-linecap', 'round');
+        wires.appendChild(path);
+        const dot = document.createElementNS(NS, 'circle');
+        dot.setAttribute('r', '11');
+        dot.setAttribute('fill', '#2563eb');
+        wires.appendChild(dot);
+        wirePaths.push({ path, dot, len: path.getTotalLength() });
+      });
+      Object.assign($('app').style, { left: hub.x - 150 + 'px', top: hub.y - 150 + 'px' });
+      Object.assign($('appname').style, { left: hub.x - 200 + 'px', top: hub.y + 180 + 'px' });
+      for (const id of ['ring1', 'ring2'])
+        Object.assign($(id).style, {
+          left: hub.x - 150 + 'px',
+          top: hub.y - 150 + 'px',
+          width: '300px',
+          height: '300px',
+        });
+
+      /* Reports */
+      const bars = [
+        [T.site, 78, 9],
+        ['WhatsApp', 62, 7],
+        [T.fb, 40, 5],
+        [T.google, 28, 3],
+      ];
+      $('bars').innerHTML = bars
+        .map(
+          ([l, w, n]) =>
+            `<div class="bar2"><span>${l}</span><div class="track"><div class="fill" style="--w:${w}%"></div></div><em>${n}</em></div>`,
+        )
+        .join('');
+
+      /* Scene 4: the booking card that lands in 12:30 */
+      $('booked').innerHTML =
+        `<div class="slot filled" style="height:112px;background:#eff6ff"><time>12:30</time><span class="who"><b>${T.m1n}</b><small>${T.svc}</small></span><span class="pill">${T.ok}</span></div>`;
+      $('booked').style.top = '0px';
+
+      /* ---------- A tiny timeline: every value is a function of time, so any frame can be drawn ---------- */
+      const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+      const E = {
+        out: (p) => 1 - Math.pow(1 - p, 3),
+        io: (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+        back: (p) => {
+          const c = 1.7;
+          return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2);
+        },
+        lin: (p) => p,
+      };
+      const tracks = []; // {el, prop, t0, t1, from, to, ease}
+      const fns = [];
+      const tw = (id, prop, t0, t1, from, to, ease = 'out') =>
+        tracks.push({
+          el: typeof id === 'string' ? $(id) : id,
+          prop,
+          t0,
+          t1,
+          from,
+          to,
+          ease: E[ease],
+        });
+      const fn = (t0, t1, f, ease = 'lin') => fns.push({ t0, t1, f, ease: E[ease] });
+      const pop = (id, t0, d = 0.5) => {
+        tw(id, 'o', t0, t0 + d * 0.6, 0, 1);
+        tw(id, 'y', t0, t0 + d, 40, 0, 'back');
+        tw(id, 's', t0, t0 + d, 0.92, 1, 'back');
+      };
+      const show = (id, t0, t1) => {
+        tw(id, 'o', t0, t0 + 0.2, 0, 1, 'lin');
+        tw(id, 'o', t1 - 0.2, t1, 1, 0, 'lin');
+      };
+
+      // scene visibility, with a short cross-fade
+      const D = 2.8; // scene 3 is longer than the old one: everything after it moves later
+      const SC = [
+        ['s1', 0, 4.2],
+        ['s2', 3.8, 9.2],
+        ['s3', 8.8, 17.0],
+        ['s4', 13.8 + D, 18.2 + D],
+        ['s5', 17.8 + D, 22.2 + D],
+        ['s6', 21.8 + D, 26.2 + D],
+        ['s7', 25.8 + D, 30 + D],
+      ];
+      SC.forEach(([id, a, b], i) => {
+        if (i > 0) tw(id, 'o', a, a + 0.4, 0, 1, 'lin');
+        else tw(id, 'o', 0, 0.01, 1, 1, 'lin');
+        if (i < SC.length - 1) tw(id, 'o', b - 0.4, b, 1, 0, 'lin');
+      });
+
+      // S1
+      tw('notif', 'y', 0.2, 0.9, -260, 0, 'back');
+      tw('notif', 'o', 0.2, 0.5, 0, 1);
+      tw('badge', 's', 0.9, 1.2, 0, 1, 'back');
+      tw('notif', 'o', 2.4, 3.2, 1, 0.25);
+      pop('l1', 1.0, 0.6);
+      pop('l2', 2.2, 0.6);
+      tw('l2', 'y', 3.4, 4.0, 0, -10);
+
+      // S2
+      tw('c2', 'o', 4.0, 4.5, 0, 1);
+      tw('c2', 'y', 4.0, 4.6, 30, 0);
+      tw('app', 's', 4.0, 4.7, 0.6, 1, 'back');
+      tw('app', 'o', 4.0, 4.4, 0, 1);
+      tw('appname', 'o', 4.4, 4.9, 0, 1);
+      channels.forEach((_, i) => {
+        const el = chansEl.children[i];
+        const t0 = 4.3 + i * 0.22;
+        tw(el, 'o', t0, t0 + 0.3, 0, 1);
+        tw(el, 'x', t0, t0 + 0.5, RTL ? 120 : -120, 0, 'back');
+        const w = wirePaths[i];
+        fn(t0 + 0.2, t0 + 0.9, (p) => {
+          w.path.setAttribute('stroke-dasharray', w.len);
+          w.path.setAttribute('stroke-dashoffset', w.len * (1 - p));
+          w.dot.setAttribute('opacity', '0');
+        });
+        fn(5.6, 8.9, (p) => {
+          const k = (p * 3 + i * 0.17) % 1;
+          const pt = w.path.getPointAtLength(w.len * k);
+          w.dot.setAttribute('cx', pt.x);
+          w.dot.setAttribute('cy', pt.y);
+          w.dot.setAttribute('opacity', String(Math.sin(k * Math.PI)));
+        });
+      });
+      for (const [id, d] of [
+        ['ring1', 0],
+        ['ring2', 0.9],
+      ])
+        fn(5.8 + d, 8.9, (p) => {
+          const k = (p * 2.2 + d) % 1;
+          const el = $(id);
+          el.style.opacity = String(0.55 * (1 - k));
+          el.style.transform = `scale(${1 + k * 0.9})`;
+        });
+
+      // S3: the status is set, a customer writes, the system answers, shows the work and books
+      tw('c3', 'o', 9.0, 9.5, 0, 1);
+      tw('c3', 'y', 9.0, 9.6, 30, 0);
+      pop('statusCard', 9.3, 0.6);
+      fn(
+        10.0,
+        10.4,
+        (p) => {
+          const on = p > 0.5;
+          $('sw').style.background = on ? '#16a34a' : '#cbd5e1';
+          $('swk').style.transform = on ? 'translateX(' + (RTL ? -32 : 32) + 'px)' : 'none';
+        },
+        'out',
+      );
+      tw('phone', 'o', 9.2, 9.6, 0, 1);
+      tw('phone', 'y', 9.2, 9.9, 60, 0, 'back');
+      const msgIn = (id, t0, d = 0.45) =>
+        fn(
+          t0,
+          t0 + d,
+          (p) => {
+            const el = $(id);
+            el.style.maxHeight = p * (el.scrollHeight + 4) + 'px';
+            el.style.opacity = String(clamp(p * 1.6));
+          },
+          'out',
+        );
+      msgIn('m1', 10.5);
+      msgIn('m2', 11.4);
+      msgIn('m3', 12.5, 0.55);
+      msgIn('m4', 14.0);
+      msgIn('m5', 14.9);
+      msgIn('m6', 15.9, 0.35);
+      msgIn('m7', 16.3, 0.4);
+      fn(
+        15.6,
+        15.9,
+        (p) => {
+          $('tm1').style.background = p > 0.3 ? '#eff6ff' : 'transparent';
+        },
+        'out',
+      );
+      tw('toast3', 'o', 16.4, 16.7, 0, 1);
+      tw('toast3', 'y', 16.4, 16.9, 40, 0, 'back');
+
+      // S4
+      tw('c4', 'o', D + 13.9, D + 14.4, 0, 1);
+      tw('c4', 'y', D + 13.9, D + 14.5, 30, 0);
+      pop('slotOther', D + 14.4, 0.5);
+      tw('booked', 'o', D + 15.2, D + 15.5, 0, 1);
+      tw('booked', 'y', D + 15.2, D + 15.9, -240, 0, 'back');
+      fn(0, 1, () => {
+        const sb = $('slotBook');
+        const r = sb.getBoundingClientRect();
+        $('booked').style.top = r.top + 'px';
+      });
+
+      // S5
+      tw('c5', 'o', D + 18.0, D + 18.5, 0, 1);
+      tw('c5', 'y', D + 18.0, D + 18.6, 30, 0);
+      pop('tk1', D + 18.5, 0.5);
+      pop('tk2', D + 18.7, 0.5);
+      pop('tk3', D + 18.9, 0.5);
+      const tick = (box, title) => (p) => {
+        const b = $(box);
+        b.style.background = p > 0.4 ? '#16a34a' : 'transparent';
+        b.style.borderColor = p > 0.4 ? '#16a34a' : '#cbd5e1';
+        b.textContent = p > 0.4 ? '✓' : '';
+        $(title).style.textDecoration = p > 0.6 ? 'line-through' : 'none';
+        $(title).style.color = p > 0.6 ? '#94a3b8' : '#0f172a';
+      };
+      fn(D + 19.8, D + 20.3, tick('bx1', 'tk1t'), 'out');
+      fn(D + 20.7, D + 21.2, tick('bx2', 'tk2t'), 'out');
+
+      // S6
+      tw('c6', 'o', D + 22.0, D + 22.5, 0, 1);
+      tw('c6', 'y', D + 22.0, D + 22.6, 30, 0);
+      pop('k1', D + 22.5, 0.5);
+      pop('k2', D + 22.7, 0.5);
+      pop('k3', D + 22.9, 0.5);
+      [
+        ['k1v', 24],
+        ['k2v', 11],
+        ['k3v', 7],
+      ].forEach(([id, n], i) =>
+        fn(
+          D + 22.7 + i * 0.2,
+          D + 24.2 + i * 0.2,
+          (p) => {
+            $(id).textContent = Math.round(n * p);
+          },
+          'out',
+        ),
+      );
+      [...document.querySelectorAll('.bar2 .fill')].forEach((el, i) =>
+        fn(
+          D + 23.4 + i * 0.18,
+          D + 24.9 + i * 0.18,
+          (p) => {
+            el.style.width = `calc(var(--w) * ${p})`;
+          },
+          'out',
+        ),
+      );
+
+      // S7
+      tw('app7', 's', D + 26.0, D + 26.8, 0.5, 1, 'back');
+      tw('app7', 'o', D + 26.0, D + 26.4, 0, 1);
+      pop('f1', D + 26.5, 0.6);
+      pop('f2', D + 27.2, 0.6);
+      pop('cta', D + 28.0, 0.6);
+      tw('url', 'o', D + 28.6, D + 29.1, 0, 1);
+
+      const DEFAULTS = { o: 1, x: 0, y: 0, s: 1 };
+      function render(t) {
+        const byEl = new Map();
+        for (const tr of tracks) {
+          if (!byEl.has(tr.el)) byEl.set(tr.el, {});
+          (byEl.get(tr.el)[tr.prop] ??= []).push(tr);
+        }
+        for (const [el, props] of byEl) {
+          const st = { ...DEFAULTS };
+          for (const [prop, list] of Object.entries(props)) {
+            list.sort((a, b) => a.t0 - b.t0);
+            let val = list[0].from;
+            for (const tr of list) {
+              if (t >= tr.t0) {
+                const p = clamp((t - tr.t0) / (tr.t1 - tr.t0));
+                val = tr.from + (tr.to - tr.from) * tr.ease(p);
+              }
+            }
+            st[prop] = val;
+          }
+          el.style.opacity = st.o;
+          el.style.transform = `translate(${st.x}px, ${st.y}px) scale(${st.s})`;
+        }
+        for (const f of fns) {
+          if (t >= f.t0 - 0.0001 && t <= f.t1 + 0.0001)
+            f.f(f.ease(clamp((t - f.t0) / (f.t1 - f.t0))));
+          else if (t > f.t1) f.f(1);
+          else f.f(0);
+        }
+        // rings/dots belong to scene 2 only
+        if (t < 5.6 || t > 9.2) {
+          for (const id of ['ring1', 'ring2']) $(id).style.opacity = 0;
+        }
+      }
+      window.render = render;
+      window.DURATION = 32.8;
+      render(0);
+    </script>
+  </body>
+</html>
