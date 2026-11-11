@@ -24,7 +24,7 @@ const en = {
   heroEyebrow: 'One system to run your business',
   heroTitle: 'Run your whole business in one place.',
   heroText:
-    'Website, customers, conversations, appointments, tasks and quotes — together, for the whole team. Every inquiry arrives by itself, and no customer falls through the cracks.',
+    'Website, customers, conversations, appointments, tasks and quotes — together, for the whole team. Every inquiry arrives by itself, and replies, bookings and reminders happen automatically.',
   mockN1: 'Dana Cohen',
   mockM1: 'Can I book Thursday?',
   mockN2: 'Yossi Levi',
@@ -150,6 +150,35 @@ const en = {
   anC2: 'Friends offer · Facebook',
   anC3: 'Website form',
   anNote: 'Sample data',
+  navAuto: 'Automation',
+  autoEyebrow: 'Automation',
+  autoTitle: 'The system works for you, even when you’re busy',
+  autoSub:
+    'What repeats happens by itself: answering customers, booking appointments, creating leads and reminding you what to do.',
+  autoBadge: 'Automatic',
+  a1t: 'A customer writes',
+  a1r: 'A lead is created',
+  a1p: 'Every inquiry from your website, WhatsApp, Facebook or email is recorded as a lead by itself, with the source it came from.',
+  a2t: 'You’re busy',
+  a2r: 'A reply by status',
+  a2p: 'A status message, such as “At an event until 6 pm”, goes to every customer who writes, and the customer picks when to talk.',
+  a3t: 'After the reply',
+  a3r: 'A peek at your work',
+  a3p: 'A link, photos and a video from your business are sent to the customer automatically, at most once a day.',
+  a4t: 'Customer wants to book',
+  a4r: 'Automatic booking',
+  a4p: 'The customer picks a service, day and free hour from your calendar. The booking lands confirmed, or waits for your approval.',
+  a5t: 'A person is needed',
+  a5r: 'A smooth hand-off to you',
+  a5p: 'A customer who asks to talk to you comes straight to you, and the automatic reply goes quiet the moment someone on your team writes.',
+  a6t: 'Time is up',
+  a6r: 'Reminders and alerts',
+  a6p: 'Tasks remind you on time by email, and the team is alerted about every new lead and message.',
+  autoNote: 'Every automation has a switch: turn it on, off and change the messages any time.',
+  q12: 'What does the system do automatically?',
+  a12: 'Creates a lead from every inquiry, replies to customers by your status, sends a peek at your work, books appointments from your calendar, hands a customer who asks for a person over to you, and sends reminders and alerts.',
+  q13: 'Can I turn the automatic reply off?',
+  a13: 'Yes. The reply is controlled by a switch: turn it off or change the messages any time. When someone on your team writes in a conversation, the automatic reply goes quiet.',
   navLabel: 'Main navigation',
   langLabel: 'Language',
   mockLabel: 'A view of the LeadFlow inbox',
@@ -212,7 +241,7 @@ if (wanted !== 'he') apply(wanted);
 // Things ease in as they scroll into view.
 const revealed = [
   ...document.querySelectorAll(
-    '.section-head, .cards .card, .steps li, .an-card, .an-copy, .chips li, .channels-title, .faq details, .final .wrap > *',
+    '.section-head, .auto-card, .auto-note, .cards .card, .steps li, .an-card, .an-copy, .chips li, .channels-title, .faq details, .final .wrap > *',
   ),
 ];
 revealed.forEach((el) => {

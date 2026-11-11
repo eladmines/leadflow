@@ -850,6 +850,93 @@ h3 {
 .section-tint {
   background: #eef2f7;
 }
+/* Automation */
+.section-warm {
+  background:
+    radial-gradient(45% 55% at 0% 0%, rgba(242, 86, 74, 0.09), transparent 70%),
+    radial-gradient(45% 55% at 100% 100%, rgba(37, 99, 235, 0.08), transparent 70%), #fffaf7;
+}
+.section-sub {
+  margin: 0.5rem auto 0;
+  max-width: 40rem;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+.auto-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+.auto-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.auto-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+.auto-card p {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+}
+.auto-badge {
+  position: absolute;
+  top: 1rem;
+  inset-inline-end: 1rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #166534;
+  background: #dcfce7;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+}
+.auto-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding-inline-end: 4.2rem;
+}
+.auto-flow .trig,
+.auto-flow .res {
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.auto-flow .trig {
+  background: #ffe9e6;
+  color: #b4231b;
+}
+.auto-flow .res {
+  background: var(--brand-50);
+  color: var(--brand-700);
+}
+.auto-flow .arrow::before {
+  content: '→';
+  color: var(--muted);
+  font-weight: 800;
+}
+[dir='rtl'] .auto-flow .arrow::before {
+  content: '←';
+}
+.auto-note {
+  margin: 1.75rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 500;
+}
+
 /* Lead analysis */
 .section-blue {
   background: radial-gradient(50% 50% at 100% 0%, rgba(37, 99, 235, 0.1), transparent 70%), #eff6ff;
@@ -1326,6 +1413,9 @@ h3 {
   }
 }
 @media (max-width: 960px) {
+  .auto-grid {
+    grid-template-columns: 1fr 1fr;
+  }
   .an-grid {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -1343,7 +1433,8 @@ h3 {
 }
 @media (max-width: 640px) {
   .cards,
-  .steps {
+  .steps,
+  .auto-grid {
     grid-template-columns: 1fr;
   }
   .hide-sm {
