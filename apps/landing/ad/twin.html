@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>LeadFlow — two endings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --brand: #2563eb;
+        --ink: #0f172a;
+        --muted: #475569;
+        --coral: #f2564a;
+        --green: #16a34a;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #000;
+      }
+      body {
+        font-family: 'Heebo', system-ui, sans-serif;
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+      }
+      .sc {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        overflow: hidden;
+      }
+      .abs {
+        position: absolute;
+      }
+      .bgA {
+        background: radial-gradient(80% 50% at 50% 30%, #eef1f5, #d5dbe3 75%);
+      }
+      .bgB {
+        background:
+          radial-gradient(70% 40% at 90% 0%, #dbeafe, transparent 70%),
+          radial-gradient(60% 40% at 0% 100%, #fde4e1, transparent 70%), #f6f8fc;
+      }
+      .brandbg {
+        background: linear-gradient(160deg, #2563eb, #1e3a8a);
+        color: #fff;
+      }
+      .hl {
+        position: absolute;
+        inset-inline: 40px;
+        text-align: center;
+        font-size: 100px;
+        font-weight: 900;
+        line-height: 1.06;
+        letter-spacing: -0.02em;
+      }
+      .tag {
+        position: absolute;
+        top: 96px;
+        inset-inline: 0;
+        text-align: center;
+      }
+      .tag span {
+        display: inline-block;
+        padding: 14px 40px;
+        border-radius: 999px;
+        font-size: 44px;
+        font-weight: 800;
+      }
+      .tA span {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .tB span {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .coral {
+        color: var(--coral);
+      }
+      .brandc {
+        color: var(--brand);
+      }
+      .logo-name {
+        direction: ltr;
+        unicode-bidi: isolate;
+        font-weight: 800;
+      }
+
+      .phone {
+        position: absolute;
+        left: 220px;
+        top: 200px;
+        width: 640px;
+        height: 1400px;
+        border-radius: 90px;
+        background: #0b0b14;
+        padding: 22px;
+        box-shadow:
+          0 80px 150px -40px rgba(15, 23, 42, 0.55),
+          inset 0 0 0 3px rgba(255, 255, 255, 0.14);
+      }
+      .scr {
+        width: 100%;
+        height: 100%;
+        border-radius: 70px;
+        overflow: hidden;
+        position: relative;
+        background: #efeae2;
+      }
+      .notch {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        margin-left: -90px;
+        width: 180px;
+        height: 44px;
+        border-radius: 22px;
+        background: #0b0b14;
+        z-index: 3;
+      }
+      .bar {
+        position: absolute;
+        top: 0;
+        inset-inline: 0;
+        height: 196px;
+        background: #fff;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: flex-end;
+        padding: 0 30px 18px;
+        gap: 18px;
+        z-index: 2;
+      }
+      .bar i {
+        width: 74px;
+        height: 74px;
+        border-radius: 37px;
+        background: #dbeafe;
+        color: var(--brand);
+        font-style: normal;
+        font-size: 36px;
+        font-weight: 800;
+        display: grid;
+        place-items: center;
+      }
+      .bar b {
+        display: block;
+        font-size: 36px;
+        line-height: 1.1;
+      }
+      .bar small {
+        font-size: 25px;
+        color: var(--muted);
+      }
+      .chat {
+        position: absolute;
+        inset: 196px 0 150px;
+        padding: 24px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .msg {
+        max-width: 84%;
+        padding: 20px 26px;
+        border-radius: 30px;
+        font-size: 35px;
+        line-height: 1.3;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        box-shadow: 0 5px 16px -8px rgba(15, 23, 42, 0.3);
+      }
+      .in {
+        align-self: flex-start;
+        background: #fff;
+        border-end-start-radius: 8px;
+      }
+      .out {
+        align-self: flex-end;
+        background: var(--brand);
+        color: #fff;
+        border-end-end-radius: 8px;
+      }
+      .tk {
+        display: inline-block;
+        width: 40px;
+        height: 28px;
+        vertical-align: -5px;
+        margin-inline-end: 8px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 18'%3E%3Cpath d='M1.5 9.5l5 5L16 3M10 12.5l2 2L24 3' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+          center / contain no-repeat;
+      }
+      .in .tk {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 18'%3E%3Cpath d='M1.5 9.5l5 5L16 3M10 12.5l2 2L24 3' fill='none' stroke='%2353bdeb' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      }
+      .msg small {
+        display: block;
+        margin-top: 6px;
+        font-size: 24px;
+        opacity: 0.9;
+      }
+      .miss {
+        align-self: flex-start;
+        font-size: 26px;
+        font-weight: 800;
+        color: #b91c1c;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        padding-inline: 8px;
+      }
+      .slots {
+        align-self: flex-end;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 84%;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+      }
+      .slot {
+        background: #fff;
+        border: 3px solid var(--brand);
+        color: var(--brand);
+        border-radius: 24px;
+        padding: 15px 24px;
+        font-size: 33px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .tap {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        border-radius: 60px;
+        background: rgba(37, 99, 235, 0.3);
+        border: 4px solid rgba(37, 99, 235, 0.7);
+        opacity: 0;
+        z-index: 6;
+      }
+      .call {
+        position: absolute;
+        width: 330px;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        background: #fff;
+        border-radius: 30px;
+        padding: 22px 24px;
+        font-size: 31px;
+        font-weight: 800;
+        line-height: 1.15;
+        box-shadow: 0 30px 70px -20px rgba(15, 23, 42, 0.5);
+        z-index: 10;
+      }
+      .call .ic {
+        width: 66px;
+        height: 66px;
+        border-radius: 20px;
+        display: grid;
+        place-items: center;
+        font-size: 34px;
+        flex: none;
+      }
+      .clock {
+        position: absolute;
+        top: 1650px;
+        inset-inline: 0;
+        text-align: center;
+      }
+      .clock span {
+        display: inline-block;
+        padding: 14px 60px;
+        border-radius: 999px;
+        background: #fff;
+        font-size: 104px;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+        direction: ltr;
+        box-shadow: 0 30px 60px -30px rgba(15, 23, 42, 0.4);
+      }
+      .pill {
+        position: absolute;
+        top: 1650px;
+        width: 320px;
+        padding: 26px 0;
+        text-align: center;
+        background: #fff;
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 800;
+        box-shadow: 0 24px 50px -24px rgba(15, 23, 42, 0.45);
+      }
+      .dt {
+        width: 22px;
+        height: 22px;
+        border-radius: 11px;
+        background: #94a3b8;
+        display: block;
+      }
+      .say {
+        position: absolute;
+        left: 190px;
+        top: 1620px;
+        width: 700px;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        background: #fff;
+        border-radius: 44px;
+        padding: 30px 38px;
+        font-size: 46px;
+        font-weight: 800;
+        line-height: 1.15;
+        box-shadow: 0 30px 70px -22px rgba(15, 23, 42, 0.5);
+        transform-origin: 0 60%;
+        opacity: 0;
+        z-index: 11;
+      }
+      .say .ic {
+        width: 84px;
+        height: 84px;
+        border-radius: 24px;
+        display: grid;
+        place-items: center;
+        font-size: 44px;
+        flex: none;
+      }
+      #inst {
+        position: absolute;
+        inset: 0;
+        z-index: 8;
+        background: linear-gradient(180deg, #f8fafc, #e8eef9);
+        opacity: 0;
+        text-align: center;
+      }
+      .chp {
+        background: #fff;
+        border-radius: 999px;
+        padding: 14px 24px;
+        font-size: 32px;
+        font-weight: 800;
+        box-shadow: 0 16px 36px -18px rgba(15, 23, 42, 0.45);
+        white-space: nowrap;
+      }
+      .sug {
+        position: absolute;
+        left: 190px;
+        top: 1560px;
+        width: 700px;
+        background: #fff;
+        border: 4px solid #7c3aed;
+        border-radius: 44px;
+        padding: 30px 36px;
+        box-shadow: 0 30px 70px -22px rgba(76, 29, 149, 0.55);
+        transform-origin: 0 70%;
+        opacity: 0;
+        z-index: 11;
+      }
+      .sug b {
+        display: block;
+        font-size: 36px;
+        color: #6d28d9;
+      }
+      .sug p {
+        margin: 10px 0 20px;
+        font-size: 40px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .sok {
+        text-align: center;
+        background: #7c3aed;
+        color: #fff;
+        font-size: 40px;
+        font-weight: 800;
+        padding: 18px 0;
+        border-radius: 999px;
+      }
+      .fc {
+        position: absolute;
+        width: 448px;
+        height: 190px;
+        background: #fff;
+        border-radius: 36px;
+        padding: 26px 30px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        box-shadow: 0 24px 54px -26px rgba(15, 23, 42, 0.4);
+        opacity: 0;
+      }
+      .fc .ic {
+        width: 92px;
+        height: 92px;
+        border-radius: 28px;
+        display: grid;
+        place-items: center;
+        font-size: 50px;
+        flex: none;
+      }
+      .fc b {
+        display: block;
+        font-size: 42px;
+        line-height: 1.1;
+      }
+      .fc small {
+        display: block;
+        margin-top: 6px;
+        font-size: 27px;
+        font-weight: 500;
+        color: var(--muted);
+        line-height: 1.2;
+      }
+      .comp {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: 26px;
+        height: 112px;
+        background: #fff;
+        border-radius: 56px;
+        box-shadow: 0 10px 30px -14px rgba(15, 23, 42, 0.35);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 14px;
+        z-index: 5;
+      }
+      .cin {
+        flex: 1;
+        color: #94a3b8;
+        font-size: 31px;
+      }
+      .cin span {
+        display: flex;
+        align-items: center;
+      }
+      .cdt {
+        width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        background: #2563eb;
+        display: block;
+      }
+      .snd {
+        width: 76px;
+        height: 76px;
+        border-radius: 38px;
+        background: #2563eb;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .btn {
+        position: absolute;
+        text-align: center;
+        background: #fff;
+        color: var(--brand);
+        font-size: 64px;
+        font-weight: 900;
+        border-radius: 999px;
+        box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.5);
+      }
+      .kpi {
+        position: absolute;
+        width: 448px;
+        height: 230px;
+        background: #fff;
+        border-radius: 40px;
+        padding: 34px 40px;
+        box-shadow: 0 28px 60px -28px rgba(15, 23, 42, 0.4);
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .kpi b {
+        display: block;
+        margin-top: 8px;
+        font-size: 108px;
+        line-height: 1;
+        font-weight: 900;
+        color: var(--ink);
+      }
+      .kpi.g b {
+        color: var(--green);
+      }
+      .bx {
+        position: absolute;
+        inset-inline: 80px;
+        top: 950px;
+        background: #fff;
+        border-radius: 40px;
+        padding: 32px 44px;
+        box-shadow: 0 28px 60px -28px rgba(15, 23, 42, 0.4);
+      }
+      .bx h4 {
+        font-size: 36px;
+        margin-bottom: 22px;
+      }
+      .br {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        font-size: 33px;
+        font-weight: 700;
+        margin-top: 14px;
+      }
+      .br span {
+        width: 270px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .lg {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .br .tr {
+        flex: 1;
+        height: 28px;
+        border-radius: 14px;
+        background: #e2e8f0;
+        overflow: hidden;
+      }
+      .br .fl {
+        height: 100%;
+        width: 0;
+        border-radius: 14px;
+        background: linear-gradient(90deg, #4f8ff7, #1d4ed8);
+      }
+      .br em {
+        font-style: normal;
+        width: 50px;
+        text-align: end;
+      }
+      #wipe {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(160deg, #2563eb, #1e3a8a);
+        transform: translateY(1920px);
+        z-index: 50;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="sc" id="s1">
+      <div class="abs bgA" id="bgA" style="inset: 0"></div>
+      <div class="abs bgB" id="bgB" style="inset: 0; opacity: 0"></div>
+
+      <div class="phone" id="ph">
+        <div class="scr">
+          <div class="notch"></div>
+          <div class="bar" id="barA">
+            <i>ד</i>
+            <div><b>דנה כהן</b><small>לקוחה</small></div>
+          </div>
+          <div class="bar" id="barB" style="opacity: 0">
+            <i>נ</i>
+            <div><b>נועה בר</b><small>לקוחה</small></div>
+          </div>
+
+          <div class="chat" id="chatA">
+            <div class="msg in" id="a1">
+              היי, אפשר תור לצבע ותספורת מחר אחרי הצהריים?<small>19:02</small>
+            </div>
+            <div class="miss" id="a1m">● לא נענה</div>
+            <div class="msg out" id="aR">
+              היי, סליחה על האיחור 🙏 יש לי מחר ב־16:00<small><span class="tk"></span>21:41</small>
+            </div>
+            <div class="msg in" id="a2">
+              היה דחוף אז כבר סגרתי במקום אחר, תודה 🙏<small>21:42</small>
+            </div>
+          </div>
+
+          <div class="chat" id="chatB" style="opacity: 0">
+            <div class="msg in" id="b1">
+              ערב טוב, יש לכם מקום לתספורת מחר בבוקר?<small>20:47</small>
+            </div>
+            <div class="msg out" id="b2">
+              היי! כאן סלון שירן 💇‍♀️ מתי נוח לך?<small
+                ><span class="tk"></span>✨ נענה ע״י AI · 20:47</small
+              >
+            </div>
+            <div class="slots" id="sl">
+              <div class="slot" id="tm1">מחר ב־09:00</div>
+              <div class="slot">מחר ב־10:30</div>
+              <div class="slot">היום ב־18:30</div>
+            </div>
+            <div class="msg in" id="b4">מחר ב־09:00</div>
+            <div class="msg out" id="b5">
+              קבענו לך תור למחר ב־09:00 ✅<small><span class="tk"></span>20:48</small>
+            </div>
+            <div class="msg in" id="b6">ומה המחיר של צבע?<small>20:49</small></div>
+            <div class="msg out" id="b7">
+              צבע מתחיל ב־₪280, תלוי באורך השיער. רוצה שאקבע לך תור?<small
+                ><span class="tk"></span>✨ נענה ע״י AI · 20:49</small
+              >
+            </div>
+          </div>
+          <div class="comp" id="comp">
+            <div id="chlp" style="width: 84px; height: 84px; flex: none; opacity: 0"></div>
+            <div class="cin">
+              <span id="cph">הקלידו הודעה…</span
+              ><span
+                id="ctxt"
+                style="
+                  display: none;
+                  color: #0f172a;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  max-width: 330px;
+                "
+              ></span>
+            </div>
+            <div class="snd">
+              <svg
+                viewBox="0 0 24 24"
+                width="38"
+                height="38"
+                fill="none"
+                stroke="#fff"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" />
+              </svg>
+            </div>
+          </div>
+          <div id="inst">
+            <p
+              class="abs"
+              style="inset-inline: 0; top: 210px; font-size: 34px; font-weight: 700; color: #64748b"
+            >
+              התקנת אפליקציה
+            </p>
+            <div
+              id="icn"
+              class="abs"
+              style="
+                left: 188px;
+                top: 330px;
+                width: 220px;
+                height: 220px;
+                border-radius: 58px;
+                background: #fff;
+                display: grid;
+                place-items: center;
+                box-shadow: 0 30px 60px -20px rgba(30, 64, 175, 0.45);
+              "
+            >
+              <svg viewBox="0 0 64 64" width="146" height="146">
+                <defs>
+                  <linearGradient id="ib" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#4f8ff7" />
+                    <stop offset="1" stop-color="#1d4ed8" />
+                  </linearGradient>
+                  <linearGradient id="ic2" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#ff8a5c" />
+                    <stop offset="1" stop-color="#f2564a" />
+                  </linearGradient>
+                </defs>
+                <circle
+                  cx="29"
+                  cy="35"
+                  r="23"
+                  fill="none"
+                  stroke="url(#ib)"
+                  stroke-opacity=".35"
+                  stroke-width="5"
+                />
+                <circle cx="29" cy="35" r="13.5" fill="none" stroke="url(#ib)" stroke-width="5" />
+                <circle cx="29" cy="35" r="6" fill="url(#ic2)" />
+                <path
+                  d="M30.5 33.5L51 13"
+                  stroke="url(#ib)"
+                  stroke-width="3.6"
+                  stroke-linecap="round"
+                />
+                <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill="url(#ib)" />
+              </svg>
+            </div>
+            <p
+              class="abs"
+              style="inset-inline: 0; top: 600px; font-size: 60px; font-weight: 900; direction: ltr"
+            >
+              LeadFlow
+            </p>
+            <p
+              class="abs"
+              id="instT"
+              style="inset-inline: 0; top: 690px; font-size: 36px; font-weight: 700; color: #475569"
+            >
+              מתקין…
+            </p>
+            <div
+              class="abs"
+              style="
+                left: 118px;
+                top: 770px;
+                width: 360px;
+                height: 16px;
+                border-radius: 8px;
+                background: #cbd5e1;
+                overflow: hidden;
+              "
+            >
+              <div
+                id="instF"
+                style="height: 100%; width: 0; background: #2563eb; border-radius: 8px"
+              ></div>
+            </div>
+          </div>
+          <div class="tap" id="tap"></div>
+        </div>
+      </div>
+
+      <p class="hl" id="ftitle" style="top: 160px; font-size: 92px; opacity: 0">
+        הכול <span class="brandc">במקום אחד.</span>
+      </p>
+      <div id="feats"></div>
+      <div
+        id="intro"
+        style="
+          position: absolute;
+          left: 150px;
+          top: 600px;
+          width: 780px;
+          z-index: 20;
+          opacity: 0;
+          background: #fff;
+          border-radius: 56px;
+          padding: 36px 30px 44px;
+          text-align: center;
+          box-shadow: 0 50px 110px -30px rgba(30, 58, 138, 0.6);
+        "
+      >
+        <div id="ihost" style="display: flex; justify-content: center"></div>
+        <div style="font-size: 38px; font-weight: 700; color: #64748b; margin-top: 4px">
+          הכירו את
+        </div>
+        <div style="font-size: 62px; font-weight: 900; line-height: 1.15">
+          הסוכן החכם<br />של <span class="logo-name">Lead<b style="color: #2563eb">Flow</b></span>
+        </div>
+        <div style="font-size: 34px; color: #475569; margin-top: 14px">
+          עונה, קובע תורים ומציע תשובות
+        </div>
+      </div>
+      <div
+        class="abs"
+        id="hlp"
+        style="left: -400px; top: 0; width: 300px; height: 300px; opacity: 0; pointer-events: none"
+      >
+        <svg
+          viewBox="0 0 56 56"
+          width="300"
+          height="300"
+          style="overflow: visible; filter: drop-shadow(0 26px 30px rgba(30, 58, 138, 0.35))"
+        >
+          <defs>
+            <linearGradient id="hb" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#3b82f6" />
+              <stop offset="1" stop-color="#1d4ed8" />
+            </linearGradient>
+          </defs>
+          <g transform="translate(56 0) scale(-1 1)">
+            <g id="hf">
+              <g id="hBob">
+                <path
+                  d="M28 17 C28 12 30 10 32 8.5"
+                  stroke="#1d4ed8"
+                  stroke-width="2.2"
+                  fill="none"
+                  stroke-linecap="round"
+                />
+                <circle cx="32.5" cy="7.5" r="3.6" fill="#f77f57" />
+              </g>
+              <g id="hWave">
+                <path
+                  d="M12 35 C8 33 6 30 5.5 26"
+                  stroke="#2563eb"
+                  stroke-width="4"
+                  fill="none"
+                  stroke-linecap="round"
+                />
+                <circle cx="5.5" cy="25" r="3" fill="#3b82f6" />
+              </g>
+              <path
+                d="M44 36 C47 37 48.5 39 49 41.5"
+                stroke="#2563eb"
+                stroke-width="4"
+                fill="none"
+                stroke-linecap="round"
+              />
+              <rect x="10" y="16" width="36" height="32" rx="12" fill="url(#hb)" />
+              <path
+                d="M15 22c2-2 4-3 7-3"
+                stroke="#fff"
+                stroke-opacity="0.35"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+              />
+              <g id="hEyes">
+                <ellipse cx="21" cy="30" rx="4.6" ry="5.2" fill="#fff" />
+                <ellipse cx="35" cy="30" rx="4.6" ry="5.2" fill="#fff" />
+                <circle cx="19.8" cy="30.8" r="2.3" fill="#1e3a8a" />
+                <circle cx="33.8" cy="30.8" r="2.3" fill="#1e3a8a" />
+                <circle cx="19" cy="29.6" r="0.8" fill="#fff" />
+                <circle cx="33" cy="29.6" r="0.8" fill="#fff" />
+              </g>
+              <g
+                id="hHappy"
+                stroke="#fff"
+                stroke-width="2.4"
+                fill="none"
+                stroke-linecap="round"
+                opacity="0"
+              >
+                <path d="M17 30.5c1.5-3 6.5-3 8 0" />
+                <path d="M31 30.5c1.5-3 6.5-3 8 0" />
+              </g>
+              <circle cx="16" cy="37.5" r="2.2" fill="#ffb4a0" opacity="0.8" />
+              <circle cx="40" cy="37.5" r="2.2" fill="#ffb4a0" opacity="0.8" />
+              <path
+                id="hSmile"
+                d="M24.5 38.5c1.8 2.4 5.2 2.4 7 0"
+                stroke="#fff"
+                stroke-width="2.2"
+                fill="none"
+                stroke-linecap="round"
+              />
+              <path
+                id="hSmile2"
+                d="M23.5 38c2 3.6 7 3.6 9 0"
+                stroke="#fff"
+                stroke-width="2.2"
+                fill="none"
+                stroke-linecap="round"
+                opacity="0"
+              />
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <div
+        class="clock"
+        id="clk"
+        style="display: flex; justify-content: center; align-items: center; gap: 36px; top: 1630px"
+      >
+        <svg
+          viewBox="0 0 100 100"
+          width="270"
+          height="270"
+          style="filter: drop-shadow(0 24px 30px rgba(15, 23, 42, 0.3))"
+        >
+          <circle cx="50" cy="50" r="48" fill="#fff" stroke="#0f172a" stroke-width="3" />
+          <g id="ticks" stroke="#0f172a" stroke-linecap="round"></g>
+          <line
+            id="hh"
+            x1="50"
+            y1="50"
+            x2="50"
+            y2="28"
+            stroke="#0f172a"
+            stroke-width="5"
+            stroke-linecap="round"
+          />
+          <line
+            id="hm"
+            x1="50"
+            y1="50"
+            x2="50"
+            y2="16"
+            stroke="#0f172a"
+            stroke-width="3.4"
+            stroke-linecap="round"
+          />
+          <line
+            id="hs"
+            x1="50"
+            y1="58"
+            x2="50"
+            y2="12"
+            stroke="#f2564a"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+          <circle cx="50" cy="50" r="3.6" fill="#f2564a" />
+        </svg>
+      </div>
+    </section>
+
+    <section class="sc brandbg" id="s2">
+      <div
+        class="abs"
+        id="app6"
+        style="
+          left: 360px;
+          top: 330px;
+          width: 360px;
+          height: 360px;
+          border-radius: 96px;
+          background: #fff;
+          display: grid;
+          place-items: center;
+          box-shadow:
+            0 60px 130px -30px rgba(0, 0, 0, 0.55),
+            0 0 0 26px rgba(255, 255, 255, 0.12);
+        "
+      >
+        <svg viewBox="0 0 64 64" width="230" height="230">
+          <defs>
+            <linearGradient id="ab" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4f8ff7" />
+              <stop offset="1" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="ac" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff8a5c" />
+              <stop offset="1" stop-color="#f2564a" />
+            </linearGradient>
+          </defs>
+          <circle
+            cx="29"
+            cy="35"
+            r="23"
+            fill="none"
+            stroke="url(#ab)"
+            stroke-opacity=".35"
+            stroke-width="5"
+          />
+          <circle cx="29" cy="35" r="13.5" fill="none" stroke="url(#ab)" stroke-width="5" />
+          <circle cx="29" cy="35" r="6" fill="url(#ac)" />
+          <path d="M30.5 33.5L51 13" stroke="url(#ab)" stroke-width="3.6" stroke-linecap="round" />
+          <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill="url(#ab)" />
+        </svg>
+      </div>
+      <p class="hl" id="f1" style="top: 790px; font-size: 176px">
+        <span class="logo-name" style="color: #fff">Lead<b style="color: #93c5fd">Flow</b></span>
+      </p>
+      <p class="hl" id="f2" style="top: 1040px; font-size: 112px">העסק שלך<br />על אוטומט.</p>
+      <div class="btn" id="cta" style="left: 190px; top: 1440px; width: 700px; padding: 44px 0">
+        נסו בחינם
+      </div>
+    </section>
+
+    <div id="wipe"></div>
+    <script src="twin.js"></script>
+  </body>
+</html>
