@@ -204,7 +204,7 @@ if (wanted !== 'he') apply(wanted);
 // Things ease in as they scroll into view.
 const revealed = [
   ...document.querySelectorAll(
-    '.section-head, .flow-step, .auto-note, .cards .card, .steps li, .an-card, .an-copy, .chips li, .faq details, .final .wrap > *',
+    '.section-head, .flow-step, .auto-note, .cards .card, .steps li, .an-card, .an-copy, .chips li, .channels-title, .faq details, .final .wrap > *',
   ),
 ];
 revealed.forEach((el) => {
