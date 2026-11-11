@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '../../lib/cn';
 
 /**
@@ -6,11 +7,20 @@ import { cn } from '../../lib/cn';
  * open, without a tile, in blue with a coral centre. The name is always LTR; in Hebrew the icon
  * sits on the right of it, where reading starts.
  */
-export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
+export function Logo({
+  className,
+  compact,
+  to,
+}: {
+  className?: string;
+  compact?: boolean;
+  /** When set, the logo is a link (e.g. "/" to go home). */
+  to?: string;
+}) {
   // Unique per instance: a gradient defined inside a hidden copy (e.g. the desktop sidebar on
   // mobile) can't be referenced by a visible one.
   const id = `lf-mark-${useId().replace(/:/g, '')}`;
-  return (
+  const mark = (
     <span
       dir="ltr"
       className={cn('inline-flex items-center gap-2 rtl:flex-row-reverse', className)}
@@ -52,5 +62,15 @@ export function Logo({ className, compact }: { className?: string; compact?: boo
         </span>
       )}
     </span>
+  );
+  if (!to) return mark;
+  return (
+    <Link
+      to={to}
+      aria-label="LeadFlow"
+      className="inline-flex rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+    >
+      {mark}
+    </Link>
   );
 }

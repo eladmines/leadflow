@@ -455,12 +455,66 @@ export const templateInfo: Record<TemplateKey, { label: string; description: str
 };
 
 /** Suggested template for an industry (owners can pick either). */
+const TEMPLATE_BY_INDUSTRY: Record<string, TemplateKey> = {
+  ...Object.fromEntries(
+    [
+      'beauty',
+      'studio',
+      'events',
+      'photo',
+      'barber',
+      'nails',
+      'makeup',
+      'spa',
+      'tattoo',
+      'hairremoval',
+      'yoga',
+      'fitness',
+      'dance',
+      'martialarts',
+      'florist',
+      'designer',
+      'weddings',
+      'venue',
+      'rentals',
+      'jewelry',
+      'videography',
+    ].map((i) => [i, 'beauty' as const]),
+  ),
+  ...Object.fromEntries(
+    ['garage', 'carwash', 'tires', 'motorcycle', 'towing'].map((i) => [i, 'garage' as const]),
+  ),
+  ...Object.fromEntries(
+    ['catering', 'bartender', 'bakery', 'restaurant', 'cafe', 'foodtruck'].map((i) => [
+      i,
+      'food' as const,
+    ]),
+  ),
+  ...Object.fromEntries(
+    [
+      'therapy',
+      'tutoring',
+      'physio',
+      'psychology',
+      'nutrition',
+      'dental',
+      'alternative',
+      'vet',
+      'speech',
+      'optics',
+      'coaching',
+      'kids',
+      'music',
+      'languages',
+      'driving',
+      'childcare',
+      'eldercare',
+    ].map((i) => [i, 'clinic' as const]),
+  ),
+};
+
 export function templateForIndustry(industry: string): TemplateKey {
-  if (['beauty', 'studio', 'events', 'photo'].includes(industry)) return 'beauty';
-  if (industry === 'garage') return 'garage';
-  if (industry === 'catering') return 'food';
-  if (industry === 'therapy' || industry === 'tutoring') return 'clinic';
-  return 'trades';
+  return TEMPLATE_BY_INDUSTRY[industry] ?? 'trades';
 }
 
 // ---------------------------------------------------------------------------

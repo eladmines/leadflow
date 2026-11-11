@@ -7,8 +7,8 @@ import {
   type CreateBusinessRequest,
 } from '@leadflow/shared';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Alert, Button, Field, Select } from '../../components/ui';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, Button, Field, SelectMenu } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
 import { tr } from '../../i18n';
 
@@ -60,13 +60,22 @@ export function StepBusiness({ business, onSubmit }: Props) {
         error={errors.name?.message}
         {...form.register('name')}
       />
-      <Select
-        label={tr('תחום פעילות')}
-        required
-        placeholder={tr('בחירת תחום')}
-        options={industryOptions}
-        error={errors.industry?.message}
-        {...form.register('industry')}
+      <Controller
+        control={form.control}
+        name="industry"
+        render={({ field }) => (
+          <SelectMenu
+            label={tr('תחום פעילות')}
+            required
+            placeholder={tr('בחירת תחום')}
+            options={industryOptions}
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            name={field.name}
+            error={errors.industry?.message}
+          />
+        )}
       />
       <div className="flex justify-end">
         <Button type="submit" loading={isSubmitting}>

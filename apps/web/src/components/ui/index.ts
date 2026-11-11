@@ -13,6 +13,7 @@ export { RefreshButton } from './RefreshButton';
 export { Spinner } from './Spinner';
 export { TextLink, textLinkClasses } from './TextLink';
 export { Select } from './Select';
+export { SelectMenu } from './SelectMenu';
 export { Textarea } from './Textarea';
 export { DialogShell } from './DialogShell';
 export { PhoneField, browserCountry } from './PhoneField';

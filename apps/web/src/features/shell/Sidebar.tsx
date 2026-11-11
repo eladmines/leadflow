@@ -137,7 +137,7 @@ export function Sidebar({
   return (
     <div className="flex min-h-full flex-col gap-4 bg-surface px-3 py-4">
       <div className={cn('flex items-center justify-between gap-2 ps-2 pt-1', inDrawer && 'pe-10')}>
-        <Logo />
+        <Logo to="/" />
         {inDrawer && (
           <div className="flex items-center gap-1">
             <LanguageSwitch />

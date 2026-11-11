@@ -10,7 +10,7 @@ export function SignedInHeader({ children }: { children?: ReactNode }) {
     <header className="border-b border-surface-border bg-surface">
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Logo />
+          <Logo to="/" />
           {children}
         </div>
         <Button variant="secondary" size="sm" loading={isPending} onClick={() => void signOut()}>
