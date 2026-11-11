@@ -97,7 +97,7 @@ export const navItems: NavItem[] = [
     segment: 'appointments',
     color: { icon: 'text-rose-500', tile: 'bg-rose-500' },
     group: 'operations',
-    label: tr('תורים'),
+    label: tr('יומן'),
     icon: CalendarDays,
   },
   {

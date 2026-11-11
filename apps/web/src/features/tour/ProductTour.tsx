@@ -55,8 +55,8 @@ const STEPS: MenuStep[] = [
   },
   {
     menu: 'appointments',
-    title: tr('תורים'),
-    body: tr('יומן התורים, ובקשות לתור שהגיעו מהאתר ומחכות לאישור.'),
+    title: tr('יומן'),
+    body: tr('היומן, ובקשות לתור שהגיעו מהאתר ומחכות לאישור.'),
   },
   {
     menu: 'quotes',

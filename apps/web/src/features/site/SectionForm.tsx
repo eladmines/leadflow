@@ -258,7 +258,7 @@ export function SectionForm({ section: s, onChange }: { section: Section; onChan
                   onChange={(e) => onChange({ form: { ...s.form, askMessage: e.target.checked } })}
                 />
                 <Checkbox
-                  label={tr('בקשת תור: שירות, תאריך ושעה (מגיע לאישור ביומן התורים)')}
+                  label={tr('בקשת תור: שירות, תאריך ושעה (מגיע לאישור ביומן)')}
                   checked={s.form.askAppointment}
                   onChange={(e) =>
                     onChange({ form: { ...s.form, askAppointment: e.target.checked } })

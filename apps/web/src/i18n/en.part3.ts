@@ -1,6 +1,6 @@
 /** English copy, keyed by the Hebrew source text (D-100). Part 3: site editor, tasks, team, tours, WhatsApp. */
 export const enPart3: Record<string, string> = {
-  'בקשת תור: שירות, תאריך ושעה (מגיע לאישור ביומן התורים)':
+  'בקשת תור: שירות, תאריך ושעה (מגיע לאישור ביומן)':
     'Appointment request: service, date and time (arrives for approval in the calendar)',
   'טקסט כפתור השליחה': 'Submit button text',
   'הודעה אחרי שליחה': 'Message after sending',
@@ -228,7 +228,7 @@ export const enPart3: Record<string, string> = {
     'New numbers that wrote on WhatsApp wait here. "Business" creates a lead, "Personal" keeps them out.',
   'תזכורות למעקב, למשל מתי לחזור ללקוח. מקבלים מייל כשמגיע הזמן.':
     "Follow-up reminders, like when to get back to a customer. You get an email when it's time.",
-  'יומן התורים, ובקשות לתור שהגיעו מהאתר ומחכות לאישור.':
+  'היומן, ובקשות לתור שהגיעו מהאתר ומחכות לאישור.':
     'The appointment calendar, and website requests waiting for approval.',
   'הצעת מחיר מסודרת מתוך ליד, שליחה בקישור או בוואטסאפ, והלקוח מאשר אונליין.':
     'A proper quote from a lead, sent by link or WhatsApp, accepted online by the customer.',
@@ -496,8 +496,8 @@ export const enPart3: Record<string, string> = {
   'סטטוס חדש': 'New status',
   'עריכת הסטטוס {0}': 'Edit the status {0}',
   'הגדרות קביעת התורים': 'Booking settings',
-  'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.':
-    'The customer answers a few questions about the event (type, date, guests and area), and the request waits for your approval on the Appointments page.',
+  'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד היומן.':
+    'The customer answers a few questions about the event (type, date, guests and area), and the request waits for your approval on the Calendar page.',
   הודעות: 'Messages',
   'חלקי העמוד': 'Page sections',
   'טוענים…': 'Loading…',
@@ -591,13 +591,13 @@ export const enPart3: Record<string, string> = {
   'הלקוח מקבל אישור, והתור נכנס ליומן.':
     'The customer gets a confirmation, and it goes into your calendar.',
   'התור מחכה לאישור שלי': 'It waits for my approval',
-  'השעה שמורה בינתיים. מאשרים בעמוד התורים.':
-    'The time is held meanwhile. You approve it on the Appointments page.',
+  'השעה שמורה בינתיים. מאשרים בעמוד היומן.':
+    'The time is held meanwhile. You approve it on the Calendar page.',
   'עריכת ההצצה': 'Edit',
   '"תור בשעה פנויה": הלקוח בוחר שירות, יום ושעה. "בקשה לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
     '"An appointment at a free time": the customer picks a service, day and time. "An event request": the customer writes a date and tells you about the event, and you approve. The option that suits your field is marked.',
-  '"התור מאושר מיד": התור נכנס ליומן כמאושר. "התור מחכה לאישור שלי": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד התורים.':
-    '"It\'s confirmed straight away": it goes into the calendar as confirmed. "It waits for my approval": the time is held, and the appointment waits for you under "Requests waiting for approval" on the Appointments page.',
+  '"התור מאושר מיד": התור נכנס ליומן כמאושר. "התור מחכה לאישור שלי": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד היומן.':
+    '"It\'s confirmed straight away": it goes into the calendar as confirmed. "It waits for my approval": the time is held, and the appointment waits for you under "Requests waiting for approval" on the Calendar page.',
   'אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
     "After the automatic reply, or to a customer who didn't finish booking, a message goes out with a link, up to 3 photos and a video of your business. At most once a day per customer. The switch turns it on and off.",
   'סרטון (לא חובה)': 'Video (optional)',
@@ -798,7 +798,7 @@ export const enPart3: Record<string, string> = {
     'Right after the customer decides (a time to talk, an appointment or an event), they get a link, photos and a video from the business. At most once a day.',
   'כל הודעה של לקוח מקבלת מענה קצר, והלקוח בוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
     'Every customer message gets a short answer, and the customer chooses when to talk. When a status is on, its message is sent.',
-  'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר. שעה שנבחרה נכנסת ליומן התורים, ואתם מקבלים משימה לחזור אליו.':
+  'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר. שעה שנבחרה נכנסת ליומן, ואתם מקבלים משימה לחזור אליו.':
     'Under the message, the customer picks an hour to talk (today or tomorrow, 09:00–20:00) or another time. A chosen hour goes into your appointments calendar, and you get a task to call them back.',
   'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
     'Sent right after the customer decides (a time to talk, an appointment or an event): the message with the link, then the video and photos.',
