@@ -230,7 +230,7 @@ export function SelectMenu({
             id={listId}
             role="listbox"
             aria-label={label}
-            className="max-h-60 overflow-y-auto py-1"
+            className="scrollbar-visible max-h-60 overflow-y-auto py-1"
           >
             {shown.map((o, i) => (
               <li

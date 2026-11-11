@@ -313,7 +313,7 @@ function CountryPicker({
               id={listId}
               role="listbox"
               aria-label={tr('מדינות')}
-              className="relative max-h-60 overflow-y-auto py-1"
+              className="scrollbar-visible relative max-h-60 overflow-y-auto py-1"
             >
               {shown.map((c, i) => (
                 <li
