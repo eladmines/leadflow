@@ -25,8 +25,8 @@ const benefits = [
   },
   {
     icon: MessageCircle,
-    title: tr('עונים ללקוחות ב־WhatsApp'),
-    text: tr('תיבת שיחות משותפת לכל הצוות.'),
+    title: tr('כל פנייה מקבלת מענה, גם כשאתם לא זמינים'),
+    text: tr('תיבת שיחות אחת לכל הערוצים ולכל הצוות.'),
   },
 ];
 
@@ -61,7 +61,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-brand-100">{tr('לעסקים מכל סוג')}</p>
             <p className="text-4xl font-semibold leading-tight">
-              {tr('האתר, הלידים והשיחות של העסק — במקום אחד.')}
+              {tr('מנהלים את כל העסק במקום אחד.')}
             </p>
           </div>
           <ul className="flex flex-col gap-5">
