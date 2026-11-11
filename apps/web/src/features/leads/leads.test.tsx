@@ -131,20 +131,17 @@ describe('leads page', () => {
     expect(screen.getByRole('status', { name: '' })).toHaveTextContent('עודכן');
   });
 
-  it('empty state points to the live address when the site is published', async () => {
-    mockApi({
-      [meKey]: me(testUser),
-      [`GET ${apiPaths.site.site(id)}`]: () => json(200, { site: liveSite }),
-    });
-    renderApp(businessWebPaths.section(id, 'leads'));
-    expect(await screen.findByRole('heading', { name: 'עדיין אין פניות' })).toBeInTheDocument();
-    expect(await screen.findByText('salon.lvh.me:4100')).toBeInTheDocument();
-  });
-
-  it('empty state has no build-the-site button when nothing is published', async () => {
+  it('empty state explains where leads come from and links an owner to the channel setup', async () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(businessWebPaths.section(id, 'leads'));
     expect(await screen.findByRole('heading', { name: 'עדיין אין פניות' })).toBeInTheDocument();
+    expect(
+      screen.getByText('הלידים מגיעים מהערוצים שהוגדרו לעסק, או שמוסיפים אותם ידנית.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'להגדרת הערוצים' })).toHaveAttribute(
+      'href',
+      `${businessWebPaths.section(id, 'settings')}?tab=channels`,
+    );
     expect(screen.queryByRole('link', { name: 'לבניית האתר' })).not.toBeInTheDocument();
   });
 
