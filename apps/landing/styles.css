@@ -936,86 +936,33 @@ h3 {
   transform: none;
 }
 @media (max-width: 800px) {
+  /* Same picture as on desktop: a column of channel icons whose lines converge on the app. */
   .pipe {
-    grid-template-columns: 1fr;
-    justify-items: center;
-  }
-  .pipe-svg {
-    display: none;
-  }
-  .pipe-in {
-    height: auto;
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
+    grid-template-columns: auto minmax(2rem, 1fr) auto;
   }
   .pipe-in li {
-    height: auto;
-    padding-block: 0.45rem;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+    font-size: 0;
   }
-  .pipe-hub {
-    margin-top: 2.4rem;
-    position: relative;
+  .pipe-in li small {
+    display: none;
   }
-  /* The desktop curves are hidden, so the flow runs straight down into the app instead. */
-  .pipe-in {
-    position: relative;
-    padding-bottom: 2.6rem;
-  }
-  /* A bracket under the chips that narrows into one line, then an arrow into the app. */
-  .pipe-in::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    inset-inline: 12%;
-    height: 1.6rem;
-    border: 2px solid #cbd5e1;
-    border-top: 0;
-    border-radius: 0 0 999px 999px;
-  }
-  .pipe-hub {
-    margin-top: 0;
-    position: relative;
-    padding-top: 3.6rem;
-  }
-  .pipe-hub::before {
-    content: '';
-    position: absolute;
-    top: -1.1rem;
-    inset-inline-start: 50%;
-    width: 3px;
-    height: 4.4rem;
-    margin-inline-start: -1.5px;
-    border-radius: 2px;
-    background: linear-gradient(var(--brand-600) 0 6px, transparent 6px) 0 0 / 3px 14px repeat-y;
-    animation: flow-down 1s linear infinite;
-  }
-  .pipe-hub::after {
-    content: '';
-    position: absolute;
-    top: 3rem;
-    inset-inline-start: 50%;
-    margin-inline-start: -7px;
-    border: 7px solid transparent;
-    border-top-color: var(--brand-600);
-    border-bottom: 0;
+  .pipe-in li .brand {
+    width: 28px;
+    height: 28px;
   }
   .app-icon {
-    animation: hub-pulse 2.4s ease-in-out infinite;
+    width: 88px;
+    height: 88px;
+    border-radius: 24px;
   }
-}
-@keyframes flow-down {
-  to {
-    background-position: 0 14px;
-  }
-}
-@keyframes hub-pulse {
-  50% {
-    box-shadow:
-      0 18px 40px -16px rgba(37, 99, 235, 0.6),
-      0 0 0 14px rgba(37, 99, 235, 0.1);
+  .app-icon svg {
+    width: 46px;
+    height: 46px;
   }
 }
 @media (max-width: 960px) {
