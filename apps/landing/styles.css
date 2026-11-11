@@ -872,63 +872,106 @@ h3 {
 }
 .auto-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1.5rem;
+  border-radius: 22px;
+  padding: 1.4rem 1.4rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition:
     transform 0.2s,
-    box-shadow 0.2s;
+    box-shadow 0.2s,
+    border-color 0.2s;
 }
 .auto-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow);
+  border-color: var(--brand-100);
 }
-.auto-card p {
-  margin: 0.9rem 0 0;
-  color: var(--muted);
+.auto-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
+}
+.auto-ico {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+}
+.auto-ico svg {
+  width: 24px;
+  height: 24px;
 }
 .auto-badge {
-  position: absolute;
-  top: 1rem;
-  inset-inline-end: 1rem;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: #166534;
   background: #dcfce7;
-  padding: 0.1rem 0.6rem;
+  padding: 0.2rem 0.7rem;
   border-radius: 999px;
 }
 .auto-flow {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;
-  padding-inline-end: 4.2rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
 }
 .auto-flow .trig,
 .auto-flow .res {
-  font-weight: 700;
-  font-size: 0.95rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.65rem 1rem;
+  border-radius: 14px;
+}
+.auto-flow small {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+.auto-flow b {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.3;
 }
 .auto-flow .trig {
-  background: #ffe9e6;
+  background: #fff1ef;
   color: #b4231b;
+  border: 1px solid #ffd9d4;
 }
 .auto-flow .res {
   background: var(--brand-50);
   color: var(--brand-700);
+  border: 1px solid var(--brand-100);
 }
-.auto-flow .arrow::before {
-  content: '→';
+.auto-flow .arrow {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-block: -6px;
+  z-index: 1;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--line);
   color: var(--muted);
   font-weight: 800;
+  font-size: 0.9rem;
 }
-[dir='rtl'] .auto-flow .arrow::before {
-  content: '←';
+.auto-flow .arrow::before {
+  content: '↓';
+}
+.auto-card p {
+  margin: 1.05rem 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
 }
 .auto-note {
   margin: 1.75rem 0 0;
@@ -1105,7 +1148,7 @@ h3 {
 .section-dark .eyebrow {
   color: #93c5fd;
 }
-.section-dark .steps li {
+.section-dark .steps > li {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(6px);
@@ -1194,7 +1237,7 @@ h3 {
   grid-template-columns: repeat(3, 1fr);
   gap: 1.25rem;
 }
-.steps li {
+.steps > li {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1203,6 +1246,51 @@ h3 {
 .steps p {
   margin: 0;
   color: var(--muted);
+}
+.step-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+.step-top .num {
+  margin-bottom: 0;
+}
+.step-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+.step-tag.tag-auto {
+  background: #dcfce7;
+  color: #166534;
+}
+.section-dark .steps > li.step-auto {
+  background: linear-gradient(160deg, rgba(37, 99, 235, 0.42), rgba(255, 255, 255, 0.08));
+  border-color: rgba(147, 197, 253, 0.7);
+  box-shadow: 0 24px 60px -24px rgba(37, 99, 235, 0.8);
+  transform: translateY(-8px);
+}
+.step-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 1.1rem 0 0;
+  padding: 0;
+}
+.section-dark .steps .step-chips li {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  backdrop-filter: none;
 }
 .num {
   display: grid;

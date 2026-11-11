@@ -6,7 +6,7 @@
     <title>LeadFlow — מנהלים את כל העסק במקום אחד</title>
     <meta
       name="description"
-      content="LeadFlow היא מערכת אחת לניהול העסק: אתר, לקוחות ולידים, שיחות מוואטסאפ, פייסבוק ומייל, תורים, משימות, הצעות מחיר ודוחות."
+      content="LeadFlow היא פלטפורמה אחת לניהול העסק: אתר, לקוחות ופניות, שיחות מוואטסאפ, פייסבוק ומייל, תורים, משימות, הצעות מחיר ודוחות, עם אוטומציה למענה ולקביעת תורים."
     />
     <meta property="og:title" content="LeadFlow" />
     <meta
@@ -98,11 +98,11 @@
       <section class="hero" id="top">
         <div class="wrap hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow" data-i18n="heroEyebrow">מערכת אחת לניהול העסק</p>
+            <p class="eyebrow" data-i18n="heroEyebrow">פלטפורמה אחת לניהול העסק</p>
             <h1 data-i18n="heroTitle">מנהלים את כל העסק במקום אחד.</h1>
             <p class="lead" data-i18n="heroText">
-              אתר, לקוחות, שיחות, תורים, משימות והצעות מחיר — הכול במקום אחד, לכל הצוות. כל פנייה
-              נכנסת לבד, והמענה, קביעת התורים והתזכורות קורים אוטומטית.
+              אתר, לקוחות, שיחות, תורים, משימות והצעות מחיר, במערכת אחת לכל הצוות. כל פנייה נרשמת
+              אוטומטית, והמענה, קביעת התורים והתזכורות מתבצעים ללא התערבות ידנית.
             </p>
             <div class="cta-row">
               <a
@@ -335,7 +335,7 @@
       <section class="channels" aria-labelledby="channels-title">
         <div class="wrap">
           <h2 id="channels-title" class="channels-title" data-i18n="channelsTitle">
-            פניות מכל מקום מגיעות למקום אחד
+            כל הפניות, מכל ערוץ, בתיבה אחת
           </h2>
           <div class="pipe">
             <ul class="pipe-in chips" aria-label="מקורות הפניות" data-i18n-aria="pipeInLabel">
@@ -476,84 +476,194 @@
         <div class="wrap">
           <header class="section-head">
             <p class="eyebrow" data-i18n="autoEyebrow">אוטומציה</p>
-            <h2 id="auto-title" data-i18n="autoTitle">המערכת עובדת בשבילכם, גם כשאתם עסוקים</h2>
+            <h2 id="auto-title" data-i18n="autoTitle">אוטומציה שעובדת בשבילכם, גם כשאתם עסוקים</h2>
             <p class="section-sub" data-i18n="autoSub">
-              מה שחוזר על עצמו קורה לבד: עונים ללקוחות, קובעים תורים, יוצרים לידים ומזכירים מה צריך
-              לעשות.
+              משימות שחוזרות על עצמן מתבצעות אוטומטית: מענה ללקוחות, קביעת תורים, רישום פניות
+              ותזכורות.
             </p>
           </header>
           <ul class="auto-grid">
             <li class="auto-card">
-              <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              <div class="auto-top">
+                <span class="auto-ico i-emerald" aria-hidden="true"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M19 8v6M22 11h-6" /></svg
+                ></span>
+                <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              </div>
               <div class="auto-flow">
-                <span class="trig" data-i18n="a1t">לקוח כותב</span
-                ><span class="arrow" aria-hidden="true"></span
-                ><span class="res" data-i18n="a1r">ליד נוצר</span>
+                <div class="trig">
+                  <small data-i18n="autoWhen">כאשר</small><b data-i18n="a1t">לקוח פונה</b>
+                </div>
+                <span class="arrow" aria-hidden="true"></span>
+                <div class="res">
+                  <small data-i18n="autoThen">אז</small><b data-i18n="a1r">הפנייה נרשמת</b>
+                </div>
               </div>
               <p data-i18n="a1p">
-                כל פנייה מהאתר, מוואטסאפ, מפייסבוק או מהמייל נרשמת בעצמה כליד, עם המקור שממנו הגיעה.
+                כל פנייה מהאתר, מוואטסאפ, מפייסבוק או ממייל נרשמת אוטומטית, יחד עם מקור ההגעה שלה.
               </p>
             </li>
             <li class="auto-card">
-              <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              <div class="auto-top">
+                <span class="auto-ico i-violet" aria-hidden="true"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" /></svg
+                ></span>
+                <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              </div>
               <div class="auto-flow">
-                <span class="trig" data-i18n="a2t">אתם עסוקים</span
-                ><span class="arrow" aria-hidden="true"></span
-                ><span class="res" data-i18n="a2r">מענה לפי הסטטוס</span>
+                <div class="trig">
+                  <small data-i18n="autoWhen">כאשר</small><b data-i18n="a2t">אתם לא זמינים</b>
+                </div>
+                <span class="arrow" aria-hidden="true"></span>
+                <div class="res">
+                  <small data-i18n="autoThen">אז</small><b data-i18n="a2r">מענה לפי הסטטוס שלכם</b>
+                </div>
               </div>
               <p data-i18n="a2p">
-                הודעת סטטוס, למשל "באירוע עד 18:00", נשלחת לכל לקוח שכותב, והלקוח בוחר מתי נוח לו
-                לדבר.
+                הודעת סטטוס, למשל ״באירוע עד 18:00״, נשלחת לכל לקוח שפונה, והלקוח בוחר מתי נוח לו
+                לשוחח.
               </p>
             </li>
             <li class="auto-card">
-              <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              <div class="auto-top">
+                <span class="auto-ico i-sky" aria-hidden="true"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                    <circle cx="9" cy="10" r="2" />
+                    <path d="m21 16-5-5-8 8" /></svg
+                ></span>
+                <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              </div>
               <div class="auto-flow">
-                <span class="trig" data-i18n="a3t">אחרי המענה</span
-                ><span class="arrow" aria-hidden="true"></span
-                ><span class="res" data-i18n="a3r">הצצה לעבודות שלכם</span>
+                <div class="trig">
+                  <small data-i18n="autoWhen">כאשר</small><b data-i18n="a3t">בסיום המענה</b>
+                </div>
+                <span class="arrow" aria-hidden="true"></span>
+                <div class="res">
+                  <small data-i18n="autoThen">אז</small><b data-i18n="a3r">הצצה לעבודות העסק</b>
+                </div>
               </div>
               <p data-i18n="a3p">
                 קישור, תמונות וסרטון מהעסק נשלחים ללקוח אוטומטית, לכל היותר פעם ביום.
               </p>
             </li>
             <li class="auto-card">
-              <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              <div class="auto-top">
+                <span class="auto-ico i-blue" aria-hidden="true"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" /></svg
+                ></span>
+                <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              </div>
               <div class="auto-flow">
-                <span class="trig" data-i18n="a4t">הלקוח רוצה תור</span
-                ><span class="arrow" aria-hidden="true"></span
-                ><span class="res" data-i18n="a4r">קביעה אוטומטית</span>
+                <div class="trig">
+                  <small data-i18n="autoWhen">כאשר</small><b data-i18n="a4t">לקוח מבקש תור</b>
+                </div>
+                <span class="arrow" aria-hidden="true"></span>
+                <div class="res">
+                  <small data-i18n="autoThen">אז</small><b data-i18n="a4r">קביעת תור אוטומטית</b>
+                </div>
               </div>
               <p data-i18n="a4p">
-                הלקוח בוחר שירות, יום ושעה פנויה מהיומן. התור נכנס ליומן מאושר, או ממתין לאישור
-                שלכם.
+                הלקוח בוחר שירות, יום ושעה פנויה מהיומן. התור נרשם ביומן כמאושר, או ממתין לאישורכם.
               </p>
             </li>
             <li class="auto-card">
-              <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              <div class="auto-top">
+                <span class="auto-ico i-amber" aria-hidden="true"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg
+                ></span>
+                <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              </div>
               <div class="auto-flow">
-                <span class="trig" data-i18n="a5t">צריך אדם</span
-                ><span class="arrow" aria-hidden="true"></span
-                ><span class="res" data-i18n="a5r">מעבר חלק אליכם</span>
+                <div class="trig">
+                  <small data-i18n="autoWhen">כאשר</small><b data-i18n="a5t">נדרש מענה אנושי</b>
+                </div>
+                <span class="arrow" aria-hidden="true"></span>
+                <div class="res">
+                  <small data-i18n="autoThen">אז</small><b data-i18n="a5r">העברה חלקה לצוות</b>
+                </div>
               </div>
               <p data-i18n="a5p">
-                לקוח שמבקש לדבר איתכם עובר אליכם מיד, והמענה האוטומטי שותק ברגע שמישהו מהצוות כותב.
+                כשלקוח מבקש לשוחח עם אדם, השיחה עוברת אליכם מיד, והמענה האוטומטי נעצר ברגע שמישהו
+                מהצוות מגיב.
               </p>
             </li>
             <li class="auto-card">
-              <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              <div class="auto-top">
+                <span class="auto-ico i-rose" aria-hidden="true"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"
+                    /></svg
+                ></span>
+                <span class="auto-badge" data-i18n="autoBadge">אוטומטי</span>
+              </div>
               <div class="auto-flow">
-                <span class="trig" data-i18n="a6t">הגיע הזמן</span
-                ><span class="arrow" aria-hidden="true"></span
-                ><span class="res" data-i18n="a6r">תזכורות והתראות</span>
+                <div class="trig">
+                  <small data-i18n="autoWhen">כאשר</small><b data-i18n="a6t">מועד היעד מגיע</b>
+                </div>
+                <span class="arrow" aria-hidden="true"></span>
+                <div class="res">
+                  <small data-i18n="autoThen">אז</small><b data-i18n="a6r">תזכורות והתראות</b>
+                </div>
               </div>
               <p data-i18n="a6p">
-                משימות מזכירות במועד במייל, והצוות מקבל התראה על כל ליד והודעה חדשה.
+                משימות שהגיע מועדן מגיעות כתזכורת במייל, והצוות מקבל התראה על כל פנייה והודעה חדשות.
               </p>
             </li>
           </ul>
           <p class="auto-note" data-i18n="autoNote">
-            כל האוטומציות נשלטות במתג: אפשר להדליק, לכבות ולשנות את ההודעות בכל רגע.
+            כל אוטומציה נשלטת בלחיצה: אפשר להפעיל, לכבות ולערוך את ההודעות בכל עת.
           </p>
         </div>
       </section>
@@ -562,8 +672,8 @@
       <section class="section" id="features" aria-labelledby="features-title">
         <div class="wrap">
           <header class="section-head">
-            <p class="eyebrow" data-i18n="featEyebrow">תכונות</p>
-            <h2 id="features-title" data-i18n="featTitle">פלטפורמה אחת לניהול העסק</h2>
+            <p class="eyebrow" data-i18n="featEyebrow">יכולות</p>
+            <h2 id="features-title" data-i18n="featTitle">כל כלי הניהול של העסק, במקום אחד</h2>
           </header>
           <ul class="cards">
             <li class="card">
@@ -580,9 +690,9 @@
                   <circle cx="9" cy="7" r="4" />
                   <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg
               ></span>
-              <h3 data-i18n="f1t">ניהול לקוחות ולידים</h3>
+              <h3 data-i18n="f1t">ניהול לקוחות ופניות</h3>
               <p data-i18n="f1p">
-                מאגר לקוחות אחד עם שלבי מכירה, תגיות, הערות והיסטוריית פעילות מלאה לכל איש קשר.
+                מאגר לקוחות מרכזי עם שלבי מכירה, תגיות והערות, והיסטוריית פעילות מלאה לכל איש קשר.
               </p>
             </li>
             <li class="card">
@@ -599,7 +709,7 @@
               ></span>
               <h3 data-i18n="f2t">תיבת שיחות מאוחדת</h3>
               <p data-i18n="f2p">
-                WhatsApp, פייסבוק ודוא״ל במסך אחד. מענה מכל ערוץ מאותו מקום, עם תצוגה משותפת לכל
+                וואטסאפ, פייסבוק ומייל במסך אחד. מענה מכל ערוץ מאותה תיבה, עם תצוגה משותפת לכל
                 הצוות.
               </p>
             </li>
@@ -616,9 +726,9 @@
                   <rect x="3" y="4" width="18" height="18" rx="2" />
                   <path d="M16 2v4M8 2v4M3 10h18" /></svg
               ></span>
-              <h3 data-i18n="f3t">יומן תורים</h3>
+              <h3 data-i18n="f3t">יומן ותורים</h3>
               <p data-i18n="f3p">
-                ניהול שירותים, זמינות ותורים לפי אנשי צוות, עם קביעת תור עצמאית ללקוחות ואישור
+                ניהול שירותים, זמינות ותורים לפי אנשי צוות, עם קביעת תור עצמית ללקוחות ואישור
                 במערכת.
               </p>
             </li>
@@ -636,7 +746,9 @@
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg
               ></span>
               <h3 data-i18n="f4t">משימות ומעקב</h3>
-              <p data-i18n="f4p">תזכורות מעקב עם אחראי ומועד לכל משימה, וקישור ללקוח הרלוונטי.</p>
+              <p data-i18n="f4p">
+                משימות עם אחראי ומועד יעד, תזכורות אוטומטיות וקישור ללקוח הרלוונטי.
+              </p>
             </li>
             <li class="card">
               <span class="icon i-amber" aria-hidden="true"
@@ -652,9 +764,7 @@
                   <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg
               ></span>
               <h3 data-i18n="f5t">הצעות מחיר</h3>
-              <p data-i18n="f5p">
-                הפקת הצעות מחיר מתוך הליד, שליחה בקישור ואישור דיגיטלי של הלקוח.
-              </p>
+              <p data-i18n="f5p">הפקת הצעת מחיר מתוך כרטיס הלקוח, שליחה בקישור ואישור דיגיטלי.</p>
             </li>
             <li class="card">
               <span class="icon i-violet" aria-hidden="true"
@@ -674,7 +784,7 @@
               ></span>
               <h3 data-i18n="f6t">אתר העסק</h3>
               <p data-i18n="f6p">
-                בניית אתר מתבניות מוכנות, פרסום בלחיצה וטופס פנייה שמזין ישירות את הלידים.
+                בניית אתר מתבניות מוכנות, פרסום בלחיצה וטופס פנייה שמזין את המערכת ישירות.
               </p>
             </li>
             <li class="card">
@@ -693,7 +803,7 @@
               ></span>
               <h3 data-i18n="f7t">מענה אוטומטי וקביעת תורים</h3>
               <p data-i18n="f7p">
-                מענה מיידי ב-WhatsApp בהתאם לסטטוס העסק, וקביעת תורים עצמאית על ידי הלקוחות.
+                מענה מיידי בוואטסאפ בהתאם לסטטוס העסק, וקביעת תורים עצמית על ידי הלקוחות.
               </p>
             </li>
             <li class="card">
@@ -709,9 +819,9 @@
                   <path d="M3 3v18h18" />
                   <path d="M7 14l4-4 4 3 5-6" /></svg
               ></span>
-              <h3 data-i18n="f8t">דוחות ומקורות</h3>
+              <h3 data-i18n="f8t">דוחות וניתוח מקורות</h3>
               <p data-i18n="f8p">
-                ניתוח לידים לפי מקור וקמפיין, שיעור סגירה, זמן תגובה והשוואה לתקופה הקודמת.
+                ניתוח פניות לפי מקור וקמפיין, שיעור סגירה, זמן תגובה והשוואה לתקופה הקודמת.
               </p>
             </li>
             <li class="card">
@@ -740,11 +850,11 @@
       <section class="section section-blue" id="analytics" aria-labelledby="an-title">
         <div class="wrap an-grid">
           <div class="an-copy">
-            <p class="eyebrow" data-i18n="anEyebrow">ניתוח לידים</p>
-            <h2 id="an-title" data-i18n="anTitle">יודעים מאיפה מגיעים הלקוחות, ומה מביא אותם</h2>
+            <p class="eyebrow" data-i18n="anEyebrow">ניתוח נתונים</p>
+            <h2 id="an-title" data-i18n="anTitle">יודעים מאיפה מגיעים הלקוחות, ומה מניע אותם</h2>
             <p class="lead" data-i18n="anText">
-              כל ליד נרשם עם המקור שלו: האתר, וואטסאפ, פייסבוק, גוגל או מודעה מסוימת. רואים מה עובד
-              ומה לא, ומחליטים איפה להשקיע.
+              כל פנייה נרשמת עם המקור שלה: האתר, וואטסאפ, פייסבוק, גוגל או מודעה מסוימת. רואים מה
+              עובד, ומחליטים היכן להשקיע.
             </p>
             <ul class="ticks2">
               <li data-i18n="an1">
@@ -752,7 +862,7 @@
               </li>
               <li data-i18n="an2">שיעור סגירה וערך עסקאות לפי מקור וקמפיין</li>
               <li data-i18n="an3">השוואה לתקופה הקודמת ומגמה לאורך זמן</li>
-              <li data-i18n="an4">זמן תגובה ממוצע: כמה מהר עונים ללקוח</li>
+              <li data-i18n="an4">זמן תגובה ממוצע: כמה מהר מגיבים ללקוח</li>
             </ul>
           </div>
 
@@ -784,7 +894,7 @@
             </ul>
             <div class="an-table" aria-hidden="true">
               <div class="an-row an-th">
-                <span data-i18n="anCamp">קמפיין</span><span data-i18n="anLeads">לידים</span
+                <span data-i18n="anCamp">קמפיין</span><span data-i18n="anLeads">פניות</span
                 ><span data-i18n="anWon">נסגרו</span><span data-i18n="anVal">ערך</span>
               </div>
               <div class="an-row">
@@ -810,28 +920,45 @@
         <div class="wrap">
           <header class="section-head">
             <p class="eyebrow" data-i18n="howEyebrow">איך זה עובד</p>
-            <h2 id="how-title" data-i18n="howTitle">שלושה צעדים להתחלה</h2>
+            <h2 id="how-title" data-i18n="howTitle">שלושה צעדים, והמערכת עושה את השאר</h2>
           </header>
           <ol class="steps">
-            <li>
-              <span class="num">1</span>
+            <li class="step">
+              <div class="step-top">
+                <span class="num">1</span>
+                <span class="step-tag" data-i18n="stepOnce">פעם אחת</span>
+              </div>
               <h3 data-i18n="s1t">מקימים את העסק</h3>
               <p data-i18n="s1p">
-                מזינים פרטים, שירותים ושעות פעילות, ובונים אתר או מחברים וואטסאפ, פייסבוק ומייל.
+                מזינים פרטים, שירותים ושעות פעילות, ובונים אתר או מחברים וואטסאפ, פייסבוק ומייל. זהו
+                השלב הידני היחיד.
               </p>
             </li>
-            <li>
-              <span class="num">2</span>
-              <h3 data-i18n="s2t">כל פנייה נכנסת לבד</h3>
+            <li class="step step-auto">
+              <div class="step-top">
+                <span class="num">2</span>
+                <span class="step-tag tag-auto" data-i18n="stepAuto">אוטומטי</span>
+              </div>
+              <h3 data-i18n="s2t">שאר התהליך אוטומטי</h3>
               <p data-i18n="s2p">
-                מי שכותב נכנס לתיבת השיחות ולרשימת הלידים, עם המקור שממנו הגיע, בלי מיון ידני.
+                כל פנייה נרשמת כלקוח עם מקור ההגעה, מקבלת מענה, קובעת תור ומקבלת תזכורת, גם בזמן
+                שאתם בעבודה.
               </p>
+              <ul class="step-chips">
+                <li data-i18n="sc1">מענה מיידי</li>
+                <li data-i18n="sc2">קביעת תור</li>
+                <li data-i18n="sc3">תזכורות</li>
+                <li data-i18n="sc4">רישום לקוח</li>
+              </ul>
             </li>
-            <li>
-              <span class="num">3</span>
-              <h3 data-i18n="s3t">מנהלים את היום</h3>
+            <li class="step">
+              <div class="step-top">
+                <span class="num">3</span>
+                <span class="step-tag" data-i18n="stepYou">אתם בשליטה</span>
+              </div>
+              <h3 data-i18n="s3t">מנהלים ועוקבים אחר התוצאות</h3>
               <p data-i18n="s3p">
-                עונים, קובעים תורים, מסמנים משימות, שולחים הצעות מחיר ורואים בדוחות איך הולך.
+                ממשיכים לעבוד כרגיל: מסמנים משימות, שולחים הצעות מחיר ועוקבים בדוחות אחר מה שעובד.
               </p>
             </li>
           </ol>
@@ -843,37 +970,38 @@
         <div class="wrap narrow">
           <header class="section-head">
             <p class="eyebrow" data-i18n="faqEyebrow">שאלות נפוצות</p>
-            <h2 id="faq-title" data-i18n="faqTitle">מה שרצית לדעת</h2>
+            <h2 id="faq-title" data-i18n="faqTitle">כל מה שכדאי לדעת</h2>
           </header>
           <div class="faq">
             <details>
               <summary data-i18n="q1">צריך כבר אתר כדי להתחיל?</summary>
               <p data-i18n="a1">
-                לא. אפשר לבנות אתר ב-LeadFlow, או להתחיל ישר מוואטסאפ, מפייסבוק ומהמייל.
+                לא. אפשר לבנות אתר ב-LeadFlow, או להתחיל ישירות מוואטסאפ, פייסבוק ומייל.
               </p>
             </details>
             <details>
               <summary data-i18n="q2">אילו ערוצים אפשר לחבר?</summary>
               <p data-i18n="a2">
-                טופס באתר, WhatsApp, פייסבוק (הודעות לדף העסק) ומייל. Instagram בדרך.
+                טופס באתר, וואטסאפ, פייסבוק (הודעות לדף העסק) ומייל. אינסטגרם בפיתוח.
               </p>
             </details>
             <details>
               <summary data-i18n="q3">האם המערכת בעברית ובאנגלית?</summary>
               <p data-i18n="a3">
-                כן. מחליפים שפה בכל רגע, והמסך מתהפך אוטומטית בין ימין לשמאל ושמאל לימין.
+                כן. אפשר להחליף שפה בכל עת, והממשק מתהפך אוטומטית בין ימין לשמאל ולהפך.
               </p>
             </details>
             <details>
               <summary data-i18n="q4">איך מתחילים?</summary>
               <p data-i18n="a4">
-                נרשמים, מגדירים את פרטי העסק, ובונים אתר או מחברים ערוץ. משם כל פנייה נכנסת לבד.
+                נרשמים, מגדירים את פרטי העסק, ובונים אתר או מחברים ערוץ. מכאן כל פנייה נרשמת
+                אוטומטית.
               </p>
             </details>
             <details>
               <summary data-i18n="q5">איך מחברים את מספר הוואטסאפ של העסק?</summary>
               <p data-i18n="a5">
-                המספר מחובר דרך ה-API הרשמי של Meta. מומלץ להשתמש במספר ייעודי לעסק, ומספר שרשום
+                המספר מחובר דרך ה-API הרשמי של Meta. מומלץ להשתמש במספר ייעודי לעסק; מספר שרשום
                 באפליקציית WhatsApp הרגילה צריך להתפנות ממנה קודם.
               </p>
             </details>
@@ -887,49 +1015,49 @@
             <details>
               <summary data-i18n="q7">האם צוות שלם יכול לעבוד במערכת?</summary>
               <p data-i18n="a7">
-                כן. מזמינים עובדים ומנהלים בהזמנה במייל, וכל אחד מקבל הרשאות לפי התפקיד. עובדים
-                רואים רק את הלידים והתורים שמוקצים אליהם.
+                כן. מזמינים עובדים ומנהלים בהזמנה במייל, וכל משתמש מקבל הרשאות לפי תפקידו. עובדים
+                רואים רק את הפניות והתורים שהוקצו להם.
               </p>
             </details>
             <details>
               <summary data-i18n="q8">האם לקוחות יכולים לקבוע תור בעצמם?</summary>
               <p data-i18n="a8">
-                כן. בוואטסאפ הלקוחות רואים שעות פנויות מהיומן ובוחרים, ואפשר להגדיר אם התור מאושר
-                מיד או ממתין לאישור שלכם.
+                כן. בוואטסאפ הלקוחות רואים שעות פנויות מהיומן ובוחרים, ואתם מגדירים אם התור מאושר
+                מיד או ממתין לאישורכם.
               </p>
             </details>
             <details>
               <summary data-i18n="q9">מה קורה לפנייה שמגיעה כשאני לא זמין?</summary>
               <p data-i18n="a9">
-                המענה האוטומטי עונה ללקוח לפי הסטטוס שבחרתם, והפנייה נשמרת בתיבת השיחות וברשימת
-                הלידים ומחכה לכם.
+                המענה האוטומטי עונה ללקוח לפי הסטטוס שבחרתם, והפנייה נשמרת בתיבת השיחות וממתינה
+                לטיפולכם.
               </p>
             </details>
             <details>
               <summary data-i18n="q10">מי רואה את המידע של העסק שלי?</summary>
               <p data-i18n="a10">
-                כל עסק עובד בסביבה נפרדת. נתוני הלקוחות, השיחות והלידים נגישים רק לחברי הצוות של
-                אותו עסק, לפי ההרשאות שלהם.
+                כל עסק פועל בסביבה נפרדת. נתוני הלקוחות והשיחות נגישים רק לחברי הצוות של אותו עסק,
+                בהתאם להרשאותיהם.
               </p>
             </details>
             <details>
               <summary data-i18n="q11">אפשר לייצא את הנתונים?</summary>
               <p data-i18n="a11">
-                כן. בעלי העסק יכולים לייצא את רשימת הלידים לקובץ CSV שנפתח ב-Excel.
+                כן. בעלי העסק יכולים לייצא את רשימת הפניות לקובץ CSV שנפתח ב-Excel.
               </p>
             </details>
             <details>
               <summary data-i18n="q12">מה המערכת עושה אוטומטית?</summary>
               <p data-i18n="a12">
-                יוצרת ליד מכל פנייה, עונה ללקוחות לפי הסטטוס שלכם, שולחת הצצה לעבודות, קובעת תורים
-                לפי היומן, מעבירה אליכם לקוח שמבקש אדם, ושולחת תזכורות והתראות.
+                רושמת כל פנייה, עונה ללקוחות לפי הסטטוס שלכם, שולחת הצצה לעבודות העסק, קובעת תורים
+                לפי היומן, מעבירה אליכם לקוח שמבקש מענה אנושי, ושולחת תזכורות והתראות.
               </p>
             </details>
             <details>
               <summary data-i18n="q13">אפשר לכבות את המענה האוטומטי?</summary>
               <p data-i18n="a13">
-                כן. המענה נשלט במתג, ואפשר לכבות אותו או לשנות את ההודעות בכל רגע. כשמישהו מהצוות
-                כותב בשיחה, המענה האוטומטי שותק.
+                כן. כל אוטומציה נשלטת במתג: אפשר לכבות אותה או לערוך את ההודעות בכל עת. כשמישהו
+                מהצוות כותב בשיחה, המענה האוטומטי נעצר.
               </p>
             </details>
           </div>
@@ -939,9 +1067,9 @@
       <!-- Final call -->
       <section class="final" aria-labelledby="final-title">
         <div class="wrap">
-          <h2 id="final-title" data-i18n="finalTitle">מוכנים לנהל את העסק במקום אחד?</h2>
+          <h2 id="final-title" data-i18n="finalTitle">מוכנים לנהל את העסק ממקום אחד?</h2>
           <p data-i18n="finalText">
-            פותחים חשבון ורואים את הלקוחות, השיחות, התורים והמשימות של העסק במקום אחד.
+            פותחים חשבון ומקבלים תמונה מלאה של הלקוחות, השיחות, התורים והמשימות של העסק.
           </p>
           <a
             class="btn btn-light btn-lg"

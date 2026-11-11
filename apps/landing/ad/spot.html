@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>LeadFlow — TV spot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --brand: #2563eb;
+        --ink: #0f172a;
+        --coral: #f2564a;
+        --green: #16a34a;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #000;
+      }
+      body {
+        font-family: 'Heebo', system-ui, sans-serif;
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+      }
+      .sc {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        overflow: hidden;
+      }
+      .abs {
+        position: absolute;
+      }
+      .stage {
+        background:
+          radial-gradient(70% 40% at 90% 0%, #dbeafe, transparent 70%),
+          radial-gradient(60% 40% at 0% 100%, #fde4e1, transparent 70%), #f6f8fc;
+      }
+      .brandbg {
+        background: linear-gradient(160deg, #2563eb, #1e3a8a);
+        color: #fff;
+      }
+      .hl {
+        position: absolute;
+        inset-inline: 40px;
+        text-align: center;
+        font-size: 150px;
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+      }
+      .coral {
+        color: var(--coral);
+      }
+      .brandc {
+        color: var(--brand);
+      }
+      .bub {
+        position: absolute;
+        inset-inline: 90px;
+        display: flex;
+        align-items: center;
+        gap: 34px;
+        padding: 46px 52px;
+        font-size: 62px;
+        font-weight: 700;
+        line-height: 1.2;
+        border-radius: 70px;
+        box-shadow: 0 40px 90px -30px rgba(15, 23, 42, 0.45);
+      }
+      .cust {
+        background: #fff;
+        border-end-start-radius: 16px;
+      }
+      .biz {
+        background: var(--brand);
+        color: #fff;
+        border-end-end-radius: 16px;
+      }
+      .wa {
+        width: 120px;
+        height: 120px;
+        border-radius: 34px;
+        background: #25d366;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .chip {
+        position: absolute;
+        inset-inline: 0;
+        text-align: center;
+        font-size: 96px;
+        font-weight: 900;
+      }
+      .chip span {
+        display: inline-block;
+        padding: 18px 56px;
+        border-radius: 999px;
+      }
+      .red span {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .grn span {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .done {
+        position: absolute;
+        inset-inline: 90px;
+        text-align: center;
+        background: var(--green);
+        color: #fff;
+        border-radius: 70px;
+        padding: 56px 40px;
+        font-size: 74px;
+        font-weight: 900;
+        line-height: 1.15;
+        box-shadow: 0 40px 90px -30px rgba(22, 163, 74, 0.7);
+      }
+      .btn {
+        position: absolute;
+        text-align: center;
+        background: #fff;
+        color: var(--brand);
+        font-size: 64px;
+        font-weight: 900;
+        border-radius: 999px;
+        box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.5);
+      }
+      .logo-name {
+        direction: ltr;
+        unicode-bidi: isolate;
+        font-weight: 800;
+      }
+      #dim {
+        position: absolute;
+        inset: 0;
+        background: #0f172a;
+        opacity: 0;
+      }
+      #wipe {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(160deg, #2563eb, #1e3a8a);
+        transform: translateY(1920px);
+        z-index: 50;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="sc stage" id="s1">
+      <p class="hl" id="c1" style="top: 170px"></p>
+      <p class="hl" id="c2" style="top: 170px; color: var(--ink)"></p>
+      <p class="hl brandc" id="c3" style="top: 170px"></p>
+
+      <div class="bub cust" id="b1" style="top: 640px">
+        <div class="wa">
+          <svg viewBox="0 0 24 24" width="84" height="84" fill="none">
+            <path
+              d="M12 3.6a8.4 8.4 0 0 0-7.2 12.7l-1.1 4.1 4.2-1.1A8.4 8.4 0 1 0 12 3.6z"
+              stroke="#fff"
+              stroke-width="1.8"
+              stroke-linejoin="round"
+            />
+            <path
+              fill="#fff"
+              d="M9.2 8.4c.2-.5.5-.5.7-.5h.5c.2 0 .4 0 .5.4l.8 1.8c.1.2 0 .4-.1.6l-.4.5c-.1.2-.2.3-.1.5.5 1 1.6 2 2.8 2.5.2.1.4 0 .5-.1l.6-.8c.2-.2.4-.3.6-.1l1.8.9c.3.1.3.3.2.6-.1.8-.9 1.5-1.9 1.5-3.1-.3-6.3-3.4-6.4-6.4 0-.9.3-1.5.5-2z"
+            />
+          </svg>
+        </div>
+        <span id="b1t"></span>
+      </div>
+
+      <div class="chip red" id="clk" style="top: 1010px"><span id="clkt"></span></div>
+      <p class="hl coral" id="no" style="top: 1290px; font-size: 220px"></p>
+
+      <div class="chip grn" id="fast" style="top: 1010px"><span id="fastt"></span></div>
+      <div class="bub biz" id="b2" style="top: 1230px"><span id="b2t"></span></div>
+      <div class="done" id="ok" style="top: 1470px"></div>
+      <div id="dim"></div>
+    </section>
+
+    <section class="sc brandbg" id="s2">
+      <div
+        class="abs"
+        id="app6"
+        style="
+          left: 360px;
+          top: 330px;
+          width: 360px;
+          height: 360px;
+          border-radius: 96px;
+          background: #fff;
+          display: grid;
+          place-items: center;
+          box-shadow:
+            0 60px 130px -30px rgba(0, 0, 0, 0.55),
+            0 0 0 26px rgba(255, 255, 255, 0.12);
+        "
+      >
+        <svg viewBox="0 0 64 64" width="230" height="230">
+          <defs>
+            <linearGradient id="ab" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4f8ff7" />
+              <stop offset="1" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="ac" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff8a5c" />
+              <stop offset="1" stop-color="#f2564a" />
+            </linearGradient>
+          </defs>
+          <circle
+            cx="29"
+            cy="35"
+            r="23"
+            fill="none"
+            stroke="url(#ab)"
+            stroke-opacity=".35"
+            stroke-width="5"
+          />
+          <circle cx="29" cy="35" r="13.5" fill="none" stroke="url(#ab)" stroke-width="5" />
+          <circle cx="29" cy="35" r="6" fill="url(#ac)" />
+          <path d="M30.5 33.5L51 13" stroke="url(#ab)" stroke-width="3.6" stroke-linecap="round" />
+          <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill="url(#ab)" />
+        </svg>
+      </div>
+      <p class="hl" id="f1" style="top: 790px; font-size: 176px">
+        <span class="logo-name" style="color: #fff">Lead<b style="color: #93c5fd">Flow</b></span>
+      </p>
+      <p class="hl" id="f2" style="top: 1040px; font-size: 130px"></p>
+      <div
+        class="btn"
+        id="cta"
+        style="left: 190px; top: 1440px; width: 700px; padding: 44px 0"
+      ></div>
+      <p
+        class="abs"
+        id="url"
+        style="
+          inset-inline: 0;
+          top: 1690px;
+          text-align: center;
+          font-size: 42px;
+          color: #bfdbfe;
+          direction: ltr;
+        "
+      >
+        leadflow-55gt.onrender.com
+      </p>
+    </section>
+
+    <div id="wipe"></div>
+    <script src="spot.js"></script>
+  </body>
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>LeadFlow — story ad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --brand: #2563eb;
+        --ink: #0f172a;
+        --muted: #475569;
+        --coral: #f2564a;
+        --green: #16a34a;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #000;
+      }
+      body {
+        font-family: 'Heebo', system-ui, sans-serif;
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+      }
+      .sc {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        overflow: hidden;
+      }
+      .abs {
+        position: absolute;
+      }
+      .night {
+        background: radial-gradient(90% 55% at 50% 25%, #2a2350, #120f26 70%);
+        color: #fff;
+      }
+      .light {
+        background:
+          radial-gradient(70% 40% at 90% 0%, #dbeafe, transparent 70%),
+          radial-gradient(60% 40% at 0% 100%, #fde4e1, transparent 70%), #f6f8fc;
+      }
+      .brandbg {
+        background: linear-gradient(160deg, #2563eb, #1e3a8a);
+        color: #fff;
+      }
+      .hl {
+        position: absolute;
+        inset-inline: 40px;
+        text-align: center;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+      }
+      .sub {
+        position: absolute;
+        inset-inline: 60px;
+        text-align: center;
+        font-size: 52px;
+        font-weight: 500;
+        line-height: 1.3;
+        opacity: 0.8;
+      }
+      .coral {
+        color: var(--coral);
+      }
+      .brandc {
+        color: var(--brand);
+      }
+      .w {
+        display: inline-block;
+      }
+      .logo-name {
+        direction: ltr;
+        unicode-bidi: isolate;
+        font-weight: 800;
+      }
+
+      /* phone, shared by the dark and the light scenes */
+      .phone {
+        position: absolute;
+        width: 640px;
+        height: 1180px;
+        border-radius: 90px;
+        background: #0b0b14;
+        padding: 22px;
+        box-shadow:
+          0 80px 160px -30px rgba(0, 0, 0, 0.7),
+          inset 0 0 0 3px rgba(255, 255, 255, 0.14);
+      }
+      .phone .scr {
+        width: 100%;
+        height: 100%;
+        border-radius: 70px;
+        overflow: hidden;
+        position: relative;
+        background: #1b1838;
+      }
+      .scr.white {
+        background: #f1f5f9;
+      }
+      .notch {
+        position: absolute;
+        top: 22px;
+        left: 50%;
+        margin-left: -90px;
+        width: 180px;
+        height: 44px;
+        border-radius: 22px;
+        background: #0b0b14;
+        z-index: 3;
+      }
+
+      /* notification cards (dark scenes) */
+      .nt {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--ink);
+        border-radius: 34px;
+        padding: 24px 28px;
+        width: 580px;
+        box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.6);
+      }
+      .nt .ic {
+        width: 84px;
+        height: 84px;
+        border-radius: 24px;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .nt b {
+        display: block;
+        font-size: 34px;
+      }
+      .nt span {
+        font-size: 29px;
+        color: var(--muted);
+      }
+      .stack {
+        position: absolute;
+        inset-inline: 0;
+        top: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .count {
+        position: absolute;
+        top: -34px;
+        inset-inline-end: -30px;
+        min-width: 110px;
+        height: 110px;
+        padding: 0 22px;
+        border-radius: 55px;
+        background: var(--coral);
+        color: #fff;
+        font-size: 64px;
+        font-weight: 900;
+        display: grid;
+        place-items: center;
+        z-index: 5;
+        box-shadow: 0 16px 40px -8px rgba(242, 86, 74, 0.7);
+      }
+
+      /* chat (light scene) */
+      .chat {
+        position: absolute;
+        inset: 130px 0 0;
+        padding: 20px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .bar {
+        position: absolute;
+        top: 0;
+        inset-inline: 0;
+        height: 130px;
+        background: #fff;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: flex-end;
+        padding: 0 30px 18px;
+        gap: 18px;
+        font-size: 36px;
+        font-weight: 800;
+      }
+      .bar i {
+        width: 66px;
+        height: 66px;
+        border-radius: 33px;
+        background: #dbeafe;
+        color: var(--brand);
+        font-style: normal;
+        display: grid;
+        place-items: center;
+        font-size: 32px;
+      }
+      .msg {
+        max-width: 82%;
+        padding: 20px 26px;
+        border-radius: 30px;
+        font-size: 34px;
+        line-height: 1.3;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+      }
+      .msg > * {
+        flex: none;
+      }
+      .in {
+        align-self: flex-start;
+        background: #fff;
+        box-shadow: 0 6px 20px -8px rgba(15, 23, 42, 0.25);
+        border-end-start-radius: 8px;
+      }
+      .out {
+        align-self: flex-end;
+        background: var(--brand);
+        color: #fff;
+        border-end-end-radius: 8px;
+      }
+      .slots {
+        align-self: flex-end;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 82%;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+      }
+      .slot {
+        background: #fff;
+        border: 3px solid var(--brand);
+        color: var(--brand);
+        border-radius: 24px;
+        padding: 16px 24px;
+        font-size: 33px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .tap {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        border-radius: 60px;
+        background: rgba(37, 99, 235, 0.35);
+        border: 4px solid rgba(37, 99, 235, 0.7);
+        opacity: 0;
+        z-index: 6;
+      }
+
+      /* day list */
+      .appt {
+        position: absolute;
+        inset-inline: 80px;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        background: #fff;
+        border-radius: 36px;
+        padding: 28px 36px;
+        box-shadow: 0 24px 60px -24px rgba(15, 23, 42, 0.35);
+        font-size: 44px;
+        font-weight: 800;
+      }
+      .appt em {
+        font-style: normal;
+        font-weight: 500;
+        color: var(--muted);
+        font-size: 36px;
+        margin-inline-start: auto;
+      }
+      .appt .ck {
+        width: 70px;
+        height: 70px;
+        border-radius: 35px;
+        background: var(--green);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 42px;
+        flex: none;
+      }
+      .btn {
+        position: absolute;
+        text-align: center;
+        background: #fff;
+        color: var(--brand);
+        font-size: 60px;
+        font-weight: 900;
+        border-radius: 999px;
+        box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.5);
+      }
+      #wipe {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(160deg, #2563eb, #1e3a8a);
+        display: grid;
+        place-items: center;
+        transform: translateY(1920px);
+        z-index: 50;
+      }
+      #vig {
+        position: absolute;
+        inset: 0;
+        z-index: 40;
+        pointer-events: none;
+        background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.45));
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 1: three in the afternoon. A hairdresser at work, the phone buzzing nearby. -->
+    <section class="sc night" id="s1">
+      <p class="sub" id="t1" style="top: 150px; font-size: 64px; opacity: 1; font-weight: 800"></p>
+      <!-- scissors, cutting -->
+      <svg
+        class="abs"
+        id="scis"
+        viewBox="0 0 200 200"
+        width="620"
+        height="620"
+        style="left: 230px; top: 330px"
+      >
+        <g transform="rotate(-35 100 100)">
+          <g id="blA" style="transform-origin: 100px 100px">
+            <path d="M100 100 L182 30 L190 36 L112 112 Z" fill="#e2e8f0" />
+            <circle cx="62" cy="152" r="26" fill="none" stroke="#f2564a" stroke-width="12" />
+            <path d="M80 136 L112 108" stroke="#e2e8f0" stroke-width="12" stroke-linecap="round" />
+          </g>
+          <g id="blB" style="transform-origin: 100px 100px">
+            <path d="M100 100 L182 170 L190 164 L112 88 Z" fill="#cbd5e1" />
+            <circle cx="62" cy="48" r="26" fill="none" stroke="#f2564a" stroke-width="12" />
+            <path d="M80 64 L112 92" stroke="#cbd5e1" stroke-width="12" stroke-linecap="round" />
+          </g>
+          <circle cx="100" cy="100" r="9" fill="#f8fafc" />
+        </g>
+      </svg>
+      <!-- hair falling -->
+      <div class="abs" id="hair" style="inset: 0"></div>
+      <!-- the phone on the counter, buzzing -->
+      <div class="abs" id="pb" style="left: 340px; top: 1010px; width: 400px; height: 560px">
+        <div
+          class="abs"
+          style="
+            inset: 0;
+            border-radius: 60px;
+            background: #0b0b14;
+            box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.18);
+          "
+        ></div>
+        <div
+          class="abs"
+          style="
+            inset: 16px;
+            border-radius: 46px;
+            background: linear-gradient(180deg, #2b2760, #17143a);
+          "
+        ></div>
+        <div
+          class="abs"
+          id="pbn"
+          style="
+            inset-inline: 40px;
+            top: 80px;
+            height: 120px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 0 22px;
+            color: var(--ink);
+            font-size: 28px;
+            font-weight: 700;
+          "
+        >
+          <span style="width: 54px; height: 54px; border-radius: 16px; background: #25d366"></span>
+          <span id="pbt"></span>
+        </div>
+        <div class="count" id="cnt" style="top: -36px">1</div>
+      </div>
+      <p class="hl" id="h1" style="top: 1640px; font-size: 94px"></p>
+    </section>
+
+    <!-- 2: they pile up, on every channel -->
+    <section class="sc night" id="s2">
+      <p class="hl" id="h2" style="top: 120px; font-size: 96px"></p>
+      <div class="stack" id="stack" style="top: 460px; gap: 26px; transform: scale(1.35)"></div>
+      <p class="hl coral" id="h2b" style="top: 1660px; font-size: 100px"></p>
+    </section>
+
+    <!-- 3: and you? in the middle of work -->
+    <section class="sc night" id="s3">
+      <p class="hl" id="h3a" style="top: 560px; font-size: 140px"></p>
+      <p class="hl" id="h3b" style="top: 760px; font-size: 140px; color: #c7d2fe"></p>
+      <p class="sub" id="h3c" style="top: 1080px; font-size: 56px"></p>
+    </section>
+
+    <!-- 4: the same moment, with LeadFlow -->
+    <section class="sc light" id="s4">
+      <p class="hl" id="h4" style="top: 90px; font-size: 92px"></p>
+      <div class="phone" id="ph4" style="left: 220px; top: 400px">
+        <div class="scr white">
+          <div class="notch"></div>
+          <div class="bar"><i>ד</i><span id="chn"></span></div>
+          <div class="chat">
+            <div class="msg in" id="m1"></div>
+            <div class="msg out" id="m2"></div>
+            <div class="msg out" id="m3"></div>
+            <div class="slots" id="sl">
+              <div class="slot" id="tm1"></div>
+              <div class="slot"></div>
+              <div class="slot"></div>
+            </div>
+            <div class="msg in" id="m4"></div>
+            <div class="msg out" id="m5"></div>
+          </div>
+          <div class="tap" id="tap"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5: while you were working -->
+    <section class="sc light" id="s5">
+      <p class="hl" id="h5" style="top: 120px; font-size: 100px"></p>
+      <div class="abs" id="big" style="inset-inline: 0; top: 400px; text-align: center">
+        <span
+          id="bign"
+          style="font-size: 330px; font-weight: 900; color: var(--brand); line-height: 1"
+          >0</span
+        >
+      </div>
+      <div id="appts"></div>
+      <p class="hl" id="h5b" style="top: 1700px; font-size: 76px; color: var(--muted)"></p>
+    </section>
+
+    <!-- 6: call to action -->
+    <section class="sc brandbg" id="s6">
+      <div
+        class="abs"
+        id="app6"
+        style="
+          left: 360px;
+          top: 330px;
+          width: 360px;
+          height: 360px;
+          border-radius: 96px;
+          background: #fff;
+          display: grid;
+          place-items: center;
+          box-shadow:
+            0 60px 130px -30px rgba(0, 0, 0, 0.55),
+            0 0 0 26px rgba(255, 255, 255, 0.12);
+        "
+      >
+        <svg viewBox="0 0 64 64" width="230" height="230">
+          <defs>
+            <linearGradient id="ab" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4f8ff7" />
+              <stop offset="1" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="ac" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff8a5c" />
+              <stop offset="1" stop-color="#f2564a" />
+            </linearGradient>
+          </defs>
+          <circle
+            cx="29"
+            cy="35"
+            r="23"
+            fill="none"
+            stroke="url(#ab)"
+            stroke-opacity=".35"
+            stroke-width="5"
+          />
+          <circle cx="29" cy="35" r="13.5" fill="none" stroke="url(#ab)" stroke-width="5" />
+          <circle cx="29" cy="35" r="6" fill="url(#ac)" />
+          <path d="M30.5 33.5L51 13" stroke="url(#ab)" stroke-width="3.6" stroke-linecap="round" />
+          <path d="M48 6.5l1.8 7.2 7.2 1.8-5.4 5.4-7.2-1.8-1.8-7.2z" fill="url(#ab)" />
+        </svg>
+      </div>
+      <p class="hl" id="f1" style="top: 790px; font-size: 168px">
+        <span class="logo-name" style="color: #fff">Lead<b style="color: #93c5fd">Flow</b></span>
+      </p>
+      <p class="hl" id="f2" style="top: 1030px; font-size: 96px"></p>
+      <div
+        class="btn"
+        id="cta"
+        style="left: 190px; top: 1440px; width: 700px; padding: 44px 0"
+      ></div>
+      <p
+        class="abs"
+        id="url"
+        style="
+          inset-inline: 0;
+          top: 1690px;
+          text-align: center;
+          font-size: 42px;
+          color: #bfdbfe;
+          direction: ltr;
+        "
+      >
+        leadflow-55gt.onrender.com
+      </p>
+    </section>
+
+    <div id="vig"></div>
+    <div id="wipe">
+      <svg viewBox="0 0 64 64" width="200" height="200">
+        <circle
+          cx="29"
+          cy="35"
+          r="23"
+          fill="none"
+          stroke="#fff"
+          stroke-opacity=".4"
+          stroke-width="5"
+        />
+        <circle cx="29" cy="35" r="13.5" fill="none" stroke="#fff" stroke-width="5" />
+        <circle cx="29" cy="35" r="6" fill="#fff" />
+        <path d="M30.5 33.5L51 13" stroke="#fff" stroke-width="3.6" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <script src="story.js"></script>
+  </body>
+</html>
