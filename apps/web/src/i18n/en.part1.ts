@@ -14,6 +14,14 @@ export const enPart1: Record<string, string> = {
   'כל פנייה מקבלת מענה, גם כשאתם לא זמינים':
     "Every inquiry gets a reply, even when you're unavailable",
   'תיבת שיחות אחת לכל הערוצים ולכל הצוות.': 'One inbox for every channel and the whole team.',
+  'יומן ותורים': 'Calendar and appointments',
+  'הלקוחות קובעים תור בעצמם, ואתם מאשרים במערכת.':
+    'Customers book on their own, and you confirm in the system.',
+  'מפיקים הצעה מכרטיס הלקוח ושולחים בקישור לאישור דיגיטלי.':
+    'Create a quote from the customer card and send it as a link for digital approval.',
+  'דוחות וניתוח מקורות': 'Reports and source analysis',
+  'רואים מאיפה מגיעות הפניות, כמה נסגרות ובכמה זמן עונים.':
+    'See where inquiries come from, how many close, and how fast you reply.',
   'לעסקים מכל סוג': 'For every kind of business',
   'מנהלים את כל העסק במקום אחד.': 'Run your whole business in one place.',
   ד: 'D',

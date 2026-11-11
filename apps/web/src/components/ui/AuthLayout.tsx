@@ -1,4 +1,4 @@
-import { Globe, MessageCircle, Users } from 'lucide-react';
+import { BarChart3, CalendarDays, FileText, Globe, MessageCircle, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Logo } from './Logo';
 import { tr } from '../../i18n';
@@ -27,6 +27,21 @@ const benefits = [
     icon: MessageCircle,
     title: tr('כל פנייה מקבלת מענה, גם כשאתם לא זמינים'),
     text: tr('תיבת שיחות אחת לכל הערוצים ולכל הצוות.'),
+  },
+  {
+    icon: CalendarDays,
+    title: tr('יומן ותורים'),
+    text: tr('הלקוחות קובעים תור בעצמם, ואתם מאשרים במערכת.'),
+  },
+  {
+    icon: FileText,
+    title: tr('הצעות מחיר'),
+    text: tr('מפיקים הצעה מכרטיס הלקוח ושולחים בקישור לאישור דיגיטלי.'),
+  },
+  {
+    icon: BarChart3,
+    title: tr('דוחות וניתוח מקורות'),
+    text: tr('רואים מאיפה מגיעות הפניות, כמה נסגרות ובכמה זמן עונים.'),
   },
 ];
 
@@ -64,7 +79,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
               {tr('מנהלים את כל העסק במקום אחד.')}
             </p>
           </div>
-          <ul className="flex flex-col gap-5">
+          <ul className="flex flex-col gap-4">
             {benefits.map(({ icon: Icon, title: t, text }) => (
               <li key={t} className="flex items-start gap-4">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
@@ -77,20 +92,6 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
               </li>
             ))}
           </ul>
-          <div className="rounded-2xl bg-white p-4 text-ink shadow-lift">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 font-semibold text-brand-700">
-                {tr('ד')}
-              </span>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{tr('פנייה חדשה מהאתר')}</p>
-                <p className="text-xs text-ink-muted">{tr('דנה · מעוניינת בתור ליום חמישי')}</p>
-              </div>
-              <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
-                {tr('חדש')}
-              </span>
-            </div>
-          </div>
         </div>
       </aside>
     </div>
