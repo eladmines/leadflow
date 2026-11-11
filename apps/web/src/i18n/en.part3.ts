@@ -867,4 +867,44 @@ export const enPart3: Record<string, string> = {
   'עריכת משימה': 'Edit task',
   'מה צריך לעשות': 'What needs doing',
   'עריכת המשימה: {0}': 'Edit task: {0}',
+  '{0} דולגו כי הם כבר קיימים כלקוחות.': '{0} skipped because they are already customers.',
+  '{0} שורות': '{0} rows',
+  '{0} שורות לא יובאו בגלל פרטים חסרים או שגויים:':
+    '{0} rows were not imported because of missing or invalid details:',
+  'איזו עמודה היא איזה פרט?': 'Which column is which detail?',
+  'אפשר להעלות קובץ Excel (xlsx) או CSV.': 'You can upload an Excel (xlsx) or CSV file.',
+  'בחירת עמודה': 'Choose a column',
+  'בחירת קובץ': 'Choose a file',
+  'בקובץ יש יותר מ־{0} שורות. פצלו אותו לכמה קבצים.':
+    'The file has more than {0} rows. Split it into several files.',
+  'בקובץ צריכה להיות שורת כותרות ולפחות שורה אחת של לקוח.':
+    'The file needs a header row and at least one customer row.',
+  'הורדת תבנית': 'Download a template',
+  'ועוד {0}…': 'and {0} more…',
+  'חובה לבחור עמודה לשם, ולפחות עמודה אחת לטלפון או לאימייל.':
+    'Choose a column for the name, and at least one for the phone or email.',
+  'יובאו {0} לקוחות': '{0} customers imported',
+  'ייבוא {0} לקוחות': 'Import {0} customers',
+  'ייבוא לקוחות מ־Excel': 'Import customers from Excel',
+  'ייבוא מ־Excel': 'Import from Excel',
+  'לא הצלחנו לקרוא את הקובץ.': "We couldn't read the file.",
+  'לא הצלחנו לקרוא את הקובץ. בדקו שהוא תקין ונסו לשמור אותו מחדש.':
+    "We couldn't read the file. Check that it's valid and try saving it again.",
+  'לא לייבא': "Don't import",
+  'מעלים קובץ Excel (xlsx) או CSV. השורה הראשונה היא כותרות, ולכל לקוח שורה עם שם, וטלפון או אימייל. סכום הוא אופציונלי.':
+    'Upload an Excel (xlsx) or CSV file. The first row is the headers, and each customer has a row with a name and a phone or email. The amount is optional.',
+  סכום: 'Amount',
+  'עד {0} שורות בכל פעם. מי שכבר קיים כלקוח לא ייווצר פעמיים.':
+    "Up to {0} rows at a time. Anyone who is already a customer isn't created twice.",
+  עמודה: 'Column',
+  'קובץ אחר': 'Another file',
+  'קובצי xls ישנים לא נתמכים. שמרו את הקובץ כ־xlsx (קובץ ← שמירה בשם) ונסו שוב.':
+    "Old .xls files aren't supported. Save the file as .xlsx (File → Save As) and try again.",
+  'שם חסר או קצר מדי': 'The name is missing or too short',
+  'חסר טלפון או אימייל': 'A phone or email is missing',
+  'מספר הטלפון אינו תקין': 'The phone number is not valid',
+  'הסכום אינו תקין': 'The amount is not valid',
+  'כבר קיים כלקוח': 'Already a customer',
+  'אפשר לייבא עד 1000 שורות בכל פעם': 'You can import up to 1000 rows at a time',
+  'לא נמצאו שורות לייבוא': 'No rows to import',
 };

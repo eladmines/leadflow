@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { EmptyState } from '../components/ui';
+import { buttonClasses, EmptyState } from '../components/ui';
 import { tr } from '../i18n';
 
 export function NotFoundPage() {
@@ -9,7 +9,7 @@ export function NotFoundPage() {
         title={tr('העמוד לא נמצא')}
         description={tr('ייתכן שהקישור שגוי או שהעמוד הוסר.')}
         action={
-          <Link to="/" className="text-sm font-medium text-brand-600 underline">
+          <Link to="/" className={buttonClasses('secondary', 'md')}>
             {tr('חזרה לדף הבית')}
           </Link>
         }
