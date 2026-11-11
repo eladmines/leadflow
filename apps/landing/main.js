@@ -62,7 +62,7 @@ const en = {
   s1t: 'Set up your business',
   s1p: 'Enter your details, services and opening hours, then build a website or connect WhatsApp, Facebook and email. This is the only manual stage.',
   s2t: 'The rest is automatic',
-  s2p: 'Every inquiry is recorded as a customer with its source, receives a reply, books an appointment and gets a reminder, even while you’re working.',
+  s2p: 'Every inquiry is recorded as a customer with its source, receives a reply, books an appointment and gets a reminder, even when you’re unavailable.',
   s3t: 'Run the business and track results',
   s3p: 'Carry on as usual: tick off tasks, send quotes and track in the reports what works.',
   faqEyebrow: 'FAQ',
@@ -120,7 +120,7 @@ const en = {
   anNote: 'Sample data',
   navAuto: 'Automation',
   autoEyebrow: 'Automation',
-  autoTitle: 'Every inquiry gets a reply, even while you’re at work',
+  autoTitle: 'Every inquiry gets a reply, even when you’re unavailable',
   autoSub:
     'Everything between the inquiry and the appointment runs automatically, and you step in only when needed.',
   mascotHi: 'Welcome to LeadFlow! 👋',
