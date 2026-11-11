@@ -123,7 +123,7 @@ export function AppointmentsPage() {
       >
         <PageHeader
           inPanel
-          title={tr('תורים')}
+          title={tr('יומן')}
           description={tr('היומן של העסק: תורים, בקשות מהאתר ושירותים.')}
           actions={
             <div className="flex flex-wrap items-center gap-2">

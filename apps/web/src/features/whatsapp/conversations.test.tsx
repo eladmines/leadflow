@@ -149,7 +149,7 @@ describe('WhatsApp conversations inbox', () => {
     const saveButton = screen.getByRole('button', { name: 'שמירת ההגדרות' });
     expect(saveButton).toBeDisabled();
     await user.selectOptions(confirm, 'approve');
-    expect(screen.getByText('השעה שמורה בינתיים. מאשרים בעמוד התורים.')).toBeInTheDocument();
+    expect(screen.getByText('השעה שמורה בינתיים. מאשרים בעמוד היומן.')).toBeInTheDocument();
     // Nothing is sent until saving.
     expect(screen.getByText('יש שינויים שעוד לא נשמרו')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
@@ -421,7 +421,7 @@ describe('WhatsApp conversations inbox', () => {
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );
-    expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד התורים/)).toBeInTheDocument();
+    expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד היומן/)).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'כשלקוח קובע תור:' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
     expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();

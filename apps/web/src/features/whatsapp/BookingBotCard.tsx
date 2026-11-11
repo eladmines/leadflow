@@ -120,7 +120,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </label>
           <p className="text-sm text-ink-muted">
             {tr(
-              'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד התורים.',
+              'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד היומן.',
             )}
           </p>
         </>
@@ -137,7 +137,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
             hint={
               settings.autoConfirm
                 ? tr('הלקוח מקבל אישור, והתור נכנס ליומן.')
-                : tr('השעה שמורה בינתיים. מאשרים בעמוד התורים.')
+                : tr('השעה שמורה בינתיים. מאשרים בעמוד היומן.')
             }
           />
         </div>
