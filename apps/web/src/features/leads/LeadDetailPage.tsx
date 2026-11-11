@@ -392,7 +392,7 @@ export function LeadDetailPage() {
           title={tr('הליד לא נמצא')}
           description={tr('ייתכן שהקישור שגוי, או שהליד לא משויך אליך.')}
           action={
-            <Link to={back} className="text-sm font-medium text-brand-700 underline">
+            <Link to={back} className={buttonClasses('secondary', 'md')}>
               {tr('חזרה לכל הלידים')}
             </Link>
           }

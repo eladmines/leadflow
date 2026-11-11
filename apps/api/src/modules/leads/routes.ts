@@ -6,6 +6,8 @@ import {
   createLeadRequestSchema,
   customerListQuerySchema,
   customerListResponseSchema,
+  importCustomersRequestSchema,
+  importCustomersResponseSchema,
   duplicateQuerySchema,
   duplicatesResponseSchema,
   leadDetailResponseSchema,
@@ -54,6 +56,20 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (req) => ({ customers: await service.customers(tenantOf(req), req.query) }),
+  );
+
+  // D-179: bulk import (the spreadsheet is read in the browser; rows arrive as JSON).
+  app.post(
+    '/customers/import',
+    {
+      preValidation: requirePermission('customers.import'),
+      schema: {
+        params,
+        body: importCustomersRequestSchema,
+        response: { 200: importCustomersResponseSchema },
+      },
+    },
+    async (req) => service.importCustomers(tenantOf(req), req.body.rows),
   );
 
   // Registered before `/leads/:leadId`; Fastify prefers the static segment anyway.

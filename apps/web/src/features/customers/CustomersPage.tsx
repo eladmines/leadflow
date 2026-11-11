@@ -2,13 +2,14 @@ import {
   appointmentStatusLabels,
   attributionName,
   businessWebPaths,
+  can,
   formatIsraeliPhone,
   type Customer,
 } from '@leadflow/shared';
-import { ChevronDown, Crown, Search } from 'lucide-react';
+import { ChevronDown, Crown, FileSpreadsheet, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, EmptyState, Spinner } from '../../components/ui';
+import { Alert, Button, buttonClasses, EmptyState, Spinner } from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
@@ -17,6 +18,7 @@ import { formatDateTime, shekel } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { useCustomers } from './api';
+import { ImportDialog } from './ImportDialog';
 import { tr } from '../../i18n';
 
 /**
@@ -28,6 +30,8 @@ export function CustomersPage() {
   const business = useCurrentBusiness();
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
+  const canImport = can(business.role, 'customers.import');
   useEffect(() => {
     const t = setTimeout(() => setQ(text.trim()), 300);
     return () => clearTimeout(t);
@@ -46,7 +50,16 @@ export function CustomersPage() {
         description={tr(
           'מי שקנה מכם (ליד בשלב "נסגר" או הצעת מחיר שאושרה) ומי שקבע תור, גם אם ביטל.',
         )}
+        actions={
+          canImport && (
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              <FileSpreadsheet aria-hidden className="h-4 w-4" />
+              {tr('ייבוא מ־Excel')}
+            </Button>
+          )
+        }
       />
+      {canImport && <ImportDialog open={importOpen} onOpenChange={setImportOpen} />}
       <div role="search" className="border-b border-surface-border p-4">
         <div className="relative max-w-md">
           <Search
@@ -88,7 +101,7 @@ export function CustomersPage() {
               q ? undefined : (
                 <Link
                   to={businessWebPaths.section(business.id, 'leads')}
-                  className="text-sm font-medium text-brand-700 underline"
+                  className={buttonClasses('secondary', 'md')}
                 >
                   {tr('ללידים')}
                 </Link>

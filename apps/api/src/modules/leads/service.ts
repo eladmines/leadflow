@@ -17,6 +17,11 @@ import {
   type LeadSubmission,
   type PipelineStage,
   type updateLeadRequestSchema,
+  importMessages,
+  normalizePhone,
+  parseImportValue,
+  type ImportCustomerRow,
+  type ImportCustomersResponse,
 } from '@leadflow/shared';
 import type { z } from 'zod';
 import type { Db } from '../../lib/db';
@@ -537,6 +542,114 @@ export class LeadService {
       return created;
     });
     return toLeadDto(lead);
+  }
+
+  /**
+   * Import customers (D-179): each valid row becomes a contact (reused by phone or email) with a
+   * lead in the first Won stage, which is what the Customers page lists. A person who is already
+   * a customer, or who appears twice in the file, is counted, not duplicated. Bad rows are reported
+   * with their row number; the rest are still imported.
+   */
+  async importCustomers(
+    ctx: TenantContext,
+    rows: ImportCustomerRow[],
+  ): Promise<ImportCustomersResponse> {
+    const invalid: ImportCustomersResponse['invalid'] = [];
+    const valid: {
+      row: number;
+      name: string;
+      phone: string | null;
+      email: string | null;
+      value: number | null;
+    }[] = [];
+    rows.forEach((r, idx) => {
+      const row = idx + 1;
+      const name = (r.name ?? '').trim();
+      const phoneRaw = (r.phone ?? '').trim();
+      const emailRaw = (r.email ?? '').trim().toLowerCase();
+      if (name.length < 2 || name.length > 80)
+        return void invalid.push({ row, reason: importMessages.nameInvalid });
+      if (!phoneRaw && !emailRaw)
+        return void invalid.push({ row, reason: importMessages.contactMissing });
+      const phone = phoneRaw ? normalizePhone(phoneRaw) : null;
+      if (phoneRaw && !phone)
+        return void invalid.push({ row, reason: importMessages.phoneInvalid });
+      if (emailRaw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw))
+        return void invalid.push({ row, reason: importMessages.emailInvalid });
+      if (emailRaw.length > 254)
+        return void invalid.push({ row, reason: importMessages.emailInvalid });
+      const value = parseImportValue(r.value);
+      if (value === 'invalid')
+        return void invalid.push({ row, reason: importMessages.valueInvalid });
+      valid.push({ row, name, phone, email: emailRaw || null, value });
+    });
+
+    let imported = 0;
+    let duplicates = 0;
+    await this.prisma.$transaction(
+      async (tx) => {
+        const stages = await ensureStages(tx, ctx.businessId);
+        const won = stages.find((s) => s.kind === 'WON');
+        if (!won) throw new AppError('VALIDATION_ERROR', importMessages.noRows);
+        for (const r of valid) {
+          const existing = await tx.contact.findFirst({
+            where: {
+              businessId: ctx.businessId,
+              OR: [
+                ...(r.phone ? [{ phone: r.phone }] : []),
+                ...(r.email ? [{ email: r.email }] : []),
+              ],
+            },
+            orderBy: { createdAt: 'asc' },
+          });
+          if (existing) {
+            const already = await tx.lead.findFirst({
+              where: { businessId: ctx.businessId, contactId: existing.id, stage: { kind: 'WON' } },
+              select: { id: true },
+            });
+            if (already) {
+              duplicates += 1;
+              continue;
+            }
+          }
+          const contact =
+            existing ??
+            (await tx.contact.create({
+              data: { businessId: ctx.businessId, name: r.name, phone: r.phone, email: r.email },
+            }));
+          const lead = await tx.lead.create({
+            data: {
+              businessId: ctx.businessId,
+              contactId: contact.id,
+              stageId: won.id,
+              ownerId: null,
+              source: 'manual',
+              expectedValue: r.value,
+            },
+            select: { id: true },
+          });
+          await tx.activity.create({
+            data: {
+              businessId: ctx.businessId,
+              leadId: lead.id,
+              type: 'lead.created',
+              actorId: ctx.userId,
+              data: { source: 'manual', imported: true, contactReused: Boolean(existing) },
+            },
+          });
+          imported += 1;
+        }
+        await recordAudit(tx, {
+          action: 'customers.imported',
+          businessId: ctx.businessId,
+          actorUserId: ctx.userId,
+          entityType: 'customer',
+          metadata: { imported, duplicates, invalid: invalid.length },
+        });
+      },
+      { timeout: 60_000, maxWait: 10_000 },
+    );
+    return { imported, duplicates, invalid };
   }
 
   /** Updates a visible lead; stage moves, assignments and field edits each land in the history. */

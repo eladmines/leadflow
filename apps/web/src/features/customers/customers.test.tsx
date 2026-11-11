@@ -1,8 +1,8 @@
 import { apiPaths, businessWebPaths, type Customer } from '@leadflow/shared';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { shekel } from '../leads/api';
-import { json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
+import { callsTo, json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -110,5 +110,85 @@ describe('customers page (D-163)', () => {
     });
     renderApp(page);
     expect(await screen.findByText('עוד אין לקוחות')).toBeInTheDocument();
+  });
+});
+
+describe('import customers from a spreadsheet (D-179)', () => {
+  it('reads a CSV, guesses the columns, sends the rows and reports what happened', async () => {
+    const fetchMock = mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.customers.list(id)}`]: () => json(200, { customers: [] }),
+      [`POST ${apiPaths.customers.import(id)}`]: () =>
+        json(200, {
+          imported: 2,
+          duplicates: 0,
+          invalid: [{ row: 3, reason: 'חסר טלפון או אימייל' }],
+        }),
+    });
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('button', { name: 'ייבוא מ־Excel' }));
+
+    // Hebrew Excel's "CSV" uses semicolons, and a phone typed as a number loses its zero.
+    const csv =
+      'שם;טלפון;מייל;סכום\nדנה כהן;521234567;dana@example.com;1500\nיוסי לוי;0527654321;;\nרונית;;;\n';
+    await user.upload(
+      await screen.findByLabelText('בחירת קובץ'),
+      new File([csv], 'customers.csv', { type: 'text/csv' }),
+    );
+
+    // The columns were matched by their headers; the first rows are previewed.
+    expect(await screen.findByText(/3 שורות/)).toBeInTheDocument();
+    const preview = screen.getByRole('table', { name: 'תצוגה מקדימה' });
+    expect(within(preview).getByText('0521234567')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'ייבוא 3 לקוחות' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'POST', apiPaths.customers.import(id))).toEqual([
+        {
+          rows: [
+            { name: 'דנה כהן', phone: '0521234567', email: 'dana@example.com', value: '1500' },
+            { name: 'יוסי לוי', phone: '0527654321', email: '', value: '' },
+            { name: 'רונית', phone: '', email: '', value: '' },
+          ],
+        },
+      ]),
+    );
+    expect(await screen.findByText('יובאו 2 לקוחות')).toBeInTheDocument();
+    // The failed row is named by its line in the file (header = 1).
+    expect(screen.getByText('שורה 4')).toBeInTheDocument();
+    expect(screen.getByText('חסר טלפון או אימייל')).toBeInTheDocument();
+  });
+
+  it('refuses a file without customers and tells an old .xls to be saved as .xlsx', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.customers.list(id)}`]: () => json(200, { customers: [] }),
+    });
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('button', { name: 'ייבוא מ־Excel' }));
+    const input = await screen.findByLabelText('בחירת קובץ');
+
+    await user.upload(input, new File(['שם;טלפון\n'], 'empty.csv', { type: 'text/csv' }));
+    expect(await screen.findByText(/שורת כותרות ולפחות שורה אחת/)).toBeInTheDocument();
+
+    // (The file picker's accept filter would hide an .xls, but a dropped or renamed file gets here.)
+    fireEvent.change(input, {
+      target: { files: [new File(['x'], 'old.xls', { type: 'application/vnd.ms-excel' })] },
+    });
+    expect(await screen.findByText(/קובצי xls ישנים לא נתמכים/)).toBeInTheDocument();
+  });
+
+  it('is hidden from employees', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.businesses.detail(id)}`]: () =>
+        json(200, { business: { ...testBusiness, role: 'EMPLOYEE' } }),
+      [`GET ${apiPaths.businesses.list}`]: () =>
+        json(200, { businesses: [{ ...testBusiness, role: 'EMPLOYEE' }] }),
+      [`GET ${apiPaths.customers.list(id)}`]: () => json(200, { customers: [] }),
+    });
+    renderApp(page);
+    await screen.findByRole('heading', { name: 'לקוחות' });
+    expect(screen.queryByRole('button', { name: 'ייבוא מ־Excel' })).not.toBeInTheDocument();
   });
 });

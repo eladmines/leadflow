@@ -53,4 +53,6 @@ export type CustomerListResponse = z.infer<typeof customerListResponseSchema>;
 
 export const customersApiPaths = {
   list: (businessId: string) => `/api/v1/businesses/${businessId}/customers`,
+  /** D-179: bulk import from a spreadsheet read in the browser. */
+  import: (businessId: string) => `/api/v1/businesses/${businessId}/customers/import`,
 } as const;

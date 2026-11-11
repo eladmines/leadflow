@@ -84,7 +84,7 @@ export function QuotesPage() {
               !status && (
                 <Link
                   to={businessWebPaths.section(business.id, 'leads')}
-                  className={buttonClasses('primary', 'md')}
+                  className={buttonClasses('secondary', 'md')}
                 >
                   {tr('ללידים')}
                 </Link>

@@ -307,6 +307,61 @@ export type DuplicatesResponse = z.infer<typeof duplicatesResponseSchema>;
 export const leadTagsResponseSchema = z.object({ tags: z.array(z.string()) });
 export type LeadTagsResponse = z.infer<typeof leadTagsResponseSchema>;
 
+// ---------------------------------------------------------------------------
+// Import customers from a spreadsheet (D-179)
+// ---------------------------------------------------------------------------
+
+/** Rows per import. The file is read in the browser; only these fields are sent. */
+export const IMPORT_MAX_ROWS = 1000;
+
+export const importMessages = {
+  tooMany: `אפשר לייבא עד ${IMPORT_MAX_ROWS} שורות בכל פעם`,
+  noRows: 'לא נמצאו שורות לייבוא',
+  nameInvalid: 'שם חסר או קצר מדי',
+  contactMissing: 'חסר טלפון או אימייל',
+  phoneInvalid: 'מספר הטלפון אינו תקין',
+  emailInvalid: 'כתובת האימייל אינה תקינה',
+  valueInvalid: 'הסכום אינו תקין',
+  alreadyCustomer: 'כבר קיים כלקוח',
+} as const;
+
+/** A spreadsheet row as the browser sends it: raw text, checked per row on the server. */
+export const importCustomerRowSchema = z.object({
+  name: z.string().max(200).optional(),
+  phone: z.string().max(60).optional(),
+  email: z.string().max(300).optional(),
+  /** Optional deal value in shekels (kept on the lead as its value). */
+  value: z.string().max(40).optional(),
+});
+export type ImportCustomerRow = z.infer<typeof importCustomerRowSchema>;
+
+export const importCustomersRequestSchema = z.object({
+  rows: z
+    .array(importCustomerRowSchema)
+    .min(1, importMessages.noRows)
+    .max(IMPORT_MAX_ROWS, importMessages.tooMany),
+});
+export type ImportCustomersRequest = z.infer<typeof importCustomersRequestSchema>;
+
+export const importCustomersResponseSchema = z.object({
+  /** New customers: a contact (new or existing) with a lead in a Won stage. */
+  imported: z.number().int(),
+  /** Rows skipped because the person is already a customer (or appeared twice in the file). */
+  duplicates: z.number().int(),
+  /** Rows that couldn't be imported, by 1-based row number in the data (header excluded). */
+  invalid: z.array(z.object({ row: z.number().int(), reason: z.string() })),
+});
+export type ImportCustomersResponse = z.infer<typeof importCustomersResponseSchema>;
+
+/** The deal value cell: digits with optional ₪, commas or a decimal part → whole shekels. */
+export function parseImportValue(raw: string | undefined): number | null | 'invalid' {
+  const t = (raw ?? '').replace(/[₪\s]/g, '').replace(/,/g, '');
+  if (!t) return null;
+  if (!/^\d+(\.\d+)?$/.test(t)) return 'invalid';
+  const n = Math.round(Number(t));
+  return n >= 0 && n <= 100_000_000 ? n : 'invalid';
+}
+
 export const leadsApiPaths = {
   list: (businessId: string) => `/api/v1/businesses/${businessId}/leads`,
   detail: (businessId: string, leadId: string) =>
@@ -318,4 +373,5 @@ export const leadsApiPaths = {
   /** CSV download (same filters as the list). Plain GET so a link can trigger it. */
   exportCsv: (businessId: string) => `/api/v1/businesses/${businessId}/leads/export.csv`,
   tags: (businessId: string) => `/api/v1/businesses/${businessId}/leads/tags`,
+  importCustomers: (businessId: string) => `/api/v1/businesses/${businessId}/customers/import`,
 } as const;

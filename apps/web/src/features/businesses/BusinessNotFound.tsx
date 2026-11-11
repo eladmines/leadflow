@@ -1,5 +1,6 @@
 import { authWebPaths } from '@leadflow/shared';
-import { EmptyState, TextLink } from '../../components/ui';
+import { Link } from 'react-router-dom';
+import { buttonClasses, EmptyState } from '../../components/ui';
 import { tr } from '../../i18n';
 
 /** Unknown business id, or one the user isn't a member of (the API answers 404 for both). */
@@ -9,7 +10,11 @@ export function BusinessNotFound() {
       <EmptyState
         title={tr('העסק לא נמצא')}
         description={tr('ייתכן שהקישור שגוי, או שאין לך גישה לעסק הזה.')}
-        action={<TextLink to={authWebPaths.appHome}>{tr('חזרה לעסקים שלי')}</TextLink>}
+        action={
+          <Link to={authWebPaths.appHome} className={buttonClasses('secondary', 'md')}>
+            {tr('חזרה לעסקים שלי')}
+          </Link>
+        }
       />
     </main>
   );
