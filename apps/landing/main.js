@@ -159,9 +159,11 @@ const en = {
   anNote: 'Sample data',
   navAuto: 'Automation',
   autoEyebrow: 'Automation',
-  autoTitle: 'What happens from the moment a customer writes',
+  autoTitle: 'Every inquiry gets a reply, even while you’re at work',
   autoSub:
     'Everything between the inquiry and the appointment runs automatically, and you step in only when needed.',
+  mascotMsg: 'Hi! Want to see how it works?',
+  mascotLabel: 'The LeadFlow helper: how it works',
   flAuto: 'Automatic',
   flYou: 'You',
   fl1t: 'The inquiry is recorded',
