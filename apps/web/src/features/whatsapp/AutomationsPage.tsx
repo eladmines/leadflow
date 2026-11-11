@@ -1,6 +1,6 @@
 import { can, type ReplyMode, type WhatsAppBotResponse } from '@leadflow/shared';
 import { CalendarCheck, Images, MessageCircleReply, type LucideIcon } from 'lucide-react';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Alert, Button, DialogShell, Spinner, Switch } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
@@ -10,7 +10,6 @@ import { PageHeader } from '../shell/PageHeader';
 import { useBotSettings, useUpdateBotSettings } from './api';
 import { AutoReplyCard } from './AutoReplyCard';
 import { BookingBotCard, ShowcaseForm, toRequest } from './BookingBotCard';
-import { SetupGuide, shouldOfferSetup } from './SetupGuide';
 import { tr } from '../../i18n';
 
 /**
@@ -39,26 +38,10 @@ export function AutomationsPage() {
   );
 }
 
-/** Automatic replies: the step-by-step guide the first time (D-144), then the full settings. */
+/** The automatic answer's settings (D-166). */
 function AutoTab({ businessId }: { businessId: string }) {
   const bot = useBotSettings(businessId);
-  // Decided once, when the settings arrive: open by itself when nothing is set up yet.
-  const [guide, setGuide] = useState<boolean | null>(null);
-  const ready = bot.isSuccess;
-  useEffect(() => {
-    if (ready && guide === null) setGuide(shouldOfferSetup(businessId, bot.data!.settings));
-  }, [ready, guide, businessId, bot.data]);
-  if (bot.isPending || (ready && guide === null)) return <Spinner />;
-  const open = guide === true;
-  if (open && bot.isSuccess) {
-    return (
-      <SetupGuide
-        businessId={businessId}
-        saved={bot.data.settings}
-        onClose={() => setGuide(false)}
-      />
-    );
-  }
+  if (bot.isPending) return <Spinner />;
   if (!bot.isSuccess) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   return (
     <ModeCards businessId={businessId} saved={bot.data.settings} connected={bot.data.connected} />
