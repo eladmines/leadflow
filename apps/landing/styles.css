@@ -1607,9 +1607,28 @@ h3 {
 .m-blink {
   transform-box: fill-box;
 }
+.mascot-bubble {
+  display: grid;
+}
+.mb {
+  grid-area: 1 / 1;
+}
+.mb1 {
+  opacity: 0;
+}
+.mascot:hover .mb1,
+.mascot:focus-visible .mb1 {
+  opacity: 0;
+}
 @media (prefers-reduced-motion: no-preference) {
-  .mascot-bubble {
-    animation: mascot-hello 7s 2.5s both;
+  .mascot:not(.quiet) .mascot-bubble {
+    animation: mascot-hello 11s 0.9s both;
+  }
+  .mascot:not(.quiet) .mb1 {
+    animation: mascot-first 11s 0.9s both;
+  }
+  .mascot:not(.quiet) .mb2 {
+    animation: mascot-second 11s 0.9s both;
   }
   .m-float {
     animation: mascot-float 3.2s ease-in-out infinite;
@@ -1620,7 +1639,7 @@ h3 {
   }
   .m-wave {
     transform-origin: 100% 100%;
-    animation: mascot-wave 1.1s 2.5s 3 ease-in-out;
+    animation: mascot-wave 1.1s 0.9s 3 ease-in-out;
   }
   .m-blink {
     transform-origin: 50% 50%;
@@ -1637,6 +1656,26 @@ h3 {
   88% {
     opacity: 1;
     transform: none;
+  }
+}
+@keyframes mascot-first {
+  0%,
+  42% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes mascot-second {
+  0%,
+  44% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
   }
 }
 @keyframes mascot-float {
