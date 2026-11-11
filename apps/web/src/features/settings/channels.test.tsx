@@ -42,6 +42,16 @@ describe('Settings → Channels (F25)', () => {
     expect(screen.getByRole('heading', { name: /Instagram/ })).toHaveTextContent('בקרוב');
     expect(screen.getByRole('switch', { name: 'Instagram' })).toBeDisabled();
     await user.click(whatsapp);
+    // The form explains where the two details come from, with links to Meta.
+    expect(await screen.findByText('איך משיגים את הפרטים?')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Meta for Developers/ })).toHaveAttribute(
+      'href',
+      'https://developers.facebook.com/apps',
+    );
+    expect(screen.getByRole('link', { name: /המדריך המלא של Meta/ })).toHaveAttribute(
+      'target',
+      '_blank',
+    );
     await user.type(screen.getByLabelText('Phone number ID'), '555000111');
     await user.type(screen.getByLabelText('טוקן גישה'), 'EAA-whatsapp-token-0123456789');
     await user.click(screen.getByRole('button', { name: 'חיבור' }));

@@ -650,8 +650,18 @@ export const enPart3: Record<string, string> = {
     'Disconnect? New messages will no longer reach your inbox. Existing conversations stay.',
   'כן, לנתק': 'Yes, disconnect',
   'חיבור WhatsApp': 'Connect WhatsApp',
-  'את הפרטים מוצאים ב-Meta for Developers: האפליקציה של העסק → WhatsApp → API Setup. מעתיקים את ה-Phone number ID ואת טוקן הגישה.':
-    "You'll find these in Meta for Developers: the business's app → WhatsApp → API Setup. Copy the Phone number ID and the access token.",
+  'איך משיגים את הפרטים?': 'How do I get these details?',
+  'נכנסים ל-': 'Go to ',
+  ', פותחים את האפליקציה של העסק (או יוצרים אחת) ומוסיפים אליה את המוצר WhatsApp.':
+    ', open the business’s app (or create one) and add the WhatsApp product to it.',
+  'ב-WhatsApp ← API Setup מעתיקים את ה-Phone number ID של המספר.':
+    'Under WhatsApp → API Setup, copy the number’s Phone number ID.',
+  'לטוקן קבוע: ב-': 'For a permanent token: in ',
+  ' יוצרים משתמש מערכת, משייכים לו את האפליקציה ויוצרים טוקן עם ההרשאות whatsapp_business_messaging ו-whatsapp_business_management.':
+    ' create a system user, assign the app to it and generate a token with the whatsapp_business_messaging and whatsapp_business_management permissions.',
+  'הטוקן הזמני שמופיע ב-API Setup פג אחרי 24 שעות, ואז החיבור מפסיק לעבוד.':
+    'The temporary token shown in API Setup expires after 24 hours, and the connection then stops working.',
+  'המדריך המלא של Meta': 'Meta’s full guide',
   'טוקן גישה': 'Access token',
   'נשמר מוצפן, ולא מוצג שוב.': 'Stored encrypted, and never shown again.',
   חיבור: 'Connect',
