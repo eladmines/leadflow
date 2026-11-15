@@ -1,7 +1,5 @@
 import {
   apiPaths,
-  type ClassifyNumberRequest,
-  type ClassifyNumberResponse,
   type PersonalNumbersResponse,
   type SendWhatsAppRequest,
   type SendWhatsAppResponse,
@@ -76,20 +74,6 @@ export function usePersonalNumbers(businessId: string, enabled = true) {
   });
 }
 
-export function useClassifyNumber(businessId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ numberId, as }: { numberId: string } & ClassifyNumberRequest) =>
-      apiFetch<ClassifyNumberResponse>(apiPaths.whatsapp.classify(businessId, numberId), {
-        method: 'POST',
-        body: JSON.stringify({ as }),
-      }),
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: whatsappKey(businessId) });
-      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'leads'] });
-    },
-  });
-}
 
 /** Undoes a personal marking. */
 export function useForgetPersonal(businessId: string) {

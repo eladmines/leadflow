@@ -1,7 +1,6 @@
 import {
   replyStatusSchema,
   MAX_STATUSES,
-  type ReplyMode,
   type WhatsAppBotResponse,
 } from '@leadflow/shared';
 import { Eye, Plus, Trash2 } from 'lucide-react';
@@ -28,12 +27,6 @@ export const toCode = (text: string, name: string) => {
   return name.trim().length >= 2 ? t.replaceAll(name.trim(), '{business}') : t;
 };
 
-export const modeHelp: Record<ReplyMode, string> = {
-  off: 'הודעות נכנסות בלי שום מענה אוטומטי.',
-  auto_reply:
-    'כל הודעה של לקוח מקבלת מענה קצר, והלקוח בוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.',
-  booking: 'לקוחות רואים זמנים פנויים וקובעים לבד תור או בקשה לאירוע.',
-};
 
 /** Until-when choices for a status, as a time from now (null = until I change it). */
 function untilOptions(now = new Date()) {

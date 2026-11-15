@@ -42,11 +42,6 @@ export const whatsappMessages = {
 export const CHANNELS = ['whatsapp', 'messenger', 'email'] as const;
 export const channelSchema = z.enum(CHANNELS);
 export type Channel = z.infer<typeof channelSchema>;
-export const channelLabels: Record<Channel, string> = {
-  whatsapp: 'WhatsApp',
-  messenger: 'פייסבוק',
-  email: 'מייל',
-};
 
 export const WHATSAPP_DIRECTIONS = ['IN', 'OUT'] as const;
 /** Delivery status from Meta for outgoing messages; incoming ones are `received`. */
@@ -185,10 +180,6 @@ export type BotTextKey = (typeof BOT_TEXT_KEYS)[number];
  */
 export const BOT_FLOWS = ['appointment', 'event'] as const;
 export type BotFlow = (typeof BOT_FLOWS)[number];
-export const botFlowLabels: Record<BotFlow, string> = {
-  appointment: 'תורים בשעות פנויות',
-  event: 'בקשות לאירוע (תאריך, אורחים, אזור)',
-};
 const EVENT_INDUSTRIES = ['events', 'catering', 'photo'];
 export const botFlowFor = (industry: string): BotFlow =>
   EVENT_INDUSTRIES.includes(industry) ? 'event' : 'appointment';
@@ -407,11 +398,6 @@ export const botShowcaseSchema = z.object({
  */
 export const REPLY_MODES = ['off', 'auto_reply', 'booking'] as const;
 export type ReplyMode = (typeof REPLY_MODES)[number];
-export const replyModeLabels: Record<ReplyMode, string> = {
-  off: 'כבוי — בלי מענה אוטומטי',
-  auto_reply: 'מענה אוטומטי',
-  booking: 'קביעת תורים אוטומטית',
-};
 
 /** The general reply, until the business writes its own (in the business's language, D-143). */
 export const AUTO_REPLY_DEFAULT =

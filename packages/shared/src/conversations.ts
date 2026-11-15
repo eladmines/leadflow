@@ -19,7 +19,6 @@ export const conversationListQuerySchema = z.object({
     .regex(/^\d{13}_[0-9a-f-]{36}$/)
     .optional(),
 });
-export type ConversationListQuery = z.input<typeof conversationListQuerySchema>;
 
 export const conversationSummarySchema = z.object({
   id: z.string().uuid(),
