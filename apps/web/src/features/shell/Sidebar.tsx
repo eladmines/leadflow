@@ -1,4 +1,4 @@
-import { businessWebPaths, can, roleLabels, type Business } from '@leadflow/shared';
+import { businessWebPaths, can, roleLabels, type Business } from '@simplecatch/shared';
 import { LogOut, Search } from 'lucide-react';
 import { useId } from 'react';
 import { NavLink } from 'react-router-dom';

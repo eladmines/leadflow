@@ -6,8 +6,8 @@ import { shortcutLabel } from '../shell/CommandPalette';
 import { HelpCharacter } from './HelpCharacter';
 
 /** Closed with X: not again in this visit (tab). "Don't show again": never in this browser. */
-const SAID_HELLO = 'leadflow.helper.hello';
-const QUIET = 'leadflow.helper.quiet';
+const SAID_HELLO = 'simplecatch.helper.hello';
+const QUIET = 'simplecatch.helper.quiet';
 
 function shouldSayHello(): boolean {
   try {
@@ -122,7 +122,7 @@ export function HelpMenu({
           <p className="font-semibold">{name ? tr('היי {0}! 👋', name) : tr('היי! 👋')}</p>
           <p className="mt-0.5 text-ink-muted">
             {tr(
-              'אני העוזר של LeadFlow, ואני כאן כדי לעזור לך. לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.',
+              'אני העוזר של SimpleCatch, ואני כאן כדי לעזור לך. לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.',
             )}
           </p>
           <button
@@ -149,7 +149,7 @@ export function HelpMenu({
             <HelpCharacter happy className="h-9 w-9 shrink-0" />
             <div className="flex flex-col">
               <p id={`${menuId}-title`} className="text-sm font-semibold text-ink">
-                {tr('היי, אני העוזר של LeadFlow')}
+                {tr('היי, אני העוזר של SimpleCatch')}
               </p>
               <p className="text-xs text-ink-muted">{tr('במה אפשר לעזור?')}</p>
             </div>

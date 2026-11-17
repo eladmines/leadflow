@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyPluginAsync, FastifyRequest } from 'fastify';
-import { can, type Permission, type Role } from '@leadflow/shared';
+import { can, type Permission, type Role } from '@simplecatch/shared';
 import { AppError } from '../lib/errors';
 import { authOf } from './session';
 

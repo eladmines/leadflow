@@ -4,7 +4,7 @@ import {
   PASSWORD_MIN_LENGTH,
   registerRequestSchema,
   type RegisterRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';

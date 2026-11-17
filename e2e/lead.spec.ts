@@ -2,11 +2,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Core journey (F01→F07): register → business → site → publish → a visitor leaves details on
- * the live site → the owner sees the lead in LeadFlow and gets an email (AC-04).
+ * the live site → the owner sees the lead in SimpleCatch and gets an email (AC-04).
  */
 const PASSWORD = 'Sup3r-secret-pass!';
 const MAILPIT = 'http://localhost:8025/api/v1';
-const API_HEADERS = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 
 async function ownerWithLiveSite(page: Page) {
   const tag = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -53,7 +53,7 @@ test('a visitor submits the website form and the owner sees the lead (AC-04)', a
   await expect(visitor.getByRole('heading', { name: 'תודה!' })).toBeVisible();
   await expect(visitor.getByText('קיבלנו את הפרטים')).toBeVisible();
 
-  // The owner sees it in LeadFlow.
+  // The owner sees it in SimpleCatch.
   await page.goto(`/b/${owner.id}/leads?view=list`);
   const card = page.getByRole('list', { name: 'פניות' }).getByRole('article').first();
   await expect(card.getByRole('heading', { name: 'דנה כהן' })).toBeVisible();

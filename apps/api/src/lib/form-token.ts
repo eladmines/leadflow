@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { FORM_MIN_FILL_MS, FORM_TOKEN_MAX_AGE_MS } from '@leadflow/shared';
+import { FORM_MIN_FILL_MS, FORM_TOKEN_MAX_AGE_MS } from '@simplecatch/shared';
 
 /**
  * Per-page-view token for public lead forms: `<issuedAtMs>.<nonce>.<hmac>`.

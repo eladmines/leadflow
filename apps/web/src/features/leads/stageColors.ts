@@ -1,4 +1,4 @@
-import type { Lead, PipelineStage } from '@leadflow/shared';
+import type { Lead, PipelineStage } from '@simplecatch/shared';
 
 interface StageColor {
   /** Small dot by the stage name. */

@@ -4,7 +4,7 @@ import {
   botDefaultTextsFor,
   businessWebPaths,
   STATUS_PRESETS,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
@@ -136,7 +136,7 @@ describe('page tours (D-096)', () => {
     const { user } = renderApp(section('customers'));
     await screen.findByRole('heading', { level: 1 });
     await user.click(screen.getByRole('button', { name: 'עזרה' }));
-    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של LeadFlow' });
+    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של SimpleCatch' });
     expect(within(menu).queryByRole('menuitem', { name: 'סיור בעמוד' })).not.toBeInTheDocument();
     expect(within(menu).getByRole('menuitem', { name: 'סיור במערכת' })).toBeInTheDocument();
   });
@@ -164,7 +164,7 @@ describe('help button (D-104)', () => {
     const help = await screen.findByRole('button', { name: 'עזרה' });
     help.focus();
     await user.keyboard('{ArrowDown}');
-    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של LeadFlow' });
+    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של SimpleCatch' });
     const items = within(menu).getAllByRole('menuitem');
     expect(items.map((i) => i.textContent)).toEqual([
       'סיור בעמוד',
@@ -193,10 +193,10 @@ describe('help button (D-104)', () => {
 });
 
 describe('help character (D-105)', () => {
-  const hello = /אני העוזר של LeadFlow, ואני כאן כדי לעזור לך/;
+  const hello = /אני העוזר של SimpleCatch, ואני כאן כדי לעזור לך/;
 
   it('greets the person by name by itself, until closed with X (once per visit)', async () => {
-    localStorage.removeItem('leadflow.helper.quiet');
+    localStorage.removeItem('simplecatch.helper.quiet');
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('leads'));
     const bubble = (await screen.findByText(hello, undefined, { timeout: 3000 })).closest(
@@ -220,13 +220,13 @@ describe('help character (D-105)', () => {
   });
 
   it('"don\'t show again" keeps it quiet in later visits too', async () => {
-    localStorage.removeItem('leadflow.helper.quiet');
+    localStorage.removeItem('simplecatch.helper.quiet');
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('leads'));
     await user.click(
       await screen.findByRole('button', { name: 'לא להציג שוב' }, { timeout: 3000 }),
     );
-    expect(localStorage.getItem('leadflow.helper.quiet')).toBe('1');
+    expect(localStorage.getItem('simplecatch.helper.quiet')).toBe('1');
     expect(screen.queryByText(hello)).not.toBeInTheDocument();
   });
 });

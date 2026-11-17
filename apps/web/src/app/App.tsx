@@ -1,4 +1,9 @@
-import { authWebPaths, businessWebPaths, INVITE_WEB_PATH, QUOTE_WEB_PATH } from '@leadflow/shared';
+import {
+  authWebPaths,
+  businessWebPaths,
+  INVITE_WEB_PATH,
+  QUOTE_WEB_PATH,
+} from '@simplecatch/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage';

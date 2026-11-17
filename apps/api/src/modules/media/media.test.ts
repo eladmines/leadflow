@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths } from '@leadflow/shared';
+import { apiPaths } from '@simplecatch/shared';
 import {
   createTestApp,
   csrfHeaders,

@@ -9,7 +9,7 @@ import {
   type SiteBusinessInfo,
   type SiteResponse,
   type SiteVersionListResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 
@@ -52,7 +52,7 @@ export function useChangeTemplate(businessId: string) {
   });
 }
 
-/** D-095: deletes the LeadFlow site (offline, address freed); the page falls back to the picker. */
+/** D-095: deletes the SimpleCatch site (offline, address freed); the page falls back to the picker. */
 export function useDeleteSite(businessId: string) {
   const queryClient = useQueryClient();
   return useMutation({

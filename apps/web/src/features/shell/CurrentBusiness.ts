@@ -1,4 +1,4 @@
-import type { Business } from '@leadflow/shared';
+import type { Business } from '@simplecatch/shared';
 import { useOutletContext } from 'react-router-dom';
 
 export interface BusinessOutletContext {

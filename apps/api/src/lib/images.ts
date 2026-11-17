@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_EDGE, mediaMessages } from '@leadflow/shared';
+import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_EDGE, mediaMessages } from '@simplecatch/shared';
 import { AppError } from './errors';
 
 const FORMATS: Record<string, (typeof ACCEPTED_IMAGE_TYPES)[number]> = {

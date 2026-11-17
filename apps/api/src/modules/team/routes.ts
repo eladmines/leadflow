@@ -9,7 +9,7 @@ import {
   inviteTokenRequestSchema,
   teamApiPaths,
   updateMemberRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { authOf, requireAuth } from '../../plugins/session';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { TeamService } from './service';

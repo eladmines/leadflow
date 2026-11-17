@@ -1,4 +1,4 @@
-import { SITE_LIMITS, type Section } from '@leadflow/shared';
+import { SITE_LIMITS, type Section } from '@simplecatch/shared';
 
 /**
  * Writes one field of a section by its editor path (`title`, `items.2.name`), as produced by the

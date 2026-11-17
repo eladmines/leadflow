@@ -4,7 +4,7 @@ import {
   classifyAttribution,
   isCampaignVisit,
   type Attribution,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 
 /**
  * F26 — the `lf_src` cookie on a business's site (D-162): where the visit came from, until the form

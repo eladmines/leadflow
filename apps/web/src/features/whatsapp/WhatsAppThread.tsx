@@ -3,7 +3,7 @@ import {
   whatsappMessages,
   whatsappStatusLabels,
   type SendWhatsAppRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bot, MessageCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';

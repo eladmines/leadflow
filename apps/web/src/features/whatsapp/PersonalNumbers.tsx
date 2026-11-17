@@ -1,4 +1,4 @@
-import { formatIsraeliPhone } from '@leadflow/shared';
+import { formatIsraeliPhone } from '@simplecatch/shared';
 import { Alert, Button, EmptyState, Spinner } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';
 import { useForgetPersonal, usePersonalNumbers } from './api';

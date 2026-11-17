@@ -3,7 +3,7 @@ import {
   can,
   type Appointment,
   type AppointmentStatus,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';

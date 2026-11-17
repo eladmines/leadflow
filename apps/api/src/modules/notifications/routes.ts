@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   markNotificationsReadRequestSchema,
   notificationListResponseSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { NotificationService } from './service';
 

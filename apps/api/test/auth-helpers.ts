@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { LightMyRequestResponse } from 'fastify';
-import { SESSION_COOKIE_NAME, apiPaths } from '@leadflow/shared';
+import { SESSION_COOKIE_NAME, apiPaths } from '@simplecatch/shared';
 import type { MemoryEmailSender } from '../src/integrations/email';
 import { csrfHeaders, sessionCookie } from './helpers';
 

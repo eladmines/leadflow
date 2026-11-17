@@ -104,7 +104,7 @@ export const enPart3: Record<string, string> = {
   'שומרים עדיין את השינויים האחרונים. רגע אחד ונסו שוב.':
     'Still saving the latest changes. Wait a moment and try again.',
   'החלפת התבנית': 'Change template',
-  'מחיקת האתר מ-LeadFlow': 'Delete the website from LeadFlow',
+  'מחיקת האתר מ-SimpleCatch': 'Delete the website from SimpleCatch',
   'למשל כדי לחזור לאתר שכבר יש לעסק. האתר יורד מהאוויר מיד, הכתובת מתפנה, והטיוטה והגרסאות נמחקות. הלידים שכבר הגיעו נשארים במערכת, והתמונות נשארות בספריית התמונות.':
     'For example, to go back to a website the business already has. The website goes offline immediately, the address is freed, and the draft and versions are deleted. Leads that already arrived stay, and photos stay in the photo library.',
   'מחיקת האתר…': 'Delete website…',
@@ -114,8 +114,8 @@ export const enPart3: Record<string, string> = {
   'מחיקה סופית': 'Delete permanently',
   'טוענים את האתר…': 'Loading the website…',
   'לא הצלחנו לטעון את האתר': "We couldn't load the website",
-  'האתר הקיים של העסק, לצפייה בלבד. אפשר גם לבנות אתר חדש ב-LeadFlow.':
-    "The business's existing website, view only. You can also build a new website in LeadFlow.",
+  'האתר הקיים של העסק, לצפייה בלבד. אפשר גם לבנות אתר חדש ב-SimpleCatch.':
+    "The business's existing website, view only. You can also build a new website in SimpleCatch.",
   'האתר עדיין לא נבנה': "The website hasn't been built yet",
   'בעל/ת העסק יכול/ה לבחור תבנית ולהתחיל לבנות.':
     'The business owner can choose a template and start building.',
@@ -124,9 +124,9 @@ export const enPart3: Record<string, string> = {
     'Saving failed last time. Restore the changes from this device?',
   'שחזור השינויים': 'Restore changes',
   התעלמות: 'Ignore',
-  'רוצים אתר חדש ב-LeadFlow?': 'Want a new website in LeadFlow?',
+  'רוצים אתר חדש ב-SimpleCatch?': 'Want a new website in SimpleCatch?',
   'אתר שמנוהל כאן: פניות נכנסות ישר למערכת, ועורכים הכול לבד. בחרו תבנית כדי להתחיל. האתר הקיים לא ישתנה.':
-    "A website managed here: inquiries go straight into LeadFlow, and you edit everything yourself. Choose a template to start. The existing website won't change.",
+    "A website managed here: inquiries go straight into SimpleCatch, and you edit everything yourself. Choose a template to start. The existing website won't change.",
   'בואו נבנה את האתר שלך': "Let's build your website",
   'בחרו תבנית. נמלא אותה מראש בפרטי העסק ובתמונות לדוגמה, ואחר כך תוכלו לשנות כל טקסט, תמונה, צבע וסדר מקטעים.':
     "Choose a template. We'll pre-fill it with your business details and sample photos, then you can change every text, photo, colour and section order.",
@@ -186,8 +186,8 @@ export const enPart3: Record<string, string> = {
   הוזמנת: "You've been invited",
   'לצוות בתפקיד': 'to the team as',
   'ההזמנה נשלחה אל': 'The invitation was sent to',
-  'כדי להצטרף צריך חשבון LeadFlow עם הכתובת הזו.':
-    'To join, you need a LeadFlow account with this address.',
+  'כדי להצטרף צריך חשבון SimpleCatch עם הכתובת הזו.':
+    'To join, you need a SimpleCatch account with this address.',
   'יצירת חשבון והצטרפות': 'Create an account and join',
   'כבר יש לי חשבון — התחברות': 'I already have an account — sign in',
   'מחובר/ת עם חשבון אחר': 'Signed in with a different account',
@@ -215,13 +215,13 @@ export const enPart3: Record<string, string> = {
   'הזמנות שממתינות לאישור': 'Pending invitations',
   'הזמנות ממתינות': 'Pending invitations',
   'ביטול ההזמנה של {0}': "Cancel {0}'s invitation",
-  'ברוכים הבאים ל-LeadFlow': 'Welcome to LeadFlow',
+  'ברוכים הבאים ל-SimpleCatch': 'Welcome to SimpleCatch',
   'סיור קצר של דקה: נראה איפה כל דבר נמצא. הכול נמצא בתפריט (בטלפון: כפתור התפריט למעלה). אפשר לדלג בכל רגע, ובכפתור העזרה (?) בפינת המסך יש גם סיור לכל עמוד.':
     "A one-minute tour of where everything is. It's all in the menu (on a phone: the menu button at the top). You can skip any time, and the help button (?) in the corner has a tour for every page.",
   'התמונה הכללית של העסק: פניות חדשות, משימות להיום והצעד הבא שכדאי לעשות.':
     "Your business at a glance: new inquiries, today's tasks and the next step to take.",
   'בונים ועורכים את אתר העסק ישירות על העמוד ומפרסמים בלחיצה. כל פנייה מהאתר נכנסת למערכת.':
-    'Build and edit your website right on the page and publish in one click. Every website inquiry lands in LeadFlow.',
+    'Build and edit your website right on the page and publish in one click. Every website inquiry lands in SimpleCatch.',
   'כל הפניות במקום אחד: מהאתר, מוואטסאפ ומה שהוספתם ידנית. גוררים בין שלבים, משייכים לעובד ומוסיפים הערות.':
     'Every inquiry in one place: from the website, WhatsApp and the ones you add. Drag between stages, assign to a teammate and add notes.',
   'מספרים חדשים שכתבו בוואטסאפ מחכים כאן. "עסקי" יוצר ליד, "פרטי" משאיר אותם מחוץ למערכת.':
@@ -292,7 +292,7 @@ export const enPart3: Record<string, string> = {
     'The numbers you marked as personal. You can undo a marking if you made a mistake.',
   הרשימה: 'The list',
   'קובעים תור ללקוח: שירות, איש צוות ושעה. המערכת לא תאפשר שני תורים באותה שעה.':
-    "Book a customer: service, staff member and time. LeadFlow won't allow two appointments at the same time.",
+    "Book a customer: service, staff member and time. SimpleCatch won't allow two appointments at the same time.",
   'יום או שבוע': 'Day or week',
   'בוחרים איך לראות את היומן, ועוברים בין ימים או שבועות בחיצים.':
     'Choose how to view the calendar, and move between days or weeks with the arrows.',
@@ -385,7 +385,7 @@ export const enPart3: Record<string, string> = {
   שפה: 'Language',
   'לוחצים על הדגל כדי להחליף בין אנגלית לעברית. ההחלפה נשמרת בדפדפן הזה.':
     'Click a flag to switch between English and Hebrew. Your choice is saved in this browser.',
-  'העוזר של LeadFlow': 'The LeadFlow helper',
+  'העוזר של SimpleCatch': 'The SimpleCatch helper',
   'בכל עמוד אפשר ללחוץ עליי: סיור בעמוד שמסביר מה יש בו, סיור במערכת כולה, וחיפוש מהיר.':
     "Click me on any page: a page tour that explains what's on it, the full product tour, and quick search.",
   'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט התורים או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.':
@@ -525,12 +525,12 @@ export const enPart3: Record<string, string> = {
   'בוחרים תבנית מוכנה, והיא מתמלאת בפרטי העסק. משנים טקסטים ותמונות ומפרסמים.':
     'Pick a ready-made template and it fills in with your business details. Change the texts and photos, then publish.',
   'חיבור אתר קיים': 'Link an existing website',
-  'יש לכם כבר אתר? מוסיפים את הכתובת ורואים אותו כאן. LeadFlow לא משנה בו כלום.':
-    "Already have a website? Add its address and see it here. LeadFlow doesn't change anything on it.",
+  'יש לכם כבר אתר? מוסיפים את הכתובת ורואים אותו כאן. SimpleCatch לא משנה בו כלום.':
+    "Already have a website? Add its address and see it here. SimpleCatch doesn't change anything on it.",
   בחירה: 'Choose',
   'חזרה לבחירה': 'Back to the choice',
-  'בונים אתר חדש מתבנית מוכנה, או מחברים את האתר שכבר יש לכם ורואים אותו כאן — LeadFlow לא משנה בו דבר. כל פנייה מאתר שנבנה כאן נכנסת ישר למערכת.':
-    "Build a new website from a ready-made template, or link the one you already have and see it here — LeadFlow doesn't change anything on it. Every inquiry from a site built here lands straight in LeadFlow.",
+  'בונים אתר חדש מתבנית מוכנה, או מחברים את האתר שכבר יש לכם ורואים אותו כאן — SimpleCatch לא משנה בו דבר. כל פנייה מאתר שנבנה כאן נכנסת ישר למערכת.':
+    "Build a new website from a ready-made template, or link the one you already have and see it here — SimpleCatch doesn't change anything on it. Every inquiry from a site built here lands straight in SimpleCatch.",
   עוד: 'More',
   סינון: 'Filter',
   'ניקוי הסינון': 'Clear filters',
@@ -730,10 +730,10 @@ export const enPart3: Record<string, string> = {
   'פייסבוק ואינסטגרם': 'Facebook & Instagram',
   'קישורים אחרים': 'Other links',
   'חיבור המודעות שלכם': 'Connect your ads',
-  'כך כל ליד יגיע עם המקור והקמפיין שהביאו אותו. אין צורך בסיסמה או בחיבור חשבון: מוסיפים סימון קטן לקישור של המודעה, ו-LeadFlow קורא אותו.':
-    "This way every lead arrives with the source and campaign that brought it. No password or account connection needed: you add a small tag to the ad's link, and LeadFlow reads it.",
-  'המעקב עובד באתר שנבנה ב-LeadFlow ופורסם.':
-    'Tracking works on a website built in LeadFlow and published.',
+  'כך כל ליד יגיע עם המקור והקמפיין שהביאו אותו. אין צורך בסיסמה או בחיבור חשבון: מוסיפים סימון קטן לקישור של המודעה, ו-SimpleCatch קורא אותו.':
+    "This way every lead arrives with the source and campaign that brought it. No password or account connection needed: you add a small tag to the ad's link, and SimpleCatch reads it.",
+  'המעקב עובד באתר שנבנה ב-SimpleCatch ופורסם.':
+    'Tracking works on a website built in SimpleCatch and published.',
   'לאתר שלי': 'Go to My website',
   'מערכת מודעות': 'Ad system',
   'היכנסו ל-Google Ads ופתחו את הקמפיין.': 'Sign in to Google Ads and open the campaign.',
@@ -852,10 +852,10 @@ export const enPart3: Record<string, string> = {
   'תור אחד': 'One booking',
   '{0} תורים': '{0} bookings',
   'התורים של {0}': '{0}’s bookings',
-  'בניית אתר חדש ב-LeadFlow': 'Build a new website in LeadFlow',
-  'להסיר את האתר מהמערכת?': 'Remove the website from LeadFlow?',
-  'הכתובת {0} תוסר מ-LeadFlow. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.':
-    '{0} will be removed from LeadFlow. The website itself isn’t affected and keeps working. You can add it again any time.',
+  'בניית אתר חדש ב-SimpleCatch': 'Build a new website in SimpleCatch',
+  'להסיר את האתר מהמערכת?': 'Remove the website from SimpleCatch?',
+  'הכתובת {0} תוסר מ-SimpleCatch. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.':
+    '{0} will be removed from SimpleCatch. The website itself isn’t affected and keeps working. You can add it again any time.',
   'כן, להסיר': 'Yes, remove',
   'סימון הכול כבוצע': 'Mark all done',
   'סימון כל המשימות כבוצעו: {0}': 'Mark all tasks done: {0}',

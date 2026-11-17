@@ -1,4 +1,4 @@
-import { notificationPath, notificationText, type Notification } from '@leadflow/shared';
+import { notificationPath, notificationText, type Notification } from '@simplecatch/shared';
 import { Bell } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';

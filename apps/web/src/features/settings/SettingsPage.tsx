@@ -11,7 +11,7 @@ import {
   openingHoursSchema,
   type BusinessDetails,
   type OpeningHours,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { Building2, Clock, CreditCard, MapPin, type LucideIcon } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';

@@ -15,7 +15,7 @@ import {
   type Section,
   type SectionType,
   type Site,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import {
   ArrowDown,
   ArrowRight,

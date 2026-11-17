@@ -24,7 +24,7 @@ describe('loadConfig', () => {
     expect(cfg.EMAIL_TRANSPORT).toBe('smtp');
     expect(cfg.SMTP_HOST).toBe('localhost');
     expect(cfg.SMTP_PORT).toBe(1025);
-    expect(cfg.EMAIL_FROM).toBe('LeadFlow <no-reply@leadflow.local>');
+    expect(cfg.EMAIL_FROM).toBe('SimpleCatch <no-reply@simplecatch.local>');
     expect(cfg.AUTH_RATE_LIMIT_MAX).toBe(10);
     expect(cfg.AUTH_RATE_LIMIT_WINDOW).toBe(900_000);
   });

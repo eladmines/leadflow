@@ -1,4 +1,4 @@
-import { businessWebPaths, can, leadSourceLabels, type ReportSummary } from '@leadflow/shared';
+import { businessWebPaths, can, leadSourceLabels, type ReportSummary } from '@simplecatch/shared';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Alert, Spinner } from '../../components/ui';

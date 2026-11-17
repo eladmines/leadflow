@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const PASSWORD = 'Sup3r-secret-pass!';
-const API = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 
 test('probe page heights', async ({ page }, info) => {
   const email = `probe-${Date.now()}@example.com`;
@@ -17,9 +17,26 @@ test('probe page heights', async ({ page }, info) => {
     data: { name: 'סטודיו נועה', industry: 'studio' },
   });
   const { business } = (await created.json()) as { business: { id: string } };
-  await page.request.patch(`/api/v1/businesses/${business.id}`, { headers: API, data: { phone: '054-7654321' } });
-  await page.request.post(`/api/v1/businesses/${business.id}/onboarding/complete`, { headers: API });
-  for (const seg of ['', 'leads', 'customers', 'conversations', 'tasks', 'appointments', 'quotes', 'reports', 'team', 'settings', 'site']) {
+  await page.request.patch(`/api/v1/businesses/${business.id}`, {
+    headers: API,
+    data: { phone: '054-7654321' },
+  });
+  await page.request.post(`/api/v1/businesses/${business.id}/onboarding/complete`, {
+    headers: API,
+  });
+  for (const seg of [
+    '',
+    'leads',
+    'customers',
+    'conversations',
+    'tasks',
+    'appointments',
+    'quotes',
+    'reports',
+    'team',
+    'settings',
+    'site',
+  ]) {
     await page.goto(`/b/${business.id}/${seg}`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
@@ -33,11 +50,21 @@ test('probe page heights', async ({ page }, info) => {
           const s = getComputedStyle(el);
           return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 2;
         })
-        .map((el) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ').slice(0, 3).join('.')} ${el.clientHeight}/${el.scrollHeight}`);
+        .map(
+          (el) =>
+            `${el.tagName.toLowerCase()}.${String(el.className).split(' ').slice(0, 3).join('.')} ${el.clientHeight}/${el.scrollHeight}`,
+        );
       const wide = [...document.querySelectorAll<HTMLElement>('main *')]
-        .filter((el) => el.getBoundingClientRect().right > document.documentElement.clientWidth + 1 || el.getBoundingClientRect().left < -1)
+        .filter(
+          (el) =>
+            el.getBoundingClientRect().right > document.documentElement.clientWidth + 1 ||
+            el.getBoundingClientRect().left < -1,
+        )
         .slice(0, 3)
-        .map((el) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ').slice(0, 4).join('.')}`);
+        .map(
+          (el) =>
+            `${el.tagName.toLowerCase()}.${String(el.className).split(' ').slice(0, 4).join('.')}`,
+        );
       return {
         viewport: window.innerHeight,
         page: se.scrollHeight,

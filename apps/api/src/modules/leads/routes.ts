@@ -17,8 +17,8 @@ import {
   leadTagsResponseSchema,
   pipelineResponseSchema,
   updateLeadRequestSchema,
-} from '@leadflow/shared';
-import { formatIsraeliPhone, leadSourceLabels } from '@leadflow/shared';
+} from '@simplecatch/shared';
+import { formatIsraeliPhone, leadSourceLabels } from '@simplecatch/shared';
 import { toCsv } from '../../lib/csv';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';
@@ -129,7 +129,7 @@ export const leadTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       const date = new Date().toISOString().slice(0, 10);
       return reply
         .header('content-type', 'text/csv; charset=utf-8')
-        .header('content-disposition', `attachment; filename="leadflow-leads-${date}.csv"`)
+        .header('content-disposition', `attachment; filename="simplecatch-leads-${date}.csv"`)
         .header('cache-control', 'no-store')
         .send(csv);
     },

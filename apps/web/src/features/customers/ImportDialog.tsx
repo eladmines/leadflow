@@ -1,4 +1,4 @@
-import { IMPORT_MAX_ROWS, type ImportCustomersResponse } from '@leadflow/shared';
+import { IMPORT_MAX_ROWS, type ImportCustomersResponse } from '@simplecatch/shared';
 import { CheckCircle2, FileSpreadsheet, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Alert, Button, DialogShell, SelectMenu } from '../../components/ui';
@@ -107,7 +107,7 @@ export function ImportDialog({
     const url = URL.createObjectURL(new Blob([templateCsv()], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'leadflow-customers-template.csv';
+    a.download = 'simplecatch-customers-template.csv';
     a.click();
     URL.revokeObjectURL(url);
   };

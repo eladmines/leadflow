@@ -1,4 +1,4 @@
-import { AUTH_TOKEN_PATTERN } from '@leadflow/shared';
+import { AUTH_TOKEN_PATTERN } from '@simplecatch/shared';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 

@@ -2,7 +2,7 @@ import {
   apiPaths,
   type MarkNotificationsReadRequest,
   type NotificationListResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useSyncExternalStore } from 'react';
 import { apiFetch } from '../../lib/api';
@@ -43,7 +43,7 @@ export function useMarkRead(businessId: string) {
 
 // --- Pop-ups on/off: a per-viewer choice in local storage (D-097). -----------------------------
 
-const popupsKey = (userId: string) => `leadflow.popups.off:${userId}`;
+const popupsKey = (userId: string) => `simplecatch.popups.off:${userId}`;
 // Shared by the bell (the switch) and the pop-ups (the reader), which live in different places.
 const listeners = new Set<() => void>();
 const memory = new Map<string, boolean>();

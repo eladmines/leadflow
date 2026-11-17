@@ -4,7 +4,7 @@ import {
   SESSION_COOKIE_NAME,
   authMessages,
   defaultErrorMessages,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { createTestApp, resetDb, testConfig } from '../../../test/helpers';
 import {
   PASSWORD,
@@ -76,7 +76,7 @@ describe('auth: register, login, sessions', () => {
 
       const mails = ctx.email.to('dana@example.com');
       expect(mails).toHaveLength(1);
-      expect(mails[0]!.subject).toBe('אימות כתובת האימייל שלך ב-LeadFlow');
+      expect(mails[0]!.subject).toBe('אימות כתובת האימייל שלך ב-SimpleCatch');
       expect(mails[0]!.text).toMatch(
         /http:\/\/localhost:5173\/verify-email\?token=[A-Za-z0-9_-]{43}/,
       );

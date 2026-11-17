@@ -1,4 +1,4 @@
-import type { SaveDraftRequest, Site } from '@leadflow/shared';
+import type { SaveDraftRequest, Site } from '@simplecatch/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../lib/api';
 import { saveDraft } from './api';
@@ -7,7 +7,7 @@ export type Draft = Omit<SaveDraftRequest, 'revision'>;
 export type SaveState = 'saved' | 'pending' | 'saving' | 'error' | 'conflict';
 
 const DEBOUNCE_MS = 800;
-const backupKey = (businessId: string) => `leadflow:site-draft:${businessId}`;
+const backupKey = (businessId: string) => `simplecatch:site-draft:${businessId}`;
 
 /** Local fallback copy when a save fails (PRD §18 step 3). Storage may be unavailable. */
 export function readBackup(businessId: string): { revision: number; draft: Draft } | null {

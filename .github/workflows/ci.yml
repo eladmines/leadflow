@@ -38,7 +38,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - name: Apply migrations to dev database (for e2e)
-        run: pnpm --filter @leadflow/api db:deploy
+        run: pnpm --filter @simplecatch/api db:deploy
       - run: pnpm exec playwright install --with-deps chromium
       - name: End-to-end tests
         run: cp apps/api/.env.example apps/api/.env && pnpm e2e

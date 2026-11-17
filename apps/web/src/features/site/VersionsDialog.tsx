@@ -1,4 +1,4 @@
-import type { Site } from '@leadflow/shared';
+import type { Site } from '@simplecatch/shared';
 import { useState } from 'react';
 import { Alert, Button, DialogShell, Spinner } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';

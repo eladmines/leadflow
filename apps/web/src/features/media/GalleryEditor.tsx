@@ -1,4 +1,4 @@
-import { SITE_LIMITS, type Section } from '@leadflow/shared';
+import { SITE_LIMITS, type Section } from '@simplecatch/shared';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Field } from '../../components/ui';

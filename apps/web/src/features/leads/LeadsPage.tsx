@@ -9,7 +9,7 @@ import {
   type Lead,
   type LeadListQuery,
   type PipelineStage,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import {
   ChevronLeft,
   ChevronRight,

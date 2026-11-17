@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths } from '@leadflow/shared';
+import { apiPaths } from '@simplecatch/shared';
 import { createTestApp, resetDb } from '../../../test/helpers';
 import { addMember, newUser, ownerWithBusiness, req } from '../../../test/business-helpers';
 
@@ -31,7 +31,7 @@ describe('leads CSV export', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toBe('text/csv; charset=utf-8');
     expect(res.headers['content-disposition']).toMatch(
-      /^attachment; filename="leadflow-leads-\d{4}-\d{2}-\d{2}\.csv"$/,
+      /^attachment; filename="simplecatch-leads-\d{4}-\d{2}-\d{2}\.csv"$/,
     );
     const body = res.body;
     expect(body.charCodeAt(0)).toBe(0xfeff);

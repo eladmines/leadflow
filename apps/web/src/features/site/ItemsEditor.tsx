@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
-import { SITE_LIMITS } from '@leadflow/shared';
+import { SITE_LIMITS } from '@simplecatch/shared';
 import { Button, Field, Textarea } from '../../components/ui';
 import { tr } from '../../i18n';
 

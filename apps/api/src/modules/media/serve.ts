@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
-import { MEDIA_PATH, STOCK_MEDIA_PATH } from '@leadflow/shared';
+import { MEDIA_PATH, STOCK_MEDIA_PATH } from '@simplecatch/shared';
 import { IMAGE_KEY, type StorageProvider } from '../../integrations/storage';
 
 /**

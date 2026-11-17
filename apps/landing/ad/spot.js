@@ -1,4 +1,4 @@
-/* LeadFlow TV spot (9:16, ~15s): one idea. Engine and audio are copied from vertical.js. */
+/* SimpleCatch TV spot (9:16, ~15s): one idea. Engine and audio are copied from vertical.js. */
 const params = new URLSearchParams(location.search);
 const LANG = params.get('lang') === 'en' ? 'en' : 'he';
 const RTL = LANG === 'he';
@@ -9,7 +9,7 @@ const TX = {
   he: {
     c1: 'לקוח כתב.',
     c2: 'מישהו ענה?',
-    c3: 'LeadFlow ענה.',
+    c3: 'SimpleCatch ענה.',
     b1t: 'היי, אפשר תור למחר?',
     no: 'לא.',
     clk: ['עברו 10 דקות', 'עברה שעה', 'עברו 3 שעות'],
@@ -22,7 +22,7 @@ const TX = {
   en: {
     c1: 'A customer wrote.',
     c2: 'Did anyone reply?',
-    c3: 'LeadFlow did.',
+    c3: 'SimpleCatch did.',
     b1t: 'Hi, can I book tomorrow?',
     no: 'No.',
     clk: ['10 minutes later', '1 hour later', '3 hours later'],
@@ -105,7 +105,7 @@ tw('clk', 'o', 7.8, 8.0, 1, 0);
 tw('no', 'o', 7.8, 8.0, 1, 0);
 tw('dim', 'o', 7.8, 8.2, 0.55, 0);
 
-// 3: LeadFlow answered
+// 3: SimpleCatch answered
 pop('c3', 8.2, 0.5, 90);
 sfx(8.2, 'chime');
 pop('fast', 8.9, 0.45, 70);

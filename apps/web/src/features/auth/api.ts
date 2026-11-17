@@ -6,7 +6,7 @@ import {
   type PasswordResetRequest,
   type RegisterRequest,
   type VerifyEmailRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '../../lib/api';
 

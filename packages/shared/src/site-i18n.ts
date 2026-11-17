@@ -32,7 +32,7 @@ const he = {
   callNow: 'חייגו עכשיו',
   recommend: '{0} לקוחות ממליצים',
   noSections: 'אין מקטעים מוצגים באתר.',
-  builtWith: 'האתר נבנה ב-LeadFlow',
+  builtWith: 'האתר נבנה ב-SimpleCatch',
   form: {
     label: 'טופס יצירת קשר',
     website: 'אתר אינטרנט',
@@ -117,7 +117,7 @@ const en: SiteText = {
   callNow: 'Call now',
   recommend: '{0} happy customers',
   noSections: 'This site has no sections to show.',
-  builtWith: 'Built with LeadFlow',
+  builtWith: 'Built with SimpleCatch',
   form: {
     label: 'Contact form',
     website: 'Website',

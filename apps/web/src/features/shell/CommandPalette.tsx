@@ -6,7 +6,7 @@ import {
   formatIsraeliPhone,
   type Business,
   type LeadListResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useQuery } from '@tanstack/react-query';
 import { CornerDownLeft, Plus, Search, UserRound, type LucideIcon } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';

@@ -5,7 +5,7 @@ import {
   type InvitePreview,
   type InviteRequest,
   type UpdateMemberRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { meQueryKey } from '../auth/api';

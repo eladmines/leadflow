@@ -4,7 +4,7 @@ import {
   EMAIL_SIGNATURE_HEADER,
   emailInboundPath,
   type EmailInbound,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { createTestApp, resetDb, testConfig } from '../../../test/helpers';
 import { addMember, newUser, req } from '../../../test/business-helpers';
 import { MemoryMessengerSender } from '../../integrations/messenger';
@@ -13,7 +13,7 @@ import { MemoryEmailSender } from '../../integrations/email';
 import { buildApp } from '../../app';
 
 const BUSINESS_ID = '22222222-3333-4444-8555-666666666666';
-const DOMAIN = 'mail.leadflow.test';
+const DOMAIN = 'mail.simplecatch.test';
 const SECRET = 'inbound-secret-0123456789';
 
 let seq = 0;

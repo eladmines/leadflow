@@ -6,7 +6,7 @@ import {
   SESSION_ABSOLUTE_TTL_MS,
   SESSION_COOKIE_NAME,
   SESSION_IDLE_TTL_MS,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { AppError } from '../lib/errors';
 import { sha256Hex } from '../lib/crypto';
 

@@ -1,11 +1,11 @@
 /**
- * Records a walkthrough of the REAL LeadFlow app (Hebrew) as a video, with a visible cursor and captions.
+ * Records a walkthrough of the REAL SimpleCatch app (Hebrew) as a video, with a visible cursor and captions.
  *
  *   1. docker compose up -d; a database with the demo account (pnpm db:seed, then seed:demo for sample data)
  *   2. API on :4000 and web on :5173 (pnpm dev), pointed at that database
- *   3. node apps/landing/ad/demo-record.mjs   → apps/landing/ad/out/leadflow-demo-he.mp4
+ *   3. node apps/landing/ad/demo-record.mjs   → apps/landing/ad/out/simplecatch-demo-he.mp4
  *
- * Login: owner@leadflow.test / LeadFlow-demo-1 (the development seed's account).
+ * Login: owner@simplecatch.test / SimpleCatch-demo-1 (the development seed's account).
  */
 import { chromium } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
@@ -27,11 +27,11 @@ const browser = await chromium.launch();
 
 // 1. sign in once, off camera
 const login = await browser.newContext({ viewport: { width: W, height: H } });
-await login.addInitScript(() => localStorage.setItem('leadflow.locale', 'he'));
+await login.addInitScript(() => localStorage.setItem('simplecatch.locale', 'he'));
 const lp = await login.newPage();
 await lp.goto(BASE + '/login');
-await lp.locator('input[type=email]').fill('owner@leadflow.test');
-await lp.locator('input[type=password]').fill('LeadFlow-demo-1');
+await lp.locator('input[type=email]').fill('owner@simplecatch.test');
+await lp.locator('input[type=password]').fill('SimpleCatch-demo-1');
 await lp.keyboard.press('Enter');
 await lp.waitForURL(/\/b\//, { timeout: 20000 });
 const home = lp.url();
@@ -45,9 +45,9 @@ const ctx = await browser.newContext({
   recordVideo: { dir: raw, size: { width: W, height: H } },
 });
 await ctx.addInitScript(() => {
-  localStorage.setItem('leadflow.locale', 'he');
-  localStorage.setItem('leadflow.tour.off', '1'); // no onboarding tour on camera
-  localStorage.setItem('leadflow.helper.quiet', '1');
+  localStorage.setItem('simplecatch.locale', 'he');
+  localStorage.setItem('simplecatch.tour.off', '1'); // no onboarding tour on camera
+  localStorage.setItem('simplecatch.helper.quiet', '1');
   const boot = () => {
     if (document.getElementById('__cur')) return;
     const st = document.createElement('style');
@@ -254,7 +254,7 @@ await ctx.close();
 await browser.close();
 
 const file = readdirSync(raw).find((f) => f.endsWith('.webm'));
-const mp4 = path.join(out, 'leadflow-demo-he.mp4');
+const mp4 = path.join(out, 'simplecatch-demo-he.mp4');
 execFileSync(
   'ffmpeg',
   [

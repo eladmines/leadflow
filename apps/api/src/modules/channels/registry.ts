@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import type { Channel } from '@leadflow/shared';
+import type { Channel } from '@simplecatch/shared';
 import type { AppConfig } from '../../config/env';
 import { CloudMessengerSender, type MessengerSender } from '../../integrations/messenger';
 import { CloudWhatsAppSender, type WhatsAppSender } from '../../integrations/whatsapp';

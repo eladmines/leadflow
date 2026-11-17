@@ -1,4 +1,4 @@
-import { authWebPaths } from '@leadflow/shared';
+import { authWebPaths } from '@simplecatch/shared';
 
 /** Guest-only pages: sending a signed-in user "back" to one of them would loop. */
 const GUEST_ONLY_PATHS: readonly string[] = [

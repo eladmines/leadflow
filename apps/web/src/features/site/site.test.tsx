@@ -4,7 +4,7 @@ import {
   businessWebPaths,
   type Business,
   type Site,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -159,12 +159,12 @@ describe('existing website (D-094)', () => {
     expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
   });
 
-  it('shows the site with a "not managed by LeadFlow" note, and no templates', async () => {
+  it('shows the site with a "not managed by SimpleCatch" note, and no templates', async () => {
     mockApi({ [meKey]: me(testUser), ...withWebsite(), ...getSite(null) });
     renderApp(sitePath);
     expect(await screen.findByRole('heading', { name: 'האתר הקיים של העסק' })).toBeInTheDocument();
-    expect(screen.getByText('לא מנוהל ב-LeadFlow')).toBeInTheDocument();
-    expect(screen.getByText(/לא נבנה ב-LeadFlow ולא מנוהל כאן/)).toBeInTheDocument();
+    expect(screen.getByText('לא מנוהל ב-SimpleCatch')).toBeInTheDocument();
+    expect(screen.getByText(/לא נבנה ב-SimpleCatch ולא מנוהל כאן/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /www\.shiran\.co\.il/ })).toHaveAttribute(
       'href',
       'https://www.shiran.co.il',
@@ -176,7 +176,7 @@ describe('existing website (D-094)', () => {
     // Linking an existing site means no templates here; removing the address brings them back.
     expect(screen.queryByRole('button', { name: 'בחירת התבנית' })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'בניית אתר חדש ב-LeadFlow' }),
+      screen.queryByRole('button', { name: 'בניית אתר חדש ב-SimpleCatch' }),
     ).not.toBeInTheDocument();
   });
 
@@ -404,14 +404,14 @@ describe('site editor', () => {
     const { user } = renderApp(sitePath);
     await user.click(await screen.findByRole('button', { name: 'הסתרת המלצות' }));
     expect(await screen.findByText('השמירה נכשלה', {}, { timeout: 3000 })).toBeInTheDocument();
-    expect(localStorage.getItem(`leadflow:site-draft:${testBusiness.id}`)).toContain(
+    expect(localStorage.getItem(`simplecatch:site-draft:${testBusiness.id}`)).toContain(
       '"revision":0',
     );
 
     fail = false;
     await user.click(screen.getByRole('button', { name: 'נסו שוב' }));
     expect(await screen.findByText('כל השינויים נשמרו')).toBeInTheDocument();
-    expect(localStorage.getItem(`leadflow:site-draft:${testBusiness.id}`)).toBeNull();
+    expect(localStorage.getItem(`simplecatch:site-draft:${testBusiness.id}`)).toBeNull();
     expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id))).toHaveLength(2);
   });
 

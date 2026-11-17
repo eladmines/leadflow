@@ -7,7 +7,7 @@ import {
   sendWhatsAppRequestSchema,
   sendWhatsAppResponseSchema,
   unreadConversationsResponseSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { WhatsAppService } from '../whatsapp/service';
 import { ConversationService } from './service';

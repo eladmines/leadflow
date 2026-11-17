@@ -79,8 +79,8 @@ F06 ─► F11 (after spike)
 - 2026-10-31 — F12 POC: WhatsApp via Meta Cloud API (D-091, proposed) — signed webhook, WhatsApp leads, conversation and replies on the lead page (24-hour window), delivery status, local simulator. See docs/features/F12.md.
 - 2026-10-31 — WhatsApp number classification (D-092): known customers go straight to their lead, new numbers wait in the "שיחות" inbox, one click marks business (lead) or personal (deleted, ignored from then on); remembered; leads page points to waiting numbers.
 - 2026-11-01 — Product tour (D-093): first-entry walkthrough of the main menu with spotlight bubbles (centred on phones), per-role steps, keyboard support, replay from "סיור במערכת".
-- 2026-11-01 — Existing website (D-094): save the address of a site built elsewhere; "האתר שלי" shows it with a live preview and a "לא מנוהל ב-LeadFlow" note, and still offers LeadFlow templates.
-- 2026-11-01 — Site options (D-095): change template after creating the site (logo, pages and address kept; live site unchanged until publish) and delete the LeadFlow site (offline, address freed, leads and consent records kept) to go back to an existing website.
+- 2026-11-01 — Existing website (D-094): save the address of a site built elsewhere; "האתר שלי" shows it with a live preview and a "לא מנוהל ב-SimpleCatch" note, and still offers SimpleCatch templates.
+- 2026-11-01 — Site options (D-095): change template after creating the site (logo, pages and address kept; live site unchanged until publish) and delete the SimpleCatch site (offline, address freed, leads and consent records kept) to go back to an existing website.
 - 2026-11-01 — Page tours (D-096): "סיור בעמוד" on every main screen, with steps that adapt to what the page shows.
 - 2026-11-01 — Notifications (D-097): bell with unread count and list, pop-ups for new leads and WhatsApp, events from the site form, WhatsApp, quotes and task reminders.
 - 2026-11-03 — Management app in English (default) with a Hebrew switch (D-100): ~1,200 strings translated, LTR/RTL by language, locale-aware dates, English e2e journey.

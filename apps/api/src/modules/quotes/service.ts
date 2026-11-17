@@ -14,7 +14,7 @@ import {
   type QuoteItem,
   type quoteListQuerySchema,
   type upsertQuoteRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { z } from 'zod';
 import type { AppConfig } from '../../config/env';
 import { quoteDecisionTemplate, quoteTemplate, type EmailSender } from '../../integrations/email';

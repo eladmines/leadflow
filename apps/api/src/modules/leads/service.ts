@@ -22,7 +22,7 @@ import {
   parseImportValue,
   type ImportCustomerRow,
   type ImportCustomersResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { z } from 'zod';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';

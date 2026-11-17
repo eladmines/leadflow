@@ -1,4 +1,4 @@
-import { weekdayLabels, WEEKDAYS, type OpeningHours } from '@leadflow/shared';
+import { weekdayLabels, WEEKDAYS, type OpeningHours } from '@simplecatch/shared';
 import type { UseFormReturn } from 'react-hook-form';
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';

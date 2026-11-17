@@ -1,4 +1,4 @@
-import { defaultErrorMessages } from '@leadflow/shared';
+import { defaultErrorMessages } from '@simplecatch/shared';
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form';
 import { ApiError } from '../../lib/api';
 import { tr } from '../../i18n';

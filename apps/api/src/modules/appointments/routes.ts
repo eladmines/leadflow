@@ -9,7 +9,7 @@ import {
   serviceResponseSchema,
   updateAppointmentRequestSchema,
   upsertServiceRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { AppointmentService } from './service';
 

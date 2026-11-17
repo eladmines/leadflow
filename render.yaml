@@ -14,10 +14,10 @@ services:
     buildCommand: >-
       corepack enable &&
       NODE_ENV=development pnpm install --frozen-lockfile &&
-      pnpm --filter @leadflow/shared build &&
-      pnpm --filter @leadflow/api exec prisma generate &&
-      pnpm --filter @leadflow/api build &&
-      pnpm --filter @leadflow/web build
+      pnpm --filter @simplecatch/shared build &&
+      pnpm --filter @simplecatch/api exec prisma generate &&
+      pnpm --filter @simplecatch/api build &&
+      pnpm --filter @simplecatch/web build
     # Migrations run on every start; they are no-ops when the database is up to date.
     startCommand: cd apps/api && pnpm exec prisma migrate deploy && node dist/server.js
     envVars:

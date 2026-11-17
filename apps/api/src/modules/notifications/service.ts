@@ -4,7 +4,7 @@ import {
   type Notification,
   type NotificationListResponse,
   type NotificationType,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { Db } from '../../lib/db';
 import type { TenantContext } from '../../plugins/tenant';
 

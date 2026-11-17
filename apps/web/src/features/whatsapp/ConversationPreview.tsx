@@ -1,4 +1,4 @@
-import { fillBotText, type WhatsAppBotResponse } from '@leadflow/shared';
+import { fillBotText, type WhatsAppBotResponse } from '@simplecatch/shared';
 import { List, Video } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn';

@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import type { PrismaClient } from '@prisma/client';
-import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE, SESSION_COOKIE_NAME } from '@leadflow/shared';
+import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE, SESSION_COOKIE_NAME } from '@simplecatch/shared';
 import { buildApp } from '../src/app';
 import { loadConfig, type AppConfig } from '../src/config/env';
 import { createPrisma } from '../src/lib/db';

@@ -3,14 +3,14 @@
  * WhatsApp, manual) with history and notes, tasks, services and appointments, quotes, and WhatsApp
  * conversations. Everything it adds is tagged "דוגמה" and can be removed again.
  *
- *   DATABASE_URL='postgresql://…' pnpm --filter @leadflow/api seed:demo --email ido@example.com
- *   DATABASE_URL='postgresql://…' pnpm --filter @leadflow/api seed:demo --email ido@example.com --remove
+ *   DATABASE_URL='postgresql://…' pnpm --filter @simplecatch/api seed:demo --email ido@example.com
+ *   DATABASE_URL='postgresql://…' pnpm --filter @simplecatch/api seed:demo --email ido@example.com --remove
  *
  * The database is never taken from .env: the address must be given on the command line, so it is
  * always a deliberate choice which database gets the data.
  */
 import type { Prisma, PrismaClient } from '@prisma/client';
-import { WEEKDAYS } from '@leadflow/shared';
+import { WEEKDAYS } from '@simplecatch/shared';
 import { generateToken } from '../src/lib/crypto';
 import { zonedTimeToUtc } from '../src/lib/time';
 

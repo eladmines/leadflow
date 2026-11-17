@@ -1,4 +1,4 @@
-import { authWebPaths } from '@leadflow/shared';
+import { authWebPaths } from '@simplecatch/shared';
 import type { ReactNode } from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Alert, Button, FullPageSpinner } from '../../components/ui';

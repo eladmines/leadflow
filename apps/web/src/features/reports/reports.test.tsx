@@ -1,4 +1,4 @@
-import { apiPaths, businessWebPaths, type ReportSummary } from '@leadflow/shared';
+import { apiPaths, businessWebPaths, type ReportSummary } from '@simplecatch/shared';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';

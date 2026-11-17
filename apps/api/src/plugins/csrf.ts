@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { apiPaths, CSRF_HEADER_NAME, emailInboundPath } from '@leadflow/shared';
+import { apiPaths, CSRF_HEADER_NAME, emailInboundPath } from '@simplecatch/shared';
 import { AppError } from '../lib/errors';
 
 const STATE_CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);

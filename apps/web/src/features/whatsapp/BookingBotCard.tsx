@@ -14,7 +14,7 @@ import {
   type BotTextKey,
   type WhatsAppBotResponse,
   type WhatsAppBotSettings,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { Eye, ImagePlus, MessageSquareText, RotateCcw, Video, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import {

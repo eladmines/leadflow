@@ -1,4 +1,4 @@
-/* LeadFlow vertical ad (9:16): a pure function of time, `window.render(t)`, plus a synthesized soundtrack, `window.audioWav()`. */
+/* SimpleCatch vertical ad (9:16): a pure function of time, `window.render(t)`, plus a synthesized soundtrack, `window.audioWav()`. */
 const params = new URLSearchParams(location.search);
 const LANG = params.get('lang') === 'en' ? 'en' : 'he';
 const RTL = LANG === 'he';

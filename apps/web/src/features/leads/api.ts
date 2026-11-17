@@ -11,7 +11,7 @@ import {
   type LeadTagsResponse,
   type PipelineResponse,
   type UpdateLeadRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { tr, intlLocale } from '../../i18n';

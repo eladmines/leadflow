@@ -26,7 +26,7 @@ import {
   type Channel,
   attributionSchema,
   type Attribution,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { z } from 'zod';
 import type { AppConfig } from '../../config/env';
 import type { StorageProvider } from '../../integrations/storage';

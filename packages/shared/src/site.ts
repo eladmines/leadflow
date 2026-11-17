@@ -74,6 +74,7 @@ export const RESERVED_SUBDOMAINS = new Set([
   'account',
   'billing',
   'leadflow',
+  'simplecatch',
   'test',
   'dev',
   'staging',

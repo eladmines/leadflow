@@ -24,7 +24,7 @@ afterAll(async () => {
 describe('English app', () => {
   it('runs left to right with English navigation and dashboard', async () => {
     const { mockApi, me, renderApp, testUser, testBusiness } = utils;
-    const { apiPaths, businessWebPaths } = await import('@leadflow/shared');
+    const { apiPaths, businessWebPaths } = await import('@simplecatch/shared');
     mockApi({ [`GET ${apiPaths.auth.me}`]: me(testUser) });
     renderApp(businessWebPaths.home(testBusiness.id));
     expect(
@@ -42,7 +42,7 @@ describe('English app', () => {
 
   it('shows validation and server messages in English', async () => {
     const { mockApi, renderApp, json } = utils;
-    const { apiPaths } = await import('@leadflow/shared');
+    const { apiPaths } = await import('@simplecatch/shared');
     mockApi({
       [`GET ${apiPaths.auth.me}`]: () =>
         json(401, { error: { code: 'UNAUTHENTICATED', message: 'יש להתחבר כדי להמשיך' } }),

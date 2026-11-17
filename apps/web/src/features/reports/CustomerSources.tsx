@@ -1,4 +1,8 @@
-import { businessWebPaths, type AttributionReportRow, type ReportSummary } from '@leadflow/shared';
+import {
+  businessWebPaths,
+  type AttributionReportRow,
+  type ReportSummary,
+} from '@simplecatch/shared';
 import { Megaphone, Plug } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';

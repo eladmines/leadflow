@@ -5,7 +5,7 @@ import {
   industryLabels,
   type Business,
   type CreateBusinessRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Button, Field, SelectMenu } from '../../components/ui';

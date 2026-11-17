@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { authWebPaths, PASSWORD_MIN_LENGTH, passwordResetConfirmSchema } from '@leadflow/shared';
+import { authWebPaths, PASSWORD_MIN_LENGTH, passwordResetConfirmSchema } from '@simplecatch/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';

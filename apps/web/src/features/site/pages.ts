@@ -1,4 +1,4 @@
-import type { Section } from '@leadflow/shared';
+import type { Section } from '@simplecatch/shared';
 import type { Draft } from './useDraftAutosave';
 
 /** '' = the home page; otherwise an extra page's id (D-081). */

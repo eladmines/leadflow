@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { HERO_ACTIONS, heroActionLabels, SITE_LIMITS, type Section } from '@leadflow/shared';
+import { HERO_ACTIONS, heroActionLabels, SITE_LIMITS, type Section } from '@simplecatch/shared';
 import { Checkbox, Field, Select, Textarea } from '../../components/ui';
 import { GalleryEditor } from '../media/GalleryEditor';
 import { ImageField } from '../media/ImageField';

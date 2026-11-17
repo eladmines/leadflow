@@ -1,4 +1,4 @@
-// LeadFlow data model. Every tenant-owned table MUST carry business_id
+// SimpleCatch data model. Every tenant-owned table MUST carry business_id
 // (see docs/ARCHITECTURE.md#tenant-isolation). Models are added per feature.
 
 generator client {
@@ -147,7 +147,7 @@ model Business {
   serviceAreas           String[]       @default([]) @map("service_areas")
   /// Shape: shared openingHoursSchema (sun..sat → { open, from, to }).
   openingHours           Json?          @map("opening_hours")
-  /// Existing website outside LeadFlow (D-094); shown in "האתר שלי", never managed by LeadFlow.
+  /// Existing website outside SimpleCatch (D-094); shown in "האתר שלי", never managed by SimpleCatch.
   websiteUrl             String?        @map("website_url") @db.VarChar(300)
   timezone               String         @default("Asia/Jerusalem") @db.VarChar(64)
   /// 'he' | 'en' (D-143): what its customers get (website, WhatsApp, emails).

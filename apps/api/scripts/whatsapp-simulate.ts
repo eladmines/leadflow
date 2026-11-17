@@ -2,11 +2,11 @@
  * Local stand-in for Meta (F12 POC): sends a signed WhatsApp webhook event to the local API, as if
  * a customer wrote to the connected number. Needs WHATSAPP_BUSINESS_ID / _APP_SECRET in .env.
  *
- *   pnpm --filter @leadflow/api wa:simulate --from 0501234567 --name "דנה" --text "היי"
- *   pnpm --filter @leadflow/api wa:simulate --status read --id wamid.local-…
+ *   pnpm --filter @simplecatch/api wa:simulate --from 0501234567 --name "דנה" --text "היי"
+ *   pnpm --filter @simplecatch/api wa:simulate --status read --id wamid.local-…
  */
 import { parseArgs } from 'node:util';
-import { normalizeIsraeliPhone, whatsappApiPaths } from '@leadflow/shared';
+import { normalizeIsraeliPhone, whatsappApiPaths } from '@simplecatch/shared';
 import { loadConfig } from '../src/config/env';
 import { signWebhookBody } from '../src/integrations/whatsapp';
 

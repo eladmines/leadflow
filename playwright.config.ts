@@ -18,9 +18,9 @@ export default defineConfig({
         {
           origin: 'http://localhost:5173',
           localStorage: [
-            { name: 'leadflow.tour.off', value: '1' },
-            { name: 'leadflow.helper.quiet', value: '1' },
-            { name: 'leadflow.locale', value: 'he' },
+            { name: 'simplecatch.tour.off', value: '1' },
+            { name: 'simplecatch.helper.quiet', value: '1' },
+            { name: 'simplecatch.locale', value: 'he' },
           ],
         },
       ],
@@ -34,7 +34,7 @@ export default defineConfig({
     {
       // Many e2e registrations share one IP, so raise the auth rate limit for this server only.
       // Rate limiting itself is covered by the API integration tests (security.test.ts).
-      command: 'pnpm --filter @leadflow/api dev',
+      command: 'pnpm --filter @simplecatch/api dev',
       // Verification is off by default (D-133); the e2e keeps its flow covered.
       env: { AUTH_RATE_LIMIT_MAX: '1000', EMAIL_VERIFICATION: 'on' },
       url: 'http://localhost:4000/health',
@@ -44,7 +44,7 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: 'pnpm --filter @leadflow/web dev',
+      command: 'pnpm --filter @simplecatch/web dev',
       url: 'http://localhost:5173',
       reuseExistingServer: false,
       timeout: 60_000,

@@ -1,4 +1,4 @@
-import { can, type ReplyMode, type WhatsAppBotResponse } from '@leadflow/shared';
+import { can, type ReplyMode, type WhatsAppBotResponse } from '@simplecatch/shared';
 import { CalendarCheck, Images, MessageCircleReply, type LucideIcon } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { Alert, Button, DialogShell, Spinner, Switch } from '../../components/ui';

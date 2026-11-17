@@ -3,7 +3,7 @@ import {
   type CustomerListResponse,
   type ImportCustomersRequest,
   type ImportCustomersResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 

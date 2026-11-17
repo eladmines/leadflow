@@ -1,5 +1,5 @@
 {
-  "name": "leadflow",
+  "name": "simplecatch",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.15.9",
@@ -7,14 +7,14 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @leadflow/api --filter @leadflow/web dev",
+    "dev": "pnpm --parallel --filter @simplecatch/api --filter @simplecatch/web dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "db:migrate": "pnpm --filter @leadflow/api db:migrate",
-    "db:seed": "pnpm --filter @leadflow/api db:seed",
+    "db:migrate": "pnpm --filter @simplecatch/api db:migrate",
+    "db:seed": "pnpm --filter @simplecatch/api db:seed",
     "e2e": "playwright test"
   },
   "devDependencies": {

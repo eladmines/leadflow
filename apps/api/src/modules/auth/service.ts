@@ -13,7 +13,7 @@ import {
   type LoginRequest,
   type RegisterRequest,
   type Language,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { AppConfig } from '../../config/env';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
@@ -42,7 +42,7 @@ export interface RequestMeta {
   ip: string | null;
   userAgent: string | null;
   log: FastifyBaseLogger;
-  /** The app's language (`X-LeadFlow-Locale`), for account emails (D-143). */
+  /** The app's language (`X-SimpleCatch-Locale`), for account emails (D-143). */
   lang?: Language;
 }
 
@@ -78,7 +78,7 @@ export function requestMeta(req: {
     ip: req.ip ? req.ip.slice(0, IP_MAX) : null,
     userAgent: typeof ua === 'string' ? ua.slice(0, USER_AGENT_MAX) : null,
     log: req.log,
-    lang: req.headers['x-leadflow-locale'] === 'en' ? 'en' : 'he',
+    lang: req.headers['x-simplecatch-locale'] === 'en' ? 'en' : 'he',
   };
 }
 

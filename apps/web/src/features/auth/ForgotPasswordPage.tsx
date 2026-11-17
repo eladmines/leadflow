@@ -4,7 +4,7 @@ import {
   PASSWORD_RESET_TOKEN_TTL_MS,
   passwordResetRequestSchema,
   type PasswordResetRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert, AuthLayout, Button, Field, TextLink } from '../../components/ui';

@@ -1,4 +1,4 @@
-import { formatAgorot, formatIsraeliPhone, quoteStatusLabels } from '@leadflow/shared';
+import { formatAgorot, formatIsraeliPhone, quoteStatusLabels } from '@simplecatch/shared';
 import { CheckCircle2, Printer, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';

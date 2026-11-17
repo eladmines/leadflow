@@ -1,4 +1,4 @@
-import { authWebPaths, businessWebPaths, INVITE_WEB_PATH, roleLabels } from '@leadflow/shared';
+import { authWebPaths, businessWebPaths, INVITE_WEB_PATH, roleLabels } from '@simplecatch/shared';
 import { Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AuthLayout, Button, buttonClasses, FullPageSpinner } from '../../components/ui';
@@ -84,7 +84,7 @@ export function AcceptInvitePage() {
         ) : !user ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-ink-muted">
-              {tr('כדי להצטרף צריך חשבון LeadFlow עם הכתובת הזו.')}
+              {tr('כדי להצטרף צריך חשבון SimpleCatch עם הכתובת הזו.')}
             </p>
             <Link
               to={`${authWebPaths.register}?next=${next}&email=${encodeURIComponent(invite.email)}`}

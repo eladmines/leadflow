@@ -15,7 +15,7 @@ import {
   sectionSchema,
   themeSchema,
   type SiteTheme,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { z } from 'zod';
 import type { AppConfig } from '../config/env';
 import { sha256Hex } from '../lib/crypto';

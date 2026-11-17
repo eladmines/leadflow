@@ -4,7 +4,7 @@ import {
   type Business,
   type LeadDetailResponse,
   type Task,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { callsTo, json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';

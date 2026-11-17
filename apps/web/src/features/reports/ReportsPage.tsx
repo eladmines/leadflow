@@ -1,4 +1,4 @@
-import { can, leadSourceLabels, REPORT_RANGES, type ReportSummary } from '@leadflow/shared';
+import { can, leadSourceLabels, REPORT_RANGES, type ReportSummary } from '@simplecatch/shared';
 import { Coins, Target, Timer, Users, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';

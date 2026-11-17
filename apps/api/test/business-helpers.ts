@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { MembershipRole, PrismaClient } from '@prisma/client';
-import { apiPaths, type Business } from '@leadflow/shared';
+import { apiPaths, type Business } from '@simplecatch/shared';
 import { csrfHeaders, sessionCookie } from './helpers';
 import { registerUser } from './auth-helpers';
 

@@ -1,4 +1,4 @@
-import { businessWebPaths } from '@leadflow/shared';
+import { businessWebPaths } from '@simplecatch/shared';
 import { Navigate } from 'react-router-dom';
 import { Alert, Button, FullPageSpinner } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';

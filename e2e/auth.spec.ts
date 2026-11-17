@@ -66,7 +66,7 @@ test('(a) register → wizard + unverified banner → verify link → banner gon
   const link = await linkFromMailpit(page, email, /אימות/);
   await page.goto(link);
   await expect(page.getByText('תודה! כתובת האימייל שלך אומתה בהצלחה.')).toBeVisible();
-  await page.getByRole('link', { name: 'המשך ל-LeadFlow' }).click();
+  await page.getByRole('link', { name: 'המשך ל-SimpleCatch' }).click();
   await expect(page).toHaveURL(/\/onboarding$/);
   await expect(page.getByRole('heading', { name: wizardStart })).toBeVisible();
   await expect(banner(page)).toHaveCount(0);

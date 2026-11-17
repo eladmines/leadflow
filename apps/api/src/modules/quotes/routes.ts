@@ -10,7 +10,7 @@ import {
   quoteResponseSchema,
   sendQuoteRequestSchema,
   upsertQuoteRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { QuoteService } from './service';
 

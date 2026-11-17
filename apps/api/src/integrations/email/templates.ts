@@ -2,7 +2,7 @@ import {
   EMAIL_VERIFY_TOKEN_TTL_MS,
   PASSWORD_RESET_TOKEN_TTL_MS,
   type Language,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 
 export interface RenderedEmail {
   subject: string;
@@ -61,19 +61,19 @@ export function verifyEmailTemplate(
 ): RenderedEmail {
   const en = lang === 'en';
   const subject = en
-    ? 'Verify your email address for LeadFlow'
-    : 'אימות כתובת האימייל שלך ב-LeadFlow';
+    ? 'Verify your email address for SimpleCatch'
+    : 'אימות כתובת האימייל שלך ב-SimpleCatch';
   const hello = en ? `Hello ${params.fullName},` : `שלום ${params.fullName},`;
   const intro = en
-    ? 'Thanks for signing up to LeadFlow. To verify your email address, click the button:'
-    : 'תודה שנרשמת ל-LeadFlow. כדי לאמת את כתובת האימייל שלך, יש ללחוץ על הכפתור:';
+    ? 'Thanks for signing up to SimpleCatch. To verify your email address, click the button:'
+    : 'תודה שנרשמת ל-SimpleCatch. כדי לאמת את כתובת האימייל שלך, יש ללחוץ על הכפתור:';
   const introText = en
-    ? 'Thanks for signing up to LeadFlow. To verify your email address, open the link:'
-    : 'תודה שנרשמת ל-LeadFlow. כדי לאמת את כתובת האימייל שלך, יש לפתוח את הקישור:';
+    ? 'Thanks for signing up to SimpleCatch. To verify your email address, open the link:'
+    : 'תודה שנרשמת ל-SimpleCatch. כדי לאמת את כתובת האימייל שלך, יש לפתוח את הקישור:';
   const valid = en ? `The link is valid for ${HOURS} hours.` : `הקישור תקף ל-${HOURS} שעות.`;
   const ignore = en
-    ? "If you didn't sign up to LeadFlow, you can ignore this email."
-    : 'אם לא נרשמת ל-LeadFlow, אפשר להתעלם מהודעה זו.';
+    ? "If you didn't sign up to SimpleCatch, you can ignore this email."
+    : 'אם לא נרשמת ל-SimpleCatch, אפשר להתעלם מהודעה זו.';
   const html = layout(
     subject,
     `<h1 style="font-size:20px;margin:0 0 16px;">${escapeHtml(hello)}</h1>
@@ -92,14 +92,14 @@ export function passwordResetTemplate(
   lang: Language = 'he',
 ): RenderedEmail {
   const en = lang === 'en';
-  const subject = en ? 'Reset your LeadFlow password' : 'איפוס הסיסמה שלך ב-LeadFlow';
+  const subject = en ? 'Reset your SimpleCatch password' : 'איפוס הסיסמה שלך ב-SimpleCatch';
   const hello = en ? `Hello ${params.fullName},` : `שלום ${params.fullName},`;
   const intro = en
-    ? 'We received a request to reset your LeadFlow password. To choose a new password, click the button:'
-    : 'קיבלנו בקשה לאיפוס הסיסמה שלך ב-LeadFlow. כדי לבחור סיסמה חדשה, יש ללחוץ על הכפתור:';
+    ? 'We received a request to reset your SimpleCatch password. To choose a new password, click the button:'
+    : 'קיבלנו בקשה לאיפוס הסיסמה שלך ב-SimpleCatch. כדי לבחור סיסמה חדשה, יש ללחוץ על הכפתור:';
   const introText = en
-    ? 'We received a request to reset your LeadFlow password. To choose a new password, open the link:'
-    : 'קיבלנו בקשה לאיפוס הסיסמה שלך ב-LeadFlow. כדי לבחור סיסמה חדשה, יש לפתוח את הקישור:';
+    ? 'We received a request to reset your SimpleCatch password. To choose a new password, open the link:'
+    : 'קיבלנו בקשה לאיפוס הסיסמה שלך ב-SimpleCatch. כדי לבחור סיסמה חדשה, יש לפתוח את הקישור:';
   const valid = en ? `The link is valid for ${MINUTES} minutes.` : `הקישור תקף ל-${MINUTES} דקות.`;
   const ignore = en
     ? "If you didn't ask to reset your password, you can ignore this email. Your password hasn't changed."
@@ -189,8 +189,8 @@ export function inviteTemplate(
 ): RenderedEmail {
   const en = lang === 'en';
   const subject = en
-    ? `You're invited to join ${params.businessName}'s team on LeadFlow`
-    : `הוזמנת להצטרף לצוות של ${params.businessName} ב-LeadFlow`;
+    ? `You're invited to join ${params.businessName}'s team on SimpleCatch`
+    : `הוזמנת להצטרף לצוות של ${params.businessName} ב-SimpleCatch`;
   const whoText = en
     ? `${params.inviterName ?? 'Someone'} invited you to join ${params.businessName}`
     : `${params.inviterName ? `${params.inviterName} הזמין/ה אותך` : 'הוזמנת'} להצטרף ל${params.businessName}`;
@@ -198,8 +198,8 @@ export function inviteTemplate(
     ? `Your role on the team: ${params.roleLabel}.`
     : `התפקיד שלך בצוות: ${params.roleLabel}.`;
   const roleHtml = en
-    ? `Your role on the team: <strong>${escapeHtml(params.roleLabel)}</strong>. LeadFlow keeps the business's enquiries, customers and website in one place.`
-    : `התפקיד שלך בצוות: <strong>${escapeHtml(params.roleLabel)}</strong>. ב-LeadFlow מנהלים את הפניות, הלקוחות והאתר של העסק במקום אחד.`;
+    ? `Your role on the team: <strong>${escapeHtml(params.roleLabel)}</strong>. SimpleCatch keeps the business's enquiries, customers and website in one place.`
+    : `התפקיד שלך בצוות: <strong>${escapeHtml(params.roleLabel)}</strong>. ב-SimpleCatch מנהלים את הפניות, הלקוחות והאתר של העסק במקום אחד.`;
   const valid = en
     ? `The invitation is valid for ${params.days} days. To join, sign in (or sign up) with this email address.`
     : `ההזמנה תקפה ל-${params.days} ימים. כדי להצטרף צריך להתחבר (או להירשם) עם כתובת האימייל הזו.`;
@@ -217,7 +217,7 @@ ${button(params.link, en ? 'Join the team' : 'הצטרפות לצוות', lang)}
     lang,
   );
   const text = [
-    en ? `${whoText} on LeadFlow.` : `${whoText} ב-LeadFlow.`,
+    en ? `${whoText} on SimpleCatch.` : `${whoText} ב-SimpleCatch.`,
     role,
     '',
     `${en ? 'Join' : 'להצטרפות'}: ${params.link}`,
@@ -252,7 +252,7 @@ export function taskReminderTemplate(
 <p style="margin:0 0 4px;font-size:16px;"><strong>${escapeHtml(params.title)}</strong></p>
 <p style="margin:0 0 4px;color:#6b7280;">${due}: ${escapeHtml(params.dueText)}</p>
 ${params.leadName ? `<p style="margin:0 0 4px;color:#6b7280;">${lead}: ${escapeHtml(params.leadName)}</p>` : ''}
-${button(params.link, en ? 'Open in LeadFlow' : 'לפתיחה ב-LeadFlow', lang)}`,
+${button(params.link, en ? 'Open in SimpleCatch' : 'לפתיחה ב-SimpleCatch', lang)}`,
     lang,
   );
   const text = [
@@ -272,11 +272,11 @@ export function passwordChangedTemplate(
   lang: Language = 'he',
 ): RenderedEmail {
   const en = lang === 'en';
-  const subject = en ? 'Your LeadFlow password was changed' : 'הסיסמה שלך ב-LeadFlow שונתה';
+  const subject = en ? 'Your SimpleCatch password was changed' : 'הסיסמה שלך ב-SimpleCatch שונתה';
   const hello = en ? `Hello ${params.fullName},` : `שלום ${params.fullName},`;
   const changed = en
-    ? 'Your LeadFlow account password was just changed, and all other devices were signed out.'
-    : 'הסיסמה לחשבון LeadFlow שלך שונתה הרגע, וכל שאר המכשירים נותקו.';
+    ? 'Your SimpleCatch account password was just changed, and all other devices were signed out.'
+    : 'הסיסמה לחשבון SimpleCatch שלך שונתה הרגע, וכל שאר המכשירים נותקו.';
   const notYou = en
     ? "If this wasn't you, reset your password right away:"
     : 'אם זה לא היית את/ה, אפסו את הסיסמה מיד:';

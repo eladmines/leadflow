@@ -9,7 +9,7 @@ describe('apiFetch', () => {
     vi.stubGlobal('fetch', fetchMock);
     await apiFetch('/api/x', { method: 'POST', body: '{}' });
     const [, init] = fetchMock.mock.calls[0]!;
-    expect(new Headers(init.headers).get('X-Requested-With')).toBe('LeadFlow');
+    expect(new Headers(init.headers).get('X-Requested-With')).toBe('SimpleCatch');
     expect(init.credentials).toBe('include');
   });
 

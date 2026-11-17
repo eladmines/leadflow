@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** F03: app shell — navigation, mobile drawer (focus trap + Escape), keyboard, 375px layout. */
 const PASSWORD = 'Sup3r-secret-pass!';
-const API_HEADERS = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 
 /** Registers through the UI, then sets up an active business through the API (faster). */
 async function ownerWithActiveBusiness(page: Page) {

@@ -1,4 +1,4 @@
-import { apiPaths, businessWebPaths, type Lead } from '@leadflow/shared';
+import { apiPaths, businessWebPaths, type Lead } from '@simplecatch/shared';
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, me, mockApi, renderApp, testBusiness, testStages, testUser } from '../../test/utils';

@@ -1,4 +1,4 @@
-import { SERVICE_AREA_MAX_LENGTH, SERVICE_AREAS_MAX, businessMessages } from '@leadflow/shared';
+import { SERVICE_AREA_MAX_LENGTH, SERVICE_AREAS_MAX, businessMessages } from '@simplecatch/shared';
 import { useState, type KeyboardEvent } from 'react';
 import { Button, Field } from '../../components/ui';
 import { tr } from '../../i18n';

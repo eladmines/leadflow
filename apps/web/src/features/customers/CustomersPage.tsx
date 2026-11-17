@@ -5,7 +5,7 @@ import {
   can,
   formatIsraeliPhone,
   type Customer,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { ChevronDown, Crown, FileSpreadsheet, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

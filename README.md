@@ -1,4 +1,4 @@
-# LeadFlow
+# SimpleCatch
 
 A Hebrew/RTL SaaS for small businesses: website, leads, CRM, WhatsApp and an AI agent in one place.
 

@@ -45,7 +45,7 @@ export const AUTH_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 /** CSRF marker. Every state-changing request must carry this header (non-empty). */
 export const CSRF_HEADER_NAME = 'X-Requested-With';
-export const CSRF_HEADER_VALUE = 'LeadFlow';
+export const CSRF_HEADER_VALUE = 'SimpleCatch';
 
 // ---------------------------------------------------------------------------
 // API paths

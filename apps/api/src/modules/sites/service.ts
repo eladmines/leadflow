@@ -22,7 +22,7 @@ import {
   type SiteBusinessInfo,
   type SiteVersion as SiteVersionDto,
   type TemplateKey,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { z } from 'zod';
 import type { AppConfig } from '../../config/env';
 import { AppError } from '../../lib/errors';
@@ -442,7 +442,7 @@ export class SiteService {
   }
 
   /**
-   * D-095: deletes the LeadFlow site: offline at once, the address is freed, the draft and versions
+   * D-095: deletes the SimpleCatch site: offline at once, the address is freed, the draft and versions
    * are gone. Leads and their form submissions stay (consent record), and so do the images.
    */
   async remove(ctx: TenantContext): Promise<void> {

@@ -4,7 +4,7 @@ import {
   openingHoursSchema,
   type Business,
   type OpeningHours,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert, Button } from '../../components/ui';

@@ -1,12 +1,12 @@
 # Deployment plan — Beta environment
 
-Status: **Plan** (2026-10-27). Goal: run LeadFlow on a real domain so 3–5 real businesses can use it, and close the
+Status: **Plan** (2026-10-27). Goal: run SimpleCatch on a real domain so 3–5 real businesses can use it, and close the
 Stage 0 gate from doc 08: _deploy a version and restore the DB in a test environment._
 
 One environment for Beta (called **beta**), on the real domain. A separate staging can be added later by
 repeating the same setup with other names.
 
-`<domain>` below = the domain you buy, e.g. `leadflow.co.il`.
+`<domain>` below = the domain you buy, e.g. `simplecatch.co.il`.
 
 ---
 
@@ -118,7 +118,7 @@ Set with `fly secrets set …` (API) and Cloudflare Pages env vars (web). Never 
 | `PUBLIC_SITE_HOST`                                                                                              | Fly            | `<domain>`                                              |
 | `COOKIE_SECURE`                                                                                                 | Fly            | `true`                                                  |
 | `FORM_TOKEN_SECRET`                                                                                             | Fly            | 48 random bytes (`openssl rand -base64 48`)             |
-| `EMAIL_TRANSPORT`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`              | Fly            | Resend SMTP; from `LeadFlow <no-reply@<domain>>`        |
+| `EMAIL_TRANSPORT`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`              | Fly            | Resend SMTP; from `SimpleCatch <no-reply@<domain>>`     |
 | `STORAGE_DRIVER`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `MEDIA_PUBLIC_BASE` | Fly            | R2 token scoped to one bucket; `https://media.<domain>` |
 | `SENTRY_DSN` (optional)                                                                                         | Fly            | from Sentry                                             |
 | `VITE_API_BASE`                                                                                                 | Pages          | `https://api.<domain>`                                  |
@@ -149,7 +149,7 @@ Set with `fly secrets set …` (API) and Cloudflare Pages env vars (web). Never 
 3. **WhatsApp Business Platform:** create an app at developers.facebook.com → add the WhatsApp product → you get a test
    number for development immediately.
 4. Decide the **onboarding model** (O-005): each customer connects their own number through Meta's _Embedded Signup_
-   inside LeadFlow (requires becoming a Tech Provider) vs. a BSP. Recommended: Embedded Signup as Tech Provider.
+   inside SimpleCatch (requires becoming a Tech Provider) vs. a BSP. Recommended: Embedded Signup as Tech Provider.
 5. Needed by Meta: privacy-policy URL, app icon, business website (`https://app.<domain>` or a landing page).
 
 The proof of concept from doc 04 — "WhatsApp with a real number" — happens once steps 1–3 are done.

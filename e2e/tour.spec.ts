@@ -8,7 +8,10 @@ test.use({
   storageState: {
     cookies: [],
     origins: [
-      { origin: 'http://localhost:5173', localStorage: [{ name: 'leadflow.locale', value: 'he' }] },
+      {
+        origin: 'http://localhost:5173',
+        localStorage: [{ name: 'simplecatch.locale', value: 'he' }],
+      },
     ],
   },
 });
@@ -42,7 +45,7 @@ test('the tour walks through the menu once and replays from the sidebar', async 
 }) => {
   await ownerWithBusiness(page);
   const tour = page.getByRole('dialog');
-  await expect(tour.getByRole('heading', { name: 'ברוכים הבאים ל-LeadFlow' })).toBeVisible();
+  await expect(tour.getByRole('heading', { name: 'ברוכים הבאים ל-SimpleCatch' })).toBeVisible();
   await expect(tour.getByText('1 מתוך')).toBeVisible();
 
   if (isMobile) {
@@ -79,7 +82,7 @@ test('the tour walks through the menu once and replays from the sidebar', async 
   await page.getByRole('button', { name: 'עזרה' }).click();
   await page.getByRole('menuitem', { name: 'סיור במערכת' }).click();
   await expect(
-    page.getByRole('dialog').getByRole('heading', { name: 'ברוכים הבאים ל-LeadFlow' }),
+    page.getByRole('dialog').getByRole('heading', { name: 'ברוכים הבאים ל-SimpleCatch' }),
   ).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden();

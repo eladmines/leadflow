@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths, whatsappMessages } from '@leadflow/shared';
+import { apiPaths, whatsappMessages } from '@simplecatch/shared';
 import { createTestApp, resetDb, testConfig } from '../../../test/helpers';
 import { addMember, newUser, ownerWithBusiness, req } from '../../../test/business-helpers';
 import { loadConfig } from '../../config/env';

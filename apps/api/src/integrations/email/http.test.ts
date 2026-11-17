@@ -15,13 +15,13 @@ describe('email without SMTP (D-120)', () => {
     }) as unknown as typeof fetch;
     await new BrevoEmailSender({
       apiKey: 'key-123456789',
-      from: 'LeadFlow <me@gmail.com>',
+      from: 'SimpleCatch <me@gmail.com>',
       fetch: fake,
     }).send(message);
     expect(calls[0]!.url).toBe('https://api.brevo.com/v3/smtp/email');
     expect((calls[0]!.init.headers as Record<string, string>)['api-key']).toBe('key-123456789');
     expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
-      sender: { name: 'LeadFlow', email: 'me@gmail.com' },
+      sender: { name: 'SimpleCatch', email: 'me@gmail.com' },
       to: [{ email: 'dana@example.com' }],
       subject: 'שלום',
       htmlContent: '<p>קוד</p>',
@@ -42,8 +42,8 @@ describe('email without SMTP (D-120)', () => {
   });
 
   it('parses the sender with or without a name', () => {
-    expect(parseSender('LeadFlow <me@gmail.com>')).toEqual({
-      name: 'LeadFlow',
+    expect(parseSender('SimpleCatch <me@gmail.com>')).toEqual({
+      name: 'SimpleCatch',
       email: 'me@gmail.com',
     });
     expect(parseSender('me@gmail.com')).toEqual({ email: 'me@gmail.com' });

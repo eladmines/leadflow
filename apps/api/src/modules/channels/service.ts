@@ -8,7 +8,7 @@ import {
   type ConnectFacebookRequest,
   type ConnectWhatsAppRequest,
   type FacebookPagesResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { AppConfig } from '../../config/env';
 import type { MetaApi, MetaPage } from '../../integrations/meta';
 import { AppError } from '../../lib/errors';
