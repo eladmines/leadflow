@@ -4,7 +4,7 @@ import {
   quoteStatusLabels,
   QUOTE_STATUSES,
   type QuoteStatus,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { FileText } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Alert, buttonClasses, EmptyState, Spinner } from '../../components/ui';

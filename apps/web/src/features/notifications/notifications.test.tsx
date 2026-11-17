@@ -1,4 +1,4 @@
-import { apiPaths, businessWebPaths, type Notification } from '@leadflow/shared';
+import { apiPaths, businessWebPaths, type Notification } from '@simplecatch/shared';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { callsTo, json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';

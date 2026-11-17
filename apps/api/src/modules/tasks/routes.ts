@@ -6,7 +6,7 @@ import {
   taskListResponseSchema,
   taskResponseSchema,
   updateTaskRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { TaskService } from './service';
 

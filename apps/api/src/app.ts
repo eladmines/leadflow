@@ -11,7 +11,7 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
-import { apiPaths, CSRF_HEADER_NAME } from '@leadflow/shared';
+import { apiPaths, CSRF_HEADER_NAME } from '@simplecatch/shared';
 import type { AppConfig } from './config/env';
 import { loggerOptions, type LogStream } from './lib/logger';
 import { AppError } from './lib/errors';
@@ -147,7 +147,7 @@ export async function buildApp({
     origin: config.WEB_ORIGINS,
     credentials: true,
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', CSRF_HEADER_NAME, 'X-LeadFlow-Locale'],
+    allowedHeaders: ['Content-Type', CSRF_HEADER_NAME, 'X-SimpleCatch-Locale'],
   });
   await app.register(cookie);
   // Uploads: one file per request; the route enforces the size limit too.

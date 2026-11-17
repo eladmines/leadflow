@@ -1,4 +1,4 @@
-import { ONBOARDING_STEPS } from '@leadflow/shared';
+import { ONBOARDING_STEPS } from '@simplecatch/shared';
 import { Check } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';

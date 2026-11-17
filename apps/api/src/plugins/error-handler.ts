@@ -1,6 +1,6 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
-import { defaultErrorMessages, type ApiErrorBody } from '@leadflow/shared';
+import { defaultErrorMessages, type ApiErrorBody } from '@simplecatch/shared';
 import { AppError } from '../lib/errors';
 
 /** Maps every error to the shared `{ error: { code, message, fields? } }` shape. */

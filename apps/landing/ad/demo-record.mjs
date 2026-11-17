@@ -27,7 +27,7 @@ const browser = await chromium.launch();
 
 // 1. sign in once, off camera
 const login = await browser.newContext({ viewport: { width: W, height: H } });
-await login.addInitScript(() => localStorage.setItem('leadflow.locale', 'he'));
+await login.addInitScript(() => localStorage.setItem('simplecatch.locale', 'he'));
 const lp = await login.newPage();
 await lp.goto(BASE + '/login');
 await lp.locator('input[type=email]').fill('owner@leadflow.test');
@@ -45,9 +45,9 @@ const ctx = await browser.newContext({
   recordVideo: { dir: raw, size: { width: W, height: H } },
 });
 await ctx.addInitScript(() => {
-  localStorage.setItem('leadflow.locale', 'he');
-  localStorage.setItem('leadflow.tour.off', '1'); // no onboarding tour on camera
-  localStorage.setItem('leadflow.helper.quiet', '1');
+  localStorage.setItem('simplecatch.locale', 'he');
+  localStorage.setItem('simplecatch.tour.off', '1'); // no onboarding tour on camera
+  localStorage.setItem('simplecatch.helper.quiet', '1');
   const boot = () => {
     if (document.getElementById('__cur')) return;
     const st = document.createElement('style');

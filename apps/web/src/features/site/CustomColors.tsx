@@ -3,7 +3,7 @@ import {
   darkenForContrast,
   MIN_BRAND_CONTRAST,
   type CustomColors as Colors,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui';
 import { tr } from '../../i18n';

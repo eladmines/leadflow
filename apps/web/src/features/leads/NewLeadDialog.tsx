@@ -7,7 +7,7 @@ import {
   normalizePhone,
   splitPhone,
   type CreateLeadRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';

@@ -8,7 +8,7 @@ import {
   type SetStatusRequest,
   type WhatsAppInboxResponse,
   type WhatsAppThreadResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 
@@ -73,7 +73,6 @@ export function usePersonalNumbers(businessId: string, enabled = true) {
     select: (d) => d.numbers,
   });
 }
-
 
 /** Undoes a personal marking. */
 export function useForgetPersonal(businessId: string) {

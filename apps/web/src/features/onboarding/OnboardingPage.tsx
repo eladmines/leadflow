@@ -1,4 +1,4 @@
-import { businessWebPaths, type Business } from '@leadflow/shared';
+import { businessWebPaths, type Business } from '@simplecatch/shared';
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { SignedInHeader } from '../../components/SignedInHeader';

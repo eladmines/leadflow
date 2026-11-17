@@ -12,7 +12,7 @@ import {
   type NotificationPrefs,
   type Role,
   type updateBusinessRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { z } from 'zod';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';

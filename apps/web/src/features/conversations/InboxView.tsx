@@ -9,7 +9,7 @@ import {
   type ConversationFilter,
   type ConversationSummary,
   type SendWhatsAppRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { ChevronLeft, ChevronRight, MessagesSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useScrollToLatest } from '../../lib/useScrollToLatest';

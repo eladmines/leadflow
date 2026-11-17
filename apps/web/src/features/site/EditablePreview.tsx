@@ -4,7 +4,7 @@ import {
   SITE_LIMITS,
   type Section,
   type SectionType,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { ArrowDown, ArrowUp, EyeOff, ImageIcon, Plus, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';

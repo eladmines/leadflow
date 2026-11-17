@@ -7,7 +7,15 @@
 document.documentElement.classList.add('js');
 
 const APP_URL = 'https://leadflow-55gt.onrender.com';
-const STORAGE_KEY = 'leadflow.landing.lang';
+const STORAGE_KEY = 'simplecatch.landing.lang';
+try {
+  // Renamed from leadflow.landing.lang (D-181): keep a returning visitor's language.
+  const old = localStorage.getItem('leadflow.landing.lang');
+  if (old && !localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, old);
+  localStorage.removeItem('leadflow.landing.lang');
+} catch {
+  /* storage blocked */
+}
 
 const en = {
   title: 'SimpleCatch — run your whole business in one place',

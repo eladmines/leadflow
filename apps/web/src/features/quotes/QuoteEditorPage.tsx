@@ -6,7 +6,7 @@ import {
   quoteTotals,
   type Quote,
   type UpsertQuoteRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { ArrowRight, Copy, ExternalLink, MessageCircle, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';

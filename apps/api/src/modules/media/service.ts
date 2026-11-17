@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Asset as AssetRow, PrismaClient } from '@prisma/client';
-import { mediaMessages, referencedAssetIds, type Asset, type MediaMap } from '@leadflow/shared';
+import { mediaMessages, referencedAssetIds, type Asset, type MediaMap } from '@simplecatch/shared';
 import type { AppConfig } from '../../config/env';
 import type { StorageProvider } from '../../integrations/storage';
 import type { Db } from '../../lib/db';

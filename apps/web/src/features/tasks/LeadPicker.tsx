@@ -1,4 +1,4 @@
-import { formatIsraeliPhone, type Lead } from '@leadflow/shared';
+import { formatIsraeliPhone, type Lead } from '@simplecatch/shared';
 import { Search, X } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { inputClasses } from '../../components/ui/Field';

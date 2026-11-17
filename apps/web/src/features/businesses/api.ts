@@ -5,7 +5,7 @@ import {
   type CreateBusinessRequest,
   type MemberListResponse,
   type UpdateBusinessRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 

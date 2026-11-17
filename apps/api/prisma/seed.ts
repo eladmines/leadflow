@@ -6,7 +6,7 @@
  * Password for all: LeadFlow-demo-1
  */
 import { PrismaClient } from '@prisma/client';
-import { defaultOpeningHours } from '@leadflow/shared';
+import { defaultOpeningHours } from '@simplecatch/shared';
 import { hashPassword } from '../src/lib/crypto';
 
 const prisma = new PrismaClient();

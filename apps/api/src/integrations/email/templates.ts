@@ -2,7 +2,7 @@ import {
   EMAIL_VERIFY_TOKEN_TTL_MS,
   PASSWORD_RESET_TOKEN_TTL_MS,
   type Language,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 
 export interface RenderedEmail {
   subject: string;

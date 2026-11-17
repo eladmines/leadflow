@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { defaultOpeningHours } from '@leadflow/shared';
+import { defaultOpeningHours } from '@simplecatch/shared';
 import { createTestApp, resetDb } from '../../../test/helpers';
 import {
   addMember,

@@ -1,4 +1,4 @@
-import { businessWebPaths, type Business } from '@leadflow/shared';
+import { businessWebPaths, type Business } from '@simplecatch/shared';
 import { Plus } from 'lucide-react';
 import { useId } from 'react';
 import { Link, useNavigate } from 'react-router-dom';

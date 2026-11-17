@@ -8,7 +8,10 @@ test.use({
   storageState: {
     cookies: [],
     origins: [
-      { origin: 'http://localhost:5173', localStorage: [{ name: 'leadflow.locale', value: 'he' }] },
+      {
+        origin: 'http://localhost:5173',
+        localStorage: [{ name: 'simplecatch.locale', value: 'he' }],
+      },
     ],
   },
 });

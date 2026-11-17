@@ -6,8 +6,8 @@ import { shortcutLabel } from '../shell/CommandPalette';
 import { HelpCharacter } from './HelpCharacter';
 
 /** Closed with X: not again in this visit (tab). "Don't show again": never in this browser. */
-const SAID_HELLO = 'leadflow.helper.hello';
-const QUIET = 'leadflow.helper.quiet';
+const SAID_HELLO = 'simplecatch.helper.hello';
+const QUIET = 'simplecatch.helper.quiet';
 
 function shouldSayHello(): boolean {
   try {

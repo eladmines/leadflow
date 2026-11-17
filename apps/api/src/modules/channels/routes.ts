@@ -8,7 +8,7 @@ import {
   connectWhatsAppRequestSchema,
   facebookPagesResponseSchema,
   facebookStartResponseSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { ChannelService } from './service';
 

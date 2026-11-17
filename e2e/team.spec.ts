@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 /** F09: owner invites → email link → new user registers and joins → sees only assigned leads. */
 const PASSWORD = 'Sup3r-secret-pass!';
 const MAILPIT = 'http://localhost:8025/api/v1';
-const API_HEADERS = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 const tag = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 async function register(page: Page, email: string, name: string) {

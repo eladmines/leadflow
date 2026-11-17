@@ -6,7 +6,7 @@ import {
   type ConversationResponse,
   type SendWhatsAppRequest,
   type SendWhatsAppResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import {
   useInfiniteQuery,
   useMutation,

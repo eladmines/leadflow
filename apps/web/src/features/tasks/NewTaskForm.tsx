@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { can, createTaskRequestSchema } from '@leadflow/shared';
+import { can, createTaskRequestSchema } from '@simplecatch/shared';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';

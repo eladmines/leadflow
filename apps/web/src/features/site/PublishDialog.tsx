@@ -1,5 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { setSubdomainRequestSchema, type SetSubdomainRequest, type Site } from '@leadflow/shared';
+import {
+  setSubdomainRequestSchema,
+  type SetSubdomainRequest,
+  type Site,
+} from '@simplecatch/shared';
 import { ExternalLink, PartyPopper } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';

@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** F08: manual lead → board (drag or stage menu) → lead page (stage, note, history) → search. */
 const PASSWORD = 'Sup3r-secret-pass!';
-const API_HEADERS = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 
 async function ownerWithBusiness(page: Page) {
   const tag = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -83,7 +83,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await page.getByRole('button', { name: 'עוד' }).click();
   await page.getByRole('link', { name: 'ייצוא לאקסל' }).click();
   const file = await download;
-  expect(file.suggestedFilename()).toMatch(/^leadflow-leads-\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(file.suggestedFilename()).toMatch(/^simplecatch-leads-\d{4}-\d{2}-\d{2}\.csv$/);
   const { readFile } = await import('node:fs/promises');
   const csv = await readFile((await file.path())!, 'utf8');
   expect(csv.charCodeAt(0)).toBe(0xfeff);

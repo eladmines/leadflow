@@ -4,7 +4,7 @@ import {
   UNKNOWN_SOURCE_LABEL,
   type Attribution,
   type AttributionSource,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { Megaphone } from 'lucide-react';
 import { Card } from '../../components/ui';
 import { cn } from '../../lib/cn';

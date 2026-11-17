@@ -1,4 +1,4 @@
-import { authWebPaths } from '@leadflow/shared';
+import { authWebPaths } from '@simplecatch/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';

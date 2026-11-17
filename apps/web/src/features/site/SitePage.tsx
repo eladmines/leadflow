@@ -1,4 +1,4 @@
-import { can } from '@leadflow/shared';
+import { can } from '@simplecatch/shared';
 import { Globe } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, Button, Spinner } from '../../components/ui';

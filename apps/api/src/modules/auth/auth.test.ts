@@ -4,7 +4,7 @@ import {
   SESSION_COOKIE_NAME,
   authMessages,
   defaultErrorMessages,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { createTestApp, resetDb, testConfig } from '../../../test/helpers';
 import {
   PASSWORD,

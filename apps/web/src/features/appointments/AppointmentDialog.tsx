@@ -5,7 +5,7 @@ import {
   formatIsraeliPhone,
   type Appointment,
   type AppointmentStatus,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert, Button, DialogShell, Field, Select, Textarea } from '../../components/ui';

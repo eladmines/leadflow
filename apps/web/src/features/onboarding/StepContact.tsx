@@ -4,7 +4,7 @@ import {
   onboardingContactSchema,
   type Business,
   type OnboardingContact,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, browserCountry, Button, Field, PhoneField } from '../../components/ui';

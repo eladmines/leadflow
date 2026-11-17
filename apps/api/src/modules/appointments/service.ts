@@ -9,7 +9,7 @@ import {
   type Service,
   type updateAppointmentRequestSchema,
   type upsertServiceRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { z } from 'zod';
 import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';

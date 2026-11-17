@@ -1,4 +1,4 @@
-import { businessWebPaths, isOverdue, type Task } from '@leadflow/shared';
+import { businessWebPaths, isOverdue, type Task } from '@simplecatch/shared';
 import { AlarmClock, Pencil, Trash2, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';

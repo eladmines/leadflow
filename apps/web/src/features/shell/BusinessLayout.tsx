@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { businessWebPaths } from '@leadflow/shared';
+import { businessWebPaths } from '@simplecatch/shared';
 import { Menu, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Outlet, useMatch, useParams } from 'react-router-dom';

@@ -5,7 +5,7 @@ import {
   assetResponseSchema,
   MAX_UPLOAD_BYTES,
   mediaMessages,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { AppError } from '../../lib/errors';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { MediaService } from './service';

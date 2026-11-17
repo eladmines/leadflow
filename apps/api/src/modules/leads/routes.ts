@@ -17,8 +17,8 @@ import {
   leadTagsResponseSchema,
   pipelineResponseSchema,
   updateLeadRequestSchema,
-} from '@leadflow/shared';
-import { formatIsraeliPhone, leadSourceLabels } from '@leadflow/shared';
+} from '@simplecatch/shared';
+import { formatIsraeliPhone, leadSourceLabels } from '@simplecatch/shared';
 import { toCsv } from '../../lib/csv';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { recordAudit } from '../audit/service';

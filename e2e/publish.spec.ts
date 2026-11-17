@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
  * the next publish (AC-02, AC-03). The public server runs on :4100 (http://<sub>.lvh.me:4100).
  */
 const PASSWORD = 'Sup3r-secret-pass!';
-const API_HEADERS = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 
 async function ownerWithActiveBusiness(page: Page) {
   const tag = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

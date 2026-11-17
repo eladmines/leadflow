@@ -3,7 +3,7 @@ import {
   WEEKDAYS,
   type Appointment,
   type OpeningHours,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '../../lib/cn';

@@ -5,7 +5,7 @@ import {
   templateInfo,
   templatePreview,
   type TemplateKey,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Alert, Button } from '../../components/ui';
 import { cn } from '../../lib/cn';

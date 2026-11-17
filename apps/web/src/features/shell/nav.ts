@@ -1,4 +1,4 @@
-import type { Permission } from '@leadflow/shared';
+import type { Permission } from '@simplecatch/shared';
 import {
   CalendarDays,
   Crown,

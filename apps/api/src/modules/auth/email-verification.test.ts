@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { apiPaths } from '@leadflow/shared';
+import { apiPaths } from '@simplecatch/shared';
 import { createTestApp, testConfig } from '../../../test/helpers';
 import { newUser, req } from '../../../test/business-helpers';
 

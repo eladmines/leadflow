@@ -6,9 +6,9 @@ import {
   type ConversationResponse,
   type ConversationSummary,
   type WhatsAppMessage,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { z } from 'zod';
-import type { conversationListQuerySchema } from '@leadflow/shared';
+import type { conversationListQuerySchema } from '@simplecatch/shared';
 import { AppError } from '../../lib/errors';
 import type { TenantContext } from '../../plugins/tenant';
 import { toDto, type WhatsAppService } from '../whatsapp/service';

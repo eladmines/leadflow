@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths, LEAD_FORM_PATH } from '@leadflow/shared';
+import { apiPaths, LEAD_FORM_PATH } from '@simplecatch/shared';
 import { createTestApp, resetDb, testConfig } from '../../test/helpers';
 import { ownerWithBusiness, req } from '../../test/business-helpers';
 import { createFormToken } from '../lib/form-token';

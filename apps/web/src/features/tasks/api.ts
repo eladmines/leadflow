@@ -5,7 +5,7 @@ import {
   type TaskListQuery,
   type TaskListResponse,
   type UpdateTaskRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { tr, intlLocale } from '../../i18n';

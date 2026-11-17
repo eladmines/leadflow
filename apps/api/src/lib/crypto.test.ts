@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUTH_TOKEN_PATTERN } from '@leadflow/shared';
+import { AUTH_TOKEN_PATTERN } from '@simplecatch/shared';
 import {
   DUMMY_PASSWORD_HASH,
   generateToken,

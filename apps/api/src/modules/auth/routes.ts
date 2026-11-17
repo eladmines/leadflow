@@ -9,7 +9,7 @@ import {
   registerRequestSchema,
   updateProfileRequestSchema,
   verifyEmailRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { authOf, requireAuth } from '../../plugins/session';
 import type { EmailSender } from '../../integrations/email';
 import { AuthService, verificationOn, requestMeta, toAuthUser } from './service';

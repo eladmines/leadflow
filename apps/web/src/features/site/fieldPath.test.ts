@@ -1,4 +1,4 @@
-import { newSection } from '@leadflow/shared';
+import { newSection } from '@simplecatch/shared';
 import { describe, expect, it } from 'vitest';
 import { fieldLimit, setSectionField } from './fieldPath';
 

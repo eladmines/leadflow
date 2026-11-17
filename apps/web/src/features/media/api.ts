@@ -1,4 +1,4 @@
-import { apiPaths, type Asset, type AssetListResponse, type MediaMap } from '@leadflow/shared';
+import { apiPaths, type Asset, type AssetListResponse, type MediaMap } from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { apiFetch } from '../../lib/api';

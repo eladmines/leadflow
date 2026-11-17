@@ -3,7 +3,7 @@ import {
   MAX_UPLOAD_BYTES,
   mediaMessages,
   type Asset,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { Check, ImagePlus, Trash2 } from 'lucide-react';
 import { useId, useState, type ChangeEvent } from 'react';
 import { Alert, DialogShell, Spinner } from '../../components/ui';

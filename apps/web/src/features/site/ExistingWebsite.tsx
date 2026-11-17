@@ -1,4 +1,4 @@
-import { websiteUrlSchema, type Business } from '@leadflow/shared';
+import { websiteUrlSchema, type Business } from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, Info } from 'lucide-react';
 import { useState } from 'react';

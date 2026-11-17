@@ -56,7 +56,7 @@ const envSchema = z
     SMTP_PASS: optionalSetting(z.string().min(1)),
     /** TLS from the first byte (port 465). Port 587 upgrades with STARTTLS on its own. */
     SMTP_SECURE: booleanString.default('false'),
-    EMAIL_FROM: z.string().min(1).default('SimpleCatch <no-reply@leadflow.local>'),
+    EMAIL_FROM: z.string().min(1).default('SimpleCatch <no-reply@simplecatch.local>'),
     /** F27: the domain business forwarding addresses live on (`<random>@<this>`); unset = email conversations are off. */
     EMAIL_INBOUND_DOMAIN: optionalSetting(
       z
@@ -77,7 +77,7 @@ const envSchema = z
     PUBLIC_PORT: z.coerce.number().int().positive().default(4100),
     /**
      * Host suffix of customer sites as visitors type it, including a port if any.
-     * Local: lvh.me (wildcard DNS → 127.0.0.1) on PUBLIC_PORT. Production: e.g. leadflow.co.il.
+     * Local: lvh.me (wildcard DNS → 127.0.0.1) on PUBLIC_PORT. Production: e.g. simplecatch.co.il.
      */
     PUBLIC_SITE_HOST: z
       .string()

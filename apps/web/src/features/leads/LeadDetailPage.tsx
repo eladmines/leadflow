@@ -11,7 +11,7 @@ import {
   appointmentStatusLabels,
   formatAgorot,
   quoteStatusLabels,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Mail, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
 import { useState } from 'react';

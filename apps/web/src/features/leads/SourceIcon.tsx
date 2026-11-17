@@ -1,4 +1,4 @@
-import type { AttributionSource, LEAD_SOURCES } from '@leadflow/shared';
+import type { AttributionSource, LEAD_SOURCES } from '@simplecatch/shared';
 import {
   CircleHelp,
   Facebook,

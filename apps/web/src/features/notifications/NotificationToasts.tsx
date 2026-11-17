@@ -3,7 +3,7 @@ import {
   notificationText,
   URGENT_NOTIFICATION_TYPES,
   type Notification,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Bell, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';

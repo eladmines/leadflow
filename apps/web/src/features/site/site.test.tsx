@@ -4,7 +4,7 @@ import {
   businessWebPaths,
   type Business,
   type Site,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -404,14 +404,14 @@ describe('site editor', () => {
     const { user } = renderApp(sitePath);
     await user.click(await screen.findByRole('button', { name: 'הסתרת המלצות' }));
     expect(await screen.findByText('השמירה נכשלה', {}, { timeout: 3000 })).toBeInTheDocument();
-    expect(localStorage.getItem(`leadflow:site-draft:${testBusiness.id}`)).toContain(
+    expect(localStorage.getItem(`simplecatch:site-draft:${testBusiness.id}`)).toContain(
       '"revision":0',
     );
 
     fail = false;
     await user.click(screen.getByRole('button', { name: 'נסו שוב' }));
     expect(await screen.findByText('כל השינויים נשמרו')).toBeInTheDocument();
-    expect(localStorage.getItem(`leadflow:site-draft:${testBusiness.id}`)).toBeNull();
+    expect(localStorage.getItem(`simplecatch:site-draft:${testBusiness.id}`)).toBeNull();
     expect(callsTo(fetchMock, 'PUT', sp.draft(testBusiness.id))).toHaveLength(2);
   });
 

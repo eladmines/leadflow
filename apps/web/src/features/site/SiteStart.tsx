@@ -1,4 +1,4 @@
-import type { Business } from '@leadflow/shared';
+import type { Business } from '@simplecatch/shared';
 import { ArrowRight, Globe, Sparkles, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/cn';

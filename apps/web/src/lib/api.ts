@@ -1,4 +1,4 @@
-import { apiErrorBodySchema, defaultErrorMessages, type ErrorCode } from '@leadflow/shared';
+import { apiErrorBodySchema, defaultErrorMessages, type ErrorCode } from '@simplecatch/shared';
 import { locale, tr } from '../i18n';
 
 export class ApiError extends Error {
@@ -18,9 +18,9 @@ export class ApiError extends Error {
  */
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  headers.set('X-Requested-With', 'LeadFlow');
+  headers.set('X-Requested-With', 'SimpleCatch');
   // Account emails (reset, verify) go out in the app's language (D-143).
-  headers.set('X-LeadFlow-Locale', locale());
+  headers.set('X-SimpleCatch-Locale', locale());
   // FormData (file uploads) sets its own multipart content type with the boundary.
   if (init.body !== undefined && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');

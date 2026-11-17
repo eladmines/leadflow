@@ -1,6 +1,6 @@
 import { Writable } from 'node:stream';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths } from '@leadflow/shared';
+import { apiPaths } from '@simplecatch/shared';
 import { createTestApp, resetDb } from '../../../test/helpers';
 import { newUser, ownerWithBusiness, req } from '../../../test/business-helpers';
 import { lastEmailToken, registerUser } from '../../../test/auth-helpers';

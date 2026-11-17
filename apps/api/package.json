@@ -1,5 +1,5 @@
 {
-  "name": "@leadflow/api",
+  "name": "@simplecatch/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -22,7 +22,7 @@
     "@fastify/cors": "^11.3.1",
     "@fastify/multipart": "^9.4.0",
     "@fastify/rate-limit": "^10.3.0",
-    "@leadflow/shared": "workspace:*",
+    "@simplecatch/shared": "workspace:*",
     "@node-rs/argon2": "^2.2.2",
     "@prisma/client": "^6.19.3",
     "fastify": "^5.12.7",

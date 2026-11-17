@@ -1,4 +1,4 @@
-import { can, type Lead } from '@leadflow/shared';
+import { can, type Lead } from '@simplecatch/shared';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Alert, Button, DialogShell, Field, Select, Textarea } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';

@@ -1,4 +1,4 @@
-import { businessWebPaths, can } from '@leadflow/shared';
+import { businessWebPaths, can } from '@simplecatch/shared';
 import { ChevronLeft } from 'lucide-react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';

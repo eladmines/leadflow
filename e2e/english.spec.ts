@@ -8,8 +8,8 @@ test.use({
       {
         origin: 'http://localhost:5173',
         localStorage: [
-          { name: 'leadflow.tour.off', value: '1' },
-          { name: 'leadflow.helper.quiet', value: '1' },
+          { name: 'simplecatch.tour.off', value: '1' },
+          { name: 'simplecatch.helper.quiet', value: '1' },
         ],
       },
     ],

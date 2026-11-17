@@ -4,7 +4,7 @@ import {
   botDefaultTextsFor,
   businessWebPaths,
   STATUS_PRESETS,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
@@ -196,7 +196,7 @@ describe('help character (D-105)', () => {
   const hello = /אני העוזר של SimpleCatch, ואני כאן כדי לעזור לך/;
 
   it('greets the person by name by itself, until closed with X (once per visit)', async () => {
-    localStorage.removeItem('leadflow.helper.quiet');
+    localStorage.removeItem('simplecatch.helper.quiet');
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('leads'));
     const bubble = (await screen.findByText(hello, undefined, { timeout: 3000 })).closest(
@@ -220,13 +220,13 @@ describe('help character (D-105)', () => {
   });
 
   it('"don\'t show again" keeps it quiet in later visits too', async () => {
-    localStorage.removeItem('leadflow.helper.quiet');
+    localStorage.removeItem('simplecatch.helper.quiet');
     mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('leads'));
     await user.click(
       await screen.findByRole('button', { name: 'לא להציג שוב' }, { timeout: 3000 }),
     );
-    expect(localStorage.getItem('leadflow.helper.quiet')).toBe('1');
+    expect(localStorage.getItem('simplecatch.helper.quiet')).toBe('1');
     expect(screen.queryByText(hello)).not.toBeInTheDocument();
   });
 });

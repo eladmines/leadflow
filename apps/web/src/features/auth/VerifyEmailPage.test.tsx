@@ -1,4 +1,4 @@
-import { apiPaths, authMessages } from '@leadflow/shared';
+import { apiPaths, authMessages } from '@simplecatch/shared';
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {

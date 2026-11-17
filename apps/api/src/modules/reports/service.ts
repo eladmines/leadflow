@@ -5,7 +5,7 @@ import {
   LEAD_SOURCES,
   type AttributionReportRow,
   type ReportSummary,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { TenantContext } from '../../plugins/tenant';
 import { ensureStages } from '../leads/service';
 

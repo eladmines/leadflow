@@ -1,8 +1,4 @@
-import {
-  replyStatusSchema,
-  MAX_STATUSES,
-  type WhatsAppBotResponse,
-} from '@leadflow/shared';
+import { replyStatusSchema, MAX_STATUSES, type WhatsAppBotResponse } from '@simplecatch/shared';
 import { Eye, Plus, Trash2 } from 'lucide-react';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { Alert, Button, EmojiPicker, Field, Textarea } from '../../components/ui';
@@ -26,7 +22,6 @@ export const toCode = (text: string, name: string) => {
   const t = text.replaceAll('[שם העסק]', '{business}').replaceAll('[Business name]', '{business}');
   return name.trim().length >= 2 ? t.replaceAll(name.trim(), '{business}') : t;
 };
-
 
 /** Until-when choices for a status, as a time from now (null = until I change it). */
 function untilOptions(now = new Date()) {

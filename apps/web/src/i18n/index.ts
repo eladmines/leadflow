@@ -11,7 +11,7 @@ import { en } from './en';
 
 export type Locale = 'en' | 'he';
 
-const STORAGE_KEY = 'leadflow.locale';
+const STORAGE_KEY = 'simplecatch.locale';
 
 function initialLocale(): Locale {
   try {

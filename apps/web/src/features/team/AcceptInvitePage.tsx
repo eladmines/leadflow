@@ -1,4 +1,4 @@
-import { authWebPaths, businessWebPaths, INVITE_WEB_PATH, roleLabels } from '@leadflow/shared';
+import { authWebPaths, businessWebPaths, INVITE_WEB_PATH, roleLabels } from '@simplecatch/shared';
 import { Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AuthLayout, Button, buttonClasses, FullPageSpinner } from '../../components/ui';

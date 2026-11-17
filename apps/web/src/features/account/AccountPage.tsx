@@ -8,7 +8,7 @@ import {
   updateProfileRequestSchema,
   type MeResponse,
   type UpdateProfileRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';

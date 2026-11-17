@@ -4,7 +4,7 @@ import {
   openingHoursSchema,
   WEEKDAYS,
   type OpeningHours,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { Db } from '../../lib/db';
 import { zonedTimeToUtc } from '../../lib/time';
 

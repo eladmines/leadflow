@@ -8,7 +8,7 @@ import {
   teamMessages,
   type Invitation,
   type InvitePreview,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { AppConfig } from '../../config/env';
 import { generateToken, sha256Hex } from '../../lib/crypto';
 import { AppError } from '../../lib/errors';

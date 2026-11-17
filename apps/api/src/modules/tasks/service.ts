@@ -7,7 +7,7 @@ import {
   type Task,
   type taskListQuerySchema,
   type updateTaskRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { z } from 'zod';
 import type { AppConfig } from '../../config/env';
 import { taskReminderTemplate, type EmailSender } from '../../integrations/email';

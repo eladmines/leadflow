@@ -1,4 +1,4 @@
-import { apiPaths, businessWebPaths, type Customer } from '@leadflow/shared';
+import { apiPaths, businessWebPaths, type Customer } from '@simplecatch/shared';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { shekel } from '../leads/api';

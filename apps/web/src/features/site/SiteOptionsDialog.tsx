@@ -1,4 +1,4 @@
-import { TEMPLATE_KEYS, templateInfo, type Site, type TemplateKey } from '@leadflow/shared';
+import { TEMPLATE_KEYS, templateInfo, type Site, type TemplateKey } from '@simplecatch/shared';
 import { useState } from 'react';
 import { Alert, Button, Checkbox, DialogShell } from '../../components/ui';
 import { cn } from '../../lib/cn';

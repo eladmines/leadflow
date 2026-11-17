@@ -1,4 +1,4 @@
-import { businessWebPaths, can } from '@leadflow/shared';
+import { businessWebPaths, can } from '@simplecatch/shared';
 import { Link } from 'react-router-dom';
 import { buttonClasses } from '../../components/ui';
 import { useMe } from '../auth/api';

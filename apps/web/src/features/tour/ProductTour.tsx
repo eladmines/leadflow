@@ -1,4 +1,4 @@
-import { can, type Business, type Permission } from '@leadflow/shared';
+import { can, type Business, type Permission } from '@simplecatch/shared';
 import { shortcutLabel } from '../shell/CommandPalette';
 import { navItems } from '../shell/nav';
 import { Tour, type TourStep } from './Tour';
@@ -94,9 +94,9 @@ export function tourSteps(role: Business['role']): TourStep[] {
 
 // --- "Seen" flag: a per-viewer convenience in local storage (D-093). ------------------------
 
-const seenKey = (userId: string) => `leadflow.tour.v1:${userId}`;
+const seenKey = (userId: string) => `simplecatch.tour.v1:${userId}`;
 /** Set by automated tests so the tour never covers the screen they drive. */
-export const TOUR_OFF_KEY = 'leadflow.tour.off';
+export const TOUR_OFF_KEY = 'simplecatch.tour.off';
 
 export function tourSeen(userId: string): boolean {
   try {

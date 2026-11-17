@@ -1,4 +1,4 @@
-import { can, type Task } from '@leadflow/shared';
+import { can, type Task } from '@simplecatch/shared';
 import { useState, type FormEvent } from 'react';
 import { Alert, Button, DialogShell, Field, Select, Textarea } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';

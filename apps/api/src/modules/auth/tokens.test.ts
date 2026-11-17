@@ -1,6 +1,6 @@
 import type { LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { authMessages } from '@leadflow/shared';
+import { authMessages } from '@simplecatch/shared';
 import { createTestApp, resetDb } from '../../../test/helpers';
 import {
   PASSWORD,

@@ -1,4 +1,4 @@
-import { businessWebPaths, can, type Business } from '@leadflow/shared';
+import { businessWebPaths, can, type Business } from '@simplecatch/shared';
 import { CalendarDays, ListTodo, MessageCircle, Users, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../../lib/cn';

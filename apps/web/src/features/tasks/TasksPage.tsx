@@ -1,4 +1,4 @@
-import { can, type Task } from '@leadflow/shared';
+import { can, type Task } from '@simplecatch/shared';
 import { CheckCheck, ListTodo } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';

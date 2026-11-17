@@ -8,7 +8,7 @@ import {
   type SiteLanguage,
   type SitePage,
   type SiteSeo,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { EyeOff, FileText, Plus, Settings2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button, Checkbox, DialogShell, Field, Textarea } from '../../components/ui';

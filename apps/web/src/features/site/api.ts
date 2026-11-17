@@ -9,7 +9,7 @@ import {
   type SiteBusinessInfo,
   type SiteResponse,
   type SiteVersionListResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 

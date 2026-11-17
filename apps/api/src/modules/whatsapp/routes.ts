@@ -19,7 +19,7 @@ import {
   EMAIL_SIGNATURE_HEADER,
   emailInboundPath,
   emailInboundSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { MessengerSender } from '../../integrations/messenger';
 import { verifyWebhookSignature, type WhatsAppSender } from '../../integrations/whatsapp';

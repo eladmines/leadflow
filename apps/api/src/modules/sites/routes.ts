@@ -8,7 +8,7 @@ import {
   setSubdomainRequestSchema,
   siteResponseSchema,
   siteVersionListResponseSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { MediaService } from '../media/service';
 import { SiteService } from './service';

@@ -1,4 +1,4 @@
-import { sectionTypeLabels, type Section, type SectionStyle } from '@leadflow/shared';
+import { sectionTypeLabels, type Section, type SectionStyle } from '@simplecatch/shared';
 import { ArrowDown, ArrowUp, Copy, EyeOff, Trash2, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Button } from '../../components/ui';

@@ -1,6 +1,6 @@
 import type { LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { CSRF_HEADER_NAME, defaultErrorMessages } from '@leadflow/shared';
+import { CSRF_HEADER_NAME, defaultErrorMessages } from '@simplecatch/shared';
 import {
   TEST_WEB_ORIGIN,
   createTestApp,

@@ -5,7 +5,7 @@ import {
   type ConnectFacebookRequest,
   type ConnectWhatsAppRequest,
   type FacebookPagesResponse,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 

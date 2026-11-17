@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { apiPaths, LEAD_FORM_PATH, newPage } from '@leadflow/shared';
+import { apiPaths, LEAD_FORM_PATH, newPage } from '@simplecatch/shared';
 import { createFormToken } from '../../lib/form-token';
 import { createTestApp, resetDb } from '../../../test/helpers';
 import { addMember, newUser, ownerWithBusiness, req } from '../../../test/business-helpers';

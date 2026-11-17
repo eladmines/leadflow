@@ -4,7 +4,7 @@ import {
   EMAIL_SIGNATURE_HEADER,
   emailInboundPath,
   type EmailInbound,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { createTestApp, resetDb, testConfig } from '../../../test/helpers';
 import { addMember, newUser, req } from '../../../test/business-helpers';
 import { MemoryMessengerSender } from '../../integrations/messenger';

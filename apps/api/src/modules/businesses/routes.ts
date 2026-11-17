@@ -9,7 +9,7 @@ import {
   notificationPrefsResponseSchema,
   notificationPrefsSchema,
   updateBusinessRequestSchema,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { authOf, requireAuth } from '../../plugins/session';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { BusinessService } from './service';

@@ -15,7 +15,7 @@ import {
   type BotTextKey,
   type BotTexts,
   type Language,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import type { z } from 'zod';
 import type { StorageProvider } from '../../integrations/storage';
 import type { WhatsAppChoice, WhatsAppSender } from '../../integrations/whatsapp';

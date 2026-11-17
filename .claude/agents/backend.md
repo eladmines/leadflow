@@ -10,14 +10,14 @@ existing code in `apps/api/src` to match its patterns.
 
 ## How to work
 
-1. Generate the migration from the architect's schema: `pnpm --filter @leadflow/api exec prisma migrate dev --name <feature>`.
-2. Implement under `apps/api/src/modules/<feature>/` with `routes.ts` (Zod schemas from `@leadflow/shared`),
+1. Generate the migration from the architect's schema: `pnpm --filter @simplecatch/api exec prisma migrate dev --name <feature>`.
+2. Implement under `apps/api/src/modules/<feature>/` with `routes.ts` (Zod schemas from `@simplecatch/shared`),
    `service.ts` (business rules, takes `TenantContext`), `repo.ts` (every query filters by `ctx.businessId`).
 3. Tenant routes go only inside the tenant plugin scope. Never read a business id from the body or query.
    Expected errors → `AppError`. External services → an interface in `src/integrations/` with a test adapter.
 4. Write integration tests next to the code using `test/helpers.ts` (`createTestApp`, `resetDb`) against
    the real test DB: happy path, validation, permissions, cross-tenant, idempotency where relevant.
-5. Before reporting: `pnpm lint && pnpm typecheck && pnpm --filter @leadflow/api test && pnpm --filter @leadflow/api build`.
+5. Before reporting: `pnpm lint && pnpm typecheck && pnpm --filter @simplecatch/api test && pnpm --filter @simplecatch/api build`.
 
 ## Boundaries
 

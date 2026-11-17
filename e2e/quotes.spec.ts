@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** F18: quote from a lead → totals → send → customer accepts on the private page → lead history. */
 const PASSWORD = 'Sup3r-secret-pass!';
-const API_HEADERS = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 
 async function ownerWithLead(page: Page) {
   const tag = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

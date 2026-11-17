@@ -12,14 +12,14 @@ if it's referenced, and the existing `apps/web/src` code to match its patterns.
 
 1. Screens and hooks go in `apps/web/src/features/<feature>/`. Reuse `src/components/ui/*`; add new
    shared primitives there only when they're reusable.
-2. All API calls go through `apiFetch` with types and Zod schemas from `@leadflow/shared`. Forms use
+2. All API calls go through `apiFetch` with types and Zod schemas from `@simplecatch/shared`. Forms use
    the shared schemas so client and server validation match; map `ApiError.fields` to inline errors.
 3. If the backend isn't merged yet, build against the contract and test with mocked `fetch`.
 4. UX rules: Hebrew copy (realistic, no lorem ipsum); logical Tailwind utilities only (`ms-/me-/ps-/pe-/start/end`);
    `dir="ltr"` for emails, phones and URLs; every screen has loading, empty, error and no-permission states;
    labels, focus states and keyboard paths; destructive actions confirm; works at 375px.
 5. Component tests with Testing Library for forms and key states.
-6. Before reporting: `pnpm lint && pnpm typecheck && pnpm --filter @leadflow/web test && pnpm --filter @leadflow/web build`.
+6. Before reporting: `pnpm lint && pnpm typecheck && pnpm --filter @simplecatch/web test && pnpm --filter @simplecatch/web build`.
 
 ## Boundaries
 

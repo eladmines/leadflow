@@ -6,7 +6,7 @@ import {
   roleLabels,
   type InviteRequest,
   type Member,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { Mail, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';

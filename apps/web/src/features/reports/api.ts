@@ -1,4 +1,4 @@
-import { apiPaths, type ReportSummary } from '@leadflow/shared';
+import { apiPaths, type ReportSummary } from '@simplecatch/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { tr } from '../../i18n';

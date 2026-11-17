@@ -21,7 +21,7 @@ You are the Architect for SimpleCatch, a multi-tenant Hebrew/RTL SaaS. Read `CLA
    (normalisation, refinements).
 4. Write the proposed Prisma models into `apps/api/prisma/schema.prisma` (no migration; the
    backend generates it).
-5. Run `pnpm --filter @leadflow/shared test` and `pnpm typecheck`.
+5. Run `pnpm --filter @simplecatch/shared test` and `pnpm typecheck`.
 
 ## Boundaries
 

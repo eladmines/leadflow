@@ -1,4 +1,9 @@
-import { normalizePhone, PHONE_COUNTRIES, splitPhone, type PhoneCountry } from '@leadflow/shared';
+import {
+  normalizePhone,
+  PHONE_COUNTRIES,
+  splitPhone,
+  type PhoneCountry,
+} from '@simplecatch/shared';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';

@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
  */
 const PASSWORD = 'Sup3r-secret-pass!';
 const MAILPIT = 'http://localhost:8025/api/v1';
-const API_HEADERS = { 'X-Requested-With': 'LeadFlow', Origin: 'http://localhost:5173' };
+const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
 
 async function ownerWithLiveSite(page: Page) {
   const tag = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

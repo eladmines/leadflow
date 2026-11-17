@@ -11,7 +11,7 @@ import {
   showcaseMessages,
   type ReplyMode,
   type ReplyStatus,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { z } from 'zod';
 import { AppError } from '../../lib/errors';
 

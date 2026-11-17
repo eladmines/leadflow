@@ -1,4 +1,4 @@
-import { authMessages } from '@leadflow/shared';
+import { authMessages } from '@simplecatch/shared';
 import type { ReactNode } from 'react';
 import { AuthLayout } from '../../components/ui';
 import { tr } from '../../i18n';

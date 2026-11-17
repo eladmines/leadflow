@@ -166,7 +166,7 @@ describe('QA F01: auth adversarial', () => {
       method: 'POST',
       url: paths.logout,
       headers: {
-        'x-requested-with': 'LeadFlow',
+        'x-requested-with': 'SimpleCatch',
         'content-type': 'application/json',
         ...sessionCookie(token),
       },

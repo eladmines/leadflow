@@ -6,6 +6,6 @@ export default defineConfig({
   target: 'node22',
   platform: 'node',
   // Bundle the workspace contract package; keep real npm deps external.
-  noExternal: ['@leadflow/shared'],
+  noExternal: ['@simplecatch/shared'],
   clean: true,
 });

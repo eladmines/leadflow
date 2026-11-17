@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { authWebPaths, loginRequestSchema, type LoginRequest } from '@leadflow/shared';
+import { authWebPaths, loginRequestSchema, type LoginRequest } from '@simplecatch/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';

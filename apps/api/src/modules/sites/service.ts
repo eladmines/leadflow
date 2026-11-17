@@ -22,7 +22,7 @@ import {
   type SiteBusinessInfo,
   type SiteVersion as SiteVersionDto,
   type TemplateKey,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { z } from 'zod';
 import type { AppConfig } from '../../config/env';
 import { AppError } from '../../lib/errors';

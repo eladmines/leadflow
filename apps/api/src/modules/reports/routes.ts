@@ -1,6 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { reportQuerySchema, reportSummarySchema } from '@leadflow/shared';
+import { reportQuerySchema, reportSummarySchema } from '@simplecatch/shared';
 import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { ReportService } from './service';
 

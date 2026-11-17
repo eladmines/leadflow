@@ -17,7 +17,7 @@ docker compose up -d            # Postgres (localhost:5432) + Mailpit (UI localh
 cp apps/api/.env.example apps/api/.env   # first time only
 pnpm install
 pnpm db:migrate                 # prisma migrate dev (apps/api)
-pnpm --filter @leadflow/api exec prisma generate   # after pulling/merging schema changes (stale client = type errors)
+pnpm --filter @simplecatch/api exec prisma generate   # after pulling/merging schema changes (stale client = type errors)
 pnpm dev                        # API :4000 + web :5173 (web proxies /api) + public sites :4100 (http://<sub>.lvh.me:4100)
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` first; e2e starts its own servers)
@@ -58,7 +58,7 @@ pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` 
 - Build the app with `buildApp()`; test through `app.inject()` against the real test DB
   (`test/helpers.ts`: `createTestApp`, `resetDb`).
 - Web: `src/features/<feature>/` for screens and hooks, `src/components/ui/` for the shared kit, `apiFetch` for all calls.
-- Migrations: `pnpm --filter @leadflow/api exec prisma migrate dev --name <change>`; never edit an applied migration.
+- Migrations: `pnpm --filter @simplecatch/api exec prisma migrate dev --name <change>`; never edit an applied migration.
 
 ## File ownership (multi-agent work)
 

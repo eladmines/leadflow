@@ -1,4 +1,4 @@
-import { businessWebPaths } from '@leadflow/shared';
+import { businessWebPaths } from '@simplecatch/shared';
 import { Check, Copy, Globe, MessageCircle } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';

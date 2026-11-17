@@ -1,4 +1,4 @@
-import { defaultErrorMessages, type ErrorCode } from '@leadflow/shared';
+import { defaultErrorMessages, type ErrorCode } from '@simplecatch/shared';
 
 const statusByCode: Record<ErrorCode, number> = {
   VALIDATION_ERROR: 400,

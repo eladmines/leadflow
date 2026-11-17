@@ -1,4 +1,4 @@
-import { authWebPaths } from '@leadflow/shared';
+import { authWebPaths } from '@simplecatch/shared';
 import { Link } from 'react-router-dom';
 import { buttonClasses, EmptyState } from '../../components/ui';
 import { tr } from '../../i18n';

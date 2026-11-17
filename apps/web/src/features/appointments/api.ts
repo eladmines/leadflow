@@ -8,7 +8,7 @@ import {
   type ServiceListResponse,
   type UpdateAppointmentRequest,
   type UpsertServiceRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { intlLocale } from '../../i18n';

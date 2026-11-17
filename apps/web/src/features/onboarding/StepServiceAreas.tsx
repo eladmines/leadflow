@@ -1,4 +1,4 @@
-import type { Business } from '@leadflow/shared';
+import type { Business } from '@simplecatch/shared';
 import { useState, type FormEvent } from 'react';
 import { Alert, Button } from '../../components/ui';
 import { errorMessage } from '../auth/serverErrors';
