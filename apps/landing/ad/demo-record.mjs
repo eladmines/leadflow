@@ -246,7 +246,7 @@ await wait(2000);
 await cap('');
 
 await card(
-  '<div><b>Simple<span style="display:inline;font-size:inherit;color:#93c5fd;margin:0">Catch</span></b><span>העסק שלך על אוטומט.</span></div>',
+  '<div><b>Simple<span style="display:inline;font-size:inherit;color:#93c5fd;margin:0">Catch</span></b><span>פשוט לא מפספסים.</span></div>',
 );
 await wait(3200);
 
