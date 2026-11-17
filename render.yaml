@@ -59,3 +59,19 @@ services:
         sync: false
       - key: EMAIL_INBOUND_SECRET
         sync: false
+  # The public landing page: plain files, no build, free (apps/landing/README.md). It links to the
+  # app above through APP_URL at the top of apps/landing/main.js.
+  - type: web
+    name: simplecatch-landing
+    runtime: static
+    staticPublishPath: apps/landing
+    buildCommand: echo "Nothing to build, static files"
+    branch: main
+    autoDeploy: true
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
