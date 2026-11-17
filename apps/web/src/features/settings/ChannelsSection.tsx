@@ -6,7 +6,7 @@ import {
   type Channel,
   type ChannelStatus,
   type ConnectWhatsAppRequest,
-} from '@leadflow/shared';
+} from '@simplecatch/shared';
 import {
   Check,
   ChevronLeft,
