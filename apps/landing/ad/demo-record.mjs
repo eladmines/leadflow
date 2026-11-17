@@ -166,7 +166,7 @@ const scrollBy = async (dy, ms = 1200) => {
 await page.goto(home);
 await settle();
 await card(
-  '<div><b>Lead<span style="display:inline;font-size:inherit;color:#93c5fd;margin:0">Flow</span></b><span>הדגמה של המערכת</span></div>',
+  '<div><b>Simple<span style="display:inline;font-size:inherit;color:#93c5fd;margin:0">Catch</span></b><span>הדגמה של המערכת</span></div>',
 );
 await wait(2300);
 await card('');
@@ -246,7 +246,7 @@ await wait(2000);
 await cap('');
 
 await card(
-  '<div><b>Lead<span style="display:inline;font-size:inherit;color:#93c5fd;margin:0">Flow</span></b><span>העסק שלך על אוטומט.</span></div>',
+  '<div><b>Simple<span style="display:inline;font-size:inherit;color:#93c5fd;margin:0">Catch</span></b><span>העסק שלך על אוטומט.</span></div>',
 );
 await wait(3200);
 
