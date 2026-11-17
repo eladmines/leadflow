@@ -66,7 +66,7 @@ export function InboxView({ businessId }: { businessId: string }) {
   return (
     // Fits the screen under the page's title and tabs (D-174): the list and the open chat scroll
     // inside it, the page doesn't, and the reply box stays in view — on phones too.
-    <div className="grid h-[calc(100dvh-11rem)] min-h-[24rem] overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card md:h-[calc(100dvh-14rem)] md:grid-cols-[22rem_1fr]">
+    <div className="grid h-[calc(100dvh-22rem)] min-h-[24rem] overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card md:h-[calc(100dvh-19.5rem)] md:grid-cols-[22rem_1fr]">
       <div
         className={cn(
           'flex min-h-0 flex-col border-surface-border md:border-e',
