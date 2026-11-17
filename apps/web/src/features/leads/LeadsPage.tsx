@@ -366,10 +366,13 @@ function Board({
     <>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {/* relative: the cards' sr-only labels are positioned inside the scroller (and clipped by
-          it), so off-screen columns can't widen the page. The scrollbar stays visible. */}
+          it), so off-screen columns can't widen the page. On wide screens the board is as tall as
+          the screen allows and scrolls inside itself, so its side scrollbar is always in view
+          instead of sitting at the bottom of a long page; on phones the page scrolls and the
+          board swipes. */}
       <div
         ref={scroller.ref}
-        className="scrollbar-visible relative -mx-4 overflow-x-auto px-4 pb-3"
+        className="scrollbar-visible relative -mx-4 overflow-x-auto px-4 pb-3 md:max-h-[calc(100dvh-22rem)] md:min-h-72 md:overflow-auto"
       >
         <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4">
           {stages.map((stage) => {
