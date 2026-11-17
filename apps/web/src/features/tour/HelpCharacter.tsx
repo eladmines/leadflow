@@ -2,8 +2,8 @@ import { useId } from 'react';
 import { cn } from '../../lib/cn';
 
 /**
- * The help character (D-105): the SimpleCatch mark come to life — the blue rounded body with the
- * coral dot as a bobble on top. It floats and blinks, waves when `waving`, and smiles with closed
+ * The help character (D-105, recoloured for the new brand in D-182): a blue rounded body with a
+ * small C-shaped bobble on top, the C of the logo. It floats and blinks, waves when `waving`, and smiles with closed
  * eyes when `happy` (menu open). Motion only runs for people who haven't asked for reduced motion.
  * Drawn facing the content (it looks towards the start side), so it flips in right-to-left.
  */
@@ -26,12 +26,12 @@ export function HelpCharacter({
     >
       <defs>
         <linearGradient id={body} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#3b82f6" />
+          <stop offset="0" stopColor="#4f8ff7" />
           <stop offset="1" stopColor="#1d4ed8" />
         </linearGradient>
       </defs>
 
-      {/* Bobble: the logo's coral dot on a little stalk */}
+      {/* Bobble: the logo's C on a little stalk */}
       <g
         className="motion-safe:animate-helper-bob"
         style={{ ...fillBox, transformOrigin: '50% 100%' }}
@@ -43,7 +43,13 @@ export function HelpCharacter({
           fill="none"
           strokeLinecap="round"
         />
-        <circle cx="32.5" cy="7.5" r="3.6" fill="#f77f57" />
+        <path
+          d="M35.1 5.4 A3.4 3.4 0 1 0 35.1 9.6"
+          stroke="#2563eb"
+          strokeWidth="2.4"
+          fill="none"
+          strokeLinecap="round"
+        />
       </g>
 
       {/* Waving arm, on the side facing the content */}
@@ -70,7 +76,7 @@ export function HelpCharacter({
       />
 
       <rect x="10" y="16" width="36" height="32" rx="12" fill={`url(#${body})`} />
-      {/* The logo's flow line as a little highlight */}
+      {/* A little highlight */}
       <path
         d="M15 22c2-2 4-3 7-3"
         stroke="#fff"
@@ -99,8 +105,8 @@ export function HelpCharacter({
           <circle cx="33" cy="29.6" r="0.8" fill="#fff" />
         </g>
       )}
-      <circle cx="16" cy="37.5" r="2.2" fill="#ffb4a0" opacity="0.8" />
-      <circle cx="40" cy="37.5" r="2.2" fill="#ffb4a0" opacity="0.8" />
+      <circle cx="16" cy="37.5" r="2.2" fill="#fff" opacity="0.28" />
+      <circle cx="40" cy="37.5" r="2.2" fill="#fff" opacity="0.28" />
       <path
         d={happy ? 'M23.5 38c2 3.6 7 3.6 9 0' : 'M24.5 38.5c1.8 2.4 5.2 2.4 7 0'}
         stroke="#fff"
