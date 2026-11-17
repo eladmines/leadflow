@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>simpleCatch — מדריך מותג</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <style>
+      :root { --navy: #1e1b4b; --blue: #2563eb; --sky: #7fb0ff; --slate: #64748b; --mist: #f8fafc; --line: #e2e8f0; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; background: var(--mist); color: #0f172a; line-height: 1.55; }
+      header.top { background: var(--navy); color: #fff; padding: 34px 16px; }
+      .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+      header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+      header.top h1 { margin: 0; font-size: 28px; }
+      header.top p { margin: 4px 0 0; color: #c7d2fe; }
+      section { padding: 40px 0 8px; }
+      h2 { font-size: 22px; margin: 0 0 4px; }
+      .lead { color: var(--slate); margin: 0 0 20px; max-width: 72ch; }
+      .panel { border-radius: 16px; border: 1px solid var(--line); background: #fff; }
+      .stage { padding: 64px 24px; display: grid; place-items: center; }
+      .grid { display: grid; gap: 16px; }
+      .g2 { grid-template-columns: repeat(2, 1fr); }
+      .g4 { grid-template-columns: repeat(4, 1fr); }
+      @media (max-width: 800px) { .g2, .g4 { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 520px) { .g2, .g4 { grid-template-columns: 1fr; } }
+      .cap { font-size: 13px; color: var(--slate); margin-top: 10px; }
+      .tile { padding: 28px 20px; display: grid; place-items: center; min-height: 140px; border-radius: 12px; }
+      .tile.dark { background: var(--navy); }
+      .tile.blue { background: linear-gradient(135deg, #4f8ff7, #1d4ed8); }
+      .tile.light { background: #fff; border: 1px solid var(--line); }
+      .tile.grey { background: #eef2f7; }
+      img { display: block; max-width: 100%; }
+
+      .clear { position: relative; padding: 31px; outline: 1.5px dashed #94a3b8; }
+      .clear::before { content: ''; position: absolute; inset: 31px; outline: 1px solid #cbd5e1; pointer-events: none; }
+      .clear .mk { position: absolute; width: 31px; height: 31px; background: rgba(37, 99, 235, .14); border: 1px solid rgba(37, 99, 235, .5); display: grid; place-items: center; font: 600 11px system-ui; color: var(--blue); }
+
+      .chip { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #fff; }
+      .chip .sw { height: 84px; }
+      .chip .meta { padding: 10px 12px; font-size: 13px; }
+      .chip b { display: block; font-size: 14px; }
+      .chip code { direction: ltr; unicode-bidi: isolate; color: var(--slate); }
+      .bad { position: relative; }
+      .bad::after { content: '✕'; position: absolute; top: 8px; inset-inline-end: 10px; color: #dc2626; font-weight: 700; }
+
+      .tab { display: inline-flex; align-items: center; gap: 8px; background: #e8edf5; border-radius: 10px 10px 0 0; padding: 8px 14px; font-size: 13px; direction: ltr; }
+      .tabbar { background: #d7deea; padding: 8px 10px 0; border-radius: 12px 12px 0 0; }
+      .appbar { display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid var(--line); padding: 12px 18px; }
+      .avatar { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; }
+      .phone { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 22px; background: linear-gradient(160deg, #dbe7ff, #f1e8ff); border-radius: 22px; max-width: 260px; }
+      .phone .app { aspect-ratio: 1; border-radius: 22%; background: rgba(255, 255, 255, .6); }
+      .phone img { width: 100%; height: auto; aspect-ratio: 1; border-radius: 22%; }
+      footer { padding: 40px 0 64px; color: var(--slate); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <div>
+          <h1>simpleCatch · מדריך מותג</h1>
+          <p>לוגו, אייקונים, צבעים ושימוש. גרסה 0.2, טיוטה לאישור.</p>
+        </div>
+        <img src="logo-dark.svg" height="46" alt="simpleCatch" />
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section>
+        <h2>1 · הלוגו הראשי</h2>
+        <p class="lead">השם simpleCatch: s קטנה ו־C גדולה וכחולה. ה־C היא הסימן של המותג: היא גדולה ב־10% משאר האותיות ובמשקל קל יותר (Bold), כדי שעובי הקו שלה יתאים לאותיות האחרות. השאר ב־Nunito ExtraBold, בכחול־כהה.</p>
+        <div class="panel stage"><img src="logo.svg" width="560" alt="simpleCatch" /></div>
+      </section>
+
+      <section>
+        <h2>2 · מרווח ומידות מינימום</h2>
+        <p class="lead">מרווח פנוי סביב הלוגו שווה לגובה האות e בשם. לא מציבים טקסט או תמונות בתוכו.</p>
+        <div class="grid g2">
+          <div class="panel stage" style="padding: 40px 24px">
+            <div class="clear">
+              <img src="logo.svg" width="380" alt="simpleCatch" />
+              <span class="mk" style="top: 0; left: 0">e</span>
+              <span class="mk" style="bottom: 0; right: 0">e</span>
+            </div>
+          </div>
+          <div class="panel stage" style="padding: 40px 24px">
+            <div style="display: flex; align-items: flex-end; gap: 28px">
+              <div><img src="logo.svg" width="120" alt="" /><div class="cap">מינימום: 120px רוחב</div></div>
+              <div><img src="icon-app.svg" width="32" alt="" /><div class="cap">אייקון: 32px</div></div>
+              <div><img src="favicon.svg" width="16" alt="" /><div class="cap">favicon: 16px</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>3 · גרסאות</h2>
+        <p class="lead">גרסת הצבע על רקע בהיר היא ברירת המחדל, על כהה משתמשים בגרסה עם כחול בהיר. חד־צבעי לדפוס, לחותמות ולרקעים עמוסים. האייקון הוא אריח כחול עם C לבנה, וה־C לבדה לאווטאר ולמקומות צרים.</p>
+        <div class="grid g4">
+          <div><div class="tile light"><img src="logo.svg" width="190" alt="" /></div><div class="cap">צבע, על בהיר</div></div>
+          <div><div class="tile dark"><img src="logo-dark.svg" width="190" alt="" /></div><div class="cap">צבע, על כהה</div></div>
+          <div><div class="tile light"><img src="logo-mono-navy.svg" width="190" alt="" /></div><div class="cap">חד־צבעי כהה</div></div>
+          <div><div class="tile blue"><img src="logo-mono-white.svg" width="190" alt="" /></div><div class="cap">חד־צבעי לבן, על כחול</div></div>
+          <div><div class="tile light"><img src="icon-app.svg" width="96" alt="" /></div><div class="cap">אייקון אפליקציה</div></div>
+          <div><div class="tile grey"><img src="favicon.svg" width="72" alt="" /></div><div class="cap">favicon</div></div>
+          <div><div class="tile light"><img src="icon-c.svg" width="96" alt="" /></div><div class="cap">ה־C לבדה</div></div>
+          <div><div class="tile dark"><img src="icon-c.svg" width="96" alt="" /></div><div class="cap">ה־C לבדה, על כהה</div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>4 · צבעים</h2>
+        <p class="lead">כחול־כהה (navy) לאותיות, וכחול עם גרדיאנט עדין ל־C ולאייקון. אין צבע שלישי בלוגו.</p>
+        <div class="grid g4">
+          <div class="chip"><div class="sw" style="background: #1e1b4b"></div><div class="meta"><b>Navy · אותיות</b><code>#1E1B4B</code></div></div>
+          <div class="chip"><div class="sw" style="background: linear-gradient(135deg, #4f8ff7, #1d4ed8)"></div><div class="meta"><b>גרדיאנט ה־C והאייקון</b><code>#4F8FF7 → #1D4ED8</code></div></div>
+          <div class="chip"><div class="sw" style="background: #2563eb"></div><div class="meta"><b>כחול · כפתורים וקישורים</b><code>#2563EB</code></div></div>
+          <div class="chip"><div class="sw" style="background: linear-gradient(135deg, #9bc2ff, #5b97f7)"></div><div class="meta"><b>גרדיאנט ה־C על כהה</b><code>#9BC2FF → #5B97F7</code></div></div>
+          <div class="chip"><div class="sw" style="background: #64748b"></div><div class="meta"><b>Slate · טקסט משני</b><code>#64748B</code></div></div>
+          <div class="chip"><div class="sw" style="background: #f8fafc"></div><div class="meta"><b>Mist · רקע</b><code>#F8FAFC</code></div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>5 · אותיות</h2>
+        <p class="lead">השם נכתב תמיד simpleCatch משמאל לימין, גם בעברית. בטקסט רציף כותבים SimpleCatch. בממשק ובטקסטים נשארים הגופנים הקיימים של המערכת.</p>
+        <div class="panel" style="padding: 28px 32px; display: flex; align-items: center; gap: 36px; flex-wrap: wrap">
+          <img src="logo.svg" width="300" alt="simpleCatch" />
+          <div style="color: var(--slate); font-size: 14px; line-height: 1.8">
+            <div><b>simple</b> + <b>atch</b>: Nunito ExtraBold (800)</div>
+            <div><b>C</b>: Nunito Bold (700), בגודל 110%</div>
+            <div>הגופן ברישיון SIL Open Font License</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>6 · מה לא עושים</h2>
+        <div class="grid g4">
+          <div><div class="tile light bad"><img src="logo.svg" width="170" style="transform: scaleX(1.35)" alt="" /></div><div class="cap">לא מותחים או מעוותים</div></div>
+          <div><div class="tile light bad"><img src="logo.svg" width="170" style="filter: hue-rotate(150deg) saturate(1.6)" alt="" /></div><div class="cap">לא משנים צבעים</div></div>
+          <div><div class="tile light bad"><img src="logo.svg" width="170" style="transform: rotate(-12deg)" alt="" /></div><div class="cap">לא מסובבים</div></div>
+          <div><div class="tile light bad"><img src="logo.svg" width="170" style="filter: drop-shadow(4px 5px 0 #94a3b8)" alt="" /></div><div class="cap">לא מוסיפים צל או קו מתאר</div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>7 · שימושים</h2>
+        <div class="grid g2">
+          <div class="panel" style="overflow: hidden">
+            <div class="tabbar"><span class="tab"><img src="favicon.svg" width="16" height="16" alt="" />simpleCatch · לוח בקרה</span></div>
+            <div class="appbar"><img src="logo.svg" height="28" alt="simpleCatch" /><span style="color: var(--slate); font-size: 14px">שלום, אדם</span></div>
+            <div style="padding: 30px 18px; color: var(--slate); font-size: 14px">כותרת הדפדפן וראש האפליקציה.</div>
+          </div>
+          <div class="panel" style="overflow: hidden">
+            <div style="background: var(--navy); padding: 22px 24px"><img src="logo-dark.svg" height="34" alt="simpleCatch" /></div>
+            <div style="padding: 20px 24px; font-size: 14px">
+              <b>הפנייה החדשה שלך הגיעה</b>
+              <p style="color: var(--slate); margin: 6px 0 0">דנה כתבה בוואטסאפ ועניתם לה תוך דקה.</p>
+            </div>
+          </div>
+          <div class="panel" style="padding: 24px; display: flex; gap: 22px; align-items: center">
+            <div class="avatar"><img src="icon-app.svg" width="72" height="72" alt="" /></div>
+            <div style="font-size: 14px"><b>אווטאר ברשתות</b><div class="cap" style="margin: 0">האייקון נחתך לעיגול וה־C נשארת במרכז.</div></div>
+          </div>
+          <div class="panel" style="padding: 24px; display: flex; justify-content: center">
+            <div class="phone">
+              <div class="app"></div><div class="app"></div><div class="app"></div><img src="icon-app.svg" alt="" />
+              <div class="app"></div><div class="app"></div><div class="app"></div><div class="app"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p><b>קבצים (SVG, האותיות מצוירות כצורות):</b> logo, logo-dark, logo-mono-navy, logo-mono-white, icon-app, icon-c, favicon.</p>
+        <p><b>לא נבדק:</b> סימן מסחרי (ישראל, מחלקות 9, 35, 42), זמינות simplecatch.co.il ו־simplecatch.ai, ורינדור ה־favicon בדפדפנים. כדאי שמעצב יעבור על המרווחים לפני דפוס.</p>
+      </footer>
+    </main>
+  </body>
+</html>
