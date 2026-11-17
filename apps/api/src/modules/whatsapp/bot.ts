@@ -23,7 +23,15 @@ import type { Db } from '../../lib/db';
 import { AppError } from '../../lib/errors';
 import { zonedTimeToUtc } from '../../lib/time';
 import { addDaysTo, freeTimes, todayIn } from '../appointments/availability';
-import { languageOf, modeOf, replyTextOf, showcaseVideoOf, toWhatsAppJpeg } from './auto-reply';
+import {
+  activeOf,
+  languageOf,
+  modeOf,
+  replyTextOf,
+  showcaseVideoOf,
+  statusesOf,
+  toWhatsAppJpeg,
+} from './auto-reply';
 import { AppointmentService, CALL_BACK_MINUTES } from '../appointments/service';
 import { MANAGERS, notifySafe } from '../notifications/service';
 
@@ -502,7 +510,15 @@ export class BookingBot {
         return this.handoff(chat, now, this.text(chat, 'handoff'));
       }
       // Booking words go straight to booking; anything else first asks when to talk (D-165).
-      if (!choice && BOOK_TEXT.test(text)) return this.start(chat, now);
+      // While a status is on ("closed now"), the customer first gets its message, with "Book now"
+      // among the choices, so the booking greeting never hides it.
+      const statusOn =
+        activeOf(
+          replies.whatsappActiveStatus,
+          statusesOf(replies.whatsappStatuses, languageOf(replies.language)),
+          now,
+        ) !== null;
+      if (!choice && !statusOn && BOOK_TEXT.test(text)) return this.start(chat, now);
       return this.answer(chat, replies, now, true);
     }
 

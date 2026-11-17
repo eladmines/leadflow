@@ -154,6 +154,22 @@ describe('WhatsApp booking bot (D-102)', () => {
     expect(whatsapp.sent).toHaveLength(0);
   });
 
+  it('while a status is on, a booking request gets the status message with "book now", and booking still works', async () => {
+    await setup();
+    await ctx.prisma.business.update({
+      where: { id: BUSINESS_ID },
+      data: { whatsappActiveStatus: { id: 'closed', until: null } },
+    });
+    await post(text('היי, אפשר לקבוע תור?'));
+    expect(last().text).toContain('סגורים כרגע');
+    expect(last().choices!.some((c) => c.id === 'book')).toBe(true);
+
+    // "Book now" starts the booking as usual.
+    await post(tap('book'));
+    expect(last().text).toContain('עיצוב שיער סיגלית');
+    expect(last().choices!.some((c) => c.id.startsWith('svc:'))).toBe(true);
+  });
+
   it('books a new customer from service to confirmation, and files them as a customer', async () => {
     const { owner, services } = await setup();
     await post(text('היי, אפשר לקבוע תור?'));
