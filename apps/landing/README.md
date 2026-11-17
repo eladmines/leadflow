@@ -21,8 +21,10 @@ Open `index.html` in a browser, or serve the folder: `npx serve apps/landing`.
 
 ## Put it online (free, separate from the app)
 
-On Render: **New → Static Site**, connect this repository, Publish directory `apps/landing`, no
-build command. Every push to `main` then updates the page. Point the company's domain at it
+It is already described in `render.yaml` as the service `simplecatch-landing` (a static site, no build,
+free): on Render open the Blueprint and press **Sync** (or **New → Blueprint**) so it creates the
+service. By hand it would be **New → Static Site**, Publish directory `apps/landing`, no build
+command. Every push to `main` then updates the page. Point the company's domain at it
 (Settings → Custom Domains). The app can stay on its own address, or move to `app.<domain>`
 (then change `APP_URL`).
 
