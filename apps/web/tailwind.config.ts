@@ -79,8 +79,12 @@ export default {
         },
         'helper-wave': {
           '0%, 100%': { transform: 'rotate(0deg)' },
-          '25%': { transform: 'rotate(-12deg)' },
-          '75%': { transform: 'rotate(8deg)' },
+          '25%': { transform: 'rotate(-28deg)' },
+          '75%': { transform: 'rotate(12deg)' },
+        },
+        'helper-bob': {
+          '0%, 100%': { transform: 'rotate(-6deg)' },
+          '50%': { transform: 'rotate(6deg)' },
         },
         'helper-pop': {
           '0%': { opacity: '0', transform: 'translateY(6px) scale(0.96)' },
@@ -91,6 +95,7 @@ export default {
         'helper-float': 'helper-float 3.2s ease-in-out infinite',
         'helper-blink': 'helper-blink 4.8s ease-in-out infinite',
         'helper-wave': 'helper-wave 0.9s ease-in-out 2',
+        'helper-bob': 'helper-bob 2.4s ease-in-out infinite',
         'helper-pop': 'helper-pop 0.25s ease-out both',
       },
     },
