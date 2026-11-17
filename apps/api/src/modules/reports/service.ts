@@ -22,6 +22,12 @@ const localDate = (tz: string) => {
   return (d: Date) => fmt.format(d);
 };
 
+/** 0-23: the hour of an instant in a time zone. */
+const localHour = (tz: string) => {
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' });
+  return (d: Date) => Number(fmt.format(d)) % 24;
+};
+
 /** The calendar day after a `YYYY-MM-DD`. */
 const nextDay = (ymd: string) => {
   const d = new Date(`${ymd}T00:00:00Z`);
@@ -143,6 +149,14 @@ export class ReportService {
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
 
+    // When inquiries arrive: per local hour of the day.
+    const hourOf = localHour(business.timezone);
+    const byHour = Array.from({ length: 24 }, () => 0);
+    for (const l of leads) {
+      const h = hourOf(l.createdAt);
+      byHour[h] = (byHour[h] ?? 0) + 1;
+    }
+
     // Response time: first human action per lead (lead.created is not a response).
     const firstActions = leads.length
       ? await this.prisma.activity.findMany({
@@ -174,6 +188,7 @@ export class ReportService {
         : null,
       respondedLeads: minutes.length,
       series: { unit, points: [...counts].map(([date, count]) => ({ date, count })) },
+      byHour,
       byStage,
       bySource,
       byAttribution: [...rows.values()].sort(byLeads),

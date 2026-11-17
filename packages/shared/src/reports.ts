@@ -44,6 +44,8 @@ export const reportSummarySchema = z.object({
     unit: z.enum(['day', 'week']),
     points: z.array(z.object({ date: z.string(), count: z.number().int() })),
   }),
+  /** Leads created in the range per local hour of the day (index 0-23, in the business's time zone). */
+  byHour: z.array(z.number().int()).length(24),
   byStage: z.array(
     z.object({
       id: z.string().uuid(),

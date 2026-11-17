@@ -25,6 +25,7 @@ const summary: ReportSummary = {
       { date: '2026-10-28', count: 5 },
     ],
   },
+  byHour: Array.from({ length: 24 }, (_, h) => (h === 20 ? 5 : h === 9 ? 2 : 0)),
   byStage: testStages.map((s, i) => ({ id: s.id, name: s.name, kind: s.kind, count: i, value: 0 })),
   bySource: [
     { source: 'website_form', count: 7 },
@@ -72,6 +73,19 @@ describe('reports page', () => {
     expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith('/reports/summary?days=90'))).toBe(
       true,
     );
+  });
+
+  it('shows when inquiries arrive: a column per hour, the peak and the share at night', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.reports.summary(id)}`]: () => json(200, summary),
+    });
+    renderApp(page);
+    expect(await screen.findByRole('list', { name: 'פניות לפי שעה' })).toBeInTheDocument();
+    expect(screen.getByRole('listitem', { name: '20:00: 5 פניות' })).toBeInTheDocument();
+    expect(screen.getByText('שעת השיא: 20:00 (5 פניות)')).toBeInTheDocument();
+    // 5 of 7 came between 18:00 and 09:00 (20:00 yes; 09:00 is working hours)
+    expect(screen.getByText('71% מהפניות הגיעו בין 18:00 ל־09:00')).toBeInTheDocument();
   });
 
   it('shows where customers come from, each row opening those leads (F26)', async () => {

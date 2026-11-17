@@ -35,6 +35,36 @@ describe('reports summary', () => {
     return { o, id, mk };
   }
 
+  it('counts inquiries per local hour of the business time zone', async () => {
+    const { o, id, mk } = await setup();
+    const a = await mk('בוקר', '052-0000011', 100, 0);
+    const b = await mk('ערב', '052-0000012', 100, 0);
+    const c = await mk('ערב2', '052-0000013', 100, 0);
+    const day = new Date(Date.now() - 2 * 86_400_000);
+    const at = (utcHour: number) =>
+      new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), utcHour, 30));
+    for (const [lead, when] of [
+      [a, at(6)],
+      [b, at(18)],
+      [c, at(18)],
+    ] as const) {
+      await ctx.prisma.lead.update({ where: { id: lead.id }, data: { createdAt: when } });
+    }
+    const tz = (await ctx.prisma.business.findUniqueOrThrow({ where: { id } })).timezone;
+    const fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz,
+      hour: '2-digit',
+      hourCycle: 'h23',
+    });
+    const hourOf = (d: Date) => Number(fmt.format(d)) % 24;
+    const res = await req(ctx.app, 'GET', `${rp.summary(id)}?days=30`, o.token);
+    const r = res.json();
+    expect(r.byHour).toHaveLength(24);
+    expect(r.byHour.reduce((x: number, y: number) => x + y, 0)).toBe(3);
+    expect(r.byHour[hourOf(at(6))]).toBeGreaterThanOrEqual(1);
+    expect(r.byHour[hourOf(at(18))]).toBe(2);
+  });
+
   it('counts leads, close rate, values, stages, sources and the series', async () => {
     const { o, id, mk } = await setup();
     await mk('נועה', '052-0000001', 1000, 0); // חדש (open)
