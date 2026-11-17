@@ -33,7 +33,7 @@ function VerifiedState() {
           {tr('תודה! כתובת האימייל שלך אומתה בהצלחה.')}
         </p>
         <Link to={authWebPaths.appHome} className={buttonClasses('primary', 'lg', 'w-full')}>
-          {tr('המשך ל-LeadFlow')}
+          {tr('המשך ל-SimpleCatch')}
         </Link>
       </div>
     </AuthLayout>
@@ -78,7 +78,7 @@ export function VerifyEmailPage() {
             </p>
             <ResendVerification email={user.email} variant="primary" />
             <Link to={authWebPaths.appHome} className={buttonClasses('ghost', 'md', 'w-full')}>
-              {tr('המשך ל-LeadFlow')}
+              {tr('המשך ל-SimpleCatch')}
             </Link>
           </div>
         ) : (

@@ -163,7 +163,7 @@ describe('auth: email verification and password reset', () => {
       expect(res.body).toBe('');
       const mails = ctx.email.to(EMAIL);
       expect(mails).toHaveLength(1);
-      expect(mails[0]!.subject).toBe('איפוס הסיסמה שלך ב-LeadFlow');
+      expect(mails[0]!.subject).toBe('איפוס הסיסמה שלך ב-SimpleCatch');
       expect(mails[0]!.text).toMatch(
         /http:\/\/localhost:5173\/reset-password\?token=[A-Za-z0-9_-]{43}/,
       );

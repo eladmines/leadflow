@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '../../lib/cn';
 
 /**
- * LeadFlow wordmark (D-115): a bullseye with a dart that has just landed — a lead caught — drawn
+ * SimpleCatch wordmark (D-115): a bullseye with a dart that has just landed — a lead caught — drawn
  * open, without a tile, in blue with a coral centre. The name is always LTR; in Hebrew the icon
  * sits on the right of it, where reading starts.
  */
@@ -58,7 +58,7 @@ export function Logo({
       </svg>
       {!compact && (
         <span className="text-[17px] font-semibold tracking-tight text-ink">
-          Lead<span className="text-brand-600">Flow</span>
+          Simple<span className="text-brand-600">Catch</span>
         </span>
       )}
     </span>
@@ -67,7 +67,7 @@ export function Logo({
   return (
     <Link
       to={to}
-      aria-label="LeadFlow"
+      aria-label="SimpleCatch"
       className="inline-flex rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
     >
       {mark}

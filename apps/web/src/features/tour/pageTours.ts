@@ -143,7 +143,7 @@ export const pageTours: Record<PageKey, TourStep[]> = {
     },
     {
       target: anywhere(`button[aria-haspopup="menu"][aria-label="${tr('עזרה')}"]`),
-      title: tr('העוזר של LeadFlow'),
+      title: tr('העוזר של SimpleCatch'),
       body: tr(
         'בכל עמוד אפשר ללחוץ עליי: סיור בעמוד שמסביר מה יש בו, סיור במערכת כולה, וחיפוש מהיר.',
       ),
@@ -159,7 +159,7 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       target: '#site-start',
       title: tr('בחרו איך להתחיל'),
       body: tr(
-        'בונים אתר חדש מתבנית מוכנה, או מחברים את האתר שכבר יש לכם ורואים אותו כאן — LeadFlow לא משנה בו דבר. כל פנייה מאתר שנבנה כאן נכנסת ישר למערכת.',
+        'בונים אתר חדש מתבנית מוכנה, או מחברים את האתר שכבר יש לכם ורואים אותו כאן — SimpleCatch לא משנה בו דבר. כל פנייה מאתר שנבנה כאן נכנסת ישר למערכת.',
       ),
     },
     {

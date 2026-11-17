@@ -200,7 +200,7 @@ export const enPart1: Record<string, string> = {
     ". Can't find it? Check your spam folder or send it again.",
   'האימייל אומת': 'Email verified',
   'תודה! כתובת האימייל שלך אומתה בהצלחה.': 'Thanks! Your email address has been verified.',
-  'המשך ל-LeadFlow': 'Continue to LeadFlow',
+  'המשך ל-SimpleCatch': 'Continue to SimpleCatch',
   'אפשר לשלוח קישור אימות חדש אל': 'You can send a new verification link to',
   'התחברו לחשבון כדי לשלוח לעצמכם קישור אימות חדש.':
     'Sign in to send yourself a new verification link.',
@@ -321,10 +321,10 @@ export const enPart1: Record<string, string> = {
   עזרה: 'Help',
   'היי {0}! 👋': 'Hi {0}! 👋',
   'היי! 👋': 'Hi! 👋',
-  'אני העוזר של LeadFlow, ואני כאן כדי לעזור לך. לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.':
-    "I'm the LeadFlow helper, and I'm here to help you. Click me for a page tour, the product tour or quick search.",
+  'אני העוזר של SimpleCatch, ואני כאן כדי לעזור לך. לחצו עליי לסיור בעמוד, לסיור במערכת או לחיפוש מהיר.':
+    "I'm the SimpleCatch helper, and I'm here to help you. Click me for a page tour, the product tour or quick search.",
   'לא להציג שוב': "Don't show again",
-  'היי, אני העוזר של LeadFlow': "Hi, I'm the LeadFlow helper",
+  'היי, אני העוזר של SimpleCatch': "Hi, I'm the SimpleCatch helper",
   'במה אפשר לעזור?': 'How can I help?',
   'ההגדרות נשמרו.': 'Settings saved.',
   'יש שינויים שעוד לא נשמרו': 'You have unsaved changes',

@@ -78,7 +78,7 @@ export const siteTenantRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => ({ site: await service.unpublish(tenantOf(req)) }),
   );
 
-  // D-095: switch template / delete the LeadFlow site.
+  // D-095: switch template / delete the SimpleCatch site.
   app.post(
     '/site/template',
     {

@@ -1,5 +1,5 @@
 /**
- * Records a walkthrough of the REAL LeadFlow app (Hebrew) as a video, with a visible cursor and captions.
+ * Records a walkthrough of the REAL SimpleCatch app (Hebrew) as a video, with a visible cursor and captions.
  *
  *   1. docker compose up -d; a database with the demo account (pnpm db:seed, then seed:demo for sample data)
  *   2. API on :4000 and web on :5173 (pnpm dev), pointed at that database

@@ -28,7 +28,10 @@ describe('VerifyEmailPage', () => {
     const { location } = renderApp(`/verify-email?token=${VALID_TOKEN}`);
 
     expect(await screen.findByRole('heading', { name: 'האימייל אומת' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'המשך ל-LeadFlow' })).toHaveAttribute('href', '/app');
+    expect(screen.getByRole('link', { name: 'המשך ל-SimpleCatch' })).toHaveAttribute(
+      'href',
+      '/app',
+    );
     expect(location()).toBe('/verify-email');
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.verifyEmail)).toEqual([{ token: VALID_TOKEN }]);
   });

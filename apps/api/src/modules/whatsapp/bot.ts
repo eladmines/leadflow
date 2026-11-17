@@ -1545,7 +1545,7 @@ export class BookingBot {
     });
   }
 
-  /** Sends and stores a video (shown in LeadFlow as "[וידאו]"). */
+  /** Sends and stores a video (shown in SimpleCatch as "[וידאו]"). */
   private async sayVideo(chat: Chat, mp4: Buffer) {
     let id: string;
     try {
@@ -1568,7 +1568,7 @@ export class BookingBot {
     });
   }
 
-  /** Sends and stores a photo (shown in LeadFlow as "[תמונה]"). */
+  /** Sends and stores a photo (shown in SimpleCatch as "[תמונה]"). */
   private async sayImage(chat: Chat, jpeg: Buffer) {
     const { id } = await chat.sender.sendImage(chat.phone, jpeg);
     await this.prisma.whatsAppMessage.create({

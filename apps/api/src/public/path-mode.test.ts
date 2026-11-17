@@ -21,7 +21,7 @@ describe('free hosting: sites under a path, images in Postgres, web app from the
   beforeAll(async () => {
     webDir = await mkdtemp(path.join(tmpdir(), 'lf-web-'));
     await mkdir(path.join(webDir, 'assets'));
-    await writeFile(path.join(webDir, 'index.html'), '<!doctype html><title>LeadFlow</title>');
+    await writeFile(path.join(webDir, 'index.html'), '<!doctype html><title>SimpleCatch</title>');
     await writeFile(path.join(webDir, 'assets', 'app-abc123.js'), 'console.log(1)');
     ctx = await createTestApp({
       config: testConfig({
@@ -120,7 +120,7 @@ describe('free hosting: sites under a path, images in Postgres, web app from the
     const shell = await ctx.app.inject({ method: 'GET', url: '/b/123/leads' });
     expect(shell.statusCode).toBe(200);
     expect(shell.headers['content-type']).toContain('text/html');
-    expect(shell.body).toContain('<title>LeadFlow</title>');
+    expect(shell.body).toContain('<title>SimpleCatch</title>');
     const asset = await ctx.app.inject({ method: 'GET', url: '/assets/app-abc123.js' });
     expect(asset.headers['content-type']).toContain('text/javascript');
     expect(asset.headers['cache-control']).toContain('immutable');
@@ -129,7 +129,7 @@ describe('free hosting: sites under a path, images in Postgres, web app from the
     expect(api.statusCode).toBe(404);
     expect(api.json().error.code).toBe('NOT_FOUND');
     const escape = await ctx.app.inject({ method: 'GET', url: '/..%2f..%2fpackage.json' });
-    expect(escape.body).toContain('<title>LeadFlow</title>');
+    expect(escape.body).toContain('<title>SimpleCatch</title>');
   });
 
   it('keeps images in Postgres when the disk is not kept', async () => {

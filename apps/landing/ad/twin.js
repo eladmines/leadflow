@@ -1,4 +1,4 @@
-/* LeadFlow "two endings" ad (9:16): the same WhatsApp chat twice, without and with LeadFlow.
+/* SimpleCatch "two endings" ad (9:16): the same WhatsApp chat twice, without and with SimpleCatch.
    A pure function of time, `window.render(t)`, plus a synthesized soundtrack. Engine and audio are shared with vertical.js. */
 const DUR = 43;
 const K = 1.1;
@@ -105,7 +105,7 @@ const typed = (id, t0, t1, bar) => {
   for (let t = t0; t < t1; t += 0.22) sfx(t, 'tick');
 };
 
-// ---------- part A: without LeadFlow (cold, quiet); the owner's phone ----------
+// ---------- part A: without SimpleCatch (cold, quiet); the owner's phone ----------
 rise('ph', 0.3, 1.1, 120);
 tw('ph', 's', 0.3, 11, 0.98, 1.03, 'lin');
 msgIn('a1', 0.9, 0.4, false);
@@ -138,7 +138,7 @@ msgIn('a2', 5.9, 0.4, false);
 typed('a2', 6.0, 7.0, 'barA');
 sfx(7.05, 'thud');
 
-// the owner installs LeadFlow
+// the owner installs SimpleCatch
 tw('inst', 'o', 8.1, 8.6, 0, 1, 'soft');
 tw('icn', 's', 8.1, 8.8, 0.5, 1, 'back');
 sfx(8.2, 'pop2');
@@ -180,7 +180,7 @@ fn(
   'lin',
 );
 
-// ---------- part B: with LeadFlow (warm, alive): the helper works, and says what it does ----------
+// ---------- part B: with SimpleCatch (warm, alive): the helper works, and says what it does ----------
 tw('ph', 's', SWAP, 24.7, 1.0, 1.04, 'lin');
 msgIn('b1', 11.4, 0.4, false);
 typed('b1', 11.6, 12.5, 'barB');

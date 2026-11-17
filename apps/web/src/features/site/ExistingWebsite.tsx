@@ -71,7 +71,7 @@ export function WebsiteForm({
 }
 
 /**
- * The business's existing website (D-094): address, live preview and a clear note that LeadFlow
+ * The business's existing website (D-094): address, live preview and a clear note that SimpleCatch
  * does not manage it. Owners can change or remove the address.
  */
 export function ExistingWebsite({ business, canEdit }: { business: Business; canEdit: boolean }) {
@@ -97,7 +97,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
           </a>
         </div>
         <span className="rounded-full bg-surface-sunken px-3 py-1 text-xs font-medium text-ink-muted">
-          {tr('לא מנוהל ב-LeadFlow')}
+          {tr('לא מנוהל ב-SimpleCatch')}
         </span>
       </div>
 
@@ -105,7 +105,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
         <Info aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" />
         <span>
           {tr(
-            'האתר הזה לא נבנה ב-LeadFlow ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת.',
+            'האתר הזה לא נבנה ב-SimpleCatch ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת.',
           )}
         </span>
       </p>
@@ -147,7 +147,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
       >
         <p className="text-sm text-ink-muted">
           {tr(
-            'הכתובת {0} תוסר מ-LeadFlow. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.',
+            'הכתובת {0} תוסר מ-SimpleCatch. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.',
             displayUrl(url),
           )}
         </p>

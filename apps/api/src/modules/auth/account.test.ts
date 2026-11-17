@@ -87,7 +87,7 @@ describe('account settings', () => {
     ).toBe(200);
 
     const notice = ctx.email.to('dana@example.com').at(-1)!;
-    expect(notice.subject).toBe('הסיסמה שלך ב-LeadFlow שונתה');
+    expect(notice.subject).toBe('הסיסמה שלך ב-SimpleCatch שונתה');
     expect(notice.text).toContain('/forgot-password');
     expect(logs.join('\n')).not.toContain('Brand-new-pass-1');
     expect(await ctx.prisma.auditLog.count({ where: { action: 'auth.password.changed' } })).toBe(1);

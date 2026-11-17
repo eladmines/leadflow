@@ -84,7 +84,7 @@ export function AcceptInvitePage() {
         ) : !user ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-ink-muted">
-              {tr('כדי להצטרף צריך חשבון LeadFlow עם הכתובת הזו.')}
+              {tr('כדי להצטרף צריך חשבון SimpleCatch עם הכתובת הזו.')}
             </p>
             <Link
               to={`${authWebPaths.register}?next=${next}&email=${encodeURIComponent(invite.email)}`}

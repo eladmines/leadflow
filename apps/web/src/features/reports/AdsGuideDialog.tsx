@@ -49,12 +49,12 @@ export function AdsGuideDialog({
     <DialogShell open={open} onOpenChange={onOpenChange} title={tr('חיבור המודעות שלכם')} wide>
       <p className="text-sm text-ink-muted">
         {tr(
-          'כך כל ליד יגיע עם המקור והקמפיין שהביאו אותו. אין צורך בסיסמה או בחיבור חשבון: מוסיפים סימון קטן לקישור של המודעה, ו-LeadFlow קורא אותו.',
+          'כך כל ליד יגיע עם המקור והקמפיין שהביאו אותו. אין צורך בסיסמה או בחיבור חשבון: מוסיפים סימון קטן לקישור של המודעה, ו-SimpleCatch קורא אותו.',
         )}
       </p>
       {!site.isPending && !siteUrl && (
         <Alert tone="warning">
-          {tr('המעקב עובד באתר שנבנה ב-LeadFlow ופורסם.')}{' '}
+          {tr('המעקב עובד באתר שנבנה ב-SimpleCatch ופורסם.')}{' '}
           <Link to={businessWebPaths.section(businessId, 'site')} className="font-medium underline">
             {tr('לאתר שלי')}
           </Link>

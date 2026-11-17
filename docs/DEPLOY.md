@@ -1,6 +1,6 @@
-# Deploying LeadFlow for free (test version)
+# Deploying SimpleCatch for free (test version)
 
-This puts LeadFlow on the internet at no cost, for you and a few test businesses (D-119).
+This puts SimpleCatch on the internet at no cost, for you and a few test businesses (D-119).
 Everything runs as one service on Render; the database is on Neon; emails go out through
 Brevo (optional).
 
@@ -34,7 +34,7 @@ verification, reset, new-lead or invitation emails go out.
    the email Brevo sends you.
 3. **SMTP & API → API keys → Generate a new API key**; copy it (shown once).
 4. In Render → the service → **Environment**: `BREVO_API_KEY` = the key, `EMAIL_FROM` =
-   `LeadFlow <the verified address>`, and `EMAIL_TRANSPORT` = `brevo` (also change it in
+   `SimpleCatch <the verified address>`, and `EMAIL_TRANSPORT` = `brevo` (also change it in
    `render.yaml`, or the Blueprint sets it back).
 
 ## 3. App — Render (10 minutes)
@@ -79,7 +79,7 @@ messages are recorded here but never delivered. Save, and let Render redeploy.
    `https://<service>.onrender.com/api/v1/integrations/whatsapp/webhook`, the verify token from
    part A, then subscribe to the **messages** field.
 
-**C. In LeadFlow.** Settings → Channels → **Connect WhatsApp**: paste the Phone number ID and the
+**C. In SimpleCatch.** Settings → Channels → **Connect WhatsApp**: paste the Phone number ID and the
 token. They are checked with Meta first, and the token is stored encrypted.
 
 **D. Try it.** Send a message to the number from another phone: it appears in Conversations and
@@ -87,7 +87,7 @@ becomes a lead. Until the Meta app is live and the business verified, Meta only 
 message you, and caps the number of conversations.
 
 Good to know: the webhook is signed with one app secret, so the number must belong to the Meta app
-named in part A. One-click connection for other businesses (Embedded Signup) needs LeadFlow to be a
+named in part A. One-click connection for other businesses (Embedded Signup) needs SimpleCatch to be a
 Meta Tech Provider and isn't built yet (D-159). Customers can be answered freely for 24 hours after
 their last message; later messages need an approved template, which isn't supported yet.
 
@@ -99,7 +99,7 @@ three things that are yours to choose, so nothing is switched on until you set t
 1. A domain for the addresses (for example `mail.example.com`) and an inbound-email service on it
    (MX records) that can post each message to
    `https://<service>.onrender.com/api/v1/integrations/email/inbound` as JSON, signed with
-   `X-LeadFlow-Signature: sha256=<HMAC-SHA256 of the body>`. The JSON shape is `emailInboundSchema` in
+   `X-SimpleCatch-Signature: sha256=<HMAC-SHA256 of the body>`. The JSON shape is `emailInboundSchema` in
    `packages/shared/src/channels.ts`; a small adapter per provider turns its own format into it.
 2. In Render → Environment: `EMAIL_INBOUND_DOMAIN` (that domain) and `EMAIL_INBOUND_SECRET` (a long
    random string, the same one the service signs with).

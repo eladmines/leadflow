@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { cn } from '../../lib/cn';
 
 /**
- * The help character (D-105): the LeadFlow mark come to life — the blue rounded body with the
+ * The help character (D-105): the SimpleCatch mark come to life — the blue rounded body with the
  * coral dot as a bobble on top. It floats and blinks, waves when `waving`, and smiles with closed
  * eyes when `happy` (menu open). Motion only runs for people who haven't asked for reduced motion.
  * Drawn facing the content (it looks towards the start side), so it flips in right-to-left.

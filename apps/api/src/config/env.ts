@@ -56,7 +56,7 @@ const envSchema = z
     SMTP_PASS: optionalSetting(z.string().min(1)),
     /** TLS from the first byte (port 465). Port 587 upgrades with STARTTLS on its own. */
     SMTP_SECURE: booleanString.default('false'),
-    EMAIL_FROM: z.string().min(1).default('LeadFlow <no-reply@leadflow.local>'),
+    EMAIL_FROM: z.string().min(1).default('SimpleCatch <no-reply@leadflow.local>'),
     /** F27: the domain business forwarding addresses live on (`<random>@<this>`); unset = email conversations are off. */
     EMAIL_INBOUND_DOMAIN: optionalSetting(
       z
@@ -120,7 +120,7 @@ const envSchema = z
     // F12 POC — WhatsApp (D-091). One number, connected to one business, from the environment.
     /** `local` records outgoing messages without calling Meta; `cloud` uses the Graph API. */
     WHATSAPP_PROVIDER: z.enum(['local', 'cloud']).default('local'),
-    /** LeadFlow business the WhatsApp number belongs to; unset = WhatsApp off. */
+    /** SimpleCatch business the WhatsApp number belongs to; unset = WhatsApp off. */
     WHATSAPP_BUSINESS_ID: optionalSetting(z.string().uuid()),
     /** Meta "Phone number ID" (not the phone number itself). */
     WHATSAPP_PHONE_NUMBER_ID: optionalSetting(z.string().min(1)),
@@ -138,7 +138,7 @@ const envSchema = z
     // Same Meta app as WhatsApp: its app secret, verify token and Graph version are shared.
     /** `local` records outgoing messages without calling Meta; `cloud` uses the Graph API. */
     MESSENGER_PROVIDER: z.enum(['local', 'cloud']).default('local'),
-    /** LeadFlow business the Facebook Page belongs to; unset = Messenger off. */
+    /** SimpleCatch business the Facebook Page belongs to; unset = Messenger off. */
     MESSENGER_BUSINESS_ID: optionalSetting(z.string().uuid()),
     /** The Facebook Page's id. */
     MESSENGER_PAGE_ID: optionalSetting(z.string().min(1)),

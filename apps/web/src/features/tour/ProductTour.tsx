@@ -17,7 +17,7 @@ interface MenuStep extends TourStep {
 
 const STEPS: MenuStep[] = [
   {
-    title: tr('ברוכים הבאים ל-LeadFlow'),
+    title: tr('ברוכים הבאים ל-SimpleCatch'),
     body: tr(
       'סיור קצר של דקה: נראה איפה כל דבר נמצא. הכול נמצא בתפריט (בטלפון: כפתור התפריט למעלה). אפשר לדלג בכל רגע, ובכפתור העזרה (?) בפינת המסך יש גם סיור לכל עמוד.',
     ),

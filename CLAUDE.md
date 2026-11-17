@@ -1,6 +1,6 @@
-# LeadFlow — shared development rules
+# SimpleCatch — shared development rules
 
-LeadFlow is a multi-tenant Hebrew/RTL SaaS for small Israeli businesses (site builder → leads → CRM → WhatsApp → AI).
+SimpleCatch is a multi-tenant Hebrew/RTL SaaS for small Israeli businesses (site builder → leads → CRM → WhatsApp → AI).
 Product source of truth: the planning PDFs (PRD v4.0 + docs 02–09). Engineering source of truth: `docs/`.
 
 ## Read before working

@@ -52,7 +52,7 @@ export function useChangeTemplate(businessId: string) {
   });
 }
 
-/** D-095: deletes the LeadFlow site (offline, address freed); the page falls back to the picker. */
+/** D-095: deletes the SimpleCatch site (offline, address freed); the page falls back to the picker. */
 export function useDeleteSite(businessId: string) {
   const queryClient = useQueryClient();
   return useMutation({

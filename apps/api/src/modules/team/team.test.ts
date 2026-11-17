@@ -38,7 +38,7 @@ describe('team invitations (F09)', () => {
     expect(res.json().invitation).toMatchObject({ email: 'yossi@example.com', role: 'EMPLOYEE' });
 
     const mail = ctx.email.to('yossi@example.com').at(-1)!;
-    expect(mail.subject).toBe('הוזמנת להצטרף לצוות של מספרת שירן ב-LeadFlow');
+    expect(mail.subject).toBe('הוזמנת להצטרף לצוות של מספרת שירן ב-SimpleCatch');
     expect(mail.text).toContain('/invite?token=');
     const token = inviteToken('yossi@example.com');
 

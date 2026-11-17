@@ -10,7 +10,7 @@ beforeEach(() => localStorage.removeItem(TOUR_OFF_KEY));
 
 const home = businessWebPaths.home(testBusiness.id);
 const meKey = `GET ${apiPaths.auth.me}`;
-const tourDialog = () => screen.findByRole('dialog', { name: 'ברוכים הבאים ל-LeadFlow' });
+const tourDialog = () => screen.findByRole('dialog', { name: 'ברוכים הבאים ל-SimpleCatch' });
 
 describe('product tour', () => {
   it('opens on first entry and walks through the steps with a counter', async () => {

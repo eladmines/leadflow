@@ -136,7 +136,7 @@ describe('page tours (D-096)', () => {
     const { user } = renderApp(section('customers'));
     await screen.findByRole('heading', { level: 1 });
     await user.click(screen.getByRole('button', { name: 'עזרה' }));
-    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של LeadFlow' });
+    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של SimpleCatch' });
     expect(within(menu).queryByRole('menuitem', { name: 'סיור בעמוד' })).not.toBeInTheDocument();
     expect(within(menu).getByRole('menuitem', { name: 'סיור במערכת' })).toBeInTheDocument();
   });
@@ -164,7 +164,7 @@ describe('help button (D-104)', () => {
     const help = await screen.findByRole('button', { name: 'עזרה' });
     help.focus();
     await user.keyboard('{ArrowDown}');
-    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של LeadFlow' });
+    const menu = screen.getByRole('menu', { name: 'היי, אני העוזר של SimpleCatch' });
     const items = within(menu).getAllByRole('menuitem');
     expect(items.map((i) => i.textContent)).toEqual([
       'סיור בעמוד',
@@ -193,7 +193,7 @@ describe('help button (D-104)', () => {
 });
 
 describe('help character (D-105)', () => {
-  const hello = /אני העוזר של LeadFlow, ואני כאן כדי לעזור לך/;
+  const hello = /אני העוזר של SimpleCatch, ואני כאן כדי לעזור לך/;
 
   it('greets the person by name by itself, until closed with X (once per visit)', async () => {
     localStorage.removeItem('leadflow.helper.quiet');

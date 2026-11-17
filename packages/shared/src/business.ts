@@ -393,8 +393,8 @@ export const addressSchema = z
   .transform((v) => (v ? v : null));
 
 /**
- * The business's own website outside LeadFlow (D-094), shown in "האתר שלי" but never managed by
- * LeadFlow. Optional: blank becomes null; "www.x.co.il" gets https://; only http(s) addresses with a
+ * The business's own website outside SimpleCatch (D-094), shown in "האתר שלי" but never managed by
+ * SimpleCatch. Optional: blank becomes null; "www.x.co.il" gets https://; only http(s) addresses with a
  * real host name are accepted.
  */
 export const websiteUrlSchema = z
@@ -519,7 +519,7 @@ export const businessSchema = z.object({
   address: z.string().nullable(),
   serviceAreas: z.array(z.string()),
   openingHours: openingHoursSchema.nullable(),
-  /** Existing website outside LeadFlow (D-094); null = none. */
+  /** Existing website outside SimpleCatch (D-094); null = none. */
   websiteUrl: z.string().nullable(),
   timezone: z.string(),
   /** What its customers get (D-143). */

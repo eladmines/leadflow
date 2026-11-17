@@ -62,7 +62,7 @@ export function DashboardPage() {
       hint: tr('בחירת כתובת והעלאה לאוויר'),
       state: site?.published ? 'done' : 'todo',
     },
-    // Connected numbers are set up with LeadFlow for now (D-091); a self-service screen comes later.
+    // Connected numbers are set up with SimpleCatch for now (D-091); a self-service screen comes later.
     whatsappConnected
       ? {
           label: tr('חיבור WhatsApp עסקי'),

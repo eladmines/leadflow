@@ -8,7 +8,7 @@ import { clearBackup } from './useDraftAutosave';
 import { tr } from '../../i18n';
 
 /**
- * D-095: switch the site to another template, or delete the LeadFlow site (for example to go back
+ * D-095: switch the site to another template, or delete the SimpleCatch site (for example to go back
  * to a website the business already has). Owner only; both ask for confirmation first.
  */
 export function SiteOptionsDialog({
@@ -140,7 +140,7 @@ export function SiteOptionsDialog({
         className="flex flex-col gap-3 border-t border-surface-border pt-5"
       >
         <h3 id="delete-site" className="text-base font-semibold text-ink">
-          {tr('מחיקת האתר מ-LeadFlow')}
+          {tr('מחיקת האתר מ-SimpleCatch')}
         </h3>
         <p className="text-sm text-ink-muted">
           {tr(

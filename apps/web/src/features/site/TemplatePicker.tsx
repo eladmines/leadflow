@@ -52,7 +52,7 @@ export function TemplatePicker({
     <>
       {secondary ? (
         <div className="flex flex-col gap-1 pt-2">
-          <h2 className="text-lg font-semibold text-ink">{tr('רוצים אתר חדש ב-LeadFlow?')}</h2>
+          <h2 className="text-lg font-semibold text-ink">{tr('רוצים אתר חדש ב-SimpleCatch?')}</h2>
           <p className="text-sm text-ink-muted">
             {tr(
               'אתר שמנוהל כאן: פניות נכנסות ישר למערכת, ועורכים הכול לבד. בחרו תבנית כדי להתחיל. האתר הקיים לא ישתנה.',

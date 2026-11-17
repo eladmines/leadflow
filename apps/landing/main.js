@@ -1,5 +1,5 @@
 /**
- * LeadFlow landing page: Hebrew (RTL) and English (LTR) with a switch, and the links into the app.
+ * SimpleCatch landing page: Hebrew (RTL) and English (LTR) with a switch, and the links into the app.
  * The page is written in Hebrew; the English texts live here. No build step, no dependencies.
  */
 
@@ -10,9 +10,9 @@ const APP_URL = 'https://leadflow-55gt.onrender.com';
 const STORAGE_KEY = 'leadflow.landing.lang';
 
 const en = {
-  title: 'LeadFlow — run your whole business in one place',
+  title: 'SimpleCatch — run your whole business in one place',
   description:
-    'LeadFlow is one system to run your business: a website, customers and leads, conversations from WhatsApp, Facebook and email, appointments, tasks, quotes and reports.',
+    'SimpleCatch is one system to run your business: a website, customers and leads, conversations from WhatsApp, Facebook and email, appointments, tasks, quotes and reports.',
   skip: 'Skip to main content',
   navFeatures: 'Features',
   navHow: 'How it works',
@@ -68,7 +68,7 @@ const en = {
   faqEyebrow: 'FAQ',
   faqTitle: 'Everything worth knowing',
   q1: 'Do I need a website to start?',
-  a1: 'No. You can build a website in LeadFlow, or start directly from WhatsApp, Facebook and email.',
+  a1: 'No. You can build a website in SimpleCatch, or start directly from WhatsApp, Facebook and email.',
   q2: 'Which channels can I connect?',
   a2: 'A website form, WhatsApp, Facebook (messages to your business page) and email. Instagram is in development.',
   q3: 'Is it in Hebrew and English?',
@@ -123,9 +123,9 @@ const en = {
   autoTitle: 'Every inquiry gets a reply, even when you’re unavailable',
   autoSub:
     'Everything between the inquiry and the appointment runs automatically, and you step in only when needed.',
-  mascotHi: 'Welcome to LeadFlow! 👋',
+  mascotHi: 'Welcome to SimpleCatch! 👋',
   mascotMsg: 'Want to see how it works?',
-  mascotLabel: 'The LeadFlow helper: how it works',
+  mascotLabel: 'The SimpleCatch helper: how it works',
   flAuto: 'Automatic',
   flYou: 'You',
   fl1t: 'The inquiry is recorded',

@@ -1,6 +1,6 @@
 import type { EmailMessage, EmailSender } from './types';
 
-/** "LeadFlow <me@gmail.com>" or "me@gmail.com" → name and address. */
+/** "SimpleCatch <me@gmail.com>" or "me@gmail.com" → name and address. */
 export function parseSender(from: string): { name?: string; email: string } {
   const m = /^\s*(.*?)\s*<([^>]+)>\s*$/.exec(from);
   return m ? { ...(m[1] ? { name: m[1] } : {}), email: m[2]! } : { email: from.trim() };

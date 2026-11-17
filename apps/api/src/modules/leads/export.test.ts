@@ -31,7 +31,7 @@ describe('leads CSV export', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toBe('text/csv; charset=utf-8');
     expect(res.headers['content-disposition']).toMatch(
-      /^attachment; filename="leadflow-leads-\d{4}-\d{2}-\d{2}\.csv"$/,
+      /^attachment; filename="simplecatch-leads-\d{4}-\d{2}-\d{2}\.csv"$/,
     );
     const body = res.body;
     expect(body.charCodeAt(0)).toBe(0xfeff);

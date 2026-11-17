@@ -1,4 +1,4 @@
-/* LeadFlow story ad (9:16): "a day in the life of a business owner". A pure function of time,
+/* SimpleCatch story ad (9:16): "a day in the life of a business owner". A pure function of time,
    `window.render(t)`, plus a synthesized soundtrack, `window.audioWav()`.
    Generated pieces: see build-story.mjs (engine and audio are shared with vertical.js). */
 const params = new URLSearchParams(location.search);
@@ -24,7 +24,7 @@ const TX = {
     h3a: 'ואתה?',
     h3b: 'אתה באמצע עבודה.',
     h3c: 'ובינתיים, הלקוחות מחפשים<br />מישהו שיענה.',
-    h4: 'אותו רגע.<br /><span class="brandc">הפעם LeadFlow עונה.</span>',
+    h4: 'אותו רגע.<br /><span class="brandc">הפעם SimpleCatch עונה.</span>',
     chn: 'דנה כהן',
     m1: 'היי, אפשר תור למחר?',
     m2: 'היי! כאן סלון שירן 💇‍♀️ אשמח לעזור. מתי נוח לך?',
@@ -58,7 +58,7 @@ const TX = {
     h3a: 'And you?',
     h3b: 'You’re mid-job.',
     h3c: 'Meanwhile, customers are looking<br />for someone who will answer.',
-    h4: 'Same moment.<br /><span class="brandc">This time LeadFlow answers.</span>',
+    h4: 'Same moment.<br /><span class="brandc">This time SimpleCatch answers.</span>',
     chn: 'Dana Cohen',
     m1: 'Hi, can I book tomorrow?',
     m2: 'Hi! Shiran Salon here 💇‍♀️ Happy to help. When suits you?',

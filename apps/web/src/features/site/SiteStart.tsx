@@ -60,7 +60,7 @@ export function SiteStart({ business }: { business: Business }) {
         icon: Globe,
         tile: 'bg-sky-500',
         title: tr('חיבור אתר קיים'),
-        text: tr('יש לכם כבר אתר? מוסיפים את הכתובת ורואים אותו כאן. LeadFlow לא משנה בו כלום.'),
+        text: tr('יש לכם כבר אתר? מוסיפים את הכתובת ורואים אותו כאן. SimpleCatch לא משנה בו כלום.'),
       },
     ];
 
