@@ -193,7 +193,7 @@ const helperClone = (prefix, size, host, mirror) => {
   host.appendChild(c);
 };
 helperClone('i_', 250, $('ihost'), false);
-helperClone('c_', 84, $('chlp'), false);
+helperClone('c_', 84, $('chlp'), true);
 // the agent introduces itself, then settles into the reply box
 pop('intro', 12.7, 0.8, 80);
 sfx(12.75, 'sparkle');
@@ -212,10 +212,11 @@ fn(
     ]) {
       const g = (id) => document.getElementById(pre + id);
       g('hf').setAttribute('transform', `translate(0 ${Math.sin(t * 2.2) * 1.2})`);
+      g('hBob').setAttribute('transform', `rotate(${Math.sin(t * 3.4) * 8} 28 17)`);
       const blink = (t * 0.9) % 1 < 0.07 ? 0.1 : 1;
       g('hEyes').setAttribute('transform', `translate(0 30) scale(1 ${blink}) translate(0 -30)`);
       const w = t >= wave0 && t <= wave0 + 1.2 ? Math.sin((t - wave0) * 15) * 24 : 0;
-      g('hWave').setAttribute('transform', `rotate(${w * 0.4} 32 58)`);
+      g('hWave').setAttribute('transform', `rotate(${w} 12 35)`);
       const happy = t >= 18.5;
       g('hEyes').setAttribute('opacity', happy ? 0 : 1);
       g('hHappy').setAttribute('opacity', happy ? 1 : 0);
