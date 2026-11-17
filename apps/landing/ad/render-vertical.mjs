@@ -46,7 +46,7 @@ if (stills) {
     });
     if (f % 90 === 0) console.log(`frame ${f}/${total}`);
   }
-  const mp4 = path.join(out, `leadflow-ad-vertical-${lang}.mp4`);
+  const mp4 = path.join(out, `simplecatch-ad-vertical-${lang}.mp4`);
   execFileSync(
     'ffmpeg',
     [

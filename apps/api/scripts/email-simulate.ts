@@ -3,7 +3,7 @@
  * a customer wrote to the business's forwarding address. Needs EMAIL_INBOUND_DOMAIN and
  * EMAIL_INBOUND_SECRET in .env, and the address created in Settings → Channels.
  *
- *   pnpm --filter @simplecatch/api mail:simulate --to abc123xyz9@mail.leadflow.local \
+ *   pnpm --filter @simplecatch/api mail:simulate --to abc123xyz9@mail.simplecatch.local \
  *     --from dana@example.com --name "דנה" --subject "תור" --text "היי, אפשר תור?"
  */
 import { parseArgs } from 'node:util';

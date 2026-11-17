@@ -2,7 +2,7 @@
  * Renders the ad to an MP4: the page is a pure function of time (`window.render(t)`), so every frame is
  * drawn exactly, screenshotted, and joined with ffmpeg. No audio.
  *
- *   node apps/landing/ad/render.mjs he            # whole video -> apps/landing/ad/out/leadflow-ad-he.mp4
+ *   node apps/landing/ad/render.mjs he            # whole video -> apps/landing/ad/out/simplecatch-ad-he.mp4
  *   node apps/landing/ad/render.mjs en
  *   node apps/landing/ad/render.mjs he 3,8,12     # just those seconds as PNGs, to look at
  */
@@ -47,7 +47,7 @@ if (stills) {
     });
     if (f % 60 === 0) console.log(`frame ${f}/${total}`);
   }
-  const mp4 = path.join(out, `leadflow-ad-${lang}.mp4`);
+  const mp4 = path.join(out, `simplecatch-ad-${lang}.mp4`);
   execFileSync(
     'ffmpeg',
     [

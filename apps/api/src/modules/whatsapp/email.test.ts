@@ -13,7 +13,7 @@ import { MemoryEmailSender } from '../../integrations/email';
 import { buildApp } from '../../app';
 
 const BUSINESS_ID = '22222222-3333-4444-8555-666666666666';
-const DOMAIN = 'mail.leadflow.test';
+const DOMAIN = 'mail.simplecatch.test';
 const SECRET = 'inbound-secret-0123456789';
 
 let seq = 0;

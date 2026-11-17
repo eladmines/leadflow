@@ -6,7 +6,7 @@ Stage 0 gate from doc 08: _deploy a version and restore the DB in a test environ
 One environment for Beta (called **beta**), on the real domain. A separate staging can be added later by
 repeating the same setup with other names.
 
-`<domain>` below = the domain you buy, e.g. `leadflow.co.il`.
+`<domain>` below = the domain you buy, e.g. `simplecatch.co.il`.
 
 ---
 
