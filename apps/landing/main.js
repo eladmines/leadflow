@@ -29,7 +29,7 @@ const en = {
   register: 'Sign up',
   start: 'Get started',
   seeHow: 'How it works',
-  heroEyebrow: 'One platform to run your business',
+  heroEyebrow: 'Simply never miss a customer.',
   heroTitle: 'Run your whole business in one place.',
   heroText:
     'Website, customers, conversations, appointments, tasks and quotes in one system for the whole team. Every inquiry is recorded automatically, and replies, bookings and reminders run without manual effort.',
