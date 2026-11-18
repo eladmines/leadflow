@@ -27,7 +27,9 @@ async function ownerWithBusiness(page: Page) {
   await page.getByRole('button', { name: 'יצירת חשבון' }).click();
   await expect(page.getByText('שלב 1 מתוך 4')).toBeVisible();
   await page.getByLabel(/שם העסק/).fill('עיצוב שיער סיגלית');
-  await page.getByLabel(/תחום פעילות/).selectOption('beauty');
+  await page.getByLabel(/תחום פעילות/).click();
+  await page.getByRole('searchbox').fill('ספרה');
+  await page.getByRole('option', { name: 'מספרה וקוסמטיקה' }).click();
   await page.getByRole('button', { name: 'המשך' }).click();
   await expect(page.getByText('שלב 2 מתוך 4')).toBeVisible();
   await page.getByLabel(/טלפון העסק/).fill('050-1234567');

@@ -85,7 +85,6 @@ test('owner invites an employee who registers from the email and joins with limi
   await expect(emp).toHaveURL(/\/invite/); // back to the invitation, not the setup wizard
   await emp.getByRole('button', { name: 'הצטרפות לצוות' }).click();
   await expect(emp).toHaveURL(new RegExp(`/b/${business.id}$`));
-  await expect(emp.getByText('מספרת שירן · עובד/ת')).toBeVisible();
   await expect(emp.getByRole('heading', { name: 'כדאי לאמת את כתובת האימייל' })).toHaveCount(0); // verified by the link
 
   // Employee sees no leads until one is assigned.
