@@ -1,6 +1,6 @@
 import { apiPaths, businessWebPaths, type Business } from '@simplecatch/shared';
 import { screen, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
   callsTo,
@@ -13,7 +13,15 @@ import {
   testUser,
 } from '../../test/utils';
 
-afterEach(() => vi.unstubAllGlobals());
+// The phone country default comes from the machine (timezone, browser language): pin it so the
+// test gives the same result on a developer laptop in Israel and on a UTC CI runner.
+beforeEach(() => {
+  vi.spyOn(navigator, 'language', 'get').mockReturnValue('he-IL');
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 const bp = apiPaths.businesses;
 const meKey = `GET ${apiPaths.auth.me}`;
