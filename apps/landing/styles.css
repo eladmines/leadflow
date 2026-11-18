@@ -1330,9 +1330,27 @@ h3 {
   font-size: 1.05rem;
   line-height: 1.6;
 }
-.review figcaption span {
-  color: var(--muted);
+.review blockquote::before {
+  content: '\201C';
 }
-.review figcaption span::before {
-  content: '· ';
+.review blockquote::after {
+  content: '\201D';
+}
+.review figcaption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.review figcaption img {
+  border-radius: 50%;
+  flex: none;
+  object-fit: cover;
+}
+.rv-who {
+  display: flex;
+  flex-direction: column;
+}
+.rv-who span {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
