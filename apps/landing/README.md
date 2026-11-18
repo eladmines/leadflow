@@ -17,7 +17,7 @@ Open `index.html` in a browser, or serve the folder: `npx serve apps/landing`.
   both are keyed by the `data-i18n` name on each element.
 - **Name and logo:** the logo is `logo.svg` (the wordmark) and `icon-c.svg`, both from `docs/brand/`;
   the favicon is `favicon.svg`. The name is "SimpleCatch" in the title and `main.js`.
-- **No prices:** none are stated yet. Add a pricing section when they are decided.
+- **Prices are mock:** the `#pricing` section uses illustrative plans and amounts (not decided). Replace them in `index.html` / `main.js` once pricing is decided (F13).
 
 ## Put it online (Cloudflare Workers, live at https://simplecatch.co.il)
 

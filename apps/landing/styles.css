@@ -1241,3 +1241,67 @@ h3 {
     font-size: 0.88rem;
   }
 }
+
+/* Pricing */
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  max-width: 62rem;
+  margin: 2.5rem auto 0;
+  align-items: stretch;
+}
+.plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.plan-featured {
+  border: 2px solid var(--brand-600);
+  box-shadow: var(--shadow);
+}
+.plan h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.plan-badge {
+  position: absolute;
+  inset-block-start: -0.8rem;
+  inset-inline-start: 1.5rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  background: var(--brand-600);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.plan-price {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.plan-price small {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+.plan-desc {
+  margin: 0;
+  color: var(--muted);
+}
+.plan .ticks2 {
+  flex: 1;
+  margin-block: 0.5rem 1rem;
+}
+.plan-note {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
