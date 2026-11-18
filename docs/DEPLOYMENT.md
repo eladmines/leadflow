@@ -1,6 +1,9 @@
 # Deployment plan — Beta environment
 
-Status: **Plan** (2026-10-27). Goal: run SimpleCatch on a real domain so 3–5 real businesses can use it, and close the
+Status: **Future plan, not what runs today** (written 2026-10-27). What runs today is the free test hosting
+on Render + Neon + Brevo (D-119, `docs/DEPLOY.md`, `render.yaml`) at `app.simplecatch.co.il`, with the landing
+page on a Cloudflare Worker (`apps/landing/README.md`). Fly.io, Cloudflare Pages, R2 and Resend below are not set up.
+Original status: **Plan** (2026-10-27). Goal: run SimpleCatch on a real domain so 3–5 real businesses can use it, and close the
 Stage 0 gate from doc 08: _deploy a version and restore the DB in a test environment._
 
 One environment for Beta (called **beta**), on the real domain. A separate staging can be added later by

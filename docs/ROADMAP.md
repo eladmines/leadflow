@@ -10,6 +10,8 @@ Follows planning doc 08 (see D-006). A stage starts only after the previous stag
 | **3 — Billing & Beta**              | F13 Plans, billing & quotas · F14 Export & deletion · F15 Ops hardening · F21 Admin console · Beta with 5–10 businesses | Can charge, change plan, cancel and export data per written policy.                                             |
 | **4 — AI & advanced**               | F16 AI agent · F17 Appointments · F18 Quotes · F19 Automations · F20 Reports                                            | Exceeding the quota triggers no AI call; sensitive actions need approval.                                       |
 
+Note (2026-11-18): F17 Appointments, F18 Quotes, a lite F20 Reports, and the WhatsApp/Messenger channels (F12, F23–F25) were built ahead of Stage 2–3 (F11, F13–F15, F21 are still open). The order above is the original plan.
+
 **Core-journey milestone (end of F08):** one Playwright test covers register → onboard → build site →
 publish to `x.lvh.me` → submit form → lead in the CRM with its source, and checks that a second
 tenant can't see it.

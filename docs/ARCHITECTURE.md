@@ -10,19 +10,25 @@ PostgreSQL database, one admin SPA (`apps/web`), and a contract package (`packag
 We don't split into microservices; background work runs in-process until queues are needed (F12).
 
 ```
-Browser (admin, Hebrew RTL) ──► apps/web (Vite SPA; Cloudflare Pages in prod)
+Browser (admin, Hebrew RTL / English LTR) ──► apps/web (Vite SPA; in prod served by the API, D-119)
             │  same-site cookie, JSON
             ▼
          apps/api (Fastify) ──► PostgreSQL (managed: Supabase/Neon; local: docker :5432)
             │        │
-            │        ├─► StorageProvider (S3 API: MinIO local / Cloudflare R2 prod)   [F05]
-            │        ├─► EmailSender (SMTP→Mailpit local / provider prod)             [F01]
-            │        ├─► WhatsApp (Meta Cloud API)                                     [F12]
-            │        └─► AI provider                                                   [F16]
+            │        ├─► StorageProvider (local disk, or Postgres via STORAGE_DRIVER)  [F05]
+            │        ├─► EmailSender (SMTP→Mailpit local / Brevo over HTTPS / off)    [F01]
+            │        ├─► WhatsApp + Messenger (Meta Cloud API, per-business tokens)    [F12, F23–F25]
+            │        └─► AI provider (planned)                                         [F16]
             ▼
-Visitors ──► public site serving by Host header (Cloudflare Worker + R2 snapshots in prod;
-             API public-site server on *.lvh.me locally)                                [F06]
+Visitors ──► public site server in the API (apps/api, port 4100) resolving the site by
+             Host (`<sub>.lvh.me` locally) or by path (`/s/<name>` on the Render test host);
+             published HTML is read from Postgres                                       [F06]
 ```
+
+Today (test hosting, D-119): one Render service runs the API, the built web app and the customer
+sites, with Neon Postgres, at `app.simplecatch.co.il`. The marketing page (`apps/landing`) is a
+separate Cloudflare Worker at `simplecatch.co.il`. The target of S3/R2 object storage and a
+Cloudflare Worker for sites is planned, not built (see `DEPLOYMENT.md`, D-010/D-011, F11).
 
 ## 2. Stack (pinned majors)
 
@@ -55,7 +61,7 @@ Visitors ──► public site serving by Host header (Cloudflare Worker + R2 sn
 - Repositories take `TenantContext` and always filter by it; nothing queries tenant data without it.
 - **Cross-tenant route walker test:** enumerates every registered tenant route and asserts that a
   member of business B gets 404 on business A. New routes are covered automatically.
-- Files: object keys are prefixed `businesses/{businessId}/...` (F05). Cache keys, queue jobs
+- Files: object keys are prefixed with the business id, `{businessId}/{uuid}.webp` (F05). Cache keys, queue jobs
   and logs carry `businessId`.
 - Postgres RLS is a planned second layer (DECISIONS D-007), not in the MVP.
 
@@ -64,16 +70,18 @@ Visitors ──► public site serving by Host header (Cloudflare Worker + R2 sn
 - Own implementation (D-001): argon2id hashes; a random 256-bit session token in an `httpOnly`,
   `Secure` (prod), `SameSite=Lax` cookie. Only the token's SHA-256 hash is stored. Sessions are
   revocable, with sliding expiry (30 days idle, 90 days absolute).
-- Email verification is soft in the MVP (D-002): a banner until verified; `email_verified_at`
-  lets later features require it.
+- Email verification: soft in the MVP (D-002, a banner until verified) and now **off by default**
+  (D-133, `EMAIL_VERIFICATION`; the e2e turns it on); `email_verified_at` lets later features require it.
 - Rate limits on auth endpoints; generic login errors; single-use, short-lived reset tokens.
 
 ## 6. Website publishing (F04–F06; proposal D-010)
 
 Draft (JSON section tree in Postgres) → `renderPage()` (pure, shared by preview and publish) →
-immutable HTML snapshot in object storage → atomic switch of `site.published_version_id`.
-A failed publish never moves the pointer. Serving resolves Host → site → snapshot, with no DB
-query per page view in production.
+immutable HTML snapshot (today a `site_versions` row in Postgres, D-036; object storage is
+planned, D-010) → atomic switch of `site.published_version_id`. A failed publish never moves the
+pointer. Serving resolves Host (or path) → site → published version through a shared in-process
+cache that publishing clears. "No DB query per page view" is the goal for the planned Worker + R2
+serving, not today's behaviour.
 
 ## 7. Configuration and environments
 
