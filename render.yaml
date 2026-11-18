@@ -25,7 +25,8 @@ services:
         value: '22'
       - key: NODE_ENV
         value: production
-      # APP_URL defaults to Render's own address (RENDER_EXTERNAL_URL).
+      # APP_URL and WEB_ORIGINS: set in the Render dashboard to https://app.simplecatch.co.il (docs/DEPLOY.md);
+      # without them APP_URL defaults to Render's own address (RENDER_EXTERNAL_URL).
       - key: PUBLIC_SITE_MODE
         value: path
       - key: WEB_DIST_DIR

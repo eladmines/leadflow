@@ -10,8 +10,13 @@ Brevo (optional).
 | Database (and photos)       | Neon Postgres                      | 0.5 GB, 100 compute hours/mo, pauses when idle     |
 | Email                       | Brevo email API (optional)         | 300 emails a day                                   |
 
-Addresses: the app is `https://<service>.onrender.com`, and a business's website is
-`https://<service>.onrender.com/s/<its-name>`.
+Addresses: the app is `https://app.simplecatch.co.il` (a Render custom domain: add it under the service's
+Settings → Custom Domains, plus a Cloudflare DNS `CNAME app → <service>.onrender.com`, DNS only), and a
+business's website is `https://app.simplecatch.co.il/s/<its-name>`. The `<service>.onrender.com` address
+keeps working. Set `APP_URL=https://app.simplecatch.co.il` and
+`WEB_ORIGINS=https://app.simplecatch.co.il,https://<service>.onrender.com` in the service's Environment
+(`WEB_ORIGINS` is the CSRF allow-list: an address missing from it can load the page but cannot sign in).
+When `APP_URL` changes, update the webhook and OAuth redirect URIs in Meta (steps below).
 
 ## 1. Database — Neon (5 minutes)
 
@@ -76,7 +81,7 @@ messages are recorded here but never delivered. Save, and let Render redeploy.
    System users → add one, give it full control of the app and the WhatsApp account, and generate a
    token with `whatsapp_business_messaging` (and `whatsapp_business_management`).
 4. WhatsApp → Configuration → Webhook: callback URL
-   `https://<service>.onrender.com/api/v1/integrations/whatsapp/webhook`, the verify token from
+   `https://app.simplecatch.co.il/api/v1/integrations/whatsapp/webhook`, the verify token from
    part A, then subscribe to the **messages** field.
 
 **C. In SimpleCatch.** Settings → Channels → **Connect WhatsApp**: paste the Phone number ID and the
@@ -98,7 +103,7 @@ three things that are yours to choose, so nothing is switched on until you set t
 
 1. A domain for the addresses (for example `mail.example.com`) and an inbound-email service on it
    (MX records) that can post each message to
-   `https://<service>.onrender.com/api/v1/integrations/email/inbound` as JSON, signed with
+   `https://app.simplecatch.co.il/api/v1/integrations/email/inbound` as JSON, signed with
    `X-SimpleCatch-Signature: sha256=<HMAC-SHA256 of the body>`. The JSON shape is `emailInboundSchema` in
    `packages/shared/src/channels.ts`; a small adapter per provider turns its own format into it.
 2. In Render → Environment: `EMAIL_INBOUND_DOMAIN` (that domain) and `EMAIL_INBOUND_SECRET` (a long
