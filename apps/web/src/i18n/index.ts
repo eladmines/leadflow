@@ -1,7 +1,7 @@
 import { en } from './en';
 
 /**
- * App language (D-100): English by default, Hebrew as an option. Copy is written in Hebrew in the
+ * App language (D-100, default changed to Hebrew by D-186): Hebrew by default, English as an option. Copy is written in Hebrew in the
  * source and looked up in the English dictionary (keyed by the Hebrew text), so Hebrew needs no
  * dictionary and a missing translation falls back to Hebrew instead of breaking.
  *
@@ -20,7 +20,7 @@ function initialLocale(): Locale {
   } catch {
     // Storage blocked: use the default.
   }
-  return 'en';
+  return 'he';
 }
 
 let current: Locale = initialLocale();

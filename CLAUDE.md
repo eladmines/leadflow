@@ -37,7 +37,7 @@ pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` 
    `AppError` for expected errors. Never leak stack traces, SQL or provider errors to clients.
 5. **Secrets and PII.** Never hardcode secrets, never log them. Logger redaction lives in
    `apps/api/src/lib/logger.ts`; extend it when adding sensitive fields. Store only hashes of tokens.
-6. **Bilingual app, RTL and LTR (D-100).** The web app defaults to English (LTR) with Hebrew (RTL) as an
+6. **Bilingual app, RTL and LTR (D-100).** The web app defaults to Hebrew (RTL, D-186) with English (LTR) as an
    option. Write copy in Hebrew wrapped in `tr('…')` (`apps/web/src/i18n`) and add its English to
    `apps/web/src/i18n/en.*.ts`; shared labels/messages are wrapped where they're shown. `dir` follows the
    language, so use logical Tailwind utilities only (`ms-/me-/ps-/pe-/start-/end-/text-start/text-end`),
