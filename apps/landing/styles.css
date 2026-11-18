@@ -1305,3 +1305,34 @@ h3 {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* Reviews */
+.reviews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  max-width: 62rem;
+  margin: 2.5rem auto 0;
+}
+.review {
+  margin: 0;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.review blockquote {
+  margin: 0;
+  flex: 1;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.review figcaption span {
+  color: var(--muted);
+}
+.review figcaption span::before {
+  content: '· ';
+}

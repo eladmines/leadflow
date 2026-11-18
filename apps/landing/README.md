@@ -38,3 +38,5 @@ address redirects to the root with a 301 Redirect Rule, and Always Use HTTPS is 
 
 Not done yet: a contact address, a privacy policy and terms, and real screenshots (the inbox
 picture is drawn in HTML and CSS).
+
+Note: the `#reviews` section is mock (sample quotes, labelled as illustrative). Replace with real, permitted customer quotes before relying on it.
