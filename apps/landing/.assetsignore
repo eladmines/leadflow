@@ -1,0 +1,3 @@
+# Files in this folder that must NOT be published by `wrangler deploy --assets=apps/landing`
+ad/
+README.md
