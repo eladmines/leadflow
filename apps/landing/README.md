@@ -19,14 +19,22 @@ Open `index.html` in a browser, or serve the folder: `npx serve apps/landing`.
   the favicon is `favicon.svg`. The name is "SimpleCatch" in the title and `main.js`.
 - **No prices:** none are stated yet. Add a pricing section when they are decided.
 
-## Put it online (free, separate from the app)
+## Put it online (Cloudflare Workers, live at https://simplecatch.co.il)
 
-It is already described in `render.yaml` as the service `simplecatch-landing` (a static site, no build,
-free): on Render open the Blueprint and press **Sync** (or **New → Blueprint**) so it creates the
-service. By hand it would be **New → Static Site**, Publish directory `apps/landing`, no build
-command. Every push to `main` then updates the page. Point the company's domain at it
-(Settings → Custom Domains). The app can stay on its own address, or move to `app.<domain>`
-(then change `APP_URL`).
+The page is served by a Cloudflare Worker with static assets, named `simplecatch-landing`, on the
+custom domains `simplecatch.co.il` and `www.simplecatch.co.il` (zone on the Free plan; the `www`
+address redirects to the root with a 301 Redirect Rule, and Always Use HTTPS is on).
+
+- **Deploy command** (also the one in Workers Builds, from the repo root; every push to `main` runs it):
+  `npx wrangler deploy --assets=apps/landing --name simplecatch-landing --compatibility-date=2026-11-01`
+- **`.assetsignore`** keeps `ad/` (video sources) and this `README.md` out of the public site. Add any
+  new non-public file or folder there.
+- **After a deploy,** check `https://simplecatch.co.il` (logo, language switch) and that
+  `https://simplecatch.co.il/ad/` and `/README.md` return 404.
+- The static service `simplecatch-landing` in `render.yaml` is an older, optional copy of the same page
+  (on `onrender.com`). The real address is the Cloudflare one.
+- The app still lives at its own address (`APP_URL` in `main.js`); when it moves to `app.simplecatch.co.il`,
+  change `APP_URL`.
 
 Not done yet: a contact address, a privacy policy and terms, and real screenshots (the inbox
 picture is drawn in HTML and CSS).
