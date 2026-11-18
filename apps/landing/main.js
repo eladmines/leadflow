@@ -243,10 +243,16 @@ for (const b of document.querySelectorAll('[data-lang]')) {
 }
 document.getElementById('year').textContent = String(new Date().getFullYear());
 
-// First visit: Hebrew for Hebrew browsers, English for everyone else.
+// First visit: Hebrew on the .co.il address or for Hebrew browsers, English for everyone else.
+// A language the visitor picked earlier always wins.
 const saved = readSaved();
+const isIsraeliSite = /\.co\.il$/i.test(location.hostname);
 const wanted =
-  saved === 'he' || saved === 'en' ? saved : /^he\b/i.test(navigator.language) ? 'he' : 'en';
+  saved === 'he' || saved === 'en'
+    ? saved
+    : isIsraeliSite || /^he\b/i.test(navigator.language)
+      ? 'he'
+      : 'en';
 if (wanted !== 'he') apply(wanted);
 
 // Things ease in as they scroll into view.
