@@ -97,6 +97,7 @@ const emptyReport: ReportSummary = {
   avgResponseMinutes: null,
   respondedLeads: 0,
   series: { unit: 'day', points: [] },
+  byHour: Array.from({ length: 24 }, () => 0),
   byStage: [],
   bySource: [],
   byAttribution: [],

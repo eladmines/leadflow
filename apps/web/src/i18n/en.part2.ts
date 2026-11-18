@@ -366,4 +366,9 @@ export const enPart2: Record<string, string> = {
     'Name and phone are always required. Every inquiry becomes a lead and reaches you by email.',
   'שדה אימייל': 'Email field',
   'שדה הודעה חופשית': 'Free-text message field',
+  'פניות לפי שעה': 'Inquiries by hour',
+  'בשעון העסק': "in the business's time",
+  'עדיין אין פניות בתקופה הזו': 'No inquiries in this period yet',
+  'שעת השיא: {0} ({1} פניות)': 'Peak hour: {0} ({1} inquiries)',
+  '{0}% מהפניות הגיעו בין 18:00 ל־09:00': '{0}% of the inquiries came between 18:00 and 09:00',
 };

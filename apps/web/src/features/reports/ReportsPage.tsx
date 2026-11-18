@@ -116,6 +116,7 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
         />
       </div>
       <LeadsOverTime series={r.series} />
+      <LeadsByHour byHour={r.byHour} />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-ink">{tr('פניות לפי שלב')}</h2>
@@ -266,6 +267,69 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
           </div>
           <p className="mt-1 text-xs text-ink-muted">
             {tr('שיא:')} {max} {tr('פניות')}
+          </p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** When inquiries arrive: one column per local hour (the business's time zone), with the peak and the share outside working hours. */
+function LeadsByHour({ byHour }: { byHour: number[] }) {
+  const total = byHour.reduce((a, b) => a + b, 0);
+  const max = Math.max(1, ...byHour);
+  const peak = byHour.indexOf(max);
+  const night = byHour.reduce((a, c, h) => (h >= 18 || h < 9 ? a + c : a), 0);
+  const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
+  return (
+    <Card className="flex flex-col gap-4">
+      <h2 className="text-lg font-semibold text-ink">
+        {tr('פניות לפי שעה')}{' '}
+        <span className="text-sm font-normal text-ink-muted">{tr('בשעון העסק')}</span>
+      </h2>
+      {total === 0 ? (
+        <p className="text-sm text-ink-muted">{tr('עדיין אין פניות בתקופה הזו')}</p>
+      ) : (
+        <div>
+          <div
+            role="list"
+            aria-label={tr('פניות לפי שעה')}
+            className="flex h-36 items-end gap-0.5 border-b border-chart-grid"
+          >
+            {byHour.map((count, h) => (
+              <div
+                key={h}
+                role="listitem"
+                tabIndex={0}
+                aria-label={tr('{0}: {1} פניות', hh(h), count)}
+                className="group relative flex h-full flex-1 items-end justify-center rounded-sm outline-none hover:bg-chart-soft focus-visible:bg-chart-soft focus-visible:ring-2 focus-visible:ring-brand-400"
+              >
+                <div
+                  className={cn(
+                    'w-full max-w-[20px] rounded-t',
+                    h === peak ? 'bg-brand-600' : 'bg-chart',
+                  )}
+                  style={{ height: count ? `${(count / max) * 100}%` : 0 }}
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute bottom-full z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-xs text-white shadow-lift group-hover:block group-focus-visible:block"
+                >
+                  {hh(h)} · {count} {tr('פניות')}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div aria-hidden className="mt-1 flex gap-0.5 text-[11px] text-ink-muted">
+            {byHour.map((_, h) => (
+              <span key={h} className="flex-1 text-center">
+                {h % 3 === 0 ? hh(h) : ''}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-sm text-ink">{tr('שעת השיא: {0} ({1} פניות)', hh(peak), max)}</p>
+          <p className="text-xs text-ink-muted">
+            {tr('{0}% מהפניות הגיעו בין 18:00 ל־09:00', Math.round((night / total) * 100))}
           </p>
         </div>
       )}
