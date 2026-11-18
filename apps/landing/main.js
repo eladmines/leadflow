@@ -6,7 +6,7 @@
 // Where the sign-up and sign-in buttons lead. Change this one line when the app moves.
 document.documentElement.classList.add('js');
 
-const APP_URL = 'https://leadflow-55gt.onrender.com';
+const APP_URL = 'https://app.simplecatch.co.il';
 const STORAGE_KEY = 'simplecatch.landing.lang';
 try {
   // Renamed from leadflow.landing.lang (D-181): keep a returning visitor's language.

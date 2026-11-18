@@ -6,7 +6,7 @@
  * Setup: see README.md in this folder. Fill in the three values below, run `install` once.
  */
 const CONFIG = {
-  // https://<your service>.onrender.com/api/v1/integrations/email/inbound
+  // https://app.simplecatch.co.il/api/v1/integrations/email/inbound
   URL: 'PASTE_THE_WEBHOOK_URL',
   // The same value as EMAIL_INBOUND_SECRET on the server.
   SECRET: 'PASTE_EMAIL_INBOUND_SECRET',
