@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>LeadFlow: אפשרויות לדמות</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: system-ui, 'Heebo', sans-serif;
+        background: #f6f8fc;
+        color: #0f172a;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 20px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        max-width: 1200px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 22px;
+        text-align: center;
+      }
+      .card h2 {
+        margin: 0 0 4px;
+        font-size: 20px;
+      }
+      .card p {
+        margin: 0 0 14px;
+        color: #475569;
+        font-size: 14px;
+        min-height: 40px;
+      }
+      .big svg {
+        width: 220px;
+        height: 260px;
+      }
+      .sizes {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 22px;
+        margin-top: 14px;
+        padding: 14px;
+        background: #eff6ff;
+        border-radius: 14px;
+      }
+      .sizes svg {
+        display: block;
+      }
+      .s76 svg {
+        width: 76px;
+        height: 89px;
+      }
+      .s48 svg {
+        width: 48px;
+        height: 56px;
+      }
+      small {
+        display: block;
+        color: #64748b;
+        margin-top: 4px;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>אפשרויות לדמות של LeadFlow</h1>
+    <div class="row">
+      <!-- A: the target as the body, the arrow as its feature -->
+      <div class="card">
+        <h2>א. מטרה עם ידיים ורגליים</h2>
+        <p>עיגול המטרה מהלוגו הוא הגוף והפנים, החץ בולט מהראש.</p>
+        <div class="big" id="A"></div>
+        <div class="sizes">
+          <div class="s76" id="A76"></div>
+          <div class="s48" id="A48"></div>
+        </div>
+      </div>
+      <!-- B: the arrow itself -->
+      <div class="card">
+        <h2>ב. חץ בלבד</h2>
+        <p>גוף בצורת חץ עם הפנים על הגוף, נוצות בתחתית.</p>
+        <div class="big" id="B"></div>
+        <div class="sizes">
+          <div class="s76" id="B76"></div>
+          <div class="s48" id="B48"></div>
+        </div>
+      </div>
+      <!-- C: today's character with a small arrow -->
+      <div class="card">
+        <h2>ג. הדמות הנוכחית + חץ קטן</h2>
+        <p>אותו גוף כמו באפליקציה, והחץ במקום האנטנה.</p>
+        <div class="big" id="C"></div>
+        <div class="sizes">
+          <div class="s76" id="C76"></div>
+          <div class="s48" id="C48"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const defs = (p) => `<defs>
+        <linearGradient id="${p}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8ff7"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
+        <linearGradient id="${p}c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a5c"/><stop offset="1" stop-color="#f2564a"/></linearGradient></defs>`;
+      const star = (x, y, s) =>
+        `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -9 L2.6 -2.6 L9 0 L2.6 2.6 L0 9 L-2.6 2.6 L-9 0 L-2.6 -2.6Z" fill="#f2564a"/>`;
+      const A = (p) => `<svg viewBox="0 0 130 150">${defs(p)}
+        <!-- legs and shoes -->
+        <path d="M50 104 L48 128" stroke="#1d4ed8" stroke-width="10" stroke-linecap="round"/>
+        <path d="M74 104 L76 128" stroke="#1d4ed8" stroke-width="10" stroke-linecap="round"/>
+        <ellipse cx="45" cy="133" rx="11" ry="6" fill="#1e3a8a"/><ellipse cx="79" cy="133" rx="11" ry="6" fill="#1e3a8a"/>
+        <!-- arms -->
+        <path d="M24 70 C10 68 6 56 10 46" stroke="#2563eb" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="10" cy="43" r="6" fill="#3b82f6"/>
+        <path d="M100 70 C112 74 116 84 112 92" stroke="#2563eb" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="112" cy="95" r="6" fill="#3b82f6"/>
+        <!-- the arrow sticking out of the target -->
+        <path d="M78 38 L112 8" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round"/>${star(114, 7, 1.15)}
+        <!-- the target: rings, and a face in the middle -->
+        <circle cx="62" cy="68" r="42" fill="url(#${p}g)"/>
+        <circle cx="62" cy="68" r="31" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="4"/>
+        <circle cx="62" cy="68" r="22" fill="#fff"/>
+        <ellipse cx="54" cy="64" rx="3.6" ry="4.6" fill="#1e3a8a"/><ellipse cx="70" cy="64" rx="3.6" ry="4.6" fill="#1e3a8a"/>
+        <circle cx="53" cy="62.5" r="1.1" fill="#fff"/><circle cx="69" cy="62.5" r="1.1" fill="#fff"/>
+        <path d="M54 74 Q62 82 70 74" stroke="#1e3a8a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="47" cy="73" r="3" fill="#ffb4a0" opacity=".9"/><circle cx="77" cy="73" r="3" fill="#ffb4a0" opacity=".9"/>
+        <circle cx="62" cy="49" r="3.4" fill="url(#${p}c)"/>
+      </svg>`;
+      const B = (p) => `<svg viewBox="0 0 130 150">${defs(p)}
+        <path d="M54 108 L52 132" stroke="#1d4ed8" stroke-width="10" stroke-linecap="round"/><path d="M76 108 L78 132" stroke="#1d4ed8" stroke-width="10" stroke-linecap="round"/>
+        <ellipse cx="49" cy="137" rx="11" ry="6" fill="#1e3a8a"/><ellipse cx="81" cy="137" rx="11" ry="6" fill="#1e3a8a"/>
+        <path d="M44 76 C30 76 24 66 26 56" stroke="#2563eb" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="26" cy="52" r="6" fill="#3b82f6"/>
+        <path d="M86 76 C100 80 104 90 100 98" stroke="#2563eb" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="100" cy="101" r="6" fill="#3b82f6"/>
+        <!-- fletching -->
+        <path d="M46 98 L28 120 L28 106 L46 86Z" fill="url(#${p}c)"/><path d="M84 98 L102 120 L102 106 L84 86Z" fill="url(#${p}c)"/>
+        <!-- the arrow body -->
+        <path d="M65 6 L100 50 H82 V108 Q82 112 78 112 H52 Q48 112 48 108 V50 H30Z" fill="url(#${p}g)" stroke-linejoin="round"/>
+        <path d="M65 12 L82 34" stroke="#fff" stroke-opacity=".3" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <ellipse cx="58" cy="72" rx="3.4" ry="4.4" fill="#fff"/><ellipse cx="72" cy="72" rx="3.4" ry="4.4" fill="#fff"/>
+        <circle cx="57" cy="73" r="1.9" fill="#1e3a8a"/><circle cx="71" cy="73" r="1.9" fill="#1e3a8a"/>
+        <path d="M58 84 Q65 91 72 84" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <circle cx="52" cy="82" r="2.6" fill="#ffb4a0" opacity=".85"/><circle cx="78" cy="82" r="2.6" fill="#ffb4a0" opacity=".85"/>
+      </svg>`;
+      const C = (p) => `<svg viewBox="0 0 66 66">${defs(p)}
+        <path d="M30 18 L56 3" stroke="#1d4ed8" stroke-width="2.6" stroke-linecap="round"/>${star(57, 3, 0.42)}
+        <path d="M12 35 C8 33 6 30 5.5 26" stroke="#2563eb" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="5.5" cy="25" r="3" fill="#3b82f6"/>
+        <path d="M44 36 C47 37 48.5 39 49 41.5" stroke="#2563eb" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <rect x="10" y="16" width="36" height="32" rx="12" fill="url(#${p}g)"/>
+        <path d="M15 22c2-2 4-3 7-3" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="21" cy="30" rx="4.6" ry="5.2" fill="#fff"/><ellipse cx="35" cy="30" rx="4.6" ry="5.2" fill="#fff"/>
+        <circle cx="19.8" cy="30.8" r="2.3" fill="#1e3a8a"/><circle cx="33.8" cy="30.8" r="2.3" fill="#1e3a8a"/>
+        <circle cx="16" cy="37.5" r="2.2" fill="#ffb4a0" opacity=".8"/><circle cx="40" cy="37.5" r="2.2" fill="#ffb4a0" opacity=".8"/>
+        <path d="M24.5 38.5c1.8 2.4 5.2 2.4 7 0" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M23 48 L22 56" stroke="#1d4ed8" stroke-width="4" stroke-linecap="round"/><path d="M33 48 L34 56" stroke="#1d4ed8" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="20.5" cy="58" rx="5" ry="2.6" fill="#1e3a8a"/><ellipse cx="35.5" cy="58" rx="5" ry="2.6" fill="#1e3a8a"/>
+      </svg>`;
+      for (const [k, f] of Object.entries({ A, B, C })) {
+        document.getElementById(k).innerHTML = f(k + 'big');
+        document.getElementById(k + '76').innerHTML = f(k + 's') + '<small>76px</small>';
+        document.getElementById(k + '48').innerHTML = f(k + 'x') + '<small>48px</small>';
+      }
+    </script>
+  </body>
+</html>
