@@ -54,7 +54,9 @@ test.describe('English chosen', () => {
 
     await expect(page.getByText('Step 1 of 4')).toBeVisible();
     await page.getByLabel(/Business name/).fill('Sarah Hair Studio');
-    await page.getByLabel(/Industry/).selectOption('beauty');
+    await page.getByLabel(/Industry/).click();
+    await page.getByRole('searchbox').fill('Hair');
+    await page.getByRole('option', { name: 'Hair & beauty' }).click();
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByText('Step 2 of 4')).toBeVisible();
     await page.getByLabel(/Business phone/).fill('050-1234567');

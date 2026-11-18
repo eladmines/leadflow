@@ -24,7 +24,9 @@ test('owner completes onboarding (resuming after a reload) and reaches the busin
   // Step 1
   await expect(page.getByText('שלב 1 מתוך 4')).toBeVisible();
   await page.getByLabel(/שם העסק/).fill('מספרת שירן');
-  await page.getByLabel(/תחום פעילות/).selectOption('beauty');
+  await page.getByLabel(/תחום פעילות/).click();
+  await page.getByRole('searchbox').fill('ספרה');
+  await page.getByRole('option', { name: 'מספרה וקוסמטיקה' }).click();
   await page.getByRole('button', { name: 'המשך' }).click();
 
   // Step 2
