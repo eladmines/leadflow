@@ -911,10 +911,10 @@ export const enPart3: Record<string, string> = {
   'אם המספר פעיל באפליקציית WhatsApp Business, החיבור עלול לנתק אותו מהאפליקציה, והודעות ילכו רק למערכת. מומלץ לחבר מספר חדש, או לוודא קודם מול Meta שהמספר יישאר זמין באפליקציה.':
     'If the number is active in the WhatsApp Business app, connecting it may disconnect it from the app, and messages will reach only the system. We recommend connecting a new number, or checking with Meta first that the number stays available in the app.',
   'השאלות שלכם ללקוח': 'Your questions for the customer',
-  'הבוט שואל {0} שאלות, אחת אחרי השנייה, ומחכה לתשובה לפני הבאה.':
-    'The bot asks {0} questions, one after another, waiting for an answer before the next.',
-  'כתבו רשימת שאלות משלכם (תאריך, שעה, מקום, מספר מוזמנים…). הבוט ישאל אותן אחת אחרי השנייה כשלקוח מבקש לקבוע. בלי רשימה, הבוט שואל את השאלות הרגילות.':
-    'Write your own list of questions (date, time, place, guests…). The bot asks them one after another when a customer asks to book. Without a list, the bot asks its usual questions.',
+  'אחרי ההודעה הבוט שואל {0} שאלות, אחת אחרי השנייה, ומחכה לתשובה לפני הבאה.':
+    'After the message the bot asks {0} questions, one after another, waiting for an answer before the next.',
+  'כתבו רשימת שאלות משלכם (תאריך, שעה, מקום, מספר מוזמנים…). אחרי הודעת הסטטוס הבוט ישאל אותן אחת אחרי השנייה.':
+    'Write your own list of questions (date, time, place, guests…). After the status message the bot asks them one after another.',
   'עריכת השאלות': 'Edit questions',
   'הוספת שאלות': 'Add questions',
   'הבוט שולח שאלה אחת, מחכה לתשובת הלקוח, ואז שולח את הבאה. בסוף אתם מקבלים את כל התשובות במשימה ובהערה בכרטיס הליד.':

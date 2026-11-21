@@ -481,6 +481,9 @@ export class BookingBot {
     // and "when can we talk?"; the team still gets the customer's message (bell and pop-up).
     if (mode === 'auto_reply') {
       if (await this.teamIsTalking(chat.numberId, now)) return 'none';
+      if (session?.step === 'ev_q') {
+        return choice ? this.repeatQuestion(chat) : this.onAnswer(chat, msg.body);
+      }
       await this.answer(chat, replies, now, false);
       return 'none';
     }
@@ -574,6 +577,12 @@ export class BookingBot {
     now: Date,
     withBooking: boolean,
   ): Promise<BotOutcome> {
+    // The owner's own questions follow the status message, one after another (the "when can we
+    // talk?" choices come once they're all answered).
+    if (chat.business.questions.length) {
+      await this.say(chat, replyTextOf(business, now));
+      return this.askQuestion(chat, []);
+    }
     await this.say(
       chat,
       replyTextOf(business, now),
@@ -696,8 +705,6 @@ export class BookingBot {
   // ------------------------------------------------------------------ steps
 
   private async start(chat: Chat, now: Date): Promise<BotOutcome> {
-    // The owner's own questions replace the flow's built-in ones (event or appointment).
-    if (chat.business.questions.length) return this.askQuestion(chat, []);
     if (chat.business.flow === 'event') return this.askHowToHelp(chat);
     const services = await this.activeServices(chat.business.id);
     if (services.length === 1) return this.askDay(chat, services[0]!.id, now);
@@ -1048,7 +1055,7 @@ export class BookingBot {
     return this.askQuestion(chat, [...answers, answer]);
   }
 
-  /** All answered: files the customer, gives the owner a task and a lead note with the answers. */
+  /** All answered: files the customer, gives the owner a task and a lead note with the answers, then asks when to talk. */
   private async finishQuestions(chat: Chat, answers: string[]): Promise<BotOutcome> {
     const w = wordsOf(chat);
     const lines = chat.business.questions.map((q, i) => `${q.text}\n${answers[i] ?? '—'}`);
@@ -1079,18 +1086,11 @@ export class BookingBot {
         });
       }
       await tx.whatsAppBotSession.deleteMany({ where: { numberId: chat.numberId } });
-      return { customer, name: contact?.name ?? chat.phone };
+      return customer;
     });
-    chat.link = booked.customer;
+    chat.link = booked;
     chat.session = null;
-    await this.say(chat, w.questionsThanks);
-    await notifySafe(this.prisma, this.log, {
-      businessId: chat.business.id,
-      type: 'appointment.booked',
-      data: { leadId: booked.customer.leadId, name: booked.name, when: w.event, pending: true },
-      to: { roles: MANAGERS },
-    });
-    await this.showcase(chat, { force: true });
+    await this.say(chat, w.questionsThanks, await this.talkChoices(chat, chat.now, false));
     return 'handled';
   }
 

@@ -7,6 +7,7 @@ import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useBotSettings, useSetStatus, useUpdateBotSettings } from './api';
 import { toRequest } from './BookingBotCard';
+import { QuestionsCard } from './QuestionsEditor';
 import { ConversationPreview } from './ConversationPreview';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
@@ -198,6 +199,8 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
           'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר. שעה שנבחרה נכנסת ליומן, ואתם מקבלים משימה לחזור אליו.',
         )}
       </p>
+
+      <QuestionsCard businessId={businessId} saved={saved} />
 
       {current && !current.preset && (
         <button

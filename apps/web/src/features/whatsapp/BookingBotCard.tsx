@@ -31,7 +31,6 @@ import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
-import { QuestionsCard } from './QuestionsEditor';
 import { useBotSettings, useShowcaseVideo, useUpdateBotSettings } from './api';
 
 /**
@@ -143,7 +142,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           />
         </div>
       )}
-      <QuestionsCard businessId={businessId} saved={stored} />
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {saved && !dirty && <Alert tone="success">{tr('ההגדרות נשמרו.')}</Alert>}
       <div className="flex flex-wrap items-center gap-3">
