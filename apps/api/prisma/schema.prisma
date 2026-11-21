@@ -162,6 +162,8 @@ model Business {
   /// 'appointment' | 'event' (D-107); null = the industry's flow.
   whatsappBotFlow        String?        @map("whatsapp_bot_flow") @db.VarChar(20)
   /// Event requests hold their date (D-108); off = only confirmed events block a date.
+  /// The owner's own event questions, asked one after another: [{ id, text }]; null/empty = built-in.
+  whatsappQuestions      Json?          @map("whatsapp_questions")
   whatsappBotHoldDate    Boolean        @default(false) @map("whatsapp_bot_hold_date")
   /// D-123: off | auto_reply | booking (booking also keeps whatsappBotEnabled on).
   whatsappReplyMode      String         @default("auto_reply") @map("whatsapp_reply_mode") @db.VarChar(20)

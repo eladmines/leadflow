@@ -27,6 +27,7 @@ import {
   activeOf,
   languageOf,
   modeOf,
+  questionsOf,
   replyTextOf,
   showcaseVideoOf,
   statusesOf,
@@ -70,6 +71,7 @@ const OPEN_STEPS = [
   'ev_guests',
   'ev_area',
   'ev_confirm',
+  'ev_q',
 ];
 
 const PARTS = {
@@ -141,6 +143,9 @@ const WORDS = {
     notUnderstood: 'לא הבנתי 🙂 בחרו מהרשימה, או כתבו "נציג" כדי לדבר עם הצוות.\n\n',
     notUnderstoodEvent: 'לא הבנתי 🙂 בחרו מהאפשרויות, או כתבו "נציג" כדי לדבר עם הצוות.\n\n',
     whichAreaEvent: 'באיזה אזור או עיר יהיה האירוע?',
+    questionsTask: (name: string) => `שאלון מוואטסאפ: ${name}`,
+    questionsNote: 'תשובות מהשאלון בוואטסאפ',
+    questionsThanks: 'תודה רבה על כל התשובות! 🙏\nנחזור אליכם בהקדם.',
     checkDate: '📅 לבדוק תאריך',
     personalChat: '💬 שיחה אישית',
     from: (price: number) => `החל מ־₪${price}`,
@@ -216,6 +221,9 @@ const WORDS = {
     notUnderstoodEvent:
       'Sorry, I didn\'t get that 🙂 Choose one of the options, or write "agent" to talk to the team.\n\n',
     whichAreaEvent: 'Which area or town will the event be in?',
+    questionsTask: (name: string) => `WhatsApp questionnaire: ${name}`,
+    questionsNote: 'Answers from the WhatsApp questions',
+    questionsThanks: "Thank you for all the answers! 🙏\nWe'll get back to you soon.",
     checkDate: '📅 Check a date',
     personalChat: '💬 Personal chat',
     from: (price: number) => `From ₪${price}`,
@@ -294,6 +302,8 @@ type Business = {
   flow: BotFlow;
   /** Event requests hold their date until the owner decides. */
   holdDate: boolean;
+  /** The owner's own event questions, asked in order (none = the built-in ones). */
+  questions: { id: string; text: string }[];
 };
 interface Chat {
   business: Business;
@@ -498,7 +508,7 @@ export class BookingBot {
       return 'handled';
     }
     if (choice === 'book') {
-      return chat.business.flow === 'event' ? this.askEventType(chat) : this.start(chat, now);
+      return chat.business.flow === 'event' ? this.beginEvent(chat) : this.start(chat, now);
     }
 
     if (!session) {
@@ -963,7 +973,9 @@ export class BookingBot {
     now: Date,
   ): Promise<BotOutcome> {
     const s = chat.session!;
-    if (choice === 'ev_start') return this.askEventType(chat);
+    // The owner's own questions: every typed message is the answer to the current one.
+    if (s.step === 'ev_q' && !choice) return this.onAnswer(chat, body);
+    if (choice === 'ev_start') return this.beginEvent(chat);
     if (choice?.startsWith('evt:')) return this.pickEventType(chat, choice.slice(4));
     if (choice === 'ev_edit') return this.askEventType(chat);
     if (choice === 'other_date') return this.askEventDate(chat);
@@ -999,6 +1011,81 @@ export class BookingBot {
         ...(this.hasShowcase(chat) ? [seeOurWork(chat)] : []),
       ],
     });
+    return 'handled';
+  }
+
+  /** Starts the event questions: the owner's own when it wrote some, else the built-in ones. */
+  private beginEvent(chat: Chat): Promise<BotOutcome> {
+    return chat.business.questions.length ? this.askQuestion(chat, []) : this.askEventType(chat);
+  }
+
+  /** Asks the next of the owner's questions (the one after the answers so far). */
+  private async askQuestion(chat: Chat, answers: string[]): Promise<BotOutcome> {
+    const question = chat.business.questions[answers.length];
+    if (!question) return this.finishQuestions(chat, answers);
+    await this.setSession(chat, {
+      step: 'ev_q',
+      serviceId: null,
+      date: null,
+      time: null,
+      data: { answers } as Prisma.InputJsonValue,
+    });
+    await this.say(chat, question.text);
+    return 'handled';
+  }
+
+  private async onAnswer(chat: Chat, body: string): Promise<BotOutcome> {
+    const stored = (chat.session?.data as { answers?: unknown } | null)?.answers;
+    const answers = Array.isArray(stored) ? stored.map(String) : [];
+    const answer = body.trim().replace(/\s+/g, ' ').slice(0, 300);
+    // Nothing to keep (an empty message): the same question again.
+    if (!answer) return this.askQuestion(chat, answers);
+    return this.askQuestion(chat, [...answers, answer]);
+  }
+
+  /** All answered: files the customer, gives the owner a task and a lead note with the answers. */
+  private async finishQuestions(chat: Chat, answers: string[]): Promise<BotOutcome> {
+    const w = wordsOf(chat);
+    const lines = chat.business.questions.map((q, i) => `${q.text}\n${answers[i] ?? '—'}`);
+    const booked = await this.prisma.$transaction(async (tx) => {
+      const customer = await this.ensureCustomer(tx, chat.business.id, chat.numberId);
+      const [contact, owner] = await Promise.all([
+        tx.contact.findUnique({ where: { id: customer.contactId }, select: { name: true } }),
+        this.ownerOf(chat.business.id, tx),
+      ]);
+      await tx.activity.create({
+        data: {
+          businessId: chat.business.id,
+          leadId: customer.leadId,
+          type: 'lead.note',
+          data: { text: `${w.questionsNote}\n\n${lines.join('\n\n')}`.slice(0, 2000) },
+        },
+      });
+      if (owner) {
+        await tx.task.create({
+          data: {
+            businessId: chat.business.id,
+            title: w.questionsTask(contact?.name ?? chat.phone).slice(0, 200),
+            notes: lines.join('\n').slice(0, 1000),
+            dueAt: chat.now,
+            assigneeId: owner,
+            leadId: customer.leadId,
+          },
+        });
+      }
+      await tx.whatsAppBotSession.deleteMany({ where: { numberId: chat.numberId } });
+      return { customer, name: contact?.name ?? chat.phone };
+    });
+    chat.link = booked.customer;
+    chat.session = null;
+    await this.say(chat, w.questionsThanks);
+    await notifySafe(this.prisma, this.log, {
+      businessId: chat.business.id,
+      type: 'appointment.booked',
+      data: { leadId: booked.customer.leadId, name: booked.name, when: w.event, pending: true },
+      to: { roles: MANAGERS },
+    });
+    await this.showcase(chat, { force: true });
     return 'handled';
   }
 
@@ -1234,7 +1321,10 @@ export class BookingBot {
     const prefix = wordsOf(chat).notUnderstoodEvent;
     const data = this.eventData(chat);
     let out: BotOutcome;
-    if (s.step === 'ev_intro') out = await this.askHowToHelp(chat, prefix);
+    if (s.step === 'ev_q') {
+      const stored = (data as { answers?: unknown } | null)?.answers;
+      out = await this.askQuestion(chat, Array.isArray(stored) ? stored.map(String) : []);
+    } else if (s.step === 'ev_intro') out = await this.askHowToHelp(chat, prefix);
     else if (s.step === 'ev_part' && s.date) {
       await this.say(chat, prefix.trim());
       chat.session = { ...s, step: 'ev_date' };
@@ -1443,6 +1533,7 @@ export class BookingBot {
         whatsappBotShowcase: true,
         whatsappBotFlow: true,
         whatsappBotHoldDate: true,
+        whatsappQuestions: true,
         language: true,
       },
     });
@@ -1462,6 +1553,7 @@ export class BookingBot {
         language: languageOf(business.language),
         showcaseVideo: showcaseVideoOf(business.whatsappBotShowcase)?.key ?? null,
         holdDate: business.whatsappBotHoldDate,
+        questions: questionsOf(business.whatsappQuestions),
         flow,
         texts: texts.success ? texts.data : {},
         showcase: showcase.success

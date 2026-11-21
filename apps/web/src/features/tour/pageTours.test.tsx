@@ -65,6 +65,7 @@ describe('page tours (D-096)', () => {
             autoReplyText: null,
             autoReplyDefault: AUTO_REPLY_DEFAULT,
             statuses: STATUS_PRESETS.map((p) => ({ ...p, preset: true })),
+            questions: [],
             activeStatus: null,
             videoBytesUsed: 0,
             enabled: true,

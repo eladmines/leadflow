@@ -45,6 +45,7 @@ const botSettings = (mode: 'off' | 'auto_reply' | 'booking' = 'booking') => ({
   autoReplyText: null,
   autoReplyDefault: AUTO_REPLY_DEFAULT,
   statuses: presets,
+  questions: [],
   activeStatus: null,
   videoBytesUsed: 0,
   enabled: mode === 'booking',

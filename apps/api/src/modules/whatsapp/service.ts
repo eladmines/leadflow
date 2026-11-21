@@ -38,6 +38,7 @@ import {
   mergeStatuses,
   modeOf,
   statusDtos,
+  questionsOf,
   statusesOf,
   languageOf,
 } from './auto-reply';
@@ -658,6 +659,7 @@ export class WhatsAppService {
         whatsappBotShowcase: true,
         whatsappBotFlow: true,
         whatsappBotHoldDate: true,
+        whatsappQuestions: true,
         whatsappReplyMode: true,
         whatsappAutoReplyText: true,
         whatsappStatuses: true,
@@ -682,6 +684,7 @@ export class WhatsAppService {
         autoReplyText: b.whatsappAutoReplyText,
         autoReplyDefault: autoReplyDefaultFor(lang),
         statuses: statusDtos(statuses),
+        questions: questionsOf(b.whatsappQuestions),
         activeStatus: active ? { id: active.status.id, until: active.until } : null,
         enabled: b.whatsappBotEnabled,
         autoConfirm: b.whatsappBotAutoConfirm,
@@ -741,6 +744,7 @@ export class WhatsAppService {
       await tx.business.update({
         where: { id: ctx.businessId },
         data: {
+          ...(input.questions ? { whatsappQuestions: input.questions } : {}),
           whatsappReplyMode: mode,
           whatsappAutoReplyText: input.autoReplyText,
           ...statusData,
@@ -782,6 +786,7 @@ export class WhatsAppService {
           mode,
           customAutoReply: input.autoReplyText !== null,
           statuses: input.statuses?.length,
+          questions: input.questions?.length,
           enabled,
           autoConfirm: input.autoConfirm,
           customTexts: Object.keys(input.texts),

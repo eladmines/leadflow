@@ -907,4 +907,22 @@ export const enPart3: Record<string, string> = {
   'כבר קיים כלקוח': 'Already a customer',
   'אפשר לייבא עד 1000 שורות בכל פעם': 'You can import up to 1000 rows at a time',
   'לא נמצאו שורות לייבוא': 'No rows to import',
+  'לפני שמחברים מספר': 'Before you connect a number',
+  'אם המספר פעיל באפליקציית WhatsApp Business, החיבור עלול לנתק אותו מהאפליקציה, והודעות ילכו רק למערכת. מומלץ לחבר מספר חדש, או לוודא קודם מול Meta שהמספר יישאר זמין באפליקציה.':
+    'If the number is active in the WhatsApp Business app, connecting it may disconnect it from the app, and messages will reach only the system. We recommend connecting a new number, or checking with Meta first that the number stays available in the app.',
+  'השאלות שלכם ללקוח': 'Your questions for the customer',
+  'הבוט שואל {0} שאלות, אחת אחרי השנייה, ומחכה לתשובה לפני הבאה.':
+    'The bot asks {0} questions, one after another, waiting for an answer before the next.',
+  'כתבו רשימת שאלות משלכם (תאריך, שעה, מקום, מספר מוזמנים…). הבוט ישאל אותן אחת אחרי השנייה. בלי רשימה, הבוט שואל את השאלות הרגילות.':
+    'Write your own list of questions (date, time, place, guests…). The bot asks them one after another. Without a list, the bot asks its usual questions.',
+  'עריכת השאלות': 'Edit questions',
+  'הוספת שאלות': 'Add questions',
+  'הבוט שולח שאלה אחת, מחכה לתשובת הלקוח, ואז שולח את הבאה. בסוף אתם מקבלים את כל התשובות במשימה ובהערה בכרטיס הליד.':
+    "The bot sends one question, waits for the customer's answer, then sends the next. At the end you get all the answers as a task and a note on the lead.",
+  'שאלה {0}': 'Question {0}',
+  'מחיקת שאלה {0}': 'Delete question {0}',
+  'שאלה נוספת': 'Add another question',
+  'שמירת השאלות': 'Save questions',
+  'יש לכתוב את השאלה': 'Write the question',
+  'השאלה ארוכה מדי (עד 300 תווים)': 'The question is too long (up to 300 characters)',
 };
