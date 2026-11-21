@@ -737,6 +737,33 @@ describe('WhatsApp booking bot (D-102)', () => {
       expect(last().text).toBe('ובאיזה אזור או עיר?');
     });
 
+    it("asks the owner's own questions one after another and hands over the answers", async () => {
+      const { owner } = await setup({ industry: 'events', services: 0, name: 'DJ רון' });
+      await ctx.prisma.business.update({
+        where: { id: BUSINESS_ID },
+        data: {
+          whatsappQuestions: [
+            { id: 'q1', text: '📅 מה תאריך האירוע?' },
+            { id: 'q2', text: '👥 כמה מוזמנים צפויים?' },
+          ],
+        },
+      });
+      await post(text('אירוע'));
+      await post(tap('ev_start'));
+      expect(last().text).toBe('📅 מה תאריך האירוע?');
+      expect(last().choices).toBeUndefined();
+      await post(text('14.2.2027'));
+      expect(last().text).toBe('👥 כמה מוזמנים צפויים?');
+      await post(text('בערך 120'));
+      expect(last().text).toMatch(/^תודה רבה על כל התשובות/);
+      const task = await ctx.prisma.task.findFirstOrThrow({ where: { businessId: BUSINESS_ID } });
+      expect(task.assigneeId).toBe(owner.userId);
+      expect(task.notes).toBe('📅 מה תאריך האירוע?\n14.2.2027\n👥 כמה מוזמנים צפויים?\nבערך 120');
+      const note = await ctx.prisma.activity.findFirstOrThrow({ where: { type: 'lead.note' } });
+      expect(JSON.stringify(note.data)).toContain('בערך 120');
+      expect(await ctx.prisma.whatsAppBotSession.count()).toBe(0);
+    });
+
     it('the business can switch the flow either way', async () => {
       const { owner } = await setup({ industry: 'beauty' });
       const get = (await req(ctx.app, 'GET', wp.bot(BUSINESS_ID), owner.token)).json();

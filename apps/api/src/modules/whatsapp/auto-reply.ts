@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
 import {
   autoReplyDefaultFor,
+  botQuestionSchema,
+  type BotQuestion,
   languageSchema,
   REPLY_MODES,
   STATUS_PRESETS,
@@ -38,6 +40,12 @@ export const modeOf = (raw: string): ReplyMode =>
 export function statusesOf(raw: unknown, lang: Language = 'he'): StoredStatus[] {
   const parsed = z.array(storedStatus).safeParse(raw);
   return parsed.success ? parsed.data : statusPresetsFor(lang).map((p) => ({ ...p }));
+}
+
+/** The owner's own event questions (none stored or invalid = the built-in questions). */
+export function questionsOf(raw: unknown): BotQuestion[] {
+  const parsed = z.array(botQuestionSchema).safeParse(raw);
+  return parsed.success ? parsed.data : [];
 }
 
 /** A business's language as stored (D-143); anything else is Hebrew. */

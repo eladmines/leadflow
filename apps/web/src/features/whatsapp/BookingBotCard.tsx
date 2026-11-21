@@ -31,6 +31,7 @@ import { MediaPicker } from '../media/MediaPicker';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
+import { QuestionsCard } from './QuestionsEditor';
 import { useBotSettings, useShowcaseVideo, useUpdateBotSettings } from './api';
 
 /**
@@ -123,6 +124,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
               'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד היומן.',
             )}
           </p>
+          <QuestionsCard businessId={businessId} saved={stored} />
         </>
       ) : (
         <div role="group" aria-label={tr('כשלקוח קובע תור:')} className="max-w-md">

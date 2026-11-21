@@ -460,6 +460,25 @@ export const setStatusRequestSchema = z.object({
 });
 export type SetStatusRequest = z.input<typeof setStatusRequestSchema>;
 
+/**
+ * The owner's own questions for an event request: the bot asks them one after another, waiting for
+ * each answer, and hands the team all the answers (replaces the built-in event questions).
+ */
+export const MAX_QUESTIONS = 12;
+export const questionMessages = {
+  textRequired: 'יש לכתוב את השאלה',
+  textTooLong: 'השאלה ארוכה מדי (עד 300 תווים)',
+} as const;
+export const botQuestionSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]{1,40}$/),
+  text: z
+    .string({ required_error: questionMessages.textRequired })
+    .trim()
+    .min(1, questionMessages.textRequired)
+    .max(300, questionMessages.textTooLong),
+});
+export type BotQuestion = z.infer<typeof botQuestionSchema>;
+
 export const whatsappBotSettingsSchema = z.object({
   /** Missing (older clients): follows `enabled` (on = booking). */
   mode: z.enum(REPLY_MODES).optional(),
@@ -467,6 +486,8 @@ export const whatsappBotSettingsSchema = z.object({
   autoReplyText: z.string().trim().max(1000, statusMessages.textTooLong).nullable().default(null),
   /** The statuses to keep (missing = unchanged). Videos stay with their status id. */
   statuses: z.array(replyStatusSchema).max(MAX_STATUSES).optional(),
+  /** The custom event questions (missing = unchanged; empty = the built-in questions). */
+  questions: z.array(botQuestionSchema).max(MAX_QUESTIONS).optional(),
   enabled: z.boolean(),
   /** true: booked as confirmed; false: booked as "waiting for approval" (holds the time). */
   autoConfirm: z.boolean(),
@@ -488,6 +509,7 @@ export const whatsappBotResponseSchema = z.object({
     autoReplyDefault: z.string(),
     statuses: z.array(replyStatusSchema.extend({ preset: z.boolean() })),
     /** The status on now (expired ones come back as null). */
+    questions: z.array(botQuestionSchema),
     activeStatus: z.object({ id: z.string(), until: z.string().datetime().nullable() }).nullable(),
     enabled: z.boolean(),
     autoConfirm: z.boolean(),
