@@ -751,6 +751,9 @@ describe('WhatsApp booking bot (D-102)', () => {
       await post(text('אירוע'));
       await post(tap('ev_start'));
       expect(last().text).toBe('📅 מה תאריך האירוע?');
+      // A button tapped meanwhile repeats the question instead of restarting.
+      await post(tap('ev_start'));
+      expect(last().text).toBe('📅 מה תאריך האירוע?');
       expect(last().choices).toBeUndefined();
       await post(text('14.2.2027'));
       expect(last().text).toBe('👥 כמה מוזמנים צפויים?');
@@ -762,6 +765,18 @@ describe('WhatsApp booking bot (D-102)', () => {
       const note = await ctx.prisma.activity.findFirstOrThrow({ where: { type: 'lead.note' } });
       expect(JSON.stringify(note.data)).toContain('בערך 120');
       expect(await ctx.prisma.whatsAppBotSession.count()).toBe(0);
+    });
+
+    it('the questions work in the appointment flow too', async () => {
+      await setup({ industry: 'beauty' });
+      await ctx.prisma.business.update({
+        where: { id: BUSINESS_ID },
+        data: { whatsappQuestions: [{ id: 'q1', text: 'מה שמך המלא?' }] },
+      });
+      await post(text('תור'));
+      expect(last().text).toBe('מה שמך המלא?');
+      await post(text('נועה'));
+      expect(last().text).toMatch(/^תודה רבה על כל התשובות/);
     });
 
     it('the business can switch the flow either way', async () => {

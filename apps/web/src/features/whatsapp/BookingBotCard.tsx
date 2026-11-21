@@ -124,7 +124,6 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
               'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד היומן.',
             )}
           </p>
-          <QuestionsCard businessId={businessId} saved={stored} />
         </>
       ) : (
         <div role="group" aria-label={tr('כשלקוח קובע תור:')} className="max-w-md">
@@ -144,6 +143,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           />
         </div>
       )}
+      <QuestionsCard businessId={businessId} saved={stored} />
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {saved && !dirty && <Alert tone="success">{tr('ההגדרות נשמרו.')}</Alert>}
       <div className="flex flex-wrap items-center gap-3">

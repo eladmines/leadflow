@@ -508,7 +508,7 @@ export class BookingBot {
       return 'handled';
     }
     if (choice === 'book') {
-      return chat.business.flow === 'event' ? this.beginEvent(chat) : this.start(chat, now);
+      return this.start(chat, now);
     }
 
     if (!session) {
@@ -543,6 +543,10 @@ export class BookingBot {
       );
       await this.showcase(chat, { offerBooking: true });
       return 'handled';
+    }
+    // The owner's own questions, in either flow: a typed message answers the current question.
+    if (session.step === 'ev_q') {
+      return choice ? this.repeatQuestion(chat) : this.onAnswer(chat, msg.body);
     }
     if (chat.business.flow === 'event') return this.onEvent(chat, choice, msg.body, now);
     if (choice?.startsWith('svc:')) return this.pickService(chat, choice.slice(4), now);
@@ -692,6 +696,8 @@ export class BookingBot {
   // ------------------------------------------------------------------ steps
 
   private async start(chat: Chat, now: Date): Promise<BotOutcome> {
+    // The owner's own questions replace the flow's built-in ones (event or appointment).
+    if (chat.business.questions.length) return this.askQuestion(chat, []);
     if (chat.business.flow === 'event') return this.askHowToHelp(chat);
     const services = await this.activeServices(chat.business.id);
     if (services.length === 1) return this.askDay(chat, services[0]!.id, now);
@@ -973,9 +979,7 @@ export class BookingBot {
     now: Date,
   ): Promise<BotOutcome> {
     const s = chat.session!;
-    // The owner's own questions: every typed message is the answer to the current one.
-    if (s.step === 'ev_q' && !choice) return this.onAnswer(chat, body);
-    if (choice === 'ev_start') return this.beginEvent(chat);
+    if (choice === 'ev_start') return this.askEventType(chat);
     if (choice?.startsWith('evt:')) return this.pickEventType(chat, choice.slice(4));
     if (choice === 'ev_edit') return this.askEventType(chat);
     if (choice === 'other_date') return this.askEventDate(chat);
@@ -1014,9 +1018,10 @@ export class BookingBot {
     return 'handled';
   }
 
-  /** Starts the event questions: the owner's own when it wrote some, else the built-in ones. */
-  private beginEvent(chat: Chat): Promise<BotOutcome> {
-    return chat.business.questions.length ? this.askQuestion(chat, []) : this.askEventType(chat);
+  /** A button tapped mid-questions: the current question again. */
+  private repeatQuestion(chat: Chat): Promise<BotOutcome> {
+    const stored = (chat.session?.data as { answers?: unknown } | null)?.answers;
+    return this.askQuestion(chat, Array.isArray(stored) ? stored.map(String) : []);
   }
 
   /** Asks the next of the owner's questions (the one after the answers so far). */
@@ -1321,10 +1326,7 @@ export class BookingBot {
     const prefix = wordsOf(chat).notUnderstoodEvent;
     const data = this.eventData(chat);
     let out: BotOutcome;
-    if (s.step === 'ev_q') {
-      const stored = (data as { answers?: unknown } | null)?.answers;
-      out = await this.askQuestion(chat, Array.isArray(stored) ? stored.map(String) : []);
-    } else if (s.step === 'ev_intro') out = await this.askHowToHelp(chat, prefix);
+    if (s.step === 'ev_intro') out = await this.askHowToHelp(chat, prefix);
     else if (s.step === 'ev_part' && s.date) {
       await this.say(chat, prefix.trim());
       chat.session = { ...s, step: 'ev_date' };

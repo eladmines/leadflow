@@ -913,8 +913,8 @@ export const enPart3: Record<string, string> = {
   'השאלות שלכם ללקוח': 'Your questions for the customer',
   'הבוט שואל {0} שאלות, אחת אחרי השנייה, ומחכה לתשובה לפני הבאה.':
     'The bot asks {0} questions, one after another, waiting for an answer before the next.',
-  'כתבו רשימת שאלות משלכם (תאריך, שעה, מקום, מספר מוזמנים…). הבוט ישאל אותן אחת אחרי השנייה. בלי רשימה, הבוט שואל את השאלות הרגילות.':
-    'Write your own list of questions (date, time, place, guests…). The bot asks them one after another. Without a list, the bot asks its usual questions.',
+  'כתבו רשימת שאלות משלכם (תאריך, שעה, מקום, מספר מוזמנים…). הבוט ישאל אותן אחת אחרי השנייה כשלקוח מבקש לקבוע. בלי רשימה, הבוט שואל את השאלות הרגילות.':
+    'Write your own list of questions (date, time, place, guests…). The bot asks them one after another when a customer asks to book. Without a list, the bot asks its usual questions.',
   'עריכת השאלות': 'Edit questions',
   'הוספת שאלות': 'Add questions',
   'הבוט שולח שאלה אחת, מחכה לתשובת הלקוח, ואז שולח את הבאה. בסוף אתם מקבלים את כל התשובות במשימה ובהערה בכרטיס הליד.':
