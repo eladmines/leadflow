@@ -1,7 +1,7 @@
 import { botQuestionSchema, MAX_QUESTIONS, type BotQuestion } from '@simplecatch/shared';
 import { ArrowDown, ArrowUp, ListOrdered, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { Alert, Button, DialogShell, Textarea } from '../../components/ui';
+import { useRef, useState } from 'react';
+import { Alert, Button, DialogShell, EmojiPicker, Textarea } from '../../components/ui';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useUpdateBotSettings } from './api';
@@ -100,17 +100,12 @@ function QuestionsForm({
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <Textarea
-                label={tr('שאלה {0}', String(i + 1))}
-                dir="auto"
-                rows={2}
-                maxLength={300}
+              <QuestionBox
+                index={i}
                 value={q.text}
                 error={errors[i] ? tr(errors[i]!) : undefined}
-                onChange={(e) =>
-                  setItems((list) =>
-                    list.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)),
-                  )
+                onChange={(text) =>
+                  setItems((list) => list.map((x, j) => (j === i ? { ...x, text } : x)))
                 }
               />
             </div>
@@ -165,6 +160,36 @@ function QuestionsForm({
           {tr('ביטול')}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** One question's text box with its emoji picker. */
+function QuestionBox({
+  index,
+  value,
+  error,
+  onChange,
+}: {
+  index: number;
+  value: string;
+  error?: string;
+  onChange: (text: string) => void;
+}) {
+  const box = useRef<HTMLTextAreaElement>(null);
+  return (
+    <div className="flex flex-col gap-2">
+      <Textarea
+        ref={box}
+        label={tr('שאלה {0}', String(index + 1))}
+        dir="auto"
+        rows={2}
+        maxLength={300}
+        value={value}
+        error={error}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <EmojiPicker target={box} value={value} onInsert={onChange} />
     </div>
   );
 }
