@@ -1,7 +1,7 @@
 import {
   apiPaths,
-  type Channel,
   type ChannelsResponse,
+  type ConnectionChannel,
   type ConnectFacebookRequest,
   type ConnectInstagramRequest,
   type ConnectWhatsAppRequest,
@@ -64,7 +64,7 @@ export const useCreateEmailAddress = (businessId: string) =>
   );
 
 export const useDisconnect = (businessId: string) =>
-  useChannelMutation(businessId, (channel: Channel) =>
+  useChannelMutation(businessId, (channel: ConnectionChannel) =>
     apiFetch<ChannelsResponse>(apiPaths.channels.channel(businessId, channel), {
       method: 'DELETE',
     }),
@@ -80,6 +80,14 @@ export function useFacebookStart(
         `${apiPaths.channels.facebookStart(businessId)}${forChannel === 'instagram' ? '?for=instagram' : ''}`,
       ),
     // Off to Facebook's sign-in; it sends the person back to this tab.
+    onSuccess: ({ url }) => window.location.assign(url),
+  });
+}
+
+/** Gmail (F29): off to Google's consent screen; it sends the person back to this tab. */
+export function useGmailStart(businessId: string) {
+  return useMutation({
+    mutationFn: () => apiFetch<{ url: string }>(apiPaths.channels.gmailStart(businessId)),
     onSuccess: ({ url }) => window.location.assign(url),
   });
 }

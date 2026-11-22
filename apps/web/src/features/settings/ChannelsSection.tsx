@@ -3,8 +3,8 @@ import {
   can,
   channelsMessages,
   connectWhatsAppRequestSchema,
-  type Channel,
   type ChannelStatus,
+  type ConnectionChannel,
   type ConnectWhatsAppRequest,
 } from '@simplecatch/shared';
 import {
@@ -13,6 +13,7 @@ import {
   Copy,
   ExternalLink,
   Facebook,
+  Inbox,
   Instagram,
   Mail,
   MessageCircle,
@@ -36,6 +37,7 @@ import {
   useDisconnect,
   useFacebookPages,
   useFacebookStart,
+  useGmailStart,
 } from './channelsApi';
 import { Section } from './SettingsPage';
 import { PersonalNumbers } from '../whatsapp/PersonalNumbers';
@@ -46,6 +48,12 @@ const FACEBOOK_RESULTS: Record<string, string> = {
   cancelled: 'החיבור לפייסבוק בוטל.',
   error: channelsMessages.facebookFailed,
   'no-pages': channelsMessages.noPages,
+};
+/** What came back from Google's sign-in (`?gmail=`); `connected` needs no message. */
+const GMAIL_RESULTS: Record<string, string> = {
+  cancelled: channelsMessages.gmailCancelled,
+  error: channelsMessages.gmailFailed,
+  taken: channelsMessages.alreadyTaken,
 };
 const isUuid = (v: string | null) => Boolean(v && /^[0-9a-f-]{36}$/i.test(v));
 
@@ -59,6 +67,7 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
   const [params, setParams] = useSearchParams();
   const facebook = params.get('facebook');
   const instagram = params.get('instagram');
+  const gmail = params.get('gmail');
   const clearFacebook = () =>
     setParams(
       (p) => {
@@ -82,6 +91,7 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
       {facebook && FACEBOOK_RESULTS[facebook] && (
         <Alert tone="warning">{tr(FACEBOOK_RESULTS[facebook]!)}</Alert>
       )}
+      {gmail && GMAIL_RESULTS[gmail] && <Alert tone="warning">{tr(GMAIL_RESULTS[gmail]!)}</Alert>}
       {instagram && FACEBOOK_RESULTS[instagram] && (
         <Alert tone="warning">
           {tr(
@@ -111,6 +121,13 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
               facebook={channels.data.messenger}
               canEdit={canEdit}
               available={channels.data.facebookLogin}
+            />
+          </li>
+          <li>
+            <GmailRow
+              status={channels.data.gmail}
+              canEdit={canEdit}
+              available={channels.data.gmailLogin}
             />
           </li>
           <li>
@@ -262,7 +279,7 @@ function ChannelBox({
 }
 
 /** Turning the plug off asks for a short confirmation inside the box. */
-function useDisconnectFlow(channel: Channel) {
+function useDisconnectFlow(channel: ConnectionChannel) {
   const business = useCurrentBusiness();
   const disconnect = useDisconnect(business.id);
   const [confirm, setConfirm] = useState(false);
@@ -511,6 +528,52 @@ function EmailRow({
         <p className="text-sm text-ink-muted">{tr(channelsMessages.emailUnavailable)}</p>
       )}
       {create.isError && <Alert tone="danger">{errorMessage(create.error)}</Alert>}
+    </ChannelBox>
+  );
+}
+
+/**
+ * Gmail (F29, D-188): sign in with Google and the inbox feeds Conversations. New senders wait to be
+ * marked business or personal, and replies go out from the same Gmail.
+ */
+function GmailRow({
+  status,
+  canEdit,
+  available,
+}: {
+  status: ChannelStatus;
+  canEdit: boolean;
+  available: boolean;
+}) {
+  const business = useCurrentBusiness();
+  const start = useGmailStart(business.id);
+  const off = useDisconnectFlow('gmail');
+  const action = (
+    <PlugSwitch
+      title="Gmail"
+      connected={status.connected}
+      disabled={!canEdit || (!status.connected && !available)}
+      busy={start.isPending}
+      onToggle={() => (status.connected ? off.request() : start.mutate())}
+    />
+  );
+  return (
+    <ChannelBox
+      icon={Inbox}
+      tone="bg-red-500"
+      title="Gmail"
+      description={tr(
+        'מיילים שמגיעים ל-Gmail של העסק יופיעו בתיבת השיחות, ותוכלו לענות להם משם. שולחים חדשים ממתינים לסיווג כעסקי או פרטי.',
+      )}
+      state={stateOf(status)}
+      detail={detailOf(status)}
+      action={action}
+    >
+      {off.panel}
+      {canEdit && !available && !status.connected && (
+        <p className="text-sm text-ink-muted">{tr(channelsMessages.gmailUnavailable)}</p>
+      )}
+      {start.isError && <Alert tone="danger">{errorMessage(start.error)}</Alert>}
     </ChannelBox>
   );
 }

@@ -4,6 +4,7 @@ import {
   apiPaths,
   channelsMessages,
   type Channel,
+  type ConnectionChannel,
   type ChannelsResponse,
   type ConnectFacebookRequest,
   type ConnectInstagramRequest,
@@ -11,6 +12,7 @@ import {
   type FacebookPagesResponse,
 } from '@simplecatch/shared';
 import type { AppConfig } from '../../config/env';
+import type { GmailApi } from '../../integrations/gmail';
 import type { MetaApi, MetaPage } from '../../integrations/meta';
 import { AppError } from '../../lib/errors';
 import { openSecret, sealSecret, secretKey } from '../../lib/secret-box';
@@ -37,6 +39,7 @@ export class ChannelService {
     private readonly config: AppConfig,
     private readonly meta: MetaApi,
     private readonly log: Log,
+    private readonly gmail: GmailApi,
   ) {
     this.key = secretKey(config);
   }
@@ -64,9 +67,21 @@ export class ChannelService {
       whatsapp: one('whatsapp'),
       messenger: one('messenger'),
       instagram: one('instagram'),
+      gmail: (() => {
+        const row = rows.find((r) => r.channel === 'gmail');
+        return row
+          ? {
+              channel: 'email' as const,
+              connected: true,
+              name: row.displayName,
+              source: 'business' as const,
+            }
+          : { channel: 'email' as const, connected: false, name: null, source: null };
+      })(),
       email: one('email'),
       emailInbound: Boolean(this.config.EMAIL_INBOUND_DOMAIN && this.config.EMAIL_INBOUND_SECRET),
       facebookLogin: Boolean(this.config.META_APP_ID),
+      gmailLogin: Boolean(this.config.GOOGLE_CLIENT_ID && this.config.GOOGLE_CLIENT_SECRET),
     };
   }
 
@@ -107,10 +122,16 @@ export class ChannelService {
     return this.status(ctx);
   }
 
-  async disconnect(ctx: TenantContext, channel: Channel) {
+  async disconnect(ctx: TenantContext, channel: ConnectionChannel) {
     const row = await this.prisma.channelConnection.findUnique({
       where: { businessId_channel: { businessId: ctx.businessId, channel } },
     });
+    if (row && channel === 'gmail') {
+      // Tell Google the grant is gone (best effort: the row goes either way).
+      await this.gmail
+        .revoke(openSecret(row.tokenEncrypted, this.key))
+        .catch((err: Error) => this.log.error({ errName: err?.name }, 'gmail revoke failed'));
+    }
     if (row) {
       const pageStillUsed =
         channel === 'instagram' &&
@@ -185,7 +206,7 @@ export class ChannelService {
   async facebookCallback(q: { code?: string; state?: string; error?: string }): Promise<string> {
     const state = this.readState(q.state);
     const app = new URL(this.config.APP_URL).origin;
-    if (!state) return `${app}/app`;
+    if (!state || state.g) return `${app}/app`;
     const back = (result: string) =>
       `${app}/b/${state.b}/settings?tab=channels&${state.i ? 'instagram' : 'facebook'}=${encodeURIComponent(result)}`;
     if (q.error || !q.code) return back('cancelled');
@@ -306,6 +327,74 @@ export class ChannelService {
     return this.status(ctx);
   }
 
+  // ------------------------------------------------------------------ Gmail sign-in (F29)
+
+  private gmailRedirectUri() {
+    return `${new URL(this.config.APP_URL).origin}${apiPaths.channels.gmailCallback}`;
+  }
+
+  /** Where to send the person: Google's consent screen, coming back with a signed state. */
+  gmailStart(ctx: TenantContext): { url: string } {
+    if (!this.config.GOOGLE_CLIENT_ID || !this.config.GOOGLE_CLIENT_SECRET) {
+      throw new AppError('CONFLICT', channelsMessages.gmailUnavailable);
+    }
+    const state = this.signState({
+      b: ctx.businessId,
+      u: ctx.userId,
+      e: Date.now() + STATE_TTL_MS,
+      g: 1,
+    });
+    return { url: this.gmail.authUrl(this.gmailRedirectUri(), state) };
+  }
+
+  /**
+   * Google sends the person back here. The inbox is connected on the spot (one account, nothing to
+   * choose); only mail that arrives from now on is imported. The answer is where to send the browser.
+   */
+  async gmailCallback(q: { code?: string; state?: string; error?: string }): Promise<string> {
+    const state = this.readState(q.state);
+    const app = new URL(this.config.APP_URL).origin;
+    if (!state || !state.g) return `${app}/app`;
+    const back = (result: string) =>
+      `${app}/b/${state.b}/settings?tab=channels&gmail=${encodeURIComponent(result)}`;
+    if (q.error || !q.code) return back('cancelled');
+    try {
+      const tokens = await this.gmail.exchangeCode(q.code, this.gmailRedirectUri());
+      const taken = await this.prisma.channelConnection.findUnique({
+        where: { channel_externalId: { channel: 'gmail', externalId: tokens.email } },
+        select: { businessId: true },
+      });
+      if (taken && taken.businessId !== state.b) return back('taken');
+      const data = {
+        externalId: tokens.email,
+        displayName: tokens.email,
+        tokenEncrypted: sealSecret(tokens.refreshToken, this.key),
+        connectedById: state.u,
+        // Nothing before this moment is imported.
+        syncCursor: BigInt(Date.now()),
+      };
+      await this.prisma.$transaction(async (tx) => {
+        const row = await tx.channelConnection.upsert({
+          where: { businessId_channel: { businessId: state.b, channel: 'gmail' } },
+          create: { businessId: state.b, channel: 'gmail', ...data },
+          update: data,
+        });
+        await recordAudit(tx, {
+          action: 'channel.connected',
+          businessId: state.b,
+          actorUserId: state.u,
+          entityType: 'channel_connection',
+          entityId: row.id,
+          metadata: { channel: 'gmail' },
+        });
+      });
+    } catch (err) {
+      this.log.error({ errName: (err as Error)?.name }, 'gmail sign-in failed');
+      return back('error');
+    }
+    return back('connected');
+  }
+
   // ------------------------------------------------------------------ helpers
 
   private async assertFree(ctx: TenantContext, channel: Channel, externalId: string) {
@@ -348,7 +437,7 @@ export class ChannelService {
     });
   }
 
-  private signState(payload: { b: string; u: string; e: number; i?: 1 }) {
+  private signState(payload: { b: string; u: string; e: number; i?: 1; g?: 1 }) {
     const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
     return `${body}.${createHmac('sha256', this.key).update(body).digest('base64url')}`;
   }
@@ -370,10 +459,11 @@ export class ChannelService {
         u?: unknown;
         e?: unknown;
         i?: unknown;
+        g?: unknown;
       };
       if (typeof p.b !== 'string' || typeof p.u !== 'string' || typeof p.e !== 'number')
         return null;
-      return p.e > Date.now() ? { b: p.b, u: p.u, i: p.i === 1 } : null;
+      return p.e > Date.now() ? { b: p.b, u: p.u, i: p.i === 1, g: p.g === 1 } : null;
     } catch {
       return null;
     }

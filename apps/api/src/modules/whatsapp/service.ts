@@ -42,6 +42,7 @@ import {
   statusesOf,
   languageOf,
 } from './auto-reply';
+import { createGmailApi, type GmailApi, type GmailMessage } from '../../integrations/gmail';
 import { MemoryMessengerSender, type MessengerSender } from '../../integrations/messenger';
 import { ChannelRegistry } from '../channels/registry';
 import { MemoryEmailSender, type EmailSender } from '../../integrations/email';
@@ -70,6 +71,11 @@ export interface InboundMessage {
   body: string;
   /** Email only: the subject line (F27). */
   subject?: string;
+  /**
+   * A new sender waits in the inbox to be marked business or personal (Gmail, F29: a personal
+   * inbox holds private mail too) instead of becoming a customer at once (D-176).
+   */
+  holdUntilApproved?: boolean;
   /** Id of the tapped button or list row (interactive replies). */
   replyId?: string | null;
   /** F26: the Meta ad the customer tapped ("Click to WhatsApp" / Messenger ad). */
@@ -110,7 +116,16 @@ const storedMailId = (messageId: string) =>
   messageId.length <= 120
     ? `m:${messageId}`
     : `h:${createHash('sha1').update(messageId).digest('hex')}`;
-const quotedMailId = (stored: string) => (stored.startsWith('m:') ? stored.slice(2) : undefined);
+const quotedMailId = (stored: string) =>
+  stored.startsWith('m:') || stored.startsWith('g:') ? stored.slice(2) : undefined;
+/** A Gmail message's stored id: `g:<Message-ID>` (quotable), hashed when too long, else Gmail's own id. */
+function storedGmailId(mail: { id: string; messageId: string }): string {
+  if (!mail.messageId) return `gi:${mail.id}`;
+  return mail.messageId.length <= 120
+    ? `g:${mail.messageId}`
+    : `gh:${createHash('sha1').update(mail.messageId).digest('hex')}`;
+}
+const isGmailId = (stored: string) => /^(g|gh|gi):/.test(stored);
 /** Quoted earlier messages (`>` lines and "On … wrote:") are cut; what is new stays. */
 function cleanEmailText(text: string): string {
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
@@ -165,6 +180,7 @@ export class WhatsAppService {
     private readonly storage: StorageProvider,
     messenger: MessengerSender = new MemoryMessengerSender(),
     private readonly email: EmailSender = new MemoryEmailSender(),
+    private readonly gmail: GmailApi = createGmailApi(config),
   ) {
     this.leads = new LeadService(prisma);
     // Each business's own channels (F25), with the environment's as the fallback.
@@ -252,10 +268,14 @@ export class WhatsAppService {
    * stored; unknown → a known contact makes it business automatically, otherwise it waits in the
    * inbox. Meta retries are ignored by message id.
    */
-  async receive(msg: InboundMessage): Promise<ReceiveResult | null> {
+  async receive(
+    msg: InboundMessage,
+    /** Already known (Gmail sync): skips the routing by number or Page. */
+    knownBusinessId?: string,
+  ): Promise<ReceiveResult | null> {
     const channel = msg.channel ?? 'whatsapp';
     // The business that connected this number or Page (F25).
-    const businessId = await this.channels.businessFor(channel, msg.to);
+    const businessId = knownBusinessId ?? (await this.channels.businessFor(channel, msg.to));
     if (!businessId) return null;
     const seen = await this.prisma.whatsAppMessage.findUnique({
       where: { waMessageId: msg.waMessageId },
@@ -283,11 +303,22 @@ export class WhatsAppService {
         });
         if (number?.status === 'PERSONAL') return { kind: 'ignored' } as const;
 
+        let isNew = false;
         if (!number) {
-          // The number is the business's own: every sender is a customer (D-176).
+          // The number is the business's own: every sender is a customer (D-176), except where the
+          // inbox is shared with private mail (Gmail): then the owner decides first.
           number = await tx.whatsAppNumber.create({
-            data: { businessId, channel, phone: msg.from, status: 'BUSINESS' },
+            data: {
+              businessId,
+              channel,
+              phone: msg.from,
+              status: msg.holdUntilApproved ? 'UNCLASSIFIED' : 'BUSINESS',
+              ...(msg.holdUntilApproved
+                ? { profileName: msg.profileName?.slice(0, 80) ?? null }
+                : {}),
+            },
           });
+          isNew = true;
         }
         // A new ad click replaces an earlier one; the lead gets it when it's created (F26).
         if (msg.attribution) {
@@ -295,6 +326,22 @@ export class WhatsAppService {
             where: { id: number.id },
             data: { attribution: msg.attribution as Prisma.InputJsonObject },
           });
+        }
+        // Waiting for the owner's decision: the message is kept, nothing else is created yet.
+        if (number.status === 'UNCLASSIFIED' && msg.holdUntilApproved) {
+          await tx.whatsAppMessage.create({
+            data: {
+              businessId,
+              numberId: number.id,
+              direction: 'IN',
+              waMessageId: msg.waMessageId,
+              body: msg.body.slice(0, 4096),
+              ...(msg.subject ? { subject: msg.subject.slice(0, 300) } : {}),
+              status: 'received',
+              createdAt: msg.receivedAt,
+            },
+          });
+          return { kind: 'inbox', numberId: number.id, isNew } as const;
         }
         // A sender who was waiting from before D-176 joins their lead with this message.
         if (number.status === 'UNCLASSIFIED') {
@@ -361,6 +408,64 @@ export class WhatsAppService {
     });
   }
 
+  /**
+   * F29: one message from a business's connected Gmail inbox. The sender waits to be marked
+   * business or personal; the message id keeps imports idempotent and lets a reply quote it.
+   */
+  async receiveGmail(businessId: string, mail: GmailMessage): Promise<ReceiveResult | null> {
+    const text = cleanEmailText(mail.text);
+    const subject = mail.subject.replace(/[\r\n]+/g, ' ').trim();
+    return this.receive(
+      {
+        channel: 'email',
+        waMessageId: storedGmailId(mail),
+        from: `${EMAIL_PREFIX}${mail.from}`,
+        profileName: mail.fromName?.trim().slice(0, 80) || null,
+        body: text || subject || '[מייל ללא טקסט]',
+        subject,
+        holdUntilApproved: true,
+        receivedAt: new Date(mail.receivedAt),
+      },
+      businessId,
+    );
+  }
+
+  /**
+   * F29, every couple of minutes: the new inbox mail of every connected Gmail. A revoked or expired
+   * grant is logged and skipped (the owner reconnects); one business never blocks another.
+   */
+  async syncGmail(now = new Date()): Promise<number> {
+    const rows = await this.prisma.channelConnection.findMany({
+      where: { channel: 'gmail' },
+      select: { businessId: true },
+    });
+    let imported = 0;
+    for (const { businessId } of rows) {
+      const conn = await this.channels.gmail(businessId);
+      if (!conn) continue;
+      try {
+        const cursor = conn.syncCursor ?? now.getTime();
+        const accessToken = await this.gmail.accessToken(conn.refreshToken);
+        const mails = await this.gmail.listInbox(accessToken, cursor);
+        let newest = cursor;
+        for (const mail of mails) {
+          newest = Math.max(newest, mail.receivedAt);
+          if (mail.receivedAt <= cursor || mail.skip || mail.from === conn.email) continue;
+          if (await this.receiveGmail(businessId, mail)) imported += 1;
+        }
+        if (newest !== cursor || conn.syncCursor === null) {
+          await this.prisma.channelConnection.update({
+            where: { id: conn.id },
+            data: { syncCursor: BigInt(newest) },
+          });
+        }
+      } catch (err) {
+        this.log.error({ errName: (err as Error)?.name }, 'gmail sync failed');
+      }
+    }
+    return imported;
+  }
+
   /** The booking bot's turn (D-102); a bot failure never loses the customer's message. */
   private async runBot(businessId: string, msg: InboundMessage): Promise<BotOutcome> {
     try {
@@ -398,7 +503,7 @@ export class WhatsAppService {
           name:
             msg.profileName?.trim() ||
             (isSocial(msg.channel) ? socialUser(msg.channel) : formatIsraeliPhone(msg.from)),
-          ...(isSocial(msg.channel) ? { channel: msg.channel } : {}),
+          ...(isSocial(msg.channel) || msg.channel === 'email' ? { channel: msg.channel } : {}),
         },
         to: { roles: MANAGERS },
       });
@@ -575,7 +680,11 @@ export class WhatsAppService {
         .map((n) => ({
           id: n.id,
           phone: n.phone,
-          ...(isSocial(n.channel) ? { channel: n.channel } : {}),
+          ...(isSocial(n.channel)
+            ? { channel: n.channel }
+            : n.channel === 'email'
+              ? { channel: 'email' as const }
+              : {}),
           profileName: n.profileName,
           messages: n.messages.map((m) => toDto(m, n.channel)).reverse(),
           lastMessageAt: n.messages[0]!.createdAt.toISOString(),
@@ -596,6 +705,7 @@ export class WhatsAppService {
         id: r.id,
         phone: r.phone,
         ...(isSocial(r.channel) ? { channel: r.channel, name: socialUser(r.channel) } : {}),
+        ...(r.channel === 'email' ? { channel: 'email' as const, name: addressOf(r.phone) } : {}),
         classifiedAt: r.classifiedAt?.toISOString() ?? null,
       })),
     };
@@ -1193,11 +1303,64 @@ export class WhatsAppService {
    * F27: a reply by email, from the business's forwarding address (so the customer's answer comes
    * back to the same conversation). No 24-hour window. Sent as plain text, quoting nothing.
    */
+  /** F29: a reply from the connected Gmail, threaded under the mail it answers. */
+  private async deliverGmail(
+    ctx: TenantContext,
+    to: { numberId: string; phone: string; contactId: string | null; leadId: string | null },
+    text: string,
+    gm: { email: string; refreshToken: string },
+    last: { subject: string | null; waMessageId: string },
+  ): Promise<WhatsAppMessage> {
+    const base = (last.subject ?? '').replace(/^(\s*re:\s*)+/i, '').trim() || '-';
+    const subject = `Re: ${base}`.slice(0, 300);
+    const quoted = quotedMailId(last.waMessageId);
+    let id: string;
+    try {
+      const accessToken = await this.gmail.accessToken(gm.refreshToken);
+      ({ id } = await this.gmail.send(accessToken, {
+        from: gm.email,
+        to: addressOf(to.phone),
+        subject,
+        text,
+        ...(quoted ? { inReplyTo: quoted } : {}),
+      }));
+    } catch (err) {
+      this.log.error({ errName: (err as Error)?.name }, 'gmail send failed');
+      throw new AppError('INTERNAL_ERROR', whatsappMessages.sendFailed);
+    }
+    const row = await this.prisma.whatsAppMessage.create({
+      data: {
+        businessId: ctx.businessId,
+        numberId: to.numberId,
+        contactId: to.contactId,
+        leadId: to.leadId,
+        direction: 'OUT',
+        waMessageId: `go:${id}`,
+        body: text.slice(0, 4096),
+        subject,
+        status: 'sent',
+        senderId: ctx.userId,
+      },
+      include: { sender },
+    });
+    return toDto(row, 'email');
+  }
+
   private async deliverEmail(
     ctx: TenantContext,
     to: { numberId: string; phone: string; contactId: string | null; leadId: string | null },
     text: string,
   ): Promise<WhatsAppMessage> {
+    // A conversation that came from the owner's Gmail is answered from that Gmail (F29).
+    const last = await this.prisma.whatsAppMessage.findFirst({
+      where: { numberId: to.numberId, direction: 'IN' },
+      orderBy: { createdAt: 'desc' },
+      select: { subject: true, waMessageId: true },
+    });
+    if (last && isGmailId(last.waMessageId)) {
+      const gm = await this.channels.gmail(ctx.businessId);
+      if (gm) return this.deliverGmail(ctx, to, text, gm, last);
+    }
     const from = await this.channels.emailAddress(ctx.businessId);
     if (!from) throw new AppError('CONFLICT', whatsappMessages.emailNotConnected);
     if (this.config.EMAIL_TRANSPORT === 'disabled') {

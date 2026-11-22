@@ -78,6 +78,22 @@ export function useMarkRead(businessId: string) {
   });
 }
 
+/**
+ * A sender who is waiting (Gmail, F29): a business customer (→ contact and lead) or a private
+ * message to ignore from now on.
+ */
+export function useClassify(businessId: string, id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (as: 'BUSINESS' | 'PERSONAL') =>
+      apiFetch<unknown>(apiPaths.whatsapp.classify(businessId, id), {
+        method: 'POST',
+        body: JSON.stringify({ as }),
+      }),
+    onSuccess: () => refreshInbox(queryClient, businessId),
+  });
+}
+
 export function useReply(businessId: string, id: string) {
   const queryClient = useQueryClient();
   return useMutation({

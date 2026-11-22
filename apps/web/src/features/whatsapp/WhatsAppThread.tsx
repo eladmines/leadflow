@@ -177,7 +177,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
               rows={2}
               hint={
                 mail || !replyUntil
-                  ? tr('התשובה נשלחת במייל, מכתובת ההעברה של העסק.')
+                  ? tr('התשובה נשלחת במייל, מאותה כתובת שאליה הלקוח כתב.')
                   : tr(
                       'אפשר לענות עד {0} (24 שעות מההודעה האחרונה של הלקוח).',
                       timeFmt.format(new Date(replyUntil)),

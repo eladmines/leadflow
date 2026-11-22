@@ -12,9 +12,11 @@ const off: ChannelsResponse = {
   whatsapp: { channel: 'whatsapp', connected: false, name: null, source: null },
   messenger: { channel: 'messenger', connected: false, name: null, source: null },
   instagram: { channel: 'instagram', connected: false, name: null, source: null },
+  gmail: { channel: 'email', connected: false, name: null, source: null },
   email: { channel: 'email', connected: false, name: null, source: null },
   emailInbound: true,
   facebookLogin: true,
+  gmailLogin: true,
 };
 const pendingId = '6f000000-0000-4000-8000-000000000001';
 
@@ -38,7 +40,7 @@ describe('Settings → Channels (F25)', () => {
     // Every channel in the same box, with a plug switch: pulled out until connected (D-161).
     const whatsapp = await screen.findByRole('switch', { name: 'WhatsApp' });
     expect(whatsapp).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getAllByText('לא מחובר')).toHaveLength(4);
+    expect(screen.getAllByText('לא מחובר')).toHaveLength(5);
     // Instagram (F28) has its own plug, usable once Facebook sign-in is set up.
     expect(screen.getByRole('switch', { name: 'Instagram' })).toBeEnabled();
     await user.click(whatsapp);
@@ -116,6 +118,35 @@ describe('Settings → Channels (F25)', () => {
         'https://www.facebook.com/v21.0/dialog/oauth?client_id=1',
       ),
     );
+  });
+
+  it('Gmail goes to Google’s sign-in; shows why it came back without connecting', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${ch.list(id)}`]: () => json(200, off),
+      [`GET ${ch.gmailStart(id)}`]: () =>
+        json(200, { url: 'https://accounts.google.com/o/oauth2/v2/auth?client_id=g' }),
+    });
+    const { user } = renderApp(`${page}&gmail=cancelled`);
+    expect(await screen.findByText('החיבור ל-Gmail בוטל.')).toBeInTheDocument();
+    await user.click(await screen.findByRole('switch', { name: 'Gmail' }));
+    await waitFor(() =>
+      expect(assign).toHaveBeenCalledWith(
+        'https://accounts.google.com/o/oauth2/v2/auth?client_id=g',
+      ),
+    );
+  });
+
+  it('Gmail is off until the server has the Google client', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${ch.list(id)}`]: () => json(200, { ...off, gmailLogin: false }),
+    });
+    renderApp(page);
+    expect(await screen.findByRole('switch', { name: 'Gmail' })).toBeDisabled();
+    expect(screen.getByText('חיבור ל-Gmail עוד לא הוגדר במערכת.')).toBeInTheDocument();
   });
 
   it('Instagram: with the Facebook Page connected, one click takes its account', async () => {

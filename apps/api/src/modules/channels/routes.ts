@@ -14,7 +14,7 @@ import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { ChannelService } from './service';
 
 const service = (app: Parameters<FastifyPluginAsync>[0]) =>
-  new ChannelService(app.prisma, app.config, app.metaApi, app.log);
+  new ChannelService(app.prisma, app.config, app.metaApi, app.log, app.gmailApi);
 
 /** F25 (D-159): Settings → Channels. Everyone sees the status; only the owner connects. */
 export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -78,6 +78,12 @@ export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => channels.connectFacebook(tenantOf(req), req.body),
   );
 
+  app.get(
+    '/channels/gmail/start',
+    { preValidation: owner, schema: { response: { 200: facebookStartResponseSchema } } },
+    async (req) => channels.gmailStart(tenantOf(req)),
+  );
+
   app.post(
     '/channels/instagram',
     {
@@ -94,7 +100,7 @@ export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         params: z.object({
           businessId: z.string(),
-          channel: z.enum(['whatsapp', 'messenger', 'instagram', 'email']),
+          channel: z.enum(['whatsapp', 'messenger', 'instagram', 'email', 'gmail']),
         }),
         response: { 200: channelsResponseSchema },
       },
@@ -118,5 +124,23 @@ export const channelPublicRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (req, reply) => reply.redirect(await channels.facebookCallback(req.query)),
+  );
+};
+
+/** Google sends the person back here after consent; the signed state says for which business. */
+export const gmailPublicRoutes: FastifyPluginAsyncZod = async (app) => {
+  const channels = service(app);
+  app.get(
+    apiPaths.channels.gmailCallback,
+    {
+      schema: {
+        querystring: z.object({
+          code: z.string().max(2000).optional(),
+          state: z.string().max(2000).optional(),
+          error: z.string().max(200).optional(),
+        }),
+      },
+    },
+    async (req, reply) => reply.redirect(await channels.gmailCallback(req.query)),
   );
 };

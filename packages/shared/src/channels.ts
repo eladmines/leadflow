@@ -20,6 +20,9 @@ export const channelsMessages = {
   instagramNoAccount:
     'לא מצאנו חשבון אינסטגרם עסקי שמקושר לדף הפייסבוק. קשרו אותו בהגדרות הדף ונסו שוב.',
   instagramFailed: 'החיבור לאינסטגרם לא הצליח. נסו שוב.',
+  gmailUnavailable: 'חיבור ל-Gmail עוד לא הוגדר במערכת.',
+  gmailFailed: 'החיבור ל-Gmail לא הצליח. נסו שוב.',
+  gmailCancelled: 'החיבור ל-Gmail בוטל.',
 } as const;
 
 export const channelStatusSchema = z.object({
@@ -31,17 +34,23 @@ export const channelStatusSchema = z.object({
   source: z.enum(['business', 'environment']).nullable(),
 });
 export type ChannelStatus = z.infer<typeof channelStatusSchema>;
+/** What a business can connect: the conversation channels, plus its Gmail inbox (F29). */
+export type ConnectionChannel = z.infer<typeof channelSchema> | 'gmail';
 
 export const channelsResponseSchema = z.object({
   whatsapp: channelStatusSchema,
   messenger: channelStatusSchema,
   instagram: channelStatusSchema,
+  /** The owner's Gmail inbox (F29); `channel` is `email`'s sibling, shown with the same shape. */
+  gmail: channelStatusSchema,
   /** The forwarding address is the "name" while connected (F27). */
   email: channelStatusSchema,
   /** The server can receive email (`EMAIL_INBOUND_DOMAIN` and secret are set). */
   emailInbound: z.boolean(),
   /** "Connect Facebook" is set up on the server (the Meta app id is known). */
   facebookLogin: z.boolean(),
+  /** "Connect Gmail" is set up on the server (the Google OAuth client is known). */
+  gmailLogin: z.boolean(),
 });
 export type ChannelsResponse = z.infer<typeof channelsResponseSchema>;
 
@@ -94,12 +103,16 @@ export const channelsApiPaths = {
   facebook: (businessId: string) => `${base(businessId)}/facebook`,
   /** POST: connect Instagram (the connected Page's account, or one picked after sign-in). */
   instagram: (businessId: string) => `${base(businessId)}/instagram`,
+  /** GET: where to send the person for Google's consent screen (F29). */
+  gmailStart: (businessId: string) => `${base(businessId)}/gmail/start`,
   /** POST: create the business's forwarding address (F27). */
   email: (businessId: string) => `${base(businessId)}/email`,
   /** DELETE: disconnect a channel. */
   channel: (businessId: string, channel: string) => `${base(businessId)}/${channel}`,
   /** Facebook sends the person back here after sign-in (public, checked by its signed state). */
   facebookCallback: '/api/v1/integrations/facebook/callback',
+  /** Google sends the person back here after consent (public, checked by its signed state). */
+  gmailCallback: '/api/v1/integrations/gmail/callback',
 } as const;
 
 /**

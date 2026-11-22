@@ -33,7 +33,11 @@ export function PersonalNumbers({ businessId }: { businessId: string }) {
       >
         {personal.data.map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
-            {p.channel === 'messenger' || p.channel === 'instagram' ? (
+            {p.channel === 'email' ? (
+              <bdi dir="ltr" className="text-sm text-ink">
+                {p.name}
+              </bdi>
+            ) : p.channel === 'messenger' || p.channel === 'instagram' ? (
               <span className="text-sm text-ink">
                 {p.channel === 'instagram'
                   ? `${tr('משתמש/ת אינסטגרם')} · Instagram`
@@ -51,11 +55,13 @@ export function PersonalNumbers({ businessId }: { businessId: string }) {
               loading={forget.isPending && forget.variables === p.id}
               aria-label={tr(
                 'ביטול סימון פרטי ל-{0}',
-                p.channel === 'instagram'
-                  ? tr('משתמש/ת אינסטגרם')
-                  : p.channel === 'messenger'
-                    ? tr('משתמש/ת פייסבוק')
-                    : showPhone(p.phone),
+                p.channel === 'email'
+                  ? (p.name ?? '')
+                  : p.channel === 'instagram'
+                    ? tr('משתמש/ת אינסטגרם')
+                    : p.channel === 'messenger'
+                      ? tr('משתמש/ת פייסבוק')
+                      : showPhone(p.phone),
               )}
             >
               {tr('ביטול סימון')}

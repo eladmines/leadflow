@@ -374,6 +374,7 @@ export function whatsappTenantRoutes(sender: WhatsAppSender): FastifyPluginAsync
       app.storage,
       app.messengerSender,
       app.email,
+      app.gmailApi,
     );
 
     app.get(
@@ -556,6 +557,7 @@ export const emailWebhookRoutes: FastifyPluginAsyncZod = async (app) => {
     app.storage,
     app.messengerSender,
     app.email,
+    app.gmailApi,
   );
   keepRawJson(app);
 

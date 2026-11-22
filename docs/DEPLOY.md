@@ -114,6 +114,21 @@ three things that are yours to choose, so nothing is switched on until you set t
 Then Settings → Channels → Email → **Create address**. Locally, `pnpm --filter @simplecatch/api
 mail:simulate --to <address>` stands in for the inbound service.
 
+### Gmail instead of forwarding (F29, D-188)
+
+A business can also connect its own Gmail inbox (Settings → Channels → **Gmail**), with no domain or
+inbound-mail service. Set it up once, in Google Cloud Console (full steps in `docs/features/F29.md`):
+
+1. Enable the **Gmail API**; configure the **OAuth consent screen** (External) with the privacy and terms
+   links, add the scopes `gmail.readonly` and `gmail.send`, and list the Gmail addresses that will connect as
+   **test users** (up to 100) while the app is in _Testing_.
+2. Create an **OAuth client ID** (Web) with the redirect URI
+   `https://app.simplecatch.co.il/api/v1/integrations/gmail/callback`.
+3. In Render → Environment: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+In _Testing_ mode Google signs a person out after 7 days (they reconnect). For everyone, the app has to be
+published and verified by Google (restricted scopes), which takes weeks.
+
 ## Good to know
 
 - **Sleeping:** after 15 minutes without visitors the server sleeps; the next visit takes about a

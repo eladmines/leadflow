@@ -20,7 +20,7 @@ import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
-import { useConversation, useConversations, useMarkRead, useReply } from './api';
+import { useClassify, useConversation, useConversations, useMarkRead, useReply } from './api';
 
 /** WhatsApp green, Facebook blue: the channel's colour on its chip and dot. */
 const CHANNEL_STYLE: Record<Channel, { label: string; chip: string; dot: string }> = {
@@ -256,6 +256,7 @@ function ConversationPane({
   const listRef = useScrollToLatest<HTMLOListElement>(convo.data?.messages.at(-1)?.id);
   const markRead = useMarkRead(businessId);
   const reply = useReply(businessId, id);
+  const classify = useClassify(businessId, id);
   const form = useForm<SendWhatsAppRequest>({
     resolver: zodResolver(sendWhatsAppRequestSchema),
     defaultValues: { text: '' },
@@ -370,7 +371,32 @@ function ConversationPane({
       </ol>
 
       <div className="border-t border-surface-border p-3">
-        {replyUntil || mail ? (
+        {c.status === 'UNCLASSIFIED' && mail ? (
+          // A new sender whose mail waits for the owner's decision (Gmail, F29).
+          <div className="flex flex-col gap-2 rounded-lg bg-surface-muted p-3 text-sm">
+            <p className="text-ink">
+              {tr('שולח חדש. זה לקוח של העסק, או מייל פרטי שאין צורך לשמור?')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                loading={classify.isPending}
+                onClick={() => classify.mutate('BUSINESS')}
+              >
+                {tr('לקוח של העסק')}
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                loading={classify.isPending}
+                onClick={() => classify.mutate('PERSONAL')}
+              >
+                {tr('פרטי, להתעלם')}
+              </Button>
+            </div>
+            {classify.isError && <Alert tone="danger">{errorMessage(classify.error)}</Alert>}
+          </div>
+        ) : replyUntil || mail ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
               label={
@@ -386,7 +412,7 @@ function ConversationPane({
               dir="auto"
               hint={
                 mail || !replyUntil
-                  ? tr('התשובה נשלחת במייל, מכתובת ההעברה של העסק.')
+                  ? tr('התשובה נשלחת במייל, מאותה כתובת שאליה הלקוח כתב.')
                   : tr(
                       'אפשר לענות עד {0} (24 שעות מההודעה האחרונה של הלקוח).',
                       time.format(new Date(replyUntil)),

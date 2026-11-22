@@ -774,7 +774,7 @@ model Notification {
 model ChannelConnection {
   id             String   @id @default(uuid()) @db.Uuid
   businessId     String   @map("business_id") @db.Uuid
-  /// whatsapp | messenger | instagram | email
+  /// whatsapp | messenger | instagram | email | gmail
   channel        String   @db.VarChar(20)
   /// WhatsApp: Meta's phone number id. Messenger: the Facebook Page id. Instagram: the Instagram
   /// account id. Email: the forwarding address.
@@ -784,6 +784,8 @@ model ChannelConnection {
   tokenEncrypted String   @map("token_encrypted")
   /// Instagram: the linked Facebook Page (its token is what sends and unsubscribes).
   pageId         String?  @map("page_id") @db.VarChar(64)
+  /// Gmail: the newest message time (ms since epoch) already imported; nothing older is read (F29).
+  syncCursor     BigInt?  @map("sync_cursor")
   connectedById  String?  @map("connected_by_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

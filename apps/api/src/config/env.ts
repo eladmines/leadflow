@@ -155,6 +155,10 @@ const envSchema = z
     META_APP_ID: optionalSetting(z.string().regex(/^\d+$/)),
     /** Facebook Login for Business configuration id; unset = classic scopes. */
     META_LOGIN_CONFIG_ID: optionalSetting(z.string().regex(/^\d+$/)),
+
+    // F29 — Gmail conversations (D-188). The Google Cloud OAuth client; both unset = "Connect Gmail" is off.
+    GOOGLE_CLIENT_ID: optionalSetting(z.string().min(10)),
+    GOOGLE_CLIENT_SECRET: optionalSetting(z.string().min(10)),
   })
   .superRefine((env, ctx) => {
     if (env.WHATSAPP_BUSINESS_ID) {

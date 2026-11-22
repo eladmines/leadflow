@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { buildApp } from './app';
 import { startTaskReminders } from './modules/tasks/reminders';
 import { startBookingNudges } from './modules/whatsapp/nudges';
+import { startGmailSync } from './modules/whatsapp/gmail-sync';
 import { createEmailSender } from './integrations/email';
 import { loadConfig } from './config/env';
 import { createPrisma } from './lib/db';
@@ -47,10 +48,12 @@ const publicApp = await buildPublicApp({
 
 let stopReminders = () => {};
 let stopNudges = () => {};
+let stopGmail = () => {};
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'shutting down');
   stopReminders();
   stopNudges();
+  stopGmail();
   await Promise.all([app.close(), publicApp.close()]);
   await prisma.$disconnect();
   process.exit(0);
@@ -61,6 +64,7 @@ process.on('SIGTERM', () => void shutdown('SIGTERM'));
 // Background jobs run with the server (never in tests, which call the services directly).
 stopReminders = startTaskReminders(app);
 stopNudges = startBookingNudges(app);
+stopGmail = startGmailSync(app);
 if (singlePort) {
   await publicApp.ready();
   await app.listen({ port: config.PORT, host: '0.0.0.0' });

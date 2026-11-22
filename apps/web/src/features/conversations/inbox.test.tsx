@@ -141,6 +141,38 @@ describe('unified inbox (F24)', () => {
     expect(user).toBeTruthy();
   });
 
+  it('a Gmail sender waiting for a decision: business makes a lead, private ignores them (F29)', async () => {
+    const eli: ConversationSummary = {
+      id: '9a000000-0000-4000-8000-000000000004',
+      channel: 'email',
+      status: 'UNCLASSIFIED',
+      name: 'אלי',
+      phone: null,
+      email: 'eli@example.com',
+      leadId: null,
+      lastMessage: { body: 'שלום, מעוניין בהצעה', direction: 'IN', at: now },
+      lastMessageAt: now,
+      unread: true,
+    };
+    const fetchMock = mockApi(
+      routes({
+        [`GET ${cp.list(id)}`]: () => json(200, listOf([eli])),
+        [`GET ${cp.detail(id, eli.id)}`]: () => json(200, detailOf(eli, { replyUntil: null })),
+        [`POST ${apiPaths.whatsapp.classify(id, eli.id)}`]: () => json(200, { ok: true }),
+      }),
+    );
+    const { user } = renderApp(`${page}?c=${eli.id}`);
+    const pane = await screen.findByRole('region', { name: 'אלי' });
+    // No reply box until the owner decides.
+    expect(within(pane).queryByLabelText('תשובה במייל')).toBeNull();
+    await user.click(within(pane).getByRole('button', { name: 'לקוח של העסק' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'POST', apiPaths.whatsapp.classify(id, eli.id))).toEqual([
+        { as: 'BUSINESS' },
+      ]),
+    );
+  });
+
   it('an email conversation shows its address and subject, and replies need no 24-hour window (F27)', async () => {
     const dana: ConversationSummary = {
       id: '9a000000-0000-4000-8000-000000000003',

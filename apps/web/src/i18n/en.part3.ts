@@ -836,8 +836,8 @@ export const enPart3: Record<string, string> = {
     'Every business gets its own address. Emails sent to it arrive in the inbox, and replies go out from it.',
   'אפשר לשים אותה באתר ובחתימה, או להעביר אליה מיילים מהתיבה הרגילה.':
     'Put it on your website and in your signature, or forward mail to it from your usual inbox.',
-  'התשובה נשלחת במייל, מכתובת ההעברה של העסק.':
-    'The reply is sent by email, from the business’s own address.',
+  'התשובה נשלחת במייל, מאותה כתובת שאליה הלקוח כתב.':
+    'The reply is sent by email, from the address the customer wrote to.',
   'תשובה במייל': 'Email reply',
   'שליחה במייל': 'Send by email',
   'קבלת מייל עוד לא הוגדרה בשרת.': 'Receiving email isn’t set up on the server yet.',
@@ -945,4 +945,13 @@ export const enPart3: Record<string, string> = {
   'שליחה באינסטגרם': 'Send on Instagram',
   'נשלחה מאינסטגרם': 'Sent from Instagram',
   'הליד נוצר מהודעה באינסטגרם': 'The lead was created from an Instagram message',
+  'חיבור ל-Gmail עוד לא הוגדר במערכת.': 'Gmail connection is not set up in the system yet.',
+  'החיבור ל-Gmail לא הצליח. נסו שוב.': "Couldn't connect to Gmail. Try again.",
+  'החיבור ל-Gmail בוטל.': 'The Gmail connection was cancelled.',
+  'מיילים שמגיעים ל-Gmail של העסק יופיעו בתיבת השיחות, ותוכלו לענות להם משם. שולחים חדשים ממתינים לסיווג כעסקי או פרטי.':
+    "Emails that reach the business's Gmail will appear in the inbox, and you can reply from there. New senders wait to be marked business or personal.",
+  'שולח חדש. זה לקוח של העסק, או מייל פרטי שאין צורך לשמור?':
+    'A new sender. Is this a business customer, or a private email that needn’t be kept?',
+  'לקוח של העסק': 'Business customer',
+  'פרטי, להתעלם': 'Private, ignore',
 };

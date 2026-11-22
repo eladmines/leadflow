@@ -38,7 +38,12 @@ import { registerMediaServing } from './modules/media/serve';
 import { createWhatsAppSender, type WhatsAppSender } from './integrations/whatsapp';
 import { createMessengerSender, type MessengerSender } from './integrations/messenger';
 import { conversationTenantRoutes } from './modules/conversations/routes';
-import { channelPublicRoutes, channelTenantRoutes } from './modules/channels/routes';
+import {
+  channelPublicRoutes,
+  channelTenantRoutes,
+  gmailPublicRoutes,
+} from './modules/channels/routes';
+import { createGmailApi, type GmailApi } from './integrations/gmail';
 import { createMetaApi, type MetaApi } from './integrations/meta';
 import {
   emailWebhookRoutes,
@@ -64,6 +69,8 @@ declare module 'fastify' {
     messengerSender: MessengerSender;
     /** Meta's Graph API for connecting channels (F25). */
     metaApi: MetaApi;
+    /** Gmail's API for the connected inbox (F29). */
+    gmailApi: GmailApi;
   }
 }
 
@@ -84,6 +91,8 @@ export interface AppDeps {
   messengerSender?: MessengerSender;
   /** Defaults to Meta's Graph API with a cloud provider, else a stand-in. Tests inject one. */
   metaApi?: MetaApi;
+  /** Defaults to Google when `GOOGLE_CLIENT_ID` is set. Tests inject a MemoryGmailApi. */
+  gmailApi?: GmailApi;
   /** A server shared with the public-site app (one port, D-119); it calls `app.routing`. */
   serverFactory?: FastifyServerFactory;
 }
@@ -99,6 +108,7 @@ export async function buildApp({
   whatsappSender,
   messengerSender,
   metaApi,
+  gmailApi,
   serverFactory,
 }: AppDeps) {
   const app = Fastify({
@@ -180,7 +190,9 @@ export async function buildApp({
   await app.register(messengerWebhookRoutes(whatsapp, messenger));
   await app.register(emailWebhookRoutes);
   app.decorate('metaApi', metaApi ?? createMetaApi(config));
+  app.decorate('gmailApi', gmailApi ?? createGmailApi(config));
   await app.register(channelPublicRoutes);
+  await app.register(gmailPublicRoutes);
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(
     tenantScope(async (scope) => {

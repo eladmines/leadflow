@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import type { Channel } from '@simplecatch/shared';
+import type { Channel, ConnectionChannel } from '@simplecatch/shared';
 import type { AppConfig } from '../../config/env';
 import { CloudMessengerSender, type MessengerSender } from '../../integrations/messenger';
 import { CloudWhatsAppSender, type WhatsAppSender } from '../../integrations/whatsapp';
@@ -24,7 +24,10 @@ export class ChannelRegistry {
     this.key = secretKey(config);
   }
 
-  private connection(channel: Channel, where: { businessId: string } | { externalId: string }) {
+  private connection(
+    channel: ConnectionChannel,
+    where: { businessId: string } | { externalId: string },
+  ) {
     return this.prisma.channelConnection.findFirst({ where: { channel, ...where } });
   }
 
@@ -89,6 +92,18 @@ export class ChannelRegistry {
           kind: 'instagram',
         })
       : this.envMessenger;
+  }
+
+  /** The business's connected Gmail (F29): its address, refresh token and sync cursor, or null. */
+  async gmail(businessId: string) {
+    const row = await this.connection('gmail', { businessId });
+    if (!row) return null;
+    return {
+      id: row.id,
+      email: row.externalId,
+      refreshToken: openSecret(row.tokenEncrypted, this.key),
+      syncCursor: row.syncCursor === null ? null : Number(row.syncCursor),
+    };
   }
 
   /** The business's forwarding address (F27), or null. */
