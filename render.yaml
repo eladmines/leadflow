@@ -49,6 +49,9 @@ services:
       # WhatsApp and Facebook (docs/DEPLOY.md, step 4). Leave empty while they are off.
       - key: WHATSAPP_PROVIDER
         sync: false
+      # Facebook Messenger and Instagram send for real (without it replies are only recorded here).
+      - key: MESSENGER_PROVIDER
+        value: cloud
       - key: WHATSAPP_APP_SECRET
         sync: false
       - key: WHATSAPP_VERIFY_TOKEN
