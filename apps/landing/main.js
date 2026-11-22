@@ -194,6 +194,9 @@ const en = {
   navLabel: 'Main navigation',
   langLabel: 'Language',
   footLabel: 'Links',
+  footPrivacy: 'Privacy',
+  footTerms: 'Terms',
+  footDeletion: 'Data deletion',
 };
 
 const he = {};

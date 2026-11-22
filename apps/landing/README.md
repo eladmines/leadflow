@@ -36,7 +36,9 @@ address redirects to the root with a 301 Redirect Rule, and Always Use HTTPS is 
 - The app still lives at its own address (`APP_URL` in `main.js`); when it moves to `app.simplecatch.co.il`,
   change `APP_URL`.
 
-Not done yet: a contact address, a privacy policy and terms, and real screenshots (the inbox
+Legal pages: `privacy.html`, `terms.html` and `data-deletion.html` (Hebrew and English in the same file, switched by `legal.js`, styled by `legal.css`). They are drafts written from how the app handles data (not legal advice: have them reviewed, O-007) and give `support@simplecatch.co.il` as the contact. They are the URLs Meta (privacy policy, terms, data deletion) and Google (OAuth consent screen) ask for.
+
+Not done yet: real screenshots (the inbox
 picture is drawn in HTML and CSS).
 
 Note: the `#reviews` section is mock (sample quotes, labelled as illustrative). Replace with real, permitted customer quotes before relying on it.

@@ -1,0 +1,50 @@
+/* Legal pages (privacy, terms, data deletion): the landing page's look, with a readable document. */
+.legal {
+  padding-block: 3rem 4rem;
+}
+.doc[hidden] {
+  display: none;
+}
+.doc h1 {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+.doc .updated {
+  color: var(--muted);
+  margin: 0 0 2rem;
+  font-size: 0.95rem;
+}
+.doc h2 {
+  font-size: 1.25rem;
+  margin: 2.25rem 0 0.5rem;
+}
+.doc p,
+.doc li {
+  color: var(--ink);
+  line-height: 1.75;
+}
+.doc ul,
+.doc ol {
+  padding-inline-start: 1.4rem;
+}
+.doc li + li {
+  margin-top: 0.35rem;
+}
+.doc a {
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.doc .note {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-block: 1.25rem;
+}
+.legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
