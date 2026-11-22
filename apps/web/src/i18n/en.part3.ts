@@ -925,4 +925,5 @@ export const enPart3: Record<string, string> = {
   'שמירת השאלות': 'Save questions',
   'יש לכתוב את השאלה': 'Write the question',
   'השאלה ארוכה מדי (עד 300 תווים)': 'The question is too long (up to 300 characters)',
+  'נשלחה מדף הפייסבוק': 'Sent from the Facebook Page',
 };

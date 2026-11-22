@@ -314,8 +314,21 @@ export function messengerWebhookRoutes(
       if (!parsed.success) return reply.send({ ok: true });
       for (const event of parsed.data.entry.flatMap((e) => e.messaging)) {
         const m = event.message;
-        // Only customers' messages to our Page (not the Page's own echoes, reads or deliveries).
-        if (!m || m.is_echo) continue;
+        // Customers' messages to our Page, and the Page's own echoes (sent from Facebook itself);
+        // reads and deliveries are ignored.
+        if (!m) continue;
+        if (m.is_echo) {
+          const customer = event.recipient?.id.replace(/[^\d]/g, '').slice(0, 40);
+          if (!customer) continue;
+          await service.receiveEcho({
+            pageId: event.sender.id,
+            customer: `fb:${customer}`,
+            waMessageId: m.mid.slice(0, 128),
+            body: messengerText(m),
+            sentAt: event.timestamp ? new Date(event.timestamp) : new Date(),
+          });
+          continue;
+        }
         // The Page it was sent to decides the business (F25); unknown Pages are ignored.
         const psid = event.sender.id.replace(/[^\d]/g, '').slice(0, 40);
         if (!psid) continue;

@@ -194,6 +194,42 @@ describe('Facebook Messenger → leads (F23)', () => {
     expect((await ctx.prisma.whatsAppMessage.findFirstOrThrow()).body).toBe('[תמונה]');
   });
 
+  it("shows what the business wrote from its Facebook Page (the Page's echo)", async () => {
+    const owner = await setup();
+    await post(fbText('היי'));
+    const echo = (mid: string, text: string) => ({
+      object: 'page',
+      entry: [
+        {
+          id: PAGE_ID,
+          messaging: [
+            {
+              sender: { id: PAGE_ID },
+              recipient: { id: PSID },
+              timestamp: Date.now(),
+              message: { mid, text, is_echo: true },
+            },
+          ],
+        },
+      ],
+    });
+    await post(echo('m_echo-1', 'שלום, כאן העסק'));
+    // Meta's retry of the same message adds nothing.
+    await post(echo('m_echo-1', 'שלום, כאן העסק'));
+    const out = await ctx.prisma.whatsAppMessage.findMany({ where: { direction: 'OUT' } });
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ body: 'שלום, כאן העסק', senderId: null });
+    expect(out[0]!.leadId).not.toBeNull();
+    const lead = await ctx.prisma.lead.findFirstOrThrow();
+    const thread = (await req(ctx.app, 'GET', wp.thread(BUSINESS_ID, lead.id), owner.token)).json();
+    expect(thread.messages.map((m: { body: string }) => m.body)).toEqual(['היי', 'שלום, כאן העסק']);
+    // To someone who never wrote to the Page, nothing is stored.
+    const stranger = echo('m_echo-2', 'hello');
+    stranger.entry[0]!.messaging[0]!.recipient.id = '5550001';
+    await post(stranger);
+    expect(await ctx.prisma.whatsAppMessage.count({ where: { direction: 'OUT' } })).toBe(1);
+  });
+
   it('only owners and managers see the inbox; employees only their leads', async () => {
     await setup();
     await post(fbText('היי'));

@@ -186,6 +186,60 @@ export class WhatsAppService {
   }
 
   /**
+   * A message the business sent from its Facebook Page itself (Meta's "echo"), so the conversation
+   * shows both sides. Only into a conversation that already exists; one sent from this app is
+   * already stored under the same message id.
+   */
+  async receiveEcho(msg: {
+    pageId: string;
+    customer: string;
+    waMessageId: string;
+    body: string;
+    sentAt: Date;
+  }): Promise<void> {
+    const businessId = await this.channels.businessFor('messenger', msg.pageId);
+    if (!businessId) return;
+    const seen = await this.prisma.whatsAppMessage.findUnique({
+      where: { waMessageId: msg.waMessageId },
+      select: { id: true },
+    });
+    if (seen) return;
+    const number = await this.prisma.whatsAppNumber.findUnique({
+      where: { businessId_phone: { businessId, phone: msg.customer } },
+    });
+    if (!number || number.status !== 'BUSINESS') return;
+    try {
+      await this.prisma.whatsAppMessage.create({
+        data: {
+          businessId,
+          numberId: number.id,
+          contactId: number.contactId,
+          leadId: await this.openLeadOf(businessId, number.contactId),
+          direction: 'OUT',
+          waMessageId: msg.waMessageId,
+          body: msg.body.slice(0, 4096),
+          status: 'sent',
+          createdAt: msg.sentAt,
+        },
+      });
+    } catch (err) {
+      // Meta delivered it twice at once: the first one is stored.
+      if ((err as { code?: string })?.code !== 'P2002') throw err;
+    }
+  }
+
+  /** The contact's newest lead (the conversation's), if any. */
+  private async openLeadOf(businessId: string, contactId: string | null) {
+    if (!contactId) return null;
+    const lead = await this.prisma.lead.findFirst({
+      where: { businessId, contactId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    return lead?.id ?? null;
+  }
+
+  /**
    * Routes an incoming message by what the business decided about the sender's number:
    * business → the contact's open lead (or a new `whatsapp` lead); personal → dropped, nothing
    * stored; unknown → a known contact makes it business automatically, otherwise it waits in the
@@ -1087,18 +1141,22 @@ export class WhatsAppService {
       );
       throw new AppError('INTERNAL_ERROR', whatsappMessages.sendFailed);
     }
-    const row = await this.prisma.whatsAppMessage.create({
-      data: {
-        businessId: ctx.businessId,
-        numberId: to.numberId,
-        contactId: to.contactId,
-        leadId: to.leadId,
-        direction: 'OUT',
-        waMessageId: id,
-        body: text,
-        status: 'sent',
-        senderId: ctx.userId,
-      },
+    const data = {
+      businessId: ctx.businessId,
+      numberId: to.numberId,
+      contactId: to.contactId,
+      leadId: to.leadId,
+      direction: 'OUT' as const,
+      waMessageId: id,
+      body: text,
+      status: 'sent',
+      senderId: ctx.userId,
+    };
+    // Messenger's echo of this very reply can land first; it then gets this sender.
+    const row = await this.prisma.whatsAppMessage.upsert({
+      where: { waMessageId: id },
+      create: data,
+      update: { senderId: ctx.userId },
       include: { sender },
     });
     return toDto(row, to.channel);
