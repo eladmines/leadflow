@@ -389,7 +389,12 @@ export class ChannelService {
         });
       });
     } catch (err) {
-      this.log.error({ errName: (err as Error)?.name }, 'gmail sign-in failed');
+      // Google's HTTP status only (never its text or any token): enough to tell a wrong secret
+      // (401) from a disabled API or redirect mismatch (400/403).
+      this.log.error(
+        { errName: (err as Error)?.name, status: (err as { status?: number })?.status },
+        'gmail sign-in failed',
+      );
       return back('error');
     }
     return back('connected');
