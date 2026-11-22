@@ -8,14 +8,11 @@ import {
   type ConnectWhatsAppRequest,
 } from '@simplecatch/shared';
 import {
-  Check,
   ChevronLeft,
-  Copy,
   ExternalLink,
   Facebook,
   Inbox,
   Instagram,
-  Mail,
   MessageCircle,
   Plug,
   Unplug,
@@ -33,7 +30,6 @@ import {
   useConnectFacebook,
   useConnectInstagram,
   useConnectWhatsApp,
-  useCreateEmailAddress,
   useDisconnect,
   useFacebookPages,
   useFacebookStart,
@@ -128,13 +124,6 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
               status={channels.data.gmail}
               canEdit={canEdit}
               available={channels.data.gmailLogin}
-            />
-          </li>
-          <li>
-            <EmailRow
-              status={channels.data.email}
-              canEdit={canEdit}
-              available={channels.data.emailInbound}
             />
           </li>
         </ul>
@@ -453,81 +442,6 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
           </div>
         </form>
       )}
-    </ChannelBox>
-  );
-}
-
-/**
- * F27 (D-177): the business's forwarding address. Mail sent to it lands in the inbox, and replies
- * go out from the same address. Created with one click; shown with a copy button.
- */
-function EmailRow({
-  status,
-  canEdit,
-  available,
-}: {
-  status: ChannelStatus;
-  canEdit: boolean;
-  available: boolean;
-}) {
-  const business = useCurrentBusiness();
-  const create = useCreateEmailAddress(business.id);
-  const off = useDisconnectFlow('email');
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(status.name ?? '');
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // No clipboard access (an insecure page): the address is on screen to copy by hand.
-    }
-  };
-  const action = (
-    <PlugSwitch
-      title={tr('אימייל')}
-      connected={status.connected}
-      disabled={!canEdit || (!status.connected && !available)}
-      busy={create.isPending}
-      onToggle={() => (status.connected ? off.request() : create.mutate())}
-    />
-  );
-  return (
-    <ChannelBox
-      icon={Mail}
-      tone="bg-sky-500"
-      title={tr('אימייל')}
-      description={tr(
-        'לכל עסק כתובת משלו. מיילים שנשלחים אליה מגיעים לתיבת השיחות, והתשובות יוצאות ממנה.',
-      )}
-      state={stateOf(status)}
-      action={action}
-    >
-      {status.connected && status.name && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-muted p-3">
-          <bdi dir="ltr" className="flex-1 break-all text-sm font-medium text-ink">
-            {status.name}
-          </bdi>
-          <Button type="button" size="sm" variant="secondary" onClick={copy}>
-            {copied ? (
-              <Check aria-hidden className="h-4 w-4" />
-            ) : (
-              <Copy aria-hidden className="h-4 w-4" />
-            )}
-            {copied ? tr('הועתק') : tr('העתקה')}
-          </Button>
-        </div>
-      )}
-      {status.connected && (
-        <p className="text-sm text-ink-muted">
-          {tr('אפשר לשים אותה באתר ובחתימה, או להעביר אליה מיילים מהתיבה הרגילה.')}
-        </p>
-      )}
-      {off.panel}
-      {canEdit && !available && !status.connected && (
-        <p className="text-sm text-ink-muted">{tr(channelsMessages.emailUnavailable)}</p>
-      )}
-      {create.isError && <Alert tone="danger">{errorMessage(create.error)}</Alert>}
     </ChannelBox>
   );
 }

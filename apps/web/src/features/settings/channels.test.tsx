@@ -40,7 +40,7 @@ describe('Settings → Channels (F25)', () => {
     // Every channel in the same box, with a plug switch: pulled out until connected (D-161).
     const whatsapp = await screen.findByRole('switch', { name: 'WhatsApp' });
     expect(whatsapp).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getAllByText('לא מחובר')).toHaveLength(5);
+    expect(screen.getAllByText('לא מחובר')).toHaveLength(4);
     // Instagram (F28) has its own plug, usable once Facebook sign-in is set up.
     expect(screen.getByRole('switch', { name: 'Instagram' })).toBeEnabled();
     await user.click(whatsapp);
@@ -67,39 +67,6 @@ describe('Settings → Channels (F25)', () => {
       'aria-checked',
       'true',
     );
-  });
-
-  it('creates the forwarding address for email and shows it to copy (F27)', async () => {
-    const connected: ChannelsResponse = {
-      ...off,
-      email: {
-        channel: 'email',
-        connected: true,
-        name: 'k7m2q9x4pa@mail.example.com',
-        source: 'business',
-      },
-    };
-    const fetchMock = mockApi({
-      [`GET ${apiPaths.auth.me}`]: me(testUser),
-      [`GET ${ch.list(id)}`]: () => json(200, off),
-      [`POST ${ch.email(id)}`]: () => json(200, connected),
-    });
-    const { user } = renderApp(page);
-    await user.click(await screen.findByRole('switch', { name: 'אימייל' }));
-    await waitFor(() => expect(callsTo(fetchMock, 'POST', ch.email(id))).toHaveLength(1));
-    expect(await screen.findByText('k7m2q9x4pa@mail.example.com')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'העתקה' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'אימייל' })).toHaveAttribute('aria-checked', 'true');
-  });
-
-  it('says email is not set up when the server cannot receive it', async () => {
-    mockApi({
-      [`GET ${apiPaths.auth.me}`]: me(testUser),
-      [`GET ${ch.list(id)}`]: () => json(200, { ...off, emailInbound: false }),
-    });
-    renderApp(page);
-    expect(await screen.findByRole('switch', { name: 'אימייל' })).toBeDisabled();
-    expect(screen.getByText('קבלת מייל עוד לא הוגדרה בשרת.')).toBeInTheDocument();
   });
 
   it('"Connect Facebook" goes to Facebook’s sign-in', async () => {
