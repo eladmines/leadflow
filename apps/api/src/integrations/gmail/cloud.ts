@@ -1,7 +1,7 @@
 import type { GmailApi, GmailMessage, GmailOutgoing, GmailTokens } from './types';
 
 /** Thrown when Google refuses a call. Carries the HTTP status only, never Google's text. */
-export class GmailApiError extends Error {
+class GmailApiError extends Error {
   constructor(readonly status: number) {
     super(`Gmail API failed (${status})`);
     this.name = 'GmailApiError';
@@ -67,7 +67,7 @@ function bodyOf(part: Part | undefined): string {
 }
 
 /** "Dana <dana@x.com>" → name and address. */
-export function parseFrom(value: string): { name: string | null; address: string } {
+function parseFrom(value: string): { name: string | null; address: string } {
   const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(value);
   const address = (m ? m[2]! : value).trim().toLowerCase();
   const name = m?.[1]?.trim();
@@ -102,7 +102,6 @@ export function toMessage(raw: RawMessage): GmailMessage {
 
 /** Google's OAuth and Gmail REST APIs. */
 export class CloudGmailApi implements GmailApi {
-  readonly available = true;
   constructor(
     private readonly opts: {
       clientId: string;

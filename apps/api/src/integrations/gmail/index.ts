@@ -3,8 +3,8 @@ import { CloudGmailApi } from './cloud';
 import { MemoryGmailApi } from './memory';
 import type { GmailApi } from './types';
 
-export type { GmailApi, GmailMessage, GmailOutgoing, GmailTokens } from './types';
-export { CloudGmailApi, GmailApiError, parseFrom, toMessage } from './cloud';
+export type { GmailApi, GmailMessage } from './types';
+export { toMessage } from './cloud';
 export { MemoryGmailApi } from './memory';
 
 /** Google when the OAuth client is configured; otherwise a stand-in whose sign-in is off. */

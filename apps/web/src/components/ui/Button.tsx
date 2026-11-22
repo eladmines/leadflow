@@ -31,7 +31,7 @@ export function buttonClasses(variant: Variant = 'primary', size: Size = 'md', c
   );
 }
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
   loading?: boolean;

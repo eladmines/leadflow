@@ -4,7 +4,7 @@ import { SmtpEmailSender } from './smtp';
 import { BrevoEmailSender, DisabledEmailSender } from './http';
 import type { EmailSender } from './types';
 
-export type { EmailMessage, EmailSender } from './types';
+export type { EmailSender } from './types';
 export { MemoryEmailSender } from './memory';
 export { SmtpEmailSender } from './smtp';
 export {

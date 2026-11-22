@@ -3,7 +3,7 @@ import { SITE_LIMITS } from '@simplecatch/shared';
 import { Button, Field, Textarea } from '../../components/ui';
 import { tr } from '../../i18n';
 
-export interface ItemField<T> {
+interface ItemField<T> {
   key: keyof T & string;
   label: string;
   multiline?: boolean;

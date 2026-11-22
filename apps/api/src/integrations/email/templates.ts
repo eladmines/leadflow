@@ -4,7 +4,7 @@ import {
   type Language,
 } from '@simplecatch/shared';
 
-export interface RenderedEmail {
+interface RenderedEmail {
   subject: string;
   html: string;
   text: string;

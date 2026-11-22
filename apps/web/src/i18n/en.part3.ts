@@ -285,11 +285,7 @@ export const enPart3: Record<string, string> = {
   'עסקי: יצירת ליד': 'Business: create lead',
   עסקי: 'Business',
   פרטי: 'Personal',
-  'ההודעות נמחקות, והמספר לא ייכנס למערכת גם בהמשך. מתאים לבני משפחה וחברים.':
-    'The messages are deleted, and the number stays out from now on. Good for family and friends.',
   'מספרים פרטיים': 'Personal numbers',
-  'המספרים שסימנתם כפרטיים. אפשר לבטל סימון אם טעיתם.':
-    'The numbers you marked as personal. You can undo a marking if you made a mistake.',
   הרשימה: 'The list',
   'קובעים תור ללקוח: שירות, איש צוות ושעה. המערכת לא תאפשר שני תורים באותה שעה.':
     "Book a customer: service, staff member and time. SimpleCatch won't allow two appointments at the same time.",
@@ -335,7 +331,6 @@ export const enPart3: Record<string, string> = {
     '{0} was marked as personal. The messages were deleted, and later messages from this number will stay out.',
   'WhatsApp עדיין לא מחובר': "WhatsApp isn't connected yet",
   'הודעות מ{0}': 'Messages from {0}',
-  'מספרים פרטיים (': 'Personal numbers (',
   'הודעות מהמספרים האלה לא נשמרות. ביטול הסימון מחזיר את ההודעה הבאה מהמספר לתיבה.':
     "Messages from these numbers aren't saved. Undoing a marking sends the number's next message back to the inbox.",
   'ביטול סימון פרטי ל-{0}': 'Undo personal marking for {0}',
@@ -356,8 +351,6 @@ export const enPart3: Record<string, string> = {
     'New messages arrive on their own every few seconds. This button fetches them right away.',
   'החדשות למעלה. נקודה ירוקה: וואטסאפ, כחולה: פייסבוק. כל פונה חדש נכנס כליד. "לא נקראו" מסנן את הרשימה.':
     'Newest first. Green dot: WhatsApp, blue: Facebook. Every new sender becomes a lead. "Unread" filters the list.',
-  'יוצר ליד מההודעות. מעכשיו כל הודעה מהמספר הזה תיכנס לליד שלו, ושם גם עונים לו.':
-    'Creates a lead from the messages. From now on every message from this number goes to its lead, where you also reply.',
   'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שלא מבינים אותו פעמיים, עובר אליכם מיד. לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
     "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or isn't understood twice, is passed to you at once. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
   'אישור התורים': 'Confirming bookings',
@@ -448,8 +441,6 @@ export const enPart3: Record<string, string> = {
   'החלפת הסרטון': 'Replace video',
   'הוספת סרטון': 'Add a video',
   'MP4 עד 16MB. סרטון קצר נשלח מהר יותר.': 'MP4 up to 16MB. A short video sends faster.',
-  'כבוי — בלי מענה אוטומטי': 'Off — no automatic reply',
-  'הודעות נכנסות בלי שום מענה אוטומטי.': 'Messages come in with no automatic reply.',
   'לקוחות רואים זמנים פנויים וקובעים לבד תור או בקשה לאירוע.':
     'Customers see your free times and book an appointment or event request on their own.',
   באירוע: 'At an event',
@@ -485,7 +476,6 @@ export const enPart3: Record<string, string> = {
   'אין עוד תורים היום': 'No more appointments today',
   'משימות באיחור': 'Late tasks',
   'ועוד {0} להיום': '+{0} due today',
-  'הודעות ממספרים חדשים': 'Messages from new numbers',
   'הכול מטופל, אין דברים שמחכים לכם 🎉': 'All caught up, nothing is waiting for you 🎉',
   'מה קורה בעסק במבט אחד. למעלה מופיע הצעד הבא שכדאי לעשות, עם כפתור ישיר אליו, וכמה מההקמה כבר הושלם.':
     'Your business at a glance. At the top: the next step to take, with a button straight to it, and how much of the setup is done.',
@@ -499,16 +489,12 @@ export const enPart3: Record<string, string> = {
   'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד היומן.':
     'The customer answers a few questions about the event (type, date, guests and area), and the request waits for your approval on the Calendar page.',
   הודעות: 'Messages',
-  'חלקי העמוד': 'Page sections',
   'טוענים…': 'Loading…',
   'אין מספרים פרטיים': 'No personal numbers',
   'מספר שתסמנו כפרטי (חברים, משפחה) יופיע כאן, וההודעות שלו לא יישמרו.':
     "A number you mark as personal (friends, family) shows here, and its messages aren't saved.",
   'כל ההודעות מלקוחות, מוואטסאפ ומפייסבוק, במקום אחד. פותחים שיחה ועונים מכאן, בערוץ שבו הלקוח כתב.':
     "All your customers' messages, from WhatsApp and Facebook, in one place. Open a conversation and reply from here, on the channel the customer wrote on.",
-  'שלושה חלקים': 'Three parts',
-  '"הודעות": כל השיחות. "מענה אוטומטי": מה הלקוח מקבל כשהוא כותב, והסטטוס שלכם. "מספרים פרטיים": מספרים שסימנתם כפרטיים.':
-    '"Messages": all your conversations. "Automatic reply": what customers get when they write, and your status. "Personal numbers": numbers you marked personal.',
   // My website: two choices (D-130)
   'יש לכם כבר אתר?': 'Already have a website?',
   'בוחרים תבנית מוכנה, והיא מתמלאת בפרטי העסק.':
@@ -560,12 +546,6 @@ export const enPart3: Record<string, string> = {
   'ההודעות בוואטסאפ, המיילים ללקוחות ואתר חדש יהיו בשפה הזו.':
     'WhatsApp messages, emails to customers and a new website will be in this language.',
   'מה קורה כשלקוח כותב לכם בוואטסאפ?': 'What happens when a customer writes to you on WhatsApp?',
-  'מה הלקוח יקבל?': 'What will the customer get?',
-  'הכול מוכן!': 'All set!',
-  'הודעות נכנסות בלי מענה אוטומטי. אפשר לשנות את זה כאן בכל זמן.':
-    'Messages come in with no automatic reply. You can change this here any time.',
-  'מעכשיו לקוחות שכותבים מקבלים מענה לבד. כל השאר, כמו סטטוסים וההודעות ללקוחות, נמצא כאן בהמשך העמוד.':
-    'From now on, customers who write get a reply automatically. Everything else, like statuses and the messages to customers, is further down this page.',
   'עריכת הסטטוסים ({0})': 'Edit statuses ({0})',
   'הסטטוס שלך': 'Your status',
   'מה לקוחות מקבלים כשאתם "{0}"': 'What customers get while you\'re "{0}"',
@@ -634,8 +614,6 @@ export const enPart3: Record<string, string> = {
   'אתם:': 'You:',
   'לא נקראה': 'Unread',
   'טוענים את השיחה…': 'Loading the conversation…',
-  'פונה חדש. לקוח? נפתח לו ליד. פרטי? ההודעות יימחקו.':
-    'A new sender. A customer? A lead is opened. Personal? The messages are deleted.',
   'הודעות בשיחה': 'Messages in the conversation',
   'חזרה לשיחות': 'Back to conversations',
   'כל ההודעות מוואטסאפ ומפייסבוק במקום אחד, ותשובה אוטומטית ללקוחות כשאתם עסוקים.':
@@ -665,7 +643,6 @@ export const enPart3: Record<string, string> = {
   'טוקן גישה': 'Access token',
   'נשמר מוצפן, ולא מוצג שוב.': 'Stored encrypted, and never shown again.',
   חיבור: 'Connect',
-  'חיבור פייסבוק': 'Connect Facebook',
   'איזה דף לחבר?': 'Which Page should we connect?',
   'טוענים את הדפים…': 'Loading your Pages…',
   'ההודעות לדף הזה יגיעו לתיבת השיחות של העסק.':
@@ -684,10 +661,8 @@ export const enPart3: Record<string, string> = {
     "We didn't find any Facebook Pages you manage on this account.",
   'הודעות ישירות מאינסטגרם יגיעו לתיבת השיחות. החשבון מתחבר דרך דף הפייסבוק של העסק.':
     "Instagram direct messages will reach your conversations inbox. The account connects through the business's Facebook Page.",
-  'חיבור Instagram': 'Connect Instagram',
   'מיילים מלקוחות יגיעו לתיבת השיחות, ותוכלו לענות להם משם.':
     "Customers' emails will reach your conversations inbox, and you'll reply from there.",
-  'חיבור אימייל': 'Connect email',
   מחובר: 'Connected',
   'דרך הגדרות המערכת': 'Through the system settings',
   'הודעות מלקוחות בוואטסאפ יגיעו לתיבת השיחות, ושם גם המענה האוטומטי וקביעת התורים.':
@@ -769,8 +744,6 @@ export const enPart3: Record<string, string> = {
   הועתק: 'Copied',
   העתקה: 'Copy',
   לקוחות: 'Customers',
-  'מי שקנה מכם: ליד שהגיע לשלב "נסגר" או הצעת מחיר שאושרה.':
-    'Everyone who bought from you: a lead that reached the Won stage or an accepted quote.',
   'חיפוש לקוחות': 'Search customers',
   'טוענים לקוחות…': 'Loading customers…',
   'לא הצלחנו לטעון את הלקוחות': "We couldn't load your customers",
@@ -796,8 +769,6 @@ export const enPart3: Record<string, string> = {
     'Adds "Book now" to the message: customers see free times and book an appointment or an event request.',
   'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
     'Right after the customer decides (a time to talk, an appointment or an event), they get a link, photos and a video from the business. At most once a day.',
-  'כל הודעה של לקוח מקבלת מענה קצר, והלקוח בוחר מתי נוח לדבר. כשסטטוס פעיל — נשלחת הודעת הסטטוס.':
-    'Every customer message gets a short answer, and the customer chooses when to talk. When a status is on, its message is sent.',
   'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר. שעה שנבחרה נכנסת ליומן, ואתם מקבלים משימה לחזור אליו.':
     'Under the message, the customer picks an hour to talk (today or tomorrow, 09:00–20:00) or another time. A chosen hour goes into your appointments calendar, and you get a task to call them back.',
   'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
@@ -831,11 +802,6 @@ export const enPart3: Record<string, string> = {
   'איפה הפניות עומדות': 'Where leads stand',
   'שיחות שלא נקראו': 'Unread conversations',
   מייל: 'Email',
-  'יצירת כתובת': 'Create address',
-  'לכל עסק כתובת משלו. מיילים שנשלחים אליה מגיעים לתיבת השיחות, והתשובות יוצאות ממנה.':
-    'Every business gets its own address. Emails sent to it arrive in the inbox, and replies go out from it.',
-  'אפשר לשים אותה באתר ובחתימה, או להעביר אליה מיילים מהתיבה הרגילה.':
-    'Put it on your website and in your signature, or forward mail to it from your usual inbox.',
   'התשובה נשלחת במייל, מאותה כתובת שאליה הלקוח כתב.':
     'The reply is sent by email, from the address the customer wrote to.',
   'תשובה במייל': 'Email reply',

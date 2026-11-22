@@ -19,7 +19,7 @@ const SLOT_STEP_MIN = 30;
 /** How soon a customer can book (minutes from now). */
 const MIN_NOTICE_MIN = 60;
 
-export interface FreeTime {
+interface FreeTime {
   /** HH:MM, wall clock in the business's time zone. */
   time: string;
   startsAt: Date;

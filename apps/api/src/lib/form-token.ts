@@ -18,7 +18,7 @@ export function createFormToken(secret: string, subdomain: string, now = Date.no
   return `${now}.${nonce}.${sign(secret, subdomain, now, nonce)}`;
 }
 
-export type FormTokenCheck =
+type FormTokenCheck =
   { ok: true; nonce: string; tooFast: boolean } | { ok: false; reason: 'invalid' | 'expired' };
 
 export function verifyFormToken(

@@ -58,11 +58,6 @@ export const useConnectInstagram = (businessId: string) =>
     }),
   );
 
-export const useCreateEmailAddress = (businessId: string) =>
-  useChannelMutation(businessId, () =>
-    apiFetch<ChannelsResponse>(apiPaths.channels.email(businessId), { method: 'POST' }),
-  );
-
 export const useDisconnect = (businessId: string) =>
   useChannelMutation(businessId, (channel: ConnectionChannel) =>
     apiFetch<ChannelsResponse>(apiPaths.channels.channel(businessId, channel), {

@@ -18,8 +18,8 @@ type Saved = WhatsAppBotResponse['settings'];
  * name like any other word. On saving, the name (or an older "[שם העסק]" tag) goes back to
  * `{business}`, so a renamed business keeps its messages right.
  */
-export const toTag = (text: string, name: string) => text.replaceAll('{business}', name);
-export const toCode = (text: string, name: string) => {
+const toTag = (text: string, name: string) => text.replaceAll('{business}', name);
+const toCode = (text: string, name: string) => {
   const t = text.replaceAll('[שם העסק]', '{business}').replaceAll('[Business name]', '{business}');
   return name.trim().length >= 2 ? t.replaceAll(name.trim(), '{business}') : t;
 };

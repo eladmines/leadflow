@@ -1,6 +1,6 @@
 import type { WhatsAppChoice, WhatsAppSender } from './types';
 
-export interface CloudApiOptions {
+interface CloudApiOptions {
   phoneNumberId: string;
   accessToken: string;
   graphVersion: string;

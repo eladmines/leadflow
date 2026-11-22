@@ -84,7 +84,7 @@ export interface InboundMessage {
 }
 
 /** What happened to an incoming message. */
-export type ReceiveResult =
+type ReceiveResult =
   | { kind: 'lead'; leadId: string; created: boolean }
   | { kind: 'inbox'; numberId: string; isNew: boolean }
   | { kind: 'ignored' };

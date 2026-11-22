@@ -244,9 +244,6 @@ export const enPart2: Record<string, string> = {
   'האתר שלי': 'My website',
   שיחות: 'Conversations',
   אוטומציות: 'Automations',
-  'אוטומציות בדרך': 'Automations are on the way',
-  'תהליכים מוכנים עם הפעלה וכיבוי, למשל התראה על פנייה חדשה או משימת מעקב אחרי הצעה.':
-    'Ready-made workflows you can switch on and off, like a new-inquiry alert or a follow-up task after a quote.',
   צוות: 'Team',
   'הפרטים האלה משותפים לכל המערכת: שינוי כאן יתעדכן באתר, בכפתור החיוג ובהתראות במייל.':
     'These details are shared across the system: a change here updates the website, the call button and email notifications.',

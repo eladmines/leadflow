@@ -10,7 +10,7 @@ import {
  * F26 — the `lf_src` cookie on a business's site (D-162): where the visit came from, until the form
  * is sent. Values only (source, campaign names, hosts, paths) — no visitor id, no click id value.
  */
-export const ATTRIBUTION_COOKIE = 'lf_src';
+const ATTRIBUTION_COOKIE = 'lf_src';
 const MAX_AGE_SECONDS = 30 * 86_400;
 
 const encode = (a: Attribution) => Buffer.from(JSON.stringify(a)).toString('base64url');

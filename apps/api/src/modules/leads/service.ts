@@ -104,7 +104,7 @@ export async function ensureStages(db: Db, businessId: string) {
   return db.pipelineStage.findMany({ where: { businessId }, orderBy: { position: 'asc' } });
 }
 
-export interface WebsiteSubmission {
+interface WebsiteSubmission {
   businessId: string;
   siteId: string;
   idempotencyKey: string;

@@ -1,7 +1,7 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 import type { EmailMessage, EmailSender } from './types';
 
-export interface SmtpOptions {
+interface SmtpOptions {
   host: string;
   port: number;
   from: string;

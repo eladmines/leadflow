@@ -38,7 +38,7 @@ const USER_AGENT_MAX = 512;
 const IP_MAX = 45;
 
 /** Per-request context the service needs (never contains secrets). */
-export interface RequestMeta {
+interface RequestMeta {
   ip: string | null;
   userAgent: string | null;
   log: FastifyBaseLogger;
@@ -46,14 +46,14 @@ export interface RequestMeta {
   lang?: Language;
 }
 
-export interface AuthServiceDeps {
+interface AuthServiceDeps {
   prisma: PrismaClient;
   email: EmailSender;
   config: AppConfig;
 }
 
 /** The result of register/login: the user plus the raw session token for the cookie. */
-export interface SignedIn {
+interface SignedIn {
   user: User;
   sessionToken: string;
 }

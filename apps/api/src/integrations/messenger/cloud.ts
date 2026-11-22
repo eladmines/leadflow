@@ -1,6 +1,6 @@
 import type { MessengerSender } from './types';
 
-export interface MessengerCloudOptions {
+interface MessengerCloudOptions {
   pageId: string;
   pageAccessToken: string;
   graphVersion: string;
@@ -11,7 +11,7 @@ export interface MessengerCloudOptions {
 }
 
 /** Thrown when Meta refuses a message. Carries Meta's numeric code only, never its text. */
-export class MessengerSendError extends Error {
+class MessengerSendError extends Error {
   constructor(
     readonly status: number,
     readonly code: number | null,

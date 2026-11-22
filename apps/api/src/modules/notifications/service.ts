@@ -9,7 +9,7 @@ import type { Db } from '../../lib/db';
 import type { TenantContext } from '../../plugins/tenant';
 
 /** Who gets a notification: members with these roles, plus specific users (e.g. the lead owner). */
-export interface Recipients {
+interface Recipients {
   roles?: MembershipRole[];
   userIds?: (string | null | undefined)[];
 }

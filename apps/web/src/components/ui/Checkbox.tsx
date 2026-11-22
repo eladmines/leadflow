@@ -2,7 +2,7 @@ import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'rea
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';
 
-export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   /** May contain links; clicking a link does not toggle the box. */
   label: ReactNode;
   error?: string;

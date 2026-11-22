@@ -56,7 +56,7 @@ const notFoundPage = (title: string, text: string) => `<!doctype html>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,Arial,sans-serif;background:#f8f5f0;color:#1f2933;text-align:center;padding:24px}h1{font-size:1.6rem;margin:0 0 .4em}p{color:#5f6b74;margin:0}</style>
 </head><body><main><h1>${title}</h1><p>${text}</p></main></body></html>`;
 
-export interface PublicAppDeps {
+interface PublicAppDeps {
   config: AppConfig;
   prisma: PrismaClient;
   /** Shared with the API so publishing invalidates it immediately. */

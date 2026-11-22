@@ -14,7 +14,7 @@ import { authOf, requireAuth } from '../../plugins/session';
 import type { EmailSender } from '../../integrations/email';
 import { AuthService, verificationOn, requestMeta, toAuthUser } from './service';
 
-export interface AuthRoutesOptions {
+interface AuthRoutesOptions {
   email: EmailSender;
 }
 

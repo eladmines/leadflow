@@ -2,7 +2,7 @@ import { forwardRef, useId, type InputHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 import { isRtl, tr } from '../../i18n';
 
-export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
+interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   hint?: string;
   error?: string;

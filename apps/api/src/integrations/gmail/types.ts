@@ -36,8 +36,6 @@ export interface GmailOutgoing {
  * Implementations never log tokens, addresses or message texts.
  */
 export interface GmailApi {
-  /** Whether Google sign-in is set up on this server. */
-  readonly available: boolean;
   /** Where to send the person for Google's consent screen. */
   authUrl(redirectUri: string, state: string): string;
   /** Exchanges the sign-in `code`: the long-lived refresh token and the account's address. */

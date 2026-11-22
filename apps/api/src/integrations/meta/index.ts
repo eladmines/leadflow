@@ -4,7 +4,6 @@ import { MemoryMetaApi } from './memory';
 import type { MetaApi } from './types';
 
 export type { MetaApi, MetaPage } from './types';
-export { CloudMetaApi, MetaApiError } from './cloud';
 export { MemoryMetaApi } from './memory';
 
 /** Real Meta when a channel uses the cloud provider and the app is known; else the stand-in. */

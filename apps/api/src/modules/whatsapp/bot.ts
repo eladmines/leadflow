@@ -276,7 +276,7 @@ type Words = (typeof WORDS)['he'];
 /** What the bot did with a message: answered it, passed the chat to the team, or nothing. */
 export type BotOutcome = 'handled' | 'handoff' | 'none';
 
-export interface BotMessage {
+interface BotMessage {
   from: string;
   body: string;
   /** Id of the tapped button or list row, if any. */

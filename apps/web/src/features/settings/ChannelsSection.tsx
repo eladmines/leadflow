@@ -136,13 +136,7 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-type BoxState = 'connected' | 'off' | 'soon';
-
-const STATE_PILL: Record<BoxState, { label: string; className: string }> = {
-  connected: { label: 'מחובר', className: 'bg-emerald-50 text-emerald-700' },
-  off: { label: 'לא מחובר', className: 'bg-slate-100 text-slate-600' },
-  soon: { label: 'בקרוב', className: 'bg-amber-50 text-amber-700' },
-};
+type BoxState = 'connected' | 'off';
 
 /**
  * The connect / disconnect control (a button with role="switch"): the plug is in the socket when
@@ -231,7 +225,6 @@ function ChannelBox({
   action?: ReactNode;
   children?: ReactNode;
 }) {
-  const pill = STATE_PILL[state];
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-surface-border p-4">
       <div className="flex flex-wrap items-start gap-3">
@@ -245,14 +238,7 @@ function ChannelBox({
           <Icon className="h-5 w-5" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h3 className="flex flex-wrap items-center gap-2 font-semibold text-ink">
-            {title}
-            {state === 'soon' && (
-              <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', pill.className)}>
-                {tr(pill.label)}
-              </span>
-            )}
-          </h3>
+          <h3 className="flex flex-wrap items-center gap-2 font-semibold text-ink">{title}</h3>
           <p className="text-sm text-ink-muted">{description}</p>
           {state === 'connected' && detail && (
             <p className="text-sm font-medium text-ink" dir="auto">

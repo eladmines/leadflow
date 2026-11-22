@@ -4,7 +4,7 @@ import { cn } from '../../lib/cn';
 import { inputClasses } from './Field';
 import { tr } from '../../i18n';
 
-export interface SelectMenuProps {
+interface SelectMenuProps {
   label: string;
   options: readonly { value: string; label: string }[];
   value: string;

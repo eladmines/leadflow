@@ -3,7 +3,7 @@ import { cn } from '../../lib/cn';
 import { inputClasses } from './Field';
 import { isRtl, tr } from '../../i18n';
 
-export interface PasswordFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface PasswordFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label: string;
   hint?: string;
   error?: string;

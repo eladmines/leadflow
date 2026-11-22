@@ -74,7 +74,7 @@ declare module 'fastify' {
   }
 }
 
-export interface AppDeps {
+interface AppDeps {
   config: AppConfig;
   prisma: PrismaClient;
   /** Defaults to the adapter chosen by `EMAIL_TRANSPORT`. Tests inject a MemoryEmailSender. */

@@ -5,7 +5,7 @@ import type { MessengerSender } from './types';
 
 export type { MessengerSender } from './types';
 export { MemoryMessengerSender } from './memory';
-export { CloudMessengerSender, MessengerSendError } from './cloud';
+export { CloudMessengerSender } from './cloud';
 
 /** Picks the adapter from `MESSENGER_PROVIDER` (F23). */
 export function createMessengerSender(config: AppConfig): MessengerSender {

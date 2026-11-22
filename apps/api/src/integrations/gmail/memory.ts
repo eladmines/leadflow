@@ -3,7 +3,6 @@ import type { GmailApi, GmailMessage, GmailOutgoing, GmailTokens } from './types
 
 /** Stands in for Google (local development and tests). */
 export class MemoryGmailApi implements GmailApi {
-  readonly available = true;
   /** What the next sign-in returns; codes other than `good-code` fail. */
   signIn: GmailTokens = { refreshToken: 'refresh-token', email: 'owner@gmail.com' };
   /** The inbox, newest last; only messages after the cursor are listed. */

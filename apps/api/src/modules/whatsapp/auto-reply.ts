@@ -30,7 +30,7 @@ const storedStatus = z.object({
   videoKey: z.string().optional(),
   videoBytes: z.number().int().optional(),
 });
-export type StoredStatus = z.infer<typeof storedStatus>;
+type StoredStatus = z.infer<typeof storedStatus>;
 const activeSchema = z.object({ id: z.string(), until: z.string().datetime().nullable() });
 
 export const modeOf = (raw: string): ReplyMode =>

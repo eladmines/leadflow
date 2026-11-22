@@ -3,7 +3,7 @@ import { cn } from '../../lib/cn';
 import { inputClasses } from './Field';
 import { tr } from '../../i18n';
 
-export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
   options: readonly { value: string; label: string }[];
   /** Shown as a disabled first option while nothing is selected. */

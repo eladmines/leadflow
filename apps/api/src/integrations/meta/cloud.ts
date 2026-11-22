@@ -1,7 +1,7 @@
 import type { MetaApi, MetaPage } from './types';
 
 /** Thrown when Meta refuses a call. Carries Meta's numeric code only, never its text. */
-export class MetaApiError extends Error {
+class MetaApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: number | null,
