@@ -186,7 +186,10 @@ export class ConversationService {
       const last = r.messages[0];
       return {
         id: r.id,
-        channel: r.channel === 'messenger' || r.channel === 'email' ? r.channel : 'whatsapp',
+        channel:
+          r.channel === 'messenger' || r.channel === 'instagram' || r.channel === 'email'
+            ? r.channel
+            : 'whatsapp',
         status: r.status === 'UNCLASSIFIED' ? 'UNCLASSIFIED' : 'BUSINESS',
         name: contact?.name ?? r.profileName ?? null,
         phone: r.channel === 'whatsapp' ? r.phone : null,

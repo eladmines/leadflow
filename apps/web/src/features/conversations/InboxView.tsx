@@ -26,13 +26,17 @@ import { useConversation, useConversations, useMarkRead, useReply } from './api'
 const CHANNEL_STYLE: Record<Channel, { label: string; chip: string; dot: string }> = {
   whatsapp: { label: 'WhatsApp', chip: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
   messenger: { label: 'פייסבוק', chip: 'bg-blue-50 text-blue-700', dot: 'bg-blue-600' },
+  instagram: { label: 'Instagram', chip: 'bg-pink-50 text-pink-700', dot: 'bg-pink-500' },
   email: { label: 'מייל', chip: 'bg-sky-50 text-sky-700', dot: 'bg-sky-500' },
 };
 
 const showPhone = (e164: string) => (e164.startsWith('+972') ? formatIsraeliPhone(e164) : e164);
 /** A name to show: the person's, else the phone or email address, else "Facebook user". */
 const nameOf = (c: ConversationSummary) =>
-  c.name || (c.phone ? showPhone(c.phone) : c.email || tr('משתמש/ת פייסבוק'));
+  c.name ||
+  (c.phone
+    ? showPhone(c.phone)
+    : c.email || (c.channel === 'instagram' ? tr('משתמש/ת אינסטגרם') : tr('משתמש/ת פייסבוק')));
 
 /**
  * F24 unified inbox (D-158): every conversation — WhatsApp and Facebook — in one list, the open one
@@ -103,6 +107,7 @@ export function InboxView({ businessId }: { businessId: string }) {
               <option value="">{tr('כל הערוצים')}</option>
               <option value="whatsapp">WhatsApp</option>
               <option value="messenger">{tr('פייסבוק')}</option>
+              <option value="instagram">Instagram</option>
               <option value="email">{tr('מייל')}</option>
             </select>
           </label>
@@ -280,6 +285,7 @@ function ConversationPane({
   const { conversation: c, messages, replyUntil } = convo.data;
   const style = CHANNEL_STYLE[c.channel];
   const fb = c.channel === 'messenger';
+  const ig = c.channel === 'instagram';
   const mail = c.channel === 'email';
   const time = new Intl.DateTimeFormat(intlLocale(), {
     weekday: 'short',
@@ -367,7 +373,15 @@ function ConversationPane({
         {replyUntil || mail ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
-              label={mail ? tr('תשובה במייל') : fb ? tr('תשובה בפייסבוק') : tr('תשובה בוואטסאפ')}
+              label={
+                mail
+                  ? tr('תשובה במייל')
+                  : fb
+                    ? tr('תשובה בפייסבוק')
+                    : ig
+                      ? tr('תשובה באינסטגרם')
+                      : tr('תשובה בוואטסאפ')
+              }
               rows={2}
               dir="auto"
               hint={
@@ -383,12 +397,24 @@ function ConversationPane({
             />
             {reply.isError && <Alert tone="danger">{errorMessage(reply.error)}</Alert>}
             <Button type="submit" size="sm" loading={reply.isPending} className="self-end">
-              {mail ? tr('שליחה במייל') : fb ? tr('שליחה בפייסבוק') : tr('שליחה בוואטסאפ')}
+              {mail
+                ? tr('שליחה במייל')
+                : fb
+                  ? tr('שליחה בפייסבוק')
+                  : ig
+                    ? tr('שליחה באינסטגרם')
+                    : tr('שליחה בוואטסאפ')}
             </Button>
           </form>
         ) : (
           <Alert tone="info">
-            {tr(fb ? whatsappMessages.messengerWindowClosed : whatsappMessages.windowClosed)}
+            {tr(
+              ig
+                ? whatsappMessages.instagramWindowClosed
+                : fb
+                  ? whatsappMessages.messengerWindowClosed
+                  : whatsappMessages.windowClosed,
+            )}
           </Alert>
         )}
       </div>

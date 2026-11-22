@@ -52,9 +52,11 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
   const { connected, messages, replyUntil, botPaused } = thread.data;
   // A Facebook Messenger conversation (F23): replies go there; no booking bot.
   const fb = thread.data.channel === 'messenger';
+  // An Instagram conversation (F28): the same, through Instagram.
+  const ig = thread.data.channel === 'instagram';
   // An email conversation (F27): replies go out by email, with no 24-hour window or booking bot.
   const mail = thread.data.channel === 'email';
-  const title = mail ? tr('מייל') : fb ? 'Facebook Messenger' : 'WhatsApp';
+  const title = mail ? tr('מייל') : fb ? 'Facebook Messenger' : ig ? 'Instagram' : 'WhatsApp';
   // Its own tab on the lead page (D-140), so say why it's empty rather than show nothing.
   if (!connected && messages.length === 0) {
     return (
@@ -75,12 +77,18 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
             aria-hidden
             className={cn(
               'h-5 w-5',
-              mail ? 'text-sky-600' : fb ? 'text-blue-600' : 'text-success-600',
+              mail
+                ? 'text-sky-600'
+                : fb
+                  ? 'text-blue-600'
+                  : ig
+                    ? 'text-pink-600'
+                    : 'text-success-600',
             )}
           />
           {title}
         </h2>
-        {connected && !fb && !mail && (
+        {connected && !fb && !ig && !mail && (
           // The booking bot for this customer only (D-108): pause it to talk yourself.
           <div className="flex items-center gap-2 text-xs text-ink-muted">
             <Bot aria-hidden className="h-4 w-4" />
@@ -132,7 +140,14 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
                     </time>
                     {out && !m.sender && (
                       // On Facebook nothing answers automatically: it was written on the Page.
-                      <span>· {fb ? tr('נשלחה מדף הפייסבוק') : tr('תשובה אוטומטית')}</span>
+                      <span>
+                        ·{' '}
+                        {ig
+                          ? tr('נשלחה מאינסטגרם')
+                          : fb
+                            ? tr('נשלחה מדף הפייסבוק')
+                            : tr('תשובה אוטומטית')}
+                      </span>
                     )}
                     {out && (
                       <span className={cn(m.status === 'failed' && 'font-medium text-danger-700')}>
@@ -150,7 +165,15 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         (replyUntil || mail ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
-              label={mail ? tr('תשובה במייל') : fb ? tr('תשובה בפייסבוק') : tr('תשובה בוואטסאפ')}
+              label={
+                mail
+                  ? tr('תשובה במייל')
+                  : fb
+                    ? tr('תשובה בפייסבוק')
+                    : ig
+                      ? tr('תשובה באינסטגרם')
+                      : tr('תשובה בוואטסאפ')
+              }
               rows={2}
               hint={
                 mail || !replyUntil
@@ -165,13 +188,25 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
             />
             {send.isError && <Alert tone="danger">{errorMessage(send.error)}</Alert>}
             <Button type="submit" size="sm" loading={send.isPending} className="self-end">
-              {mail ? tr('שליחה במייל') : fb ? tr('שליחה בפייסבוק') : tr('שליחה בוואטסאפ')}
+              {mail
+                ? tr('שליחה במייל')
+                : fb
+                  ? tr('שליחה בפייסבוק')
+                  : ig
+                    ? tr('שליחה באינסטגרם')
+                    : tr('שליחה בוואטסאפ')}
             </Button>
           </form>
         ) : (
           messages.length > 0 && (
             <Alert tone="info">
-              {tr(fb ? whatsappMessages.messengerWindowClosed : whatsappMessages.windowClosed)}
+              {tr(
+                ig
+                  ? whatsappMessages.instagramWindowClosed
+                  : fb
+                    ? whatsappMessages.messengerWindowClosed
+                    : whatsappMessages.windowClosed,
+              )}
             </Alert>
           )
         ))}

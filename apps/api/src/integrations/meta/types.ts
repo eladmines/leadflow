@@ -3,6 +3,8 @@ export interface MetaPage {
   id: string;
   name: string;
   accessToken: string;
+  /** The Instagram professional account linked to the Page, if it has one. */
+  instagram?: { id: string; username: string };
 }
 
 /**
@@ -15,6 +17,8 @@ export interface MetaApi {
   exchangeCode(code: string, redirectUri: string): Promise<string>;
   /** The Pages the person manages, each with its own token. */
   pages(userToken: string): Promise<MetaPage[]>;
+  /** The Instagram account linked to a Page (null: none, or the token can't see it). */
+  instagramOf(pageId: string, pageToken: string): Promise<{ id: string; username: string } | null>;
   /** Sends the Page's messages to this app's webhook. */
   subscribePage(pageId: string, pageToken: string): Promise<void>;
   unsubscribePage(pageId: string, pageToken: string): Promise<void>;

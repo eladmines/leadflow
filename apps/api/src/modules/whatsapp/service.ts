@@ -97,9 +97,11 @@ const statusRank: Record<Status, number> = {
 };
 
 const sender = { select: { id: true, fullName: true } } as const;
-/** Messenger senders are stored as `fb:<psid>` (F23). */
-const MESSENGER_PREFIX = 'fb:';
-const psidOf = (address: string) => address.slice(MESSENGER_PREFIX.length);
+/** Messenger senders are stored as `fb:<psid>` (F23), Instagram ones as `ig:<id>` (F28). */
+const psidOf = (address: string) => address.slice(address.indexOf(':') + 1);
+/** Facebook and Instagram conversations: contacts without a phone, replies within 24 hours. */
+const isSocial = (channel: string | undefined): channel is 'messenger' | 'instagram' =>
+  channel === 'messenger' || channel === 'instagram';
 /** Email senders are stored as `mail:<address>` (F27). */
 const EMAIL_PREFIX = 'mail:';
 const addressOf = (address: string) => address.slice(EMAIL_PREFIX.length);
@@ -121,13 +123,16 @@ function cleanEmailText(text: string): string {
   return out.join('\n').trim();
 }
 const mailName = (address: string) => address.split('@')[0]!.slice(0, 80);
-/** A Messenger sender without a shared profile name. */
+/** A Messenger / Instagram sender without a shared profile name. */
 const FACEBOOK_USER = 'משתמש/ת פייסבוק';
+const INSTAGRAM_USER = 'משתמש/ת אינסטגרם';
+const socialUser = (channel: string | undefined) =>
+  channel === 'instagram' ? INSTAGRAM_USER : FACEBOOK_USER;
 type Row = MessageRow & { sender: { id: string; fullName: string } | null };
 
 export function toDto(row: Row, channel?: string): WhatsAppMessage {
   return {
-    ...(channel === 'messenger' || channel === 'email' ? { channel } : {}),
+    ...(isSocial(channel) || channel === 'email' ? { channel } : {}),
     ...(row.subject ? { subject: row.subject } : {}),
     id: row.id,
     direction: row.direction,
@@ -191,13 +196,15 @@ export class WhatsAppService {
    * already stored under the same message id.
    */
   async receiveEcho(msg: {
+    channel?: 'messenger' | 'instagram';
+    /** The Page id (Messenger) or Instagram account id (Instagram) that sent it. */
     pageId: string;
     customer: string;
     waMessageId: string;
     body: string;
     sentAt: Date;
   }): Promise<void> {
-    const businessId = await this.channels.businessFor('messenger', msg.pageId);
+    const businessId = await this.channels.businessFor(msg.channel ?? 'messenger', msg.pageId);
     if (!businessId) return;
     const seen = await this.prisma.whatsAppMessage.findUnique({
       where: { waMessageId: msg.waMessageId },
@@ -255,14 +262,18 @@ export class WhatsAppService {
       select: { id: true },
     });
     if (seen) return null;
-    // A new Facebook sender: their name comes from their profile (F23).
-    if (channel === 'messenger' && !msg.profileName) {
+    // A new Facebook / Instagram sender: their name comes from their profile (F23, F28).
+    if (isSocial(channel) && !msg.profileName) {
       const known = await this.prisma.whatsAppNumber.findUnique({
         where: { businessId_phone: { businessId, phone: msg.from } },
         select: { id: true },
       });
-      const messenger = known ? null : await this.channels.messenger(businessId);
-      if (messenger) msg = { ...msg, profileName: await messenger.profileName(psidOf(msg.from)) };
+      const social = known
+        ? null
+        : channel === 'instagram'
+          ? await this.channels.instagram(businessId)
+          : await this.channels.messenger(businessId);
+      if (social) msg = { ...msg, profileName: await social.profileName(psidOf(msg.from)) };
     }
 
     try {
@@ -386,8 +397,8 @@ export class WhatsAppService {
           numberId: result.numberId,
           name:
             msg.profileName?.trim() ||
-            (msg.channel === 'messenger' ? FACEBOOK_USER : formatIsraeliPhone(msg.from)),
-          ...(msg.channel === 'messenger' ? { channel: 'messenger' } : {}),
+            (isSocial(msg.channel) ? socialUser(msg.channel) : formatIsraeliPhone(msg.from)),
+          ...(isSocial(msg.channel) ? { channel: msg.channel } : {}),
         },
         to: { roles: MANAGERS },
       });
@@ -408,9 +419,11 @@ export class WhatsAppService {
               source:
                 msg.channel === 'messenger'
                   ? 'facebook'
-                  : msg.channel === 'email'
-                    ? 'email'
-                    : 'whatsapp',
+                  : msg.channel === 'instagram'
+                    ? 'instagram'
+                    : msg.channel === 'email'
+                      ? 'email'
+                      : 'whatsapp',
             },
           }
         : {
@@ -447,10 +460,11 @@ export class WhatsAppService {
     },
   ): Promise<{ contactId: string; leadId: string; created: boolean }> {
     const channel = input.number.channel;
-    const messenger = channel === 'messenger';
+    const messenger = isSocial(channel);
     const email = channel === 'email';
     const address = email ? addressOf(input.number.phone) : null;
-    const source = messenger ? 'facebook' : email ? 'email' : 'whatsapp';
+    const source =
+      channel === 'instagram' ? 'instagram' : messenger ? 'facebook' : email ? 'email' : 'whatsapp';
     // Messenger and email senders are linked to their contact directly; WhatsApp ones are matched
     // by phone.
     const existing = messenger
@@ -476,7 +490,7 @@ export class WhatsAppService {
           name: (
             input.name?.trim() ||
             (messenger
-              ? FACEBOOK_USER
+              ? socialUser(channel)
               : email
                 ? mailName(address!)
                 : formatIsraeliPhone(input.number.phone))
@@ -561,7 +575,7 @@ export class WhatsAppService {
         .map((n) => ({
           id: n.id,
           phone: n.phone,
-          ...(n.channel === 'messenger' ? { channel: 'messenger' as const } : {}),
+          ...(isSocial(n.channel) ? { channel: n.channel } : {}),
           profileName: n.profileName,
           messages: n.messages.map((m) => toDto(m, n.channel)).reverse(),
           lastMessageAt: n.messages[0]!.createdAt.toISOString(),
@@ -581,9 +595,7 @@ export class WhatsAppService {
       numbers: rows.map((r) => ({
         id: r.id,
         phone: r.phone,
-        ...(r.channel === 'messenger'
-          ? { channel: 'messenger' as const, name: FACEBOOK_USER }
-          : {}),
+        ...(isSocial(r.channel) ? { channel: r.channel, name: socialUser(r.channel) } : {}),
         classifiedAt: r.classifiedAt?.toISOString() ?? null,
       })),
     };
@@ -979,7 +991,7 @@ export class WhatsAppService {
       messages: rows.map((r) => toDto(r, r.number.channel)),
       replyUntil: until > Date.now() ? new Date(until).toISOString() : null,
       botPaused: number?.botPaused ?? false,
-      ...(lastIn?.number.channel === 'messenger' || lastIn?.number.channel === 'email'
+      ...(isSocial(lastIn?.number.channel) || lastIn?.number.channel === 'email'
         ? { channel: lastIn.number.channel }
         : {}),
     };
@@ -1114,30 +1126,45 @@ export class WhatsAppService {
     text: string,
   ): Promise<WhatsAppMessage> {
     if (to.channel === 'email') return this.deliverEmail(ctx, to, text);
-    const messenger = to.channel === 'messenger';
-    const via = messenger
-      ? await this.channels.messenger(ctx.businessId)
-      : await this.channels.whatsapp(ctx.businessId);
+    const social = isSocial(to.channel);
+    const instagram = to.channel === 'instagram';
+    const via = instagram
+      ? await this.channels.instagram(ctx.businessId)
+      : social
+        ? await this.channels.messenger(ctx.businessId)
+        : await this.channels.whatsapp(ctx.businessId);
     if (!via) {
       throw new AppError(
         'CONFLICT',
-        messenger ? whatsappMessages.messengerNotConnected : whatsappMessages.notConnected,
+        instagram
+          ? whatsappMessages.instagramNotConnected
+          : social
+            ? whatsappMessages.messengerNotConnected
+            : whatsappMessages.notConnected,
       );
     }
     if (!lastInAt || Date.now() - lastInAt.getTime() > WHATSAPP_WINDOW_MS) {
       throw new AppError(
         'CONFLICT',
-        messenger ? whatsappMessages.messengerWindowClosed : whatsappMessages.windowClosed,
+        instagram
+          ? whatsappMessages.instagramWindowClosed
+          : social
+            ? whatsappMessages.messengerWindowClosed
+            : whatsappMessages.windowClosed,
       );
     }
     let id: string;
     try {
-      ({ id } = await via.sendText(messenger ? psidOf(to.phone) : to.phone, text));
+      ({ id } = await via.sendText(social ? psidOf(to.phone) : to.phone, text));
     } catch (err) {
       const e = err as { name?: string; status?: number; code?: number | null };
       this.log.error(
         { errName: e?.name, status: e?.status, code: e?.code },
-        messenger ? 'messenger send failed' : 'whatsapp send failed',
+        instagram
+          ? 'instagram send failed'
+          : social
+            ? 'messenger send failed'
+            : 'whatsapp send failed',
       );
       throw new AppError('INTERNAL_ERROR', whatsappMessages.sendFailed);
     }

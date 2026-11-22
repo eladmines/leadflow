@@ -4,6 +4,8 @@ export interface MessengerCloudOptions {
   pageId: string;
   pageAccessToken: string;
   graphVersion: string;
+  /** `instagram`: the Page token sends to Instagram users and their names are `name`/`username`. */
+  kind?: 'messenger' | 'instagram';
   /** Injected in tests; defaults to the global fetch. */
   fetch?: typeof fetch;
 }
@@ -56,18 +58,26 @@ export class CloudMessengerSender implements MessengerSender {
     const doFetch = this.opts.fetch ?? fetch;
     try {
       const res = await doFetch(
-        `https://graph.facebook.com/${this.opts.graphVersion}/${encodeURIComponent(psid)}?fields=first_name,last_name`,
+        `https://graph.facebook.com/${this.opts.graphVersion}/${encodeURIComponent(psid)}?fields=${this.opts.kind === 'instagram' ? 'name,username' : 'first_name,last_name'}`,
         {
           headers: { authorization: `Bearer ${this.opts.pageAccessToken}` },
           signal: AbortSignal.timeout(5_000),
         },
       );
       if (!res.ok) return null;
-      const json = (await res.json()) as { first_name?: string; last_name?: string };
-      const name = [json.first_name, json.last_name].filter(Boolean).join(' ').trim();
+      const json = (await res.json()) as {
+        first_name?: string;
+        last_name?: string;
+        name?: string;
+        username?: string;
+      };
+      const name =
+        this.opts.kind === 'instagram'
+          ? (json.name || json.username || '').trim()
+          : [json.first_name, json.last_name].filter(Boolean).join(' ').trim();
       return name || null;
     } catch {
-      // No name is fine: the sender shows as "Facebook user".
+      // No name is fine: the sender shows as "Facebook user" / "Instagram user".
       return null;
     }
   }

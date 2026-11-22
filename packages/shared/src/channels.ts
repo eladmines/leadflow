@@ -17,6 +17,9 @@ export const channelsMessages = {
   facebookExpired: 'החיבור לפייסבוק פג תוקף. התחילו שוב.',
   noPages: 'לא מצאנו דפי פייסבוק שאתם מנהלים בחשבון הזה.',
   emailUnavailable: 'קבלת מייל עוד לא הוגדרה בשרת.',
+  instagramNoAccount:
+    'לא מצאנו חשבון אינסטגרם עסקי שמקושר לדף הפייסבוק. קשרו אותו בהגדרות הדף ונסו שוב.',
+  instagramFailed: 'החיבור לאינסטגרם לא הצליח. נסו שוב.',
 } as const;
 
 export const channelStatusSchema = z.object({
@@ -32,6 +35,7 @@ export type ChannelStatus = z.infer<typeof channelStatusSchema>;
 export const channelsResponseSchema = z.object({
   whatsapp: channelStatusSchema,
   messenger: channelStatusSchema,
+  instagram: channelStatusSchema,
   /** The forwarding address is the "name" while connected (F27). */
   email: channelStatusSchema,
   /** The server can receive email (`EMAIL_INBOUND_DOMAIN` and secret are set). */
@@ -52,9 +56,22 @@ export type ConnectWhatsAppRequest = z.infer<typeof connectWhatsAppRequestSchema
 
 export const facebookStartResponseSchema = z.object({ url: z.string().url() });
 export const facebookPagesResponseSchema = z.object({
-  pages: z.array(z.object({ id: z.string(), name: z.string() })),
+  /** `instagram`: the Page's linked Instagram account (@username), if it has one. */
+  pages: z.array(
+    z.object({ id: z.string(), name: z.string(), instagram: z.string().nullable().optional() }),
+  ),
 });
 export type FacebookPagesResponse = z.infer<typeof facebookPagesResponseSchema>;
+
+/** Empty: the Instagram account of the Facebook Page already connected. Else the picked Page. */
+export const connectInstagramRequestSchema = z.object({
+  pendingId: z.string().uuid().optional(),
+  pageId: z
+    .string()
+    .regex(/^\d{1,40}$/)
+    .optional(),
+});
+export type ConnectInstagramRequest = z.infer<typeof connectInstagramRequestSchema>;
 
 export const connectFacebookRequestSchema = z.object({
   pendingId: z.string().uuid(),
@@ -75,6 +92,8 @@ export const channelsApiPaths = {
     `${base(businessId)}/facebook/pending/${pendingId}`,
   /** POST: connect the chosen Page. */
   facebook: (businessId: string) => `${base(businessId)}/facebook`,
+  /** POST: connect Instagram (the connected Page's account, or one picked after sign-in). */
+  instagram: (businessId: string) => `${base(businessId)}/instagram`,
   /** POST: create the business's forwarding address (F27). */
   email: (businessId: string) => `${base(businessId)}/email`,
   /** DELETE: disconnect a channel. */

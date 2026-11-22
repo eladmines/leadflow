@@ -35,8 +35,8 @@ export class ChannelRegistry {
       if (row) return row.businessId;
     }
     const c = this.config;
-    // Email has no environment fallback: only addresses a business created (F27).
-    if (channel === 'email') return null;
+    // Email and Instagram have no environment fallback: only what a business connected itself.
+    if (channel === 'email' || channel === 'instagram') return null;
     if (channel === 'whatsapp') {
       if (!c.WHATSAPP_BUSINESS_ID) return null;
       return !c.WHATSAPP_PHONE_NUMBER_ID || c.WHATSAPP_PHONE_NUMBER_ID === externalId
@@ -77,13 +77,29 @@ export class ChannelRegistry {
     return this.config.MESSENGER_BUSINESS_ID === businessId ? this.envMessenger : null;
   }
 
+  /** Sends Instagram DMs for a business (F28): the linked Page's token, `me` = that Page. */
+  async instagram(businessId: string): Promise<MessengerSender | null> {
+    const row = await this.connection('instagram', { businessId });
+    if (!row) return null;
+    return this.config.MESSENGER_PROVIDER === 'cloud'
+      ? new CloudMessengerSender({
+          pageId: 'me',
+          pageAccessToken: openSecret(row.tokenEncrypted, this.key),
+          graphVersion: this.config.WHATSAPP_GRAPH_VERSION,
+          kind: 'instagram',
+        })
+      : this.envMessenger;
+  }
+
   /** The business's forwarding address (F27), or null. */
   async emailAddress(businessId: string): Promise<string | null> {
     return (await this.connection('email', { businessId }))?.externalId ?? null;
   }
 
   async isConnected(businessId: string, channel?: Channel): Promise<boolean> {
-    const channels: Channel[] = channel ? [channel] : ['whatsapp', 'messenger', 'email'];
+    const channels: Channel[] = channel
+      ? [channel]
+      : ['whatsapp', 'messenger', 'instagram', 'email'];
     for (const ch of channels) {
       if (ch === 'whatsapp' && this.config.WHATSAPP_BUSINESS_ID === businessId) return true;
       if (ch === 'messenger' && this.config.MESSENGER_BUSINESS_ID === businessId) return true;

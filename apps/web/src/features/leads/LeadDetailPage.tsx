@@ -85,7 +85,9 @@ function activityText(a: Activity): string {
           ? tr('הליד נוצר מהודעת וואטסאפ')
           : d.source === 'facebook'
             ? tr('הליד נוצר מהודעה בפייסבוק')
-            : tr('הליד נוצר מטופס באתר');
+            : d.source === 'instagram'
+              ? tr('הליד נוצר מהודעה באינסטגרם')
+              : tr('הליד נוצר מטופס באתר');
     case 'lead.stage_changed':
       return tr('השלב שונה מ"{0}" ל"{1}"', String(d.from), String(d.to));
     case 'lead.assigned':
@@ -375,7 +377,7 @@ function LeadTasks({ leadId }: { leadId: string }) {
 
 /** `/b/:businessId/leads/:leadId`: contact, stage, owner, value, next action, notes, history. */
 /** Sources whose first message already shows in the lead's conversation. */
-const CONVERSATION_SOURCES: readonly string[] = ['whatsapp', 'facebook', 'email'];
+const CONVERSATION_SOURCES: readonly string[] = ['whatsapp', 'facebook', 'instagram', 'email'];
 
 export function LeadDetailPage() {
   const business = useCurrentBusiness();
@@ -507,7 +509,10 @@ type LeadTab = (typeof LEAD_TABS)[number];
 function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) {
   const [params, setParams] = useSearchParams();
   const fallback: LeadTab =
-    lead.source === 'whatsapp' || lead.source === 'facebook' || lead.lastWhatsApp
+    lead.source === 'whatsapp' ||
+    lead.source === 'facebook' ||
+    lead.source === 'instagram' ||
+    lead.lastWhatsApp
       ? 'whatsapp'
       : 'notes';
   const asked = params.get('tab');
@@ -517,7 +522,12 @@ function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) 
   const labels: Record<LeadTab, string> = {
     notes: tr('הערות והיסטוריה'),
     // The conversation: WhatsApp, or Facebook for a lead that came from the Page (F23).
-    whatsapp: lead.source === 'facebook' ? tr('פייסבוק') : 'WhatsApp',
+    whatsapp:
+      lead.source === 'facebook'
+        ? tr('פייסבוק')
+        : lead.source === 'instagram'
+          ? 'Instagram'
+          : 'WhatsApp',
     tasks: tr('משימות'),
     appointments: tr('תורים'),
     quotes: tr('הצעות מחיר'),

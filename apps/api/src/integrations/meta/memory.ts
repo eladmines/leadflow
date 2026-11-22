@@ -5,6 +5,8 @@ export class MemoryMetaApi implements MetaApi {
   /** Pages returned after sign-in; codes other than `good-code` fail. */
   pagesToReturn: MetaPage[] = [{ id: '100200300', name: 'דף לבדיקה', accessToken: 'page-token' }];
   readonly subscribed = new Set<string>();
+  /** Instagram accounts by Page id (tests). */
+  readonly instagram = new Map<string, { id: string; username: string }>();
   /** Phone number ids this "Meta" knows, with their display numbers. */
   readonly numbers = new Map<string, string>([['555000111', '+1 555-000-1111']]);
 
@@ -16,6 +18,10 @@ export class MemoryMetaApi implements MetaApi {
 
   pages(): Promise<MetaPage[]> {
     return Promise.resolve(this.pagesToReturn);
+  }
+
+  instagramOf(pageId: string) {
+    return Promise.resolve(this.instagram.get(pageId) ?? null);
   }
 
   subscribePage(pageId: string): Promise<void> {

@@ -3,6 +3,7 @@ import {
   type Channel,
   type ChannelsResponse,
   type ConnectFacebookRequest,
+  type ConnectInstagramRequest,
   type ConnectWhatsAppRequest,
   type FacebookPagesResponse,
 } from '@simplecatch/shared';
@@ -48,6 +49,15 @@ export const useConnectFacebook = (businessId: string) =>
     }),
   );
 
+/** Instagram: nothing = the connected Facebook Page's account; or the Page picked after sign-in. */
+export const useConnectInstagram = (businessId: string) =>
+  useChannelMutation(businessId, (body: ConnectInstagramRequest = {}) =>
+    apiFetch<ChannelsResponse>(apiPaths.channels.instagram(businessId), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  );
+
 export const useCreateEmailAddress = (businessId: string) =>
   useChannelMutation(businessId, () =>
     apiFetch<ChannelsResponse>(apiPaths.channels.email(businessId), { method: 'POST' }),
@@ -60,9 +70,15 @@ export const useDisconnect = (businessId: string) =>
     }),
   );
 
-export function useFacebookStart(businessId: string) {
+export function useFacebookStart(
+  businessId: string,
+  forChannel: 'facebook' | 'instagram' = 'facebook',
+) {
   return useMutation({
-    mutationFn: () => apiFetch<{ url: string }>(apiPaths.channels.facebookStart(businessId)),
+    mutationFn: () =>
+      apiFetch<{ url: string }>(
+        `${apiPaths.channels.facebookStart(businessId)}${forChannel === 'instagram' ? '?for=instagram' : ''}`,
+      ),
     // Off to Facebook's sign-in; it sends the person back to this tab.
     onSuccess: ({ url }) => window.location.assign(url),
   });

@@ -36,10 +36,12 @@ export const whatsappMessages = {
   emailNotConnected: 'המייל עדיין לא מחובר לעסק הזה',
   emailNotConfigured: 'שליחת מייל עוד לא הוגדרה בשרת, ולכן אי אפשר לענות כאן.',
   messengerWindowClosed: 'אפשר לענות בפייסבוק רק עד 24 שעות אחרי ההודעה האחרונה של הלקוח.',
+  instagramNotConnected: 'אינסטגרם עדיין לא מחובר לעסק הזה',
+  instagramWindowClosed: 'אפשר לענות באינסטגרם רק עד 24 שעות אחרי ההודעה האחרונה של הלקוח.',
 } as const;
 
 /** Where a conversation happens: WhatsApp, the business's Facebook Page (F23) or its email address (F27). */
-export const CHANNELS = ['whatsapp', 'messenger', 'email'] as const;
+export const CHANNELS = ['whatsapp', 'messenger', 'instagram', 'email'] as const;
 export const channelSchema = z.enum(CHANNELS);
 export type Channel = z.infer<typeof channelSchema>;
 

@@ -303,6 +303,8 @@ enum LeadSource {
   whatsapp
   /// F23: a message to the business's Facebook Page (D-157).
   facebook
+  /// F28: a direct message to the business's Instagram account (D-187).
+  instagram
   /// F27: an email to the business's forwarding address (D-177).
   email
 }
@@ -772,13 +774,16 @@ model Notification {
 model ChannelConnection {
   id             String   @id @default(uuid()) @db.Uuid
   businessId     String   @map("business_id") @db.Uuid
-  /// whatsapp | messenger | email
+  /// whatsapp | messenger | instagram | email
   channel        String   @db.VarChar(20)
-  /// WhatsApp: Meta's phone number id. Messenger: the Facebook Page id. Email: the forwarding address.
+  /// WhatsApp: Meta's phone number id. Messenger: the Facebook Page id. Instagram: the Instagram
+  /// account id. Email: the forwarding address.
   externalId     String   @map("external_id") @db.VarChar(64)
   /// The number or the Page's name, for the settings screen.
   displayName    String   @map("display_name") @db.VarChar(120)
   tokenEncrypted String   @map("token_encrypted")
+  /// Instagram: the linked Facebook Page (its token is what sends and unsubscribes).
+  pageId         String?  @map("page_id") @db.VarChar(64)
   connectedById  String?  @map("connected_by_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

@@ -50,6 +50,7 @@ describe('channels each business connects itself (F25)', () => {
     whatsapp.clear();
     messenger.clear();
     meta.subscribed.clear();
+    meta.instagram.clear();
   });
 
   const signed = (url: string, payload: object) => {
@@ -106,6 +107,31 @@ describe('channels each business connects itself (F25)', () => {
               recipient: { id: pageId },
               timestamp: Date.now(),
               message: { mid: `m_ch-${seq}-${Date.now()}`, text: 'היי' },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const instagramTo = (igId: string, extra: object = {}, echo = false) => {
+    seq += 1;
+    return signed(apiPaths.whatsapp.messengerWebhook, {
+      object: 'instagram',
+      entry: [
+        {
+          id: igId,
+          messaging: [
+            {
+              sender: { id: echo ? igId : '1784140000' },
+              recipient: { id: echo ? '1784140000' : igId },
+              timestamp: Date.now(),
+              message: {
+                mid: `ig_ch-${seq}-${Date.now()}`,
+                text: 'היי מאינסטגרם',
+                ...(echo ? { is_echo: true } : {}),
+                ...extra,
+              },
             },
           ],
         },
@@ -186,7 +212,7 @@ describe('channels each business connects itself (F25)', () => {
     const pages = (
       await req(ctx.app, 'GET', ch.facebookPages(o.business.id, pendingId), o.token)
     ).json();
-    expect(pages).toEqual({ pages: [{ id: '100200300', name: 'דף לבדיקה' }] });
+    expect(pages).toEqual({ pages: [{ id: '100200300', name: 'דף לבדיקה', instagram: null }] });
 
     const connected = await req(ctx.app, 'POST', ch.facebook(o.business.id), o.token, {
       pendingId,
@@ -225,5 +251,126 @@ describe('channels each business connects itself (F25)', () => {
     });
     expect(new URL(failed.headers.location as string).searchParams.get('facebook')).toBe('error');
     expect(await ctx.prisma.oAuthPending.count()).toBe(0);
+  });
+
+  it('connects Instagram from the connected Page, routes its messages, and replies', async () => {
+    const o = await ownerWithBusiness(ctx.app, 'ch-ig');
+    meta.instagram.set('100200300', { id: '17841400001', username: 'shiran_hair' });
+    // Without the Facebook Page there is nothing to take Instagram from.
+    const early = await req(ctx.app, 'POST', ch.instagram(o.business.id), o.token, {});
+    expect(early.statusCode).toBe(409);
+
+    const { url } = (await req(ctx.app, 'GET', ch.facebookStart(o.business.id), o.token)).json();
+    const state = new URL(url).searchParams.get('state')!;
+    const back = await ctx.app.inject({
+      method: 'GET',
+      url: `${ch.facebookCallback}?code=good-code&state=${encodeURIComponent(state)}`,
+    });
+    const pendingId = new URL(back.headers.location as string).searchParams.get('facebook')!;
+    await req(ctx.app, 'POST', ch.facebook(o.business.id), o.token, {
+      pendingId,
+      pageId: '100200300',
+    });
+
+    const res = await req(ctx.app, 'POST', ch.instagram(o.business.id), o.token, {});
+    expect(res.json().instagram).toEqual({
+      channel: 'instagram',
+      connected: true,
+      name: '@shiran_hair',
+      source: 'business',
+    });
+    expect(res.body).not.toContain('page-token');
+
+    // A DM to that account becomes an Instagram lead; one to another account lands nowhere.
+    messenger.names.set('1784140000', 'dana_cohen');
+    await instagramTo('17841400001');
+    await instagramTo('99999');
+    const number = await ctx.prisma.whatsAppNumber.findFirstOrThrow({
+      where: { channel: 'instagram' },
+    });
+    expect(number).toMatchObject({ businessId: o.business.id, phone: 'ig:1784140000' });
+    const lead = await ctx.prisma.lead.findFirstOrThrow({ where: { source: 'instagram' } });
+    const contact = await ctx.prisma.contact.findUniqueOrThrow({ where: { id: lead.contactId } });
+    expect(contact.name).toBe('dana_cohen');
+
+    // Reply from the thread: sent through Instagram with the sender's id.
+    const reply = await req(
+      ctx.app,
+      'POST',
+      apiPaths.whatsapp.thread(o.business.id, lead.id),
+      o.token,
+      { text: 'שלום דנה!' },
+    );
+    expect(reply.statusCode).toBe(201);
+    expect(reply.json().message.channel).toBe('instagram');
+    expect(messenger.sent.at(-1)).toMatchObject({ to: '1784140000', text: 'שלום דנה!' });
+
+    // What the account writes from Instagram itself shows once, even when Meta repeats it.
+    const echo = await instagramTo('17841400001', { mid: 'ig_echo-1', text: 'מהאפליקציה' }, true);
+    expect(echo.statusCode).toBe(200);
+    await instagramTo('17841400001', { mid: 'ig_echo-1', text: 'מהאפליקציה' }, true);
+    expect(
+      await ctx.prisma.whatsAppMessage.count({ where: { body: 'מהאפליקציה', direction: 'OUT' } }),
+    ).toBe(1);
+
+    // Disconnecting Instagram keeps the Page's subscription while Facebook still uses it.
+    const off = await req(ctx.app, 'DELETE', ch.channel(o.business.id, 'instagram'), o.token);
+    expect(off.json().instagram.connected).toBe(false);
+    expect(meta.subscribed.has('100200300')).toBe(true);
+    // After disconnecting, its messages go nowhere.
+    const stored = await ctx.prisma.whatsAppMessage.count();
+    await instagramTo('17841400001');
+    expect(await ctx.prisma.whatsAppMessage.count()).toBe(stored);
+  });
+
+  it('connects Instagram through sign-in, for a Page with an account; one without gets a clear error', async () => {
+    const o = await ownerWithBusiness(ctx.app, 'ch-ig2');
+    meta.pagesToReturn = [
+      { id: '100200300', name: 'דף לבדיקה', accessToken: 'page-token' },
+      {
+        id: '100200301',
+        name: 'דף עם אינסטגרם',
+        accessToken: 'page-token-2',
+        instagram: { id: '17841400002', username: 'with_ig' },
+      },
+    ];
+    const start = (
+      await req(ctx.app, 'GET', `${ch.facebookStart(o.business.id)}?for=instagram`, o.token)
+    ).json();
+    const scope = new URL(start.url).searchParams.get('scope');
+    expect(scope).toContain('instagram_manage_messages');
+    const state = new URL(start.url).searchParams.get('state')!;
+    const back = await ctx.app.inject({
+      method: 'GET',
+      url: `${ch.facebookCallback}?code=good-code&state=${encodeURIComponent(state)}`,
+    });
+    const location = new URL(back.headers.location as string);
+    const pendingId = location.searchParams.get('instagram')!;
+    expect(pendingId).toBeTruthy();
+    const pages = (
+      await req(ctx.app, 'GET', ch.facebookPages(o.business.id, pendingId), o.token)
+    ).json();
+    expect(pages.pages.map((p: { instagram: string | null }) => p.instagram)).toEqual([
+      null,
+      '@with_ig',
+    ]);
+
+    const none = await req(ctx.app, 'POST', ch.instagram(o.business.id), o.token, {
+      pendingId,
+      pageId: '100200300',
+    });
+    expect(none.statusCode).toBe(409);
+    expect(none.json().error.message).toMatch(/אינסטגרם עסקי/);
+
+    const ok = await req(ctx.app, 'POST', ch.instagram(o.business.id), o.token, {
+      pendingId,
+      pageId: '100200301',
+    });
+    expect(ok.json().instagram).toMatchObject({ connected: true, name: '@with_ig' });
+    expect(meta.subscribed.has('100200301')).toBe(true);
+    // Instagram alone: disconnecting it also stops the Page's messages.
+    await req(ctx.app, 'DELETE', ch.channel(o.business.id, 'instagram'), o.token);
+    expect(meta.subscribed.has('100200301')).toBe(false);
+    meta.pagesToReturn = [{ id: '100200300', name: 'דף לבדיקה', accessToken: 'page-token' }];
   });
 });

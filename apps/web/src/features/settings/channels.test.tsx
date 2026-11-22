@@ -11,6 +11,7 @@ const page = `${businessWebPaths.section(id, 'settings')}?tab=channels`;
 const off: ChannelsResponse = {
   whatsapp: { channel: 'whatsapp', connected: false, name: null, source: null },
   messenger: { channel: 'messenger', connected: false, name: null, source: null },
+  instagram: { channel: 'instagram', connected: false, name: null, source: null },
   email: { channel: 'email', connected: false, name: null, source: null },
   emailInbound: true,
   facebookLogin: true,
@@ -37,10 +38,9 @@ describe('Settings → Channels (F25)', () => {
     // Every channel in the same box, with a plug switch: pulled out until connected (D-161).
     const whatsapp = await screen.findByRole('switch', { name: 'WhatsApp' });
     expect(whatsapp).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getAllByText('לא מחובר')).toHaveLength(3);
-    // Instagram is on its way (D-160): shown, its plug not usable yet.
-    expect(screen.getByRole('heading', { name: /Instagram/ })).toHaveTextContent('בקרוב');
-    expect(screen.getByRole('switch', { name: 'Instagram' })).toBeDisabled();
+    expect(screen.getAllByText('לא מחובר')).toHaveLength(4);
+    // Instagram (F28) has its own plug, usable once Facebook sign-in is set up.
+    expect(screen.getByRole('switch', { name: 'Instagram' })).toBeEnabled();
     await user.click(whatsapp);
     // The form explains where the two details come from, with links to Meta.
     expect(await screen.findByText('איך משיגים את הפרטים?')).toBeInTheDocument();
@@ -115,6 +115,70 @@ describe('Settings → Channels (F25)', () => {
       expect(assign).toHaveBeenCalledWith(
         'https://www.facebook.com/v21.0/dialog/oauth?client_id=1',
       ),
+    );
+  });
+
+  it('Instagram: with the Facebook Page connected, one click takes its account', async () => {
+    const fetchMock = mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${ch.list(id)}`]: () =>
+        json(200, {
+          ...off,
+          messenger: { channel: 'messenger', connected: true, name: 'דף', source: 'business' },
+        }),
+      [`POST ${ch.instagram(id)}`]: () =>
+        json(200, {
+          ...off,
+          instagram: { channel: 'instagram', connected: true, name: '@shiran', source: 'business' },
+        }),
+    });
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('switch', { name: 'Instagram' }));
+    await waitFor(() => expect(callsTo(fetchMock, 'POST', ch.instagram(id))).toEqual([{}]));
+  });
+
+  it('Instagram without the Page goes to Facebook’s sign-in', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${ch.list(id)}`]: () => json(200, off),
+      [`GET ${ch.facebookStart(id)}?for=instagram`]: () =>
+        json(200, { url: 'https://www.facebook.com/v21.0/dialog/oauth?client_id=2' }),
+    });
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('switch', { name: 'Instagram' }));
+    await waitFor(() =>
+      expect(assign).toHaveBeenCalledWith(
+        'https://www.facebook.com/v21.0/dialog/oauth?client_id=2',
+      ),
+    );
+  });
+
+  it('back from Facebook for Instagram: only Pages with an account are offered', async () => {
+    const fetchMock = mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${ch.list(id)}`]: () => json(200, off),
+      [`GET ${ch.facebookPages(id, pendingId)}`]: () =>
+        json(200, {
+          pages: [
+            { id: '111', name: 'דף בלי אינסטגרם', instagram: null },
+            { id: '222', name: 'מספרת שירן', instagram: '@shiran' },
+          ],
+        }),
+      [`POST ${ch.instagram(id)}`]: () =>
+        json(200, {
+          ...off,
+          instagram: { channel: 'instagram', connected: true, name: '@shiran', source: 'business' },
+        }),
+    });
+    const { user } = renderApp(`${page}&instagram=${pendingId}`);
+    const dialog = await screen.findByRole('dialog', { name: 'איזה חשבון אינסטגרם לחבר?' });
+    expect(within(dialog).queryByText('דף בלי אינסטגרם')).not.toBeInTheDocument();
+    await user.click(await within(dialog).findByRole('radio', { name: /@shiran/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'חיבור החשבון' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'POST', ch.instagram(id))).toEqual([{ pendingId, pageId: '222' }]),
     );
   });
 

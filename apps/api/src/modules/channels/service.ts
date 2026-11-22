@@ -6,6 +6,7 @@ import {
   type Channel,
   type ChannelsResponse,
   type ConnectFacebookRequest,
+  type ConnectInstagramRequest,
   type ConnectWhatsAppRequest,
   type FacebookPagesResponse,
 } from '@simplecatch/shared';
@@ -62,6 +63,7 @@ export class ChannelService {
     return {
       whatsapp: one('whatsapp'),
       messenger: one('messenger'),
+      instagram: one('instagram'),
       email: one('email'),
       emailInbound: Boolean(this.config.EMAIL_INBOUND_DOMAIN && this.config.EMAIL_INBOUND_SECRET),
       facebookLogin: Boolean(this.config.META_APP_ID),
@@ -110,10 +112,16 @@ export class ChannelService {
       where: { businessId_channel: { businessId: ctx.businessId, channel } },
     });
     if (row) {
-      if (channel === 'messenger') {
-        // Stop the Page's messages reaching us (best effort: the row goes either way).
+      const pageStillUsed =
+        channel === 'instagram' &&
+        (await this.prisma.channelConnection.count({
+          where: { businessId: ctx.businessId, channel: 'messenger' },
+        })) > 0;
+      if (channel === 'messenger' || (channel === 'instagram' && !pageStillUsed)) {
+        // Stop the Page's messages reaching us (best effort: the row goes either way). Instagram
+        // shares the Page's subscription, so it stays while Facebook still uses it.
         await this.meta
-          .unsubscribePage(row.externalId, openSecret(row.tokenEncrypted, this.key))
+          .unsubscribePage(row.pageId ?? row.externalId, openSecret(row.tokenEncrypted, this.key))
           .catch((err: Error) =>
             this.log.error({ errName: err?.name }, 'facebook unsubscribe failed'),
           );
@@ -140,18 +148,30 @@ export class ChannelService {
   }
 
   /** Where to send the person: Facebook's sign-in, coming back with a signed state. */
-  facebookStart(ctx: TenantContext): { url: string } {
+  facebookStart(
+    ctx: TenantContext,
+    forChannel: 'facebook' | 'instagram' = 'facebook',
+  ): { url: string } {
     if (!this.config.META_APP_ID) {
       throw new AppError('CONFLICT', channelsMessages.facebookUnavailable);
     }
     const q = new URLSearchParams({
       client_id: this.config.META_APP_ID,
       redirect_uri: this.redirectUri(),
-      state: this.signState({ b: ctx.businessId, u: ctx.userId, e: Date.now() + STATE_TTL_MS }),
+      state: this.signState({
+        b: ctx.businessId,
+        u: ctx.userId,
+        e: Date.now() + STATE_TTL_MS,
+        ...(forChannel === 'instagram' ? { i: 1 } : {}),
+      }),
       response_type: 'code',
       ...(this.config.META_LOGIN_CONFIG_ID
         ? { config_id: this.config.META_LOGIN_CONFIG_ID }
-        : { scope: 'pages_show_list,pages_messaging,pages_manage_metadata' }),
+        : {
+            scope: `pages_show_list,pages_messaging,pages_manage_metadata${
+              forChannel === 'instagram' ? ',instagram_basic,instagram_manage_messages' : ''
+            }`,
+          }),
     });
     return {
       url: `https://www.facebook.com/${this.config.WHATSAPP_GRAPH_VERSION}/dialog/oauth?${q}`,
@@ -167,7 +187,7 @@ export class ChannelService {
     const app = new URL(this.config.APP_URL).origin;
     if (!state) return `${app}/app`;
     const back = (result: string) =>
-      `${app}/b/${state.b}/settings?tab=channels&facebook=${encodeURIComponent(result)}`;
+      `${app}/b/${state.b}/settings?tab=channels&${state.i ? 'instagram' : 'facebook'}=${encodeURIComponent(result)}`;
     if (q.error || !q.code) return back('cancelled');
     let pages: MetaPage[];
     try {
@@ -204,7 +224,13 @@ export class ChannelService {
 
   async facebookPages(ctx: TenantContext, pendingId: string): Promise<FacebookPagesResponse> {
     const pages = await this.pendingPages(ctx, pendingId);
-    return { pages: pages.map((p) => ({ id: p.id, name: p.name })) };
+    return {
+      pages: pages.map((p) => ({
+        id: p.id,
+        name: p.name,
+        instagram: p.instagram ? `@${p.instagram.username}` : null,
+      })),
+    };
   }
 
   /** Connects the chosen Page: its messages are sent to us, and its token is kept sealed. */
@@ -229,6 +255,57 @@ export class ChannelService {
     return this.status(ctx);
   }
 
+  /**
+   * F28: connects Instagram. With a picked Page (after sign-in) its linked account; with nothing,
+   * the account linked to the Facebook Page this business already connected. Messages arrive on the
+   * Page's subscription, and replies use the Page's token (kept sealed).
+   */
+  async connectInstagram(ctx: TenantContext, input: ConnectInstagramRequest) {
+    let page: { id: string; token: string; instagram: { id: string; username: string } | null };
+    if (input.pendingId && input.pageId) {
+      const picked = (await this.pendingPages(ctx, input.pendingId)).find(
+        (p) => p.id === input.pageId,
+      );
+      if (!picked) throw new AppError('CONFLICT', channelsMessages.facebookExpired);
+      page = {
+        id: picked.id,
+        token: picked.accessToken,
+        instagram: picked.instagram ?? null,
+      };
+    } else {
+      const row = await this.prisma.channelConnection.findUnique({
+        where: { businessId_channel: { businessId: ctx.businessId, channel: 'messenger' } },
+      });
+      if (!row) throw new AppError('CONFLICT', channelsMessages.instagramFailed);
+      const token = openSecret(row.tokenEncrypted, this.key);
+      page = {
+        id: row.externalId,
+        token,
+        instagram: await this.meta.instagramOf(row.externalId, token),
+      };
+    }
+    if (!page.instagram) throw new AppError('CONFLICT', channelsMessages.instagramNoAccount);
+    await this.assertFree(ctx, 'instagram', page.instagram.id);
+    try {
+      await this.meta.subscribePage(page.id, page.token);
+    } catch (err) {
+      this.log.error({ errName: (err as Error)?.name }, 'instagram subscribe failed');
+      throw new AppError('CONFLICT', channelsMessages.instagramFailed);
+    }
+    await this.save(ctx, 'instagram', {
+      externalId: page.instagram.id,
+      displayName: `@${page.instagram.username}`,
+      token: page.token,
+      pageId: page.id,
+    });
+    if (input.pendingId) {
+      await this.prisma.oAuthPending.deleteMany({
+        where: { OR: [{ id: input.pendingId }, { expiresAt: { lt: new Date() } }] },
+      });
+    }
+    return this.status(ctx);
+  }
+
   // ------------------------------------------------------------------ helpers
 
   private async assertFree(ctx: TenantContext, channel: Channel, externalId: string) {
@@ -244,13 +321,14 @@ export class ChannelService {
   private async save(
     ctx: TenantContext,
     channel: Channel,
-    c: { externalId: string; displayName: string; token: string },
+    c: { externalId: string; displayName: string; token: string; pageId?: string },
   ) {
     await this.assertFree(ctx, channel, c.externalId);
     const data = {
       externalId: c.externalId,
       displayName: c.displayName.slice(0, 120),
       tokenEncrypted: sealSecret(c.token, this.key),
+      pageId: c.pageId ?? null,
       connectedById: ctx.userId,
     };
     await this.prisma.$transaction(async (tx) => {
@@ -270,7 +348,7 @@ export class ChannelService {
     });
   }
 
-  private signState(payload: { b: string; u: string; e: number }) {
+  private signState(payload: { b: string; u: string; e: number; i?: 1 }) {
     const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
     return `${body}.${createHmac('sha256', this.key).update(body).digest('base64url')}`;
   }
@@ -291,10 +369,11 @@ export class ChannelService {
         b?: unknown;
         u?: unknown;
         e?: unknown;
+        i?: unknown;
       };
       if (typeof p.b !== 'string' || typeof p.u !== 'string' || typeof p.e !== 'number')
         return null;
-      return p.e > Date.now() ? { b: p.b, u: p.u } : null;
+      return p.e > Date.now() ? { b: p.b, u: p.u, i: p.i === 1 } : null;
     } catch {
       return null;
     }

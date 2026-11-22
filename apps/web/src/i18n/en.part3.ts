@@ -926,4 +926,23 @@ export const enPart3: Record<string, string> = {
   'יש לכתוב את השאלה': 'Write the question',
   'השאלה ארוכה מדי (עד 300 תווים)': 'The question is too long (up to 300 characters)',
   'נשלחה מדף הפייסבוק': 'Sent from the Facebook Page',
+  'חברו את הוואטסאפ, דף הפייסבוק והאינסטגרם של העסק, וכל ההודעות יגיעו לתיבת השיחות.':
+    "Connect the business's WhatsApp, Facebook Page and Instagram, and all messages will arrive in the inbox.",
+  'הודעות ישירות מאינסטגרם יגיעו לתיבת השיחות, ותוכלו לענות להן משם. נדרש חשבון עסקי או Creator שמקושר לדף הפייסבוק.':
+    'Instagram direct messages will arrive in the inbox, and you can reply from there. Needs a business or Creator account linked to the Facebook Page.',
+  'איזה חשבון אינסטגרם לחבר?': 'Which Instagram account to connect?',
+  'ההודעות לחשבון הזה יגיעו לתיבת השיחות של העסק.':
+    "Messages to this account will arrive in the business's inbox.",
+  'חיבור החשבון': 'Connect the account',
+  'לא מצאנו חשבון אינסטגרם עסקי שמקושר לדף הפייסבוק. קשרו אותו בהגדרות הדף ונסו שוב.':
+    "We couldn't find a business Instagram account linked to the Facebook Page. Link it in the Page settings and try again.",
+  'החיבור לאינסטגרם לא הצליח. נסו שוב.': "Couldn't connect to Instagram. Try again.",
+  'אינסטגרם עדיין לא מחובר לעסק הזה': 'Instagram is not connected to this business yet',
+  'אפשר לענות באינסטגרם רק עד 24 שעות אחרי ההודעה האחרונה של הלקוח.':
+    "You can reply on Instagram only within 24 hours of the customer's last message.",
+  'משתמש/ת אינסטגרם': 'Instagram user',
+  'תשובה באינסטגרם': 'Reply on Instagram',
+  'שליחה באינסטגרם': 'Send on Instagram',
+  'נשלחה מאינסטגרם': 'Sent from Instagram',
+  'הליד נוצר מהודעה באינסטגרם': 'The lead was created from an Instagram message',
 };

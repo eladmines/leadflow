@@ -5,6 +5,7 @@ import {
   apiPaths,
   channelsResponseSchema,
   connectFacebookRequestSchema,
+  connectInstagramRequestSchema,
   connectWhatsAppRequestSchema,
   facebookPagesResponseSchema,
   facebookStartResponseSchema,
@@ -46,8 +47,14 @@ export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.get(
     '/channels/facebook/start',
-    { preValidation: owner, schema: { response: { 200: facebookStartResponseSchema } } },
-    async (req) => channels.facebookStart(tenantOf(req)),
+    {
+      preValidation: owner,
+      schema: {
+        querystring: z.object({ for: z.enum(['facebook', 'instagram']).default('facebook') }),
+        response: { 200: facebookStartResponseSchema },
+      },
+    },
+    async (req) => channels.facebookStart(tenantOf(req), req.query.for),
   );
 
   app.get(
@@ -71,6 +78,15 @@ export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => channels.connectFacebook(tenantOf(req), req.body),
   );
 
+  app.post(
+    '/channels/instagram',
+    {
+      preValidation: owner,
+      schema: { body: connectInstagramRequestSchema, response: { 200: channelsResponseSchema } },
+    },
+    async (req) => channels.connectInstagram(tenantOf(req), req.body),
+  );
+
   app.delete(
     '/channels/:channel',
     {
@@ -78,7 +94,7 @@ export const channelTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         params: z.object({
           businessId: z.string(),
-          channel: z.enum(['whatsapp', 'messenger', 'email']),
+          channel: z.enum(['whatsapp', 'messenger', 'instagram', 'email']),
         }),
         response: { 200: channelsResponseSchema },
       },

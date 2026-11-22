@@ -3,6 +3,7 @@ import {
   CircleHelp,
   Facebook,
   Globe,
+  Instagram,
   Link2,
   Mail,
   Megaphone,
@@ -80,6 +81,8 @@ export function LeadSourceIcon({
       return <MessageCircle aria-hidden className={cn(className, 'text-[#25D366]')} />;
     case 'facebook':
       return <Facebook aria-hidden className={cn(className, 'text-[#1877F2]')} />;
+    case 'instagram':
+      return <Instagram aria-hidden className={cn(className, 'text-[#E4405F]')} />;
     case 'website_form':
       return <Globe aria-hidden className={cn(className, 'text-sky-600')} />;
     case 'email':

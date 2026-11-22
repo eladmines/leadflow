@@ -66,9 +66,11 @@ export function notificationText(n: Pick<Notification, 'type' | 'data'>): {
             ? 'ליד חדש מוואטסאפ'
             : d.source === 'facebook'
               ? 'ליד חדש מפייסבוק'
-              : d.source === 'email'
-                ? 'ליד חדש ממייל'
-                : 'ליד חדש מהאתר',
+              : d.source === 'instagram'
+                ? 'ליד חדש מאינסטגרם'
+                : d.source === 'email'
+                  ? 'ליד חדש ממייל'
+                  : 'ליד חדש מהאתר',
         body: str(d.appointment)
           ? `${str(d.name)} · בקשה לתור: ${str(d.appointment)}`
           : str(d.name),
@@ -77,7 +79,12 @@ export function notificationText(n: Pick<Notification, 'type' | 'data'>): {
       return { title: `הודעה מ${str(d.name)}`, body: str(d.preview) };
     case 'whatsapp.new_number':
       return {
-        title: d.channel === 'messenger' ? 'פנייה חדשה בפייסבוק' : 'מספר חדש כתב בוואטסאפ',
+        title:
+          d.channel === 'messenger'
+            ? 'פנייה חדשה בפייסבוק'
+            : d.channel === 'instagram'
+              ? 'פנייה חדשה באינסטגרם'
+              : 'מספר חדש כתב בוואטסאפ',
         body: `${str(d.name)} · מחכה לסיווג`,
       };
     case 'appointment.booked':

@@ -211,9 +211,12 @@ export function whatsappWebhookRoutes(sender: WhatsAppSender): FastifyPluginAsyn
   };
 }
 
-/** The parts of Messenger's webhook payload we use (F23); everything else is ignored. */
+/**
+ * The parts of the Messenger (`page`) and Instagram (`instagram`, F28) webhook payload we use; the
+ * two have the same shape. Everything else is ignored.
+ */
 const messengerSchema = z.object({
-  object: z.literal('page'),
+  object: z.enum(['page', 'instagram']),
   entry: z.array(
     z.object({
       id: z.string().optional(),
@@ -255,7 +258,7 @@ function messengerText(m: { text?: string; attachments?: { type?: string }[] }):
 }
 
 /**
- * Facebook Messenger's webhook (F23, D-157). Same Meta app as WhatsApp: the same app secret signs
+ * Facebook Messenger's and Instagram's webhook (F23, D-157; F28, D-187). Same Meta app as WhatsApp: the same app secret signs
  * every POST and the same verify token answers the handshake. A message to the Page becomes a
  * conversation like a WhatsApp one (inbox → business/personal → lead).
  */
@@ -312,6 +315,9 @@ export function messengerWebhookRoutes(
       }
       const parsed = messengerSchema.safeParse(req.body);
       if (!parsed.success) return reply.send({ ok: true });
+      const instagram = parsed.data.object === 'instagram';
+      const channel = instagram ? 'instagram' : 'messenger';
+      const prefix = instagram ? 'ig' : 'fb';
       for (const event of parsed.data.entry.flatMap((e) => e.messaging)) {
         const m = event.message;
         // Customers' messages to our Page, and the Page's own echoes (sent from Facebook itself);
@@ -321,8 +327,9 @@ export function messengerWebhookRoutes(
           const customer = event.recipient?.id.replace(/[^\d]/g, '').slice(0, 40);
           if (!customer) continue;
           await service.receiveEcho({
+            channel,
             pageId: event.sender.id,
-            customer: `fb:${customer}`,
+            customer: `${prefix}:${customer}`,
             waMessageId: m.mid.slice(0, 128),
             body: messengerText(m),
             sentAt: event.timestamp ? new Date(event.timestamp) : new Date(),
@@ -333,10 +340,10 @@ export function messengerWebhookRoutes(
         const psid = event.sender.id.replace(/[^\d]/g, '').slice(0, 40);
         if (!psid) continue;
         await service.receive({
-          channel: 'messenger',
+          channel,
           to: event.recipient?.id,
           waMessageId: m.mid.slice(0, 128),
-          from: `fb:${psid}`,
+          from: `${prefix}:${psid}`,
           profileName: null,
           body: messengerText(m),
           attribution: adReferral(m.referral ?? event.referral),

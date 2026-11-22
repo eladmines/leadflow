@@ -53,11 +53,48 @@ export class CloudMetaApi implements MetaApi {
   }
 
   async pages(userToken: string): Promise<MetaPage[]> {
-    const json = await this.call<{ data?: { id: string; name: string; access_token: string }[] }>(
-      this.url('me/accounts', { fields: 'id,name,access_token', limit: '100' }),
+    const json = await this.call<{
+      data?: {
+        id: string;
+        name: string;
+        access_token: string;
+        instagram_business_account?: { id: string; username?: string };
+      }[];
+    }>(
+      this.url('me/accounts', {
+        fields: 'id,name,access_token,instagram_business_account{id,username}',
+        limit: '100',
+      }),
       { token: userToken },
     );
-    return (json.data ?? []).map((p) => ({ id: p.id, name: p.name, accessToken: p.access_token }));
+    return (json.data ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      accessToken: p.access_token,
+      ...(p.instagram_business_account
+        ? {
+            instagram: {
+              id: p.instagram_business_account.id,
+              username: p.instagram_business_account.username ?? p.instagram_business_account.id,
+            },
+          }
+        : {}),
+    }));
+  }
+
+  async instagramOf(pageId: string, pageToken: string) {
+    try {
+      const json = await this.call<{
+        instagram_business_account?: { id: string; username?: string };
+      }>(
+        this.url(encodeURIComponent(pageId), { fields: 'instagram_business_account{id,username}' }),
+        { token: pageToken },
+      );
+      const ig = json.instagram_business_account;
+      return ig ? { id: ig.id, username: ig.username ?? ig.id } : null;
+    } catch {
+      return null;
+    }
   }
 
   async subscribePage(pageId: string, pageToken: string): Promise<void> {

@@ -30,6 +30,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import {
   useChannels,
   useConnectFacebook,
+  useConnectInstagram,
   useConnectWhatsApp,
   useCreateEmailAddress,
   useDisconnect,
@@ -57,11 +58,13 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
   const channels = useChannels(business.id);
   const [params, setParams] = useSearchParams();
   const facebook = params.get('facebook');
+  const instagram = params.get('instagram');
   const clearFacebook = () =>
     setParams(
       (p) => {
         const next = new URLSearchParams(p);
         next.delete('facebook');
+        next.delete('instagram');
         return next;
       },
       { replace: true },
@@ -70,12 +73,21 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
   return (
     <Section
       title={tr('ערוצים')}
-      description={tr('חברו את הוואטסאפ ואת דף הפייסבוק של העסק, וכל ההודעות יגיעו לתיבת השיחות.')}
+      description={tr(
+        'חברו את הוואטסאפ, דף הפייסבוק והאינסטגרם של העסק, וכל ההודעות יגיעו לתיבת השיחות.',
+      )}
       icon={Plug}
       tone="bg-emerald-500"
     >
       {facebook && FACEBOOK_RESULTS[facebook] && (
         <Alert tone="warning">{tr(FACEBOOK_RESULTS[facebook]!)}</Alert>
+      )}
+      {instagram && FACEBOOK_RESULTS[instagram] && (
+        <Alert tone="warning">
+          {tr(
+            instagram === 'error' ? channelsMessages.instagramFailed : FACEBOOK_RESULTS[instagram]!,
+          )}
+        </Alert>
       )}
       {channels.isPending ? (
         <Spinner size="sm" label={tr('טוענים…')} />
@@ -93,15 +105,12 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
               available={channels.data.facebookLogin}
             />
           </li>
-          {/* Not connectable yet (UI only, D-160). */}
           <li>
-            <ComingSoonRow
-              icon={Instagram}
-              tone="bg-pink-500"
-              title="Instagram"
-              description={tr(
-                'הודעות ישירות מאינסטגרם יגיעו לתיבת השיחות. החשבון מתחבר דרך דף הפייסבוק של העסק.',
-              )}
+            <InstagramRow
+              status={channels.data.instagram}
+              facebook={channels.data.messenger}
+              canEdit={canEdit}
+              available={channels.data.facebookLogin}
             />
           </li>
           <li>
@@ -114,6 +123,9 @@ export function ChannelsSection({ canEdit }: { canEdit: boolean }) {
         </ul>
       )}
       {canEdit && isUuid(facebook) && <PickPage pendingId={facebook!} onClose={clearFacebook} />}
+      {canEdit && isUuid(instagram) && (
+        <PickPage kind="instagram" pendingId={instagram!} onClose={clearFacebook} />
+      )}
     </Section>
   );
 }
@@ -543,37 +555,92 @@ function FacebookRow({
   );
 }
 
-/** A channel on its way (D-160): the same box, its button not active yet. */
-function ComingSoonRow(props: {
-  icon: typeof MessageCircle;
-  tone: string;
-  title: string;
-  description: string;
+/**
+ * Instagram (F28, D-187): with the Facebook Page already connected, one click takes the Page's
+ * Instagram account; otherwise Facebook's sign-in finds the Pages that have one.
+ */
+function InstagramRow({
+  status,
+  facebook,
+  canEdit,
+  available,
+}: {
+  status: ChannelStatus;
+  facebook: ChannelStatus;
+  canEdit: boolean;
+  available: boolean;
 }) {
-  return (
-    <ChannelBox
-      {...props}
-      state="soon"
-      action={
-        <PlugSwitch title={props.title} connected={false} disabled hideLabel onToggle={() => {}} />
+  const business = useCurrentBusiness();
+  const start = useFacebookStart(business.id, 'instagram');
+  const connect = useConnectInstagram(business.id);
+  const off = useDisconnectFlow('instagram');
+  // The Page connected from this screen has a token to look the account up with.
+  const fromPage = facebook.connected && facebook.source === 'business';
+  const action = (
+    <PlugSwitch
+      title="Instagram"
+      connected={status.connected}
+      disabled={!canEdit || (!status.connected && !fromPage && !available)}
+      busy={start.isPending || connect.isPending}
+      onToggle={() =>
+        status.connected ? off.request() : fromPage ? connect.mutate({}) : start.mutate()
       }
     />
+  );
+  return (
+    <ChannelBox
+      icon={Instagram}
+      tone="bg-pink-500"
+      title="Instagram"
+      description={tr(
+        'הודעות ישירות מאינסטגרם יגיעו לתיבת השיחות, ותוכלו לענות להן משם. נדרש חשבון עסקי או Creator שמקושר לדף הפייסבוק.',
+      )}
+      state={stateOf(status)}
+      detail={detailOf(status)}
+      action={action}
+    >
+      {off.panel}
+      {canEdit && !available && !fromPage && !status.connected && (
+        <p className="text-sm text-ink-muted">{tr(channelsMessages.facebookUnavailable)}</p>
+      )}
+      {(connect.isError || start.isError) && (
+        <Alert tone="danger">{errorMessage(connect.error ?? start.error)}</Alert>
+      )}
+    </ChannelBox>
   );
 }
 
 /** Back from Facebook: choose which of the person's Pages to connect. */
-function PickPage({ pendingId, onClose }: { pendingId: string; onClose: () => void }) {
+function PickPage({
+  pendingId,
+  onClose,
+  kind = 'facebook',
+}: {
+  pendingId: string;
+  onClose: () => void;
+  /** Instagram: only Pages with a linked Instagram account can be picked. */
+  kind?: 'facebook' | 'instagram';
+}) {
   const business = useCurrentBusiness();
   const pages = useFacebookPages(business.id, pendingId);
-  const connect = useConnectFacebook(business.id);
+  const connectFacebook = useConnectFacebook(business.id);
+  const connectInstagram = useConnectInstagram(business.id);
+  const connect = kind === 'instagram' ? connectInstagram : connectFacebook;
   const [pageId, setPageId] = useState<string | null>(null);
-  const chosen = pageId ?? pages.data?.pages[0]?.id ?? null;
+  const options = (pages.data?.pages ?? []).filter((p) => kind === 'facebook' || p.instagram);
+  const chosen = pageId ?? options[0]?.id ?? null;
   return (
-    <DialogShell open onOpenChange={(o) => !o && onClose()} title={tr('איזה דף לחבר?')}>
+    <DialogShell
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={kind === 'instagram' ? tr('איזה חשבון אינסטגרם לחבר?') : tr('איזה דף לחבר?')}
+    >
       {pages.isPending ? (
         <Spinner size="sm" label={tr('טוענים את הדפים…')} />
       ) : pages.isError ? (
         <Alert tone="danger">{errorMessage(pages.error)}</Alert>
+      ) : options.length === 0 ? (
+        <Alert tone="warning">{tr(channelsMessages.instagramNoAccount)}</Alert>
       ) : (
         <form
           className="flex flex-col gap-4"
@@ -584,9 +651,11 @@ function PickPage({ pendingId, onClose }: { pendingId: string; onClose: () => vo
         >
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-1 text-sm text-ink-muted">
-              {tr('ההודעות לדף הזה יגיעו לתיבת השיחות של העסק.')}
+              {kind === 'instagram'
+                ? tr('ההודעות לחשבון הזה יגיעו לתיבת השיחות של העסק.')
+                : tr('ההודעות לדף הזה יגיעו לתיבת השיחות של העסק.')}
             </legend>
-            {pages.data.pages.map((p) => (
+            {options.map((p) => (
               <label
                 key={p.id}
                 className={cn(
@@ -602,14 +671,19 @@ function PickPage({ pendingId, onClose }: { pendingId: string; onClose: () => vo
                   className="h-4 w-4 accent-brand-600"
                 />
                 <span className="font-medium text-ink" dir="auto">
-                  {p.name}
+                  {kind === 'instagram' ? p.instagram : p.name}
                 </span>
+                {kind === 'instagram' && (
+                  <span className="text-sm text-ink-muted" dir="auto">
+                    {p.name}
+                  </span>
+                )}
               </label>
             ))}
           </fieldset>
           {connect.isError && <Alert tone="danger">{errorMessage(connect.error)}</Alert>}
           <Button type="submit" loading={connect.isPending} disabled={!chosen}>
-            {tr('חיבור הדף')}
+            {kind === 'instagram' ? tr('חיבור החשבון') : tr('חיבור הדף')}
           </Button>
         </form>
       )}
