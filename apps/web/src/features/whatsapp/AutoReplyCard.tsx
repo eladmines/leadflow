@@ -1,14 +1,12 @@
 import { replyStatusSchema, MAX_STATUSES, type WhatsAppBotResponse } from '@simplecatch/shared';
-import { Eye, Plus, Trash2 } from 'lucide-react';
-import { useId, useRef, useState, type ReactNode } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { useId, useRef, useState } from 'react';
 import { Alert, Button, EmojiPicker, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useBotSettings, useSetStatus, useUpdateBotSettings } from './api';
 import { toRequest } from './BookingBotCard';
-import { QuestionsCard } from './QuestionsEditor';
-import { ConversationPreview } from './ConversationPreview';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 
 type Saved = WhatsAppBotResponse['settings'];
@@ -186,21 +184,12 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
         )}
         saving={update.isPending}
         onSave={saveMessage}
-        preview={(text) => (
-          <ConversationPreview
-            businessId={businessId}
-            saved={saved}
-            message={toCode(text, business.name).replaceAll('{business}', business.name)}
-          />
-        )}
       />
       <p className="-mt-3 text-xs text-ink-muted">
         {tr(
           'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר. שעה שנבחרה נכנסת ליומן, ואתם מקבלים משימה לחזור אליו.',
         )}
       </p>
-
-      <QuestionsCard businessId={businessId} saved={saved} />
 
       {current && !current.preset && (
         <button
@@ -228,17 +217,13 @@ function Message({
   initial,
   saving,
   onSave,
-  preview,
 }: {
   label: string;
   initial: string;
   saving: boolean;
   onSave: (text: string, onDone: () => void) => void;
-  /** The whole conversation with this message, as the customer sees it (D-172). */
-  preview: (text: string) => ReactNode;
 }) {
   const [text, setText] = useState(initial);
-  const [previewing, setPreviewing] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -285,22 +270,12 @@ function Message({
             </Button>
           </>
         )}
-        <Button
-          variant="secondary"
-          size="sm"
-          aria-expanded={previewing}
-          onClick={() => setPreviewing((v) => !v)}
-        >
-          <Eye aria-hidden className="h-4 w-4" />
-          {previewing ? tr('הסתרת התצוגה המקדימה') : tr('תצוגה מקדימה')}
-        </Button>
         {!dirty && saved && (
           <p role="status" className="text-sm text-emerald-700">
             {tr('ההודעה נשמרה.')}
           </p>
         )}
       </div>
-      {previewing && preview(text)}
     </div>
   );
 }

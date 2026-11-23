@@ -1536,6 +1536,7 @@ export class BookingBot {
         whatsappBotFlow: true,
         whatsappBotHoldDate: true,
         whatsappQuestions: true,
+        whatsappQuestionsEnabled: true,
         language: true,
       },
     });
@@ -1555,7 +1556,8 @@ export class BookingBot {
         language: languageOf(business.language),
         showcaseVideo: showcaseVideoOf(business.whatsappBotShowcase)?.key ?? null,
         holdDate: business.whatsappBotHoldDate,
-        questions: questionsOf(business.whatsappQuestions),
+        // Switched off (D-198): the written questions stay saved, but none is asked.
+        questions: business.whatsappQuestionsEnabled ? questionsOf(business.whatsappQuestions) : [],
         flow,
         texts: texts.success ? texts.data : {},
         showcase: showcase.success

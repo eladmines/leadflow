@@ -66,6 +66,7 @@ describe('page tours (D-096)', () => {
             autoReplyDefault: AUTO_REPLY_DEFAULT,
             statuses: STATUS_PRESETS.map((p) => ({ ...p, preset: true })),
             questions: [],
+            questionsEnabled: true,
             activeStatus: null,
             videoBytesUsed: 0,
             enabled: true,
@@ -94,6 +95,7 @@ describe('page tours (D-096)', () => {
       'אוטומציות',
       'מה קורה כשלקוח כותב',
       'הודעה לפי הסטטוס',
+      'שאלות ללקוח',
       'לקוחות קובעים לבד',
       'הצצה לעסק',
     ]);

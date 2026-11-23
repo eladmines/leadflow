@@ -836,6 +836,7 @@ export class WhatsAppService {
         whatsappBotFlow: true,
         whatsappBotHoldDate: true,
         whatsappQuestions: true,
+        whatsappQuestionsEnabled: true,
         whatsappReplyMode: true,
         whatsappAutoReplyText: true,
         whatsappStatuses: true,
@@ -861,6 +862,7 @@ export class WhatsAppService {
         autoReplyDefault: autoReplyDefaultFor(lang),
         statuses: statusDtos(statuses),
         questions: questionsOf(b.whatsappQuestions),
+        questionsEnabled: b.whatsappQuestionsEnabled,
         activeStatus: active ? { id: active.status.id, until: active.until } : null,
         enabled: b.whatsappBotEnabled,
         autoConfirm: b.whatsappBotAutoConfirm,
@@ -921,6 +923,9 @@ export class WhatsAppService {
         where: { id: ctx.businessId },
         data: {
           ...(input.questions ? { whatsappQuestions: input.questions } : {}),
+          ...(input.questionsEnabled !== undefined
+            ? { whatsappQuestionsEnabled: input.questionsEnabled }
+            : {}),
           whatsappReplyMode: mode,
           whatsappAutoReplyText: input.autoReplyText,
           ...statusData,
@@ -963,6 +968,7 @@ export class WhatsAppService {
           customAutoReply: input.autoReplyText !== null,
           statuses: input.statuses?.length,
           questions: input.questions?.length,
+          questionsEnabled: input.questionsEnabled,
           enabled,
           autoConfirm: input.autoConfirm,
           customTexts: Object.keys(input.texts),

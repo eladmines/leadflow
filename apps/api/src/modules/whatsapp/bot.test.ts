@@ -769,6 +769,47 @@ describe('WhatsApp booking bot (D-102)', () => {
       expect(await ctx.prisma.whatsAppBotSession.count()).toBe(0);
     });
 
+    it('switched off, the questions stay saved but none is asked; on again, they come back (D-198)', async () => {
+      const { owner } = await setup({ enabled: false, industry: 'events', name: 'DJ רון' });
+      await ctx.prisma.business.update({
+        where: { id: BUSINESS_ID },
+        data: {
+          whatsappReplyMode: 'auto_reply',
+          whatsappQuestions: [{ id: 'q1', text: '📅 מה תאריך האירוע?' }],
+        },
+      });
+      const saved = async () =>
+        (await req(ctx.app, 'GET', wp.bot(BUSINESS_ID), owner.token)).json().settings;
+      expect(await saved()).toMatchObject({ questionsEnabled: true });
+
+      // Off through the settings (only the switch is sent: the questions are untouched).
+      const off = await req(ctx.app, 'PUT', wp.bot(BUSINESS_ID), owner.token, {
+        mode: 'auto_reply',
+        enabled: false,
+        autoConfirm: true,
+        questionsEnabled: false,
+      });
+      expect(off.json().settings).toMatchObject({
+        questionsEnabled: false,
+        questions: [{ id: 'q1', text: '📅 מה תאריך האירוע?' }],
+      });
+      await post(text('היי'));
+      // The status message with "when can we talk?", straight away: no question.
+      expect(last().text).not.toContain('מה תאריך האירוע');
+      expect(last().choices!.map((c) => c.id)).toContain('cb:other');
+      const sentWhileOff = whatsapp.sent.length;
+
+      // On again: the same question is asked.
+      await ctx.prisma.whatsAppBotSession.deleteMany({});
+      await ctx.prisma.business.update({
+        where: { id: BUSINESS_ID },
+        data: { whatsappQuestionsEnabled: true },
+      });
+      await post(text('שלום שוב'));
+      expect(whatsapp.sent.length).toBeGreaterThan(sentWhileOff);
+      expect(last().text).toBe('📅 מה תאריך האירוע?');
+    });
+
     it('the business can switch the flow either way', async () => {
       const { owner } = await setup({ industry: 'beauty' });
       const get = (await req(ctx.app, 'GET', wp.bot(BUSINESS_ID), owner.token)).json();

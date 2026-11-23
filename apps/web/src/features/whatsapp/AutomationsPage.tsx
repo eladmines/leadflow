@@ -3,6 +3,7 @@ import {
   CalendarCheck,
   ChevronDown,
   Images,
+  ListOrdered,
   MessageCircle,
   MessageCircleReply,
   type LucideIcon,
@@ -18,6 +19,7 @@ import { PageHeader } from '../shell/PageHeader';
 import { useBotSettings, useUpdateBotSettings } from './api';
 import { AutoReplyCard } from './AutoReplyCard';
 import { BookingBotCard, ShowcaseForm, toRequest } from './BookingBotCard';
+import { QuestionsForm } from './QuestionsEditor';
 import { tr } from '../../i18n';
 
 type Saved = WhatsAppBotResponse['settings'];
@@ -77,6 +79,9 @@ function Steps({
   const auto = saved.mode !== 'off';
   const booking = saved.mode === 'booking';
   const peek = saved.showcase.enabled;
+  // The questions step (D-198): on only inside the status answer, and only when the switch is on.
+  const asking = auto && saved.questionsEnabled;
+  const count = saved.questions.length;
   const setMode = (mode: ReplyMode) =>
     update.mutate({ ...toRequest(saved), mode, enabled: mode === 'booking' });
   const base = toRequest(saved);
@@ -111,10 +116,35 @@ function Steps({
           }
           settingsLabel={tr('הגדרות הסטטוס וההודעה')}
           settings={<AutoReplyCard businessId={businessId} />}
-          nextOff={!booking}
+          nextOff={!asking}
         />
         <FlowStep
           n={3}
+          icon={ListOrdered}
+          tone="bg-sky-500"
+          title={tr('שאלות ללקוח')}
+          description={tr(
+            'אחרי ההודעה הבוט שואל את הלקוח את השאלות שלכם, אחת אחרי השנייה, ומחכה לתשובה לפני הבאה. את כל התשובות אתם מקבלים במשימה ובהערה בליד.',
+          )}
+          on={asking}
+          busy={update.isPending}
+          disabled={!auto}
+          disabledNote={tr('פועל רק כשהמענה לפי הסטטוס דלוק.')}
+          // Only the switch is sent: the written questions stay as they are, on or off.
+          onToggle={(next) => update.mutate({ ...toRequest(saved), questionsEnabled: next })}
+          now={
+            !saved.questionsEnabled
+              ? tr('כבוי: הלקוח לא נשאל. השאלות שכתבתם נשמרות.')
+              : count
+                ? tr('{0} שאלות, אחת אחרי השנייה', String(count))
+                : tr('עוד לא כתבתם שאלות. כתבו אותן בהגדרות.')
+          }
+          settingsLabel={tr('עריכת השאלות')}
+          settings={<QuestionsForm businessId={businessId} saved={saved} />}
+          nextOff={!booking}
+        />
+        <FlowStep
+          n={4}
           icon={CalendarCheck}
           tone="bg-violet-500"
           title={tr('לקוחות קובעים לבד')}
@@ -138,7 +168,7 @@ function Steps({
           nextOff={!peek}
         />
         <FlowStep
-          n={4}
+          n={5}
           icon={Images}
           tone="bg-amber-500"
           title={tr('הצצה לעסק')}

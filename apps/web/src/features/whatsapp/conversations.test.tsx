@@ -47,6 +47,7 @@ const botSettings = (mode: 'off' | 'auto_reply' | 'booking' = 'booking') => ({
   autoReplyDefault: AUTO_REPLY_DEFAULT,
   statuses: presets,
   questions: [],
+  questionsEnabled: true,
   activeStatus: null,
   videoBytesUsed: 0,
   enabled: mode === 'booking',
@@ -127,9 +128,10 @@ describe('WhatsApp conversations inbox', () => {
       within(steps)
         .getAllByRole('heading')
         .map((h) => h.textContent),
-    ).toEqual(['הלקוח כותב', 'הודעה לפי הסטטוס', 'לקוחות קובעים לבד', 'הצצה לעסק']);
+    ).toEqual(['הלקוח כותב', 'הודעה לפי הסטטוס', 'שאלות ללקוח', 'לקוחות קובעים לבד', 'הצצה לעסק']);
     // One line per step on what it does now.
     expect(within(steps).getByText('עכשיו: ההודעה הכללית')).toBeInTheDocument();
+    expect(within(steps).getByText(/עוד לא כתבתם שאלות/)).toBeInTheDocument();
     expect(within(steps).getByText(/כבוי: אפשר לקבוע רק מול הצוות/)).toBeInTheDocument();
     // Their settings are folded until asked for.
     expect(screen.queryByLabelText('מה לקוחות מקבלים עכשיו')).not.toBeInTheDocument();
@@ -147,9 +149,65 @@ describe('WhatsApp conversations inbox', () => {
     );
     renderApp(autoTab);
     expect(await screen.findByRole('switch', { name: 'לקוחות קובעים לבד' })).toBeDisabled();
-    expect(screen.getByText('פועל רק כשהמענה לפי הסטטוס דלוק.')).toBeInTheDocument();
+    // Both steps that need the answer by status say so.
+    expect(screen.getAllByText('פועל רק כשהמענה לפי הסטטוס דלוק.')).toHaveLength(2);
+    expect(screen.getByRole('switch', { name: 'שאלות ללקוח' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'הודעה לפי הסטטוס' })).toBeEnabled();
     expect(screen.getByText('כבוי: הלקוח לא מקבל הודעה אוטומטית.')).toBeInTheDocument();
+  });
+
+  it('the questions are a step of their own, with a switch that keeps what was written (D-198)', async () => {
+    // Like the server: a save without `questions` leaves the written ones as they are.
+    let settings = {
+      ...botSettings('auto_reply'),
+      questions: [
+        { id: 'q1', text: 'מה תאריך האירוע?' },
+        { id: 'q2', text: 'כמה מוזמנים?' },
+      ],
+    };
+    const fetchMock = mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () => json(200, { connected: true, settings }),
+          [`PUT ${wp.bot(id)}`]: (body: unknown) => {
+            const b = body as { questions?: typeof settings.questions; questionsEnabled?: boolean };
+            settings = {
+              ...settings,
+              questions: b.questions ?? settings.questions,
+              questionsEnabled: b.questionsEnabled ?? settings.questionsEnabled,
+            };
+            return json(200, { connected: true, settings });
+          },
+        },
+      ),
+    );
+    const { user } = renderApp(autoTab);
+    const steps = await screen.findByRole('list', { name: 'מה קורה כשלקוח כותב' });
+    expect(within(steps).getByText('2 שאלות, אחת אחרי השנייה')).toBeInTheDocument();
+    const sw = screen.getByRole('switch', { name: 'שאלות ללקוח' });
+    expect(sw).toHaveAttribute('aria-checked', 'true');
+    // Off: only the switch is sent, the written questions are not touched.
+    await user.click(sw);
+    const sent = callsTo(fetchMock, 'PUT', wp.bot(id))[0] as Record<string, unknown>;
+    expect(sent).toMatchObject({ mode: 'auto_reply', questionsEnabled: false });
+    expect(sent).not.toHaveProperty('questions');
+    await waitFor(() => expect(sw).toHaveAttribute('aria-checked', 'false'));
+    expect(
+      within(steps).getByText('כבוי: הלקוח לא נשאל. השאלות שכתבתם נשמרות.'),
+    ).toBeInTheDocument();
+    // They are still there to edit.
+    await open(user, 'עריכת השאלות');
+    expect(screen.getByLabelText('שאלה 1')).toHaveValue('מה תאריך האירוע?');
+    // Saving edited questions sends them (and leaves the switch alone).
+    await user.type(screen.getByLabelText('שאלה 2'), ' בערך');
+    await user.click(screen.getByRole('button', { name: 'שמירת השאלות' }));
+    const saved = callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1) as {
+      questions: { text: string }[];
+    };
+    expect(saved.questions.map((q) => q.text)).toEqual(['מה תאריך האירוע?', 'כמה מוזמנים? בערך']);
+    expect(saved).not.toHaveProperty('questionsEnabled');
+    expect(await screen.findByText('השאלות נשמרו.')).toBeInTheDocument();
   });
 
   it("a step's settings fold and unfold, and stay as they were left", async () => {
@@ -291,12 +349,8 @@ describe('WhatsApp conversations inbox', () => {
     );
     // Photos and video live only in "A peek" (D-166).
     expect(screen.queryByRole('button', { name: 'הוספת סרטון' })).not.toBeInTheDocument();
-    // The whole conversation with this status, as the customer sees it (D-172).
-    await user.click(screen.getByRole('button', { name: 'תצוגה מקדימה' }));
-    const chat = screen.getByRole('group', { name: 'כך תיראה השיחה' });
-    expect(within(chat).getByText(presets[0]!.text)).toBeInTheDocument();
-    expect(within(chat).getByText('מעולה! נחזור אליכם מחר ב־09:00 🙏')).toBeInTheDocument();
-    expect(within(chat).getByText('"הצצה לעסק" כבויה, אז השיחה מסתיימת כאן.')).toBeInTheDocument();
+    // No conversation preview any more (removed): only the message box.
+    expect(screen.queryByRole('button', { name: 'תצוגה מקדימה' })).not.toBeInTheDocument();
     // How long, once you're away.
     await user.selectOptions(screen.getByLabelText('לכמה זמן:'), 'לשעה');
     const sent = callsTo(fetchMock, 'PUT', wp.status(id))[1] as { id: string; until: string };

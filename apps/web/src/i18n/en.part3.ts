@@ -1160,4 +1160,17 @@ export const enPart3: Record<string, string> = {
     'The script line on your website (the one you pasted from the card above) now says:',
   'החליפו אותה בשורה הזו (אותה שורה, עם תוספת בסוף):':
     'Replace it with this line (the same line, with an addition at the end):',
+  'שאלות ללקוח': 'Questions for the customer',
+  'אחרי ההודעה הבוט שואל את הלקוח את השאלות שלכם, אחת אחרי השנייה, ומחכה לתשובה לפני הבאה. את כל התשובות אתם מקבלים במשימה ובהערה בליד.':
+    'After the message the bot asks the customer your questions, one after another, waiting for the answer before the next. You get all the answers as a task and a note on the lead.',
+  'כבוי: הלקוח לא נשאל. השאלות שכתבתם נשמרות.':
+    "Off: the customer isn't asked. The questions you wrote are kept.",
+  '{0} שאלות, אחת אחרי השנייה': '{0} questions, one after another',
+  'עוד לא כתבתם שאלות. כתבו אותן בהגדרות.':
+    "You haven't written questions yet. Write them in the settings.",
+  'השאלות נשמרו.': 'The questions were saved.',
+  'אחרי ההודעה הבוט שואל את השאלות שכתבתם, אחת אחרי השנייה, ואתם מקבלים את כל התשובות במשימה ובליד. המתג מכבה את השאלות בלי למחוק אותן, והן חוזרות כשמדליקים. הוא פועל רק כשהמענה לפי הסטטוס דלוק.':
+    'After the message the bot asks the questions you wrote, one after another, and you get all the answers as a task and on the lead. The switch turns the questions off without deleting them, and they come back when you turn it on. It works only while the answer by status is on.',
+  'הרצף של הלקוח, לפי הסדר: הוא כותב, מקבל הודעה לפי הסטטוס שלך, עונה על השאלות שלכם, אפשר שיקבע תור בעצמו, ואז מקבל הצצה לעסק. לכל שלב מתג אחד, שורה שאומרת מה הוא עושה עכשיו, וכפתור הגדרות שפותח את ההגדרות שלו.':
+    "The customer's sequence, in order: they write, get a message by your status, answer your questions, may book by themselves, then get a peek at the business. Each step has one switch, a line saying what it does now, and a settings button that opens its settings.",
 };

@@ -1,7 +1,7 @@
 import { botQuestionSchema, MAX_QUESTIONS, type BotQuestion } from '@simplecatch/shared';
-import { ArrowDown, ArrowUp, ListOrdered, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Alert, Button, DialogShell, EmojiPicker, Textarea } from '../../components/ui';
+import { Alert, Button, EmojiPicker, Textarea } from '../../components/ui';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useUpdateBotSettings } from './api';
@@ -13,54 +13,17 @@ type Saved = WhatsAppBotResponse['settings'];
 const newId = () => `q-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 /**
- * "Your own questions" for an event request: the bot sends them one after another, waiting for
- * each answer, and the team gets all the answers as a task and a note on the lead.
+ * "Your own questions": the editor under the questions step of the Automations flow (D-198). The bot
+ * sends them one after another, waiting for each answer, and the team gets all the answers as a task
+ * and a note on the lead.
  */
-export function QuestionsCard({ businessId, saved }: { businessId: string; saved: Saved }) {
-  const [open, setOpen] = useState(false);
-  const count = saved.questions.length;
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-surface-border p-4">
-      <div className="flex items-start gap-3">
-        <ListOrdered aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-ink-muted" />
-        <div className="min-w-0 flex-1">
-          <h4 className="font-medium text-ink">{tr('השאלות שלכם ללקוח')}</h4>
-          <p className="text-sm text-ink-muted">
-            {count
-              ? tr(
-                  'אחרי ההודעה הבוט שואל {0} שאלות, אחת אחרי השנייה, ומחכה לתשובה לפני הבאה.',
-                  String(count),
-                )
-              : tr(
-                  'כתבו רשימת שאלות משלכם (תאריך, שעה, מקום, מספר מוזמנים…). אחרי הודעת הסטטוס הבוט ישאל אותן אחת אחרי השנייה.',
-                )}
-          </p>
-        </div>
-      </div>
-      <Button variant="secondary" size="sm" className="self-start" onClick={() => setOpen(true)}>
-        {count ? tr('עריכת השאלות') : tr('הוספת שאלות')}
-      </Button>
-      <DialogShell open={open} onOpenChange={setOpen} title={tr('השאלות שלכם ללקוח')} wide>
-        <QuestionsForm businessId={businessId} saved={saved} onDone={() => setOpen(false)} />
-      </DialogShell>
-    </div>
-  );
-}
-
-function QuestionsForm({
-  businessId,
-  saved,
-  onDone,
-}: {
-  businessId: string;
-  saved: Saved;
-  onDone: () => void;
-}) {
+export function QuestionsForm({ businessId, saved }: { businessId: string; saved: Saved }) {
   const update = useUpdateBotSettings(businessId);
   const [items, setItems] = useState<BotQuestion[]>(
     saved.questions.length ? saved.questions : [{ id: newId(), text: '' }],
   );
   const [errors, setErrors] = useState<Record<number, string>>({});
+  const [done, setDone] = useState(false);
 
   const move = (i: number, by: -1 | 1) =>
     setItems((list) => {
@@ -83,7 +46,8 @@ function QuestionsForm({
     });
     setErrors(found);
     if (Object.keys(found).length) return;
-    update.mutate({ ...toRequest(saved), questions: parsed }, { onSuccess: onDone });
+    setDone(false);
+    update.mutate({ ...toRequest(saved), questions: parsed }, { onSuccess: () => setDone(true) });
   };
 
   return (
@@ -152,13 +116,15 @@ function QuestionsForm({
         </Button>
       )}
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button loading={update.isPending} onClick={save}>
           {tr('שמירת השאלות')}
         </Button>
-        <Button variant="ghost" onClick={onDone}>
-          {tr('ביטול')}
-        </Button>
+        {done && (
+          <p role="status" className="text-sm text-emerald-700">
+            {tr('השאלות נשמרו.')}
+          </p>
+        )}
       </div>
     </div>
   );

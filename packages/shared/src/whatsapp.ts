@@ -490,6 +490,8 @@ export const whatsappBotSettingsSchema = z.object({
   statuses: z.array(replyStatusSchema).max(MAX_STATUSES).optional(),
   /** The custom event questions (missing = unchanged; empty = the built-in questions). */
   questions: z.array(botQuestionSchema).max(MAX_QUESTIONS).optional(),
+  /** The questions step's switch (missing = unchanged): off keeps the questions but the bot skips them. */
+  questionsEnabled: z.boolean().optional(),
   enabled: z.boolean(),
   /** true: booked as confirmed; false: booked as "waiting for approval" (holds the time). */
   autoConfirm: z.boolean(),
@@ -512,6 +514,7 @@ export const whatsappBotResponseSchema = z.object({
     statuses: z.array(replyStatusSchema.extend({ preset: z.boolean() })),
     /** The status on now (expired ones come back as null). */
     questions: z.array(botQuestionSchema),
+    questionsEnabled: z.boolean(),
     activeStatus: z.object({ id: z.string(), until: z.string().datetime().nullable() }).nullable(),
     enabled: z.boolean(),
     autoConfirm: z.boolean(),

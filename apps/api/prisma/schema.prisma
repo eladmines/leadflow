@@ -137,54 +137,56 @@ enum MembershipStatus {
 
 /// The tenant. Every tenant-owned table references it through business_id.
 model Business {
-  id                     String         @id @default(uuid()) @db.Uuid
-  name                   String         @db.VarChar(80)
+  id                       String         @id @default(uuid()) @db.Uuid
+  name                     String         @db.VarChar(80)
   /// Code from the shared INDUSTRIES list (validated in the app, not a DB enum).
-  industry               String         @db.VarChar(40)
+  industry                 String         @db.VarChar(40)
   /// E.164, e.g. +972501234567.
-  phone                  String?        @db.VarChar(20)
-  address                String?        @db.VarChar(200)
-  serviceAreas           String[]       @default([]) @map("service_areas")
+  phone                    String?        @db.VarChar(20)
+  address                  String?        @db.VarChar(200)
+  serviceAreas             String[]       @default([]) @map("service_areas")
   /// Shape: shared openingHoursSchema (sun..sat → { open, from, to }).
-  openingHours           Json?          @map("opening_hours")
+  openingHours             Json?          @map("opening_hours")
   /// Existing website outside SimpleCatch (D-094); shown in "האתר שלי", never managed by SimpleCatch.
-  websiteUrl             String?        @map("website_url") @db.VarChar(300)
+  websiteUrl               String?        @map("website_url") @db.VarChar(300)
   /// F33: when the existing website's domain expires, read from the registry (RDAP, or ISOC-IL's WHOIS
   /// for .il). `domainCheck`: ok | unsupported | failed. `domainRemindedDays`: the tightest reminder
   /// (60/30/7/0) already sent for this expiry, so each goes out once.
-  domainExpiresAt        DateTime?      @map("domain_expires_at") @db.Timestamptz(3)
-  domainCheckedAt        DateTime?      @map("domain_checked_at") @db.Timestamptz(3)
-  domainCheck            String?        @map("domain_check") @db.VarChar(12)
-  domainRemindedDays     Int?           @map("domain_reminded_days")
-  timezone               String         @default("Asia/Jerusalem") @db.VarChar(64)
+  domainExpiresAt          DateTime?      @map("domain_expires_at") @db.Timestamptz(3)
+  domainCheckedAt          DateTime?      @map("domain_checked_at") @db.Timestamptz(3)
+  domainCheck              String?        @map("domain_check") @db.VarChar(12)
+  domainRemindedDays       Int?           @map("domain_reminded_days")
+  timezone                 String         @default("Asia/Jerusalem") @db.VarChar(64)
   /// 'he' | 'en' (D-143): what its customers get (website, WhatsApp, emails).
-  language               String         @default("he") @db.VarChar(2)
+  language                 String         @default("he") @db.VarChar(2)
   /// WhatsApp booking bot (D-102): off by default; confirmed bookings unless autoConfirm is off.
-  whatsappBotEnabled     Boolean        @default(false) @map("whatsapp_bot_enabled")
-  whatsappBotAutoConfirm Boolean        @default(true) @map("whatsapp_bot_auto_confirm")
+  whatsappBotEnabled       Boolean        @default(false) @map("whatsapp_bot_enabled")
+  whatsappBotAutoConfirm   Boolean        @default(true) @map("whatsapp_bot_auto_confirm")
   /// The business's own bot messages (shared botTextsSchema); missing keys use the defaults.
-  whatsappBotTexts       Json?          @map("whatsapp_bot_texts")
+  whatsappBotTexts         Json?          @map("whatsapp_bot_texts")
   /// "In the meantime" showcase (D-106; shared botShowcaseSchema).
-  whatsappBotShowcase    Json?          @map("whatsapp_bot_showcase")
+  whatsappBotShowcase      Json?          @map("whatsapp_bot_showcase")
   /// 'appointment' | 'event' (D-107); null = the industry's flow.
-  whatsappBotFlow        String?        @map("whatsapp_bot_flow") @db.VarChar(20)
+  whatsappBotFlow          String?        @map("whatsapp_bot_flow") @db.VarChar(20)
   /// Event requests hold their date (D-108); off = only confirmed events block a date.
   /// The owner's own event questions, asked one after another: [{ id, text }]; null/empty = built-in.
-  whatsappQuestions      Json?          @map("whatsapp_questions")
-  whatsappBotHoldDate    Boolean        @default(false) @map("whatsapp_bot_hold_date")
+  whatsappQuestions        Json?          @map("whatsapp_questions")
+  /// The questions step has a switch (D-198): off keeps the written questions but the bot does not ask them.
+  whatsappQuestionsEnabled Boolean        @default(true) @map("whatsapp_questions_enabled")
+  whatsappBotHoldDate      Boolean        @default(false) @map("whatsapp_bot_hold_date")
   /// D-123: off | auto_reply | booking (booking also keeps whatsappBotEnabled on).
-  whatsappReplyMode      String         @default("auto_reply") @map("whatsapp_reply_mode") @db.VarChar(20)
+  whatsappReplyMode        String         @default("auto_reply") @map("whatsapp_reply_mode") @db.VarChar(20)
   /// The general automatic reply; null = the default text.
-  whatsappAutoReplyText  String?        @map("whatsapp_auto_reply_text") @db.VarChar(1000)
+  whatsappAutoReplyText    String?        @map("whatsapp_auto_reply_text") @db.VarChar(1000)
   /// [{ id, label, text, videoKey?, videoBytes? }]; null = the ready-made statuses.
-  whatsappStatuses       Json?          @map("whatsapp_statuses")
+  whatsappStatuses         Json?          @map("whatsapp_statuses")
   /// { id, until } — the status on now.
-  whatsappActiveStatus   Json?          @map("whatsapp_active_status")
-  status                 BusinessStatus @default(ONBOARDING)
+  whatsappActiveStatus     Json?          @map("whatsapp_active_status")
+  status                   BusinessStatus @default(ONBOARDING)
   /// Last saved wizard step (1..4); meaningful only while status = ONBOARDING.
-  onboardingStep         Int            @default(1) @map("onboarding_step")
-  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt              DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  onboardingStep           Int            @default(1) @map("onboarding_step")
+  createdAt                DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   memberships         Membership[]
   channelConnections  ChannelConnection[]
