@@ -60,9 +60,6 @@ export function QuestionsForm({ businessId, saved }: { businessId: string; saved
       <ol className="flex flex-col gap-3">
         {items.map((q, i) => (
           <li key={q.id} className="flex items-center gap-2">
-            <span className="w-6 shrink-0 text-center text-sm font-semibold text-ink-muted">
-              {i + 1}
-            </span>
             <div className="min-w-0 flex-1">
               <QuestionBox
                 index={i}
