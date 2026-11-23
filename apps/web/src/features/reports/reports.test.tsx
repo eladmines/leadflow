@@ -198,14 +198,10 @@ describe('reports page', () => {
     expect(await screen.findByText('מה גולשים עושים באתר')).toBeInTheDocument();
     expect(screen.getByText('גללו עד סוף הדף').nextElementSibling).toHaveTextContent('25%');
     expect(screen.getByText('עד אמצע הדף: 50%')).toBeInTheDocument();
-    // Sections: a type shows its name, a repeated one is numbered, an owner's name stays; with the share of page views.
-    expect(screen.getByRole('cell', { name: 'שירותים' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'שירותים (2)' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'my-offer' })).toBeInTheDocument();
-    expect(screen.getByText('25%', { selector: 'td' })).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'כפתורים שנבחרו לספירה' })).toHaveTextContent(
-      'קבע תור',
-    );
+    // Sections, named buttons and "forms started" are hidden for now.
+    expect(screen.queryByText('הסקשנים שהגולשים ראו')).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'כפתורים שנבחרו לספירה' })).not.toBeInTheDocument();
+    expect(screen.queryByText('התחילו למלא טופס')).not.toBeInTheDocument();
     expect(screen.getByText('4 מתוך 40 (10%)')).toBeInTheDocument();
     expect(screen.getByText('75%', { exact: false })).toBeInTheDocument();
   });

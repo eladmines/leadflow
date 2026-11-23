@@ -1,4 +1,6 @@
-import { businessWebPaths, sectionTypeLabels, type Behavior } from '@simplecatch/shared';
+// For now the sections table, the named-buttons list and "forms started" are hidden (commented out
+// below). To bring them back, also import `sectionTypeLabels` from '@simplecatch/shared'.
+import { businessWebPaths, type Behavior } from '@simplecatch/shared';
 import { MousePointerClick } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui';
@@ -9,12 +11,12 @@ import { tr } from '../../i18n';
 const percent = (part: number, whole: number) =>
   whole > 0 ? `${Math.round((part / whole) * 100)}%` : '—';
 
-/** `services` → "Services", `services-2` → "Services (2)"; a name the owner gave is shown as it is. */
-function sectionName(name: string) {
-  const m = /^(.+?)(?:-(\d+))?$/.exec(name);
-  const label = m && (sectionTypeLabels as Record<string, string | undefined>)[m[1]!];
-  return label ? `${tr(label)}${m![2] ? ` (${m![2]})` : ''}` : name;
-}
+// /** `services` → "Services", `services-2` → "Services (2)"; a name the owner gave is shown as it is. */
+// function sectionName(name: string) {
+//   const m = /^(.+?)(?:-(\d+))?$/.exec(name);
+//   const label = m && (sectionTypeLabels as Record<string, string | undefined>)[m[1]!];
+//   return label ? `${tr(label)}${m![2] ? ` (${m![2]})` : ''}` : name;
+// }
 
 /** "3 of 120 (2.5%)"; blank when the leads can't be told apart from the visits. */
 const conversion = (leads: number, visits: number) =>
@@ -64,12 +66,12 @@ export function BehaviorCard({
         </p>
       ) : (
         <>
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <Fact label={tr('צפיות בדפים')} value={String(b.pageViews)} />
             <Fact label={tr('לחצו על טלפון')} value={String(b.clicks.phone)} />
             <Fact label={tr('לחצו על וואטסאפ')} value={String(b.clicks.whatsapp)} />
             <Fact label={tr('לחצו על מייל')} value={String(b.clicks.email)} />
-            <Fact label={tr('התחילו למלא טופס')} value={String(b.formStarts)} />
+            {/* <Fact label={tr('התחילו למלא טופס')} value={String(b.formStarts)} /> */}
             <Fact
               label={tr('גללו עד סוף הדף')}
               value={scrolled ? percent(b.scroll.p90, b.pageViews) : '—'}
@@ -102,6 +104,7 @@ export function BehaviorCard({
               />
             </section>
           </div>
+          {/*
           {b.sections.length > 0 && (
             <div className="scrollbar-visible overflow-x-auto">
               <table className="w-full min-w-[420px] text-sm">
@@ -146,6 +149,7 @@ export function BehaviorCard({
               />
             </section>
           )}
+          */}
           {b.landing.length > 0 && (
             <div className="scrollbar-visible overflow-x-auto">
               <table className="w-full min-w-[420px] text-sm">

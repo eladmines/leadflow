@@ -8,20 +8,21 @@ import { errorMessage } from '../auth/serverErrors';
 import { useEmbedInfo } from './embedApi';
 import { tr } from '../../i18n';
 
-const CTA_EXAMPLE = '<button data-sc-click="book-appointment">Book</button>';
-const TRACK_EXAMPLE = 'data-track="#book-btn=book-appointment"';
-
-const SECTION_EXAMPLE = '<section data-sc-section="pricing">…</section>';
-const SECTIONS_TRACK_EXAMPLE = 'data-track-sections="#pricing=pricing"';
-
-const FORM_EXAMPLE = `<form data-simplecatch data-success="Thank you!">
-  <input name="name" required>
-  <input name="phone" required>
-  <input name="email">
-  <textarea name="message"></textarea>
-  <label><input type="checkbox" name="consent" required> I agree to be contacted</label>
-  <button type="submit">Send</button>
-</form>`;
+// The "more options" box below is hidden for now (commented out); its examples:
+// const CTA_EXAMPLE = '<button data-sc-click="book-appointment">Book</button>';
+// const TRACK_EXAMPLE = 'data-track="#book-btn=book-appointment"';
+//
+// const SECTION_EXAMPLE = '<section data-sc-section="pricing">…</section>';
+// const SECTIONS_TRACK_EXAMPLE = 'data-track-sections="#pricing=pricing"';
+//
+// const FORM_EXAMPLE = `<form data-simplecatch data-success="Thank you!">
+//   <input name="name" required>
+//   <input name="phone" required>
+//   <input name="email">
+//   <textarea name="message"></textarea>
+//   <label><input type="checkbox" name="consent" required> I agree to be contacted</label>
+//   <button type="submit">Send</button>
+// </form>`;
 
 /** The line for a Shopify theme: it also connects the "Contact us" form and lets Shopify keep its own copy. */
 const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
@@ -238,6 +239,7 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
                 </Step>
               </Steps>
 
+              {/*
               <div className="flex flex-col gap-3 rounded-2xl bg-surface-muted p-4">
                 <h3 className="text-sm font-semibold text-ink">
                   {tr('אפשרויות נוספות (לא חובה)')}
@@ -277,6 +279,7 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
                   </Step>
                 </Steps>
               </div>
+              */}
             </>
           )}
           <p className="text-xs text-ink-muted">
