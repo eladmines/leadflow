@@ -1000,11 +1000,6 @@ export const enPart3: Record<string, string> = {
     'Not sure how? Send this message to whoever built or maintains your website:',
   'שלום, אפשר להוסיף את השורה הבאה לכל דפי האתר, ממש לפני התגית </body>? זה מונה כניסות לאתר.':
     'Hello, could you add the following line to every page of the website, right before the </body> tag? It is a visit counter.',
-  '1. העתיקו': '1. Copy',
-  '2. מצאו "קוד מותאם"': '2. Find "Custom code"',
-  '3. הדביקו ושמרו': '3. Paste and save',
-  'קוד מותאם (Custom code)': 'Custom code',
-  מוכן: 'Done',
   'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. מאותו רגע, בדף "דוחות" רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.':
     'How it works: you paste one line into your website, once. From then on, the Reports page shows how many visitors came, where they came from (Google, Facebook, another link) and which pages they viewed. No personal details are collected.',
   'העתיקו את השורה הזו:': 'Copy this line:',

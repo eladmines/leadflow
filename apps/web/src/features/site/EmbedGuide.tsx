@@ -1,3 +1,4 @@
+import { Code2 } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, Card, ScrollTabs, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -76,54 +77,71 @@ function PlatformSteps({ tab, message }: { tab: Tab; message: string }) {
   );
 }
 
-/**
- * A looping picture of the three moves (copy, find "custom code", paste and save). Pure CSS: a tile
- * lights up in turn; nothing moves for people who ask for less motion.
- */
-function HowItWorks() {
-  return (
-    <div className="flex flex-col gap-2" aria-hidden>
-      <style>{`
-        @keyframes sc-glow { 0%, 30% { opacity: 1; transform: scale(1); } 34%, 100% { opacity: .5; transform: scale(.98); } }
-        @keyframes sc-pulse { 0%, 12% { transform: scale(1); } 6% { transform: scale(1.12); } }
-        @keyframes sc-grow { 0%, 66% { width: 0; } 80%, 100% { width: 100%; } }
-        @keyframes sc-pop { 0%, 80% { transform: scale(0); } 88%, 100% { transform: scale(1); } }
-        .sc-tile { animation: sc-glow 6s infinite; }
-        .sc-t2 { animation-delay: 2s; }
-        .sc-t3 { animation-delay: 4s; }
-        .sc-pill { animation: sc-pulse 6s infinite; }
-        .sc-paste { animation: sc-grow 6s infinite; }
-        .sc-check { animation: sc-pop 6s infinite; transform-origin: center; }
-        @media (prefers-reduced-motion: reduce) { .sc-tile, .sc-pill, .sc-paste, .sc-check { animation: none; opacity: 1; transform: none; width: 100%; } }
-      `}</style>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="sc-tile flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
-          <p className="text-sm font-medium text-ink">{tr('1. העתיקו')}</p>
-          <div className="h-6 rounded bg-surface-sunken" />
-          <span className="sc-pill self-start rounded-md bg-brand-600 px-2 py-0.5 text-xs text-white">
-            {tr('העתקה')}
-          </span>
-        </div>
-        <div className="sc-tile sc-t2 flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
-          <p className="text-sm font-medium text-ink">{tr('2. מצאו "קוד מותאם"')}</p>
-          <div className="h-3 rounded bg-surface-sunken" />
-          <div className="rounded bg-brand-100 px-2 py-1 text-xs font-medium text-brand-700">
-            {tr('קוד מותאם (Custom code)')}
-          </div>
-          <div className="h-3 rounded bg-surface-sunken" />
-        </div>
-        <div className="sc-tile sc-t3 flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
-          <p className="text-sm font-medium text-ink">{tr('3. הדביקו ושמרו')}</p>
-          <div className="h-6 overflow-hidden rounded bg-surface-sunken">
-            <div className="sc-paste h-full rounded bg-brand-200" />
-          </div>
-          <span className="sc-check self-start text-sm font-medium text-emerald-700">
-            ✓ {tr('מוכן')}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
+/** Small marks for the site builders, drawn here as simple shapes (a letter on the builder's colour). */
+function BuilderIcon({ tab }: { tab: Tab }) {
+  const box = 'h-5 w-5 shrink-0';
+  if (tab === 'wix') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden className={box}>
+        <rect width="24" height="24" rx="6" fill="#111827" />
+        <text
+          x="12"
+          y="15.5"
+          textAnchor="middle"
+          fontSize="9"
+          fontWeight="800"
+          fill="#fff"
+          fontFamily="system-ui, Arial, sans-serif"
+        >
+          Wix
+        </text>
+      </svg>
+    );
+  }
+  if (tab === 'wordpress') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden className={box}>
+        <circle cx="12" cy="12" r="11" fill="#21759B" />
+        <text
+          x="12"
+          y="17"
+          textAnchor="middle"
+          fontSize="14"
+          fontWeight="700"
+          fill="#fff"
+          fontFamily="Georgia, 'Times New Roman', serif"
+        >
+          W
+        </text>
+      </svg>
+    );
+  }
+  if (tab === 'shopify') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden className={box}>
+        <path d="M5 8h14l-1 13H6L5 8z" fill="#95BF47" />
+        <path
+          d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8"
+          fill="none"
+          stroke="#5E8E3E"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+        <text
+          x="12"
+          y="17.5"
+          textAnchor="middle"
+          fontSize="9"
+          fontWeight="800"
+          fill="#fff"
+          fontFamily="system-ui, Arial, sans-serif"
+        >
+          S
+        </text>
+      </svg>
+    );
+  }
+  return <Code2 aria-hidden className={cn(box, 'text-ink-muted')} />;
 }
 
 /**
@@ -162,7 +180,6 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
           'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. מאותו רגע, בדף "דוחות" רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.',
         )}
       </p>
-      <HowItWorks />
       {info.isPending && <Spinner size="sm" label={tr('טוענים…')} />}
       {info.isError && <Alert tone="danger">{errorMessage(info.error)}</Alert>}
       {info.data && (
@@ -188,10 +205,11 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
                   aria-selected={tab === t}
                   onClick={() => setTab(t)}
                   className={cn(
-                    'shrink-0 rounded-lg px-3 py-1.5 text-sm',
+                    'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm',
                     tab === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
                   )}
                 >
+                  <BuilderIcon tab={t} />
                   {labels[t]}
                 </button>
               ))}
