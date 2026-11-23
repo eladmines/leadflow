@@ -34,6 +34,7 @@ function Reports({ businessId }: { businessId: string }) {
   return (
     <>
       <PageHeader
+        refresh
         title={tr('דוחות')}
         description={tr('איך העסק עובד עם הפניות: כמה מגיעות, מאיפה, כמה מהר עונים ומה נסגר.')}
         actions={

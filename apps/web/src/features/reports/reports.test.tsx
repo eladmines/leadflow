@@ -91,6 +91,22 @@ describe('reports page', () => {
     );
   });
 
+  it('refreshes the numbers on demand, without reloading the page', async () => {
+    const user = userEvent.setup();
+    let version = 12;
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.reports.summary(id)}`]: () =>
+        json(200, { ...summary, leads: { current: version, previous: 9 } }),
+    });
+    renderApp(page);
+    expect(await screen.findByText('12')).toBeInTheDocument();
+    version = 17;
+    await user.click(screen.getByRole('button', { name: 'רענון' }));
+    expect(await screen.findByText('17')).toBeInTheDocument();
+    expect(await screen.findByText('עודכן')).toBeInTheDocument();
+  });
+
   it('shows when inquiries arrive: a column per hour, the peak and the share at night', async () => {
     mockApi({
       [`GET ${apiPaths.auth.me}`]: me(testUser),

@@ -4,6 +4,7 @@ import { buttonClasses } from '../../components/ui';
 import { useMe } from '../auth/api';
 import { useSite } from '../site/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
+import { PageRefresh } from '../shell/PageRefresh';
 import { useWhatsAppInbox } from '../whatsapp/api';
 import { LeadsOverview } from './LeadsOverview';
 import { TodayBoxes } from './TodayBoxes';
@@ -111,27 +112,30 @@ export function DashboardPage() {
                 </Link>
               )}
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-56">
-            <div className="flex items-baseline justify-between gap-3 text-sm">
-              <span className="text-ink-muted">{tr('התקדמות ההקמה')}</span>
-              <span className="font-semibold tabular-nums text-ink">
-                <bdi>
-                  {done}/{checklist.length}
-                </bdi>
-              </span>
-            </div>
-            <div
-              role="progressbar"
-              aria-label={tr('התקדמות ההקמה')}
-              aria-valuemin={0}
-              aria-valuemax={checklist.length}
-              aria-valuenow={done}
-              className="h-2 overflow-hidden rounded-full bg-brand-100"
-            >
+          <div className="flex w-full flex-col items-start gap-3 sm:w-56">
+            <PageRefresh />
+            <div className="flex w-full flex-col gap-2">
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="text-ink-muted">{tr('התקדמות ההקמה')}</span>
+                <span className="font-semibold tabular-nums text-ink">
+                  <bdi>
+                    {done}/{checklist.length}
+                  </bdi>
+                </span>
+              </div>
               <div
-                className="h-full rounded-full bg-brand-600 transition-[width] duration-700"
-                style={{ width: `${(done / checklist.length) * 100}%` }}
-              />
+                role="progressbar"
+                aria-label={tr('התקדמות ההקמה')}
+                aria-valuemin={0}
+                aria-valuemax={checklist.length}
+                aria-valuenow={done}
+                className="h-2 overflow-hidden rounded-full bg-brand-100"
+              >
+                <div
+                  className="h-full rounded-full bg-brand-600 transition-[width] duration-700"
+                  style={{ width: `${(done / checklist.length) * 100}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>

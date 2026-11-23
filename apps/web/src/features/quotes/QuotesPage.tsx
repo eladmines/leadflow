@@ -34,6 +34,7 @@ export function QuotesPage() {
       >
         <PageHeader
           inPanel
+          refresh
           title={tr('הצעות מחיר')}
           description={tr('כל ההצעות של העסק. הצעה חדשה נפתחת מתוך כרטיס הליד.')}
         />

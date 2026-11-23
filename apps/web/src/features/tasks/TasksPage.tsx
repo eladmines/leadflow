@@ -34,6 +34,7 @@ export function TasksPage() {
   return (
     <>
       <PageHeader
+        refresh
         title={tr('משימות')}
         description={tr('מעקב אחרי מה שצריך לעשות ומתי. תזכורת נשלחת באימייל כשמגיע המועד.')}
         actions={

@@ -123,6 +123,7 @@ export function AppointmentsPage() {
       >
         <PageHeader
           inPanel
+          refresh
           title={tr('יומן')}
           description={tr('היומן של העסק: תורים, בקשות מהאתר ושירותים.')}
           actions={

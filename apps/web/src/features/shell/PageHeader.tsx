@@ -2,18 +2,22 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '../../lib/cn';
 import { navItemOf } from './nav';
+import { PageRefresh } from './PageRefresh';
 
 export function PageHeader({
   title,
   description,
   actions,
   inPanel = false,
+  refresh = false,
 }: {
   title: string;
   description?: ReactNode;
   actions?: ReactNode;
   /** The top row of a page panel (D-117): padded, with a divider under it. */
   inPanel?: boolean;
+  /** A "refresh" button for the whole page, after the actions. */
+  refresh?: boolean;
 }) {
   // The section's icon in its colour beside the title (D-137), so each page is easy to recognise.
   const item = navItemOf(useLocation().pathname);
@@ -42,7 +46,10 @@ export function PageHeader({
           {description && <p className="text-sm text-ink-muted">{description}</p>}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      <div className="flex flex-wrap items-center gap-2">
+        {actions}
+        {refresh && <PageRefresh />}
+      </div>
     </div>
   );
 }

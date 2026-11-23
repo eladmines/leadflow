@@ -46,6 +46,7 @@ export function CustomersPage() {
     >
       <PageHeader
         inPanel
+        refresh
         title={tr('לקוחות')}
         description={tr(
           'מי שקנה מכם (ליד בשלב "נסגר" או הצעת מחיר שאושרה) ומי שקבע תור, גם אם ביטל.',
