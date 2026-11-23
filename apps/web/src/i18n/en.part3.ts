@@ -980,4 +980,6 @@ export const enPart3: Record<string, string> = {
     'Or, without touching the site itself, write on the script tag:',
   לחצו: 'Clicked',
   'רענון: {0}': 'Refresh: {0}',
+  'אפשר לחבר את האתר הקיים כדי לספור כמה גולשים נכנסו אליו ומאיפה הגיעו.':
+    'You can connect your existing website to count how many visitors came and where from.',
 };
