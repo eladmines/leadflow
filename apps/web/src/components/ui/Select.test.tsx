@@ -126,7 +126,7 @@ describe('SelectMenu: compact, hidden label, and which way it opens', () => {
         <SelectMenu label="שלב" options={options} value="" onChange={() => {}} />,
       );
       await user.click(screen.getByRole('combobox', { name: 'שלב' }));
-      expect(screen.getByRole('listbox').parentElement).toHaveClass('top-full');
+      expect(screen.getByRole('listbox').parentElement!.style.top).not.toBe('');
       small.unmount();
       // Seven options need about 290px: they do not, and there is more room above.
       const many = Array.from({ length: 7 }, (_, i) => ({
@@ -135,10 +135,41 @@ describe('SelectMenu: compact, hidden label, and which way it opens', () => {
       }));
       render(<SelectMenu label="שלב" options={many} value="" onChange={() => {}} />);
       await user.click(screen.getByRole('combobox', { name: 'שלב' }));
-      expect(screen.getByRole('listbox').parentElement).toHaveClass('bottom-full');
+      expect(screen.getByRole('listbox').parentElement!.style.bottom).not.toBe('');
     } finally {
       HTMLElement.prototype.getBoundingClientRect = original;
     }
+  });
+
+  it('floats over the window, so a card or column with its own overflow cannot clip it; in a pop-up it stays inside', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <div data-testid="clip" style={{ overflow: 'hidden' }}>
+        <SelectMenu label="שלב" options={options} value="" onChange={() => {}} />
+      </div>,
+    );
+    await user.click(screen.getByRole('combobox', { name: 'שלב' }));
+    const list = screen.getByRole('listbox').parentElement!;
+    expect(list).toHaveClass('fixed');
+    expect(screen.getByTestId('clip')).not.toContainElement(list);
+    expect(document.body).toContainElement(list);
+    // Choosing and clicking outside still work from there.
+    await user.click(screen.getByRole('option', { name: 'נוצר קשר' }));
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'שלב' }));
+    await user.click(document.body);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <div role="dialog" aria-label="חלון">
+        <SelectMenu label="שלב" options={options} value="" onChange={() => {}} />
+      </div>,
+    );
+    await user.click(screen.getByRole('combobox', { name: 'שלב' }));
+    const inside = screen.getByRole('listbox').parentElement!;
+    expect(inside).toHaveClass('absolute');
+    expect(screen.getByRole('dialog')).toContainElement(inside);
   });
 
   it('never scrolls the page: not when it opens, not when the pointer moves over the options', async () => {
@@ -163,7 +194,7 @@ describe('SelectMenu: compact, hidden label, and which way it opens', () => {
       <SelectMenu label="שלב" options={options} value="" onChange={() => {}} />,
     );
     await user.click(screen.getByRole('combobox', { name: 'שלב' }));
-    expect(screen.getByRole('listbox').parentElement).toHaveClass('top-full');
+    expect(screen.getByRole('listbox').parentElement!.style.top).not.toBe('');
     unmount();
 
     // A button near the bottom edge of a 768px-high window, with more room above than below.
@@ -173,7 +204,7 @@ describe('SelectMenu: compact, hidden label, and which way it opens', () => {
     try {
       render(<SelectMenu label="שלב" options={options} value="" onChange={() => {}} />);
       await user.click(screen.getByRole('combobox', { name: 'שלב' }));
-      expect(screen.getByRole('listbox').parentElement).toHaveClass('bottom-full');
+      expect(screen.getByRole('listbox').parentElement!.style.bottom).not.toBe('');
     } finally {
       HTMLElement.prototype.getBoundingClientRect = box;
     }

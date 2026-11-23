@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type FocusEvent, type KeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 import { inputClasses } from './Field';
 import { tr } from '../../i18n';
@@ -12,6 +13,17 @@ const compactClasses = (hasError: boolean) =>
       ? 'border-danger-600 focus-visible:ring-danger-600/15'
       : 'border-surface-border focus-visible:border-brand-500 focus-visible:ring-brand-500/15',
   );
+
+/** Where the open list goes (all in pixels of the window). */
+interface Placement {
+  up: boolean;
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  width: number;
+  maxHeight: number;
+}
 
 interface SelectMenuProps {
   label: string;
@@ -73,8 +85,13 @@ export function SelectMenu({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [query, setQuery] = useState('');
-  // Opens upwards when the room below is small and there is more above (near the bottom of a page or pop-up).
-  const [up, setUp] = useState(false);
+  // Where the list goes: upwards when the room below is small and there is more above.
+  const [place, setPlace] = useState<Placement | null>(null);
+  // Outside a pop-up the list floats above everything (a fixed box over the window), so no container
+  // with its own overflow (a board column, a card) can clip it. Inside a pop-up it stays in place,
+  // under the pop-up's own scrolling and focus handling.
+  const [floating, setFloating] = useState(false);
+  const floatRef = useRef<HTMLDivElement>(null);
   // True while the highlight is moved by the keyboard (or at opening): then the list follows it.
   const followActive = useRef(true);
 
@@ -83,15 +100,30 @@ export function SelectMenu({
   const shown = q ? options.filter((o) => o.label.toLocaleLowerCase().includes(q)) : options;
   const selected = options.find((o) => o.value === value);
 
-  // Close on a click outside.
+  // Close on a click outside (the floating list is outside the control's own box).
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (!rootRef.current?.contains(t) && !floatRef.current?.contains(t)) setOpen(false);
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
+
+  // A floating list follows its control when the window or any scroller moves under it.
+  useEffect(() => {
+    if (!open || !floating) return;
+    const follow = () => setPlace(measure());
+    window.addEventListener('resize', follow);
+    window.addEventListener('scroll', follow, true);
+    return () => {
+      window.removeEventListener('resize', follow);
+      window.removeEventListener('scroll', follow, true);
+    };
+    // `measure` only reads refs and props that open the list again when they change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, floating]);
 
   // Keep the highlighted option in view, inside the list only. The page never scrolls for it (that
   // made the menu jump away from the pointer), and the pointer moving over options changes nothing.
@@ -106,15 +138,29 @@ export function SelectMenu({
     }
   }, [open, active]);
 
+  /** The list's place: below the control, or above it when there is little room below and more above. */
+  function measure(): Placement | null {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    // The list's own height (rows of about 40px, with the search box, at most 15rem plus a margin).
+    const needed = Math.min(options.length * 40 + 8, 240) + (hasSearch ? 56 : 0) + 8;
+    const below = window.innerHeight - rect.bottom;
+    const up = below < needed && rect.top > below;
+    return {
+      up,
+      top: rect.bottom + 4,
+      bottom: window.innerHeight - rect.top + 4,
+      left: rect.left,
+      right: window.innerWidth - rect.right,
+      width: rect.width,
+      maxHeight: Math.max(120, Math.min(up ? rect.top - 12 : below - 12, 300)),
+    };
+  }
+
   function openList() {
     if (disabled) return;
-    const rect = buttonRef.current?.getBoundingClientRect();
-    if (rect) {
-      // The list's own height (rows of about 40px, with the search box, at most 15rem plus a margin).
-      const needed = Math.min(options.length * 40 + 8, 240) + (hasSearch ? 56 : 0) + 8;
-      const below = window.innerHeight - rect.bottom;
-      setUp(below < needed && rect.top > below);
-    }
+    setPlace(measure());
+    setFloating(!rootRef.current?.closest('[role="dialog"]'));
     followActive.current = true;
     setQuery('');
     setActive(
@@ -193,10 +239,102 @@ export function SelectMenu({
 
   // "Touched" only once focus leaves the whole control, not when it moves to the search box.
   function onRootBlur(e: FocusEvent<HTMLDivElement>) {
-    if (!rootRef.current?.contains(e.relatedTarget as Node | null)) onBlur?.();
+    const to = e.relatedTarget as Node | null;
+    if (!rootRef.current?.contains(to) && !floatRef.current?.contains(to)) onBlur?.();
   }
 
   const activeId = open && shown[active] ? `${listId}-${active}` : undefined;
+
+  const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
+  const up = place?.up ?? false;
+  const listBox = (
+    <div
+      ref={floatRef}
+      style={
+        floating && place
+          ? {
+              ...(place.up ? { bottom: place.bottom } : { top: place.top }),
+              ...(rtl ? { right: place.right } : { left: place.left }),
+              ...(compact ? { minWidth: place.width } : { width: place.width }),
+            }
+          : undefined
+      }
+      className={cn(
+        'overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lift',
+        floating
+          ? // Fixed over the window; a compact control's list is as wide as its longest option.
+            cn('fixed z-50', compact && 'w-max max-w-[min(20rem,90vw)]')
+          : cn(
+              'absolute z-40',
+              up ? 'bottom-full mb-1' : 'top-full mt-1',
+              compact ? 'start-0 w-max min-w-full max-w-[min(20rem,90vw)]' : 'inset-x-0',
+            ),
+      )}
+    >
+      {hasSearch && (
+        <div className="border-b border-surface-border p-2">
+          <div className="relative">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle"
+            />
+            <input
+              autoFocus
+              role="searchbox"
+              aria-label={tr('חיפוש')}
+              aria-controls={listId}
+              aria-activedescendant={activeId}
+              placeholder={tr('חיפוש')}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setActive(0);
+              }}
+              onKeyDown={onKeyDown}
+              className={cn(inputClasses(false), 'h-9 ps-8 shadow-none')}
+            />
+          </div>
+        </div>
+      )}
+      <ul
+        ref={listRef}
+        id={listId}
+        role="listbox"
+        aria-label={label}
+        className="scrollbar-visible overflow-y-auto py-1"
+        style={{ maxHeight: place?.maxHeight ?? 240 }}
+      >
+        {shown.map((o, i) => (
+          <li
+            key={o.value}
+            id={`${listId}-${i}`}
+            data-index={i}
+            role="option"
+            aria-selected={o.value === value}
+            onMouseMove={() => {
+              followActive.current = false;
+              if (active !== i) setActive(i);
+            }}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => pick(i)}
+            className={cn(
+              'flex cursor-pointer items-center gap-2 px-3 py-2 text-base sm:text-sm',
+              i === active && 'bg-brand-50',
+              o.value === value ? 'font-semibold text-brand-700' : 'text-ink',
+            )}
+          >
+            <span className="flex-1">{o.label}</span>
+            {o.value === value && <Check aria-hidden className="h-4 w-4" />}
+          </li>
+        ))}
+        {shown.length === 0 && (
+          <li role="presentation" className="px-3 py-3 text-sm text-ink-muted">
+            {tr('לא נמצאו תוצאות')}
+          </li>
+        )}
+      </ul>
+    </div>
+  );
 
   return (
     <div
@@ -248,78 +386,7 @@ export function SelectMenu({
         />
       </button>
 
-      {open && (
-        <div
-          className={cn(
-            'absolute z-40 overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lift',
-            up ? 'bottom-full mb-1' : 'top-full mt-1',
-            // A compact control's list is as wide as its longest option, from the control's edge.
-            compact ? 'start-0 w-max min-w-full max-w-[min(20rem,90vw)]' : 'inset-x-0',
-          )}
-        >
-          {hasSearch && (
-            <div className="border-b border-surface-border p-2">
-              <div className="relative">
-                <Search
-                  aria-hidden
-                  className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle"
-                />
-                <input
-                  autoFocus
-                  role="searchbox"
-                  aria-label={tr('חיפוש')}
-                  aria-controls={listId}
-                  aria-activedescendant={activeId}
-                  placeholder={tr('חיפוש')}
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setActive(0);
-                  }}
-                  onKeyDown={onKeyDown}
-                  className={cn(inputClasses(false), 'h-9 ps-8 shadow-none')}
-                />
-              </div>
-            </div>
-          )}
-          <ul
-            ref={listRef}
-            id={listId}
-            role="listbox"
-            aria-label={label}
-            className="scrollbar-visible max-h-60 overflow-y-auto py-1"
-          >
-            {shown.map((o, i) => (
-              <li
-                key={o.value}
-                id={`${listId}-${i}`}
-                data-index={i}
-                role="option"
-                aria-selected={o.value === value}
-                onMouseMove={() => {
-                  followActive.current = false;
-                  if (active !== i) setActive(i);
-                }}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => pick(i)}
-                className={cn(
-                  'flex cursor-pointer items-center gap-2 px-3 py-2 text-base sm:text-sm',
-                  i === active && 'bg-brand-50',
-                  o.value === value ? 'font-semibold text-brand-700' : 'text-ink',
-                )}
-              >
-                <span className="flex-1">{o.label}</span>
-                {o.value === value && <Check aria-hidden className="h-4 w-4" />}
-              </li>
-            ))}
-            {shown.length === 0 && (
-              <li role="presentation" className="px-3 py-3 text-sm text-ink-muted">
-                {tr('לא נמצאו תוצאות')}
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
+      {open && (floating ? createPortal(listBox, document.body) : listBox)}
 
       {hint && !error && (
         <p id={hintId} className="text-xs text-ink-muted">
