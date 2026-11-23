@@ -9,6 +9,10 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useEmbedInfo } from './embedApi';
 import { tr } from '../../i18n';
 
+/** The visit-counter line with the form added at its end: `…></script>` → `… data-forms="#contact-form"></script>`. */
+const withForm = (snippet: string) =>
+  snippet.replace(/><\/script>\s*$/, ' data-forms="#contact-form"></script>');
+
 /**
  * F30: the website's own form also becomes a lead. Three short steps; the form itself is not touched
  * and keeps sending as before (a copy comes here). Fields are found by themselves.
@@ -44,8 +48,19 @@ export function FormLeadsGuide({ businessId }: { businessId: string }) {
               <Steps>
                 <Step>{tr('הדביקו באתר את השורה מהכרטיס שמעל (אם עוד לא).')}</Step>
                 <Step>
-                  {tr('הוסיפו לשורה הזו את המזהה (id) של הטופס, במקום contact-form:')}
-                  <Paste text='data-forms="#contact-form"' />
+                  {tr(
+                    'מצאו בקוד של הטופס שלכם את התגית form ואת ה-id שלה. למשל, בטופס כזה ה-id הוא contact-form:',
+                  )}
+                  <code
+                    dir="ltr"
+                    className="block overflow-x-auto whitespace-nowrap rounded-lg bg-surface-sunken px-3 py-2 text-start text-xs text-ink"
+                  >
+                    {'<form id="contact-form"> … </form>'}
+                  </code>
+                  {tr(
+                    'עכשיו הוסיפו את ה-id הזה בסוף השורה שהדבקתם באתר, לפני סימן >. בשורה שלמטה כבר הוספנו לכם את זה: העתיקו אותה, והחליפו את contact-form ב-id של הטופס שלכם.',
+                  )}
+                  <Paste text={withForm(info.data.snippet)} />
                   <span className="text-xs text-ink-muted">
                     {tr('בטופס צריך לפחות שם וטלפון. את השאר אנחנו מזהים לבד.')}
                   </span>
