@@ -162,11 +162,11 @@ export function AdsGuideDialog({
   );
 }
 
-function Steps({ children }: { children: ReactNode }) {
+export function Steps({ children }: { children: ReactNode }) {
   return <ol className="flex list-none flex-col gap-3 [counter-reset:step]">{children}</ol>;
 }
 
-function Step({ children }: { children: ReactNode }) {
+export function Step({ children }: { children: ReactNode }) {
   return (
     <li className="flex gap-3 text-sm text-ink [counter-increment:step]">
       <span
@@ -179,7 +179,7 @@ function Step({ children }: { children: ReactNode }) {
 }
 
 /** Text to paste into the ad system, with a Copy button. */
-function Paste({ text }: { text: string }) {
+export function Paste({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {

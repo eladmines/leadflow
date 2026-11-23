@@ -106,7 +106,8 @@ export async function ensureStages(db: Db, businessId: string) {
 
 interface WebsiteSubmission {
   businessId: string;
-  siteId: string;
+  /** Null: a form on a website built elsewhere (F30), deduplicated per business instead. */
+  siteId: string | null;
   idempotencyKey: string;
   ipHash: string;
   sourceUrl: string;
@@ -124,7 +125,11 @@ export class LeadService {
    * The same idempotency key twice returns the existing lead with `created: false`.
    */
   async createFromWebsite(input: WebsiteSubmission): Promise<{ lead: Lead; created: boolean }> {
-    const dup = await this.findByIdempotencyKey(input.siteId, input.idempotencyKey);
+    const dup = await this.findByIdempotencyKey(
+      input.businessId,
+      input.siteId,
+      input.idempotencyKey,
+    );
     if (dup) return { lead: dup, created: false };
 
     try {
@@ -187,18 +192,31 @@ export class LeadService {
     } catch (err) {
       // Two identical submissions racing: the second hits the unique key → return the first.
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-        const again = await this.findByIdempotencyKey(input.siteId, input.idempotencyKey);
+        const again = await this.findByIdempotencyKey(
+          input.businessId,
+          input.siteId,
+          input.idempotencyKey,
+        );
         if (again) return { lead: again, created: false };
       }
       throw err;
     }
   }
 
-  private async findByIdempotencyKey(siteId: string, idempotencyKey: string): Promise<Lead | null> {
-    const sub = await this.prisma.formSubmission.findUnique({
-      where: { siteId_idempotencyKey: { siteId, idempotencyKey } },
-      select: { lead: { include: leadInclude } },
-    });
+  private async findByIdempotencyKey(
+    businessId: string,
+    siteId: string | null,
+    idempotencyKey: string,
+  ): Promise<Lead | null> {
+    const sub = siteId
+      ? await this.prisma.formSubmission.findUnique({
+          where: { siteId_idempotencyKey: { siteId, idempotencyKey } },
+          select: { lead: { include: leadInclude } },
+        })
+      : await this.prisma.formSubmission.findFirst({
+          where: { businessId, siteId: null, idempotencyKey },
+          select: { lead: { include: leadInclude } },
+        });
     return sub ? toLeadDto(sub.lead) : null;
   }
 

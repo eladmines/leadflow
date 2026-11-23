@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Alert, Button, Card, DialogShell, Field } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
+import { EmbedGuide } from './EmbedGuide';
 import { tr } from '../../i18n';
 
 const formSchema = z.object({ websiteUrl: websiteUrlSchema });
@@ -81,91 +82,94 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   return (
-    <Card className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-ink">{tr('האתר הקיים של העסק')}</h2>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
-          >
-            <bdi dir="ltr">{displayUrl(url)}</bdi>
-            <ExternalLink aria-hidden className="h-3.5 w-3.5" />
-            <span className="sr-only">{tr('(נפתח בחלון חדש)')}</span>
-          </a>
-        </div>
-        <span className="rounded-full bg-surface-sunken px-3 py-1 text-xs font-medium text-ink-muted">
-          {tr('לא מנוהל ב-SimpleCatch')}
-        </span>
-      </div>
-
-      <p className="flex items-start gap-2 rounded-xl bg-surface-muted p-3 text-sm text-ink">
-        <Info aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" />
-        <span>
-          {tr(
-            'האתר הזה לא נבנה ב-SimpleCatch ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת.',
-          )}
-        </span>
-      </p>
-
-      <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-muted">
-        <iframe
-          title={tr('תצוגה של האתר הקיים')}
-          src={url}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin allow-popups"
-          className="block h-[calc(100dvh-14rem)] min-h-[34rem] w-full bg-white"
-        />
-      </div>
-      <p className="text-xs text-ink-muted">
-        {tr(
-          'לא רואים את האתר? חלק מהאתרים לא מאפשרים הצגה בתוך מערכות אחרות. אפשר לפתוח אותו בחלון חדש מהקישור למעלה.',
-        )}
-      </p>
-
-      {canEdit &&
-        (editing ? (
-          <WebsiteForm business={business} onDone={() => setEditing(false)} compact />
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-              {tr('שינוי הכתובת')}
-            </Button>
-            <Button variant="danger" size="sm" onClick={() => setConfirmRemove(true)}>
-              {tr('הסרת האתר מהמערכת')}
-            </Button>
+    <>
+      <Card className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold text-ink">{tr('האתר הקיים של העסק')}</h2>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+            >
+              <bdi dir="ltr">{displayUrl(url)}</bdi>
+              <ExternalLink aria-hidden className="h-3.5 w-3.5" />
+              <span className="sr-only">{tr('(נפתח בחלון חדש)')}</span>
+            </a>
           </div>
-        ))}
-      {update.isError && <Alert tone="danger">{tr('שמירת השינוי נכשלה. נסו שוב.')}</Alert>}
-      <DialogShell
-        open={confirmRemove}
-        onOpenChange={setConfirmRemove}
-        title={tr('להסיר את האתר מהמערכת?')}
-      >
-        <p className="text-sm text-ink-muted">
+          <span className="rounded-full bg-surface-sunken px-3 py-1 text-xs font-medium text-ink-muted">
+            {tr('לא מנוהל ב-SimpleCatch')}
+          </span>
+        </div>
+
+        <p className="flex items-start gap-2 rounded-xl bg-surface-muted p-3 text-sm text-ink">
+          <Info aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" />
+          <span>
+            {tr(
+              'האתר הזה לא נבנה ב-SimpleCatch ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת, אלא אם מחברים אותו לפי ההוראות למטה.',
+            )}
+          </span>
+        </p>
+
+        <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-muted">
+          <iframe
+            title={tr('תצוגה של האתר הקיים')}
+            src={url}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-popups"
+            className="block h-[calc(100dvh-14rem)] min-h-[34rem] w-full bg-white"
+          />
+        </div>
+        <p className="text-xs text-ink-muted">
           {tr(
-            'הכתובת {0} תוסר מ-SimpleCatch. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.',
-            displayUrl(url),
+            'לא רואים את האתר? חלק מהאתרים לא מאפשרים הצגה בתוך מערכות אחרות. אפשר לפתוח אותו בחלון חדש מהקישור למעלה.',
           )}
         </p>
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="secondary" onClick={() => setConfirmRemove(false)}>
-            {tr('ביטול')}
-          </Button>
-          <Button
-            variant="danger"
-            loading={update.isPending}
-            onClick={() =>
-              update.mutate({ websiteUrl: null }, { onSuccess: () => setConfirmRemove(false) })
-            }
-          >
-            {tr('כן, להסיר')}
-          </Button>
-        </div>
-      </DialogShell>
-    </Card>
+
+        {canEdit &&
+          (editing ? (
+            <WebsiteForm business={business} onDone={() => setEditing(false)} compact />
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                {tr('שינוי הכתובת')}
+              </Button>
+              <Button variant="danger" size="sm" onClick={() => setConfirmRemove(true)}>
+                {tr('הסרת האתר מהמערכת')}
+              </Button>
+            </div>
+          ))}
+        {update.isError && <Alert tone="danger">{tr('שמירת השינוי נכשלה. נסו שוב.')}</Alert>}
+        <DialogShell
+          open={confirmRemove}
+          onOpenChange={setConfirmRemove}
+          title={tr('להסיר את האתר מהמערכת?')}
+        >
+          <p className="text-sm text-ink-muted">
+            {tr(
+              'הכתובת {0} תוסר מ-SimpleCatch. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.',
+              displayUrl(url),
+            )}
+          </p>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="secondary" onClick={() => setConfirmRemove(false)}>
+              {tr('ביטול')}
+            </Button>
+            <Button
+              variant="danger"
+              loading={update.isPending}
+              onClick={() =>
+                update.mutate({ websiteUrl: null }, { onSuccess: () => setConfirmRemove(false) })
+              }
+            >
+              {tr('כן, להסיר')}
+            </Button>
+          </div>
+        </DialogShell>
+      </Card>
+      {canEdit && <EmbedGuide businessId={business.id} />}
+    </>
   );
 }

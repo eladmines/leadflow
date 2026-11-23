@@ -22,3 +22,4 @@ export * from './channels';
 export * from './notifications';
 export * from './attribution';
 export * from './customers';
+export * from './embed';

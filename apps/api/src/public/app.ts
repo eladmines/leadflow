@@ -3,7 +3,6 @@ import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
 import type { PrismaClient } from '@prisma/client';
 import {
-  formatIsraeliPhone,
   FORM_TOKEN_PLACEHOLDER,
   HONEYPOT_FIELD,
   LEAD_FORM_PATH,
@@ -21,8 +20,9 @@ import type { AppConfig } from '../config/env';
 import { sha256Hex } from '../lib/crypto';
 import { createFormToken, verifyFormToken } from '../lib/form-token';
 import { loggerOptions, type LogStream } from '../lib/logger';
-import { newLeadTemplate, type EmailSender } from '../integrations/email';
+import type { EmailSender } from '../integrations/email';
 import { LeadService } from '../modules/leads/service';
+import { notifyTeamByEmail } from '../modules/leads/notify';
 import { AppointmentService } from '../modules/appointments/service';
 import { MANAGERS, notifySafe } from '../modules/notifications/service';
 import { zonedTimeToUtc } from '../lib/time';
@@ -378,7 +378,14 @@ export async function buildPublicApp({
           }
         }
         // In the background; a failure is logged, never left unhandled (it could stop the server).
-        notifyTeam(site.businessId, business.name, data.data, req.log, requested).catch((err) =>
+        notifyTeamByEmail(
+          { prisma, email, config },
+          site.businessId,
+          business.name,
+          data.data,
+          req.log,
+          requested,
+        ).catch((err) =>
           req.log.error({ errName: (err as Error)?.name }, 'lead notification failed'),
         );
         // In-app: the bell and a pop-up for everyone who sees all leads (D-097).
@@ -397,52 +404,6 @@ export async function buildPublicApp({
       return message(reply, subdomain, 200, theme, business.name, thanks);
     },
   );
-
-  /** Emails owners and managers (best effort: a failed email never loses the lead). */
-  async function notifyTeam(
-    businessId: string,
-    businessName: string,
-    d: z.output<typeof leadSubmissionSchema>,
-    log: { error: (obj: object, msg: string) => void },
-    requested: string | null = null,
-  ) {
-    const team = await prisma.membership.findMany({
-      where: {
-        businessId,
-        status: 'ACTIVE',
-        role: { in: ['OWNER', 'MANAGER'] },
-        notifyNewLeads: true,
-      },
-      select: { user: { select: { email: true, status: true } } },
-    });
-    const { language } = await prisma.business.findUniqueOrThrow({
-      where: { id: businessId },
-      select: { language: true },
-    });
-    const en = language === 'en';
-    const mail = newLeadTemplate(
-      {
-        businessName,
-        name: d.name,
-        phone: formatIsraeliPhone(d.phone),
-        email: d.email,
-        message: requested
-          ? `${en ? 'Appointment request' : 'בקשה לתור'}: ${requested}${d.message ? `\n\n${d.message}` : ''}`
-          : d.message,
-        link: `${config.APP_URL}/b/${businessId}/leads`,
-        settingsLink: `${config.APP_URL}/b/${businessId}/account`,
-      },
-      en ? 'en' : 'he',
-    );
-    for (const { user } of team) {
-      if (user.status !== 'ACTIVE') continue;
-      try {
-        await email.send({ to: user.email, ...mail });
-      } catch (err) {
-        log.error({ errName: (err as Error)?.name, template: 'newLead' }, 'lead email failed');
-      }
-    }
-  }
 
   app.setErrorHandler((err: Error & { statusCode?: number }, req, reply) => {
     if (err.statusCode === 429) {

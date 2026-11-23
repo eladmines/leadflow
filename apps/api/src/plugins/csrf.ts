@@ -4,11 +4,13 @@ import { AppError } from '../lib/errors';
 
 const STATE_CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const HEADER = CSRF_HEADER_NAME.toLowerCase();
-/** Server-to-server webhooks: no cookies, authenticated by the sender's signature instead. */
+/** Webhooks and public forms: no cookies, authenticated by a signature or key instead. */
 const EXEMPT = new Set<string>([
   apiPaths.whatsapp.webhook,
   apiPaths.whatsapp.messengerWebhook,
   emailInboundPath,
+  // F30: forms on other people's websites post here (no cookies; the business key authorizes it).
+  apiPaths.embed.lead,
 ]);
 
 /**

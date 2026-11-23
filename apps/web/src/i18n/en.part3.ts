@@ -920,4 +920,15 @@ export const enPart3: Record<string, string> = {
     'A new sender. Is this a business customer, or a private email that needn’t be kept?',
   'לקוח של העסק': 'Business customer',
   'פרטי, להתעלם': 'Private, ignore',
+  'קבלת פניות והמקור שלהן מהאתר': 'Receive inquiries from your website, and where they came from',
+  'אפשר לחבר את האתר הקיים כך שכל פנייה מהטופס תיכנס לכאן כליד, יחד עם המודעה או הקמפיין שהביאו אותה (Google Ads, פייסבוק ועוד).':
+    'You can connect your existing website so every form inquiry arrives here as a lead, together with the ad or campaign that brought it (Google Ads, Facebook and more).',
+  'הדביקו את השורה הזו באתר, לפני סגירת התגית </body> (או בתיבת "קוד מותאם" של בונה האתרים):':
+    'Paste this line into your website, before the closing </body> tag (or in your site builder’s "custom code" box):',
+  'בטופס יצירת הקשר הוסיפו לתגית form את data-simplecatch. השדות מזוהים לפי השם: name, phone, email, message ו-consent (תיבת אישור):':
+    'On your contact form, add data-simplecatch to the form tag. Fields are recognised by name: name, phone, email, message and consent (a tick box):',
+  'לכל מודעה הוסיפו סימון בקישור (ראו "חיבור המודעות" בדוחות). הסקריפט שומר אותו 30 יום בדפדפן של המבקר, ושולח אותו עם הפנייה.':
+    'Tag each ad’s link (see "Connect your ads" in Reports). The script keeps it for 30 days in the visitor’s browser and sends it with the inquiry.',
+  'הסקריפט לא אוסף פרטים אישיים: רק את שם הקמפיין, הקישור המפנה והדף. ערך מזהה הקליק (gclid) לא נשמר.':
+    'The script collects no personal details: only the campaign name, the referring link and the page. The click id (gclid) value is not stored.',
 };

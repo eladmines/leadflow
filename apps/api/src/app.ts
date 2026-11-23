@@ -17,6 +17,7 @@ import { loggerOptions, type LogStream } from './lib/logger';
 import { AppError } from './lib/errors';
 import { registerErrorHandler } from './plugins/error-handler';
 import { createWebAppHandler } from './lib/web-app';
+import { embedPublicRoutes, embedTenantRoutes } from './modules/embed/routes';
 import { registerCsrfGuard } from './plugins/csrf';
 import { registerSessionPlugin } from './plugins/session';
 import { registerTenantSupport, tenantScope } from './plugins/tenant';
@@ -193,6 +194,7 @@ export async function buildApp({
   app.decorate('gmailApi', gmailApi ?? createGmailApi(config));
   await app.register(channelPublicRoutes);
   await app.register(gmailPublicRoutes);
+  await app.register(embedPublicRoutes);
   // Every tenant-scoped feature registers here, behind the membership check (404 for outsiders).
   await app.register(
     tenantScope(async (scope) => {
@@ -209,6 +211,7 @@ export async function buildApp({
       await scope.register(notificationTenantRoutes);
       await scope.register(conversationTenantRoutes);
       await scope.register(channelTenantRoutes);
+      await scope.register(embedTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

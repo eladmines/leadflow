@@ -268,8 +268,8 @@ export const enPart2: Record<string, string> = {
   'האתר הקיים של העסק': "The business's existing website",
   '(נפתח בחלון חדש)': '(opens in a new window)',
   'לא מנוהל ב-SimpleCatch': 'Not managed by SimpleCatch',
-  'האתר הזה לא נבנה ב-SimpleCatch ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת.':
-    "This website wasn't built with SimpleCatch and isn't managed here. You can view it, but changes are made by whoever built or hosts it. Inquiries from it don't arrive in SimpleCatch automatically.",
+  'האתר הזה לא נבנה ב-SimpleCatch ולא מנוהל כאן. אפשר לצפות בו, אבל שינויים בו נעשים אצל מי שבנה או מארח אותו. פניות מהאתר הזה לא נכנסות אוטומטית למערכת, אלא אם מחברים אותו לפי ההוראות למטה.':
+    "This website wasn't built with SimpleCatch and isn't managed here. You can view it, but changes are made by whoever built or hosts it. Inquiries from it don't arrive in SimpleCatch automatically, unless you connect it as described below.",
   'תצוגה של האתר הקיים': 'Preview of the existing website',
   'לא רואים את האתר? חלק מהאתרים לא מאפשרים הצגה בתוך מערכות אחרות. אפשר לפתוח אותו בחלון חדש מהקישור למעלה.':
     "Can't see the website? Some sites don't allow being shown inside other apps. Open it in a new window from the link above.",
