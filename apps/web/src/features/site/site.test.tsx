@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
   callsTo,
+  choose,
   json,
   me,
   mockApi,
@@ -505,7 +506,7 @@ describe('site editor', () => {
     const { user } = renderApp(sitePath);
     await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
     const addDialog = await screen.findByRole('dialog', { name: 'עמוד חדש' });
-    await user.selectOptions(within(addDialog).getByLabelText('תוכן התחלתי (לא חובה)'), 'landing');
+    await choose(user, within(addDialog).getByLabelText('תוכן התחלתי (לא חובה)'), /^דף נחיתה/);
     expect(
       within(addDialog).getByRole('checkbox', { name: 'להציג בתפריט האתר' }),
     ).not.toBeChecked();
@@ -531,7 +532,7 @@ describe('site editor', () => {
     const { user } = renderApp(sitePath);
     await user.click(await screen.findByRole('button', { name: 'עמוד חדש' }));
     const dialog = await screen.findByRole('dialog', { name: 'עמוד חדש' });
-    await user.selectOptions(within(dialog).getByLabelText('תוכן התחלתי (לא חובה)'), 'about');
+    await choose(user, within(dialog).getByLabelText('תוכן התחלתי (לא חובה)'), /^אודות/);
     expect(within(dialog).getByLabelText('שם העמוד')).toHaveValue('אודות');
     expect(within(dialog).getByLabelText('כתובת העמוד')).toHaveValue('about');
     await user.click(within(dialog).getByRole('button', { name: 'הוספת העמוד' }));

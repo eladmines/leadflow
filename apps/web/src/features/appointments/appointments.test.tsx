@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
   callsTo,
+  choose,
   json,
   me,
   mockApi,
@@ -132,8 +133,7 @@ describe('appointments page', () => {
     const dialog = await screen.findByRole('dialog', { name: 'תור חדש' });
     await user.type(within(dialog).getByLabelText('שם הלקוח'), 'רון לוי');
     await user.type(within(dialog).getByLabelText('טלפון'), '052-1112233');
-    await screen.findByRole('option', { name: /תספורת/ });
-    await user.selectOptions(within(dialog).getByLabelText('שירות'), service.id);
+    await choose(user, within(dialog).getByLabelText('שירות'), /תספורת/);
     expect(within(dialog).getByLabelText('משך (דק׳)')).toHaveValue('45');
     await user.click(within(dialog).getByRole('button', { name: 'קביעת התור' }));
     await waitFor(() => expect(callsTo(fetchMock, 'POST', ap.list(id))).toHaveLength(1));
@@ -178,8 +178,7 @@ describe('appointments page', () => {
     await user.click(screen.getAllByRole('button', { name: /רון לוי/ })[0]!);
     const dialog = await screen.findByRole('dialog', { name: 'רון לוי' });
     expect(within(dialog).getByText(/בקשה מהאתר/)).toBeInTheDocument();
-    await screen.findByRole('option', { name: 'דנה כהן' });
-    await user.selectOptions(within(dialog).getByLabelText('איש צוות'), testUser.id);
+    await choose(user, within(dialog).getByLabelText('איש צוות'), 'דנה כהן');
     await user.click(within(dialog).getByRole('button', { name: 'אישור התור' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PATCH', ap.appointment(id, request.id))).toEqual([

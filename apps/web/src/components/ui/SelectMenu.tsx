@@ -4,6 +4,15 @@ import { cn } from '../../lib/cn';
 import { inputClasses } from './Field';
 import { tr } from '../../i18n';
 
+/** The small control (toolbars, filters, rows): like a field, but 32px high and tighter. */
+const compactClasses = (hasError: boolean) =>
+  cn(
+    'h-8 w-full rounded-lg border bg-surface px-2 text-sm text-ink shadow-card transition-[border-color,box-shadow] hover:border-accent-300 focus-visible:ring-4 focus-visible:ring-offset-0',
+    hasError
+      ? 'border-danger-600 focus-visible:ring-danger-600/15'
+      : 'border-surface-border focus-visible:border-brand-500 focus-visible:ring-brand-500/15',
+  );
+
 interface SelectMenuProps {
   label: string;
   options: readonly { value: string; label: string }[];
@@ -18,6 +27,15 @@ interface SelectMenuProps {
   name?: string;
   /** Show a search box in the list. Default: on when there are more than 8 options. */
   searchable?: boolean;
+  disabled?: boolean;
+  /** A small version for toolbars, filters and table rows (the list is as wide as its longest option). */
+  compact?: boolean;
+  /** The label is only for screen readers (a filter whose meaning is clear from its first option). */
+  labelHidden?: boolean;
+  /** Classes for the whole control (its width, for example). */
+  className?: string;
+  /** Classes for the label (a smaller one in a side menu, for example). */
+  labelClassName?: string;
 }
 
 /**
@@ -38,6 +56,11 @@ export function SelectMenu({
   id,
   name,
   searchable,
+  disabled,
+  compact,
+  labelHidden,
+  className,
+  labelClassName,
 }: SelectMenuProps) {
   const autoId = useId();
   const buttonId = id ?? autoId;
@@ -50,6 +73,8 @@ export function SelectMenu({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [query, setQuery] = useState('');
+  // Opens upwards when the room below is small and there is more above (near the bottom of a page or pop-up).
+  const [up, setUp] = useState(false);
 
   const hasSearch = searchable ?? options.length > 8;
   const q = query.trim().toLocaleLowerCase();
@@ -75,6 +100,12 @@ export function SelectMenu({
   }, [open, active]);
 
   function openList() {
+    if (disabled) return;
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      const below = window.innerHeight - rect.bottom;
+      setUp(below < 260 && rect.top > below);
+    }
     setQuery('');
     setActive(
       Math.max(
@@ -157,8 +188,15 @@ export function SelectMenu({
   const activeId = open && shown[active] ? `${listId}-${active}` : undefined;
 
   return (
-    <div ref={rootRef} onBlur={onRootBlur} className="relative flex flex-col gap-1.5">
-      <label htmlFor={buttonId} className="text-sm font-medium text-ink">
+    <div
+      ref={rootRef}
+      onBlur={onRootBlur}
+      className={cn('relative flex flex-col gap-1.5', className)}
+    >
+      <label
+        htmlFor={buttonId}
+        className={cn('text-sm font-medium text-ink', labelClassName, labelHidden && 'sr-only')}
+      >
         {label}
         {required && (
           <span aria-hidden className="ms-0.5 text-danger-600">
@@ -177,13 +215,14 @@ export function SelectMenu({
         aria-controls={open ? listId : undefined}
         aria-activedescendant={!hasSearch ? activeId : undefined}
         aria-required={required}
+        disabled={disabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onKeyDown}
         className={cn(
-          inputClasses(!!error),
-          'flex cursor-pointer items-center justify-between gap-2 text-start',
+          compact ? compactClasses(!!error) : inputClasses(!!error),
+          'flex cursor-pointer items-center justify-between gap-2 text-start disabled:cursor-not-allowed disabled:opacity-60',
         )}
       >
         <span className={cn('truncate', !selected && 'text-ink-subtle')}>
@@ -199,7 +238,14 @@ export function SelectMenu({
       </button>
 
       {open && (
-        <div className="absolute inset-x-0 top-full z-40 mt-1 overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lift">
+        <div
+          className={cn(
+            'absolute z-40 overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lift',
+            up ? 'bottom-full mb-1' : 'top-full mt-1',
+            // A compact control's list is as wide as its longest option, from the control's edge.
+            compact ? 'start-0 w-max min-w-full max-w-[min(20rem,90vw)]' : 'inset-x-0',
+          )}
+        >
           {hasSearch && (
             <div className="border-b border-surface-border p-2">
               <div className="relative">

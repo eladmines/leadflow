@@ -25,6 +25,7 @@ import {
   DialogShell,
   EmptyState,
   Field,
+  SelectMenu,
   Spinner,
   Textarea,
   ScrollTabs,
@@ -218,47 +219,34 @@ function Details({ lead }: { lead: Lead }) {
     <Card className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold text-ink">{tr('פרטי הטיפול')}</h2>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="lead-stage" className="text-sm font-medium text-ink">
-          {tr('שלב')}
-        </label>
-        <select
-          id="lead-stage"
-          value={lead.stage.id}
-          onChange={(e) => save({ stageId: e.target.value })}
-          className={cn(inputClasses(false), 'cursor-pointer')}
-        >
-          {stages.data?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {tr(s.name)}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="lead-owner" className="text-sm font-medium text-ink">
-          {tr('אחראי')}
-        </label>
-        {canAssign ? (
-          <select
-            id="lead-owner"
-            value={lead.owner?.id ?? ''}
-            onChange={(e) => save({ ownerId: e.target.value || null })}
-            className={cn(inputClasses(false), 'cursor-pointer')}
-          >
-            <option value="">{tr('ללא אחראי')}</option>
-            {members.data?.map((m) => (
-              <option key={m.userId} value={m.userId}>
-                {m.fullName}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <p id="lead-owner" className="text-sm text-ink">
+      <SelectMenu
+        id="lead-stage"
+        label={tr('שלב')}
+        value={lead.stage.id}
+        onChange={(v) => save({ stageId: v })}
+        options={(stages.data ?? []).map((st) => ({ value: st.id, label: tr(st.name) }))}
+      />
+      {canAssign ? (
+        <SelectMenu
+          id="lead-owner"
+          label={tr('אחראי')}
+          value={lead.owner?.id ?? ''}
+          onChange={(v) => save({ ownerId: v || null })}
+          options={[
+            { value: '', label: tr('ללא אחראי') },
+            ...(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName })),
+          ]}
+        />
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <span id="lead-owner-label" className="text-sm font-medium text-ink">
+            {tr('אחראי')}
+          </span>
+          <p id="lead-owner" aria-labelledby="lead-owner-label" className="text-sm text-ink">
             {lead.owner?.name ?? tr('ללא אחראי')}
           </p>
-        )}
-      </div>
+        </div>
+      )}
       <TagEditor tags={lead.tags} onChange={(tags) => save({ tags })} />
       <Field
         label={tr('ערך משוער (₪)')}

@@ -10,9 +10,7 @@ import {
 import { Mail, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Alert, Button, Card, Field, Select, Spinner } from '../../components/ui';
-import { inputClasses } from '../../components/ui/Field';
-import { cn } from '../../lib/cn';
+import { Alert, Button, Card, Field, Select, SelectMenu, Spinner } from '../../components/ui';
 import { applyServerErrors, errorMessage } from '../auth/serverErrors';
 import { useMe } from '../auth/api';
 import { useMembers } from '../businesses/api';
@@ -132,27 +130,19 @@ function MemberRow({
         </div>
         {editable ? (
           <>
-            <label htmlFor={`role-${m.userId}`} className="sr-only">
-              {tr('התפקיד של')} {m.fullName}
-            </label>
-            <select
+            <SelectMenu
               id={`role-${m.userId}`}
+              compact
+              labelHidden
+              className="w-40"
+              label={`${tr('התפקיד של')} ${m.fullName}`}
               value={m.role}
               disabled={changeRole.isPending}
-              onChange={(e) =>
-                changeRole.mutate({
-                  userId: m.userId,
-                  role: e.target.value as InviteRequest['role'],
-                })
+              onChange={(v) =>
+                changeRole.mutate({ userId: m.userId, role: v as InviteRequest['role'] })
               }
-              className={cn(inputClasses(false), 'h-9 w-auto cursor-pointer')}
-            >
-              {roleOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              options={roleOptions}
+            />
             {confirm ? (
               <span
                 role="group"

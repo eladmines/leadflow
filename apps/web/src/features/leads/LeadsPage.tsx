@@ -35,6 +35,7 @@ import {
   buttonClasses,
   MoreMenu,
   RefreshButton,
+  SelectMenu,
   Spinner,
 } from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
@@ -245,24 +246,18 @@ function BoardCard({
           </span>
         )}
       </div>
-      <label className="sr-only" htmlFor={`move-${lead.id}`}>
-        {tr('העברת')} {lead.contact.name} {tr('לשלב')}
-      </label>
-      <select
+      <SelectMenu
         id={`move-${lead.id}`}
+        compact
+        labelHidden
+        label={`${tr('העברת')} ${lead.contact.name} ${tr('לשלב')}`}
         value={lead.stage.id}
-        onChange={(e) => {
-          const stage = stages.find((s) => s.id === e.target.value);
+        onChange={(v) => {
+          const stage = stages.find((x) => x.id === v);
           if (stage) onMove(lead, stage);
         }}
-        className="h-8 rounded-lg border border-surface-border bg-surface-muted px-2 text-xs text-ink"
-      >
-        {stages.map((s) => (
-          <option key={s.id} value={s.id}>
-            {tr(s.name)}
-          </option>
-        ))}
-      </select>
+        options={stages.map((x) => ({ value: x.id, label: tr(x.name) }))}
+      />
     </article>
   );
 }
@@ -529,10 +524,6 @@ export function LeadsPage() {
     () => LEAD_SOURCES.map((s) => ({ value: s, label: tr(leadSourceLabels[s]) })),
     [],
   );
-  const selectClass = cn(
-    inputClasses(false).replace('w-full', 'w-auto'),
-    'min-w-36 cursor-pointer',
-  );
 
   return (
     <>
@@ -656,62 +647,58 @@ export function LeadsPage() {
             className="flex flex-wrap items-center gap-3 border-b border-surface-border bg-surface-muted px-4 py-3"
           >
             {view === 'list' && (
-              <select
-                aria-label={tr('סינון לפי שלב')}
+              <SelectMenu
+                compact
+                labelHidden
+                className="min-w-36"
+                label={tr('סינון לפי שלב')}
                 value={query.stageId ?? ''}
-                onChange={(e) => setParam('stageId', e.target.value || undefined)}
-                className={selectClass}
-              >
-                <option value="">{tr('כל השלבים')}</option>
-                {stages.data?.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {tr(s.name)}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setParam('stageId', v || undefined)}
+                options={[
+                  { value: '', label: tr('כל השלבים') },
+                  ...(stages.data ?? []).map((x) => ({ value: x.id, label: tr(x.name) })),
+                ]}
+              />
             )}
             {seesAll && (
-              <select
-                aria-label={tr('סינון לפי אחראי')}
+              <SelectMenu
+                compact
+                labelHidden
+                className="min-w-36"
+                label={tr('סינון לפי אחראי')}
                 value={query.ownerId ?? ''}
-                onChange={(e) => setParam('ownerId', e.target.value || undefined)}
-                className={selectClass}
-              >
-                <option value="">{tr('כל האחראים')}</option>
-                <option value="none">{tr('ללא אחראי')}</option>
-                {members.data?.map((m) => (
-                  <option key={m.userId} value={m.userId}>
-                    {m.fullName}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setParam('ownerId', v || undefined)}
+                options={[
+                  { value: '', label: tr('כל האחראים') },
+                  { value: 'none', label: tr('ללא אחראי') },
+                  ...(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName })),
+                ]}
+              />
             )}
-            <select
-              aria-label={tr('סינון לפי מקור')}
+            <SelectMenu
+              compact
+              labelHidden
+              className="min-w-36"
+              label={tr('סינון לפי מקור')}
               value={query.source ?? ''}
-              onChange={(e) => setParam('source', e.target.value || undefined)}
-              className={selectClass}
-            >
-              <option value="">{tr('כל המקורות')}</option>
-              {sourceOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label={tr('סינון לפי מאיפה הגיע')}
+              onChange={(v) => setParam('source', v || undefined)}
+              options={[{ value: '', label: tr('כל המקורות') }, ...sourceOptions]}
+            />
+            <SelectMenu
+              compact
+              labelHidden
+              className="min-w-36"
+              label={tr('סינון לפי מאיפה הגיע')}
               value={query.from ?? ''}
-              onChange={(e) => setParam('from', e.target.value || undefined)}
-              className={selectClass}
-            >
-              <option value="">{tr('מכל מקום')}</option>
-              {[...ATTRIBUTION_SOURCES, 'unknown' as const].map((s) => (
-                <option key={s} value={s}>
-                  {sourceName(s)}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setParam('from', v || undefined)}
+              options={[
+                { value: '', label: tr('מכל מקום') },
+                ...[...ATTRIBUTION_SOURCES, 'unknown' as const].map((x) => ({
+                  value: x,
+                  label: sourceName(x),
+                })),
+              ]}
+            />
             {query.campaign && (
               <button
                 type="button"
@@ -724,22 +711,21 @@ export function LeadsPage() {
               </button>
             )}
             {(tags.length > 0 || query.tag) && (
-              <select
-                aria-label={tr('סינון לפי תגית')}
+              <SelectMenu
+                compact
+                labelHidden
+                className="min-w-36"
+                label={tr('סינון לפי תגית')}
                 value={query.tag ?? ''}
-                onChange={(e) => setParam('tag', e.target.value || undefined)}
-                className={selectClass}
-              >
-                <option value="">{tr('כל התגיות')}</option>
-                {query.tag && !tags.includes(query.tag) && (
-                  <option value={query.tag}>{query.tag}</option>
-                )}
-                {tags.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setParam('tag', v || undefined)}
+                options={[
+                  { value: '', label: tr('כל התגיות') },
+                  ...(query.tag && !tags.includes(query.tag)
+                    ? [{ value: query.tag, label: query.tag }]
+                    : []),
+                  ...tags.map((t) => ({ value: t, label: t })),
+                ]}
+              />
             )}
             {activeFilters > 0 && (
               <button

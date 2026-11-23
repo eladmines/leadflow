@@ -8,7 +8,7 @@ import {
 } from '@simplecatch/shared';
 import { Plus, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
-import { Alert, Button, DialogShell, EmojiTextarea, Field } from '../../components/ui';
+import { Alert, Button, DialogShell, EmojiTextarea, Field, SelectMenu } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -67,6 +67,8 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
   const setStatus = useSetStatus(businessId);
   const update = useUpdateBotSettings(businessId);
   const [adding, setAdding] = useState(false);
+  // The "until" choice shown (picked now; the status keeps its own end).
+  const [until, setUntil] = useState('none');
   const uid = useId();
   const active = saved.activeStatus;
   const current = active ? saved.statuses.find((x) => x.id === active.id) : undefined;
@@ -155,26 +157,25 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
         {/* How long matters only once you're away. */}
         {active && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <label htmlFor={`${uid}-until`} className="text-ink-muted">
+            <span aria-hidden className="text-ink-muted">
               {tr('לכמה זמן:')}
-            </label>
-            <select
+            </span>
+            <SelectMenu
               id={`${uid}-until`}
-              defaultValue="none"
-              onChange={(e) => {
-                const until = untilOptions(business.timezone).find(
-                  (o) => o.key === e.target.value,
-                )?.until;
-                setStatus.mutate({ id: active.id, until: until ? until.toISOString() : null });
+              compact
+              labelHidden
+              label={tr('לכמה זמן:')}
+              value={until}
+              onChange={(key) => {
+                setUntil(key);
+                const at = untilOptions(business.timezone).find((o) => o.key === key)?.until;
+                setStatus.mutate({ id: active.id, until: at ? at.toISOString() : null });
               }}
-              className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
-            >
-              {untilOptions(business.timezone).map((o) => (
-                <option key={o.key} value={o.key}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              options={untilOptions(business.timezone).map((o) => ({
+                value: o.key,
+                label: o.label,
+              }))}
+            />
             <span className="w-full text-xs text-ink-muted">
               {tr(
                 '"סוף היום" ו"מחר בבוקר" לפי שעון העסק ({0}), לא לפי המכשיר שלכם.',

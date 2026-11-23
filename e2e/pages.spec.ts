@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { choose } from './choose';
 
 /** D-081: add a page in the editor → publish → it's live at its own address and in the menu. */
 const PASSWORD = 'Sup3r-secret-pass!';
@@ -34,7 +35,7 @@ test('add an "about" page, publish, and open it on the live site', async ({ page
 
   await page.getByRole('button', { name: 'עמוד חדש' }).click();
   const add = page.getByRole('dialog', { name: 'עמוד חדש' });
-  await add.getByLabel('תוכן התחלתי (לא חובה)').selectOption('about');
+  await choose(page, add.getByLabel('תוכן התחלתי (לא חובה)'), /^אודות/);
   await add.getByRole('button', { name: 'הוספת העמוד' }).click();
   await expect(page.getByRole('tab', { name: 'אודות' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText('כל השינויים נשמרו')).toBeVisible({ timeout: 10_000 });

@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
   callsTo,
+  choose,
   json,
   me,
   mockApi,
@@ -138,7 +139,7 @@ describe('gallery section', () => {
       editor({ ...library([logo]), [`DELETE ${apiPaths.media.asset(id, logo.id)}`]: noContent }),
     );
     const { user } = renderApp(sitePath);
-    await user.selectOptions(await screen.findByLabelText('הוספת מקטע'), 'gallery');
+    await choose(user, await screen.findByLabelText('הוספת מקטע'), 'גלריה');
     await user.click(screen.getByRole('button', { name: 'הוספה' }));
     await user.click(await screen.findByRole('button', { name: 'הוספת תמונה' }));
     const dialog = await screen.findByRole('dialog', { name: 'הוספת תמונה לגלריה' });

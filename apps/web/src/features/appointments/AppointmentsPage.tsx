@@ -7,7 +7,15 @@ import {
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Button, Card, EmptyState, MoreMenu, Spinner } from '../../components/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  EmptyState,
+  MoreMenu,
+  SelectMenu,
+  Spinner,
+} from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
@@ -192,19 +200,17 @@ export function AppointmentsPage() {
           </h2>
           <div className="ms-auto flex flex-wrap items-center gap-2">
             {manager && (
-              <select
-                aria-label={tr('סינון לפי איש צוות')}
+              <SelectMenu
+                compact
+                labelHidden
+                label={tr('סינון לפי איש צוות')}
                 value={staff}
-                onChange={(e) => set({ staff: e.target.value || undefined })}
-                className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
-              >
-                <option value="">{tr('כל הצוות')}</option>
-                {(members.data ?? []).map((m) => (
-                  <option key={m.userId} value={m.userId}>
-                    {m.fullName}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => set({ staff: v || undefined })}
+                options={[
+                  { value: '', label: tr('כל הצוות') },
+                  ...(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName })),
+                ]}
+              />
             )}
             <div
               role="group"

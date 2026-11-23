@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
   callsTo,
+  choose,
   json,
   me,
   mockApi,
@@ -62,7 +63,7 @@ describe('team page (owner)', () => {
     });
     const { user } = renderApp(teamPath);
     await user.type(await screen.findByLabelText('אימייל'), 'Noa@Example.com');
-    await user.selectOptions(screen.getByLabelText('תפקיד'), 'MANAGER');
+    await choose(user, screen.getByLabelText('תפקיד'), 'מנהל/ת צוות');
     await user.click(screen.getByRole('button', { name: 'שליחת הזמנה' }));
     expect(await screen.findByText(/ההזמנה נשלחה אל/)).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', tp.invitations(id))).toEqual([
@@ -95,7 +96,7 @@ describe('team page (owner)', () => {
     expect(within(list).getByText('בעל/ת העסק')).toBeInTheDocument();
     expect(within(list).queryByLabelText('התפקיד של דנה כהן')).not.toBeInTheDocument();
 
-    await user.selectOptions(within(list).getByLabelText('התפקיד של יוסי מזרחי'), 'MANAGER');
+    await choose(user, within(list).getByLabelText('התפקיד של יוסי מזרחי'), 'מנהל/ת צוות');
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PATCH', tp.member(id, emp.userId))).toEqual([{ role: 'MANAGER' }]),
     );

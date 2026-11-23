@@ -2,12 +2,11 @@ import { businessWebPaths, type Business } from '@simplecatch/shared';
 import { Plus } from 'lucide-react';
 import { useId } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { inputClasses } from '../../components/ui/Field';
-import { cn } from '../../lib/cn';
+import { SelectMenu } from '../../components/ui';
 import { useBusinesses } from '../businesses/api';
 import { tr } from '../../i18n';
 
-/** Shows the current business; with more than one, a native select switches between them. */
+/** Shows the current business; with more than one, a menu switches between them. */
 export function BusinessSwitcher({
   business,
   onNavigate,
@@ -23,32 +22,23 @@ export function BusinessSwitcher({
   return (
     <div className="flex flex-col gap-2">
       {list.length > 1 ? (
-        <>
-          <label htmlFor={id} className="text-xs font-medium text-ink-muted">
-            {tr('העסק הנוכחי')}
-          </label>
-          <select
-            id={id}
-            value={business.id}
-            onChange={(e) => {
-              const target = list.find((b) => b.id === e.target.value);
-              if (!target) return;
-              onNavigate?.();
-              navigate(
-                target.status === 'ONBOARDING' && target.role === 'OWNER'
-                  ? businessWebPaths.onboardingFor(target.id)
-                  : businessWebPaths.home(target.id),
-              );
-            }}
-            className={cn(inputClasses(false), 'cursor-pointer font-medium')}
-          >
-            {list.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </>
+        <SelectMenu
+          id={id}
+          label={tr('העסק הנוכחי')}
+          labelClassName="text-xs text-ink-muted"
+          value={business.id}
+          onChange={(v) => {
+            const target = list.find((b) => b.id === v);
+            if (!target) return;
+            onNavigate?.();
+            navigate(
+              target.status === 'ONBOARDING' && target.role === 'OWNER'
+                ? businessWebPaths.onboardingFor(target.id)
+                : businessWebPaths.home(target.id),
+            );
+          }}
+          options={list.map((b) => ({ value: b.id, label: b.name }))}
+        />
       ) : (
         <div className="flex items-center gap-2.5 rounded-xl border border-surface-border bg-surface-muted p-2">
           <span

@@ -59,8 +59,8 @@ export function QuestionsForm({ businessId, saved }: { businessId: string; saved
       </p>
       <ol className="flex flex-col gap-3">
         {items.map((q, i) => (
-          <li key={q.id} className="flex items-start gap-2">
-            <span className="mt-2 w-6 shrink-0 text-center text-sm font-semibold text-ink-muted">
+          <li key={q.id} className="flex items-center gap-2">
+            <span className="w-6 shrink-0 text-center text-sm font-semibold text-ink-muted">
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">
@@ -73,7 +73,7 @@ export function QuestionsForm({ businessId, saved }: { businessId: string; saved
                 }
               />
             </div>
-            <div className="mt-6 flex shrink-0 gap-1">
+            <div className="flex shrink-0 gap-1">
               <Button
                 variant="ghost"
                 size="sm"

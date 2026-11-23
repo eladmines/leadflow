@@ -11,7 +11,16 @@ import {
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { callsTo, json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
+import {
+  callsTo,
+  choose,
+  json,
+  me,
+  mockApi,
+  renderApp,
+  testBusiness,
+  testUser,
+} from '../../test/utils';
 
 afterEach(() => vi.unstubAllGlobals());
 const id = testBusiness.id;
@@ -265,7 +274,7 @@ describe('WhatsApp conversations inbox', () => {
     expect(screen.getByText('הלקוח מקבל אישור, והתור נכנס ליומן.')).toBeInTheDocument();
     const saveButton = screen.getByRole('button', { name: 'שמירת ההגדרות' });
     expect(saveButton).toBeDisabled();
-    await user.selectOptions(confirm, 'approve');
+    await choose(user, confirm, 'התור מחכה לאישור שלי');
     expect(screen.getByText('השעה שמורה בינתיים. מאשרים בעמוד היומן.')).toBeInTheDocument();
     // Nothing is sent until saving.
     expect(screen.getByText('יש שינויים שעוד לא נשמרו')).toBeInTheDocument();
@@ -291,9 +300,11 @@ describe('WhatsApp conversations inbox', () => {
     const { user } = renderApp(autoTab);
     await open(user, BOOKING_SETTINGS);
     const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע תור:' });
-    await user.selectOptions(confirm, 'approve');
+    await choose(user, confirm, 'התור מחכה לאישור שלי');
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
-    expect(screen.getByRole('combobox', { name: 'כשלקוח קובע תור:' })).toHaveValue('confirm');
+    expect(screen.getByRole('combobox', { name: 'כשלקוח קובע תור:' })).toHaveTextContent(
+      'התור מאושר מיד',
+    );
     expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeDisabled();
   });
 
@@ -352,7 +363,7 @@ describe('WhatsApp conversations inbox', () => {
     // No conversation preview any more (removed): only the message box.
     expect(screen.queryByRole('button', { name: 'תצוגה מקדימה' })).not.toBeInTheDocument();
     // How long, once you're away.
-    await user.selectOptions(screen.getByLabelText('לכמה זמן:'), 'לשעה');
+    await choose(user, screen.getByLabelText('לכמה זמן:'), 'לשעה');
     const sent = callsTo(fetchMock, 'PUT', wp.status(id))[1] as { id: string; until: string };
     expect(sent.id).toBe('event');
     const ahead = new Date(sent.until).getTime() - before;
@@ -572,9 +583,11 @@ describe('WhatsApp conversations inbox', () => {
     const { user } = renderApp(autoTab);
     await open(user, BOOKING_SETTINGS);
     const flow = await screen.findByRole('combobox', { name: 'מה לקוחות יכולים להזמין?' });
-    expect(flow).toHaveValue('appointment');
-    expect(screen.getByRole('option', { name: /מתאים לתחום שלכם/ })).toBeInTheDocument();
-    await user.selectOptions(flow, 'event');
+    expect(flow).toHaveTextContent('תור בשעה פנויה');
+    // The industry's own choice says so in the list.
+    await user.click(flow);
+    expect(await screen.findByRole('option', { name: /מתאים לתחום שלכם/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: 'הזמנה' }));
     await user.click(screen.getByRole('button', { name: 'שמירת ההגדרות' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),

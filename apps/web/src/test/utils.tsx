@@ -219,3 +219,16 @@ export function renderApp(path: string) {
     location: () => screen.getByTestId('location').textContent,
   };
 }
+
+/**
+ * Chooses an option in one of our dropdowns: opens it, then picks the option by its text. (The menu
+ * is our own list, not a native select, so `selectOptions` does not apply.)
+ */
+export async function choose(
+  user: ReturnType<typeof userEvent.setup>,
+  control: HTMLElement,
+  option: string | RegExp,
+) {
+  await user.click(control);
+  await user.click(await screen.findByRole('option', { name: option }));
+}

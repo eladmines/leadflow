@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
   callsTo,
+  choose,
   json,
   me,
   mockApi,
@@ -98,7 +99,7 @@ describe('pipeline board', () => {
       },
     });
     const { user } = renderApp(leadsPath);
-    await user.selectOptions(await screen.findByLabelText('העברת דנה כהן לשלב'), contacted!.id);
+    await choose(user, await screen.findByLabelText('העברת דנה כהן לשלב'), contacted!.name);
     const board = screen.getByRole('list', { name: 'לוח לידים' });
     expect(
       await within(within(board).getByRole('listitem', { name: /^נוצר קשר/ })).findByText(
@@ -121,7 +122,7 @@ describe('pipeline board', () => {
         apiError(403, 'FORBIDDEN', 'אין לך הרשאה לבצע פעולה זו'),
     });
     const { user } = renderApp(leadsPath);
-    await user.selectOptions(await screen.findByLabelText('העברת דנה כהן לשלב'), contacted!.id);
+    await choose(user, await screen.findByLabelText('העברת דנה כהן לשלב'), contacted!.name);
     expect(await screen.findByText('אין לך הרשאה לבצע פעולה זו')).toBeInTheDocument();
     const board = screen.getByRole('list', { name: 'לוח לידים' });
     await waitFor(() =>
@@ -180,10 +181,7 @@ describe('new lead', () => {
     expect(await within(dialog).findByText('כבר קיים איש קשר עם הפרטים האלה')).toBeInTheDocument();
     expect(within(dialog).getByText(/2 פניות/)).toBeInTheDocument();
 
-    await user.selectOptions(
-      within(dialog).getByLabelText('אחראי'),
-      '6e000000-0000-4000-8000-000000000001',
-    );
+    await choose(user, within(dialog).getByLabelText('אחראי'), 'יוסי מזרחי');
     await user.click(within(dialog).getByRole('button', { name: 'יצירת ליד' }));
     await waitFor(() => expect(location()).toBe(`${leadsPath}/${created.id}`));
     expect(callsTo(fetchMock, 'POST', lp.list(id))[0]).toMatchObject({
@@ -233,13 +231,8 @@ describe('lead page', () => {
     expect(within(history).getByText('השלב שונה מ"חדש" ל"נוצר קשר"')).toBeInTheDocument();
     expect(within(history).getByText('הליד נוצר מטופס באתר')).toBeInTheDocument();
 
-    await screen.findByRole('option', { name: 'נוצר קשר' });
-    await screen.findAllByRole('option', { name: 'יוסי מזרחי' });
-    await user.selectOptions(screen.getByLabelText('שלב'), contacted!.id);
-    await user.selectOptions(
-      screen.getByLabelText('אחראי'),
-      '6e000000-0000-4000-8000-000000000001',
-    );
+    await choose(user, screen.getByLabelText('שלב'), contacted!.name);
+    await choose(user, screen.getByLabelText('אחראי'), 'יוסי מזרחי');
     await user.type(screen.getByLabelText('הוספת הערה'), 'דיברנו בטלפון');
     await user.click(screen.getByRole('button', { name: 'שמירת הערה' }));
     await waitFor(() =>
@@ -366,7 +359,7 @@ describe('tags in the list', () => {
     expect(within(chips).getByText('VIP')).toBeInTheDocument();
     // Filters open from one button (D-138).
     await user.click(screen.getByRole('button', { name: 'סינון' }));
-    await user.selectOptions(await screen.findByLabelText('סינון לפי תגית'), 'חוזר');
+    await choose(user, await screen.findByLabelText('סינון לפי תגית'), 'חוזר');
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(

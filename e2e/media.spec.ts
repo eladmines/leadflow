@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { choose } from './choose';
 import sharp from 'sharp';
 
 /** F05: upload a logo and a gallery image, publish, and see them load on the live site. */
@@ -78,7 +79,7 @@ test('logo + gallery image upload, preview, publish, and load on the live site',
   // Gallery with a captioned photo.
   if (isMobile) {
     await page.getByRole('tab', { name: 'מקטעים' }).click();
-    await page.getByLabel('הוספת מקטע').selectOption('gallery');
+    await choose(page, page.getByLabel('הוספת מקטע'), 'גלריה');
     await page.getByRole('button', { name: 'הוספה', exact: true }).click();
   } else {
     await page.getByRole('button', { name: 'הוספת מקטע', exact: true }).click();

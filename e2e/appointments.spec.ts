@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { choose } from './choose';
 
 /** F17: services → book from the calendar → a clashing booking is refused → cancel → lead card. */
 const PASSWORD = 'Sup3r-secret-pass!';
@@ -43,7 +44,7 @@ test('book, clash, cancel, and see it from the calendar', async ({ page }) => {
     const dialog = page.getByRole('dialog', { name: 'תור חדש' });
     await dialog.getByLabel('שם הלקוח').fill(name);
     await dialog.getByLabel('טלפון').fill(phone);
-    await dialog.getByLabel('שירות').selectOption({ label: 'תספורת · 45 דק׳' });
+    await choose(page, dialog.getByLabel('שירות'), 'תספורת · 45 דק׳');
     await dialog.getByLabel('תאריך').fill(ymd);
     await dialog.getByLabel('שעה').fill('10:00');
     await dialog.getByRole('button', { name: 'קביעת התור' }).click();

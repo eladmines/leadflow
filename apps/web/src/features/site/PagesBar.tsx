@@ -11,7 +11,7 @@ import {
 } from '@simplecatch/shared';
 import { EyeOff, FileText, Plus, Settings2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button, Checkbox, DialogShell, Field, Textarea } from '../../components/ui';
+import { Button, Checkbox, DialogShell, Field, SelectMenu, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import type { PageId } from './pages';
 import { tr } from '../../i18n';
@@ -224,28 +224,15 @@ function AddPage({
           checked={inMenu}
           onChange={(e) => setInMenu(e.target.checked)}
         />
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="page-preset" className="text-sm font-medium text-ink">
-            {tr('תוכן התחלתי (לא חובה)')}
-          </label>
-          <select
-            id="page-preset"
-            value={preset}
-            onChange={(e) => choose(e.target.value as PagePresetKey)}
-            className="h-9 rounded-lg border border-surface-border bg-surface px-3 text-sm text-ink"
-          >
-            {(
-              [
-                'blank',
-                ...Object.keys(PAGE_PRESETS).filter((k) => k !== 'blank'),
-              ] as PagePresetKey[]
-            ).map((k) => (
-              <option key={k} value={k}>
-                {tr(PAGE_PRESETS[k].label)} · {presetHints[k]}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectMenu
+          id="page-preset"
+          label={tr('תוכן התחלתי (לא חובה)')}
+          value={preset}
+          onChange={(v) => choose(v as PagePresetKey)}
+          options={(
+            ['blank', ...Object.keys(PAGE_PRESETS).filter((k) => k !== 'blank')] as PagePresetKey[]
+          ).map((k) => ({ value: k, label: `${tr(PAGE_PRESETS[k].label)} · ${presetHints[k]}` }))}
+        />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             {tr('ביטול')}

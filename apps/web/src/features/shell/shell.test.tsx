@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   callsTo,
+  choose,
   json,
   me,
   mockApi,
@@ -93,7 +94,7 @@ describe('app shell', () => {
     });
     const { user, location } = renderApp(home);
     const switcher = (await screen.findAllByLabelText('העסק הנוכחי'))[0]!;
-    await user.selectOptions(switcher, second.id);
+    await choose(user, switcher, 'מוסך הצפון');
     await waitFor(() => expect(location()).toBe(businessWebPaths.home(second.id)));
     // The dashboard header shows the business name only, without the role.
     expect(

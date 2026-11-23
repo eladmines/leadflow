@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { useScrollToLatest } from '../../lib/useScrollToLatest';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Alert, Button, EmptyState, Spinner, Textarea } from '../../components/ui';
+import { Alert, Button, EmptyState, SelectMenu, Spinner, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -97,20 +97,23 @@ export function InboxView({ businessId }: { businessId: string }) {
               </button>
             ))}
           </div>
-          <label className="flex items-center gap-2 text-xs text-ink-muted">
-            {tr('ערוץ:')}
-            <select
+          <div className="flex items-center gap-2 text-xs text-ink-muted">
+            <span aria-hidden>{tr('ערוץ:')}</span>
+            <SelectMenu
+              compact
+              labelHidden
+              label={tr('ערוץ:')}
               value={channel ?? ''}
-              onChange={(e) => setChannel((e.target.value || undefined) as Channel | undefined)}
-              className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
-            >
-              <option value="">{tr('כל הערוצים')}</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="messenger">{tr('פייסבוק')}</option>
-              <option value="instagram">Instagram</option>
-              <option value="email">{tr('מייל')}</option>
-            </select>
-          </label>
+              onChange={(v) => setChannel((v || undefined) as Channel | undefined)}
+              options={[
+                { value: '', label: tr('כל הערוצים') },
+                { value: 'whatsapp', label: 'WhatsApp' },
+                { value: 'messenger', label: tr('פייסבוק') },
+                { value: 'instagram', label: 'Instagram' },
+                { value: 'email', label: tr('מייל') },
+              ]}
+            />
+          </div>
         </div>
 
         <div className="scrollbar-visible min-h-0 flex-1 overflow-y-auto">

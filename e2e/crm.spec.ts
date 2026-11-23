@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { choose } from './choose';
 
 /** F08: manual lead → board (drag or stage menu) → lead page (stage, note, history) → search. */
 const PASSWORD = 'Sup3r-secret-pass!';
@@ -50,7 +51,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   const card = board.getByRole('article').filter({ hasText: 'אבי כהן' });
   const target = board.getByRole('listitem', { name: /^נוצר קשר/ });
   if (isMobile) {
-    await card.getByLabel('העברת אבי כהן לשלב').selectOption({ label: 'נוצר קשר' });
+    await choose(page, card.getByLabel('העברת אבי כהן לשלב'), 'נוצר קשר');
   } else {
     await card.dragTo(target);
   }
@@ -59,8 +60,8 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
 
   // Lead page: stage change, note, history.
   await target.getByRole('link', { name: 'אבי כהן' }).click();
-  await expect(page.getByLabel('שלב', { exact: true })).toHaveValue(/.+/);
-  await page.getByLabel('שלב', { exact: true }).selectOption({ label: 'הצעה נשלחה' });
+  await expect(page.getByLabel('שלב', { exact: true })).toContainText(/.+/);
+  await choose(page, page.getByLabel('שלב', { exact: true }), 'הצעה נשלחה');
   await expect(page.getByText('השלב שונה מ"נוצר קשר" ל"הצעה נשלחה"')).toBeVisible();
   await page.getByLabel('הוספת הערה').fill('נשלחה הצעה של ₪650, מחכה לאישור');
   await page.getByRole('button', { name: 'שמירת הערה' }).click();
