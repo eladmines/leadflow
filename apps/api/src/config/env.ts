@@ -98,6 +98,8 @@ const envSchema = z
     /** Accepted form submissions per visitor IP per site per window. */
     LEAD_FORM_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
     LEAD_FORM_RATE_LIMIT_WINDOW: z.coerce.number().int().positive().default(600_000),
+    /** F31: embed-script visits per IP per window (a page view is cheaper than a lead). */
+    EMBED_VISIT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
 
     // F05 — Media
     /** `disk`: MEDIA_DIR. `database`: in Postgres, for hosts whose disk is wiped on restart (D-119). */

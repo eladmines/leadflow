@@ -47,6 +47,16 @@ export const embedLeadRequestSchema = z.object({
 });
 export type EmbedLeadRequest = z.infer<typeof embedLeadRequestSchema>;
 
+/** A page view, once per browser session (F31). Counted, never stored per person. */
+export const embedVisitRequestSchema = embedLeadRequestSchema.pick({
+  key: true,
+  params: true,
+  referrer: true,
+  landing: true,
+  page: true,
+});
+export type EmbedVisitRequest = z.infer<typeof embedVisitRequestSchema>;
+
 export const embedLeadResponseSchema = z.object({
   ok: z.boolean(),
   errors: z.array(z.string()).optional(),
@@ -69,6 +79,8 @@ export const embedApiPaths = {
   script: '/api/v1/embed/lead.js',
   /** Public: where the script posts a lead (no cookies, no CSRF header: protected by the key). */
   lead: '/api/v1/embed/lead',
+  /** Public: a visit (F31), same rules as `lead`. */
+  visit: '/api/v1/embed/visit',
 } as const;
 
 /** Keeps only the tracked parameters, trimmed (what the script and the server both accept). */

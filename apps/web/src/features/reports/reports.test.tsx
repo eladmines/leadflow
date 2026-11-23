@@ -32,10 +32,11 @@ const summary: ReportSummary = {
     { source: 'manual', count: 5 },
     { source: 'whatsapp', count: 0 },
   ],
+  visits: 120,
   byAttribution: [
-    { source: 'google_ads', name: null, leads: 6, won: 2, lost: 2, wonValue: 3000 },
-    { source: 'utm', name: 'newsletter', leads: 2, won: 0, lost: 0, wonValue: 0 },
-    { source: 'unknown', name: null, leads: 4, won: 1, lost: 0, wonValue: 1500 },
+    { source: 'google_ads', name: null, leads: 6, won: 2, lost: 2, wonValue: 3000, visits: 120 },
+    { source: 'utm', name: 'newsletter', leads: 2, won: 0, lost: 0, wonValue: 0, visits: 0 },
+    { source: 'unknown', name: null, leads: 4, won: 1, lost: 0, wonValue: 1500, visits: 0 },
   ],
   byCampaign: [
     {
@@ -46,6 +47,7 @@ const summary: ReportSummary = {
       won: 2,
       lost: 2,
       wonValue: 3000,
+      visits: 90,
     },
   ],
 };
@@ -100,7 +102,7 @@ describe('reports page', () => {
       within(google)
         .getAllByRole('cell')
         .map((c) => c.textContent),
-    ).toEqual(['Google Ads', '6', '2', shekel.format(3000), '50%']);
+    ).toEqual(['Google Ads', '120', '6', '6 מתוך 120 (5%)', '2', shekel.format(3000), '50%']);
     expect(within(bySource).getByText('newsletter')).toBeInTheDocument();
     expect(within(bySource).getByText('לא ידוע')).toBeInTheDocument();
     expect(within(google).getByRole('link')).toHaveAttribute(

@@ -12,6 +12,12 @@ import { shekel } from '../leads/api';
 import { SourceBadge } from '../leads/Attribution';
 import { tr } from '../../i18n';
 
+/** "3 of 120 (2.5%)": how many visits became an inquiry. Blank when the visits don't cover them. */
+const conversion = (r: AttributionReportRow) =>
+  r.visits > 0 && r.leads <= r.visits
+    ? `${tr('{0} מתוך {1}', r.leads, r.visits)} (${Math.round((r.leads / r.visits) * 1000) / 10}%)`
+    : '—';
+
 const rate = (r: AttributionReportRow) =>
   r.won + r.lost > 0 ? `${Math.round((r.won / (r.won + r.lost)) * 100)}%` : '—';
 
@@ -43,7 +49,7 @@ export function CustomerSources({
           </h2>
           <p className="text-sm text-ink-muted">
             {tr(
-              'לפי מקור ולפי קמפיין: כמה פניות, כמה הפכו ללקוחות (שלב "נסגר" או הצעת מחיר שאושרה) וכמה כסף.',
+              'לפי מקור ולפי קמפיין: כמה כניסו לאתר, כמה השאירו פנייה, כמה הפכו ללקוחות (שלב "נסגר" או הצעת מחיר שאושרה) וכמה כסף.',
             )}
           </p>
         </div>
@@ -98,12 +104,14 @@ function Table({
 }) {
   return (
     <div className="scrollbar-visible overflow-x-auto">
-      <table className="w-full min-w-[520px] text-sm">
+      <table className="w-full min-w-[640px] text-sm">
         <caption className="pb-2 text-start text-sm font-medium text-ink">{caption}</caption>
         <thead className="text-ink-muted">
           <tr>
             <th className="py-1.5 text-start font-medium">{first}</th>
+            <th className="py-1.5 text-end font-medium">{tr('כניסות לאתר')}</th>
             <th className="py-1.5 text-end font-medium">{tr('פניות')}</th>
+            <th className="py-1.5 text-end font-medium">{tr('הפכו לפנייה')}</th>
             <th className="py-1.5 text-end font-medium">{tr('הפכו ללקוחות')}</th>
             <th className="py-1.5 text-end font-medium">{tr('שווי עסקאות')}</th>
             <th className="py-1.5 text-end font-medium">{tr('אחוז סגירה')}</th>
@@ -120,7 +128,11 @@ function Table({
                   {label}
                 </Link>
               </td>
+              <td className="py-2 text-end tabular-nums text-ink">{row.visits || '—'}</td>
               <td className="py-2 text-end tabular-nums text-ink">{row.leads}</td>
+              <td className="py-2 text-end tabular-nums text-ink">
+                <bdi>{conversion(row)}</bdi>
+              </td>
               <td className="py-2 text-end tabular-nums font-semibold text-emerald-700">
                 {row.won}
               </td>

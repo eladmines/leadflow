@@ -13,6 +13,7 @@ import {
   siteText,
   sectionSchema,
   themeSchema,
+  type Attribution,
   type SiteTheme,
 } from '@simplecatch/shared';
 import { z } from 'zod';
@@ -30,6 +31,7 @@ import { PublishedSiteCache, type PublishedPage } from './cache';
 import type { StorageProvider } from '../integrations/storage';
 import { registerMediaServing } from '../modules/media/serve';
 import { readAttributionCookie, rememberVisit } from './attribution';
+import { isBotAgent, recordVisit } from '../modules/reports/visits';
 
 /**
  * Public-site server (F06): serves each business's *published* version by Host header,
@@ -124,6 +126,26 @@ export async function buildPublicApp({
     return SUBDOMAIN.test(sub) ? sub : null;
   };
 
+  /** The business behind a site name, for counting visits (a few minutes' cache). */
+  const visitTargets = new Map<string, { businessId: string; timezone: string; expires: number }>();
+  const countVisit = async (subdomain: string, attribution: Attribution) => {
+    let target = visitTargets.get(subdomain);
+    if (!target || target.expires < Date.now()) {
+      const site = await prisma.site.findUnique({
+        where: { subdomain },
+        select: { businessId: true, business: { select: { timezone: true } } },
+      });
+      if (!site) return;
+      target = {
+        businessId: site.businessId,
+        timezone: site.business.timezone,
+        expires: Date.now() + 300_000,
+      };
+      visitTargets.set(subdomain, target);
+    }
+    await recordVisit(prisma, target.businessId, target.timezone, attribution);
+  };
+
   const lookup = async (subdomain: string): Promise<PublishedPage> => {
     const hit = cache.get(subdomain);
     if (hit) return hit;
@@ -197,11 +219,17 @@ export async function buildPublicApp({
         ),
         subdomain,
       );
-      rememberVisit(req, reply, {
+      const visit = rememberVisit(req, reply, {
         landingPath: path,
         cookiePath: byPath ? `/s/${subdomain}` : '/',
         secure: (byPath ? config.APP_URL : origin).startsWith('https:'),
       });
+      // F31: counted in the background; a failure is logged, never shown to the visitor.
+      if (visit.entry && !isBotAgent(req.headers['user-agent']) && !req.headers['purpose']) {
+        countVisit(subdomain, visit.attribution).catch((err) =>
+          req.log.error({ errName: (err as Error)?.name }, 'visit count failed'),
+        );
+      }
       return send(reply, 200, 'text/html', html, 'no-store');
     }
     if (path === '/robots.txt') {

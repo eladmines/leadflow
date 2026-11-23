@@ -181,6 +181,7 @@ model Business {
 
   memberships         Membership[]
   channelConnections  ChannelConnection[]
+  visitCounts         VisitCount[]
   oauthPending        OAuthPending[]
   auditLogs           AuditLog[]
   site                Site?
@@ -767,6 +768,25 @@ model Notification {
 
   @@index([userId, businessId, createdAt])
   @@map("notifications")
+}
+
+/// F31: website visits per local day, source, name and campaign (a count, never a person).
+/// Fed by SimpleCatch sites and by the embed script on other websites; read by Reports.
+model VisitCount {
+  businessId String @map("business_id") @db.Uuid
+  /// The business's local day, `YYYY-MM-DD`.
+  day        String @db.VarChar(10)
+  /// An attribution source (`direct` when unknown).
+  source     String @db.VarChar(20)
+  /// utm_source / referring host for `utm` / `referral`; empty otherwise.
+  name       String @default("") @db.VarChar(100)
+  campaign   String @default("") @db.VarChar(100)
+  count      Int    @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, day, source, name, campaign])
+  @@map("visit_counts")
 }
 
 /// F25: a channel a business connected itself (D-159): its WhatsApp number or Facebook Page.

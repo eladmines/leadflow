@@ -11,6 +11,7 @@ const EXEMPT = new Set<string>([
   emailInboundPath,
   // F30: forms on other people's websites post here (no cookies; the business key authorizes it).
   apiPaths.embed.lead,
+  apiPaths.embed.visit,
 ]);
 
 /**

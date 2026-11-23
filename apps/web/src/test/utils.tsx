@@ -101,6 +101,7 @@ const emptyReport: ReportSummary = {
   byStage: [],
   bySource: [],
   byAttribution: [],
+  visits: 0,
   byCampaign: [],
 };
 

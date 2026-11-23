@@ -152,4 +152,75 @@ describe('leads from a website built elsewhere (F30)', () => {
     expect(junk.statusCode).toBe(400);
     expect(await ctx.prisma.lead.count()).toBe(0);
   });
+
+  describe('visits (F31)', () => {
+    const UA =
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15';
+    const visit = (body: Record<string, unknown>, ua: string | undefined = UA) =>
+      ctx.app.inject({
+        method: 'POST',
+        url: ep.visit,
+        headers: { 'content-type': 'text/plain', ...(ua ? { 'user-agent': ua } : {}) },
+        payload: JSON.stringify(body),
+      });
+    const summary = async (o: Awaited<ReturnType<typeof ownerWithBusiness>>) =>
+      (
+        await req(ctx.app, 'GET', `${apiPaths.reports.summary(o.business.id)}?days=7`, o.token)
+      ).json();
+
+    it('counts visits per source and campaign, and shows them next to the leads', async () => {
+      const o = await ownerWithBusiness(ctx.app, 'visit-a');
+      const { key } = await keyOf(o);
+      const ad = {
+        key,
+        params: { gclid: 'SECRET-CLICK', utm_campaign: 'summer' },
+        page: 'https://www.my-site.example/',
+      };
+      for (let i = 0; i < 3; i++) expect((await visit(ad)).statusCode).toBe(200);
+      await visit({ key, page: 'https://www.my-site.example/' });
+      await visit({
+        key,
+        referrer: 'https://blog.example.org/post',
+        page: 'https://www.my-site.example/',
+      });
+      // One of the three ad visitors left their details.
+      await post(
+        base(key, { params: { gclid: 'SECRET-CLICK', utm_campaign: 'summer' }, landing: ad.page }),
+      );
+
+      const rep = await summary(o);
+      expect(rep.visits).toBe(5);
+      const google = rep.byAttribution.find((r: { source: string }) => r.source === 'google_ads');
+      expect(google).toMatchObject({ visits: 3, leads: 1 });
+      expect(rep.byCampaign[0]).toMatchObject({ campaign: 'summer', visits: 3, leads: 1 });
+      expect(
+        rep.byAttribution.find((r: { source: string }) => r.source === 'unknown'),
+      ).toMatchObject({
+        visits: 1,
+        leads: 0,
+      });
+      expect(
+        rep.byAttribution.find((r: { name: string | null }) => r.name === 'blog.example.org'),
+      ).toMatchObject({ source: 'referral', visits: 1 });
+      expect(JSON.stringify(await ctx.prisma.visitCount.findMany())).not.toContain('SECRET-CLICK');
+    });
+
+    it('ignores bots, a wrong key and garbage; other businesses see none of it', async () => {
+      const a = await ownerWithBusiness(ctx.app, 'visit-b');
+      const b = await ownerWithBusiness(ctx.app, 'visit-c');
+      const { key } = await keyOf(a);
+      const body = { key, page: 'https://www.my-site.example/' };
+      await visit(body, 'Googlebot/2.1 (+http://www.google.com/bot.html)');
+      await visit(body, 'curl/8.4.0');
+      expect(
+        (await visit({ ...body, key: key.slice(0, -1) + (key.endsWith('A') ? 'B' : 'A') }))
+          .statusCode,
+      ).toBe(400);
+      expect((await visit({ nonsense: true })).statusCode).toBe(400);
+      expect(await ctx.prisma.visitCount.count()).toBe(0);
+      await visit(body);
+      expect((await summary(a)).visits).toBe(1);
+      expect((await summary(b)).visits).toBe(0);
+    });
+  });
 });

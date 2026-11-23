@@ -5,6 +5,7 @@ import {
   classifyAttribution,
   embedInfoSchema,
   embedLeadRequestSchema,
+  embedVisitRequestSchema,
   leadSubmissionSchema,
   pickTrackedParams,
   siteError,
@@ -16,6 +17,7 @@ import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { LeadService } from '../leads/service';
 import { notifyTeamByEmail } from '../leads/notify';
 import { MANAGERS, notifySafe } from '../notifications/service';
+import { isBotAgent, recordVisit } from '../reports/visits';
 import { createEmbedKey, readEmbedKey } from './key';
 import { EMBED_SCRIPT } from './script';
 
@@ -161,6 +163,58 @@ export const embedPublicRoutes: FastifyPluginAsync = async (app) => {
         });
       }
       return answer(200, { ok: true });
+    },
+  );
+
+  // F31: a page view, once per browser session (the script keeps the flag). Counted, not stored.
+  app.post(
+    apiPaths.embed.visit,
+    {
+      bodyLimit: 16 * 1024,
+      config: {
+        rateLimit: {
+          max: app.config.EMBED_VISIT_RATE_LIMIT_MAX,
+          timeWindow: app.config.LEAD_FORM_RATE_LIMIT_WINDOW,
+          keyGenerator: (req) => req.ip,
+        },
+      },
+    },
+    async (req, reply) => {
+      const answer = (status: number) =>
+        reply
+          .code(status)
+          .headers(CORS)
+          .send({ ok: status === 200 });
+      const parsed = embedVisitRequestSchema.safeParse(req.body);
+      if (!parsed.success) return answer(400);
+      const body = parsed.data;
+      const businessId = readEmbedKey(app.config.FORM_TOKEN_SECRET, body.key);
+      const business = businessId
+        ? await app.prisma.business.findUnique({
+            where: { id: businessId },
+            select: { id: true, timezone: true },
+          })
+        : null;
+      if (!business) return answer(400);
+      if (isBotAgent(req.headers['user-agent'])) return answer(200);
+      let host: string | undefined;
+      try {
+        host = body.page ? new URL(body.page).host : undefined;
+      } catch {
+        host = undefined;
+      }
+      const attribution = classifyAttribution({
+        params: pickTrackedParams(body.params),
+        referrer: body.referrer ?? null,
+        selfHost: host,
+        landingPath: pathOf(body.landing),
+      });
+      try {
+        await recordVisit(app.prisma, business.id, business.timezone, attribution);
+      } catch (err) {
+        req.log.error({ errName: (err as Error)?.name }, 'visit count failed');
+      }
+      return answer(200);
     },
   );
 };

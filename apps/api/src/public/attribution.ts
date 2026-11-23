@@ -36,12 +36,14 @@ export function readAttributionCookie(req: FastifyRequest): Attribution | null {
 /**
  * On a page view: an ad click or tagged link replaces what's stored; otherwise the first visit
  * stays. Direct visits and the site's own pages set nothing (no cookie = direct).
+ * Returns what the visit counts under (F31: the same source a lead sent now would get) and whether
+ * it is an entry (from outside the site) rather than a move between the site's own pages.
  */
 export function rememberVisit(
   req: FastifyRequest,
   reply: FastifyReply,
   opts: { landingPath: string; cookiePath: string; secure: boolean },
-) {
+): { attribution: Attribution; entry: boolean } {
   const query = (req.query ?? {}) as Record<string, unknown>;
   const params = Object.fromEntries(
     Object.entries(query).map(([k, v]) => [k, typeof v === 'string' ? v : undefined]),
@@ -52,10 +54,21 @@ export function rememberVisit(
     selfHost: req.host,
     landingPath: opts.landingPath,
   });
-  if (visit.source === 'direct') return;
-  if (!isCampaignVisit(visit) && readAttributionCookie(req)) return;
+  const stored = readAttributionCookie(req);
+  let refHost: string | undefined;
+  try {
+    refHost = req.headers.referer ? new URL(req.headers.referer).host : undefined;
+  } catch {
+    refHost = undefined;
+  }
+  const entry = !(refHost && refHost === req.host);
+  const campaign = isCampaignVisit(visit);
+  const attribution = campaign ? visit : (stored ?? visit);
+  if (visit.source === 'direct') return { attribution, entry };
+  if (!campaign && stored) return { attribution, entry };
   reply.header(
     'set-cookie',
     `${ATTRIBUTION_COOKIE}=${encode(visit)}; Max-Age=${MAX_AGE_SECONDS}; Path=${opts.cookiePath}; HttpOnly; SameSite=Lax${opts.secure ? '; Secure' : ''}`,
   );
+  return { attribution: visit, entry };
 }

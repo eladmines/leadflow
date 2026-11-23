@@ -21,6 +21,8 @@ const attributionRow = z.object({
   lost: z.number().int(),
   /** Sum of the won leads' deal values (whole units). */
   wonValue: z.number().int(),
+  /** F31: website visits from this source (or campaign) in the range. */
+  visits: z.number().int(),
 });
 export type AttributionReportRow = z.infer<typeof attributionRow>;
 
@@ -58,6 +60,8 @@ export const reportSummarySchema = z.object({
   bySource: z.array(z.object({ source: z.enum(LEAD_SOURCES), count: z.number().int() })),
   /** F26: where customers come from, per source and per campaign (leads created in the range). */
   byAttribution: z.array(attributionRow),
+  /** F31: all website visits in the range (SimpleCatch sites and the embed script). */
+  visits: z.number().int(),
   byCampaign: z.array(attributionRow.extend({ campaign: z.string() })),
 });
 export type ReportSummary = z.infer<typeof reportSummarySchema>;

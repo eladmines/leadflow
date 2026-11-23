@@ -182,11 +182,14 @@ describe('where website leads come from (F26)', () => {
     const report = (
       await req(ctx.app, 'GET', `${apiPaths.reports.summary(o.id)}?days=30`, o.token)
     ).json();
-    expect(report.byAttribution).toEqual([
+    // Visits have their own test below.
+    const noVisits = <T extends { visits: number }>(rows: T[]) =>
+      rows.map(({ visits: _v, ...r }) => r);
+    expect(noVisits(report.byAttribution)).toEqual([
       { source: 'google_ads', name: null, leads: 2, won: 1, lost: 1, wonValue: 1200 },
       { source: 'unknown', name: null, leads: 1, won: 0, lost: 0, wonValue: 0 },
     ]);
-    expect(report.byCampaign).toEqual([
+    expect(noVisits(report.byCampaign)).toEqual([
       {
         source: 'google_ads',
         name: null,
@@ -208,6 +211,34 @@ describe('where website leads come from (F26)', () => {
 
   const only = (o: { id: string; token: string }, q: string) =>
     req(ctx.app, 'GET', `${lp.list(o.id)}?${q}`, o.token).then((r) => r.json().leads.length);
+  it('counts visits to a SimpleCatch site once per entry, not for bots or its own pages (F31)', async () => {
+    const o = await liveSite('visit-salon');
+    const UA =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1';
+    const get = (url: string, headers: Record<string, string> = {}) =>
+      pub.inject({ method: 'GET', url, headers: { host: host('visit-salon'), ...headers } });
+    await get('/?gclid=SECRET-CLICK&utm_campaign=summer', { 'user-agent': UA });
+    // A move between the site's own pages, a bot and a prefetch are not visits.
+    await get('/', { 'user-agent': UA, referer: `https://${host('visit-salon')}/?gclid=x` });
+    await get('/', { 'user-agent': 'Googlebot/2.1' });
+    await get('/', { 'user-agent': UA, purpose: 'prefetch' });
+    // Another site sending someone, and a direct visit.
+    await get('/', { 'user-agent': UA, referer: 'https://www.google.co.il/' });
+    await get('/', { 'user-agent': UA });
+    // Give the background writes a moment.
+    await new Promise((r) => setTimeout(r, 200));
+    const rows = await ctx.prisma.visitCount.findMany({ orderBy: { source: 'asc' } });
+    expect(rows.map((r) => [r.source, r.campaign, r.count])).toEqual([
+      ['direct', '', 1],
+      ['google', '', 1],
+      ['google_ads', 'summer', 1],
+    ]);
+    expect(JSON.stringify(rows)).not.toContain('SECRET-CLICK');
+    const rep = (
+      await req(ctx.app, 'GET', `${apiPaths.reports.summary(o.id)}?days=7`, o.token)
+    ).json();
+    expect(rep.visits).toBe(3);
+  });
 });
 
 describe('WhatsApp leads from Meta ads (F26)', () => {

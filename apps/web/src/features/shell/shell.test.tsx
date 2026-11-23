@@ -197,6 +197,7 @@ describe('dashboard', () => {
             { source: 'facebook', count: 2 },
           ],
           byAttribution: [],
+          visits: 0,
           byCampaign: [],
         }),
     });

@@ -38,6 +38,20 @@ export const EMBED_SCRIPT = `(function () {
   }
   remember();
 
+  // One visit per browser session (tab), counted under the same source a lead sent now would get.
+  function visit() {
+    try { if (sessionStorage.getItem('sc_v')) return; sessionStorage.setItem('sc_v', '1'); } catch (e) { return; }
+    var src = read() || {};
+    var x = new XMLHttpRequest();
+    x.open('POST', origin + '/api/v1/embed/visit');
+    x.setRequestHeader('Content-Type', 'text/plain');
+    x.send(JSON.stringify({
+      key: key, params: src.params, referrer: src.referrer, landing: src.landing,
+      page: location.href.split(/[?#]/)[0]
+    }));
+  }
+  visit();
+
   function uid() {
     var a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', r = '';
     for (var i = 0; i < 24; i++) r += a.charAt(Math.floor(Math.random() * a.length));

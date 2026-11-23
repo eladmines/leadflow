@@ -54,7 +54,8 @@ export class ReportService {
       select: { timezone: true },
     });
     const stages = await ensureStages(this.prisma, ctx.businessId);
-    const [leads, previous] = await Promise.all([
+    const toLocalDay = localDate(business.timezone);
+    const [leads, previous, visitRows] = await Promise.all([
       this.prisma.lead.findMany({
         where: { businessId: ctx.businessId, createdAt: { gte: from, lt: to } },
         select: {
@@ -69,6 +70,13 @@ export class ReportService {
       }),
       this.prisma.lead.count({
         where: { businessId: ctx.businessId, createdAt: { gte: prevFrom, lt: from } },
+      }),
+      this.prisma.visitCount.findMany({
+        where: {
+          businessId: ctx.businessId,
+          day: { gte: toLocalDay(from), lte: toLocalDay(to) },
+        },
+        select: { source: true, name: true, campaign: true, count: true },
       }),
     ]);
 
@@ -113,6 +121,7 @@ export class ReportService {
       won: 0,
       lost: 0,
       wonValue: 0,
+      visits: 0,
     });
     for (const l of leads) {
       const a = attributionSchema.safeParse(l.attribution);
@@ -129,8 +138,25 @@ export class ReportService {
         add(campaigns.get(ck)!, l);
       }
     }
+    // F31: visits join the same rows. An unknown source on a lead is a direct visit.
+    let visits = 0;
+    for (const v of visitRows) {
+      visits += v.count;
+      const source = (
+        v.source === 'direct' ? 'unknown' : v.source
+      ) as AttributionReportRow['source'];
+      const name = v.name || null;
+      const key = `${source}|${name ?? ''}`;
+      if (!rows.has(key)) rows.set(key, empty(source, name));
+      rows.get(key)!.visits += v.count;
+      if (v.campaign) {
+        const ck = `${key}|${v.campaign}`;
+        if (!campaigns.has(ck)) campaigns.set(ck, { ...empty(source, name), campaign: v.campaign });
+        campaigns.get(ck)!.visits += v.count;
+      }
+    }
     const byLeads = (a: AttributionReportRow, b: AttributionReportRow) =>
-      b.won - a.won || b.leads - a.leads;
+      b.won - a.won || b.leads - a.leads || b.visits - a.visits;
 
     // Time series in the business's local days.
     const toLocal = localDate(business.timezone);
@@ -192,6 +218,7 @@ export class ReportService {
       byStage,
       bySource,
       byAttribution: [...rows.values()].sort(byLeads),
+      visits,
       byCampaign: [...campaigns.values()].sort(byLeads).slice(0, 10),
     };
   }

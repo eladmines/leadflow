@@ -690,8 +690,11 @@ export const enPart3: Record<string, string> = {
   'מכל מקום': 'From anywhere',
   'הסרת הסינון לפי קמפיין': 'Remove the campaign filter',
   'מאיפה מגיעים הלקוחות': 'Where your customers come from',
-  'לפי מקור ולפי קמפיין: כמה פניות, כמה הפכו ללקוחות (שלב "נסגר" או הצעת מחיר שאושרה) וכמה כסף.':
-    'By source and by campaign: how many leads, how many became customers (the Won stage or an accepted quote), and how much money.',
+  'לפי מקור ולפי קמפיין: כמה כניסו לאתר, כמה השאירו פנייה, כמה הפכו ללקוחות (שלב "נסגר" או הצעת מחיר שאושרה) וכמה כסף.':
+    'By source and by campaign: how many visited the website, how many left an inquiry, how many became customers (the Won stage or an accepted quote), and how much money.',
+  'כניסות לאתר': 'Website visits',
+  'הפכו לפנייה': 'Became an inquiry',
+  '{0} מתוך {1}': '{0} of {1}',
   'אין פניות בתקופה הזו.': 'No leads in this period.',
   'לקוחות לפי מקור': 'Customers by source',
   מקור: 'Source',
