@@ -25,8 +25,7 @@ type Saved = WhatsAppBotResponse['settings'];
 /**
  * `/b/:businessId/automations` (D-175, redesigned as the customer's journey): what happens when a
  * customer writes on WhatsApp, in order: 1 they write, 2 they get the status message, 3 they book by
- * themselves, 4 they get "A peek at the business". A bar on top says what is on right now; each step
- * has one switch, one line saying what it does now, and its settings, folded until asked for.
+ * themselves, 4 they get "A peek at the business". Each step has one switch, one line saying what it does now, and its settings, folded until asked for.
  */
 export function AutomationsPage() {
   const business = useCurrentBusiness();
@@ -55,22 +54,6 @@ function Journey({ businessId }: { businessId: string }) {
   if (bot.isPending) return <Spinner />;
   if (!bot.isSuccess) return <Alert tone="danger">{errorMessage(bot.error)}</Alert>;
   return <Steps businessId={businessId} saved={bot.data.settings} connected={bot.data.connected} />;
-}
-
-/** One status line: a dot, what it is, and whether it is on. */
-function Chip({ label, on }: { label: string; on: boolean }) {
-  return (
-    <li className="inline-flex items-center gap-2 rounded-full bg-surface-muted px-3 py-1 text-sm text-ink">
-      <span
-        aria-hidden
-        className={cn('h-2 w-2 rounded-full', on ? 'bg-emerald-500' : 'bg-slate-400')}
-      />
-      {label}
-      <span className={cn('font-medium', on ? 'text-emerald-700' : 'text-ink-muted')}>
-        {on ? tr('פועל') : tr('כבוי')}
-      </span>
-    </li>
-  );
 }
 
 /** What the status message says right now: the active status, or the general message. */
@@ -103,11 +86,6 @@ function Steps({
       {!connected && (
         <Alert tone="info">{tr('המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.')}</Alert>
       )}
-      <ul aria-label={tr('מצב האוטומציות')} className="flex flex-wrap gap-2">
-        <Chip label={tr('מענה לפי סטטוס')} on={auto} />
-        <Chip label={tr('קביעת תורים')} on={booking} />
-        <Chip label={tr('הצצה לעסק')} on={peek} />
-      </ul>
       <ol aria-label={tr('מה קורה כשלקוח כותב')} className="flex flex-col gap-3">
         <FlowStep
           n={1}

@@ -279,13 +279,6 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       ),
     },
     {
-      target: `[aria-label="${tr('מצב האוטומציות')}"]`,
-      title: tr('מה פועל עכשיו'),
-      body: tr(
-        'נקודה ירוקה אומרת שהשלב פועל, ואפורה שהוא כבוי. כך רואים במבט אחד מה הלקוחות מקבלים.',
-      ),
-    },
-    {
       target: `[aria-label="${tr('מה קורה כשלקוח כותב')}"]`,
       title: tr('מה קורה כשלקוח כותב'),
       body: tr(

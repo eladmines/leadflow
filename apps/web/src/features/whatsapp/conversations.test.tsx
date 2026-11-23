@@ -131,12 +131,6 @@ describe('WhatsApp conversations inbox', () => {
     // One line per step on what it does now.
     expect(within(steps).getByText('עכשיו: ההודעה הכללית')).toBeInTheDocument();
     expect(within(steps).getByText(/כבוי: אפשר לקבוע רק מול הצוות/)).toBeInTheDocument();
-    // The bar on top.
-    const bar = screen.getByRole('list', { name: 'מצב האוטומציות' });
-    const chips = within(bar)
-      .getAllByRole('listitem')
-      .map((li) => li.textContent);
-    expect(chips).toEqual(['מענה לפי סטטוספועל', 'קביעת תוריםכבוי', 'הצצה לעסקכבוי']);
     // Their settings are folded until asked for.
     expect(screen.queryByLabelText('מה לקוחות מקבלים עכשיו')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'שמירת ההגדרות' })).not.toBeInTheDocument();
@@ -156,10 +150,6 @@ describe('WhatsApp conversations inbox', () => {
     expect(screen.getByText('פועל רק כשהמענה לפי הסטטוס דלוק.')).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'הודעה לפי הסטטוס' })).toBeEnabled();
     expect(screen.getByText('כבוי: הלקוח לא מקבל הודעה אוטומטית.')).toBeInTheDocument();
-    const chips = within(screen.getByRole('list', { name: 'מצב האוטומציות' }))
-      .getAllByRole('listitem')
-      .map((li) => li.textContent);
-    expect(chips.every((c) => c?.endsWith('כבוי'))).toBe(true);
   });
 
   it("a step's settings fold and unfold, and stay as they were left", async () => {
