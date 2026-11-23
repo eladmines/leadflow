@@ -25,7 +25,7 @@ import { tr } from '../../i18n';
 // </form>`;
 
 /** The line for a Shopify theme: it also connects the "Contact us" form and lets Shopify keep its own copy. */
-const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
+export const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
   `<script async src="${info.scriptUrl}" data-key="${info.key}" data-forms="form[action*='/contact']" data-consent-implied data-passthrough></script>`;
 
 const TABS = ['wix', 'wordpress', 'shopify', 'other'] as const;

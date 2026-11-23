@@ -185,12 +185,12 @@ describe('embed script (F30, F31)', () => {
     expect(document.body.textContent).toContain('תודה!');
   });
 
-  it('sends no consent when the form has no tick box and none is declared implied', async () => {
+  it('a form with no tick box at all: sending it is asking to be contacted, so consent is on', async () => {
     document.body.innerHTML = `<form data-simplecatch><input name="name" value="דנה"><input name="phone" value="0527654321"></form>`;
     load();
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();
-    expect(sent.find((s) => s.url.endsWith('/lead'))!.body.consent).toBeUndefined();
+    expect(sent.find((s) => s.url.endsWith('/lead'))!.body.consent).toBe('on');
   });
 
   describe('sections (F32)', () => {
@@ -375,6 +375,146 @@ describe('embed script (F30, F31)', () => {
         { k: 'scroll', l: '50' },
         { k: 'scroll', l: '90' },
       ]);
+    });
+  });
+
+  describe('forms we did not write: fields found by type, name and label', () => {
+    const leadBody = () => sent.find((x) => x.url.endsWith('/api/v1/embed/lead'))!.body;
+    const submit = async (form: HTMLFormElement) => {
+      const ev = new Event('submit', { cancelable: true, bubbles: true });
+      form.dispatchEvent(ev);
+      await flush();
+      return ev;
+    };
+    const fill = (root: ParentNode, values: Record<string, string>) => {
+      for (const [sel, v] of Object.entries(values)) {
+        (root.querySelector(sel) as HTMLInputElement | HTMLTextAreaElement).value = v;
+      }
+    };
+
+    // A real customer form: short names (n, p, d, e), a date, a trap field, its own way of sending.
+    const customerForm = `
+      <form id="f" class="rv in" style="--d: 0.08s;">
+        <label>שם מלא<input name="n" required="" autocomplete="name"></label>
+        <label>מספר טלפון<input name="p" type="tel" required="" autocomplete="tel"></label>
+        <label>תאריך האירוע (אופציונלי)<input name="d" type="date"></label>
+        <label>פרטי האירוע<textarea name="e" rows="4" required=""></textarea></label>
+        <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+        <button class="btn" type="submit">שליחת פרטים במייל</button>
+        <p id="fmsg" role="status" aria-live="polite"></p>
+      </form>`;
+
+    it("reads a customer's own form, adds the other fields to the message, and leaves the page alone", async () => {
+      document.body.innerHTML = customerForm;
+      // Bound while still empty: a phone field counts by being there, not by having a value.
+      load({ 'data-forms': '#f', 'data-copy': '' });
+      const form = document.getElementById('f') as HTMLFormElement;
+      fill(form, {
+        '[name=n]': 'דנה כהן',
+        '[name=p]': '052-7654321',
+        '[name=d]': '2026-12-15',
+        '[name=e]': 'חתונה בגן, כ-120 אורחים',
+      });
+      const alertSpy = vi.fn();
+      vi.stubGlobal('alert', alertSpy);
+      const ev = await submit(form);
+      expect(leadBody()).toMatchObject({
+        name: 'דנה כהן',
+        phone: '052-7654321',
+        // The date is none of the standard fields: it rides inside the message, with its label.
+        message: 'חתונה בגן, כ-120 אורחים\n\nתאריך האירוע: 2026-12-15',
+        // No tick box in the form: sending it is asking to be contacted.
+        consent: 'on',
+        // The trap field is empty, so this is a person.
+        website: '',
+      });
+      expect(leadBody().email).toBeUndefined();
+      // A copy: the form's own handler still runs, nothing is replaced, nothing is shown.
+      expect(ev.defaultPrevented).toBe(false);
+      expect(document.getElementById('f')).not.toBeNull();
+      expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it('passes a filled trap field on, so the server drops the bot', async () => {
+      document.body.innerHTML = customerForm;
+      load({ 'data-forms': '#f', 'data-copy': '' });
+      const form = document.getElementById('f') as HTMLFormElement;
+      fill(form, { '[name=n]': 'Bot', '[name=p]': '0501234567', '[name=_honey]': 'http://spam' });
+      await submit(form);
+      expect(leadBody().website).toBe('http://spam');
+    });
+
+    it('Contact Form 7 style names, and a Hebrew form with no names at all', async () => {
+      document.body.innerHTML = `
+        <form id="cf7">
+          <input name="your-name"><input name="your-email" type="email"><input name="tel-1" type="tel">
+          <textarea name="your-message"></textarea>
+          <input type="checkbox" name="acceptance-1"> <button type="submit">Send</button>
+        </form>
+        <form id="he">
+          <label>שם פרטי<input name="f1"></label><label>שם משפחה<input name="f2"></label>
+          <label>נייד<input name="f3"></label><label>דואר אלקטרוני<input name="f4"></label>
+          <textarea name="f5" aria-label="הודעה"></textarea>
+          <label><input type="checkbox" name="f6"> קראתי ואני מאשר/ת את התנאים</label>
+          <label><input type="checkbox" name="f7"> שלחו לי עדכונים</label>
+        </form>`;
+      load({ 'data-forms': '#cf7, #he' });
+      const cf7 = document.getElementById('cf7') as HTMLFormElement;
+      fill(cf7, {
+        '[name=your-name]': 'Dana Cohen',
+        '[name=your-email]': 'dana@example.com',
+        '[name=tel-1]': '0527654321',
+        '[name=your-message]': 'Hello',
+      });
+      (cf7.querySelector('[name=acceptance-1]') as HTMLInputElement).checked = true;
+      await submit(cf7);
+      expect(leadBody()).toMatchObject({
+        name: 'Dana Cohen',
+        email: 'dana@example.com',
+        phone: '0527654321',
+        message: 'Hello',
+        consent: 'on',
+      });
+
+      sent.length = 0;
+      const he = document.getElementById('he') as HTMLFormElement;
+      fill(he, {
+        '[name=f1]': 'דנה',
+        '[name=f2]': 'כהן',
+        '[name=f3]': '0527654321',
+        '[name=f4]': 'd@example.com',
+        '[name=f5]': 'שלום',
+      });
+      (he.querySelector('[name=f6]') as HTMLInputElement).checked = true;
+      await submit(he);
+      expect(leadBody()).toMatchObject({
+        name: 'דנה כהן',
+        phone: '0527654321',
+        email: 'd@example.com',
+        message: 'שלום',
+        consent: 'on',
+      });
+      // The second tick box (updates) is neither the consent nor an extra field.
+      expect(String(leadBody().message)).not.toContain('עדכונים');
+    });
+
+    it('an unticked consent box is not consent, and names we ask for still come first', async () => {
+      document.body.innerHTML = `
+        <form data-simplecatch>
+          <input name="name" value="דנה"><input name="phone" value="0527654321">
+          <input name="p" type="tel" value="000"><label><input type="checkbox" name="agree"> אני מאשר</label>
+        </form>`;
+      load();
+      await submit(document.querySelector('form') as HTMLFormElement);
+      expect(leadBody()).toMatchObject({ name: 'דנה', phone: '0527654321', consent: '' });
+    });
+
+    it('leaves a newsletter box alone, even when the script is pointed at it', async () => {
+      document.body.innerHTML = `<form id="nl"><input name="em" type="email" value="a@b.co"><button type="submit">Join</button></form>`;
+      load({ 'data-forms': '#nl' });
+      const ev = await submit(document.getElementById('nl') as HTMLFormElement);
+      expect(ev.defaultPrevented).toBe(false);
+      expect(sent.some((x) => x.url.endsWith('/lead'))).toBe(false);
     });
   });
 });

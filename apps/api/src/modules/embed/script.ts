@@ -2,11 +2,13 @@
  * F30: the script a business pastes on its own website. Plain ES5 (runs on any site), no
  * dependencies. It remembers where the visitor came from (ad click, UTM, referrer) in
  * localStorage for 30 days, and posts every `<form data-simplecatch>` to SimpleCatch with it.
- * Fields are found by name: name, phone, email, message, consent (a checkbox the visitor ticks),
- * and the same names Shopify's contact form uses (`contact[name]`, `contact[body]`…).
+ * Fields are found by the names we ask for (name, phone, email, message, consent) and Shopify's
+ * (`contact[name]`, `contact[body]`…), and otherwise by their type, name, label and placeholder, in
+ * Hebrew or English; other filled fields (a date, a service) go into the message as "label: value".
  * F32: it also counts what visitors do (page, landing page, device, taps on phone/WhatsApp/email
  * links and on buttons the owner named, sections seen (data-sc-section), scroll depth, a form started), never who they are.
- * Options, on the form or on the script tag: `data-consent-implied` (the form's own text already asks
+ * Options, on the form or on the script tag: `data-copy` (the form sends itself some other way: we only
+ * send a copy and change nothing on the page), `data-consent-implied` (the form's own text already asks
  * for consent), `data-passthrough` (after sending, the form is submitted normally too, e.g. to
  * Shopify). On the script tag, `data-forms="<css selector>"` binds forms that can't carry attributes.
  */
@@ -209,33 +211,133 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
     }
     return undefined;
   }
+
+  // --- Finding a form's fields when they are not named as we ask ---------------------------------
+  // By type (email, tel, textarea, tick box) and by what the field says about itself: its name, id,
+  // placeholder, label and autocomplete, in Hebrew or English. That text is only read here, to tell
+  // the fields apart; it is never sent (a label is sent only for an extra field's value, below).
+  var WORDS = {
+    email: /e-?mail|מייל|דוא|אימייל/i,
+    phone: /phone|tel|mobile|cell|טלפון|נייד|פלאפון|סלולרי/i,
+    name: /name|שם/i,
+    consent: /consent|agree|accept|terms|privacy|gdpr|אישור|מאשר|מסכים|מסכימה|תנאים|פרטיות|הסכמה/i,
+    honey: /honey|trap|website|url|fax|hp/i
+  };
+  var SKIP = /^(hidden|submit|button|reset|image|file|password|search|radio|range|color)$/;
+  function labelOf(el) {
+    var labels = el.labels;
+    return labels && labels.length ? labels[0].textContent : '';
+  }
+  function describe(el) {
+    return [el.name, el.id, el.placeholder, el.getAttribute('aria-label'), el.getAttribute('autocomplete'), labelOf(el)].join(' ');
+  }
+  // A field people don't see, that bots fill: aria-hidden or out of the tab order, named like a trap.
+  function isHoney(el) {
+    return (el.getAttribute('aria-hidden') === 'true' || el.tabIndex === -1) && WORDS.honey.test(el.name || el.id || '');
+  }
+  function detect(form) {
+    var out = { names: [], phone: null, email: null, message: null, consent: null, honey: null, boxes: [], used: [] };
+    var els = form.elements;
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], tag = el.tagName, type = (el.type || '').toLowerCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') continue;
+      if (SKIP.test(type) || el.name === 'website') continue;
+      if (isHoney(el)) { out.honey = el; continue; }
+      var d = describe(el);
+      if (type === 'checkbox') {
+        out.boxes.push(el);
+        if (!out.consent && WORDS.consent.test(d)) { out.consent = el; out.used.push(el); }
+        continue;
+      }
+      if (tag === 'SELECT') continue;
+      if (tag === 'TEXTAREA') { if (!out.message) { out.message = el; out.used.push(el); } continue; }
+      if (type === 'email' || WORDS.email.test(d)) { if (!out.email) { out.email = el; out.used.push(el); } continue; }
+      if (type === 'tel' || WORDS.phone.test(d)) { if (!out.phone) { out.phone = el; out.used.push(el); } continue; }
+      if (WORDS.name.test(d) && out.names.length < 2) { out.names.push(el); out.used.push(el); }
+    }
+    // A form with a single tick box: that is the consent.
+    if (!out.consent && out.boxes.length === 1) { out.consent = out.boxes[0]; out.used.push(out.boxes[0]); }
+    return out;
+  }
+  function fieldText(el) { return el ? el.value : undefined; }
+  // Fields that are none of the above (an event date, a service, a budget): sent inside the message as
+  // "label: value" so nothing the visitor wrote is lost.
+  function extras(form, d) {
+    var lines = [], els = form.elements;
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], tag = el.tagName, type = (el.type || '').toLowerCase();
+      if (tag !== 'INPUT' && tag !== 'SELECT') continue;
+      if (SKIP.test(type) || type === 'checkbox' || el === d.honey || el.name === 'website') continue;
+      if (d.used.indexOf(el) >= 0 || !el.value) continue;
+      var label = (labelOf(el) || el.placeholder || el.getAttribute('aria-label') || el.name || '')
+        .replace(/[(][^)]*[)]/g, '').replace(/\\s+/g, ' ').trim();
+      var value = tag === 'SELECT' && el.selectedOptions && el.selectedOptions.length ? el.selectedOptions[0].text : el.value;
+      lines.push((label ? label + ': ' : '') + value);
+    }
+    return lines;
+  }
+  // What to send for a form: the names we ask for first, then what detect() found.
+  function readForm(form) {
+    var d = detect(form);
+    var name = val(form, ['name', 'contact[name]', 'contact[Name]']);
+    if (name === undefined && d.names.length) {
+      var parts = [];
+      for (var i = 0; i < d.names.length; i++) if (d.names[i].value) parts.push(d.names[i].value);
+      name = parts.join(' ');
+    }
+    // No tick box in the form at all: sending it is the visitor asking to be contacted.
+    var consent = val(form, ['consent', 'contact[consent]']);
+    if (consent === undefined) consent = d.consent ? (d.consent.checked ? 'on' : '') : (d.boxes.length ? '' : 'on');
+    var pick = function (names, found) { var v = val(form, names); return v === undefined ? fieldText(found) : v; };
+    var message = pick(['message', 'contact[body]', 'contact[message]', 'contact[Message]'], d.message);
+    var more = extras(form, d);
+    if (more.length) message = (message ? message + '\\n\\n' : '') + more.join('\\n');
+    return {
+      name: name,
+      phone: pick(PHONE, d.phone),
+      email: pick(['email', 'contact[email]', 'contact[Email]'], d.email),
+      message: message ? message.slice(0, 2900) : message,
+      consent: consent,
+      website: val(form, ['website']) || fieldText(d.honey)
+    };
+  }
+  function hasPhone(form) {
+    for (var i = 0; i < PHONE.length; i++) if (form.elements[PHONE[i]]) return true;
+    return !!detect(form).phone;
+  }
   function opt(form, name) { return form.hasAttribute(name) || s.hasAttribute(name); }
 
   function bind(form) {
     if (form.__sc) return;
     form.__sc = true;
     var id = uid(), busy = false;
+    // data-copy: the form has its own way of sending (a mailer, a script): we only send a copy of what
+    // was submitted, and leave the page and the form exactly as they are.
+    var copy = opt(form, 'data-copy');
     form.addEventListener('submit', function (e) {
-      e.preventDefault();
+      if (!copy) e.preventDefault();
       if (busy) return;
       busy = true;
-      var btn = form.querySelector('[type=submit]');
+      var btn = copy ? null : form.querySelector('[type=submit]');
       if (btn) btn.disabled = true;
       var passthrough = opt(form, 'data-passthrough');
+      var f = readForm(form);
       send({
         _id: id,
-        name: val(form, ['name', 'contact[name]', 'contact[Name]']),
-        phone: val(form, PHONE),
-        email: val(form, ['email', 'contact[email]', 'contact[Email]']),
-        message: val(form, ['message', 'contact[body]', 'contact[message]', 'contact[Message]']),
-        consent: opt(form, 'data-consent-implied') ? 'on' : val(form, ['consent', 'contact[consent]']),
-        website: val(form, ['website'])
+        name: f.name,
+        phone: f.phone,
+        email: f.email,
+        message: f.message,
+        consent: opt(form, 'data-consent-implied') ? 'on' : f.consent,
+        website: f.website
       }, function (ok, errors) {
         busy = false;
+        id = uid();
         if (btn) btn.disabled = false;
         var ev = document.createEvent('CustomEvent');
         ev.initCustomEvent(ok ? 'simplecatch:sent' : 'simplecatch:error', true, false, { errors: errors });
         form.dispatchEvent(ev);
+        if (copy) return;
         // The form's own destination still gets it (it was only paused to send ours first).
         if (passthrough) { HTMLFormElement.prototype.submit.call(form); return; }
         if (ok) {
@@ -246,7 +348,8 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
           alert(errors.length ? errors.join('\\n') : (form.getAttribute('data-error') || 'Sending failed. Please try again.'));
         }
       });
-    });
+    // Capture: a copy is read before the form's own handler can clear it.
+    }, copy);
   }
 
   function bindAll() {
@@ -256,7 +359,7 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
     var f = document.querySelectorAll(sel);
     for (var i = 0; i < f.length; i++) {
       // A form picked only by the selector must have a phone field: a newsletter box can't be a lead.
-      if (!f[i].hasAttribute('data-simplecatch') && !val(f[i], PHONE)) continue;
+      if (!f[i].hasAttribute('data-simplecatch') && !hasPhone(f[i])) continue;
       bind(f[i]);
     }
   }

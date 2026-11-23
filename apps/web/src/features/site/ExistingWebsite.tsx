@@ -10,6 +10,7 @@ import { applyServerErrors } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
 import { DomainExpiry } from './DomainExpiry';
 import { EmbedGuide } from './EmbedGuide';
+import { FormLeadsGuide } from './FormLeadsGuide';
 import { tr } from '../../i18n';
 
 const formSchema = z.object({ websiteUrl: websiteUrlSchema });
@@ -191,6 +192,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
         </DialogShell>
       </Card>
       {canEdit && <EmbedGuide businessId={business.id} />}
+      {canEdit && <FormLeadsGuide businessId={business.id} />}
     </>
   );
 }

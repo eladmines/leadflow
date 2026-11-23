@@ -1097,4 +1097,34 @@ export const enPart3: Record<string, string> = {
     'Right after the customer decides (a time to talk, an appointment or a booking request), they get a link, photos and a video from the business. At most once a day.',
   'בקשות מהאתר ומהבוט בוואטסאפ, כולל הזמנות. לוחצים על בקשה, משבצים איש צוות ומאשרים.':
     'Requests from the website and the WhatsApp bot, booking requests included. Click one, assign a staff member and confirm.',
+  'לידים מהטופס שלכם': 'Leads from your form',
+  'הטופס באתר נשאר כמו שהוא. אנחנו מזהים בו לבד שם, טלפון, מייל והודעה, והפנייה נכנסת לדף "לידים" עם המקור שלה.':
+    'The form on your website stays as it is. We find the name, phone, email and message in it by ourselves, and the inquiry arrives in the Leads page with its source.',
+  'ודאו שהדבקתם באתר את השורה מהכרטיס שמעל (קבלת פניות והמקור שלהן מהאתר).':
+    'Make sure you pasted the line from the card above (Receive inquiries and their source from the website) into your website.',
+  'אמרו לנו איזה טופס לקלוט. הדרך הפשוטה: בתגית form של הטופס הוסיפו את המילה הזו:':
+    "Tell us which form to pick up. The simple way: in the form's form tag add this word:",
+  'אי אפשר לשנות את הטופס? על שורת הסקריפט כתבו את המזהה (id) של הטופס, כך (במקום contact-form):':
+    "Can't change the form? On the script line, write the form's id, like this (instead of contact-form):",
+  'הטופס שולח את עצמו בדרך אחרת (מייל, שירות חיצוני) ואתם רוצים שהוא ימשיך כרגיל? הוסיפו data-copy. נשלח לכאן עותק של הפנייה, ושום דבר בטופס או בדף לא משתנה:':
+    'Does the form send itself another way (email, an outside service) and you want it to carry on as usual? Add data-copy. A copy of the inquiry is sent here, and nothing in the form or the page changes:',
+  'מה אנחנו מזהים לבד:': 'What we recognise by ourselves:',
+  'שם: שדה עם "שם" בתווית או בשם, או autocomplete="name". שם פרטי ושם משפחה מתחברים.':
+    'Name: a field with "name" in its label or name, or autocomplete="name". First and last name are joined.',
+  'טלפון: שדה מסוג טלפון (type="tel"), או עם "טלפון" או "נייד" בתווית.':
+    'Phone: a phone field (type="tel"), or one with "phone" or "mobile" in its label.',
+  'מייל: שדה מסוג מייל, או עם "מייל" בתווית.':
+    'Email: an email field, or one with "email" in its label.',
+  'הודעה: תיבת טקסט גדולה (textarea).': 'Message: a large text box (textarea).',
+  'שדות נוספים, כמו תאריך האירוע, מצורפים להודעה עם שם השדה.':
+    "Other fields, such as the event date, are added to the message with the field's name.",
+  'שדה מוסתר שרק בוטים ממלאים מזוהה, ופנייה כזו נזרקת.':
+    'A hidden field that only bots fill is recognised, and such an inquiry is dropped.',
+  'שני דברים שחשוב לדעת: טלפון חובה (בלעדיו הפנייה לא תיכנס, כי ליד מזוהה לפי טלפון). ואם בטופס יש תיבת אישור והיא לא מסומנת, הפנייה לא תיכנס. בטופס בלי תיבת אישור, שליחת הטופס נחשבת בקשה שיחזרו אליכם.':
+    "Two things to know: a phone is required (without it the inquiry won't come in, because a lead is identified by phone). And if the form has a consent tick box that isn't ticked, the inquiry won't come in. In a form with no tick box, sending the form counts as a request to be contacted.",
+  'בדקו: שלחו פנייה לדוגמה מהאתר, ובדקו שהיא מופיעה ב':
+    'Check: send a sample inquiry from your website, and check that it appears in the ',
+  'דף הלידים': 'Leads page',
+  'ב-Shopify לא צריך לסמן את הטופס: במקום השורה הרגילה הדביקו את השורה הזו, והיא מחברת את טופס "צור קשר" לבד (הפנייה ממשיכה להגיע גם ל-Shopify):':
+    'On Shopify you don\'t need to mark the form: paste this line instead of the usual one, and it connects the "Contact us" form by itself (the inquiry still reaches Shopify too):',
 };

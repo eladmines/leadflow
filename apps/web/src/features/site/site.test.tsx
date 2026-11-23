@@ -154,14 +154,55 @@ describe('existing website (D-094)', () => {
     await user.click(screen.getByRole('tab', { name: 'Shopify' }));
     expect(screen.getByText(/theme\.liquid/)).toBeInTheDocument();
     // Shopify gets its own line, which also connects the contact form.
-    expect(screen.getByText(/data-forms=/)).toBeInTheDocument();
-    // The optional parts (forms as leads, named buttons and sections, ad tags) are hidden for now.
+    expect(screen.getAllByText(/data-forms=/).length).toBeGreaterThan(0);
+    // Named buttons, sections and ad tags are hidden for now; forms have a card of their own.
     expect(screen.queryByText('אפשרויות נוספות (לא חובה)')).not.toBeInTheDocument();
-    expect(screen.queryByText(/<form data-simplecatch/)).not.toBeInTheDocument();
     expect(screen.queryByText(/data-sc-click=/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: 'אחר' }));
     expect(screen.getByText(/שלחו את ההודעה הזו למי שבנה/)).toBeInTheDocument();
     expect(screen.getAllByText(/שלום, אפשר להוסיף את השורה הבאה/).length).toBeGreaterThan(0);
+  });
+
+  it("explains how the website's own form becomes leads: which form, a copy, what is recognised (F30)", async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...withWebsite(),
+      ...getSite(null),
+      [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
+        json(200, {
+          scriptUrl: 'https://app.example/api/v1/embed/sc.js',
+          key: 'K',
+          snippet:
+            '<script async src="https://app.example/api/v1/embed/sc.js" data-key="K"></script>',
+        }),
+      [`GET ${apiPaths.domain.domain(testBusiness.id)}`]: () =>
+        json(200, {
+          domain: 'shiran.co.il',
+          check: 'unsupported',
+          expiresAt: null,
+          checkedAt: null,
+          daysLeft: null,
+          checking: false,
+        }),
+    });
+    const { user } = renderApp(sitePath);
+    expect(await screen.findByRole('heading', { name: 'לידים מהטופס שלכם' })).toBeInTheDocument();
+    expect(await screen.findByText('<form data-simplecatch>')).toBeInTheDocument();
+    expect(screen.getByText('data-forms="#contact-form"')).toBeInTheDocument();
+    expect(screen.getByText('data-forms="#contact-form" data-copy')).toBeInTheDocument();
+    expect(screen.getByText('מה אנחנו מזהים לבד:')).toBeInTheDocument();
+    expect(screen.getByText(/טלפון חובה/)).toBeInTheDocument();
+    // Shopify has its own line, which connects the contact form without marking it.
+    expect(
+      screen.getAllByText(/data-key="K" data-forms="form\[action\*='\/contact'\]"/).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'דף הלידים' })).toHaveAttribute(
+      'href',
+      `/b/${testBusiness.id}/leads`,
+    );
+    // It folds away like the others.
+    await user.click(screen.getByRole('button', { name: 'הסתרה: לידים מהטופס שלכם' }));
+    expect(screen.queryByText('מה אנחנו מזהים לבד:')).not.toBeInTheDocument();
   });
 
   it('the preview and the visit-counter guide can be folded away, and stay that way (F33)', async () => {
