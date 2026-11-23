@@ -238,6 +238,14 @@ describe('where website leads come from (F26)', () => {
       await req(ctx.app, 'GET', `${apiPaths.reports.summary(o.id)}?days=7`, o.token)
     ).json();
     expect(rep.visits).toBe(3);
+    // F32: the server sees every page view, so pages, entry pages and devices need no script.
+    expect(rep.behavior).toMatchObject({
+      pageViews: 4, // the three entries and the move between the site's own pages
+      topPages: [{ path: '/', views: 4 }],
+      landing: [{ path: '/', visits: 3, leads: 0 }],
+      devices: { mobile: 3, tablet: 0, desktop: 0 },
+      clicks: { phone: 0, whatsapp: 0, email: 0 },
+    });
   });
 });
 

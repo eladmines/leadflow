@@ -962,6 +962,6 @@ export const enPart3: Record<string, string> = {
     'Landing pages: how many entered and how many left an inquiry',
   דף: 'Page',
   כניסות: 'Visits',
-  'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף.':
-    'Numbers are approximate: ad blockers and bots affect them, and a short page that fits the screen counts as seen to the end.',
+  'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף. לחיצות על טלפון, גלילה והתחלת טופס נמדדות רק באתר שמוטמע בו הסקריפט; באתר שנבנה ב-SimpleCatch נספרים צפיות, דפי נחיתה ומכשירים.':
+    'Numbers are approximate: ad blockers and bots affect them, and a short page that fits the screen counts as seen to the end. Taps on phone links, scrolling and forms started are measured only on a website with the script; on a site built in SimpleCatch, page views, landing pages and devices are counted.',
 };

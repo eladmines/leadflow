@@ -14,6 +14,8 @@ import {
   sectionSchema,
   themeSchema,
   type Attribution,
+  type BehaviorEvent,
+  normalizePagePath,
   type SiteTheme,
 } from '@simplecatch/shared';
 import { z } from 'zod';
@@ -31,7 +33,8 @@ import { PublishedSiteCache, type PublishedPage } from './cache';
 import type { StorageProvider } from '../integrations/storage';
 import { registerMediaServing } from '../modules/media/serve';
 import { readAttributionCookie, rememberVisit } from './attribution';
-import { isBotAgent, recordVisit } from '../modules/reports/visits';
+import { deviceOf, recordEvents } from '../modules/reports/events';
+import { isBotAgent, localDay, recordVisit } from '../modules/reports/visits';
 
 /**
  * Public-site server (F06): serves each business's *published* version by Host header,
@@ -128,7 +131,12 @@ export async function buildPublicApp({
 
   /** The business behind a site name, for counting visits (a few minutes' cache). */
   const visitTargets = new Map<string, { businessId: string; timezone: string; expires: number }>();
-  const countVisit = async (subdomain: string, attribution: Attribution) => {
+  const countView = async (
+    subdomain: string,
+    visit: { attribution: Attribution; entry: boolean },
+    pagePath: string,
+    ua: string | undefined,
+  ) => {
     let target = visitTargets.get(subdomain);
     if (!target || target.expires < Date.now()) {
       const site = await prisma.site.findUnique({
@@ -143,7 +151,12 @@ export async function buildPublicApp({
       };
       visitTargets.set(subdomain, target);
     }
-    await recordVisit(prisma, target.businessId, target.timezone, attribution);
+    const events: { k: BehaviorEvent; l: string }[] = [{ k: 'page', l: pagePath }];
+    if (visit.entry) {
+      events.push({ k: 'landing', l: pagePath }, { k: 'device', l: deviceOf(ua) });
+      await recordVisit(prisma, target.businessId, target.timezone, visit.attribution);
+    }
+    await recordEvents(prisma, target.businessId, localDay(target.timezone, new Date()), events);
   };
 
   const lookup = async (subdomain: string): Promise<PublishedPage> => {
@@ -224,9 +237,11 @@ export async function buildPublicApp({
         cookiePath: byPath ? `/s/${subdomain}` : '/',
         secure: (byPath ? config.APP_URL : origin).startsWith('https:'),
       });
-      // F31: counted in the background; a failure is logged, never shown to the visitor.
-      if (visit.entry && !isBotAgent(req.headers['user-agent']) && !req.headers['purpose']) {
-        countVisit(subdomain, visit.attribution).catch((err) =>
+      // F31/F32: counted in the background; a failure is logged, never shown to the visitor. The
+      // server sees every page view, so pages, entry pages and devices need no script on the site.
+      const ua = req.headers['user-agent'];
+      if (!isBotAgent(ua) && !req.headers['purpose']) {
+        countView(subdomain, visit, normalizePagePath(path), ua).catch((err) =>
           req.log.error({ errName: (err as Error)?.name }, 'visit count failed'),
         );
       }

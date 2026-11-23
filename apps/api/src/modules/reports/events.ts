@@ -17,6 +17,15 @@ const ONE_OF: Partial<Record<BehaviorEvent, readonly string[]>> = {
   form: ['start'],
 };
 
+/** The device class from the user agent (a site without the script can't read the window width). */
+export const deviceOf = (ua: string | undefined): 'mobile' | 'tablet' | 'desktop' =>
+  /ipad|tablet|kindle|silk|playbook/i.test(ua ?? '') ||
+  (/android/i.test(ua ?? '') && !/mobile/i.test(ua ?? ''))
+    ? 'tablet'
+    : /mobi|iphone|ipod|android|windows phone/i.test(ua ?? '')
+      ? 'mobile'
+      : 'desktop';
+
 /** The label to store, or null when the event isn't acceptable. */
 export function eventLabel(kind: BehaviorEvent, label: string | undefined): string | null {
   if (kind === 'page' || kind === 'landing') return normalizePagePath(label);

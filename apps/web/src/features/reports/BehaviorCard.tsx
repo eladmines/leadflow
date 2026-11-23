@@ -26,6 +26,8 @@ export function BehaviorCard({
   behavior: Behavior;
 }) {
   const devices = b.devices.mobile + b.devices.tablet + b.devices.desktop;
+  // Scroll, taps and forms started need the script on the site; SimpleCatch's own sites show dashes.
+  const scrolled = b.scroll.p50 + b.scroll.p90 > 0;
   return (
     <Card className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
@@ -59,8 +61,10 @@ export function BehaviorCard({
             <Fact label={tr('התחילו למלא טופס')} value={String(b.formStarts)} />
             <Fact
               label={tr('גללו עד סוף הדף')}
-              value={percent(b.scroll.p90, b.pageViews)}
-              note={tr('עד אמצע הדף: {0}', percent(b.scroll.p50, b.pageViews))}
+              value={scrolled ? percent(b.scroll.p90, b.pageViews) : '—'}
+              note={
+                scrolled ? tr('עד אמצע הדף: {0}', percent(b.scroll.p50, b.pageViews)) : undefined
+              }
             />
           </dl>
           <div className="grid gap-5 lg:grid-cols-2">
@@ -122,7 +126,7 @@ export function BehaviorCard({
           )}
           <p className="text-xs text-ink-muted">
             {tr(
-              'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף.',
+              'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף. לחיצות על טלפון, גלילה והתחלת טופס נמדדות רק באתר שמוטמע בו הסקריפט; באתר שנבנה ב-SimpleCatch נספרים צפיות, דפי נחיתה ומכשירים.',
             )}
           </p>
         </>
