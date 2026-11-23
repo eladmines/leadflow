@@ -134,6 +134,30 @@ describe('existing website (D-094)', () => {
       json(200, { business: { ...testBusiness, role, websiteUrl: 'https://www.shiran.co.il' } }),
   });
 
+  it('explains in plain steps how to add the visit counter, per site builder (F31)', async () => {
+    const snippet =
+      '<script async src="https://app.example/api/v1/embed/lead.js" data-key="K"></script>';
+    mockApi({
+      [meKey]: me(testUser),
+      ...withWebsite(),
+      ...getSite(null),
+      [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
+        json(200, { scriptUrl: 'https://app.example/api/v1/embed/lead.js', key: 'K', snippet }),
+    });
+    const { user } = renderApp(sitePath);
+    expect(await screen.findByText('העתיקו את השורה הזו:')).toBeInTheDocument();
+    expect(screen.getByText(snippet)).toBeInTheDocument();
+    // Wix first; the other builders and a message to whoever maintains the site are one tab away.
+    expect(screen.getByText(/הגדרות \(Settings\) ← קוד מותאם/)).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'WordPress' }));
+    expect(screen.getByText(/WPCode/)).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Shopify' }));
+    expect(screen.getByText(/theme\.liquid/)).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'אחר' }));
+    expect(screen.getByText(/שלחו את ההודעה הזו למי שבנה/)).toBeInTheDocument();
+    expect(screen.getAllByText(/שלום, אפשר להוסיף את השורה הבאה/).length).toBeGreaterThan(0);
+  });
+
   it('the owner adds the address from the picker page', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),

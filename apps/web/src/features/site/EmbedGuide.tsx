@@ -1,4 +1,6 @@
-import { Alert, Card, Spinner } from '../../components/ui';
+import { useState } from 'react';
+import { Alert, Card, ScrollTabs, Spinner } from '../../components/ui';
+import { cn } from '../../lib/cn';
 import { Paste, Step, Steps } from '../reports/AdsGuideDialog';
 import { errorMessage } from '../auth/serverErrors';
 import { useEmbedInfo } from './embedApi';
@@ -26,14 +28,122 @@ import { tr } from '../../i18n';
 // const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
 //   `<script async src="${info.scriptUrl}" data-key="${info.key}" data-forms="form[action*='/contact']" data-consent-implied data-passthrough></script>`;
 
+const TABS = ['wix', 'wordpress', 'shopify', 'other'] as const;
+type Tab = (typeof TABS)[number];
+
+/** Where to paste it, in plain words, for the most common site builders (their menus change now and then). */
+function PlatformSteps({ tab, message }: { tab: Tab; message: string }) {
+  if (tab === 'wix') {
+    return (
+      <Steps>
+        <Step>{tr('בעורך של Wix: הגדרות (Settings) ← קוד מותאם (Custom code).')}</Step>
+        <Step>{tr('לחצו "הוספת קוד" (Add code) והדביקו את השורה שהעתקתם.')}</Step>
+        <Step>
+          {tr(
+            'בחרו "כל הדפים" ו"סוף ה-Body" (Body – end), לחצו "החלה", ואז פרסמו את האתר. בדרך כלל צריך חבילה בתשלום של Wix.',
+          )}
+        </Step>
+      </Steps>
+    );
+  }
+  if (tab === 'wordpress') {
+    return (
+      <Steps>
+        <Step>{tr('התקינו את התוסף החינמי WPCode (תוספים ← הוספת תוסף, וחפשו "WPCode").')}</Step>
+        <Step>{tr('Code Snippets ← Header & Footer, והדביקו את השורה בתיבה "Footer". שמרו.')}</Step>
+      </Steps>
+    );
+  }
+  if (tab === 'shopify') {
+    return (
+      <Steps>
+        <Step>
+          {tr(
+            'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את layout/theme.liquid.',
+          )}
+        </Step>
+        <Step>{tr('הדביקו את השורה ממש לפני התגית </body> ושמרו.')}</Step>
+      </Steps>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm text-ink">
+        {tr('לא בטוחים איך? שלחו את ההודעה הזו למי שבנה או מתחזק את האתר:')}
+      </p>
+      <Paste text={message} />
+    </div>
+  );
+}
+
+/**
+ * A looping picture of the three moves (copy, find "custom code", paste and save). Pure CSS: a tile
+ * lights up in turn; nothing moves for people who ask for less motion.
+ */
+function HowItWorks() {
+  return (
+    <div className="flex flex-col gap-2" aria-hidden>
+      <style>{`
+        @keyframes sc-glow { 0%, 30% { opacity: 1; transform: scale(1); } 34%, 100% { opacity: .5; transform: scale(.98); } }
+        @keyframes sc-pulse { 0%, 12% { transform: scale(1); } 6% { transform: scale(1.12); } }
+        @keyframes sc-grow { 0%, 66% { width: 0; } 80%, 100% { width: 100%; } }
+        @keyframes sc-pop { 0%, 80% { transform: scale(0); } 88%, 100% { transform: scale(1); } }
+        .sc-tile { animation: sc-glow 6s infinite; }
+        .sc-t2 { animation-delay: 2s; }
+        .sc-t3 { animation-delay: 4s; }
+        .sc-pill { animation: sc-pulse 6s infinite; }
+        .sc-paste { animation: sc-grow 6s infinite; }
+        .sc-check { animation: sc-pop 6s infinite; transform-origin: center; }
+        @media (prefers-reduced-motion: reduce) { .sc-tile, .sc-pill, .sc-paste, .sc-check { animation: none; opacity: 1; transform: none; width: 100%; } }
+      `}</style>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="sc-tile flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
+          <p className="text-sm font-medium text-ink">{tr('1. העתיקו')}</p>
+          <div className="h-6 rounded bg-surface-sunken" />
+          <span className="sc-pill self-start rounded-md bg-brand-600 px-2 py-0.5 text-xs text-white">
+            {tr('העתקה')}
+          </span>
+        </div>
+        <div className="sc-tile sc-t2 flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
+          <p className="text-sm font-medium text-ink">{tr('2. מצאו "קוד מותאם"')}</p>
+          <div className="h-3 rounded bg-surface-sunken" />
+          <div className="rounded bg-brand-100 px-2 py-1 text-xs font-medium text-brand-700">
+            {tr('קוד מותאם (Custom code)')}
+          </div>
+          <div className="h-3 rounded bg-surface-sunken" />
+        </div>
+        <div className="sc-tile sc-t3 flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
+          <p className="text-sm font-medium text-ink">{tr('3. הדביקו ושמרו')}</p>
+          <div className="h-6 overflow-hidden rounded bg-surface-sunken">
+            <div className="sc-paste h-full rounded bg-brand-200" />
+          </div>
+          <span className="sc-check self-start text-sm font-medium text-emerald-700">
+            ✓ {tr('מוכן')}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * F30/F31: counting visits to a website built elsewhere. The owner pastes one script tag. (Leads
  * from forms, named buttons and sections, and the Shopify steps are commented out for now.)
  */
 export function EmbedGuide({ businessId }: { businessId: string }) {
   const info = useEmbedInfo(businessId, true);
+  const [tab, setTab] = useState<Tab>('wix');
+  const labels: Record<Tab, string> = {
+    wix: 'Wix',
+    wordpress: 'WordPress',
+    shopify: 'Shopify',
+    other: tr('אחר'),
+  };
+  const message = info.data
+    ? `${tr('שלום, אפשר להוסיף את השורה הבאה לכל דפי האתר, ממש לפני התגית </body>? זה מונה כניסות לאתר.')}\n\n${info.data.snippet}`
+    : '';
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-semibold text-ink">{tr('קבלת פניות והמקור שלהן מהאתר')}</h2>
         <p className="text-sm text-ink-muted">
@@ -47,15 +157,51 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
         </p>
         */}
       </div>
+      <p className="text-sm text-ink">
+        {tr(
+          'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. מאותו רגע, בדף "דוחות" רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.',
+        )}
+      </p>
+      <HowItWorks />
       {info.isPending && <Spinner size="sm" label={tr('טוענים…')} />}
       {info.isError && <Alert tone="danger">{errorMessage(info.error)}</Alert>}
       {info.data && (
         <Steps>
           <Step>
-            {tr(
-              'הדביקו את השורה הזו באתר, לפני סגירת התגית </body> (או בתיבת "קוד מותאם" של בונה האתרים):',
-            )}
+            {tr('העתיקו את השורה הזו:')}
             <Paste text={info.data.snippet} />
+          </Step>
+          <Step>
+            {tr(
+              'הדביקו אותה באתר, בכל הדפים, בסוף הדף (לפני התגית </body>). איך עושים את זה בבונה שלכם?',
+            )}
+            <ScrollTabs
+              label={tr('בונה אתרים')}
+              activeKey={tab}
+              className="rounded-xl bg-surface-sunken p-1"
+            >
+              {TABS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t}
+                  onClick={() => setTab(t)}
+                  className={cn(
+                    'shrink-0 rounded-lg px-3 py-1.5 text-sm',
+                    tab === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
+                  )}
+                >
+                  {labels[t]}
+                </button>
+              ))}
+            </ScrollTabs>
+            <PlatformSteps tab={tab} message={message} />
+          </Step>
+          <Step>
+            {tr(
+              'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.',
+            )}
           </Step>
           {/*
           <Step>

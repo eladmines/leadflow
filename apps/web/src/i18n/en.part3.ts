@@ -982,4 +982,35 @@ export const enPart3: Record<string, string> = {
   'רענון: {0}': 'Refresh: {0}',
   'אפשר לחבר את האתר הקיים כדי לספור כמה גולשים נכנסו אליו ומאיפה הגיעו.':
     'You can connect your existing website to count how many visitors came and where from.',
+  'בעורך של Wix: הגדרות (Settings) ← קוד מותאם (Custom code).':
+    'In the Wix editor: Settings → Custom code.',
+  'לחצו "הוספת קוד" (Add code) והדביקו את השורה שהעתקתם.':
+    'Click "Add code" and paste the line you copied.',
+  'בחרו "כל הדפים" ו"סוף ה-Body" (Body – end), לחצו "החלה", ואז פרסמו את האתר. בדרך כלל צריך חבילה בתשלום של Wix.':
+    'Choose "All pages" and "Body – end", click "Apply", then publish the site. A paid Wix plan is usually required.',
+  'התקינו את התוסף החינמי WPCode (תוספים ← הוספת תוסף, וחפשו "WPCode").':
+    'Install the free WPCode plugin (Plugins → Add New, and search "WPCode").',
+  'Code Snippets ← Header & Footer, והדביקו את השורה בתיבה "Footer". שמרו.':
+    'Code Snippets → Header & Footer, and paste the line into the "Footer" box. Save.',
+  'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את layout/theme.liquid.':
+    'In Shopify admin: Online Store → Themes → ⋯ → Edit code, and open layout/theme.liquid.',
+  'הדביקו את השורה ממש לפני התגית </body> ושמרו.':
+    'Paste the line right before the </body> tag and save.',
+  'לא בטוחים איך? שלחו את ההודעה הזו למי שבנה או מתחזק את האתר:':
+    'Not sure how? Send this message to whoever built or maintains your website:',
+  'שלום, אפשר להוסיף את השורה הבאה לכל דפי האתר, ממש לפני התגית </body>? זה מונה כניסות לאתר.':
+    'Hello, could you add the following line to every page of the website, right before the </body> tag? It is a visit counter.',
+  '1. העתיקו': '1. Copy',
+  '2. מצאו "קוד מותאם"': '2. Find "Custom code"',
+  '3. הדביקו ושמרו': '3. Paste and save',
+  'קוד מותאם (Custom code)': 'Custom code',
+  מוכן: 'Done',
+  'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. מאותו רגע, בדף "דוחות" רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.':
+    'How it works: you paste one line into your website, once. From then on, the Reports page shows how many visitors came, where they came from (Google, Facebook, another link) and which pages they viewed. No personal details are collected.',
+  'העתיקו את השורה הזו:': 'Copy this line:',
+  'הדביקו אותה באתר, בכל הדפים, בסוף הדף (לפני התגית </body>). איך עושים את זה בבונה שלכם?':
+    'Paste it into your website, on all pages, at the end of the page (before the </body> tag). How do you do that in your site builder?',
+  'בונה אתרים': 'Site builder',
+  'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.':
+    'Check that it works: open your website (preferably in a private window), and a minute later go back to Reports. The "Website visits" card will go up. If it stays 0, make sure you pasted it on all pages and that an ad blocker isn\'t active.',
 };
