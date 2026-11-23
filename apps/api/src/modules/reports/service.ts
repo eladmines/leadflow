@@ -10,6 +10,7 @@ import {
 } from '@simplecatch/shared';
 import type { TenantContext } from '../../plugins/tenant';
 import { ensureStages } from '../leads/service';
+import { sectionMap } from '../sites/published-content';
 
 const DAY = 86_400_000;
 
@@ -51,6 +52,7 @@ export class ReportService {
   private behavior(
     rows: { kind: string; label: string; count: number }[],
     leads: { attribution: unknown }[],
+    known: { path: string; name: string }[],
   ): Behavior {
     const sum = (kind: string, label?: string) =>
       rows
@@ -69,8 +71,28 @@ export class ReportService {
         leadsByLanding.set(path, (leadsByLanding.get(path) ?? 0) + 1);
       }
     }
+    // Sections: every section of the published site (in page order, even with no views yet), then any
+    // others that were counted (a site elsewhere, an older version), most seen first.
+    const seenViews = by('section');
+    const seenClicks = by('sclick');
+    const pageViewsOf = by('page');
+    const toRow = (path: string, name: string) => ({
+      path,
+      name,
+      views: seenViews.get(`${path}#${name}`) ?? 0,
+      clicks: seenClicks.get(`${path}#${name}`) ?? 0,
+      pageViews: pageViewsOf.get(path) ?? 0,
+    });
+    const knownKeys = new Set(known.map((k) => `${k.path}#${k.name}`));
+    const extra = [...new Set([...seenViews.keys(), ...seenClicks.keys()])]
+      .filter((label) => !knownKeys.has(label))
+      .map((label) =>
+        toRow(label.slice(0, label.indexOf('#')), label.slice(label.indexOf('#') + 1)),
+      )
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 30);
+    const sections = [...known.map((k) => toRow(k.path, k.name)), ...extra];
     const landings = by('landing');
-    const pages = by('page');
     // A landing page with inquiries but no counted visits (a site without the script) isn't shown.
     return {
       pageViews: sum('page'),
@@ -93,14 +115,7 @@ export class ReportService {
         email: sum('click', 'email'),
       },
       scroll: { p50: sum('scroll', '50'), p90: sum('scroll', '90') },
-      sections: [...by('section')]
-        .map(([label, views]) => {
-          const at = label.indexOf('#');
-          const path = label.slice(0, at);
-          return { path, name: label.slice(at + 1), views, pageViews: pages.get(path) ?? 0 };
-        })
-        .sort((a, b) => b.views - a.views)
-        .slice(0, 30),
+      sections,
       ctas: [...by('cta')]
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
@@ -226,7 +241,15 @@ export class ReportService {
         campaigns.get(ck)!.visits += v.count;
       }
     }
-    const behavior = this.behavior(eventRows, leads);
+    const published = await this.prisma.site.findUnique({
+      where: { businessId: ctx.businessId },
+      select: { publishedVersion: { select: { content: true } } },
+    });
+    const behavior = this.behavior(
+      eventRows,
+      leads,
+      sectionMap(published?.publishedVersion?.content),
+    );
     const byLeads = (a: AttributionReportRow, b: AttributionReportRow) =>
       b.won - a.won || b.leads - a.leads || b.visits - a.visits;
 

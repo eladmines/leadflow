@@ -337,12 +337,19 @@ describe('leads from a website built elsewhere (F30)', () => {
           { k: 'section', l: '/sale/#pricing' },
           { k: 'section', l: '/sale?x=1#pricing' },
           { k: 'section', l: '/sale#  ' }, // no name
+          { k: 'sclick', l: '/sale/#pricing' },
           { k: 'section', l: 'no hash at all' },
           { k: 'section', l: `/${'p'.repeat(100)}#${'n'.repeat(80)}` },
         ],
       });
       const b = await behavior(o);
-      expect(b.sections).toContainEqual({ path: '/sale', name: 'pricing', views: 2, pageViews: 1 });
+      expect(b.sections).toContainEqual({
+        path: '/sale',
+        name: 'pricing',
+        views: 2,
+        clicks: 1,
+        pageViews: 1,
+      });
       expect(b.sections).toHaveLength(2);
       const long = b.sections.find((x: { name: string }) => x.name.startsWith('n'))!;
       expect(`${long.path}#${long.name}`.length).toBeLessThanOrEqual(100);

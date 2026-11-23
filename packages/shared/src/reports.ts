@@ -53,6 +53,8 @@ export const behaviorSchema = z.object({
       path: z.string(),
       name: z.string(),
       views: z.number().int(),
+      /** Taps or clicks inside it. */
+      clicks: z.number().int(),
       /** Views of that page, to read `views` as a share. */
       pageViews: z.number().int(),
     }),

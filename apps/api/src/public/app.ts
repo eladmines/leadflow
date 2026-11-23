@@ -11,8 +11,6 @@ import {
   renderSiteMessagePage,
   siteError,
   siteText,
-  sectionSchema,
-  themeSchema,
   type Attribution,
   type BehaviorEvent,
   normalizePagePath,
@@ -35,6 +33,7 @@ import { registerMediaServing } from '../modules/media/serve';
 import { readAttributionCookie, rememberVisit } from './attribution';
 import { deviceOf, recordEvents } from '../modules/reports/events';
 import { SITE_SCRIPT } from '../modules/embed/site-script';
+import { publishedContent, sectionMap } from '../modules/sites/published-content';
 import { isBotAgent, localDay, recordVisit } from '../modules/reports/visits';
 
 /**
@@ -83,13 +82,8 @@ const siteEventSchema = z.object({
     .array(z.object({ k: z.enum(['click', 'scroll', 'form']), l: z.string().max(20).optional() }))
     .max(12),
   sec: z.array(z.string().max(60)).max(30).optional(),
-});
-
-const publishedContent = z.object({
-  theme: themeSchema,
-  sections: z.array(sectionSchema),
-  pages: z.array(z.object({ slug: z.string(), sections: z.array(sectionSchema) })).catch([]),
-  business: z.object({ name: z.string() }),
+  /** The section a tap was inside (its element id). */
+  clk: z.string().max(60).optional(),
 });
 
 export async function buildPublicApp({
@@ -162,22 +156,9 @@ export async function buildPublicApp({
       },
     });
     if (!site) return null;
-    const sections = new Map<string, { path: string; name: string }>();
-    const content = publishedContent.safeParse(site.publishedVersion?.content);
-    if (content.success) {
-      const pages = [
-        { path: '/', list: content.data.sections },
-        ...content.data.pages.map((p) => ({ path: `/${p.slug}`, list: p.sections })),
-      ];
-      for (const page of pages) {
-        const seen = new Map<string, number>();
-        for (const sec of page.list) {
-          const n = (seen.get(sec.type) ?? 0) + 1;
-          seen.set(sec.type, n);
-          sections.set(sec.id, { path: page.path, name: n > 1 ? `${sec.type}-${n}` : sec.type });
-        }
-      }
-    }
+    const sections = new Map(
+      sectionMap(site.publishedVersion?.content).map((x) => [x.id, { path: x.path, name: x.name }]),
+    );
     const target = {
       businessId: site.businessId,
       timezone: site.business.timezone,
@@ -349,6 +330,8 @@ export async function buildPublicApp({
       const sec = target.sections.get(id.replace(/^s-/, ''));
       if (sec) events.push({ k: 'section', l: `${sec.path}#${sec.name}` });
     }
+    const clicked = body.data.clk && target.sections.get(body.data.clk.replace(/^s-/, ''));
+    if (clicked) events.push({ k: 'sclick', l: `${clicked.path}#${clicked.name}` });
     try {
       await recordEvents(prisma, target.businessId, localDay(target.timezone, new Date()), events);
     } catch (err) {

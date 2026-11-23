@@ -978,4 +978,5 @@ export const enPart3: Record<string, string> = {
     'Want to know which parts of a page visitors really see (pricing, FAQ…)? Give a part a name, and we count it when it was on screen for at least half a second:',
   'או, בלי לגעת באתר עצמו, כתבו על תגית הסקריפט:':
     'Or, without touching the site itself, write on the script tag:',
+  לחצו: 'Clicked',
 };

@@ -78,6 +78,8 @@ export const BEHAVIOR_EVENTS = [
   'cta',
   /** A section of a page was on screen for a moment. Label: `<page path>#<section name>`. */
   'section',
+  /** A tap or click inside a section. Label: `<page path>#<section name>`. */
+  'sclick',
 ] as const;
 export type BehaviorEvent = (typeof BEHAVIOR_EVENTS)[number];
 

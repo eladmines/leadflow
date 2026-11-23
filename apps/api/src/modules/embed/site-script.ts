@@ -3,7 +3,7 @@ import { CLICK_KIND_JS, WATCH_SECTIONS_JS } from './script-parts';
 /**
  * F32: the one script on SimpleCatch's own sites (D-192): first-party (served from the site's own
  * address, CSP `script-src 'self'`), no cookies, no storage, no visitor id. It reports to the same
- * address (`__sc`), as counts: taps on phone/WhatsApp/email links, a form started, how far they
+ * address (`__sc`), as counts: taps on phone/WhatsApp/email links, taps inside each section, a form started, how far they
  * scrolled and which sections were on screen. Pages, entry pages and devices are counted by the server
  * from the request itself, so they are not sent from here. Plain ES5.
  */
@@ -26,11 +26,19 @@ export const SITE_SCRIPT = `(function () {
     x.send(data);
   }
 
+  // A tap or click: on a contact link (which kind), and inside which section (its element id).
   document.addEventListener('click', function (e) {
-    var el = e.target;
-    while (el && el.nodeType === 1 && el.tagName !== 'A') el = el.parentNode;
-    var kind = el && el.getAttribute ? clickKind(el.getAttribute('href') || '') : '';
-    if (kind) emit({ p: path, ev: [{ k: 'click', l: kind }] }, true);
+    var el = e.target, link = null, section = '';
+    while (el && el.nodeType === 1) {
+      if (!link && el.tagName === 'A') link = el;
+      if (!section && el.id && el.id.indexOf('s-') === 0 && (el.tagName === 'SECTION' || el.tagName === 'HEADER')) section = el.id;
+      el = el.parentNode;
+    }
+    var kind = link ? clickKind(link.getAttribute('href') || '') : '';
+    if (!kind && !section) return;
+    var body = { p: path, ev: kind ? [{ k: 'click', l: kind }] : [] };
+    if (section) body.clk = section;
+    emit(body, true);
   }, true);
 
   var started = false;

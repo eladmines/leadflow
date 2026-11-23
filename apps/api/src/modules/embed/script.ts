@@ -81,6 +81,7 @@ export const EMBED_SCRIPT = `(function () {
   emit(first, false);
 
 ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
+  var sectionItems = [];
   // Buttons the owner chose to count: data-sc-click="name" on the element, or on the script tag
   // data-track="selector=name; selector=name" for builders that can't add attributes.
   var TRACK = [];
@@ -107,6 +108,12 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
         }
       }
     }
+    // A click inside a section the owner named counts for that section (the innermost one).
+    for (var q = e.target; q && q.nodeType === 1; q = q.parentNode) {
+      var hit = null;
+      for (var si = 0; si < sectionItems.length; si++) if (sectionItems[si].el === q) hit = sectionItems[si];
+      if (hit) { events.push({ k: 'sclick', l: path + '#' + hit.key }); break; }
+    }
     var el = e.target;
     while (el && el.nodeType === 1 && el.tagName !== 'A') el = el.parentNode;
     var href = el && el.getAttribute ? (el.getAttribute('href') || '') : '';
@@ -128,7 +135,7 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
   // data-track-sections="selector=name; selector=name". Counted once per page view when seen.
   var seenSections = [];
   (function () {
-    var items = [], byName = {};
+    var items = sectionItems, byName = {};
     function add(el, name) { if (el && name && !byName[name]) { byName[name] = 1; items.push({ el: el, key: name }); } }
     var tagged = document.querySelectorAll('[data-sc-section]');
     for (var i = 0; i < tagged.length; i++) add(tagged[i], tagged[i].getAttribute('data-sc-section'));

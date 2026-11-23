@@ -300,23 +300,35 @@ describe('where website leads come from (F26)', () => {
       ],
       sec: [`s-${services.id}`, `s-${contact.id}`, 's-not-a-section', `s-${services.id}`],
     });
-    await report({ p: '/', ev: [], sec: [`s-${services.id}`] }, 'Googlebot/2.1');
+    // A tap inside a section (with a contact tap in the same request), and one inside an unknown id.
+    await report({ p: '/', ev: [{ k: 'click', l: 'phone' }], clk: `s-${services.id}` });
+    await report({ p: '/', ev: [], clk: 's-not-a-section' });
+    await report(
+      { p: '/', ev: [], sec: [`s-${services.id}`], clk: `s-${contact.id}` },
+      'Googlebot/2.1',
+    );
     await report('not json');
     await new Promise((r) => setTimeout(r, 100));
 
     const rep = (
       await req(ctx.app, 'GET', `${apiPaths.reports.summary(o.id)}?days=7`, o.token)
     ).json();
-    expect(rep.behavior.clicks.phone).toBe(1);
+    expect(rep.behavior.clicks.phone).toBe(2);
     expect(rep.behavior.scroll.p50).toBe(1);
     expect(rep.behavior.formStarts).toBe(1);
-    expect(rep.behavior.sections).toEqual(
-      expect.arrayContaining([
-        { path: '/', name: 'services', views: 1, pageViews: expect.any(Number) },
-        { path: '/', name: 'contact', views: 1, pageViews: expect.any(Number) },
-      ]),
-    );
-    expect(rep.behavior.sections).toHaveLength(2);
+    // Every section of the site is listed, in page order, even those nobody saw yet.
+    const names = (rep.behavior.sections as { path: string; name: string }[]).map((x) => x.name);
+    expect(names).toEqual(sections.map((x) => x.type));
+    const row = (id: string) =>
+      rep.behavior.sections[sections.findIndex((x) => x.id === id)] as {
+        views: number;
+        clicks: number;
+        pageViews: number;
+      };
+    expect(row(services.id)).toMatchObject({ views: 1, clicks: 1 });
+    expect(row(contact.id)).toMatchObject({ views: 1, clicks: 0 });
+    expect(row(sections[0]!.id)).toMatchObject({ views: 0, clicks: 0 });
+    expect(row(services.id).pageViews).toBeGreaterThan(0);
   });
 });
 

@@ -141,9 +141,9 @@ describe('reports page', () => {
         clicks: { phone: 7, whatsapp: 9, email: 1 },
         scroll: { p50: 100, p90: 50 },
         sections: [
-          { path: '/', name: 'services', views: 30, pageViews: 120 },
-          { path: '/', name: 'services-2', views: 6, pageViews: 120 },
-          { path: '/', name: 'my-offer', views: 12, pageViews: 120 },
+          { path: '/', name: 'services', views: 30, clicks: 9, pageViews: 120 },
+          { path: '/', name: 'services-2', views: 6, clicks: 0, pageViews: 120 },
+          { path: '/', name: 'my-offer', views: 12, clicks: 3, pageViews: 120 },
         ],
         ctas: [{ name: 'קבע תור', count: 14 }],
         formStarts: 12,

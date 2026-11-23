@@ -255,6 +255,34 @@ describe('embed script (F30, F31)', () => {
       });
     });
 
+    it('counts a tap inside a section, for a SimpleCatch site and for a section the owner named', () => {
+      // SimpleCatch: the section's own element id, with the contact kind in the same request.
+      document.body.innerHTML = `<main><section id="s-abc"><p id="p">Text</p><a id="t" href="tel:+972501234567">Call</a></section></main><a id="out" href="/">Home</a>`;
+      history.replaceState(null, '', '/');
+      loadSite('/__sc.js');
+      document.getElementById('p')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.getElementById('t')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.getElementById('out')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(sent.map((s) => s.body)).toEqual([
+        { p: '/', ev: [], clk: 's-abc' },
+        { p: '/', ev: [{ k: 'click', l: 'phone' }], clk: 's-abc' },
+      ]);
+
+      // An external site: a section the owner named.
+      sent.length = 0;
+      document.body.innerHTML = `<div id="faq" data-sc-section="faq"><button id="b">Open</button></div><p id="x">x</p>`;
+      history.replaceState(null, '', '/help');
+      load();
+      sent.length = 0;
+      document.getElementById('b')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.getElementById('x')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(
+        sent
+          .filter((s) => s.url.endsWith('/api/v1/embed/event'))
+          .flatMap((s) => s.body.events as { k: string; l: string }[]),
+      ).toEqual([{ k: 'sclick', l: '/help#faq' }]);
+    });
+
     it('on a SimpleCatch site at its own address the path is the page path', () => {
       document.body.innerHTML = `<main><section id="s-abc"></section></main>`;
       history.replaceState(null, '', '/');

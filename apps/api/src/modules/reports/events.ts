@@ -35,7 +35,7 @@ export const deviceOf = (ua: string | undefined): 'mobile' | 'tablet' | 'desktop
 export function eventLabel(kind: BehaviorEvent, label: string | undefined): string | null {
   if (kind === 'page' || kind === 'landing') return normalizePagePath(label);
   if (kind === 'cta') return normalizeCtaName(label) || null;
-  if (kind === 'section') {
+  if (kind === 'section' || kind === 'sclick') {
     // `<path>#<name>`: rebuilt from its parts, so the stored label is always clean and short.
     const at = (label ?? '').indexOf('#');
     return at < 0 ? null : sectionLabel(label!.slice(0, at), label!.slice(at + 1)) || null;

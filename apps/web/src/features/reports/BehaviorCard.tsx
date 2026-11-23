@@ -109,26 +109,26 @@ export function BehaviorCard({
                     <th className="py-1.5 text-start font-medium">{tr('סקשן')}</th>
                     <th className="py-1.5 text-start font-medium">{tr('דף')}</th>
                     <th className="py-1.5 text-end font-medium">{tr('נצפה')}</th>
+                    <th className="py-1.5 text-end font-medium">{tr('לחצו')}</th>
                     <th className="py-1.5 text-end font-medium">{tr('מצפיות הדף')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[...b.sections]
-                    .sort((x, y) => x.path.localeCompare(y.path) || y.views - x.views)
-                    .map((x) => (
-                      <tr key={`${x.path}#${x.name}`} className="border-t border-surface-border">
-                        <td className="py-2 font-medium text-ink">{sectionName(x.name)}</td>
-                        <td className="py-2">
-                          <bdi dir="ltr" className="text-ink-muted">
-                            {x.path}
-                          </bdi>
-                        </td>
-                        <td className="py-2 text-end tabular-nums text-ink">{x.views}</td>
-                        <td className="py-2 text-end tabular-nums text-ink">
-                          {x.pageViews >= x.views ? percent(x.views, x.pageViews) : '—'}
-                        </td>
-                      </tr>
-                    ))}
+                  {b.sections.map((x) => (
+                    <tr key={`${x.path}#${x.name}`} className="border-t border-surface-border">
+                      <td className="py-2 font-medium text-ink">{sectionName(x.name)}</td>
+                      <td className="py-2">
+                        <bdi dir="ltr" className="text-ink-muted">
+                          {x.path}
+                        </bdi>
+                      </td>
+                      <td className="py-2 text-end tabular-nums text-ink">{x.views}</td>
+                      <td className="py-2 text-end tabular-nums text-ink">{x.clicks}</td>
+                      <td className="py-2 text-end tabular-nums text-ink">
+                        {x.pageViews >= x.views ? percent(x.views, x.pageViews) : '—'}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
