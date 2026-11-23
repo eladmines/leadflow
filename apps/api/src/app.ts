@@ -45,6 +45,8 @@ import {
   gmailPublicRoutes,
 } from './modules/channels/routes';
 import { createGmailApi, type GmailApi } from './integrations/gmail';
+import { createDomainExpiry, type DomainExpiry } from './integrations/domain';
+import { domainTenantRoutes } from './modules/domain/routes';
 import { createMetaApi, type MetaApi } from './integrations/meta';
 import {
   emailWebhookRoutes,
@@ -72,6 +74,8 @@ declare module 'fastify' {
     metaApi: MetaApi;
     /** Gmail's API for the connected inbox (F29). */
     gmailApi: GmailApi;
+    /** When a domain expires, from its registry (F33). */
+    domainExpiry: DomainExpiry;
   }
 }
 
@@ -94,6 +98,8 @@ interface AppDeps {
   metaApi?: MetaApi;
   /** Defaults to Google when `GOOGLE_CLIENT_ID` is set. Tests inject a MemoryGmailApi. */
   gmailApi?: GmailApi;
+  /** Defaults to the registries (`DOMAIN_LOOKUP=live`). Tests inject a MemoryDomainExpiry. */
+  domainExpiry?: DomainExpiry;
   /** A server shared with the public-site app (one port, D-119); it calls `app.routing`. */
   serverFactory?: FastifyServerFactory;
 }
@@ -110,6 +116,7 @@ export async function buildApp({
   messengerSender,
   metaApi,
   gmailApi,
+  domainExpiry,
   serverFactory,
 }: AppDeps) {
   const app = Fastify({
@@ -192,6 +199,7 @@ export async function buildApp({
   await app.register(emailWebhookRoutes);
   app.decorate('metaApi', metaApi ?? createMetaApi(config));
   app.decorate('gmailApi', gmailApi ?? createGmailApi(config));
+  app.decorate('domainExpiry', domainExpiry ?? createDomainExpiry(config));
   await app.register(channelPublicRoutes);
   await app.register(gmailPublicRoutes);
   await app.register(embedPublicRoutes);
@@ -212,6 +220,7 @@ export async function buildApp({
       await scope.register(conversationTenantRoutes);
       await scope.register(channelTenantRoutes);
       await scope.register(embedTenantRoutes);
+      await scope.register(domainTenantRoutes);
     }),
     { prefix: apiPaths.businesses.tenantPrefix },
   );

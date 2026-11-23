@@ -3,6 +3,7 @@ import { buildApp } from './app';
 import { startTaskReminders } from './modules/tasks/reminders';
 import { startBookingNudges } from './modules/whatsapp/nudges';
 import { startGmailSync } from './modules/whatsapp/gmail-sync';
+import { startDomainWatch } from './modules/domain/watch';
 import { createEmailSender } from './integrations/email';
 import { loadConfig } from './config/env';
 import { createPrisma } from './lib/db';
@@ -49,11 +50,13 @@ const publicApp = await buildPublicApp({
 let stopReminders = () => {};
 let stopNudges = () => {};
 let stopGmail = () => {};
+let stopDomain = () => {};
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'shutting down');
   stopReminders();
   stopNudges();
   stopGmail();
+  stopDomain();
   await Promise.all([app.close(), publicApp.close()]);
   await prisma.$disconnect();
   process.exit(0);
@@ -65,6 +68,7 @@ process.on('SIGTERM', () => void shutdown('SIGTERM'));
 stopReminders = startTaskReminders(app);
 stopNudges = startBookingNudges(app);
 stopGmail = startGmailSync(app);
+stopDomain = startDomainWatch(app);
 if (singlePort) {
   await publicApp.ready();
   await app.listen({ port: config.PORT, host: '0.0.0.0' });

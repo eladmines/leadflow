@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Alert, Button, Card, DialogShell, Field } from '../../components/ui';
 import { applyServerErrors } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
+import { DomainExpiry } from './DomainExpiry';
 import { EmbedGuide } from './EmbedGuide';
 import { tr } from '../../i18n';
 
@@ -111,6 +112,8 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
             )}
           </span>
         </p>
+
+        <DomainExpiry businessId={business.id} canEdit={canEdit} />
 
         <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-muted">
           <iframe

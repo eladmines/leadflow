@@ -8,6 +8,7 @@ export type { EmailSender } from './types';
 export { MemoryEmailSender } from './memory';
 export { SmtpEmailSender } from './smtp';
 export {
+  domainExpiryTemplate,
   inviteTemplate,
   newLeadTemplate,
   passwordChangedTemplate,

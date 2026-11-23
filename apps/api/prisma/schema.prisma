@@ -149,6 +149,13 @@ model Business {
   openingHours           Json?          @map("opening_hours")
   /// Existing website outside SimpleCatch (D-094); shown in "האתר שלי", never managed by SimpleCatch.
   websiteUrl             String?        @map("website_url") @db.VarChar(300)
+  /// F33: when the existing website's domain expires, read from the registry (RDAP, or ISOC-IL's WHOIS
+  /// for .il). `domainCheck`: ok | unsupported | failed. `domainRemindedDays`: the tightest reminder
+  /// (60/30/7/0) already sent for this expiry, so each goes out once.
+  domainExpiresAt        DateTime?      @map("domain_expires_at") @db.Timestamptz(3)
+  domainCheckedAt        DateTime?      @map("domain_checked_at") @db.Timestamptz(3)
+  domainCheck            String?        @map("domain_check") @db.VarChar(12)
+  domainRemindedDays     Int?           @map("domain_reminded_days")
   timezone               String         @default("Asia/Jerusalem") @db.VarChar(64)
   /// 'he' | 'en' (D-143): what its customers get (website, WhatsApp, emails).
   language               String         @default("he") @db.VarChar(2)

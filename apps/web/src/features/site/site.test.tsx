@@ -158,6 +158,68 @@ describe('existing website (D-094)', () => {
     expect(screen.getAllByText(/שלום, אפשר להוסיף את השורה הבאה/).length).toBeGreaterThan(0);
   });
 
+  it('shows when the domain expires, warns when it is close, and the owner can check now (F33)', async () => {
+    const soon = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    let checked = 0;
+    mockApi({
+      [meKey]: me(testUser),
+      ...withWebsite(),
+      ...getSite(null),
+      [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
+        json(200, {
+          scriptUrl: 'https://app.example/api/v1/embed/lead.js',
+          key: 'K',
+          snippet: '<script></script>',
+        }),
+      [`GET ${apiPaths.domain.domain(testBusiness.id)}`]: () =>
+        json(200, {
+          domain: 'shiran.co.il',
+          check: 'ok',
+          expiresAt: soon,
+          checkedAt: soon,
+          daysLeft: 20,
+        }),
+      [`POST ${apiPaths.domain.domain(testBusiness.id)}`]: () => {
+        checked += 1;
+        return json(200, {
+          domain: 'shiran.co.il',
+          check: 'ok',
+          expiresAt: soon,
+          checkedAt: soon,
+          daysLeft: 19,
+        });
+      },
+    });
+    const { user } = renderApp(sitePath);
+    const line = await screen.findByText(/הדומיין shiran\.co\.il פג ב-.*בעוד 20 ימים/);
+    // Under 30 days: the warning colour.
+    expect(line.closest('div')).toHaveClass('bg-danger-50');
+    await user.click(screen.getByRole('button', { name: 'בדיקה עכשיו' }));
+    expect(await screen.findByText(/בעוד 19 ימים/)).toBeInTheDocument();
+    expect(checked).toBe(1);
+  });
+
+  it('says plainly when the domain can not be read, and hides the button from non-owners (F33)', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...withWebsite('EMPLOYEE'),
+      ...getSite(null),
+      [`GET ${apiPaths.domain.domain(testBusiness.id)}`]: () =>
+        json(200, {
+          domain: 'shiran.xyz',
+          check: 'unsupported',
+          expiresAt: null,
+          checkedAt: null,
+          daysLeft: null,
+        }),
+    });
+    renderApp(sitePath);
+    expect(
+      await screen.findByText(/לא ניתן לקרוא אוטומטית את תאריך הפקיעה של shiran\.xyz/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'בדיקה עכשיו' })).not.toBeInTheDocument();
+  });
+
   it('the owner adds the address from the picker page', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),

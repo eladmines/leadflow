@@ -7,6 +7,7 @@ import { loadConfig, type AppConfig } from '../src/config/env';
 import { createPrisma } from '../src/lib/db';
 import type { LogStream } from '../src/lib/logger';
 import { MemoryEmailSender } from '../src/integrations/email';
+import type { DomainExpiry } from '../src/integrations/domain';
 
 export const TEST_WEB_ORIGIN = 'http://localhost:5173';
 
@@ -28,6 +29,8 @@ export function testConfig(overrides: Partial<Record<string, string>> = {}): App
     MEDIA_DIR: path.join(os.tmpdir(), `leadflow-test-media-${process.pid}`),
     // Copying sample photos into every new site would slow the suite; a dedicated test enables it.
     SITE_STOCK_IMAGES: 'false',
+    // Tests never ask a real registry (F33); a test that needs an answer injects one.
+    DOMAIN_LOOKUP: 'off',
     ...overrides,
   });
 }
@@ -38,6 +41,8 @@ export async function createTestApp(
     config?: AppConfig;
     prisma?: PrismaClient;
     email?: MemoryEmailSender;
+    /** Answers for domain lookups (F33). */
+    domainExpiry?: DomainExpiry;
     /** Captures log output; set `LOG_LEVEL` in the config to choose the level. */
     logStream?: LogStream;
   } = {},
@@ -45,7 +50,13 @@ export async function createTestApp(
   const config = opts.config ?? testConfig();
   const prisma = opts.prisma ?? createPrisma(config.DATABASE_URL);
   const email = opts.email ?? new MemoryEmailSender();
-  const app = await buildApp({ config, prisma, emailSender: email, logStream: opts.logStream });
+  const app = await buildApp({
+    config,
+    prisma,
+    emailSender: email,
+    logStream: opts.logStream,
+    domainExpiry: opts.domainExpiry,
+  });
   await app.ready();
   return {
     app,

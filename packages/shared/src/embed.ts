@@ -86,20 +86,24 @@ export type BehaviorEvent = (typeof BEHAVIOR_EVENTS)[number];
 export const embedEventRequestSchema = z.object({
   key: z.string().min(10).max(120),
   events: z
-    .array(z.object({ k: z.enum(BEHAVIOR_EVENTS), l: z.string().max(200).optional().catch(undefined) }))
+    .array(
+      z.object({ k: z.enum(BEHAVIOR_EVENTS), l: z.string().max(200).optional().catch(undefined) }),
+    )
     .max(12),
 });
 export type EmbedEventRequest = z.infer<typeof embedEventRequestSchema>;
 
 /** The name of a counted button: plain text, one line, at most 40 characters; empty means not countable. */
 export function normalizeCtaName(input: string | undefined | null): string {
-  return (input ?? '')
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\u0000-\u001f\u007f]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 40)
-    .trim();
+  return (
+    (input ?? '')
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u001f\u007f]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 40)
+      .trim()
+  );
 }
 
 /** A section as one label: its page path and name, at most 100 characters in all. */

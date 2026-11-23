@@ -266,6 +266,41 @@ ${button(params.link, en ? 'Open in SimpleCatch' : 'לפתיחה ב-SimpleCatch'
   return { subject, html, text };
 }
 
+/** F33: the website's domain is about to expire (or has). */
+export function domainExpiryTemplate(
+  params: { domain: string; expiresText: string; daysLeft: number; link: string },
+  lang: Language = 'he',
+): RenderedEmail {
+  const en = lang === 'en';
+  const expired = params.daysLeft < 0;
+  const subject = expired
+    ? en
+      ? `Your domain ${params.domain} has expired`
+      : `הדומיין ${params.domain} פג`
+    : en
+      ? `Your domain ${params.domain} expires in ${params.daysLeft} days`
+      : `הדומיין ${params.domain} פג בעוד ${params.daysLeft} ימים`;
+  const lead = expired
+    ? en
+      ? 'Renew it now: until then your website and any email on this domain may stop working.'
+      : 'כדאי לחדש מיד: עד אז האתר וכל מייל על הדומיין עלולים להפסיק לעבוד.'
+    : en
+      ? 'Renew it with the company you bought it from, so your website and email keep working.'
+      : 'כדאי לחדש אותו אצל החברה שממנה קניתם אותו, כדי שהאתר והמייל ימשיכו לעבוד.';
+  const when = en ? 'Expires' : 'מועד פקיעה';
+  const html = layout(
+    subject,
+    `<h1 style="font-size:20px;margin:0 0 16px;">${escapeHtml(subject)}</h1>
+<p style="margin:0 0 4px;font-size:16px;"><strong>${escapeHtml(params.domain)}</strong></p>
+<p style="margin:0 0 12px;color:#6b7280;">${when}: ${escapeHtml(params.expiresText)}</p>
+<p style="margin:0 0 8px;">${lead}</p>
+${button(params.link, en ? 'Open in SimpleCatch' : 'לפתיחה ב-SimpleCatch', lang)}`,
+    lang,
+  );
+  const text = [subject, `${when}: ${params.expiresText}`, '', lead, '', params.link].join('\n');
+  return { subject, html, text };
+}
+
 /** Security notice after a password change (O-008). */
 export function passwordChangedTemplate(
   params: { fullName: string; resetLink: string },

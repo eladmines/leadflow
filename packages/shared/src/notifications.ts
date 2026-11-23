@@ -15,6 +15,7 @@ export const NOTIFICATION_TYPES = [
   'quote.accepted',
   'quote.rejected',
   'task.due',
+  'domain.expiring',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -100,6 +101,18 @@ export function notificationText(n: Pick<Notification, 'type' | 'data'>): {
       return { title: 'הצעת מחיר נדחתה', body: `${str(d.name)} · הצעה מס׳ ${str(d.number)}` };
     case 'task.due':
       return { title: 'הגיע הזמן למשימה', body: str(d.title) };
+    case 'domain.expiring': {
+      const days = typeof d.days === 'number' ? d.days : 0;
+      return {
+        title: days < 0 ? 'הדומיין של האתר פג' : 'הדומיין של האתר עומד לפוג',
+        body:
+          days < 0
+            ? `${str(d.domain)} · פג לפני ${-days} ימים. חדשו אותו מיד.`
+            : days === 0
+              ? `${str(d.domain)} · פג היום`
+              : `${str(d.domain)} · פג בעוד ${days} ימים`,
+      };
+    }
   }
 }
 
@@ -112,6 +125,7 @@ export function notificationPath(businessId: string, n: Pick<Notification, 'type
     return `${base}/quotes/${str(d.quoteId)}`;
   }
   if (n.type === 'task.due' && !str(d.leadId)) return `${base}/tasks`;
+  if (n.type === 'domain.expiring') return `${base}/site`;
   return `${base}/leads/${str(d.leadId)}`;
 }
 

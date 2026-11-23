@@ -1008,4 +1008,13 @@ export const enPart3: Record<string, string> = {
   'בונה אתרים': 'Site builder',
   'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.':
     'Check that it works: open your website (preferably in a private window), and a minute later go back to Reports. The "Website visits" card will go up. If it stays 0, make sure you pasted it on all pages and that an ad blocker isn\'t active.',
+  'הדומיין {0} פג ב-{1}. חדשו אותו מיד.': 'The domain {0} expired on {1}. Renew it right away.',
+  'הדומיין {0} פג היום ({1}).': 'The domain {0} expires today ({1}).',
+  'הדומיין {0} פג ב-{1}, בעוד {2} ימים.': 'The domain {0} expires on {1}, in {2} days.',
+  'לא ניתן לקרוא אוטומטית את תאריך הפקיעה של {0}: לסיומת הזו אין בדיקה ציבורית.':
+    "The expiry date of {0} can't be read automatically: this ending has no public lookup.",
+  'לא הצלחנו לבדוק עכשיו מתי {0} פג. ננסה שוב בקרוב.':
+    "We couldn't check when {0} expires right now. We'll try again soon.",
+  'עוד לא בדקנו מתי {0} פג.': "We haven't checked when {0} expires yet.",
+  'בדיקה עכשיו': 'Check now',
 };

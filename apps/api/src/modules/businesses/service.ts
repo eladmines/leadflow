@@ -86,7 +86,16 @@ export class BusinessService {
     if (input.phone !== undefined) data.phone = input.phone;
     if (input.address !== undefined) data.address = input.address;
     if (input.serviceAreas !== undefined) data.serviceAreas = input.serviceAreas;
-    if (input.websiteUrl !== undefined) data.websiteUrl = input.websiteUrl;
+    if (input.websiteUrl !== undefined) {
+      data.websiteUrl = input.websiteUrl;
+      // A different address is a different domain (F33): forget what we read about the old one.
+      if (input.websiteUrl !== current.websiteUrl) {
+        data.domainExpiresAt = null;
+        data.domainCheckedAt = null;
+        data.domainCheck = null;
+        data.domainRemindedDays = null;
+      }
+    }
     if (input.language !== undefined) data.language = input.language;
     if (input.openingHours !== undefined) {
       data.openingHours = input.openingHours ?? Prisma.DbNull;

@@ -14,6 +14,7 @@ import { notificationsApiPaths } from './notifications';
 import { conversationsApiPaths } from './conversations';
 import { channelsApiPaths } from './channels';
 import { embedApiPaths } from './embed';
+import { domainApiPaths } from './domain';
 
 /**
  * Every API path, grouped by feature. Neither the API nor the web hardcodes path strings.
@@ -36,4 +37,5 @@ export const apiPaths = {
   conversations: conversationsApiPaths,
   channels: channelsApiPaths,
   embed: embedApiPaths,
+  domain: domainApiPaths,
 } as const;
