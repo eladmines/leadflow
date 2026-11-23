@@ -184,13 +184,7 @@ describe('existing website (D-094)', () => {
     const { user } = renderApp(sitePath);
     expect(await screen.findByRole('heading', { name: 'לידים מהטופס שלכם' })).toBeInTheDocument();
     // One attribute on the script line; no restrictions listed beyond a name and a phone.
-    // A form's id, and the line ready to copy: the user's own line with data-forms added at the end.
-    expect(await screen.findByText('<form id="contact-form"> … </form>')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        '<script async src="https://app.example/api/v1/embed/sc.js" data-key="K" data-forms="#contact-form"></script>',
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('data-forms="#contact-form"')).toBeInTheDocument();
     expect(screen.getByText(/בטופס צריך לפחות שם וטלפון/)).toBeInTheDocument();
     expect(screen.queryByText(/data-copy/)).not.toBeInTheDocument();
     expect(screen.queryByText(/תיבת אישור/)).not.toBeInTheDocument();
@@ -207,7 +201,7 @@ describe('existing website (D-094)', () => {
     );
     // It folds away like the others.
     await user.click(screen.getByRole('button', { name: 'הסתרה: לידים מהטופס שלכם' }));
-    expect(screen.queryByText('<form id="contact-form"> … </form>')).not.toBeInTheDocument();
+    expect(screen.queryByText('data-forms="#contact-form"')).not.toBeInTheDocument();
   });
 
   it('the preview and the visit-counter guide can be folded away, and stay that way (F33)', async () => {

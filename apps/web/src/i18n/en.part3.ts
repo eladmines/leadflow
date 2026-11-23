@@ -1139,8 +1139,4 @@ export const enPart3: Record<string, string> = {
     'On Shopify: paste this line instead of the usual one, and it connects the "Contact us" form:',
   'העתיקו את השורה הזו, והדביקו אותה באתר בכל הדפים, לפני התגית </body>:':
     'Copy this line, and paste it into your website on all pages, before the </body> tag:',
-  'מצאו בקוד של הטופס שלכם את התגית form ואת ה-id שלה. למשל, בטופס כזה ה-id הוא contact-form:':
-    "Find the form tag and its id in your form's code. For example, in a form like this the id is contact-form:",
-  'עכשיו הוסיפו את ה-id הזה בסוף השורה שהדבקתם באתר, לפני סימן >. בשורה שלמטה כבר הוספנו לכם את זה: העתיקו אותה, והחליפו את contact-form ב-id של הטופס שלכם.':
-    "Now add that id at the end of the line you pasted into your website, before the > sign. In the line below we've already added it for you: copy it, and replace contact-form with the id of your form.",
 };
