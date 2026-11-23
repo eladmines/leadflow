@@ -323,21 +323,9 @@ const initialTexts = (saved: Saved, name: string) =>
     BOT_TEXT_KEYS.map((k) => [k, toTags(saved.texts[k] ?? saved.defaults[k], saved.flow, name)]),
   ) as Record<BotTextKey, string>;
 
-/** An example date for the preview: next week at 10:00. */
-function exampleWhen() {
-  const d = new Date();
-  d.setDate(d.getDate() + 7);
-  const day = new Intl.DateTimeFormat('he-IL', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(d);
-  return `${day} בשעה 10:00`;
-}
-
 /**
- * The business's own wording for the bot's messages, with a live preview. Messages to customers
- * are Hebrew (D-100), so the boxes and previews are right-to-left in either app language.
+ * The business's own wording for the bot's messages, in a list that scrolls by itself. Messages to
+ * customers are Hebrew (D-100), so the boxes are right-to-left in either app language.
  */
 function BotTextsForm({ businessId, settings }: { businessId: string; settings: Saved }) {
   const business = useCurrentBusiness();
@@ -361,7 +349,6 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
       box?.setSelectionRange(at + token.length, at + token.length);
     });
   };
-  const values = { business: business.name, service: 'תספורת נשים', when: exampleWhen() };
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -392,60 +379,55 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
           'הלקוחות מקבלים את ההודעות בעברית. שם העסק נכתב כמו שהוא. השירות ומועד התור משתנים מלקוח ללקוח, ולכן מוסיפים אותם בכפתורים שמתחת לכל הודעה והם מתמלאים לפי מה שהלקוח בחר. הכפתורים והרשימות בוואטסאפ נשארים קבועים.',
         )}
       </p>
-      {botTextKeysFor(settings.flow).map((k) => (
-        <div key={k} className="flex flex-col gap-2">
-          <Textarea
-            label={tr(botTextLabels[k])}
-            dir="rtl"
-            lang="he"
-            rows={3}
-            ref={(el) => {
-              boxes.current[k] = el;
-            }}
-            value={texts[k]}
-            error={errors[k]}
-            onChange={(e) => edit(k, e.target.value)}
-          />
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
-            <span>{tr('הוספה:')}</span>
-            {INSERTABLE.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => insert(k, tagOf(settings.flow, p))}
-                aria-label={`${tr('הוספה:')} ${chipLabel(settings.flow, p)} (${tr(botTextLabels[k])})`}
-                className="rounded-full border border-surface-border px-2 py-0.5 text-ink hover:bg-surface-sunken"
-              >
-                + {chipLabel(settings.flow, p)}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-xs text-ink-muted">{tr('כך הלקוח יראה את זה:')}</span>
-              <p
-                dir="rtl"
-                lang="he"
-                className="max-w-md whitespace-pre-line break-words rounded-2xl rounded-ee-sm bg-success-50 px-3 py-2 text-sm text-ink ring-1 ring-success-600/20"
-              >
-                {fillBotText(toCodes(texts[k], business.name), values) || '—'}
-              </p>
+      {/* The messages scroll on their own; the note above and the Save button below stay put. */}
+      <div className="scrollbar-visible flex max-h-[55vh] flex-col gap-5 overflow-y-auto pe-2">
+        {botTextKeysFor(settings.flow).map((k) => (
+          <div key={k} className="flex flex-col gap-2">
+            <Textarea
+              label={tr(botTextLabels[k])}
+              dir="rtl"
+              lang="he"
+              rows={3}
+              ref={(el) => {
+                boxes.current[k] = el;
+              }}
+              value={texts[k]}
+              error={errors[k]}
+              onChange={(e) => edit(k, e.target.value)}
+            />
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+              <span>{tr('הוספה:')}</span>
+              {INSERTABLE.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => insert(k, tagOf(settings.flow, p))}
+                  aria-label={`${tr('הוספה:')} ${chipLabel(settings.flow, p)} (${tr(botTextLabels[k])})`}
+                  className="rounded-full border border-surface-border px-2 py-0.5 text-ink hover:bg-surface-sunken"
+                >
+                  + {chipLabel(settings.flow, p)}
+                </button>
+              ))}
             </div>
-            {toCodes(texts[k], business.name) !== settings.defaults[k] && (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => edit(k, toTags(settings.defaults[k], settings.flow, business.name))}
-                aria-label={tr('החזרת ברירת המחדל: {0}', tr(botTextLabels[k]))}
-              >
-                <RotateCcw aria-hidden className="h-4 w-4" />
-                {tr('ברירת מחדל')}
-              </Button>
-            )}
+            <div className="flex justify-end">
+              {toCodes(texts[k], business.name) !== settings.defaults[k] && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    edit(k, toTags(settings.defaults[k], settings.flow, business.name))
+                  }
+                  aria-label={tr('החזרת ברירת המחדל: {0}', tr(botTextLabels[k]))}
+                >
+                  <RotateCcw aria-hidden className="h-4 w-4" />
+                  {tr('ברירת מחדל')}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {saved && <Alert tone="success">{tr('ההודעות נשמרו.')}</Alert>}
       <div>

@@ -114,6 +114,49 @@ describe('SelectMenu: compact, hidden label, and which way it opens', () => {
     expect(screen.getByText('סינון לפי שלב')).toHaveClass('sr-only');
   });
 
+  it('a short list opens downwards whenever it fits below, even near the bottom; a tall one flips', async () => {
+    const user = userEvent.setup();
+    const original = HTMLElement.prototype.getBoundingClientRect;
+    // 768px-high window; the field ends 140px above the bottom edge, with more room above.
+    HTMLElement.prototype.getBoundingClientRect = () =>
+      ({ top: 560, bottom: 628, left: 0, right: 100, width: 100, height: 32 }) as DOMRect;
+    try {
+      // Two options need about 100px: they fit below, so the menu does not jump upwards.
+      const small = render(
+        <SelectMenu label="שלב" options={options} value="" onChange={() => {}} />,
+      );
+      await user.click(screen.getByRole('combobox', { name: 'שלב' }));
+      expect(screen.getByRole('listbox').parentElement).toHaveClass('top-full');
+      small.unmount();
+      // Seven options need about 290px: they do not, and there is more room above.
+      const many = Array.from({ length: 7 }, (_, i) => ({
+        value: String(i),
+        label: `אפשרות ${i}`,
+      }));
+      render(<SelectMenu label="שלב" options={many} value="" onChange={() => {}} />);
+      await user.click(screen.getByRole('combobox', { name: 'שלב' }));
+      expect(screen.getByRole('listbox').parentElement).toHaveClass('bottom-full');
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = original;
+    }
+  });
+
+  it('never scrolls the page: not when it opens, not when the pointer moves over the options', async () => {
+    const user = userEvent.setup();
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+    try {
+      render(<SelectMenu label="שלב" options={options} value="a" onChange={() => {}} />);
+      await user.click(screen.getByRole('combobox', { name: 'שלב' }));
+      await user.hover(screen.getByRole('option', { name: 'כל השלבים' }));
+      await user.hover(screen.getByRole('option', { name: 'נוצר קשר' }));
+      await user.keyboard('{ArrowUp}');
+      expect(scroll).not.toHaveBeenCalled();
+    } finally {
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
+  });
+
   it('opens downwards by default, and upwards near the bottom of the screen', async () => {
     const user = userEvent.setup();
     const { unmount } = render(

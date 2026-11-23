@@ -75,6 +75,8 @@ export function SelectMenu({
   const [query, setQuery] = useState('');
   // Opens upwards when the room below is small and there is more above (near the bottom of a page or pop-up).
   const [up, setUp] = useState(false);
+  // True while the highlight is moved by the keyboard (or at opening): then the list follows it.
+  const followActive = useRef(true);
 
   const hasSearch = searchable ?? options.length > 8;
   const q = query.trim().toLocaleLowerCase();
@@ -91,21 +93,29 @@ export function SelectMenu({
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  // Keep the highlighted option in view.
+  // Keep the highlighted option in view, inside the list only. The page never scrolls for it (that
+  // made the menu jump away from the pointer), and the pointer moving over options changes nothing.
   useEffect(() => {
-    if (!open) return;
-    listRef.current?.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView?.({
-      block: 'nearest',
-    });
+    if (!open || !followActive.current) return;
+    const list = listRef.current;
+    const item = list?.querySelector<HTMLElement>(`[data-index="${active}"]`);
+    if (!list || !item) return;
+    if (item.offsetTop < list.scrollTop) list.scrollTop = item.offsetTop;
+    else if (item.offsetTop + item.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = item.offsetTop + item.offsetHeight - list.clientHeight;
+    }
   }, [open, active]);
 
   function openList() {
     if (disabled) return;
     const rect = buttonRef.current?.getBoundingClientRect();
     if (rect) {
+      // The list's own height (rows of about 40px, with the search box, at most 15rem plus a margin).
+      const needed = Math.min(options.length * 40 + 8, 240) + (hasSearch ? 56 : 0) + 8;
       const below = window.innerHeight - rect.bottom;
-      setUp(below < 260 && rect.top > below);
+      setUp(below < needed && rect.top > below);
     }
+    followActive.current = true;
     setQuery('');
     setActive(
       Math.max(
@@ -135,6 +145,7 @@ export function SelectMenu({
       }
       return;
     }
+    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) followActive.current = true;
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -285,7 +296,10 @@ export function SelectMenu({
                 data-index={i}
                 role="option"
                 aria-selected={o.value === value}
-                onMouseMove={() => active !== i && setActive(i)}
+                onMouseMove={() => {
+                  followActive.current = false;
+                  if (active !== i) setActive(i);
+                }}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(i)}
                 className={cn(

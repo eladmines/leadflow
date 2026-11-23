@@ -470,7 +470,7 @@ describe('WhatsApp conversations inbox', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it('edits the bot messages with a live preview, and keeps unchanged ones as defaults', async () => {
+  it('edits the bot messages in a scrolling list (no preview), and keeps unchanged ones as defaults', async () => {
     const fetchMock = mockApi(
       routes(
         { connected: true, numbers: [] },
@@ -501,8 +501,14 @@ describe('WhatsApp conversations inbox', () => {
 
     await user.clear(confirmed);
     await user.type(confirmed, `נתראה ב${testBusiness.name}!`);
-    // The box and the preview now read the same.
-    expect(screen.getAllByText(`נתראה ב${testBusiness.name}!`)).toHaveLength(2);
+    // No preview of the customer's view any more: the box is the only place the text shows.
+    expect(screen.queryByText('כך הלקוח יראה את זה:')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('אישור תור')).toHaveValue(`נתראה ב${testBusiness.name}!`);
+    // The messages scroll by themselves; the note above and the Save button stay outside the scroller.
+    const scroller = screen.getByLabelText('אישור תור').closest('.overflow-y-auto') as HTMLElement;
+    expect(scroller).toHaveClass('max-h-[55vh]');
+    expect(scroller).toContainElement(screen.getByLabelText('הודעת פתיחה'));
+    expect(scroller).not.toContainElement(screen.getByRole('button', { name: 'שמירת ההודעות' }));
     await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
     expect(await screen.findByText('ההודעות נשמרו.')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toEqual([
