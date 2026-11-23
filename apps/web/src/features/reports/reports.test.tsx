@@ -63,6 +63,9 @@ describe('reports page', () => {
     expect(await screen.findByText('12')).toBeInTheDocument();
     expect(screen.getByText('+3 לעומת התקופה הקודמת')).toBeInTheDocument();
     expect(screen.getByText('25%')).toBeInTheDocument();
+    // F31: the visits tile (the fixture has 120 visits).
+    expect(screen.getAllByText('כניסות לאתר').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('120').length).toBeGreaterThan(0);
     expect(screen.getByText('2.5 שע׳')).toBeInTheDocument();
     expect(screen.getByRole('listitem', { name: '28.10: 5 פניות' })).toBeInTheDocument();
 

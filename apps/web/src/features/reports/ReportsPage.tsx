@@ -1,5 +1,5 @@
 import { can, leadSourceLabels, REPORT_RANGES, type ReportSummary } from '@simplecatch/shared';
-import { Coins, Target, Timer, Users, type LucideIcon } from 'lucide-react';
+import { Coins, Eye, Target, Timer, Users, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Card, Spinner } from '../../components/ui';
@@ -73,7 +73,18 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
   const decided = r.byStage.filter((s) => s.kind !== 'OPEN').reduce((a, s) => a + s.count, 0);
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <StatTile
+          icon={Eye}
+          tone="bg-rose-500"
+          label={tr('כניסות לאתר')}
+          value={String(r.visits)}
+          note={
+            r.visits === 0
+              ? tr('הספירה מתחילה אחרי חיבור האתר')
+              : tr('{0} פניות בתקופה', r.leads.current)
+          }
+        />
         <StatTile
           icon={Users}
           tone="bg-violet-500"
