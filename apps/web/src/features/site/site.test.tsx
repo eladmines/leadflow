@@ -153,6 +153,14 @@ describe('existing website (D-094)', () => {
     expect(screen.getByText(/WPCode/)).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: 'Shopify' }));
     expect(screen.getByText(/theme\.liquid/)).toBeInTheDocument();
+    // Shopify gets its own line, which also connects the contact form.
+    expect(screen.getByText(/data-forms=/)).toBeInTheDocument();
+    // The optional parts are back, in plain words: forms as leads, named buttons and sections, ad tags.
+    expect(screen.getByRole('heading', { name: 'אפשרויות נוספות (לא חובה)' })).toBeInTheDocument();
+    expect(screen.getByText(/<form data-simplecatch/)).toBeInTheDocument();
+    expect(screen.getByText(/data-sc-click="book-appointment"/)).toBeInTheDocument();
+    expect(screen.getByText(/data-sc-section="pricing"/)).toBeInTheDocument();
+    expect(screen.getByText(/איזו מודעה הביאה כל פנייה/)).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: 'אחר' }));
     expect(screen.getByText(/שלחו את ההודעה הזו למי שבנה/)).toBeInTheDocument();
     expect(screen.getAllByText(/שלום, אפשר להוסיף את השורה הבאה/).length).toBeGreaterThan(0);

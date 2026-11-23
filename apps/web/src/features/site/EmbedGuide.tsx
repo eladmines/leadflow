@@ -8,33 +8,30 @@ import { errorMessage } from '../auth/serverErrors';
 import { useEmbedInfo } from './embedApi';
 import { tr } from '../../i18n';
 
-// For now only the visit count is offered (the script tag). The rest of the guide is kept below,
-// commented out, to bring back when forms, buttons, sections and Shopify are offered again:
-//
-// const CTA_EXAMPLE = '<button data-sc-click="book-appointment">Book</button>';
-// const TRACK_EXAMPLE = 'data-track="#book-btn=book-appointment; .buy-now=buy"';
-//
-// const SECTION_EXAMPLE = '<section data-sc-section="pricing">…</section>';
-// const SECTIONS_TRACK_EXAMPLE = 'data-track-sections="#pricing=pricing; .faq-block=faq"';
-//
-// const FORM_EXAMPLE = `<form data-simplecatch data-success="Thank you!">
-//   <input name="name" required>
-//   <input name="phone" required>
-//   <input name="email">
-//   <textarea name="message"></textarea>
-//   <label><input type="checkbox" name="consent" required> I agree to be contacted</label>
-//   <button type="submit">Send</button>
-// </form>`;
-//
-// /** The script tag for a Shopify theme: binds the contact form by its address and keeps Shopify's own copy. */
-// const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
-//   `<script async src="${info.scriptUrl}" data-key="${info.key}" data-forms="form[action*='/contact']" data-consent-implied data-passthrough></script>`;
+const CTA_EXAMPLE = '<button data-sc-click="book-appointment">Book</button>';
+const TRACK_EXAMPLE = 'data-track="#book-btn=book-appointment"';
+
+const SECTION_EXAMPLE = '<section data-sc-section="pricing">…</section>';
+const SECTIONS_TRACK_EXAMPLE = 'data-track-sections="#pricing=pricing"';
+
+const FORM_EXAMPLE = `<form data-simplecatch data-success="Thank you!">
+  <input name="name" required>
+  <input name="phone" required>
+  <input name="email">
+  <textarea name="message"></textarea>
+  <label><input type="checkbox" name="consent" required> I agree to be contacted</label>
+  <button type="submit">Send</button>
+</form>`;
+
+/** The line for a Shopify theme: it also connects the "Contact us" form and lets Shopify keep its own copy. */
+const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
+  `<script async src="${info.scriptUrl}" data-key="${info.key}" data-forms="form[action*='/contact']" data-consent-implied data-passthrough></script>`;
 
 const TABS = ['wix', 'wordpress', 'shopify', 'other'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Where to paste it, in plain words, for the most common site builders (their menus change now and then). */
-function PlatformSteps({ tab, message }: { tab: Tab; message: string }) {
+function PlatformSteps({ tab, message, shopify }: { tab: Tab; message: string; shopify: string }) {
   if (tab === 'wix') {
     return (
       <Steps>
@@ -64,7 +61,17 @@ function PlatformSteps({ tab, message }: { tab: Tab; message: string }) {
             'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את layout/theme.liquid.',
           )}
         </Step>
-        <Step>{tr('הדביקו את השורה ממש לפני התגית </body> ושמרו.')}</Step>
+        <Step>
+          {tr(
+            'הדביקו ממש לפני התגית </body> ושמרו. כאן הדביקו את השורה הזו במקום השורה שהעתקתם למעלה, כי היא מחברת גם את טופס "צור קשר" של Shopify:',
+          )}
+          <Paste text={shopify} />
+          <span className="text-xs text-ink-muted">
+            {tr(
+              'כדי שפנייה תגיע אלינו כליד, הטלפון בטופס צריך להיות שדה חובה (בערכות רבות הוא רשות). הפנייה ממשיכה להגיע גם ל-Shopify.',
+            )}
+          </span>
+        </Step>
       </Steps>
     );
   }
@@ -146,8 +153,8 @@ function BuilderIcon({ tab }: { tab: Tab }) {
 }
 
 /**
- * F30/F31: counting visits to a website built elsewhere. The owner pastes one script tag. (Leads
- * from forms, named buttons and sections, and the Shopify steps are commented out for now.)
+ * F30-F32: connecting a website built elsewhere: one line to paste (it counts visits and behavior),
+ * and, if wanted, forms that become leads, named buttons and sections, and ad tags.
  */
 export function EmbedGuide({ businessId }: { businessId: string }) {
   const info = useEmbedInfo(businessId, true);
@@ -168,15 +175,10 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold text-ink">{tr('קבלת פניות והמקור שלהן מהאתר')}</h2>
           <p className="text-sm text-ink-muted">
-            {tr('אפשר לחבר את האתר הקיים כדי לספור כמה גולשים נכנסו אליו ומאיפה הגיעו.')}
+            {tr(
+              'אפשר לחבר את האתר הקיים: כל פנייה מהטופס תיכנס לכאן כליד, ותראו כמה גולשים נכנסו, מאיפה הגיעו ומה הם עושים באתר.',
+            )}
           </p>
-          {/*
-        <p className="text-sm text-ink-muted">
-          {tr(
-            'אפשר לחבר את האתר הקיים כך שכל פנייה מהטופס תיכנס לכאן כליד, יחד עם המודעה או הקמפיין שהביאו אותה (Google Ads, פייסבוק ועוד).',
-          )}
-        </p>
-        */}
         </div>
         <CollapseButton
           collapsed={hidden}
@@ -189,108 +191,94 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
         <div id="site-embed-guide" className="flex flex-col gap-5">
           <p className="text-sm text-ink">
             {tr(
-              'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. מאותו רגע, בדף "דוחות" רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.',
+              'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. אחר כך, בדף "דוחות", רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.',
             )}
           </p>
           {info.isPending && <Spinner size="sm" label={tr('טוענים…')} />}
           {info.isError && <Alert tone="danger">{errorMessage(info.error)}</Alert>}
           {info.data && (
-            <Steps>
-              <Step>
-                {tr('העתיקו את השורה הזו:')}
-                <Paste text={info.data.snippet} />
-              </Step>
-              <Step>
-                {tr(
-                  'הדביקו אותה באתר, בכל הדפים, בסוף הדף (לפני התגית </body>). איך עושים את זה בבונה שלכם?',
-                )}
-                <ScrollTabs
-                  label={tr('בונה אתרים')}
-                  activeKey={tab}
-                  className="rounded-xl bg-surface-sunken p-1"
-                >
-                  {TABS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      role="tab"
-                      aria-selected={tab === t}
-                      onClick={() => setTab(t)}
-                      className={cn(
-                        'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm',
-                        tab === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
-                      )}
-                    >
-                      <BuilderIcon tab={t} />
-                      {labels[t]}
-                    </button>
-                  ))}
-                </ScrollTabs>
-                <PlatformSteps tab={tab} message={message} />
-              </Step>
-              <Step>
-                {tr(
-                  'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.',
-                )}
-              </Step>
-              {/*
-          <Step>
-            {tr(
-              'בטופס יצירת הקשר הוסיפו לתגית form את data-simplecatch. השדות מזוהים לפי השם: name, phone, email, message ו-consent (תיבת אישור):',
-            )}
-            <Paste text={FORM_EXAMPLE} />
-          </Step>
-          <Step>
-            {tr(
-              'רוצים לספור לחיצות על כפתור מסוים (למשל "קבע תור")? הוסיפו לכפתור שם, ותראו אותו בדוחות:',
-            )}
-            <Paste text={CTA_EXAMPLE} />
-            {tr(
-              'בונה אתרים שלא מאפשר להוסיף תכונות? כתבו על תגית הסקריפט data-track עם רשימה של מסמן=שם, מופרדים בנקודה-פסיק:',
-            )}
-            <Paste text={TRACK_EXAMPLE} />
-          </Step>
-          <Step>
-            {tr(
-              'רוצים לדעת אילו חלקים בדף הגולשים באמת רואים (מחירון, שאלות נפוצות...)? תנו שם לחלק, ונספור כשהוא היה על המסך לפחות חצי שנייה:',
-            )}
-            <Paste text={SECTION_EXAMPLE} />
-            {tr('או, בלי לגעת באתר עצמו, כתבו על תגית הסקריפט:')}
-            <Paste text={SECTIONS_TRACK_EXAMPLE} />
-          </Step>
-          <Step>
-            {tr(
-              'לכל מודעה הוסיפו סימון בקישור (ראו "חיבור המודעות" בדוחות). הסקריפט שומר אותו 30 יום בדפדפן של המבקר, ושולח אותו עם הפנייה.',
-            )}
-          </Step>
-          */}
-            </Steps>
+            <>
+              <Steps>
+                <Step>
+                  {tr('העתיקו את השורה הזו:')}
+                  <Paste text={info.data.snippet} />
+                </Step>
+                <Step>
+                  {tr(
+                    'הדביקו אותה באתר, בכל הדפים, בסוף הדף (לפני התגית </body>). איך עושים את זה בבונה שלכם?',
+                  )}
+                  <ScrollTabs
+                    label={tr('בונה אתרים')}
+                    activeKey={tab}
+                    className="rounded-xl bg-surface-sunken p-1"
+                  >
+                    {TABS.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        role="tab"
+                        aria-selected={tab === t}
+                        onClick={() => setTab(t)}
+                        className={cn(
+                          'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm',
+                          tab === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
+                        )}
+                      >
+                        <BuilderIcon tab={t} />
+                        {labels[t]}
+                      </button>
+                    ))}
+                  </ScrollTabs>
+                  <PlatformSteps tab={tab} message={message} shopify={shopifySnippet(info.data)} />
+                </Step>
+                <Step>
+                  {tr(
+                    'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.',
+                  )}
+                </Step>
+              </Steps>
+
+              <div className="flex flex-col gap-3 rounded-2xl bg-surface-muted p-4">
+                <h3 className="text-sm font-semibold text-ink">
+                  {tr('אפשרויות נוספות (לא חובה)')}
+                </h3>
+                <Steps>
+                  <Step>
+                    {tr(
+                      'רוצים שפניות מהטופס באתר יגיעו אליכם כלידים? בתגית form של טופס "צור קשר" הוסיפו data-simplecatch, ותנו לשדות את השמות האלה: name (שם), phone (טלפון), email (מייל), message (הודעה) ו-consent (תיבת אישור):',
+                    )}
+                    <Paste text={FORM_EXAMPLE} />
+                    <span className="text-xs text-ink-muted">
+                      {tr('הטלפון חובה, ובלי תיבת אישור הפנייה לא תתקבל.')}
+                    </span>
+                  </Step>
+                  <Step>
+                    {tr(
+                      'רוצים לדעת כמה לוחצים על כפתור מסוים (למשל "קבע תור")? תנו לכפתור שם, ותראו אותו בדוחות:',
+                    )}
+                    <Paste text={CTA_EXAMPLE} />
+                    {tr(
+                      'אי אפשר להוסיף תכונה לכפתור? כתבו על שורת הסקריפט את המזהה (id) של הכפתור ואת השם, כך:',
+                    )}
+                    <Paste text={TRACK_EXAMPLE} />
+                  </Step>
+                  <Step>
+                    {tr(
+                      'רוצים לדעת אילו חלקים בדף הגולשים באמת רואים (מחירון, שאלות נפוצות...)? תנו שם לחלק, ונספור כשהוא היה על המסך לפחות חצי שנייה:',
+                    )}
+                    <Paste text={SECTION_EXAMPLE} />
+                    {tr('או, בלי לגעת באתר עצמו, כתבו על שורת הסקריפט:')}
+                    <Paste text={SECTIONS_TRACK_EXAMPLE} />
+                  </Step>
+                  <Step>
+                    {tr(
+                      'רוצים לדעת איזו מודעה הביאה כל פנייה? הוסיפו סימון בקישור של כל מודעה (ראו "חיבור המודעות" בדוחות). הוא נשמר 30 יום בדפדפן של הגולש, ונשלח עם הפנייה.',
+                    )}
+                  </Step>
+                </Steps>
+              </div>
+            </>
           )}
-          {/*
-      {info.data && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-surface-muted p-4">
-          <h3 className="text-sm font-semibold text-ink">{tr('חנות Shopify')}</h3>
-          <Steps>
-            <Step>
-              {tr(
-                'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את הקובץ layout/theme.liquid.',
-              )}
-            </Step>
-            <Step>
-              {tr(
-                'הדביקו את השורה הזו לפני </body>. היא סופרת כניסות לחנות, ושולחת אלינו כל פנייה מטופס "צור קשר" (ובנוסף ממשיכה לשלוח אותה גם ל-Shopify):',
-              )}
-              <Paste text={shopifySnippet(info.data)} />
-            </Step>
-          </Steps>
-          <p className="text-xs text-ink-muted">
-            {tr(
-              'כדי שהפנייה תתקבל כליד צריך שהטלפון בטופס יהיה שדה חובה (בערכות רבות הוא רשות), ושהטופס יסביר שמשאירים פרטים ליצירת קשר. כניסות נספרות בחנות עצמה; דף התשלום של Shopify חסום לסקריפטים חיצוניים.',
-            )}
-          </p>
-        </div>
-      )}
-      */}
           <p className="text-xs text-ink-muted">
             {tr(
               'הסקריפט לא אוסף פרטים אישיים: רק את שם הקמפיין, הקישור המפנה והדף. ערך מזהה הקליק (gclid) לא נשמר.',

@@ -1021,4 +1021,25 @@ export const enPart3: Record<string, string> = {
   'הצגה: {0}': 'Show: {0}',
   'הסתרה: {0}': 'Hide: {0}',
   'תצוגת האתר': 'Website preview',
+  'אפשר לחבר את האתר הקיים: כל פנייה מהטופס תיכנס לכאן כליד, ותראו כמה גולשים נכנסו, מאיפה הגיעו ומה הם עושים באתר.':
+    'You can connect your existing website: every inquiry from its form arrives here as a lead, and you see how many visitors came, where from and what they do on the site.',
+  'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. אחר כך, בדף "דוחות", רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.':
+    'How it works: you paste one line into your website, once. Then, on the Reports page, you see how many visitors came, where from (Google, Facebook, another link) and which pages they viewed. No personal details are collected.',
+  'הדביקו ממש לפני התגית </body> ושמרו. כאן הדביקו את השורה הזו במקום השורה שהעתקתם למעלה, כי היא מחברת גם את טופס "צור קשר" של Shopify:':
+    'Paste it right before the </body> tag and save. Here, paste this line instead of the one you copied above, because it also connects Shopify\'s "Contact us" form:',
+  'כדי שפנייה תגיע אלינו כליד, הטלפון בטופס צריך להיות שדה חובה (בערכות רבות הוא רשות). הפנייה ממשיכה להגיע גם ל-Shopify.':
+    'For an inquiry to reach us as a lead, the phone in the form must be a required field (in many themes it is optional). The inquiry still reaches Shopify too.',
+  'אפשרויות נוספות (לא חובה)': 'More options (optional)',
+  'רוצים שפניות מהטופס באתר יגיעו אליכם כלידים? בתגית form של טופס "צור קשר" הוסיפו data-simplecatch, ותנו לשדות את השמות האלה: name (שם), phone (טלפון), email (מייל), message (הודעה) ו-consent (תיבת אישור):':
+    'Want inquiries from your website\'s form to reach you as leads? In the form tag of your "Contact us" form add data-simplecatch, and give the fields these names: name, phone, email, message and consent (a tick box):',
+  'הטלפון חובה, ובלי תיבת אישור הפנייה לא תתקבל.':
+    "The phone is required, and without a tick box the inquiry won't be accepted.",
+  'רוצים לדעת כמה לוחצים על כפתור מסוים (למשל "קבע תור")? תנו לכפתור שם, ותראו אותו בדוחות:':
+    'Want to know how many click a particular button (for example "Book an appointment")? Give the button a name and you will see it in Reports:',
+  'אי אפשר להוסיף תכונה לכפתור? כתבו על שורת הסקריפט את המזהה (id) של הכפתור ואת השם, כך:':
+    "Can't add an attribute to the button? On the script line, write the button's id and a name, like this:",
+  'או, בלי לגעת באתר עצמו, כתבו על שורת הסקריפט:':
+    'Or, without touching the site itself, write on the script line:',
+  'רוצים לדעת איזו מודעה הביאה כל פנייה? הוסיפו סימון בקישור של כל מודעה (ראו "חיבור המודעות" בדוחות). הוא נשמר 30 יום בדפדפן של הגולש, ונשלח עם הפנייה.':
+    'Want to know which ad brought each inquiry? Add a tag to each ad\'s link (see "Connect your ads" in Reports). It is kept for 30 days in the visitor\'s browser and sent with the inquiry.',
 };
