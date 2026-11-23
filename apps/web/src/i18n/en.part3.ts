@@ -943,4 +943,25 @@ export const enPart3: Record<string, string> = {
     'Paste this line before </body>. It counts visits to the store and sends us every "Contact us" form inquiry (it still goes to Shopify as well):',
   'כדי שהפנייה תתקבל כליד צריך שהטלפון בטופס יהיה שדה חובה (בערכות רבות הוא רשות), ושהטופס יסביר שמשאירים פרטים ליצירת קשר. כניסות נספרות בחנות עצמה; דף התשלום של Shopify חסום לסקריפטים חיצוניים.':
     'For an inquiry to arrive as a lead, the phone must be a required field in the form (in many themes it is optional), and the form should say that details are left to be contacted. Visits are counted in the store itself; Shopify’s checkout blocks external scripts.',
+  'מה גולשים עושים באתר': 'What visitors do on your website',
+  'ספירה בלבד, בלי לזהות אנשים: אילו דפים נצפים, איפה נכנסים, באיזה מכשיר, על מה לוחצים ועד איפה גוללים.':
+    'Counts only, without identifying people: which pages are viewed, where they enter, on which device, what they tap, and how far they scroll.',
+  'עוד אין נתונים. הם מתחילים להיספר אחרי שמדביקים את הסקריפט באתר.':
+    'No data yet. Counting starts once the script is pasted into your website.',
+  'צפיות בדפים': 'Page views',
+  'לחצו על טלפון': 'Tapped phone',
+  'לחצו על וואטסאפ': 'Tapped WhatsApp',
+  'לחצו על מייל': 'Tapped email',
+  'התחילו למלא טופס': 'Started a form',
+  'גללו עד סוף הדף': 'Scrolled to the end',
+  'עד אמצע הדף: {0}': 'To the middle: {0}',
+  'הדפים הנצפים ביותר': 'Most viewed pages',
+  'באיזה מכשיר': 'Which device',
+  טאבלט: 'Tablet',
+  'דפי נחיתה: כמה נכנסו וכמה השאירו פנייה':
+    'Landing pages: how many entered and how many left an inquiry',
+  דף: 'Page',
+  כניסות: 'Visits',
+  'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף.':
+    'Numbers are approximate: ad blockers and bots affect them, and a short page that fits the screen counts as seen to the end.',
 };

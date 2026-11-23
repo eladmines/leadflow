@@ -25,7 +25,7 @@ export function visitKey(a: Attribution) {
   };
 }
 
-const localDay = (timezone: string, now: Date) =>
+export const localDay = (timezone: string, now: Date) =>
   new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     year: 'numeric',

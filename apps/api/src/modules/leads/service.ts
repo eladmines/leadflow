@@ -271,7 +271,12 @@ export class LeadService {
               : []),
           ...(query.source ? [{ source: query.source }] : []),
           ...(query.from
-            ? [{ attributionSource: query.from === 'unknown' ? null : query.from }]
+            ? [
+                query.from === 'unknown'
+                  ? // Direct visits from other websites (F32) are stored as "direct": unknown too.
+                    { OR: [{ attributionSource: null }, { attributionSource: 'direct' }] }
+                  : { attributionSource: query.from },
+              ]
             : []),
           ...(query.campaign
             ? [{ attribution: { path: ['campaign'], equals: query.campaign } }]

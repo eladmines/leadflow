@@ -99,6 +99,8 @@ const envSchema = z
     LEAD_FORM_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
     LEAD_FORM_RATE_LIMIT_WINDOW: z.coerce.number().int().positive().default(600_000),
     /** F31: embed-script visits per IP per window (a page view is cheaper than a lead). */
+    /** F32: embed-script events per IP per window (a few per page view). */
+    EMBED_EVENT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(240),
     EMBED_VISIT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
 
     // F05 — Media

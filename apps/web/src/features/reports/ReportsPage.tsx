@@ -10,7 +10,9 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { durationLabel, shortDate, useReportSummary } from './api';
+import { BehaviorCard } from './BehaviorCard';
 import { CustomerSources } from './CustomerSources';
+import { HBars } from './HBars';
 import { LeadSourceIcon } from '../leads/SourceIcon';
 import { tr } from '../../i18n';
 
@@ -155,6 +157,7 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
         </Card>
       </div>
       <CustomerSources businessId={businessId} report={r} />
+      <BehaviorCard businessId={businessId} behavior={r.behavior} />
     </>
   );
 }
@@ -349,41 +352,3 @@ function LeadsByHour({ byHour }: { byHour: number[] }) {
 }
 
 /** Horizontal bars for a small category breakdown; values are written out, so no table is needed. */
-function HBars({
-  label,
-  rows,
-}: {
-  label: string;
-  rows: { key: string; name: string; icon?: React.ReactNode; count: number; extra?: string }[];
-}) {
-  const max = Math.max(1, ...rows.map((r) => r.count));
-  return (
-    <ul aria-label={label} className="flex flex-col gap-3">
-      {rows.map((r) => (
-        <li key={r.key} className="flex flex-col gap-1">
-          <div className="flex items-baseline justify-between gap-2 text-sm">
-            <span className="flex items-center gap-2 text-ink">
-              {r.icon}
-              {r.name}
-            </span>
-            <span className="tabular-nums text-ink-muted">
-              {r.count}
-              {r.extra && (
-                <>
-                  {' '}
-                  · <bdi>{r.extra}</bdi>
-                </>
-              )}
-            </span>
-          </div>
-          <div className="h-3 rounded bg-surface-sunken">
-            <div
-              className="h-full rounded bg-chart"
-              style={{ width: r.count ? `max(4px, ${(r.count / max) * 100}%)` : 0 }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}

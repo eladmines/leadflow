@@ -3,7 +3,9 @@ import {
   attributionName,
   attributionSchema,
   LEAD_SOURCES,
+  normalizePagePath,
   type AttributionReportRow,
+  type Behavior,
   type ReportSummary,
 } from '@simplecatch/shared';
 import type { TenantContext } from '../../plugins/tenant';
@@ -45,6 +47,55 @@ const weekStart = (ymd: string) => {
 export class ReportService {
   constructor(private readonly prisma: PrismaClient) {}
 
+  /** F32: what visitors do on a website with the script (counts per kind and label). */
+  private behavior(
+    rows: { kind: string; label: string; count: number }[],
+    leads: { attribution: unknown }[],
+  ): Behavior {
+    const sum = (kind: string, label?: string) =>
+      rows
+        .filter((r) => r.kind === kind && (label === undefined || r.label === label))
+        .reduce((a, r) => a + r.count, 0);
+    const by = (kind: string) => {
+      const m = new Map<string, number>();
+      for (const r of rows) if (r.kind === kind) m.set(r.label, (m.get(r.label) ?? 0) + r.count);
+      return m;
+    };
+    const leadsByLanding = new Map<string, number>();
+    for (const l of leads) {
+      const a = attributionSchema.safeParse(l.attribution);
+      if (a.success && a.data.landingPath) {
+        const path = normalizePagePath(a.data.landingPath);
+        leadsByLanding.set(path, (leadsByLanding.get(path) ?? 0) + 1);
+      }
+    }
+    const landings = by('landing');
+    // A landing page with inquiries but no counted visits (a site without the script) isn't shown.
+    return {
+      pageViews: sum('page'),
+      topPages: [...by('page')]
+        .map(([path, views]) => ({ path, views }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 10),
+      landing: [...landings]
+        .map(([path, visits]) => ({ path, visits, leads: leadsByLanding.get(path) ?? 0 }))
+        .sort((a, b) => b.visits - a.visits)
+        .slice(0, 10),
+      devices: {
+        mobile: sum('device', 'mobile'),
+        tablet: sum('device', 'tablet'),
+        desktop: sum('device', 'desktop'),
+      },
+      clicks: {
+        phone: sum('click', 'phone'),
+        whatsapp: sum('click', 'whatsapp'),
+        email: sum('click', 'email'),
+      },
+      scroll: { p50: sum('scroll', '50'), p90: sum('scroll', '90') },
+      formStarts: sum('form', 'start'),
+    };
+  }
+
   async summary(ctx: TenantContext, days: number, now = new Date()): Promise<ReportSummary> {
     const to = now;
     const from = new Date(to.getTime() - days * DAY);
@@ -55,7 +106,7 @@ export class ReportService {
     });
     const stages = await ensureStages(this.prisma, ctx.businessId);
     const toLocalDay = localDate(business.timezone);
-    const [leads, previous, visitRows] = await Promise.all([
+    const [leads, previous, visitRows, eventRows] = await Promise.all([
       this.prisma.lead.findMany({
         where: { businessId: ctx.businessId, createdAt: { gte: from, lt: to } },
         select: {
@@ -77,6 +128,13 @@ export class ReportService {
           day: { gte: toLocalDay(from), lte: toLocalDay(to) },
         },
         select: { source: true, name: true, campaign: true, count: true },
+      }),
+      this.prisma.eventCount.findMany({
+        where: {
+          businessId: ctx.businessId,
+          day: { gte: toLocalDay(from), lte: toLocalDay(to) },
+        },
+        select: { kind: true, label: true, count: true },
       }),
     ]);
 
@@ -125,7 +183,7 @@ export class ReportService {
     });
     for (const l of leads) {
       const a = attributionSchema.safeParse(l.attribution);
-      const source = a.success ? a.data.source : 'unknown';
+      const source = a.success && a.data.source !== 'direct' ? a.data.source : 'unknown';
       const name =
         a.success && (source === 'utm' || source === 'referral') ? attributionName(a.data) : null;
       const key = `${source}|${name ?? ''}`;
@@ -155,6 +213,7 @@ export class ReportService {
         campaigns.get(ck)!.visits += v.count;
       }
     }
+    const behavior = this.behavior(eventRows, leads);
     const byLeads = (a: AttributionReportRow, b: AttributionReportRow) =>
       b.won - a.won || b.leads - a.leads || b.visits - a.visits;
 
@@ -219,6 +278,7 @@ export class ReportService {
       bySource,
       byAttribution: [...rows.values()].sort(byLeads),
       visits,
+      behavior,
       byCampaign: [...campaigns.values()].sort(byLeads).slice(0, 10),
     };
   }

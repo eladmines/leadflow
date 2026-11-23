@@ -26,6 +26,32 @@ const attributionRow = z.object({
 });
 export type AttributionReportRow = z.infer<typeof attributionRow>;
 
+/** F32: what visitors do on a website with the script (counts, never people). */
+export const behaviorSchema = z.object({
+  /** Pages opened, and by the most-opened pages. */
+  pageViews: z.number().int(),
+  topPages: z.array(z.object({ path: z.string(), views: z.number().int() })),
+  /** The entry page of each session, with the inquiries that came from visits starting there. */
+  landing: z.array(
+    z.object({ path: z.string(), visits: z.number().int(), leads: z.number().int() }),
+  ),
+  devices: z.object({
+    mobile: z.number().int(),
+    tablet: z.number().int(),
+    desktop: z.number().int(),
+  }),
+  clicks: z.object({
+    phone: z.number().int(),
+    whatsapp: z.number().int(),
+    email: z.number().int(),
+  }),
+  /** Page views that reached half the page, and 90% of it. */
+  scroll: z.object({ p50: z.number().int(), p90: z.number().int() }),
+  /** Forms started (a first field filled). Sent ones are the website leads. */
+  formStarts: z.number().int(),
+});
+export type Behavior = z.infer<typeof behaviorSchema>;
+
 export const reportSummarySchema = z.object({
   range: z.object({
     from: z.string().datetime(),
@@ -62,6 +88,8 @@ export const reportSummarySchema = z.object({
   byAttribution: z.array(attributionRow),
   /** F31: all website visits in the range (SimpleCatch sites and the embed script). */
   visits: z.number().int(),
+  /** F32: what visitors do on a website with the script. */
+  behavior: behaviorSchema,
   byCampaign: z.array(attributionRow.extend({ campaign: z.string() })),
 });
 export type ReportSummary = z.infer<typeof reportSummarySchema>;

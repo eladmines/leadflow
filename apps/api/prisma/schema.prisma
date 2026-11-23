@@ -182,6 +182,7 @@ model Business {
   memberships         Membership[]
   channelConnections  ChannelConnection[]
   visitCounts         VisitCount[]
+  eventCounts         EventCount[]
   oauthPending        OAuthPending[]
   auditLogs           AuditLog[]
   site                Site?
@@ -787,6 +788,22 @@ model VisitCount {
 
   @@id([businessId, day, source, name, campaign])
   @@map("visit_counts")
+}
+
+/// F32: what visitors do on a website with the embed script, as counts per local day, kind and label
+/// (a page path, a device, a click type…). Never a visitor id.
+model EventCount {
+  businessId String @map("business_id") @db.Uuid
+  day        String @db.VarChar(10)
+  /// page | landing | device | click | scroll | form
+  kind       String @db.VarChar(12)
+  label      String @default("") @db.VarChar(100)
+  count      Int    @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, day, kind, label])
+  @@map("event_counts")
 }
 
 /// F25: a channel a business connected itself (D-159): its WhatsApp number or Facebook Page.

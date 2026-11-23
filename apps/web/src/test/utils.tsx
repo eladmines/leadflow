@@ -102,6 +102,15 @@ const emptyReport: ReportSummary = {
   bySource: [],
   byAttribution: [],
   visits: 0,
+  behavior: {
+    pageViews: 0,
+    topPages: [],
+    landing: [],
+    devices: { mobile: 0, tablet: 0, desktop: 0 },
+    clicks: { phone: 0, whatsapp: 0, email: 0 },
+    scroll: { p50: 0, p90: 0 },
+    formStarts: 0,
+  },
   byCampaign: [],
 };
 

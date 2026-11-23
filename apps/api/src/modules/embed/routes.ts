@@ -6,6 +6,7 @@ import {
   embedInfoSchema,
   embedLeadRequestSchema,
   embedVisitRequestSchema,
+  embedEventRequestSchema,
   leadSubmissionSchema,
   pickTrackedParams,
   siteError,
@@ -17,7 +18,8 @@ import { requirePermission, tenantOf } from '../../plugins/tenant';
 import { LeadService } from '../leads/service';
 import { notifyTeamByEmail } from '../leads/notify';
 import { MANAGERS, notifySafe } from '../notifications/service';
-import { isBotAgent, recordVisit } from '../reports/visits';
+import { recordEvents } from '../reports/events';
+import { isBotAgent, localDay, recordVisit } from '../reports/visits';
 import { createEmbedKey, readEmbedKey } from './key';
 import { EMBED_SCRIPT } from './script';
 
@@ -140,8 +142,9 @@ export const embedPublicRoutes: FastifyPluginAsync = async (app) => {
         idempotencyKey: body.id,
         ipHash: sha256Hex(`${req.ip}|${app.config.FORM_TOKEN_SECRET}`),
         sourceUrl: (body.page ?? '').split(/[?#]/)[0]!.slice(0, 300) || 'embed',
-        // "direct" visits keep no attribution, like a SimpleCatch site without a cookie.
-        attribution: attribution.source === 'direct' ? null : attribution,
+        // A direct visit keeps its landing page (F32 shows inquiries per landing page); Reports
+        // and the leads filter read source "direct" as unknown.
+        attribution,
         data: data.data,
       });
       if (created) {
@@ -213,6 +216,50 @@ export const embedPublicRoutes: FastifyPluginAsync = async (app) => {
         await recordVisit(app.prisma, business.id, business.timezone, attribution);
       } catch (err) {
         req.log.error({ errName: (err as Error)?.name }, 'visit count failed');
+      }
+      return answer(200);
+    },
+  );
+
+  // F32: what happened on a page. Counted per kind and label; the script batches a few per view.
+  app.post(
+    apiPaths.embed.event,
+    {
+      bodyLimit: 16 * 1024,
+      config: {
+        rateLimit: {
+          max: app.config.EMBED_EVENT_RATE_LIMIT_MAX,
+          timeWindow: app.config.LEAD_FORM_RATE_LIMIT_WINDOW,
+          keyGenerator: (req) => req.ip,
+        },
+      },
+    },
+    async (req, reply) => {
+      const answer = (status: number) =>
+        reply
+          .code(status)
+          .headers(CORS)
+          .send({ ok: status === 200 });
+      const parsed = embedEventRequestSchema.safeParse(req.body);
+      if (!parsed.success) return answer(400);
+      const businessId = readEmbedKey(app.config.FORM_TOKEN_SECRET, parsed.data.key);
+      const business = businessId
+        ? await app.prisma.business.findUnique({
+            where: { id: businessId },
+            select: { id: true, timezone: true },
+          })
+        : null;
+      if (!business) return answer(400);
+      if (isBotAgent(req.headers['user-agent'])) return answer(200);
+      try {
+        await recordEvents(
+          app.prisma,
+          business.id,
+          localDay(business.timezone, new Date()),
+          parsed.data.events,
+        );
+      } catch (err) {
+        req.log.error({ errName: (err as Error)?.name }, 'event count failed');
       }
       return answer(200);
     },

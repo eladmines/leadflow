@@ -33,6 +33,15 @@ const summary: ReportSummary = {
     { source: 'whatsapp', count: 0 },
   ],
   visits: 120,
+  behavior: {
+    pageViews: 0,
+    topPages: [],
+    landing: [],
+    devices: { mobile: 0, tablet: 0, desktop: 0 },
+    clicks: { phone: 0, whatsapp: 0, email: 0 },
+    scroll: { p50: 0, p90: 0 },
+    formStarts: 0,
+  },
   byAttribution: [
     { source: 'google_ads', name: null, leads: 6, won: 2, lost: 2, wonValue: 3000, visits: 120 },
     { source: 'utm', name: 'newsletter', leads: 2, won: 0, lost: 0, wonValue: 0, visits: 0 },
@@ -117,6 +126,40 @@ describe('reports page', () => {
       'href',
       `${businessWebPaths.section(id, 'leads')}?view=list&from=google_ads&campaign=summer`,
     );
+  });
+
+  it('shows what visitors do on the website (F32)', async () => {
+    const withData = {
+      ...summary,
+      behavior: {
+        pageViews: 200,
+        topPages: [{ path: '/sale', views: 120 }],
+        landing: [{ path: '/sale', visits: 40, leads: 4 }],
+        devices: { mobile: 30, tablet: 0, desktop: 10 },
+        clicks: { phone: 7, whatsapp: 9, email: 1 },
+        scroll: { p50: 100, p90: 50 },
+        formStarts: 12,
+      },
+    };
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.reports.summary(id)}`]: () => json(200, withData),
+    });
+    renderApp(page);
+    expect(await screen.findByText('מה גולשים עושים באתר')).toBeInTheDocument();
+    expect(screen.getByText('גללו עד סוף הדף').nextElementSibling).toHaveTextContent('25%');
+    expect(screen.getByText('עד אמצע הדף: 50%')).toBeInTheDocument();
+    expect(screen.getByText('4 מתוך 40 (10%)')).toBeInTheDocument();
+    expect(screen.getByText('75%', { exact: false })).toBeInTheDocument();
+  });
+
+  it('says how to start when no visitor behavior is counted yet (F32)', async () => {
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.reports.summary(id)}`]: () => json(200, summary),
+    });
+    renderApp(page);
+    expect(await screen.findByText(/עוד אין נתונים/)).toBeInTheDocument();
   });
 
   it('opens the ads guide: a tab per ad system with the text to paste (F26)', async () => {

@@ -41,8 +41,26 @@ const shopifyForm = `
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
+/** The script listens on `document` and `window`; a real page loads it once, so undo it per test. */
+const added: [EventTarget, string, EventListenerOrEventListenerObject, unknown][] = [];
+function trackListeners() {
+  for (const target of [document, window] as EventTarget[]) {
+    const original = target.addEventListener.bind(target);
+    vi.spyOn(target, 'addEventListener').mockImplementation((type, fn, opts) => {
+      added.push([target, type, fn as EventListener, opts]);
+      original(type, fn as EventListener, opts as AddEventListenerOptions);
+    });
+  }
+}
+function untrackListeners() {
+  for (const [target, type, fn, opts] of added.splice(0)) {
+    target.removeEventListener(type, fn, opts as EventListenerOptions);
+  }
+}
+
 describe('embed script (F30, F31)', () => {
   beforeEach(() => {
+    trackListeners();
     sent.length = 0;
     localStorage.clear();
     sessionStorage.clear();
@@ -50,7 +68,11 @@ describe('embed script (F30, F31)', () => {
     vi.stubGlobal('XMLHttpRequest', FakeXhr);
     history.replaceState(null, '', '/');
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    untrackListeners();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   it('counts one visit per session, with the ad it came from', () => {
     history.replaceState(null, '', '/sale?gclid=SECRET&utm_campaign=summer&junk=1');
@@ -127,5 +149,66 @@ describe('embed script (F30, F31)', () => {
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();
     expect(sent.find((s) => s.url.endsWith('/lead'))!.body.consent).toBeUndefined();
+  });
+
+  describe('behavior (F32)', () => {
+    const events = () =>
+      sent
+        .filter((s) => s.url.endsWith('/api/v1/embed/event'))
+        .flatMap((s) => s.body.events as { k: string; l?: string }[]);
+
+    it('counts the page, and for a first page also the landing page and the device', () => {
+      history.replaceState(null, '', '/sale/');
+      load();
+      expect(events()).toEqual([
+        { k: 'page', l: '/sale/' },
+        { k: 'landing', l: '/sale/' },
+        { k: 'device', l: 'desktop' },
+      ]);
+      sent.length = 0;
+      load(); // the next page in the same session
+      expect(events()).toEqual([{ k: 'page', l: '/sale/' }]);
+    });
+
+    it('counts a tap on phone, WhatsApp and email links, and nothing else', () => {
+      document.body.innerHTML = `
+        <a id="t" href="tel:+972501234567"><span id="in">Call</span></a>
+        <a id="w" href="https://wa.me/972501234567">WhatsApp</a>
+        <a id="m" href="mailto:a@b.co">Mail</a>
+        <a id="o" href="https://example.org/">Other</a>`;
+      load();
+      sent.length = 0;
+      for (const id of ['in', 'w', 'm', 'o']) {
+        document.getElementById(id)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+      expect(events()).toEqual([
+        { k: 'click', l: 'phone' },
+        { k: 'click', l: 'whatsapp' },
+        { k: 'click', l: 'email' },
+      ]);
+    });
+
+    it('counts a form started once, only in a form the script listens to', () => {
+      document.body.innerHTML = `
+        <form data-simplecatch><input id="a" name="name"><input id="b" name="phone"></form>
+        <form><input id="c" name="q"></form>`;
+      load();
+      sent.length = 0;
+      for (const id of ['c', 'a', 'b']) {
+        document.getElementById(id)!.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      expect(events()).toEqual([{ k: 'form', l: 'start' }]);
+    });
+
+    it('reports how far they scrolled once, when leaving (a page that fits counts as seen)', () => {
+      load();
+      sent.length = 0;
+      window.dispatchEvent(new Event('pagehide'));
+      window.dispatchEvent(new Event('pagehide'));
+      expect(events()).toEqual([
+        { k: 'scroll', l: '50' },
+        { k: 'scroll', l: '90' },
+      ]);
+    });
   });
 });

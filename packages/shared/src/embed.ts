@@ -57,6 +57,49 @@ export const embedVisitRequestSchema = embedLeadRequestSchema.pick({
 });
 export type EmbedVisitRequest = z.infer<typeof embedVisitRequestSchema>;
 
+/**
+ * F32 — what visitors do on the page, as counts only (never a visitor id). The script sends a small
+ * batch per page view: the page, and what happened on it. Only these kinds are accepted.
+ */
+export const BEHAVIOR_EVENTS = [
+  /** A page was opened. Label: its path. */
+  'page',
+  /** The first page of a browser session. Label: its path. */
+  'landing',
+  /** The visitor's screen: `mobile`, `tablet` or `desktop` (once per session). */
+  'device',
+  /** A tap on a contact link: `phone`, `whatsapp` or `email`. */
+  'click',
+  /** The visitor scrolled to `50` or `90` percent of the page. */
+  'scroll',
+  /** The visitor started filling a form (label `start`). */
+  'form',
+] as const;
+export type BehaviorEvent = (typeof BEHAVIOR_EVENTS)[number];
+
+export const embedEventRequestSchema = z.object({
+  key: z.string().min(10).max(120),
+  events: z
+    .array(z.object({ k: z.enum(BEHAVIOR_EVENTS), l: z.string().max(200).optional().catch(undefined) }))
+    .max(12),
+});
+export type EmbedEventRequest = z.infer<typeof embedEventRequestSchema>;
+
+/** A page address as one stable label: path only, no query or trailing slash, at most 100 characters. */
+export function normalizePagePath(input: string | undefined | null): string {
+  if (!input) return '/';
+  let path = input;
+  try {
+    path = /^https?:\/\//i.test(input) ? new URL(input).pathname : input;
+  } catch {
+    path = input;
+  }
+  path = path.split(/[?#]/)[0] ?? '/';
+  if (!path.startsWith('/')) path = `/${path}`;
+  if (path.length > 1) path = path.replace(/\/+$/, '');
+  return (path || '/').slice(0, 100);
+}
+
 export const embedLeadResponseSchema = z.object({
   ok: z.boolean(),
   errors: z.array(z.string()).optional(),
@@ -81,6 +124,8 @@ export const embedApiPaths = {
   lead: '/api/v1/embed/lead',
   /** Public: a visit (F31), same rules as `lead`. */
   visit: '/api/v1/embed/visit',
+  /** Public: what happened on a page (F32), same rules as `lead`. */
+  event: '/api/v1/embed/event',
 } as const;
 
 /** Keeps only the tracked parameters, trimmed (what the script and the server both accept). */

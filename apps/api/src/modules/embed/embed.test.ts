@@ -119,7 +119,7 @@ describe('leads from a website built elsewhere (F30)', () => {
       (await ctx.prisma.lead.findFirstOrThrow({ where: { contact: { phone } } })).attributionSource;
     expect(await by('+972521111111')).toBe('google');
     expect(await by('+972522222222')).toBe('referral');
-    expect(await by('+972523333333')).toBeNull();
+    expect(await by('+972523333333')).toBe('direct');
   });
 
   it('rejects a wrong or another business key, and explains missing fields', async () => {
@@ -221,6 +221,117 @@ describe('leads from a website built elsewhere (F30)', () => {
       await visit(body);
       expect((await summary(a)).visits).toBe(1);
       expect((await summary(b)).visits).toBe(0);
+    });
+  });
+
+  describe('behavior (F32)', () => {
+    const UA =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1';
+    const events = (body: Record<string, unknown>, ua = UA) =>
+      ctx.app.inject({
+        method: 'POST',
+        url: ep.event,
+        headers: { 'content-type': 'text/plain', 'user-agent': ua },
+        payload: JSON.stringify(body),
+      });
+    const behavior = async (o: Awaited<ReturnType<typeof ownerWithBusiness>>) =>
+      (
+        await req(ctx.app, 'GET', `${apiPaths.reports.summary(o.business.id)}?days=7`, o.token)
+      ).json().behavior;
+
+    it('counts pages, landing pages, devices, taps, scroll and form starts', async () => {
+      const o = await ownerWithBusiness(ctx.app, 'beh-a');
+      const { key } = await keyOf(o);
+      const send = (evs: unknown[]) => events({ key, events: evs });
+      // Three sessions: two start on /sale/ (one on a phone), one on the home page.
+      await send([
+        { k: 'page', l: '/sale/' },
+        { k: 'landing', l: '/sale/' },
+        { k: 'device', l: 'mobile' },
+      ]);
+      await send([
+        { k: 'page', l: '/sale' },
+        { k: 'landing', l: '/sale' },
+        { k: 'device', l: 'desktop' },
+      ]);
+      await send([
+        { k: 'page', l: '/' },
+        { k: 'landing', l: '/' },
+        { k: 'device', l: 'mobile' },
+      ]);
+      await send([{ k: 'page', l: '/sale?utm=x#top' }]);
+      await send([
+        { k: 'click', l: 'phone' },
+        { k: 'click', l: 'whatsapp' },
+        { k: 'form', l: 'start' },
+      ]);
+      await send([
+        { k: 'scroll', l: '50' },
+        { k: 'scroll', l: '90' },
+      ]);
+      await send([{ k: 'scroll', l: '50' }]);
+      // One of the /sale visitors sent the form.
+      await post(
+        base(key, {
+          landing: 'https://www.my-site.example/sale',
+          params: { utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'summer' },
+        }),
+      );
+      // And a direct visitor who landed on /sale/ and sent the form too.
+      await post(
+        base(key, {
+          id: 'dir0000000000000002',
+          phone: '052-9999999',
+          landing: 'https://www.my-site.example/sale/',
+        }),
+      );
+
+      const b = await behavior(o);
+      expect(b.pageViews).toBe(4);
+      expect(b.topPages).toEqual([
+        { path: '/sale', views: 3 },
+        { path: '/', views: 1 },
+      ]);
+      expect(b.landing).toEqual([
+        { path: '/sale', visits: 2, leads: 2 },
+        { path: '/', visits: 1, leads: 0 },
+      ]);
+      expect(b.devices).toEqual({ mobile: 2, tablet: 0, desktop: 1 });
+      expect(b.clicks).toEqual({ phone: 1, whatsapp: 1, email: 0 });
+      expect(b.scroll).toEqual({ p50: 2, p90: 1 });
+      expect(b.formStarts).toBe(1);
+    });
+
+    it('stores only known labels, ignores bots, wrong keys and other businesses', async () => {
+      const a = await ownerWithBusiness(ctx.app, 'beh-b');
+      const other = await ownerWithBusiness(ctx.app, 'beh-c');
+      const { key } = await keyOf(a);
+      await events({
+        key,
+        events: [
+          { k: 'device', l: 'toaster' },
+          { k: 'click', l: 'carrier-pigeon' },
+          { k: 'scroll', l: '75' },
+          { k: 'form', l: 'sent' },
+          { k: 'page', l: '/x'.repeat(200) },
+        ],
+      });
+      const rows = await ctx.prisma.eventCount.findMany();
+      expect(rows.map((r) => r.kind)).toEqual(['page']);
+      expect(rows[0]!.label.length).toBeLessThanOrEqual(100);
+      await ctx.prisma.eventCount.deleteMany();
+
+      await events({ key, events: [{ k: 'page', l: '/' }] }, 'Googlebot/2.1');
+      const wrong = await events({
+        key: key.slice(0, -1) + (key.endsWith('A') ? 'B' : 'A'),
+        events: [{ k: 'page', l: '/' }],
+      });
+      expect(wrong.statusCode).toBe(400);
+      expect((await events({ key, events: [{ k: 'nonsense' }] })).statusCode).toBe(400);
+      expect(await ctx.prisma.eventCount.count()).toBe(0);
+      await events({ key, events: [{ k: 'page', l: '/' }] });
+      expect((await behavior(a)).pageViews).toBe(1);
+      expect((await behavior(other)).pageViews).toBe(0);
     });
   });
 });

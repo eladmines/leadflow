@@ -37,6 +37,7 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F29 | Gmail conversations (D-188)                             | High               | F24, F25, F27     | F16           | Full pipeline                       | **Built** (Google verification open)                |
 | F30 | Leads and ad tracking for an external website (D-189) | Medium             | F07, F26          | F16           | Full pipeline              | **Built**                                           |
 | F31 | Website visit counts in Reports (D-190)                 | Medium             | F26, F30          | F16           | Full pipeline              | **Built**                                           |
+| F32 | What visitors do on the website, as counts (D-191)      | Medium             | F30, F31          | F16           | Full pipeline              | **Built**                                           |
 | F28 | Instagram DMs → conversations and leads (D-187)         | High               | F23, F24, F25     | F16           | Full pipeline                       | **Built**                                           |
 
 ## Dependency graph (core journey)
@@ -100,6 +101,7 @@ F06 ─► F11 (after spike)
 - 2026-11-22 — F29 Gmail conversations: connect Gmail from Settings → Channels, new mail waits to be marked business/personal, replies go from the same Gmail (D-188).
 - 2026-11-23 — F30 external-website script: paste one script tag; forms marked `data-simplecatch` create leads with their ad source (D-189).
 - 2026-11-23 — F31 website visits: SimpleCatch sites and the embed script count visits per source and campaign; Reports show visits and visit-to-inquiry (D-190).
+- 2026-11-23 — F32 visitor behavior: pages, landing pages, devices, taps on phone/WhatsApp/email, scroll depth and forms started, as counts, in Reports (D-191).
 - 2026-11-22 — F28 Instagram DMs: connect from Settings → Channels, messages become conversations and `instagram` leads, replies within 24 h (D-187).
 - 2026-11-09 — Channels: Instagram and Email rows marked "Coming soon" (UI only, D-160).
 - 2026-11-09 — F25 Settings → Channels: each business connects its WhatsApp (form) and Facebook Page (sign-in); tokens encrypted; messages routed by number/Page (D-159).

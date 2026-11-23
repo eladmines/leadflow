@@ -4,6 +4,8 @@
  * localStorage for 30 days, and posts every `<form data-simplecatch>` to SimpleCatch with it.
  * Fields are found by name: name, phone, email, message, consent (a checkbox the visitor ticks),
  * and the same names Shopify's contact form uses (`contact[name]`, `contact[body]`…).
+ * F32: it also counts what visitors do (page, landing page, device, taps on phone/WhatsApp/email
+ * links, scroll depth, a form started), never who they are.
  * Options, on the form or on the script tag: `data-consent-implied` (the form's own text already asks
  * for consent), `data-passthrough` (after sending, the form is submitted normally too, e.g. to
  * Shopify). On the script tag, `data-forms="<css selector>"` binds forms that can't carry attributes.
@@ -43,7 +45,7 @@ export const EMBED_SCRIPT = `(function () {
 
   // One visit per browser session (tab), counted under the same source a lead sent now would get.
   function visit() {
-    try { if (sessionStorage.getItem('sc_v')) return; sessionStorage.setItem('sc_v', '1'); } catch (e) { return; }
+    try { if (sessionStorage.getItem('sc_v')) return false; sessionStorage.setItem('sc_v', '1'); } catch (e) { return false; }
     var src = read() || {};
     var x = new XMLHttpRequest();
     x.open('POST', origin + '/api/v1/embed/visit');
@@ -52,8 +54,73 @@ export const EMBED_SCRIPT = `(function () {
       key: key, params: src.params, referrer: src.referrer, landing: src.landing,
       page: location.href.split(/[?#]/)[0]
     }));
+    return true;
   }
-  visit();
+  var firstOfSession = visit();
+
+  // F32: what the visitor does on the page, as counts (no visitor id, no page sequence).
+  var path = location.pathname;
+  function emit(events, beacon) {
+    var data = JSON.stringify({ key: key, events: events });
+    var url = origin + '/api/v1/embed/event';
+    try {
+      if (beacon && navigator.sendBeacon && navigator.sendBeacon(url, new Blob([data], { type: 'text/plain' }))) return;
+    } catch (e) {}
+    var x = new XMLHttpRequest();
+    x.open('POST', url);
+    x.setRequestHeader('Content-Type', 'text/plain');
+    x.send(data);
+  }
+  var first = [{ k: 'page', l: path }];
+  if (firstOfSession) {
+    var w = window.innerWidth || 1024;
+    first.push({ k: 'landing', l: path }, { k: 'device', l: w < 768 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop' });
+  }
+  emit(first, false);
+
+  // Taps on phone, WhatsApp and email links (sent at once: the page may be left right after).
+  document.addEventListener('click', function (e) {
+    var el = e.target;
+    while (el && el.nodeType === 1 && el.tagName !== 'A') el = el.parentNode;
+    var href = el && el.getAttribute ? (el.getAttribute('href') || '') : '';
+    var kind = /^tel:/i.test(href) ? 'phone'
+      : /^mailto:/i.test(href) ? 'email'
+      : /^(whatsapp:|https?:\\/\\/(wa\\.me|api\\.whatsapp\\.com|web\\.whatsapp\\.com)\\b)/i.test(href) ? 'whatsapp' : '';
+    if (kind) emit([{ k: 'click', l: kind }], true);
+  }, true);
+
+  // A form started: the first field the visitor touches in a form SimpleCatch listens to.
+  var started = false;
+  document.addEventListener('input', function (e) {
+    var f = e.target && e.target.form;
+    if (started || !f || !f.__sc) return;
+    started = true;
+    emit([{ k: 'form', l: 'start' }], true);
+  }, true);
+
+  // How far down the page they got, sent once when they leave. A page that fits the screen counts as seen.
+  var depth = 0;
+  function measure() {
+    var doc = document.documentElement;
+    var total = Math.max(doc.scrollHeight, document.body ? document.body.scrollHeight : 0);
+    var seen = (window.pageYOffset || doc.scrollTop || 0) + (window.innerHeight || doc.clientHeight || 0);
+    var pct = total > 0 ? seen / total * 100 : 100;
+    if (pct > depth) depth = pct;
+  }
+  window.addEventListener('scroll', measure, { passive: true });
+  measure();
+  var left = false;
+  function leave() {
+    if (left) return;
+    left = true;
+    measure();
+    var ev = [];
+    if (depth >= 50) ev.push({ k: 'scroll', l: '50' });
+    if (depth >= 90) ev.push({ k: 'scroll', l: '90' });
+    if (ev.length) emit(ev, true);
+  }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') leave(); });
+  window.addEventListener('pagehide', leave);
 
   function uid() {
     var a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', r = '';
