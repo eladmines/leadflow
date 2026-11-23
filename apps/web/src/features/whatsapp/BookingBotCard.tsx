@@ -120,7 +120,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </label>
           <p className="text-sm text-ink-muted">
             {tr(
-              'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד היומן.',
+              'הלקוח עונה על כמה שאלות (סוג, תאריך ופרטים נוספים), וההזמנה מחכה לאישור שלכם בעמוד היומן.',
             )}
           </p>
         </>
@@ -185,7 +185,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
 /** What customers can book, said plainly (D-149). */
 const FLOW_CHOICES: Record<BotFlow, { label: string; hint: string }> = {
   appointment: { label: 'תור בשעה פנויה', hint: 'הלקוח רואה ימים ושעות פנויים מהיומן.' },
-  event: { label: 'בקשה לאירוע', hint: 'הלקוח כותב תאריך, מספר אורחים ואזור, ואתם מאשרים.' },
+  event: { label: 'הזמנה', hint: 'הלקוח כותב תאריך ופרטים, ואתם מאשרים.' },
 };
 
 const mb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
@@ -512,7 +512,7 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-4">
       <p className="text-xs text-ink-muted">
         {tr(
-          'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.',
+          'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה): ההודעה עם הקישור, אחריה הסרטון והתמונות.',
         )}
       </p>
       <fieldset className="flex flex-col gap-4">

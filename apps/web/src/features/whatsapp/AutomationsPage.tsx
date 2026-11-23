@@ -137,9 +137,7 @@ function Steps({
           icon={CalendarCheck}
           tone="bg-violet-500"
           title={tr('לקוחות קובעים לבד')}
-          description={tr(
-            'מוסיף "לקביעת תור" להודעה: הלקוח רואה זמנים פנויים וקובע תור או בקשה לאירוע.',
-          )}
+          description={tr('מוסיף "לקביעת תור" להודעה: הלקוח רואה זמנים פנויים וקובע תור או הזמנה.')}
           on={booking}
           busy={update.isPending}
           disabled={!auto}
@@ -149,7 +147,7 @@ function Steps({
             booking
               ? tr(
                   '{0} · אישור: {1}',
-                  saved.flow === 'event' ? tr('בקשות לאירוע') : tr('תורים'),
+                  saved.flow === 'event' ? tr('הזמנות') : tr('תורים'),
                   saved.autoConfirm ? tr('מיד') : tr('ידני'),
                 )
               : tr('כבוי: אפשר לקבוע רק מול הצוות.')
@@ -163,7 +161,7 @@ function Steps({
           tone="bg-amber-500"
           title={tr('הצצה לעסק')}
           description={tr(
-            'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.',
+            'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.',
           )}
           on={peek}
           busy={update.isPending}

@@ -587,7 +587,7 @@ export class AppointmentService {
     const label = {
       booked: en ? 'New appointment' : 'תור חדש',
       request: en ? 'New appointment request' : 'בקשה חדשה לתור',
-      event: en ? 'New event request' : 'בקשה חדשה לאירוע',
+      event: en ? 'New booking request' : 'הזמנה חדשה',
       cancelled: en ? 'Appointment cancelled' : 'תור בוטל',
     }[x.kind];
     const title = [contact?.name, x.what, when].filter(Boolean).join(' · ');

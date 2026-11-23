@@ -482,7 +482,7 @@ describe('WhatsApp conversations inbox', () => {
     });
   });
 
-  it('switches to event requests, which changes the messages to edit (D-107)', async () => {
+  it('switches to booking requests, which changes the messages to edit (D-107)', async () => {
     const fetchMock = mockApi(
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
@@ -496,10 +496,10 @@ describe('WhatsApp conversations inbox', () => {
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );
-    expect(await screen.findByText(/הבקשה מחכה לאישור שלכם בעמוד היומן/)).toBeInTheDocument();
+    expect(await screen.findByText(/ההזמנה מחכה לאישור שלכם בעמוד היומן/)).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'כשלקוח קובע תור:' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
-    expect(screen.getByLabelText('בקשה לאירוע התקבלה')).toBeInTheDocument();
+    expect(screen.getByLabelText('הזמנה התקבלה')).toBeInTheDocument();
     expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();
   });
 

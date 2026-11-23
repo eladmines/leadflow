@@ -231,7 +231,7 @@ export const botTextLabels: Record<BotTextKey, string> = {
   pending: 'בקשה שממתינה לאישור',
   handoff: 'מעבר לצוות',
   noTimes: 'אין זמנים פנויים',
-  eventReceived: 'בקשה לאירוע התקבלה',
+  eventReceived: 'הזמנה התקבלה',
   dateTaken: 'התאריך תפוס',
 };
 

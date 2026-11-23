@@ -684,7 +684,7 @@ describe('WhatsApp booking bot (D-102)', () => {
       expect(appt).toMatchObject({ status: 'REQUESTED', source: 'whatsapp', staffId: null });
       // The owner gets a task to notice it (D-152).
       const [task] = await ctx.prisma.task.findMany();
-      expect(task!.title).toMatch(/^בקשה חדשה לאירוע: /);
+      expect(task!.title).toMatch(/^הזמנה חדשה: /);
       expect(appt.startsAt).toEqual(zonedTimeToUtc(ymd(day), '19:00', TZ));
       expect(appt.notes).toMatch(/^בקשה מוואטסאפ · חתונה · /);
       expect(appt.notes).toContain('אורחים: 150–300 · אזור: ראשון לציון');

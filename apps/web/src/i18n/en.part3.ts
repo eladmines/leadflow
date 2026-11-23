@@ -1076,10 +1076,25 @@ export const enPart3: Record<string, string> = {
     "The customer's sequence, in order: they write, get a message by your status, may book by themselves, then get a peek at the business. Each step has one switch, a line saying what it does now, and a settings button that opens its settings.",
   'בהגדרות בוחרים סטטוס בלחיצה אחת, למשל "באירוע", ורואים מה לקוחות מקבלים עכשיו. אפשר לבחור לכמה זמן, להוסיף סרטון ולשנות את ההודעה. "זמין" מחזיר את ההודעה הכללית.':
     'In the settings you pick a status with one click, for example "At an event", and see what customers get now. You can choose for how long, and edit the message. "Available" brings back the general message.',
-  'הלקוח רואה שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים משאיר את פרטי האירוע. הוא פועל רק כשהמענה לפי הסטטוס דלוק. בהגדרות בוחרים מה אפשר להזמין, אם התור מאושר מיד או מחכה לכם, ואפשר לכתוב את ההודעות במילים שלכם.':
-    'The customer sees free hours from the calendar and books with a click, or in event businesses leaves the event details. It works only while the answer by status is on. In the settings you choose what can be booked, whether the appointment is confirmed at once or waits for you, and you can write the messages in your own words.',
+  'הלקוח רואה שעות פנויות מהיומן וקובע תור בלחיצה, או משאיר בקשת הזמנה עם תאריך ופרטים. הוא פועל רק כשהמענה לפי הסטטוס דלוק. בהגדרות בוחרים מה אפשר להזמין, אם התור מאושר מיד או מחכה לכם, ואפשר לכתוב את ההודעות במילים שלכם.':
+    'The customer sees free hours from the calendar and books with a click, or leaves a booking request with a date and details. It works only while the answer by status is on. In the settings you choose what can be booked, whether the appointment is confirmed at once or waits for you, and you can write the messages in your own words.',
   'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. עוד: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי.':
     "Business details, opening hours (which decide the hours offered for appointments) and service areas, all in one tab, each card with its own save button. Also: channels (connecting the business's WhatsApp and Facebook page) and the subscription.",
   'מופיעות באתר, ומהן נקבעות השעות שמוצעות לתורים.':
     'Shown on the website, and they set the hours offered for appointments.',
+  הזמנה: 'Booking request',
+  הזמנות: 'Booking requests',
+  'הזמנה התקבלה': 'Booking request received',
+  'הלקוח כותב תאריך ופרטים, ואתם מאשרים.':
+    'The customer writes a date and details, and you confirm.',
+  'הלקוח עונה על כמה שאלות (סוג, תאריך ופרטים נוספים), וההזמנה מחכה לאישור שלכם בעמוד היומן.':
+    'The customer answers a few questions (type, date and more details), and the booking request waits for your confirmation on the calendar page.',
+  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
+    'Sent right after the customer decides (a time to talk, an appointment or a booking request): the message with the link, then the video and photos.',
+  'מוסיף "לקביעת תור" להודעה: הלקוח רואה זמנים פנויים וקובע תור או הזמנה.':
+    'Adds "Book an appointment" to the message: the customer sees free times and books an appointment or a booking request.',
+  'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
+    'Right after the customer decides (a time to talk, an appointment or a booking request), they get a link, photos and a video from the business. At most once a day.',
+  'בקשות מהאתר ומהבוט בוואטסאפ, כולל הזמנות. לוחצים על בקשה, משבצים איש צוות ומאשרים.':
+    'Requests from the website and the WhatsApp bot, booking requests included. Click one, assign a staff member and confirm.',
 };
