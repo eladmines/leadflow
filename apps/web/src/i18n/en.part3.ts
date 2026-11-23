@@ -1078,4 +1078,8 @@ export const enPart3: Record<string, string> = {
     'In the settings you pick a status with one click, for example "At an event", and see what customers get now. You can choose for how long, and edit the message. "Available" brings back the general message.',
   'הלקוח רואה שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים משאיר את פרטי האירוע. הוא פועל רק כשהמענה לפי הסטטוס דלוק. בהגדרות בוחרים מה אפשר להזמין, אם התור מאושר מיד או מחכה לכם, ואפשר לכתוב את ההודעות במילים שלכם.':
     'The customer sees free hours from the calendar and books with a click, or in event businesses leaves the event details. It works only while the answer by status is on. In the settings you choose what can be booked, whether the appointment is confirmed at once or waits for you, and you can write the messages in your own words.',
+  'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. עוד: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי.':
+    "Business details, opening hours (which decide the hours offered for appointments) and service areas, all in one tab, each card with its own save button. Also: channels (connecting the business's WhatsApp and Facebook page) and the subscription.",
+  'מופיעות באתר, ומהן נקבעות השעות שמוצעות לתורים.':
+    'Shown on the website, and they set the hours offered for appointments.',
 };

@@ -13,7 +13,7 @@ import {
   type OpeningHours,
 } from '@simplecatch/shared';
 import { Building2, Clock, CreditCard, MapPin, type LucideIcon } from 'lucide-react';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -21,12 +21,14 @@ import {
   browserCountry,
   Button,
   Card,
+  CollapseButton,
   Field,
   PhoneField,
   Select,
   ScrollTabs,
 } from '../../components/ui';
 import { cn } from '../../lib/cn';
+import { useCollapsed } from '../../lib/useCollapsed';
 import { applyServerErrors, errorMessage } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
 import { HoursFields } from '../businesses/HoursFields';
@@ -43,6 +45,8 @@ export function Section({
   description,
   icon: Icon,
   tone,
+  id,
+  collapseKey,
   children,
 }: {
   title: string;
@@ -50,10 +54,16 @@ export function Section({
   icon: LucideIcon;
   /** The icon tile's colour (D-141). */
   tone: string;
+  /** For a link that scrolls to this card. */
+  id?: string;
+  /** Gives the card a fold button, remembered in the browser under this key. */
+  collapseKey?: string;
   children: ReactNode;
 }) {
+  const [folded, toggle] = useCollapsed(collapseKey ?? 'unused');
+  const collapsed = collapseKey !== undefined && folded;
   return (
-    <Card className="flex flex-col gap-5">
+    <Card id={id} className="flex scroll-mt-4 flex-col gap-5">
       <div className="flex items-center gap-3">
         <span
           aria-hidden
@@ -64,17 +74,32 @@ export function Section({
         >
           <Icon className="h-5 w-5" />
         </span>
-        <div className="flex flex-col gap-0.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h2 className="text-lg font-semibold text-ink">{title}</h2>
           {description && <p className="text-sm text-ink-muted">{description}</p>}
         </div>
+        {collapseKey !== undefined && (
+          <CollapseButton
+            collapsed={collapsed}
+            onToggle={toggle}
+            controls={`${collapseKey}-body`}
+            label={title}
+          />
+        )}
       </div>
-      {children}
+      {/* Hidden, not removed: what was typed and not yet saved stays. */}
+      <div
+        id={collapseKey ? `${collapseKey}-body` : undefined}
+        hidden={collapsed}
+        className="flex flex-col gap-5"
+      >
+        {children}
+      </div>
     </Card>
   );
 }
 
-const TABS = ['details', 'areas', 'hours', 'channels', 'billing'] as const;
+const TABS = ['details', 'channels', 'billing'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Save feedback for one section: success is announced politely, errors as an alert. */
@@ -93,11 +118,14 @@ export function SettingsPage() {
   const canEdit = can(business.role, 'business.update');
   const [params, setParams] = useSearchParams();
   const asked = params.get('tab');
+  // Service areas and opening hours used to be tabs of their own: old links land on their cards.
+  const scrollTo = asked === 'hours' || asked === 'areas' ? `settings-${asked}` : null;
   const tab: Tab = (TABS as readonly string[]).includes(asked ?? '') ? (asked as Tab) : 'details';
+  useEffect(() => {
+    if (scrollTo) document.getElementById(scrollTo)?.scrollIntoView?.({ block: 'start' });
+  }, [scrollTo]);
   const labels: Record<Tab, string> = {
     details: tr('פרטי העסק'),
-    areas: tr('אזורי שירות'),
-    hours: tr('שעות פעילות'),
     channels: tr('ערוצים'),
     billing: tr('מנוי וחיוב'),
   };
@@ -142,9 +170,14 @@ export function SettingsPage() {
         aria-labelledby={`settings-tab-${tab}`}
         className="max-w-3xl"
       >
-        {tab === 'details' && <DetailsSection canEdit={canEdit} />}
-        {tab === 'areas' && <ServiceAreasSection canEdit={canEdit} />}
-        {tab === 'hours' && <HoursSection canEdit={canEdit} />}
+        {tab === 'details' && (
+          // One tab for what the business is: its details, when it is open, where it works.
+          <div className="flex flex-col gap-5">
+            <DetailsSection canEdit={canEdit} collapsible />
+            <HoursSection canEdit={canEdit} collapsible />
+            <ServiceAreasSection canEdit={canEdit} collapsible />
+          </div>
+        )}
         {tab === 'channels' && <ChannelsSection canEdit={canEdit} />}
         {tab === 'billing' && (
           <Section title={tr('מנוי וחיוב')} icon={CreditCard} tone="bg-violet-500">
@@ -160,7 +193,14 @@ export function SettingsPage() {
   );
 }
 
-export function DetailsSection({ canEdit }: { canEdit: boolean }) {
+export function DetailsSection({
+  canEdit,
+  collapsible = false,
+}: {
+  canEdit: boolean;
+  /** A fold button on the card (the settings tab); the pop-up beside the site editor has none. */
+  collapsible?: boolean;
+}) {
   const business = useCurrentBusiness();
   const update = useUpdateBusiness(business.id);
   const [saved, setSaved] = useState(false);
@@ -190,7 +230,13 @@ export function DetailsSection({ canEdit }: { canEdit: boolean }) {
   });
 
   return (
-    <Section title={tr('פרטי העסק')} icon={Building2} tone="bg-sky-500">
+    <Section
+      title={tr('פרטי העסק')}
+      icon={Building2}
+      tone="bg-sky-500"
+      id="settings-details"
+      collapseKey={collapsible ? 'settings-details' : undefined}
+    >
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         <fieldset disabled={!canEdit} className="grid gap-4 sm:grid-cols-2">
           <Field
@@ -246,7 +292,13 @@ export function DetailsSection({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-export function ServiceAreasSection({ canEdit }: { canEdit: boolean }) {
+export function ServiceAreasSection({
+  canEdit,
+  collapsible = false,
+}: {
+  canEdit: boolean;
+  collapsible?: boolean;
+}) {
   const business = useCurrentBusiness();
   const update = useUpdateBusiness(business.id);
   const [areas, setAreas] = useState(business.serviceAreas);
@@ -271,6 +323,8 @@ export function ServiceAreasSection({ canEdit }: { canEdit: boolean }) {
       description={tr('הערים או האזורים שבהם העסק נותן שירות.')}
       icon={MapPin}
       tone="bg-emerald-500"
+      id="settings-areas"
+      collapseKey={collapsible ? 'settings-areas' : undefined}
     >
       {canEdit ? (
         <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
@@ -289,7 +343,13 @@ export function ServiceAreasSection({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-export function HoursSection({ canEdit }: { canEdit: boolean }) {
+export function HoursSection({
+  canEdit,
+  collapsible = false,
+}: {
+  canEdit: boolean;
+  collapsible?: boolean;
+}) {
   const business = useCurrentBusiness();
   const update = useUpdateBusiness(business.id);
   const [saved, setSaved] = useState(false);
@@ -312,7 +372,14 @@ export function HoursSection({ canEdit }: { canEdit: boolean }) {
   });
 
   return (
-    <Section title={tr('שעות פעילות')} icon={Clock} tone="bg-amber-500">
+    <Section
+      title={tr('שעות פעילות')}
+      description={tr('מופיעות באתר, ומהן נקבעות השעות שמוצעות לתורים.')}
+      icon={Clock}
+      tone="bg-amber-500"
+      id="settings-hours"
+      collapseKey={collapsible ? 'settings-hours' : undefined}
+    >
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         <HoursFields form={form} disabled={!canEdit} />
         {canEdit && (

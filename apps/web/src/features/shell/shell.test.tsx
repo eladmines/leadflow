@@ -329,11 +329,56 @@ describe('settings', () => {
     ]);
   });
 
+  it('has three tabs, with the details, the hours and the service areas on one tab', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    renderApp(section('settings'));
+    await screen.findByLabelText(/שם העסק/);
+    expect(
+      within(screen.getByRole('tablist', { name: 'חלקי ההגדרות' }))
+        .getAllByRole('tab')
+        .map((t) => t.textContent),
+    ).toEqual(['פרטי העסק', 'ערוצים', 'מנוי וחיוב']);
+    // In this order, each with its own save button.
+    const panel = screen.getByRole('tabpanel');
+    expect(
+      within(panel)
+        .getAllByRole('heading', { level: 2 })
+        .map((h) => h.textContent),
+    ).toEqual(['פרטי העסק', 'שעות פעילות', 'אזורי שירות']);
+    for (const save of ['שמירת הפרטים', 'שמירת השעות', 'שמירת האזורים']) {
+      expect(within(panel).getByRole('button', { name: save })).toBeInTheDocument();
+    }
+  });
+
+  it('the old hours and areas links still open the settings, with those cards', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    renderApp(`${section('settings')}?tab=hours`);
+    expect(await screen.findByLabelText('שעת סגירה ביום שני')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'פרטי העסק' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('a card can be folded without losing what was typed and not yet saved', async () => {
+    mockApi({ [meKey]: me(testUser) });
+    const { user } = renderApp(section('settings'));
+    const close = await screen.findByLabelText('שעת סגירה ביום שני');
+    await user.clear(close);
+    await user.type(close, '21:00');
+    await user.click(screen.getByRole('button', { name: 'הסתרה: שעות פעילות' }));
+    // Hidden, not removed.
+    expect(screen.getByLabelText('שעת סגירה ביום שני')).not.toBeVisible();
+    expect(screen.getByRole('button', { name: 'הצגה: שעות פעילות' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    await user.click(screen.getByRole('button', { name: 'הצגה: שעות פעילות' }));
+    expect(screen.getByLabelText('שעת סגירה ביום שני')).toBeVisible();
+    expect(screen.getByLabelText('שעת סגירה ביום שני')).toHaveValue('21:00');
+  });
+
   it('shows the Hebrew validation error and does not save invalid hours', async () => {
     const fetchMock = mockApi({ [meKey]: me(testUser) });
     const { user } = renderApp(section('settings'));
-    // Settings come in tabs (D-141).
-    await user.click(await screen.findByRole('tab', { name: 'שעות פעילות' }));
+    // Hours are a card of the business details tab, not a tab of their own.
     const close = await screen.findByLabelText('שעת סגירה ביום שני');
     await user.clear(close);
     await user.type(close, '07:00');
