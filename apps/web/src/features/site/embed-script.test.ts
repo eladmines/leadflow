@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMBED_SCRIPT } from '../../../../api/src/modules/embed/script';
 import { SITE_SCRIPT } from '../../../../api/src/modules/embed/site-script';
 
-const SRC = 'https://app.example.com/api/v1/embed/lead.js';
+const SRC = 'https://app.example.com/api/v1/embed/sc.js';
 const sent: { url: string; body: Record<string, unknown> }[] = [];
 
 class FakeXhr {

@@ -136,13 +136,13 @@ describe('existing website (D-094)', () => {
 
   it('explains in plain steps how to add the visit counter, per site builder (F31)', async () => {
     const snippet =
-      '<script async src="https://app.example/api/v1/embed/lead.js" data-key="K"></script>';
+      '<script async src="https://app.example/api/v1/embed/sc.js" data-key="K"></script>';
     mockApi({
       [meKey]: me(testUser),
       ...withWebsite(),
       ...getSite(null),
       [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
-        json(200, { scriptUrl: 'https://app.example/api/v1/embed/lead.js', key: 'K', snippet }),
+        json(200, { scriptUrl: 'https://app.example/api/v1/embed/sc.js', key: 'K', snippet }),
     });
     const { user } = renderApp(sitePath);
     expect(await screen.findByText('העתיקו את השורה הזו:')).toBeInTheDocument();
@@ -172,7 +172,7 @@ describe('existing website (D-094)', () => {
         ...getSite(null),
         [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
           json(200, {
-            scriptUrl: 'https://app.example/api/v1/embed/lead.js',
+            scriptUrl: 'https://app.example/api/v1/embed/sc.js',
             key: 'K',
             snippet: '<script async></script>',
           }),
@@ -225,7 +225,7 @@ describe('existing website (D-094)', () => {
       ...getSite(null),
       [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
         json(200, {
-          scriptUrl: 'https://app.example/api/v1/embed/lead.js',
+          scriptUrl: 'https://app.example/api/v1/embed/sc.js',
           key: 'K',
           snippet: '<script></script>',
         }),
@@ -267,7 +267,7 @@ describe('existing website (D-094)', () => {
       ...getSite(null),
       [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
         json(200, {
-          scriptUrl: 'https://app.example/api/v1/embed/lead.js',
+          scriptUrl: 'https://app.example/api/v1/embed/sc.js',
           key: 'K',
           snippet: '<script></script>',
         }),

@@ -145,8 +145,8 @@ export type EmbedInfo = z.infer<typeof embedInfoSchema>;
 export const embedApiPaths = {
   /** GET (owner): the business's script tag. */
   info: (businessId: string) => `/api/v1/businesses/${businessId}/embed`,
-  /** Public: the script itself. */
-  script: '/api/v1/embed/lead.js',
+  /** Public: the script itself (named neutrally: it counts visits, behavior and leads). */
+  script: '/api/v1/embed/sc.js',
   /** Public: where the script posts a lead (no cookies, no CSRF header: protected by the key). */
   lead: '/api/v1/embed/lead',
   /** Public: a visit (F31), same rules as `lead`. */
