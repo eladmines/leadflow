@@ -134,7 +134,7 @@ describe('existing website (D-094)', () => {
       json(200, { business: { ...testBusiness, role, websiteUrl: 'https://www.shiran.co.il' } }),
   });
 
-  it('explains in plain steps how to add the visit counter, per site builder (F31)', async () => {
+  it('explains the visit counter in two short steps; the per-builder steps are hidden for now (F31)', async () => {
     const snippet =
       '<script async src="https://app.example/api/v1/embed/sc.js" data-key="K"></script>';
     mockApi({
@@ -144,26 +144,22 @@ describe('existing website (D-094)', () => {
       [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
         json(200, { scriptUrl: 'https://app.example/api/v1/embed/sc.js', key: 'K', snippet }),
     });
-    const { user } = renderApp(sitePath);
-    expect(await screen.findByText('העתיקו את השורה הזו:')).toBeInTheDocument();
+    renderApp(sitePath);
+    expect(
+      await screen.findByText(/העתיקו את השורה הזו, והדביקו אותה באתר בכל הדפים, לפני התגית/),
+    ).toBeInTheDocument();
     expect(screen.getByText(snippet)).toBeInTheDocument();
-    // Wix first; the other builders and a message to whoever maintains the site are one tab away.
-    expect(screen.getByText(/הגדרות \(Settings\) ← קוד מותאם/)).toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: 'WordPress' }));
-    expect(screen.getByText(/WPCode/)).toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: 'Shopify' }));
-    expect(screen.getByText(/theme\.liquid/)).toBeInTheDocument();
-    // Shopify gets its own line, which also connects the contact form.
-    expect(screen.getAllByText(/data-forms=/).length).toBeGreaterThan(0);
-    // Named buttons, sections and ad tags are hidden for now; forms have a card of their own.
+    expect(screen.getByText(/בדקו שזה עובד/)).toBeInTheDocument();
+    // Wix, WordPress, Shopify and "other" steps are commented out for now.
+    expect(screen.queryByRole('tab', { name: 'WordPress' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/WPCode/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/theme\.liquid/)).not.toBeInTheDocument();
+    // Named buttons, sections and ad tags are hidden too; forms have a card of their own.
     expect(screen.queryByText('אפשרויות נוספות (לא חובה)')).not.toBeInTheDocument();
     expect(screen.queryByText(/data-sc-click=/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: 'אחר' }));
-    expect(screen.getByText(/שלחו את ההודעה הזו למי שבנה/)).toBeInTheDocument();
-    expect(screen.getAllByText(/שלום, אפשר להוסיף את השורה הבאה/).length).toBeGreaterThan(0);
   });
 
-  it("explains how the website's own form becomes leads: which form, a copy, what is recognised (F30)", async () => {
+  it("explains in three short steps how the website's own form becomes leads (F30)", async () => {
     mockApi({
       [meKey]: me(testUser),
       ...withWebsite(),
@@ -187,12 +183,12 @@ describe('existing website (D-094)', () => {
     });
     const { user } = renderApp(sitePath);
     expect(await screen.findByRole('heading', { name: 'לידים מהטופס שלכם' })).toBeInTheDocument();
-    expect(await screen.findByText('<form data-simplecatch>')).toBeInTheDocument();
-    expect(screen.getByText('data-forms="#contact-form"')).toBeInTheDocument();
-    expect(screen.getByText('data-forms="#contact-form" data-copy')).toBeInTheDocument();
-    expect(screen.getByText('מה אנחנו מזהים לבד:')).toBeInTheDocument();
-    expect(screen.getByText(/טלפון חובה/)).toBeInTheDocument();
-    // Shopify has its own line, which connects the contact form without marking it.
+    // One attribute on the script line; no restrictions listed beyond a name and a phone.
+    expect(await screen.findByText('data-forms="#contact-form"')).toBeInTheDocument();
+    expect(screen.getByText(/בטופס צריך לפחות שם וטלפון/)).toBeInTheDocument();
+    expect(screen.queryByText(/data-copy/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/תיבת אישור/)).not.toBeInTheDocument();
+    // Shopify has its own line, which connects the contact form.
     expect(
       screen.getAllByText(/data-key="K" data-forms="form\[action\*='\/contact'\]"/).length,
     ).toBeGreaterThan(0);
@@ -202,7 +198,7 @@ describe('existing website (D-094)', () => {
     );
     // It folds away like the others.
     await user.click(screen.getByRole('button', { name: 'הסתרה: לידים מהטופס שלכם' }));
-    expect(screen.queryByText('מה אנחנו מזהים לבד:')).not.toBeInTheDocument();
+    expect(screen.queryByText('data-forms="#contact-form"')).not.toBeInTheDocument();
   });
 
   it('the preview and the visit-counter guide can be folded away, and stay that way (F33)', async () => {
@@ -236,12 +232,12 @@ describe('existing website (D-094)', () => {
     mocks();
     const { user } = renderApp(sitePath);
     expect(await screen.findByTitle('תצוגה של האתר הקיים')).toBeInTheDocument();
-    expect(await screen.findByText('העתיקו את השורה הזו:')).toBeInTheDocument();
+    expect(await screen.findByText(/העתיקו את השורה הזו, והדביקו אותה באתר/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'הסתרה: תצוגת האתר' }));
     expect(screen.queryByTitle('תצוגה של האתר הקיים')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'הסתרה: קבלת פניות והמקור שלהן מהאתר' }));
-    expect(screen.queryByText('העתיקו את השורה הזו:')).not.toBeInTheDocument();
+    expect(screen.queryByText(/העתיקו את השורה הזו, והדביקו אותה באתר/)).not.toBeInTheDocument();
     // The title stays, and the button says it is folded.
     expect(
       screen.getByRole('heading', { name: 'קבלת פניות והמקור שלהן מהאתר' }),
@@ -257,7 +253,7 @@ describe('existing website (D-094)', () => {
     const second = renderApp(sitePath);
     expect(await screen.findByRole('button', { name: 'הצגה: תצוגת האתר' })).toBeInTheDocument();
     expect(screen.queryByTitle('תצוגה של האתר הקיים')).not.toBeInTheDocument();
-    expect(screen.queryByText('העתיקו את השורה הזו:')).not.toBeInTheDocument();
+    expect(screen.queryByText(/העתיקו את השורה הזו, והדביקו אותה באתר/)).not.toBeInTheDocument();
     await second.user.click(screen.getByRole('button', { name: 'הצגה: תצוגת האתר' }));
     expect(await screen.findByTitle('תצוגה של האתר הקיים')).toBeInTheDocument();
     forget();

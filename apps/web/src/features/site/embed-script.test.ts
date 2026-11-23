@@ -130,16 +130,12 @@ describe('embed script (F30, F31)', () => {
     expect(visits[0]!.body.params).not.toHaveProperty('junk');
   });
 
-  it("sends a Shopify contact form's fields with the ad, then lets Shopify have it too", async () => {
+  it("sends a Shopify contact form's fields with the ad, and Shopify keeps getting it as before", async () => {
     history.replaceState(null, '', '/?utm_source=google&utm_medium=cpc&utm_campaign=summer');
     document.body.innerHTML = shopifyForm;
-    const submit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
-    load({
-      'data-forms': "form[action*='/contact']",
-      'data-consent-implied': '',
-      'data-passthrough': '',
-    });
-    document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    load({ 'data-forms': "form[action*='/contact']" });
+    const ev = new Event('submit', { cancelable: true });
+    document.querySelector('form')!.dispatchEvent(ev);
     await flush();
     const lead = sent.find((s) => s.url.endsWith('/api/v1/embed/lead'))!;
     expect(lead.body).toMatchObject({
@@ -148,25 +144,22 @@ describe('embed script (F30, F31)', () => {
       email: 'dana@example.com',
       phone: '052-7654321',
       message: 'מעוניינת בהצעה',
-      consent: 'on',
       params: { utm_campaign: 'summer', utm_source: 'google' },
     });
     expect(String(lead.body.id)).toMatch(/^[A-Za-z0-9]{24}$/);
-    expect(submit).toHaveBeenCalledTimes(1);
-    // The form is kept, not replaced by a thank-you.
+    // A copy only: the form is not stopped, not replaced.
+    expect(ev.defaultPrevented).toBe(false);
     expect(document.querySelector('form#shop')).not.toBeNull();
   });
 
   it("leaves a form without a phone field alone (a newsletter box on Shopify's /contact address)", async () => {
     document.body.innerHTML = `<form action="/contact#footer" method="post"><input name="contact[email]" value="a@b.co"><button type="submit">Join</button></form>`;
-    load({ 'data-forms': "form[action*='/contact']", 'data-passthrough': '' });
-    const submit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+    load({ 'data-forms': "form[action*='/contact']" });
     const ev = new Event('submit', { cancelable: true });
     document.querySelector('form')!.dispatchEvent(ev);
     await flush();
     expect(ev.defaultPrevented).toBe(false);
     expect(sent.some((s) => s.url.endsWith('/lead'))).toBe(false);
-    expect(submit).not.toHaveBeenCalled();
   });
 
   it('a form with data-simplecatch sends our field names and shows the thank-you', async () => {
@@ -180,17 +173,9 @@ describe('embed script (F30, F31)', () => {
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();
     const lead = sent.find((s) => s.url.endsWith('/lead'))!;
-    expect(lead.body).toMatchObject({ name: 'דנה', phone: '0527654321', consent: 'on' });
+    expect(lead.body).toMatchObject({ name: 'דנה', phone: '0527654321' });
     expect(document.querySelector('form')).toBeNull();
     expect(document.body.textContent).toContain('תודה!');
-  });
-
-  it('a form with no tick box at all: sending it is asking to be contacted, so consent is on', async () => {
-    document.body.innerHTML = `<form data-simplecatch><input name="name" value="דנה"><input name="phone" value="0527654321"></form>`;
-    load();
-    document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
-    await flush();
-    expect(sent.find((s) => s.url.endsWith('/lead'))!.body.consent).toBe('on');
   });
 
   describe('sections (F32)', () => {
@@ -407,7 +392,7 @@ describe('embed script (F30, F31)', () => {
     it("reads a customer's own form, adds the other fields to the message, and leaves the page alone", async () => {
       document.body.innerHTML = customerForm;
       // Bound while still empty: a phone field counts by being there, not by having a value.
-      load({ 'data-forms': '#f', 'data-copy': '' });
+      load({ 'data-forms': '#f' });
       const form = document.getElementById('f') as HTMLFormElement;
       fill(form, {
         '[name=n]': 'דנה כהן',
@@ -423,8 +408,6 @@ describe('embed script (F30, F31)', () => {
         phone: '052-7654321',
         // The date is none of the standard fields: it rides inside the message, with its label.
         message: 'חתונה בגן, כ-120 אורחים\n\nתאריך האירוע: 2026-12-15',
-        // No tick box in the form: sending it is asking to be contacted.
-        consent: 'on',
         // The trap field is empty, so this is a person.
         website: '',
       });
@@ -435,9 +418,31 @@ describe('embed script (F30, F31)', () => {
       expect(alertSpy).not.toHaveBeenCalled();
     });
 
+    it('sends the copy as a beacon, which survives the page change when the form posts normally', async () => {
+      document.body.innerHTML = customerForm;
+      const beacon = vi.fn(() => true);
+      Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true });
+      try {
+        load({ 'data-forms': '#f' });
+        const form = document.getElementById('f') as HTMLFormElement;
+        fill(form, { '[name=n]': 'דנה כהן', '[name=p]': '052-7654321' });
+        sent.length = 0;
+        await submit(form);
+        expect(beacon).toHaveBeenCalledTimes(1);
+        const [url, blob] = beacon.mock.calls[0] as unknown as [string, Blob];
+        expect(url).toBe('https://app.example.com/api/v1/embed/lead');
+        expect(blob.type).toBe('text/plain');
+        expect(blob.size).toBeGreaterThan(50);
+        // No second, ordinary request for the same form.
+        expect(sent.filter((x) => x.url.endsWith('/embed/lead'))).toHaveLength(0);
+      } finally {
+        Reflect.deleteProperty(navigator, 'sendBeacon');
+      }
+    });
+
     it('passes a filled trap field on, so the server drops the bot', async () => {
       document.body.innerHTML = customerForm;
-      load({ 'data-forms': '#f', 'data-copy': '' });
+      load({ 'data-forms': '#f' });
       const form = document.getElementById('f') as HTMLFormElement;
       fill(form, { '[name=n]': 'Bot', '[name=p]': '0501234567', '[name=_honey]': 'http://spam' });
       await submit(form);
@@ -473,7 +478,6 @@ describe('embed script (F30, F31)', () => {
         email: 'dana@example.com',
         phone: '0527654321',
         message: 'Hello',
-        consent: 'on',
       });
 
       sent.length = 0;
@@ -492,13 +496,12 @@ describe('embed script (F30, F31)', () => {
         phone: '0527654321',
         email: 'd@example.com',
         message: 'שלום',
-        consent: 'on',
       });
       // The second tick box (updates) is neither the consent nor an extra field.
       expect(String(leadBody().message)).not.toContain('עדכונים');
     });
 
-    it('an unticked consent box is not consent, and names we ask for still come first', async () => {
+    it('names we ask for still come first, and a tick box is just ignored', async () => {
       document.body.innerHTML = `
         <form data-simplecatch>
           <input name="name" value="דנה"><input name="phone" value="0527654321">
@@ -506,7 +509,8 @@ describe('embed script (F30, F31)', () => {
         </form>`;
       load();
       await submit(document.querySelector('form') as HTMLFormElement);
-      expect(leadBody()).toMatchObject({ name: 'דנה', phone: '0527654321', consent: '' });
+      expect(leadBody()).toMatchObject({ name: 'דנה', phone: '0527654321' });
+      expect(leadBody()).not.toHaveProperty('consent');
     });
 
     it('leaves a newsletter box alone, even when the script is pointed at it', async () => {

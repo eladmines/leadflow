@@ -1127,4 +1127,16 @@ export const enPart3: Record<string, string> = {
   'דף הלידים': 'Leads page',
   'ב-Shopify לא צריך לסמן את הטופס: במקום השורה הרגילה הדביקו את השורה הזו, והיא מחברת את טופס "צור קשר" לבד (הפנייה ממשיכה להגיע גם ל-Shopify):':
     'On Shopify you don\'t need to mark the form: paste this line instead of the usual one, and it connects the "Contact us" form by itself (the inquiry still reaches Shopify too):',
+  'הטופס באתר ממשיך לשלוח כרגיל. אנחנו מקבלים עותק של כל פנייה, והיא נכנסת לדף "לידים".':
+    'The form on your website keeps sending as usual. We get a copy of every inquiry, and it arrives in the Leads page.',
+  'הדביקו באתר את השורה מהכרטיס שמעל (אם עוד לא).':
+    "Paste the line from the card above into your website (if you haven't yet).",
+  'הוסיפו לשורה הזו את המזהה (id) של הטופס, במקום contact-form:':
+    "Add the form's id to that line, instead of contact-form:",
+  'בטופס צריך לפחות שם וטלפון. את השאר אנחנו מזהים לבד.':
+    'The form needs at least a name and a phone. We recognise the rest by ourselves.',
+  'ב-Shopify: במקום השורה הרגילה הדביקו את השורה הזו, והיא מחברת את טופס "צור קשר":':
+    'On Shopify: paste this line instead of the usual one, and it connects the "Contact us" form:',
+  'העתיקו את השורה הזו, והדביקו אותה באתר בכל הדפים, לפני התגית </body>:':
+    'Copy this line, and paste it into your website on all pages, before the </body> tag:',
 };

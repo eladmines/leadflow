@@ -1,8 +1,7 @@
-import { Code2 } from 'lucide-react';
-import { useState } from 'react';
-import { Alert, Card, CollapseButton, ScrollTabs, Spinner } from '../../components/ui';
+// Needed again when the per-builder steps come back: Code2 (lucide-react), useState (react), ScrollTabs
+// (components/ui) and cn (lib/cn).
+import { Alert, Card, CollapseButton, Spinner } from '../../components/ui';
 import { useCollapsed } from '../../lib/useCollapsed';
-import { cn } from '../../lib/cn';
 import { Paste, Step, Steps } from '../reports/AdsGuideDialog';
 import { errorMessage } from '../auth/serverErrors';
 import { useEmbedInfo } from './embedApi';
@@ -24,134 +23,136 @@ import { tr } from '../../i18n';
 //   <button type="submit">Send</button>
 // </form>`;
 
-/** The line for a Shopify theme: it also connects the "Contact us" form and lets Shopify keep its own copy. */
+/** The line for a Shopify theme: it also picks up the "Contact us" form (which keeps sending as before). */
 export const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
-  `<script async src="${info.scriptUrl}" data-key="${info.key}" data-forms="form[action*='/contact']" data-consent-implied data-passthrough></script>`;
+  `<script async src="${info.scriptUrl}" data-key="${info.key}" data-forms="form[action*='/contact']"></script>`;
 
-const TABS = ['wix', 'wordpress', 'shopify', 'other'] as const;
-type Tab = (typeof TABS)[number];
-
-/** Where to paste it, in plain words, for the most common site builders (their menus change now and then). */
-function PlatformSteps({ tab, message, shopify }: { tab: Tab; message: string; shopify: string }) {
-  if (tab === 'wix') {
-    return (
-      <Steps>
-        <Step>{tr('בעורך של Wix: הגדרות (Settings) ← קוד מותאם (Custom code).')}</Step>
-        <Step>{tr('לחצו "הוספת קוד" (Add code) והדביקו את השורה שהעתקתם.')}</Step>
-        <Step>
-          {tr(
-            'בחרו "כל הדפים" ו"סוף ה-Body" (Body – end), לחצו "החלה", ואז פרסמו את האתר. בדרך כלל צריך חבילה בתשלום של Wix.',
-          )}
-        </Step>
-      </Steps>
-    );
-  }
-  if (tab === 'wordpress') {
-    return (
-      <Steps>
-        <Step>{tr('התקינו את התוסף החינמי WPCode (תוספים ← הוספת תוסף, וחפשו "WPCode").')}</Step>
-        <Step>{tr('Code Snippets ← Header & Footer, והדביקו את השורה בתיבה "Footer". שמרו.')}</Step>
-      </Steps>
-    );
-  }
-  if (tab === 'shopify') {
-    return (
-      <Steps>
-        <Step>
-          {tr(
-            'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את layout/theme.liquid.',
-          )}
-        </Step>
-        <Step>
-          {tr(
-            'הדביקו ממש לפני התגית </body> ושמרו. כאן הדביקו את השורה הזו במקום השורה שהעתקתם למעלה, כי היא מחברת גם את טופס "צור קשר" של Shopify:',
-          )}
-          <Paste text={shopify} />
-          <span className="text-xs text-ink-muted">
-            {tr(
-              'כדי שפנייה תגיע אלינו כליד, הטלפון בטופס צריך להיות שדה חובה (בערכות רבות הוא רשות). הפנייה ממשיכה להגיע גם ל-Shopify.',
-            )}
-          </span>
-        </Step>
-      </Steps>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-sm text-ink">
-        {tr('לא בטוחים איך? שלחו את ההודעה הזו למי שבנה או מתחזק את האתר:')}
-      </p>
-      <Paste text={message} />
-    </div>
-  );
-}
-
-/** Small marks for the site builders, drawn here as simple shapes (a letter on the builder's colour). */
-function BuilderIcon({ tab }: { tab: Tab }) {
-  const box = 'h-5 w-5 shrink-0';
-  if (tab === 'wix') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden className={box}>
-        <rect width="24" height="24" rx="6" fill="#111827" />
-        <text
-          x="12"
-          y="15.5"
-          textAnchor="middle"
-          fontSize="9"
-          fontWeight="800"
-          fill="#fff"
-          fontFamily="system-ui, Arial, sans-serif"
-        >
-          Wix
-        </text>
-      </svg>
-    );
-  }
-  if (tab === 'wordpress') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden className={box}>
-        <circle cx="12" cy="12" r="11" fill="#21759B" />
-        <text
-          x="12"
-          y="17"
-          textAnchor="middle"
-          fontSize="14"
-          fontWeight="700"
-          fill="#fff"
-          fontFamily="Georgia, 'Times New Roman', serif"
-        >
-          W
-        </text>
-      </svg>
-    );
-  }
-  if (tab === 'shopify') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden className={box}>
-        <path d="M5 8h14l-1 13H6L5 8z" fill="#95BF47" />
-        <path
-          d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8"
-          fill="none"
-          stroke="#5E8E3E"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <text
-          x="12"
-          y="17.5"
-          textAnchor="middle"
-          fontSize="9"
-          fontWeight="800"
-          fill="#fff"
-          fontFamily="system-ui, Arial, sans-serif"
-        >
-          S
-        </text>
-      </svg>
-    );
-  }
-  return <Code2 aria-hidden className={cn(box, 'text-ink-muted')} />;
-}
+// The per-builder steps (Wix, WordPress, Shopify, other) are hidden for now; kept here to bring back:
+//
+// const TABS = ['wix', 'wordpress', 'shopify', 'other'] as const;
+// type Tab = (typeof TABS)[number];
+//
+// /** Where to paste it, in plain words, for the most common site builders (their menus change now and then). */
+// function PlatformSteps({ tab, message, shopify }: { tab: Tab; message: string; shopify: string }) {
+//   if (tab === 'wix') {
+//     return (
+//       <Steps>
+//         <Step>{tr('בעורך של Wix: הגדרות (Settings) ← קוד מותאם (Custom code).')}</Step>
+//         <Step>{tr('לחצו "הוספת קוד" (Add code) והדביקו את השורה שהעתקתם.')}</Step>
+//         <Step>
+//           {tr(
+//             'בחרו "כל הדפים" ו"סוף ה-Body" (Body – end), לחצו "החלה", ואז פרסמו את האתר. בדרך כלל צריך חבילה בתשלום של Wix.',
+//           )}
+//         </Step>
+//       </Steps>
+//     );
+//   }
+//   if (tab === 'wordpress') {
+//     return (
+//       <Steps>
+//         <Step>{tr('התקינו את התוסף החינמי WPCode (תוספים ← הוספת תוסף, וחפשו "WPCode").')}</Step>
+//         <Step>{tr('Code Snippets ← Header & Footer, והדביקו את השורה בתיבה "Footer". שמרו.')}</Step>
+//       </Steps>
+//     );
+//   }
+//   if (tab === 'shopify') {
+//     return (
+//       <Steps>
+//         <Step>
+//           {tr(
+//             'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את layout/theme.liquid.',
+//           )}
+//         </Step>
+//         <Step>
+//           {tr(
+//             'הדביקו ממש לפני התגית </body> ושמרו. כאן הדביקו את השורה הזו במקום השורה שהעתקתם למעלה, כי היא מחברת גם את טופס "צור קשר" של Shopify:',
+//           )}
+//           <Paste text={shopify} />
+//           <span className="text-xs text-ink-muted">
+//             {tr(
+//               'כדי שפנייה תגיע אלינו כליד, הטלפון בטופס צריך להיות שדה חובה (בערכות רבות הוא רשות). הפנייה ממשיכה להגיע גם ל-Shopify.',
+//             )}
+//           </span>
+//         </Step>
+//       </Steps>
+//     );
+//   }
+//   return (
+//     <div className="flex flex-col gap-2">
+//       <p className="text-sm text-ink">
+//         {tr('לא בטוחים איך? שלחו את ההודעה הזו למי שבנה או מתחזק את האתר:')}
+//       </p>
+//       <Paste text={message} />
+//     </div>
+//   );
+// }
+//
+// /** Small marks for the site builders, drawn here as simple shapes (a letter on the builder's colour). */
+// function BuilderIcon({ tab }: { tab: Tab }) {
+//   const box = 'h-5 w-5 shrink-0';
+//   if (tab === 'wix') {
+//     return (
+//       <svg viewBox="0 0 24 24" aria-hidden className={box}>
+//         <rect width="24" height="24" rx="6" fill="#111827" />
+//         <text
+//           x="12"
+//           y="15.5"
+//           textAnchor="middle"
+//           fontSize="9"
+//           fontWeight="800"
+//           fill="#fff"
+//           fontFamily="system-ui, Arial, sans-serif"
+//         >
+//           Wix
+//         </text>
+//       </svg>
+//     );
+//   }
+//   if (tab === 'wordpress') {
+//     return (
+//       <svg viewBox="0 0 24 24" aria-hidden className={box}>
+//         <circle cx="12" cy="12" r="11" fill="#21759B" />
+//         <text
+//           x="12"
+//           y="17"
+//           textAnchor="middle"
+//           fontSize="14"
+//           fontWeight="700"
+//           fill="#fff"
+//           fontFamily="Georgia, 'Times New Roman', serif"
+//         >
+//           W
+//         </text>
+//       </svg>
+//     );
+//   }
+//   if (tab === 'shopify') {
+//     return (
+//       <svg viewBox="0 0 24 24" aria-hidden className={box}>
+//         <path d="M5 8h14l-1 13H6L5 8z" fill="#95BF47" />
+//         <path
+//           d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8"
+//           fill="none"
+//           stroke="#5E8E3E"
+//           strokeWidth="1.6"
+//           strokeLinecap="round"
+//         />
+//         <text
+//           x="12"
+//           y="17.5"
+//           textAnchor="middle"
+//           fontSize="9"
+//           fontWeight="800"
+//           fill="#fff"
+//           fontFamily="system-ui, Arial, sans-serif"
+//         >
+//           S
+//         </text>
+//       </svg>
+//     );
+//   }
+//   return <Code2 aria-hidden className={cn(box, 'text-ink-muted')} />;
+// }
 
 /**
  * F30-F32: connecting a website built elsewhere: one line to paste (it counts visits and behavior),
@@ -159,17 +160,17 @@ function BuilderIcon({ tab }: { tab: Tab }) {
  */
 export function EmbedGuide({ businessId }: { businessId: string }) {
   const info = useEmbedInfo(businessId, true);
-  const [tab, setTab] = useState<Tab>('wix');
   const [hidden, toggle] = useCollapsed('site-embed-guide');
-  const labels: Record<Tab, string> = {
-    wix: 'Wix',
-    wordpress: 'WordPress',
-    shopify: 'Shopify',
-    other: tr('אחר'),
-  };
-  const message = info.data
-    ? `${tr('שלום, אפשר להוסיף את השורה הבאה לכל דפי האתר, ממש לפני התגית </body>? זה מונה כניסות לאתר.')}\n\n${info.data.snippet}`
-    : '';
+  // For the per-builder steps (hidden for now):
+  // const labels: Record<Tab, string> = {
+  // wix: 'Wix',
+  // wordpress: 'WordPress',
+  // shopify: 'Shopify',
+  // other: tr('אחר'),
+  // };
+  // const message = info.data
+  // ? `${tr('שלום, אפשר להוסיף את השורה הבאה לכל דפי האתר, ממש לפני התגית </body>? זה מונה כניסות לאתר.')}\n\n${info.data.snippet}`
+  // : '';
   return (
     <Card className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-2">
@@ -201,9 +202,10 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
             <>
               <Steps>
                 <Step>
-                  {tr('העתיקו את השורה הזו:')}
+                  {tr('העתיקו את השורה הזו, והדביקו אותה באתר בכל הדפים, לפני התגית </body>:')}
                   <Paste text={info.data.snippet} />
                 </Step>
+                {/*
                 <Step>
                   {tr(
                     'הדביקו אותה באתר, בכל הדפים, בסוף הדף (לפני התגית </body>). איך עושים את זה בבונה שלכם?',
@@ -232,6 +234,7 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
                   </ScrollTabs>
                   <PlatformSteps tab={tab} message={message} shopify={shopifySnippet(info.data)} />
                 </Step>
+                */}
                 <Step>
                   {tr(
                     'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.',

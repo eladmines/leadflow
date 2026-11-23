@@ -114,7 +114,8 @@ export const embedPublicRoutes: FastifyPluginAsync = async (app) => {
         phone: body.phone,
         email: body.email,
         message: body.message,
-        consent: body.consent,
+        // A form on the owner's own website: sending it is asking to be contacted (D-197).
+        consent: 'on',
       });
       if (!data.success) {
         return answer(400, {

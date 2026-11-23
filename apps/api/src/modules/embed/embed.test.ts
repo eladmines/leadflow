@@ -122,7 +122,7 @@ describe('leads from a website built elsewhere (F30)', () => {
     expect(await by('+972523333333')).toBe('direct');
   });
 
-  it('rejects a wrong or another business key, and explains missing fields', async () => {
+  it('rejects a wrong or another business key, and explains a missing phone', async () => {
     const a = await ownerWithBusiness(ctx.app, 'embed-e');
     const { key } = await keyOf(a);
     expect((await post(base(key.slice(0, -1) + (key.endsWith('A') ? 'B' : 'A')))).statusCode).toBe(
@@ -130,11 +130,19 @@ describe('leads from a website built elsewhere (F30)', () => {
     );
     expect((await post(base('0'.repeat(32) + '.' + 'A'.repeat(22)))).statusCode).toBe(400);
 
-    const noConsent = await post(base(key, { consent: undefined }));
-    expect(noConsent.statusCode).toBe(400);
-    expect(noConsent.json().ok).toBe(false);
-    expect(noConsent.json().errors).toContain('יש לאשר את יצירת הקשר כדי לשלוח');
+    // A phone is the one thing a lead needs; it is explained in the business's language.
+    const noPhone = await post(base(key, { phone: undefined }));
+    expect(noPhone.statusCode).toBe(400);
+    expect(noPhone.json().ok).toBe(false);
+    expect(noPhone.json().errors?.length).toBeGreaterThan(0);
     expect(await ctx.prisma.lead.count()).toBe(0);
+  });
+
+  it("needs no consent field: sending a form on the owner's own site is asking to be contacted (D-197)", async () => {
+    const o = await ownerWithBusiness(ctx.app, 'embed-g');
+    const { key } = await keyOf(o);
+    expect((await post(base(key, { consent: undefined }))).json()).toEqual({ ok: true });
+    expect(await ctx.prisma.lead.count({ where: { businessId: o.business.id } })).toBe(1);
   });
 
   it('drops bots that fill the hidden field, and garbage bodies', async () => {

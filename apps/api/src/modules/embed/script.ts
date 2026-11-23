@@ -2,15 +2,15 @@
  * F30: the script a business pastes on its own website. Plain ES5 (runs on any site), no
  * dependencies. It remembers where the visitor came from (ad click, UTM, referrer) in
  * localStorage for 30 days, and posts every `<form data-simplecatch>` to SimpleCatch with it.
- * Fields are found by the names we ask for (name, phone, email, message, consent) and Shopify's
+ * Fields are found by the names we ask for (name, phone, email, message) and Shopify's
  * (`contact[name]`, `contact[body]`…), and otherwise by their type, name, label and placeholder, in
  * Hebrew or English; other filled fields (a date, a service) go into the message as "label: value".
  * F32: it also counts what visitors do (page, landing page, device, taps on phone/WhatsApp/email
- * links and on buttons the owner named, sections seen (data-sc-section), scroll depth, a form started), never who they are.
- * Options, on the form or on the script tag: `data-copy` (the form sends itself some other way: we only
- * send a copy and change nothing on the page), `data-consent-implied` (the form's own text already asks
- * for consent), `data-passthrough` (after sending, the form is submitted normally too, e.g. to
- * Shopify). On the script tag, `data-forms="<css selector>"` binds forms that can't carry attributes.
+ * links and on buttons the owner named, sections seen (data-sc-section), scroll depth, a form started),
+ * never who they are.
+ * Forms: `data-forms="<css selector>"` on the script tag picks forms that keep sending themselves; we send
+ * a copy (a beacon, so it survives the page change) and change nothing. `data-simplecatch` on a form
+ * means we take it over instead (we send it and show `data-success`).
  */
 import { CLICK_KIND_JS, WATCH_SECTIONS_JS } from './script-parts';
 
@@ -180,15 +180,21 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
     return r;
   }
 
-  function send(fields, done) {
+  function send(fields, done, beacon) {
     var src = read() || {};
     var body = {
       key: key, id: fields._id || uid(),
       name: fields.name, phone: fields.phone, email: fields.email, message: fields.message,
-      consent: fields.consent, website: fields.website,
+      website: fields.website,
       params: src.params, referrer: src.referrer, landing: src.landing,
       page: location.href.split(/[?#]/)[0]
     };
+    // A copy of a form that is about to leave the page: a beacon survives the page change.
+    if (beacon) {
+      try {
+        if (navigator.sendBeacon && navigator.sendBeacon(endpoint, new Blob([JSON.stringify(body)], { type: 'text/plain' }))) { done(true, []); return; }
+      } catch (e) {}
+    }
     var x = new XMLHttpRequest();
     x.open('POST', endpoint);
     x.setRequestHeader('Content-Type', 'text/plain');
@@ -220,7 +226,6 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
     email: /e-?mail|מייל|דוא|אימייל/i,
     phone: /phone|tel|mobile|cell|טלפון|נייד|פלאפון|סלולרי/i,
     name: /name|שם/i,
-    consent: /consent|agree|accept|terms|privacy|gdpr|אישור|מאשר|מסכים|מסכימה|תנאים|פרטיות|הסכמה/i,
     honey: /honey|trap|website|url|fax|hp/i
   };
   var SKIP = /^(hidden|submit|button|reset|image|file|password|search|radio|range|color)$/;
@@ -236,7 +241,7 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
     return (el.getAttribute('aria-hidden') === 'true' || el.tabIndex === -1) && WORDS.honey.test(el.name || el.id || '');
   }
   function detect(form) {
-    var out = { names: [], phone: null, email: null, message: null, consent: null, honey: null, boxes: [], used: [] };
+    var out = { names: [], phone: null, email: null, message: null, honey: null, used: [] };
     var els = form.elements;
     for (var i = 0; i < els.length; i++) {
       var el = els[i], tag = el.tagName, type = (el.type || '').toLowerCase();
@@ -244,19 +249,13 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
       if (SKIP.test(type) || el.name === 'website') continue;
       if (isHoney(el)) { out.honey = el; continue; }
       var d = describe(el);
-      if (type === 'checkbox') {
-        out.boxes.push(el);
-        if (!out.consent && WORDS.consent.test(d)) { out.consent = el; out.used.push(el); }
-        continue;
-      }
+      if (type === 'checkbox') continue;
       if (tag === 'SELECT') continue;
       if (tag === 'TEXTAREA') { if (!out.message) { out.message = el; out.used.push(el); } continue; }
       if (type === 'email' || WORDS.email.test(d)) { if (!out.email) { out.email = el; out.used.push(el); } continue; }
       if (type === 'tel' || WORDS.phone.test(d)) { if (!out.phone) { out.phone = el; out.used.push(el); } continue; }
       if (WORDS.name.test(d) && out.names.length < 2) { out.names.push(el); out.used.push(el); }
     }
-    // A form with a single tick box: that is the consent.
-    if (!out.consent && out.boxes.length === 1) { out.consent = out.boxes[0]; out.used.push(out.boxes[0]); }
     return out;
   }
   function fieldText(el) { return el ? el.value : undefined; }
@@ -285,9 +284,6 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
       for (var i = 0; i < d.names.length; i++) if (d.names[i].value) parts.push(d.names[i].value);
       name = parts.join(' ');
     }
-    // No tick box in the form at all: sending it is the visitor asking to be contacted.
-    var consent = val(form, ['consent', 'contact[consent]']);
-    if (consent === undefined) consent = d.consent ? (d.consent.checked ? 'on' : '') : (d.boxes.length ? '' : 'on');
     var pick = function (names, found) { var v = val(form, names); return v === undefined ? fieldText(found) : v; };
     var message = pick(['message', 'contact[body]', 'contact[message]', 'contact[Message]'], d.message);
     var more = extras(form, d);
@@ -297,7 +293,6 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
       phone: pick(PHONE, d.phone),
       email: pick(['email', 'contact[email]', 'contact[Email]'], d.email),
       message: message ? message.slice(0, 2900) : message,
-      consent: consent,
       website: val(form, ['website']) || fieldText(d.honey)
     };
   }
@@ -311,16 +306,15 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
     if (form.__sc) return;
     form.__sc = true;
     var id = uid(), busy = false;
-    // data-copy: the form has its own way of sending (a mailer, a script): we only send a copy of what
-    // was submitted, and leave the page and the form exactly as they are.
-    var copy = opt(form, 'data-copy');
+    // A form picked with data-forms keeps sending itself (a mailer, a script, a normal post): we only
+    // send a copy and change nothing. data-simplecatch on the form means we take it over instead.
+    var copy = !form.hasAttribute('data-simplecatch') || opt(form, 'data-copy');
     form.addEventListener('submit', function (e) {
       if (!copy) e.preventDefault();
       if (busy) return;
       busy = true;
       var btn = copy ? null : form.querySelector('[type=submit]');
       if (btn) btn.disabled = true;
-      var passthrough = opt(form, 'data-passthrough');
       var f = readForm(form);
       send({
         _id: id,
@@ -328,7 +322,6 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
         phone: f.phone,
         email: f.email,
         message: f.message,
-        consent: opt(form, 'data-consent-implied') ? 'on' : f.consent,
         website: f.website
       }, function (ok, errors) {
         busy = false;
@@ -338,8 +331,6 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
         ev.initCustomEvent(ok ? 'simplecatch:sent' : 'simplecatch:error', true, false, { errors: errors });
         form.dispatchEvent(ev);
         if (copy) return;
-        // The form's own destination still gets it (it was only paused to send ours first).
-        if (passthrough) { HTMLFormElement.prototype.submit.call(form); return; }
         if (ok) {
           var note = document.createElement('p');
           note.textContent = form.getAttribute('data-success') || 'Thank you! We will be in touch.';
@@ -347,7 +338,7 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
         } else {
           alert(errors.length ? errors.join('\\n') : (form.getAttribute('data-error') || 'Sending failed. Please try again.'));
         }
-      });
+      }, copy);
     // Capture: a copy is read before the form's own handler can clear it.
     }, copy);
   }
