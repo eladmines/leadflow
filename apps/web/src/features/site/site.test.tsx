@@ -148,7 +148,8 @@ describe('existing website (D-094)', () => {
     expect(
       await screen.findByText(/העתיקו את השורה הזו, והדביקו אותה באתר בכל הדפים, לפני התגית/),
     ).toBeInTheDocument();
-    expect(screen.getByText(snippet)).toBeInTheDocument();
+    // The line shows in the visit-counter card, and again in the forms card ("what it says now").
+    expect(screen.getAllByText(snippet).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/בדקו שזה עובד/)).toBeInTheDocument();
     // Wix, WordPress, Shopify and "other" steps are commented out for now.
     expect(screen.queryByRole('tab', { name: 'WordPress' })).not.toBeInTheDocument();
@@ -183,8 +184,24 @@ describe('existing website (D-094)', () => {
     });
     const { user } = renderApp(sitePath);
     expect(await screen.findByRole('heading', { name: 'לידים מהטופס שלכם' })).toBeInTheDocument();
-    // One attribute on the script line; no restrictions listed beyond a name and a phone.
-    expect(await screen.findByText('data-forms="#contact-form"')).toBeInTheDocument();
+    const line = (id: string) =>
+      `<script async src="https://app.example/api/v1/embed/sc.js" data-key="K" data-forms="#${id}"></script>`;
+    // What is on the site now, and the line to replace it with (a sample id until one is typed).
+    expect(
+      await screen.findAllByText(
+        '<script async src="https://app.example/api/v1/embed/sc.js" data-key="K"></script>',
+      ),
+    ).toHaveLength(2);
+    expect(screen.getByText(line('contact-form'))).toBeInTheDocument();
+    expect(screen.getByText('<form id="contact-form">')).toBeInTheDocument();
+    // Type the form's id and the line follows; a "#" and stray characters are cleaned away.
+    await user.type(screen.getByLabelText('הקלידו כאן את ה-id של הטופס שלכם'), '#f"<x> y');
+    expect(screen.getByText(line('fxy'))).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('הקלידו כאן את ה-id של הטופס שלכם'));
+    await user.type(screen.getByLabelText('הקלידו כאן את ה-id של הטופס שלכם'), 'f');
+    expect(screen.getByText(line('f'))).toBeInTheDocument();
+    // The one thing that changes is the script line, never the form.
+    expect(screen.getByText(/כל השינוי הוא בשורת ה-script/)).toBeInTheDocument();
     expect(screen.getByText(/בטופס צריך לפחות שם וטלפון/)).toBeInTheDocument();
     expect(screen.queryByText(/data-copy/)).not.toBeInTheDocument();
     expect(screen.queryByText(/תיבת אישור/)).not.toBeInTheDocument();
@@ -193,7 +210,7 @@ describe('existing website (D-094)', () => {
     expect(screen.queryByText(/ב-Shopify/)).not.toBeInTheDocument();
     // The link continues the sentence: "…מופיעה בדף הלידים.", all in one line.
     expect(screen.getByRole('link', { name: 'דף הלידים' }).parentElement).toHaveTextContent(
-      'שלחו פנייה לדוגמה מהאתר, ובדקו שהיא מופיעה בדף הלידים.',
+      'שמרו ופרסמו, שלחו פנייה לדוגמה מהאתר, ובדקו שהיא מופיעה בדף הלידים.',
     );
     expect(screen.getByRole('link', { name: 'דף הלידים' })).toHaveAttribute(
       'href',
@@ -201,7 +218,7 @@ describe('existing website (D-094)', () => {
     );
     // It folds away like the others.
     await user.click(screen.getByRole('button', { name: 'הסתרה: לידים מהטופס שלכם' }));
-    expect(screen.queryByText('data-forms="#contact-form"')).not.toBeInTheDocument();
+    expect(screen.queryByText('<form id="contact-form">')).not.toBeInTheDocument();
   });
 
   it('the preview and the visit-counter guide can be folded away, and stay that way (F33)', async () => {

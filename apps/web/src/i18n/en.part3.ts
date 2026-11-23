@@ -1139,4 +1139,25 @@ export const enPart3: Record<string, string> = {
     'On Shopify: paste this line instead of the usual one, and it connects the "Contact us" form:',
   'העתיקו את השורה הזו, והדביקו אותה באתר בכל הדפים, לפני התגית </body>:':
     'Copy this line, and paste it into your website on all pages, before the </body> tag:',
+  'במקום השורה שהדבקתם באתר (מהכרטיס שמעל), הדביקו את השורה הזו. זו אותה שורה עם תוספת אחת בסוף, data-forms:':
+    'Instead of the line you pasted into your website (from the card above), paste this line. It is the same line with one addition at the end, data-forms:',
+  'את contact-form החליפו ב-id של הטופס שלכם. מוצאים אותו בקוד של הטופס, בתגית form, למשל:':
+    "Replace contact-form with the id of your form. You find it in the form's code, in the form tag, for example:",
+  'כל השינוי הוא בשורת ה-script שהדבקתם באתר. את הטופס עצמו לא משנים.':
+    "The whole change is in the script line you pasted into your website. You don't change the form itself.",
+  'מצאו את ה-id של הטופס. בקוד של הטופס יש תגית form, והמילה אחרי id= היא ה-id. בדוגמה כאן ה-id הוא contact-form:':
+    "Find the form's id. In the form's code there is a form tag, and the word after id= is the id. In the example here the id is contact-form:",
+  'זה רק לקרוא. לא משנים שום דבר בטופס.':
+    "This is just to read. You don't change anything in the form.",
+  'החליפו את שורת ה-script שבאתר בשורה הזו. בשורה כתוב contact-form: החליפו אותו ב-id שמצאתם. בטופס צריך לפחות שם וטלפון, את השאר אנחנו מזהים לבד.':
+    'Replace the script line on your website with this line. It says contact-form: replace it with the id you found. The form needs at least a name and a phone; we recognise the rest ourselves.',
+  'שמרו ופרסמו, שלחו פנייה לדוגמה מהאתר, ובדקו שהיא מופיעה ב':
+    'Save and publish, send a sample inquiry from your website, and check that it appears in the ',
+  'הקלידו כאן את ה-id של הטופס שלכם': "Type your form's id here",
+  'השורה בצעד הבא מתעדכנת לבד. זה רק לקרוא: לא משנים שום דבר בטופס.':
+    "The line in the next step updates by itself. This is just to read: you don't change anything in the form.",
+  'בשורת ה-script שבאתר (זו שהדבקתם מהכרטיס שמעל) כתוב עכשיו:':
+    'The script line on your website (the one you pasted from the card above) now says:',
+  'החליפו אותה בשורה הזו (אותה שורה, עם תוספת בסוף):':
+    'Replace it with this line (the same line, with an addition at the end):',
 };
