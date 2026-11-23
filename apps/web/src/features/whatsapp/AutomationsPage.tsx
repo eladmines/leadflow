@@ -25,7 +25,8 @@ type Saved = WhatsAppBotResponse['settings'];
 /**
  * `/b/:businessId/automations` (D-175, redesigned as the customer's journey): what happens when a
  * customer writes on WhatsApp, in order: 1 they write, 2 they get the status message, 3 they book by
- * themselves, 4 they get "A peek at the business". Each step has one switch, one line saying what it does now, and its settings, folded until asked for.
+ * themselves, 4 they get "A peek at the business". The steps hang on a rail (numbered nodes, a
+ * line and an arrow between them, dashed towards a step that is off). Each step has one switch, one line saying what it does now, and its settings, folded until asked for.
  */
 export function AutomationsPage() {
   const business = useCurrentBusiness();
@@ -86,13 +87,14 @@ function Steps({
       {!connected && (
         <Alert tone="info">{tr('המענה יתחיל לפעול אחרי חיבור מספר WhatsApp לעסק.')}</Alert>
       )}
-      <ol aria-label={tr('מה קורה כשלקוח כותב')} className="flex flex-col gap-3">
+      <ol aria-label={tr('מה קורה כשלקוח כותב')} className="flex flex-col gap-6">
         <FlowStep
           n={1}
           icon={MessageCircle}
           tone="bg-slate-500"
           title={tr('הלקוח כותב')}
           description={tr('כל הודעה בוואטסאפ למספר העסק מתחילה את התהליך.')}
+          nextOff={!auto}
         />
         <FlowStep
           n={2}
@@ -109,6 +111,7 @@ function Steps({
           }
           settingsLabel={tr('הגדרות הסטטוס וההודעה')}
           settings={<AutoReplyCard businessId={businessId} />}
+          nextOff={!booking}
         />
         <FlowStep
           n={3}
@@ -132,6 +135,7 @@ function Steps({
           }
           settingsLabel={tr('הגדרות קביעת התורים')}
           settings={<BookingBotCard businessId={businessId} />}
+          nextOff={!peek}
         />
         <FlowStep
           n={4}
@@ -153,6 +157,7 @@ function Steps({
           }
           settingsLabel={tr('עריכת ההצצה')}
           settings={<ShowcaseForm businessId={businessId} settings={saved} />}
+          last
         />
       </ol>
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
@@ -178,6 +183,8 @@ function FlowStep({
   now,
   settingsLabel,
   settings,
+  nextOff,
+  last = false,
 }: {
   n: number;
   icon: LucideIcon;
@@ -193,12 +200,43 @@ function FlowStep({
   now?: string;
   settingsLabel?: string;
   settings?: ReactNode;
+  /** The step after this one is off: the line to it is dashed (the customer skips it). */
+  nextOff?: boolean;
+  last?: boolean;
 }) {
   const uid = useId();
   const [folded, toggle] = useCollapsed(`automations-step-${n}`, true);
   const live = on === undefined || on;
   return (
-    <li>
+    <li className="relative ps-12">
+      {/* The rail: a numbered node, and a line with an arrow down to the next step. */}
+      <span
+        aria-hidden
+        className={cn(
+          'absolute start-0 top-4 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ring-4 ring-surface',
+          live ? 'bg-brand-600 text-white' : 'bg-slate-200 text-ink-muted',
+        )}
+      >
+        {n}
+      </span>
+      {!last && (
+        <>
+          <span
+            aria-hidden
+            className={cn(
+              'absolute start-[15px] top-12 -bottom-[2.2rem] border-s-2',
+              nextOff ? 'border-dashed border-slate-300' : 'border-brand-300',
+            )}
+          />
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              'absolute start-[7px] -bottom-[2.6rem] h-4 w-4',
+              nextOff ? 'text-slate-300' : 'text-brand-300',
+            )}
+          />
+        </>
+      )}
       <section
         aria-labelledby={`${uid}-title`}
         className={cn(
@@ -207,12 +245,6 @@ function FlowStep({
         )}
       >
         <div className="flex items-start gap-3">
-          <span
-            aria-hidden
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-sm font-semibold text-ink"
-          >
-            {n}
-          </span>
           <span
             aria-hidden
             className={cn(
