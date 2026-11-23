@@ -80,7 +80,7 @@ describe('page tours (D-096)', () => {
         }),
     });
     const { user } = renderApp(section('automations'));
-    await screen.findByRole('heading', { name: 'הגדרות קביעת התורים' });
+    await screen.findByRole('list', { name: 'מה קורה כשלקוח כותב' });
     await openPageTour(user);
     const titles: string[] = [];
     for (;;) {
@@ -92,14 +92,10 @@ describe('page tours (D-096)', () => {
     }
     expect(titles).toEqual([
       'אוטומציות',
-      // One automatic answer (D-166): the status first, then booking's settings inside it.
-      'הסטטוס שלך',
+      'מה פועל עכשיו',
       'מה קורה כשלקוח כותב',
-      'הגדרות קביעת התורים',
-      'מה לקוחות יכולים להזמין',
-      'אישור התורים',
-      'שמירת ההגדרות',
-      'ההודעות ללקוחות',
+      'הודעה לפי הסטטוס',
+      'לקוחות קובעים לבד',
       'הצצה לעסק',
     ]);
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'סיום' }));

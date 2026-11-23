@@ -8,7 +8,8 @@ import {
   type InboxNumber,
   type WhatsAppInboxResponse,
 } from '@simplecatch/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { callsTo, json, me, mockApi, renderApp, testBusiness, testUser } from '../../test/utils';
 
@@ -102,7 +103,93 @@ function routes(inbox: WhatsAppInboxResponse, extra = {}) {
   };
 }
 
+/** The settings of each automation step are folded until its button is pressed. */
+async function open(user: ReturnType<typeof renderApp>['user'], name: string) {
+  await user.click(await screen.findByRole('button', { name }));
+}
+const STATUS_SETTINGS = 'הגדרות הסטטוס וההודעה';
+const BOOKING_SETTINGS = 'הגדרות קביעת התורים';
+
 describe('WhatsApp conversations inbox', () => {
+  it("shows the customer's journey in order, and what is on right now", async () => {
+    mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () =>
+            json(200, { connected: true, settings: botSettings('auto_reply') }),
+        },
+      ),
+    );
+    renderApp(autoTab);
+    const steps = await screen.findByRole('list', { name: 'מה קורה כשלקוח כותב' });
+    expect(
+      within(steps)
+        .getAllByRole('heading')
+        .map((h) => h.textContent),
+    ).toEqual(['הלקוח כותב', 'הודעה לפי הסטטוס', 'לקוחות קובעים לבד', 'הצצה לעסק']);
+    // One line per step on what it does now.
+    expect(within(steps).getByText('עכשיו: ההודעה הכללית')).toBeInTheDocument();
+    expect(within(steps).getByText(/כבוי: אפשר לקבוע רק מול הצוות/)).toBeInTheDocument();
+    // The bar on top.
+    const bar = screen.getByRole('list', { name: 'מצב האוטומציות' });
+    const chips = within(bar)
+      .getAllByRole('listitem')
+      .map((li) => li.textContent);
+    expect(chips).toEqual(['מענה לפי סטטוספועל', 'קביעת תוריםכבוי', 'הצצה לעסקכבוי']);
+    // Their settings are folded until asked for.
+    expect(screen.queryByLabelText('מה לקוחות מקבלים עכשיו')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'שמירת ההגדרות' })).not.toBeInTheDocument();
+  });
+
+  it('booking cannot be switched on while the answer by status is off, and says why', async () => {
+    mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () => json(200, { connected: true, settings: botSettings('off') }),
+        },
+      ),
+    );
+    renderApp(autoTab);
+    expect(await screen.findByRole('switch', { name: 'לקוחות קובעים לבד' })).toBeDisabled();
+    expect(screen.getByText('פועל רק כשהמענה לפי הסטטוס דלוק.')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'הודעה לפי הסטטוס' })).toBeEnabled();
+    expect(screen.getByText('כבוי: הלקוח לא מקבל הודעה אוטומטית.')).toBeInTheDocument();
+    const chips = within(screen.getByRole('list', { name: 'מצב האוטומציות' }))
+      .getAllByRole('listitem')
+      .map((li) => li.textContent);
+    expect(chips.every((c) => c?.endsWith('כבוי'))).toBe(true);
+  });
+
+  it("a step's settings fold and unfold, and stay as they were left", async () => {
+    const mocks = () =>
+      mockApi(
+        routes(
+          { connected: true, numbers: [] },
+          {
+            [`GET ${wp.bot(id)}`]: () =>
+              json(200, { connected: true, settings: botSettings('auto_reply') }),
+          },
+        ),
+      );
+    mocks();
+    const { user } = renderApp(autoTab);
+    await open(user, STATUS_SETTINGS);
+    expect(screen.getByLabelText('מה לקוחות מקבלים עכשיו')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'הסתרת ההגדרות' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    cleanup();
+    mocks();
+    renderApp(autoTab);
+    expect(await screen.findByLabelText('מה לקוחות מקבלים עכשיו')).toBeInTheDocument();
+    const hide = screen.getByRole('button', { name: 'הסתרת ההגדרות' });
+    await userEvent.click(hide);
+    expect(screen.queryByLabelText('מה לקוחות מקבלים עכשיו')).not.toBeInTheDocument();
+  });
+
   it('a new business goes straight to the settings, with no setup steps first', async () => {
     mockApi(
       routes(
@@ -124,6 +211,7 @@ describe('WhatsApp conversations inbox', () => {
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(autoTab);
+    await open(user, BOOKING_SETTINGS);
     // Dropdowns, the chosen option explained under each (D-173).
     const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע תור:' });
     expect(screen.getByText('הלקוח מקבל אישור, והתור נכנס ליומן.')).toBeInTheDocument();
@@ -153,6 +241,7 @@ describe('WhatsApp conversations inbox', () => {
   it('"Discard changes" puts the saved settings back', async () => {
     mockApi(routes({ connected: true, numbers: [] }));
     const { user } = renderApp(autoTab);
+    await open(user, BOOKING_SETTINGS);
     const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע תור:' });
     await user.selectOptions(confirm, 'approve');
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
@@ -177,7 +266,7 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(autoTab);
     // One automatic answer (D-166): on, with booking off inside it and its settings hidden.
-    expect(await screen.findByRole('switch', { name: 'מענה אוטומטי' })).toHaveAttribute(
+    expect(await screen.findByRole('switch', { name: 'הודעה לפי הסטטוס' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
@@ -187,6 +276,7 @@ describe('WhatsApp conversations inbox', () => {
     );
     expect(screen.queryByRole('button', { name: 'שמירת ההגדרות' })).not.toBeInTheDocument();
 
+    await open(user, STATUS_SETTINGS);
     // Available: the general message, no save button until it changes, no "how long".
     const message = screen.getByLabelText('מה לקוחות מקבלים עכשיו');
     // The business's name is written as itself, not as a tag.
@@ -247,13 +337,14 @@ describe('WhatsApp conversations inbox', () => {
       enabled: true,
     });
     await waitFor(() => expect(booking).toHaveAttribute('aria-checked', 'true'));
-    expect(screen.getByRole('switch', { name: 'מענה אוטומטי' })).toHaveAttribute(
+    expect(screen.getByRole('switch', { name: 'הודעה לפי הסטטוס' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
+    await open(user, BOOKING_SETTINGS);
     expect(await screen.findByRole('button', { name: 'שמירת ההגדרות' })).toBeInTheDocument();
     // The main switch off: nothing answers.
-    await user.click(screen.getByRole('switch', { name: 'מענה אוטומטי' }));
+    await user.click(screen.getByRole('switch', { name: 'הודעה לפי הסטטוס' }));
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))[1]).toMatchObject({ mode: 'off', enabled: false });
   });
 
@@ -269,6 +360,7 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
+    await open(user, STATUS_SETTINGS);
     await user.click(await screen.findByRole('button', { name: 'סטטוס חדש' }));
     await user.click(screen.getByRole('button', { name: 'הוספה' }));
     expect(await screen.findByText('יש לתת שם לסטטוס')).toBeInTheDocument();
@@ -294,6 +386,7 @@ describe('WhatsApp conversations inbox', () => {
       ),
     );
     const { user } = renderApp(autoTab);
+    await open(user, BOOKING_SETTINGS);
     await user.click(await screen.findByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
     // The business's name is written as itself; only what changes per booking is a tag.
     expect(screen.getByLabelText('הודעת פתיחה')).toHaveValue(
@@ -332,7 +425,7 @@ describe('WhatsApp conversations inbox', () => {
     ]);
   });
 
-  it('the shared "meanwhile" card: its switch, and the editor in a pop-up (D-106, D-149)', async () => {
+  it('the shared "meanwhile" card: its switch, and the editor under the step (D-106, D-149)', async () => {
     const fetchMock = mockApi(
       routes(
         { connected: true, numbers: [] },
@@ -350,7 +443,7 @@ describe('WhatsApp conversations inbox', () => {
       showcase: { enabled: true },
     });
     await user.click(screen.getByRole('button', { name: 'עריכת ההצצה' }));
-    // Its message (the industry's default, ready to edit), then a link, photos and a video (D-169).
+    // Its settings open under the step. Its message (the industry's default, ready to edit), then a link, photos and a video (D-169).
     expect(await screen.findByLabelText('ההודעה')).toHaveValue(DEFAULT_SHOWCASE);
     expect(screen.getByRole('button', { name: 'הוספת סרטון' })).toBeInTheDocument();
     // The customer's view only on request (D-155).
@@ -394,6 +487,7 @@ describe('WhatsApp conversations inbox', () => {
       routes({ connected: true, numbers: [] }, { [`PUT ${wp.bot(id)}`]: echoBot }),
     );
     const { user } = renderApp(autoTab);
+    await open(user, BOOKING_SETTINGS);
     const flow = await screen.findByRole('combobox', { name: 'מה לקוחות יכולים להזמין?' });
     expect(flow).toHaveValue('appointment');
     expect(screen.getByRole('option', { name: /מתאים לתחום שלכם/ })).toBeInTheDocument();

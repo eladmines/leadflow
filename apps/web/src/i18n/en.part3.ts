@@ -1042,4 +1042,40 @@ export const enPart3: Record<string, string> = {
     'Or, without touching the site itself, write on the script line:',
   'רוצים לדעת איזו מודעה הביאה כל פנייה? הוסיפו סימון בקישור של כל מודעה (ראו "חיבור המודעות" בדוחות). הוא נשמר 30 יום בדפדפן של הגולש, ונשלח עם הפנייה.':
     'Want to know which ad brought each inquiry? Add a tag to each ad\'s link (see "Connect your ads" in Reports). It is kept for 30 days in the visitor\'s browser and sent with the inquiry.',
+  'הלקוח כותב': 'The customer writes',
+  'כל הודעה בוואטסאפ למספר העסק מתחילה את התהליך.':
+    'Every WhatsApp message to the business number starts the process.',
+  'הודעה לפי הסטטוס': 'Message by status',
+  'הלקוח מקבל הודעה לפי הסטטוס שלך, ובוחר מתי נוח לדבר.':
+    'The customer gets a message by your status, and chooses when it suits to talk.',
+  'עכשיו: {0}': 'Now: {0}',
+  'כבוי: הלקוח לא מקבל הודעה אוטומטית.': 'Off: the customer gets no automatic message.',
+  'הגדרות הסטטוס וההודעה': 'Status and message settings',
+  'מוסיף "לקביעת תור" להודעה: הלקוח רואה זמנים פנויים וקובע תור או בקשה לאירוע.':
+    'Adds "Book an appointment" to the message: the customer sees free times and books an appointment or an event request.',
+  'פועל רק כשהמענה לפי הסטטוס דלוק.': 'Works only while the answer by status is on.',
+  '{0} · אישור: {1}': '{0} · Approval: {1}',
+  'בקשות לאירוע': 'Event requests',
+  מיד: 'Immediately',
+  ידני: 'Manual',
+  'כבוי: אפשר לקבוע רק מול הצוות.': 'Off: booking is only possible with the team.',
+  '{0} · {1} קבצים': '{0} · {1} files',
+  'עם קישור': 'With a link',
+  'בלי קישור': 'Without a link',
+  'כבוי.': 'Off.',
+  'מצב האוטומציות': 'Automations status',
+  'מענה לפי סטטוס': 'Answer by status',
+  'קביעת תורים': 'Booking',
+  פועל: 'On',
+  'מה פועל עכשיו': 'What is on now',
+  'נקודה ירוקה אומרת שהשלב פועל, ואפורה שהוא כבוי. כך רואים במבט אחד מה הלקוחות מקבלים.':
+    'A green dot means the step is on, a grey one that it is off. So you see at a glance what customers get.',
+  'מה קורה כשלקוח כותב לכם בוואטסאפ, צעד אחרי צעד: מענה לפי הסטטוס, קביעת תורים והצצה לעסק.':
+    'What happens when a customer writes to you on WhatsApp, step by step: an answer by status, booking and a peek at the business.',
+  'הרצף של הלקוח, לפי הסדר: הוא כותב, מקבל הודעה לפי הסטטוס שלך, אפשר שיקבע תור בעצמו, ואז מקבל הצצה לעסק. לכל שלב מתג אחד, שורה שאומרת מה הוא עושה עכשיו, וכפתור הגדרות שפותח את ההגדרות שלו.':
+    "The customer's sequence, in order: they write, get a message by your status, may book by themselves, then get a peek at the business. Each step has one switch, a line saying what it does now, and a settings button that opens its settings.",
+  'בהגדרות בוחרים סטטוס בלחיצה אחת, למשל "באירוע", ורואים מה לקוחות מקבלים עכשיו. אפשר לבחור לכמה זמן, להוסיף סרטון ולשנות את ההודעה. "זמין" מחזיר את ההודעה הכללית.':
+    'In the settings you pick a status with one click, for example "At an event", and see what customers get now. You can choose for how long, and edit the message. "Available" brings back the general message.',
+  'הלקוח רואה שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים משאיר את פרטי האירוע. הוא פועל רק כשהמענה לפי הסטטוס דלוק. בהגדרות בוחרים מה אפשר להזמין, אם התור מאושר מיד או מחכה לכם, ואפשר לכתוב את ההודעות במילים שלכם.':
+    'The customer sees free hours from the calendar and books with a click, or in event businesses leaves the event details. It works only while the answer by status is on. In the settings you choose what can be booked, whether the appointment is confirmed at once or waits for you, and you can write the messages in your own words.',
 };
