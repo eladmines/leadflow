@@ -7,8 +7,8 @@ import {
   type WhatsAppBotResponse,
 } from '@simplecatch/shared';
 import { Plus, Trash2 } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
-import { Alert, Button, DialogShell, EmojiPicker, Field, Textarea } from '../../components/ui';
+import { useId, useState } from 'react';
+import { Alert, Button, DialogShell, EmojiTextarea, Field } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -252,29 +252,19 @@ function Message({
   onSave: (text: string, onDone: () => void) => void;
 }) {
   const [text, setText] = useState(initial);
-  const box = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const dirty = text !== initial;
   return (
     <div className="flex flex-col gap-2">
-      <Textarea
-        ref={box}
+      <EmojiTextarea
         label={label}
         // Customer messages follow the business's language: direction by content.
         dir="auto"
         value={text}
         rows={3}
         error={error ?? undefined}
-        onChange={(e) => {
-          setSaved(false);
-          setText(e.target.value);
-        }}
-      />
-      <EmojiPicker
-        target={box}
-        value={text}
-        onInsert={(next) => {
+        onValueChange={(next) => {
           setSaved(false);
           setText(next);
         }}
@@ -345,13 +335,13 @@ function NewStatus({
         error={errors.label ? tr(errors.label) : undefined}
         onChange={(e) => setName(e.target.value)}
       />
-      <Textarea
+      <EmojiTextarea
         label={tr('ההודעה ללקוח')}
         dir="auto"
         value={text}
         rows={2}
         error={errors.text ? tr(errors.text) : undefined}
-        onChange={(e) => setText(e.target.value)}
+        onValueChange={setText}
       />
       <div className="flex flex-wrap gap-2">
         <Button size="sm" loading={saving} onClick={add}>

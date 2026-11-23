@@ -21,7 +21,7 @@ import {
   Alert,
   Button,
   DialogShell,
-  EmojiPicker,
+  EmojiTextarea,
   Field,
   Select,
   Textarea,
@@ -470,7 +470,6 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
   const [text, setText] = useState(
     toTags(saved.text ?? saved.defaultText, settings.flow, business.name),
   );
-  const textBox = useRef<HTMLTextAreaElement>(null);
   const [link, setLink] = useState(saved.link ?? '');
   const [assetIds, setAssetIds] = useState(saved.assetIds);
   const [picking, setPicking] = useState(false);
@@ -517,22 +516,13 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
       </p>
       <fieldset className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <Textarea
-            ref={textBox}
+          <EmojiTextarea
             label={tr('ההודעה')}
             dir="auto"
             rows={2}
             value={text}
             error={errors.text}
-            onChange={(e) => {
-              changed();
-              setText(e.target.value);
-            }}
-          />
-          <EmojiPicker
-            target={textBox}
-            value={text}
-            onInsert={(next) => {
+            onValueChange={(next) => {
               changed();
               setText(next);
             }}

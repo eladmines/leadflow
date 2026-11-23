@@ -19,5 +19,5 @@ export { Textarea } from './Textarea';
 export { DialogShell } from './DialogShell';
 export { PhoneField, browserCountry } from './PhoneField';
 export { Switch } from './Switch';
-export { EmojiPicker } from './EmojiPicker';
+export { EmojiTextarea } from './EmojiTextarea';
 export { ScrollTabs } from './ScrollTabs';

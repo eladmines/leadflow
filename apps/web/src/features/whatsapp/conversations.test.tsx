@@ -441,6 +441,11 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(within(dialog).getByRole('button', { name: 'הוספה' }));
     expect(await within(dialog).findByText('יש לתת שם לסטטוס')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
+    // The message box has the emoji button inside it, like the other messages (it had none here).
+    const messageBox = within(dialog).getByLabelText('ההודעה ללקוח');
+    expect(messageBox.parentElement).toContainElement(
+      within(dialog).getByRole('button', { name: 'הוספת אימוג׳י' }),
+    );
     await user.type(within(dialog).getByLabelText('שם הסטטוס'), 'באולפן');
     await user.type(within(dialog).getByLabelText('ההודעה ללקוח'), 'באולפן עד הערב 🎧');
     await user.click(within(dialog).getByRole('button', { name: 'הוספה' }));

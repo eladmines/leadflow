@@ -1,7 +1,7 @@
 import { botQuestionSchema, MAX_QUESTIONS, type BotQuestion } from '@simplecatch/shared';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { Alert, Button, EmojiPicker, Textarea } from '../../components/ui';
+import { useState } from 'react';
+import { Alert, Button, EmojiTextarea } from '../../components/ui';
 import { tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { useUpdateBotSettings } from './api';
@@ -142,20 +142,15 @@ function QuestionBox({
   error?: string;
   onChange: (text: string) => void;
 }) {
-  const box = useRef<HTMLTextAreaElement>(null);
   return (
-    <div className="flex flex-col gap-2">
-      <Textarea
-        ref={box}
-        label={tr('שאלה {0}', String(index + 1))}
-        dir="auto"
-        rows={2}
-        maxLength={300}
-        value={value}
-        error={error}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <EmojiPicker target={box} value={value} onInsert={onChange} />
-    </div>
+    <EmojiTextarea
+      label={tr('שאלה {0}', String(index + 1))}
+      dir="auto"
+      rows={2}
+      maxLength={300}
+      value={value}
+      error={error}
+      onValueChange={onChange}
+    />
   );
 }
