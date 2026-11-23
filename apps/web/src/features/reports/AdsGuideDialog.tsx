@@ -171,7 +171,7 @@ export function Step({ children }: { children: ReactNode }) {
     <li className="flex gap-3 text-sm text-ink [counter-increment:step]">
       <span
         aria-hidden
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white before:content-[counter(step)]"
+        className="flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full bg-brand-600 px-1.5 text-xs font-semibold text-white before:content-[counters(step,'.')]"
       />
       <div className="flex min-w-0 flex-1 flex-col gap-2 pt-0.5">{children}</div>
     </li>
