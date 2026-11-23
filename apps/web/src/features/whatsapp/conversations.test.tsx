@@ -392,6 +392,36 @@ describe('WhatsApp conversations inbox', () => {
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))[1]).toMatchObject({ mode: 'off', enabled: false });
   });
 
+  it("a status's end is counted in the business's time zone and says so (D-199)", async () => {
+    const until = new Date(Date.now() + 5 * 3600_000).toISOString();
+    mockApi(
+      routes(
+        { connected: true, numbers: [] },
+        {
+          [`GET ${wp.bot(id)}`]: () =>
+            json(200, {
+              connected: true,
+              settings: {
+                ...botSettings('auto_reply'),
+                activeStatus: { id: 'event', until },
+              },
+            }),
+        },
+      ),
+    );
+    const { user } = renderApp(autoTab);
+    await open(user, STATUS_SETTINGS);
+    // "Active until … (by the business's clock)", stressed, and the choices explain themselves.
+    const line = await screen.findByText(/^פעיל עד /);
+    expect(line).toHaveTextContent('(לפי שעון העסק)');
+    expect(within(line).getByText('(לפי שעון העסק)')).toHaveClass('font-semibold');
+    expect(
+      screen.getByText(
+        `"סוף היום" ו"מחר בבוקר" לפי שעון העסק (${testBusiness.timezone}), לא לפי המכשיר שלכם.`,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('adds an own status with a name and a message', async () => {
     const fetchMock = mockApi(
       routes(
@@ -405,19 +435,23 @@ describe('WhatsApp conversations inbox', () => {
     );
     const { user } = renderApp(autoTab);
     await open(user, STATUS_SETTINGS);
+    // The new status is made in a pop-up of its own.
     await user.click(await screen.findByRole('button', { name: 'סטטוס חדש' }));
-    await user.click(screen.getByRole('button', { name: 'הוספה' }));
-    expect(await screen.findByText('יש לתת שם לסטטוס')).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog', { name: 'סטטוס חדש' });
+    await user.click(within(dialog).getByRole('button', { name: 'הוספה' }));
+    expect(await within(dialog).findByText('יש לתת שם לסטטוס')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'PUT', wp.bot(id))).toHaveLength(0);
-    await user.type(screen.getByLabelText('שם הסטטוס'), 'באולפן');
-    await user.type(screen.getByLabelText('ההודעה ללקוח'), 'באולפן עד הערב 🎧');
-    await user.click(screen.getByRole('button', { name: 'הוספה' }));
+    await user.type(within(dialog).getByLabelText('שם הסטטוס'), 'באולפן');
+    await user.type(within(dialog).getByLabelText('ההודעה ללקוח'), 'באולפן עד הערב 🎧');
+    await user.click(within(dialog).getByRole('button', { name: 'הוספה' }));
     const body = callsTo(fetchMock, 'PUT', wp.bot(id))[0] as {
       statuses: { label: string; text: string; id: string }[];
     };
     expect(body.statuses.at(-1)).toMatchObject({ label: 'באולפן', text: 'באולפן עד הערב 🎧' });
     expect(body.statuses.at(-1)!.id).toMatch(/^c-/);
     expect(await screen.findByRole('button', { name: 'באולפן' })).toBeInTheDocument();
+    // The pop-up closes once it is added.
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('edits the bot messages with a live preview, and keeps unchanged ones as defaults', async () => {

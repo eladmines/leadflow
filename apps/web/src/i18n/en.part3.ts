@@ -1173,4 +1173,7 @@ export const enPart3: Record<string, string> = {
     'After the message the bot asks the questions you wrote, one after another, and you get all the answers as a task and on the lead. The switch turns the questions off without deleting them, and they come back when you turn it on. It works only while the answer by status is on.',
   'הרצף של הלקוח, לפי הסדר: הוא כותב, מקבל הודעה לפי הסטטוס שלך, עונה על השאלות שלכם, אפשר שיקבע תור בעצמו, ואז מקבל הצצה לעסק. לכל שלב מתג אחד, שורה שאומרת מה הוא עושה עכשיו, וכפתור הגדרות שפותח את ההגדרות שלו.':
     "The customer's sequence, in order: they write, get a message by your status, answer your questions, may book by themselves, then get a peek at the business. Each step has one switch, a line saying what it does now, and a settings button that opens its settings.",
+  '(לפי שעון העסק)': "(by the business's clock)",
+  '"סוף היום" ו"מחר בבוקר" לפי שעון העסק ({0}), לא לפי המכשיר שלכם.':
+    '"End of the day" and "tomorrow morning" follow the business\'s clock ({0}), not your device.',
 };

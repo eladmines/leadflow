@@ -24,3 +24,4 @@ export * from './attribution';
 export * from './customers';
 export * from './embed';
 export * from './domain';
+export * from './time';

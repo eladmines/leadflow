@@ -1,7 +1,14 @@
-import { replyStatusSchema, MAX_STATUSES, type WhatsAppBotResponse } from '@simplecatch/shared';
+import {
+  dateInZone,
+  MAX_STATUSES,
+  nextDate,
+  replyStatusSchema,
+  zonedTimeToUtc,
+  type WhatsAppBotResponse,
+} from '@simplecatch/shared';
 import { Plus, Trash2 } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
-import { Alert, Button, EmojiPicker, Field, Textarea } from '../../components/ui';
+import { Alert, Button, DialogShell, EmojiPicker, Field, Textarea } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -22,19 +29,23 @@ const toCode = (text: string, name: string) => {
   return name.trim().length >= 2 ? t.replaceAll(name.trim(), '{business}') : t;
 };
 
-/** Until-when choices for a status, as a time from now (null = until I change it). */
-function untilOptions(now = new Date()) {
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 0, 0);
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(8, 0, 0, 0);
+/**
+ * Until-when choices for a status, as a time from now (null = until I change it). "End of the day" and
+ * "tomorrow morning" are the business's own day (its time zone), not the browser's: an owner abroad
+ * still means the day the business is open (D-199).
+ */
+export function untilOptions(timeZone: string, now = new Date()) {
+  const today = dateInZone(now, timeZone);
   return [
     { key: 'none', label: tr('עד שאשנה'), until: null },
     { key: '1h', label: tr('לשעה'), until: new Date(now.getTime() + 3600_000) },
     { key: '3h', label: tr('ל־3 שעות'), until: new Date(now.getTime() + 3 * 3600_000) },
-    { key: 'eod', label: tr('עד סוף היום'), until: endOfDay },
-    { key: 'tomorrow', label: tr('עד מחר בבוקר'), until: tomorrow },
+    { key: 'eod', label: tr('עד סוף היום'), until: zonedTimeToUtc(today, '23:59', timeZone) },
+    {
+      key: 'tomorrow',
+      label: tr('עד מחר בבוקר'),
+      until: zonedTimeToUtc(nextDate(today), '08:00', timeZone),
+    },
   ] as const;
 }
 
@@ -61,10 +72,12 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
   const current = active ? saved.statuses.find((x) => x.id === active.id) : undefined;
   const label = (x: { id: string | null; label: string; preset?: boolean }) =>
     x.id === null || x.preset ? tr(x.label) : x.label;
+  // Shown in the business's time zone, the one the end times are counted in (D-199).
   const time = new Intl.DateTimeFormat(intlLocale(), {
     weekday: 'short',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: business.timezone,
   });
 
   /** Saves the general message or one status's message, keeping everything else. */
@@ -92,11 +105,18 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
             {tr('הסטטוס שלך')}
           </h3>
           <p role="status" className="text-sm text-ink-muted">
-            {active
-              ? active.until
-                ? tr('פעיל עד {0}', time.format(new Date(active.until)))
-                : tr('פעיל עד שתשנו')
-              : tr('זמין — נשלח המענה הכללי')}
+            {active ? (
+              active.until ? (
+                <>
+                  {tr('פעיל עד {0}', time.format(new Date(active.until)))}{' '}
+                  <span className="font-semibold text-ink">{tr('(לפי שעון העסק)')}</span>
+                </>
+              ) : (
+                tr('פעיל עד שתשנו')
+              )
+            ) : (
+              tr('זמין — נשלח המענה הכללי')
+            )}
           </p>
         </div>
         <div role="group" aria-label={tr('בחירת סטטוס')} className="flex flex-wrap gap-2">
@@ -123,8 +143,8 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
           {saved.statuses.length < MAX_STATUSES && (
             <button
               type="button"
-              aria-expanded={adding}
-              onClick={() => setAdding((v) => !v)}
+              aria-haspopup="dialog"
+              onClick={() => setAdding(true)}
               className="inline-flex items-center gap-1 rounded-full border border-dashed border-surface-border px-3.5 py-1.5 text-sm text-ink-muted hover:border-brand-300 hover:text-ink"
             >
               <Plus aria-hidden className="h-4 w-4" />
@@ -142,23 +162,31 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
               id={`${uid}-until`}
               defaultValue="none"
               onChange={(e) => {
-                const until = untilOptions().find((o) => o.key === e.target.value)?.until;
+                const until = untilOptions(business.timezone).find(
+                  (o) => o.key === e.target.value,
+                )?.until;
                 setStatus.mutate({ id: active.id, until: until ? until.toISOString() : null });
               }}
               className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-sm text-ink"
             >
-              {untilOptions().map((o) => (
+              {untilOptions(business.timezone).map((o) => (
                 <option key={o.key} value={o.key}>
                   {o.label}
                 </option>
               ))}
             </select>
+            <span className="w-full text-xs text-ink-muted">
+              {tr(
+                '"סוף היום" ו"מחר בבוקר" לפי שעון העסק ({0}), לא לפי המכשיר שלכם.',
+                business.timezone,
+              )}
+            </span>
           </div>
         )}
         {setStatus.isError && <Alert tone="danger">{errorMessage(setStatus.error)}</Alert>}
       </section>
 
-      {adding && (
+      <DialogShell open={adding} onOpenChange={setAdding} title={tr('סטטוס חדש')}>
         <NewStatus
           saving={update.isPending}
           onCancel={() => setAdding(false)}
@@ -169,7 +197,7 @@ function StatusAndMessage({ businessId, saved }: { businessId: string; saved: Sa
             )
           }
         />
-      )}
+      </DialogShell>
 
       <Message
         key={`${current?.id ?? ''}|${current?.text ?? saved.autoReplyText ?? ''}`}
@@ -308,10 +336,7 @@ function NewStatus({
     onAdd(r.data);
   };
   return (
-    <section
-      aria-label={tr('סטטוס חדש')}
-      className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface-muted p-4"
-    >
+    <div className="flex flex-col gap-3">
       <Field
         label={tr('שם הסטטוס')}
         dir="auto"
@@ -336,6 +361,6 @@ function NewStatus({
           {tr('ביטול')}
         </Button>
       </div>
-    </section>
+    </div>
   );
 }
