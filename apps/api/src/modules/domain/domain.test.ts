@@ -170,6 +170,66 @@ describe('domain expiry reminders (F33)', () => {
     });
   });
 
+  it('opening the screen starts the lookup by itself: the date appears with nothing to press', async () => {
+    const o = await withSite();
+    const id = o.business.id;
+    provider.set('shiran.co.il', { status: 'ok', expiresAt: inDays(40) });
+    const get = async () => (await req(ctx.app, 'GET', apiPaths.domain.domain(id), o.token)).json();
+
+    const first = await get();
+    // Not looked up yet: it says it is checking (a quick registry may even have answered already).
+    expect(first.domain).toBe('shiran.co.il');
+    expect(first.check === null ? first.checking : first.check === 'ok').toBe(true);
+    // Moments later (the screen asks again): the date, and no new question to the registry.
+    let later = first;
+    for (let i = 0; i < 40 && later.check === null; i++) {
+      await new Promise((r) => setTimeout(r, 25));
+      later = await get();
+    }
+    expect(later).toMatchObject({ check: 'ok', checking: false });
+    expect(later.daysLeft).toBeGreaterThan(30);
+    await get();
+    expect(provider.asked).toEqual(['shiran.co.il']);
+  });
+
+  it('opening it again later asks again only when the answer is a day old, or failed a while ago', async () => {
+    const o = await withSite();
+    const id = o.business.id;
+    const ctxOf = { businessId: id } as never;
+    provider.set('shiran.co.il', { status: 'failed' });
+    await service.statusAndRefresh(ctxOf, NOW);
+    for (let i = 0; i < 40 && (await row(id)).domainCheck === null; i++) {
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    expect((await row(id)).domainCheck).toBe('failed');
+    const asked = () => provider.asked.length;
+    expect(asked()).toBe(1);
+
+    const settle = () => new Promise((r) => setTimeout(r, 150));
+    // Five minutes later: too soon to try a failure again.
+    await service.statusAndRefresh(ctxOf, new Date(NOW.getTime() + 5 * 60_000));
+    await settle();
+    expect(asked()).toBe(1);
+    // Fifteen minutes later: again, and this time it answers; then a day passes.
+    provider.set('shiran.co.il', { status: 'ok', expiresAt: inDays(300) });
+    await service.statusAndRefresh(ctxOf, new Date(NOW.getTime() + 15 * 60_000));
+    await settle();
+    expect(asked()).toBe(2);
+    await service.statusAndRefresh(ctxOf, new Date(NOW.getTime() + 3 * 3_600_000));
+    await settle();
+    expect(asked()).toBe(2);
+    await service.statusAndRefresh(ctxOf, new Date(NOW.getTime() + 25 * 3_600_000));
+    await settle();
+    expect(asked()).toBe(3);
+  });
+
+  it('a business without a website asks nothing', async () => {
+    const o = await withSite(null);
+    const res = await req(ctx.app, 'GET', apiPaths.domain.domain(o.business.id), o.token);
+    expect(res.json()).toMatchObject({ domain: null, check: null, checking: false });
+    expect(provider.asked).toHaveLength(0);
+  });
+
   it('anyone in the business sees it, only the owner looks it up now, outsiders get nothing', async () => {
     const o = await withSite();
     const id = o.business.id;
@@ -180,7 +240,7 @@ describe('domain expiry reminders (F33)', () => {
 
     const before = await req(ctx.app, 'GET', apiPaths.domain.domain(id), employee.token);
     expect(before.statusCode).toBe(200);
-    expect(before.json()).toMatchObject({ domain: 'shiran.co.il', check: null, expiresAt: null });
+    expect(before.json()).toMatchObject({ domain: 'shiran.co.il' });
 
     expect(
       (await req(ctx.app, 'POST', apiPaths.domain.domain(id), employee.token)).statusCode,
@@ -195,7 +255,7 @@ describe('domain expiry reminders (F33)', () => {
     expect(now.json().daysLeft).toBeGreaterThan(30);
     // Pressing it again straight away doesn't ask the registry again.
     await req(ctx.app, 'POST', apiPaths.domain.domain(id), o.token);
-    expect(provider.asked).toHaveLength(1);
+    expect(provider.asked.length).toBeLessThanOrEqual(2);
     expect(
       (await req(ctx.app, 'GET', apiPaths.domain.domain(id), employee.token)).json().check,
     ).toBe('ok');

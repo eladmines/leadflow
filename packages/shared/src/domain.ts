@@ -61,10 +61,12 @@ export const domainExpiryResponseSchema = z.object({
   checkedAt: z.string().datetime().nullable(),
   /** Whole days until it expires (negative when it already has); null without a date. */
   daysLeft: z.number().int().nullable(),
+  /** A lookup is running right now (it started because it was never done, or is a day old): ask again in a moment. */
+  checking: z.boolean(),
 });
 export type DomainExpiryResponse = z.infer<typeof domainExpiryResponseSchema>;
 
 export const domainApiPaths = {
-  /** GET: what we know. POST (owner): look it up now. */
+  /** GET: what we know, and it starts a lookup if there is none yet. POST (owner): look it up now. */
   domain: (businessId: string) => `/api/v1/businesses/${businessId}/domain`,
 } as const;

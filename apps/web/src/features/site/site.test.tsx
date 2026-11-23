@@ -5,7 +5,7 @@ import {
   type Business,
   type Site,
 } from '@simplecatch/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
@@ -158,6 +158,64 @@ describe('existing website (D-094)', () => {
     expect(screen.getAllByText(/שלום, אפשר להוסיף את השורה הבאה/).length).toBeGreaterThan(0);
   });
 
+  it('the preview and the visit-counter guide can be folded away, and stay that way (F33)', async () => {
+    // Only the fold marks (clearing everything would bring the first-visit tour back).
+    const forget = () =>
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('simplecatch.collapsed.'))
+        .forEach((k) => localStorage.removeItem(k));
+    forget();
+    const mocks = () =>
+      mockApi({
+        [meKey]: me(testUser),
+        ...withWebsite(),
+        ...getSite(null),
+        [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
+          json(200, {
+            scriptUrl: 'https://app.example/api/v1/embed/lead.js',
+            key: 'K',
+            snippet: '<script async></script>',
+          }),
+        [`GET ${apiPaths.domain.domain(testBusiness.id)}`]: () =>
+          json(200, {
+            domain: 'shiran.co.il',
+            check: 'unsupported',
+            expiresAt: null,
+            checkedAt: null,
+            daysLeft: null,
+            checking: false,
+          }),
+      });
+    mocks();
+    const { user } = renderApp(sitePath);
+    expect(await screen.findByTitle('תצוגה של האתר הקיים')).toBeInTheDocument();
+    expect(await screen.findByText('העתיקו את השורה הזו:')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'הסתרה: תצוגת האתר' }));
+    expect(screen.queryByTitle('תצוגה של האתר הקיים')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'הסתרה: קבלת פניות והמקור שלהן מהאתר' }));
+    expect(screen.queryByText('העתיקו את השורה הזו:')).not.toBeInTheDocument();
+    // The title stays, and the button says it is folded.
+    expect(
+      screen.getByRole('heading', { name: 'קבלת פניות והמקור שלהן מהאתר' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'הצגה: תצוגת האתר' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+
+    // Opening the screen again (a reload) keeps both folded; showing brings one back.
+    cleanup();
+    mocks();
+    const second = renderApp(sitePath);
+    expect(await screen.findByRole('button', { name: 'הצגה: תצוגת האתר' })).toBeInTheDocument();
+    expect(screen.queryByTitle('תצוגה של האתר הקיים')).not.toBeInTheDocument();
+    expect(screen.queryByText('העתיקו את השורה הזו:')).not.toBeInTheDocument();
+    await second.user.click(screen.getByRole('button', { name: 'הצגה: תצוגת האתר' }));
+    expect(await screen.findByTitle('תצוגה של האתר הקיים')).toBeInTheDocument();
+    forget();
+  });
+
   it('shows when the domain expires, warns when it is close, and the owner can check now (F33)', async () => {
     const soon = new Date(Date.now() + 20 * 86_400_000).toISOString();
     let checked = 0;
@@ -187,6 +245,7 @@ describe('existing website (D-094)', () => {
           expiresAt: soon,
           checkedAt: soon,
           daysLeft: 19,
+          checking: false,
         });
       },
     });
@@ -197,6 +256,48 @@ describe('existing website (D-094)', () => {
     await user.click(screen.getByRole('button', { name: 'בדיקה עכשיו' }));
     expect(await screen.findByText(/בעוד 19 ימים/)).toBeInTheDocument();
     expect(checked).toBe(1);
+  });
+
+  it('finds the domain date by itself when the screen opens: no button to press (F33)', async () => {
+    const soon = new Date(Date.now() + 90 * 86_400_000).toISOString();
+    let asked = 0;
+    mockApi({
+      [meKey]: me(testUser),
+      ...withWebsite(),
+      ...getSite(null),
+      [`GET ${apiPaths.embed.info(testBusiness.id)}`]: () =>
+        json(200, {
+          scriptUrl: 'https://app.example/api/v1/embed/lead.js',
+          key: 'K',
+          snippet: '<script></script>',
+        }),
+      [`GET ${apiPaths.domain.domain(testBusiness.id)}`]: () => {
+        asked += 1;
+        return asked === 1
+          ? json(200, {
+              domain: 'shiran.co.il',
+              check: null,
+              expiresAt: null,
+              checkedAt: null,
+              daysLeft: null,
+              checking: true,
+            })
+          : json(200, {
+              domain: 'shiran.co.il',
+              check: 'ok',
+              expiresAt: soon,
+              checkedAt: soon,
+              daysLeft: 90,
+              checking: false,
+            });
+      },
+    });
+    renderApp(sitePath);
+    expect(await screen.findByText('בודקים מתי shiran.co.il פג…')).toBeInTheDocument();
+    expect(
+      await screen.findByText(/בעוד 90 ימים/, undefined, { timeout: 4000 }),
+    ).toBeInTheDocument();
+    expect(asked).toBe(2);
   });
 
   it('says plainly when the domain can not be read, and hides the button from non-owners (F33)', async () => {

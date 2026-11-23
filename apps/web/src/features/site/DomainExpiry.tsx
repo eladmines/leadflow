@@ -39,6 +39,8 @@ export function DomainExpiry({ businessId, canEdit }: { businessId: string; canE
         : left === 0
           ? tr('הדומיין {0} פג היום ({1}).', d.domain, when)
           : tr('הדומיין {0} פג ב-{1}, בעוד {2} ימים.', d.domain, when, left);
+  } else if (d.checking && d.check === null) {
+    line = tr('בודקים מתי {0} פג…', d.domain);
   } else if (d.check === 'unsupported') {
     line = tr(
       'לא ניתן לקרוא אוטומטית את תאריך הפקיעה של {0}: לסיומת הזו אין בדיקה ציבורית.',
@@ -58,7 +60,11 @@ export function DomainExpiry({ businessId, canEdit }: { businessId: string; canE
       )}
     >
       <p className="flex items-start gap-2">
-        <CalendarClock aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+        {d.checking && d.check === null ? (
+          <Spinner size="sm" label="" />
+        ) : (
+          <CalendarClock aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+        )}
         <span>{line}</span>
       </p>
       {canEdit && (

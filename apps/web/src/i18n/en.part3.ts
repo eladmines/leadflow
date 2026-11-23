@@ -1017,4 +1017,8 @@ export const enPart3: Record<string, string> = {
     "We couldn't check when {0} expires right now. We'll try again soon.",
   'עוד לא בדקנו מתי {0} פג.': "We haven't checked when {0} expires yet.",
   'בדיקה עכשיו': 'Check now',
+  'בודקים מתי {0} פג…': 'Checking when {0} expires…',
+  'הצגה: {0}': 'Show: {0}',
+  'הסתרה: {0}': 'Hide: {0}',
+  'תצוגת האתר': 'Website preview',
 };

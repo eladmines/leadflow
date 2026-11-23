@@ -4,7 +4,8 @@ import { ExternalLink, Info } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Alert, Button, Card, DialogShell, Field } from '../../components/ui';
+import { Alert, Button, Card, CollapseButton, DialogShell, Field } from '../../components/ui';
+import { useCollapsed } from '../../lib/useCollapsed';
 import { applyServerErrors } from '../auth/serverErrors';
 import { useUpdateBusiness } from '../businesses/api';
 import { DomainExpiry } from './DomainExpiry';
@@ -81,6 +82,7 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
   const update = useUpdateBusiness(business.id);
   const [editing, setEditing] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [previewHidden, togglePreview] = useCollapsed('site-preview');
 
   return (
     <>
@@ -115,21 +117,37 @@ export function ExistingWebsite({ business, canEdit }: { business: Business; can
 
         <DomainExpiry businessId={business.id} canEdit={canEdit} />
 
-        <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-muted">
-          <iframe
-            title={tr('תצוגה של האתר הקיים')}
-            src={url}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            sandbox="allow-scripts allow-same-origin allow-popups"
-            className="block h-[calc(100dvh-14rem)] min-h-[34rem] w-full bg-white"
-          />
-        </div>
-        <p className="text-xs text-ink-muted">
-          {tr(
-            'לא רואים את האתר? חלק מהאתרים לא מאפשרים הצגה בתוך מערכות אחרות. אפשר לפתוח אותו בחלון חדש מהקישור למעלה.',
+        <section aria-label={tr('תצוגה של האתר הקיים')} className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium text-ink">{tr('תצוגת האתר')}</h3>
+            <CollapseButton
+              collapsed={previewHidden}
+              onToggle={togglePreview}
+              controls="site-preview"
+              label={tr('תצוגת האתר')}
+              showText
+            />
+          </div>
+          {!previewHidden && (
+            <div id="site-preview" className="flex flex-col gap-3">
+              <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-muted">
+                <iframe
+                  title={tr('תצוגה של האתר הקיים')}
+                  src={url}
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                  className="block h-[calc(100dvh-14rem)] min-h-[34rem] w-full bg-white"
+                />
+              </div>
+              <p className="text-xs text-ink-muted">
+                {tr(
+                  'לא רואים את האתר? חלק מהאתרים לא מאפשרים הצגה בתוך מערכות אחרות. אפשר לפתוח אותו בחלון חדש מהקישור למעלה.',
+                )}
+              </p>
+            </div>
           )}
-        </p>
+        </section>
 
         {canEdit &&
           (editing ? (

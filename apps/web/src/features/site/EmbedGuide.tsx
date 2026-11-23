@@ -1,6 +1,7 @@
 import { Code2 } from 'lucide-react';
 import { useState } from 'react';
-import { Alert, Card, ScrollTabs, Spinner } from '../../components/ui';
+import { Alert, Card, CollapseButton, ScrollTabs, Spinner } from '../../components/ui';
+import { useCollapsed } from '../../lib/useCollapsed';
 import { cn } from '../../lib/cn';
 import { Paste, Step, Steps } from '../reports/AdsGuideDialog';
 import { errorMessage } from '../auth/serverErrors';
@@ -151,6 +152,7 @@ function BuilderIcon({ tab }: { tab: Tab }) {
 export function EmbedGuide({ businessId }: { businessId: string }) {
   const info = useEmbedInfo(businessId, true);
   const [tab, setTab] = useState<Tab>('wix');
+  const [hidden, toggle] = useCollapsed('site-embed-guide');
   const labels: Record<Tab, string> = {
     wix: 'Wix',
     wordpress: 'WordPress',
@@ -162,66 +164,76 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
     : '';
   return (
     <Card className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold text-ink">{tr('קבלת פניות והמקור שלהן מהאתר')}</h2>
-        <p className="text-sm text-ink-muted">
-          {tr('אפשר לחבר את האתר הקיים כדי לספור כמה גולשים נכנסו אליו ומאיפה הגיעו.')}
-        </p>
-        {/*
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-ink">{tr('קבלת פניות והמקור שלהן מהאתר')}</h2>
+          <p className="text-sm text-ink-muted">
+            {tr('אפשר לחבר את האתר הקיים כדי לספור כמה גולשים נכנסו אליו ומאיפה הגיעו.')}
+          </p>
+          {/*
         <p className="text-sm text-ink-muted">
           {tr(
             'אפשר לחבר את האתר הקיים כך שכל פנייה מהטופס תיכנס לכאן כליד, יחד עם המודעה או הקמפיין שהביאו אותה (Google Ads, פייסבוק ועוד).',
           )}
         </p>
         */}
+        </div>
+        <CollapseButton
+          collapsed={hidden}
+          onToggle={toggle}
+          controls="site-embed-guide"
+          label={tr('קבלת פניות והמקור שלהן מהאתר')}
+        />
       </div>
-      <p className="text-sm text-ink">
-        {tr(
-          'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. מאותו רגע, בדף "דוחות" רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.',
-        )}
-      </p>
-      {info.isPending && <Spinner size="sm" label={tr('טוענים…')} />}
-      {info.isError && <Alert tone="danger">{errorMessage(info.error)}</Alert>}
-      {info.data && (
-        <Steps>
-          <Step>
-            {tr('העתיקו את השורה הזו:')}
-            <Paste text={info.data.snippet} />
-          </Step>
-          <Step>
+      {!hidden && (
+        <div id="site-embed-guide" className="flex flex-col gap-5">
+          <p className="text-sm text-ink">
             {tr(
-              'הדביקו אותה באתר, בכל הדפים, בסוף הדף (לפני התגית </body>). איך עושים את זה בבונה שלכם?',
+              'איך זה עובד: מדביקים באתר שורה אחת, פעם אחת. מאותו רגע, בדף "דוחות" רואים כמה גולשים נכנסו, מאיפה הגיעו (גוגל, פייסבוק, קישור אחר) ואילו דפים ראו. לא נאספים פרטים אישיים.',
             )}
-            <ScrollTabs
-              label={tr('בונה אתרים')}
-              activeKey={tab}
-              className="rounded-xl bg-surface-sunken p-1"
-            >
-              {TABS.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === t}
-                  onClick={() => setTab(t)}
-                  className={cn(
-                    'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm',
-                    tab === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
-                  )}
+          </p>
+          {info.isPending && <Spinner size="sm" label={tr('טוענים…')} />}
+          {info.isError && <Alert tone="danger">{errorMessage(info.error)}</Alert>}
+          {info.data && (
+            <Steps>
+              <Step>
+                {tr('העתיקו את השורה הזו:')}
+                <Paste text={info.data.snippet} />
+              </Step>
+              <Step>
+                {tr(
+                  'הדביקו אותה באתר, בכל הדפים, בסוף הדף (לפני התגית </body>). איך עושים את זה בבונה שלכם?',
+                )}
+                <ScrollTabs
+                  label={tr('בונה אתרים')}
+                  activeKey={tab}
+                  className="rounded-xl bg-surface-sunken p-1"
                 >
-                  <BuilderIcon tab={t} />
-                  {labels[t]}
-                </button>
-              ))}
-            </ScrollTabs>
-            <PlatformSteps tab={tab} message={message} />
-          </Step>
-          <Step>
-            {tr(
-              'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.',
-            )}
-          </Step>
-          {/*
+                  {TABS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      role="tab"
+                      aria-selected={tab === t}
+                      onClick={() => setTab(t)}
+                      className={cn(
+                        'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm',
+                        tab === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
+                      )}
+                    >
+                      <BuilderIcon tab={t} />
+                      {labels[t]}
+                    </button>
+                  ))}
+                </ScrollTabs>
+                <PlatformSteps tab={tab} message={message} />
+              </Step>
+              <Step>
+                {tr(
+                  'בדקו שזה עובד: פתחו את האתר שלכם (עדיף בחלון גלישה פרטי), ואחרי דקה חזרו ל"דוחות". הכרטיס "כניסות לאתר" יעלה. אם הוא נשאר 0, ודאו שהדבקתם בכל הדפים ושחוסם פרסומות לא פעיל.',
+                )}
+              </Step>
+              {/*
           <Step>
             {tr(
               'בטופס יצירת הקשר הוסיפו לתגית form את data-simplecatch. השדות מזוהים לפי השם: name, phone, email, message ו-consent (תיבת אישור):',
@@ -252,9 +264,9 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
             )}
           </Step>
           */}
-        </Steps>
-      )}
-      {/*
+            </Steps>
+          )}
+          {/*
       {info.data && (
         <div className="flex flex-col gap-3 rounded-2xl bg-surface-muted p-4">
           <h3 className="text-sm font-semibold text-ink">{tr('חנות Shopify')}</h3>
@@ -279,11 +291,13 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
         </div>
       )}
       */}
-      <p className="text-xs text-ink-muted">
-        {tr(
-          'הסקריפט לא אוסף פרטים אישיים: רק את שם הקמפיין, הקישור המפנה והדף. ערך מזהה הקליק (gclid) לא נשמר.',
-        )}
-      </p>
+          <p className="text-xs text-ink-muted">
+            {tr(
+              'הסקריפט לא אוסף פרטים אישיים: רק את שם הקמפיין, הקישור המפנה והדף. ערך מזהה הקליק (gclid) לא נשמר.',
+            )}
+          </p>
+        </div>
+      )}
     </Card>
   );
 }

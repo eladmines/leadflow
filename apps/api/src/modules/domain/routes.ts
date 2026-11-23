@@ -17,7 +17,7 @@ export const domainTenantRoutes: FastifyPluginAsyncZod = async (app) => {
       preValidation: requirePermission('business.view'),
       schema: { response: { 200: domainExpiryResponseSchema } },
     },
-    async (req) => domain.status(tenantOf(req)),
+    async (req) => domain.statusAndRefresh(tenantOf(req)),
   );
 
   app.post(

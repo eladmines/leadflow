@@ -9,6 +9,8 @@ export function useDomainExpiry(businessId: string) {
   return useQuery({
     queryKey: domainKey(businessId),
     queryFn: () => apiFetch<DomainExpiryResponse>(apiPaths.domain.domain(businessId)),
+    // The first look-up starts when the screen opens: ask again until it has an answer.
+    refetchInterval: (query) => (query.state.data?.checking ? 1500 : false),
   });
 }
 

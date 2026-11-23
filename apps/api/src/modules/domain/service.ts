@@ -17,6 +17,10 @@ const DAY = 86_400_000;
 const RECHECK_AFTER_MS = 20 * 3_600_000;
 /** "Check now" can't be pressed more often than this. */
 const MANUAL_COOLDOWN_MS = 60_000;
+/** A lookup that failed is tried again when the screen is opened after this long. */
+const RETRY_FAILED_AFTER_MS = 10 * 60_000;
+/** Lookups running right now, so opening the screen twice asks the registry once. */
+const inFlight = new Set<string>();
 
 type Log = Pick<FastifyBaseLogger, 'error' | 'info'>;
 
@@ -41,6 +45,29 @@ export class DomainExpiryService {
     private readonly log: Log,
   ) {}
 
+  /**
+   * What we know about the business's domain. When there is a domain nobody has looked up yet (or the
+   * last answer is a day old, or failed a while ago), the lookup starts in the background and
+   * `checking` says so: the screen shows the date a moment later, with nothing to press.
+   */
+  async statusAndRefresh(ctx: TenantContext, now = new Date()): Promise<DomainExpiryResponse> {
+    const b = await this.prisma.business.findUniqueOrThrow({
+      where: { id: ctx.businessId },
+      select: { websiteUrl: true, domainCheckedAt: true, domainCheck: true },
+    });
+    const age = b.domainCheckedAt ? now.getTime() - b.domainCheckedAt.getTime() : Infinity;
+    const stale = age > (b.domainCheck === 'failed' ? RETRY_FAILED_AFTER_MS : RECHECK_AFTER_MS);
+    if (registrableDomain(b.websiteUrl) && stale && !inFlight.has(ctx.businessId)) {
+      inFlight.add(ctx.businessId);
+      void this.check(ctx.businessId, now)
+        .catch((err) =>
+          this.log.error({ errName: (err as Error)?.name }, 'domain lookup on view failed'),
+        )
+        .finally(() => inFlight.delete(ctx.businessId));
+    }
+    return this.status(ctx, now);
+  }
+
   /** What we know about the business's domain (no lookup). */
   async status(ctx: TenantContext, now = new Date()): Promise<DomainExpiryResponse> {
     const b = await this.prisma.business.findUniqueOrThrow({
@@ -52,7 +79,7 @@ export class DomainExpiryService {
         domainCheck: true,
       },
     });
-    return this.toDto(b, now);
+    return this.toDto(b, now, inFlight.has(ctx.businessId));
   }
 
   /** Looks it up now (unless it was just looked up), and answers with what we know. */
@@ -187,6 +214,7 @@ export class DomainExpiryService {
       domainCheck: string | null;
     },
     now: Date,
+    checking = false,
   ): DomainExpiryResponse {
     const check = (DOMAIN_CHECKS as readonly string[]).includes(b.domainCheck ?? '')
       ? (b.domainCheck as DomainExpiryResponse['check'])
@@ -197,6 +225,7 @@ export class DomainExpiryService {
       expiresAt: b.domainExpiresAt?.toISOString() ?? null,
       checkedAt: b.domainCheckedAt?.toISOString() ?? null,
       daysLeft: b.domainExpiresAt ? daysUntil(b.domainExpiresAt, now) : null,
+      checking,
     };
   }
 }

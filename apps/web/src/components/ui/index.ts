@@ -9,6 +9,7 @@ export { FullPageSpinner } from './FullPageSpinner';
 export { Logo } from './Logo';
 export { MoreMenu } from './MoreMenu';
 export { PasswordField } from './PasswordField';
+export { CollapseButton } from './CollapseButton';
 export { RefreshButton } from './RefreshButton';
 export { Spinner } from './Spinner';
 export { TextLink, textLinkClasses } from './TextLink';
