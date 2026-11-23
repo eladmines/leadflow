@@ -2,6 +2,7 @@ import { businessWebPaths, sectionTypeLabels, type Behavior } from '@simplecatch
 import { MousePointerClick } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui';
+import { CardRefresh } from '../shell/CardRefresh';
 import { HBars } from './HBars';
 import { tr } from '../../i18n';
 
@@ -38,10 +39,13 @@ export function BehaviorCard({
   return (
     <Card className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
-          <MousePointerClick aria-hidden className="h-5 w-5 text-rose-600" />
-          {tr('מה גולשים עושים באתר')}
-        </h2>
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+            <MousePointerClick aria-hidden className="h-5 w-5 text-rose-600" />
+            {tr('מה גולשים עושים באתר')}
+          </h2>
+          <CardRefresh scope="reports" title={tr('מה גולשים עושים באתר')} />
+        </div>
         <p className="text-sm text-ink-muted">
           {tr(
             'ספירה בלבד, בלי לזהות אנשים: אילו דפים נצפים, איפה נכנסים, באיזה מכשיר, על מה לוחצים ועד איפה גוללים.',

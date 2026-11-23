@@ -7,6 +7,7 @@ import { useAppointments } from '../appointments/api';
 import { useLeads } from '../leads/api';
 import { groupTasks, useTasks } from '../tasks/api';
 import { useUnreadConversations } from '../conversations/api';
+import { CardRefresh } from '../shell/CardRefresh';
 
 const WEEK_MS = 7 * 86_400_000;
 
@@ -104,9 +105,12 @@ export function TodayBoxes({ business }: { business: Business }) {
         <h2 id="today-title" className="text-lg font-semibold text-ink">
           {tr('מה מחכה לכם היום')}
         </h2>
-        {calm && (
-          <p className="text-sm text-ink-muted">{tr('הכול מטופל, אין דברים שמחכים לכם 🎉')}</p>
-        )}
+        <div className="flex items-center gap-2">
+          {calm && (
+            <p className="text-sm text-ink-muted">{tr('הכול מטופל, אין דברים שמחכים לכם 🎉')}</p>
+          )}
+          <CardRefresh title={tr('מה מחכה לכם היום')} />
+        </div>
       </div>
       <ul
         className={cn(

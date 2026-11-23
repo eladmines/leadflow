@@ -979,4 +979,5 @@ export const enPart3: Record<string, string> = {
   'או, בלי לגעת באתר עצמו, כתבו על תגית הסקריפט:':
     'Or, without touching the site itself, write on the script tag:',
   לחצו: 'Clicked',
+  'רענון: {0}': 'Refresh: {0}',
 };

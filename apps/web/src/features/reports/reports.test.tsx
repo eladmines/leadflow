@@ -107,6 +107,31 @@ describe('reports page', () => {
     expect(await screen.findByText('עודכן')).toBeInTheDocument();
   });
 
+  it('refreshes from a card, and every card has its own refresh', async () => {
+    const user = userEvent.setup();
+    let version = 12;
+    mockApi({
+      [`GET ${apiPaths.auth.me}`]: me(testUser),
+      [`GET ${apiPaths.reports.summary(id)}`]: () =>
+        json(200, { ...summary, leads: { current: version, previous: 9 } }),
+    });
+    renderApp(page);
+    expect(await screen.findByText('12')).toBeInTheDocument();
+    for (const title of [
+      'פניות לאורך זמן',
+      'פניות לפי שעה',
+      'פניות לפי שלב',
+      'מאיפה הגיעו הפניות',
+      'מאיפה מגיעים הלקוחות',
+      'מה גולשים עושים באתר',
+    ]) {
+      expect(screen.getByRole('button', { name: `רענון: ${title}` })).toBeInTheDocument();
+    }
+    version = 21;
+    await user.click(screen.getByRole('button', { name: 'רענון: פניות לפי שעה' }));
+    expect(await screen.findByText('21')).toBeInTheDocument();
+  });
+
   it('shows when inquiries arrive: a column per hour, the peak and the share at night', async () => {
     mockApi({
       [`GET ${apiPaths.auth.me}`]: me(testUser),

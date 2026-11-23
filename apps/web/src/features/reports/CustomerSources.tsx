@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { Button, Card } from '../../components/ui';
 import { AdsGuideDialog } from './AdsGuideDialog';
 import { shekel } from '../leads/api';
+import { CardRefresh } from '../shell/CardRefresh';
 import { SourceBadge } from '../leads/Attribution';
 import { tr } from '../../i18n';
 
@@ -53,10 +54,13 @@ export function CustomerSources({
             )}
           </p>
         </div>
-        <Button variant="secondary" onClick={() => setGuideOpen(true)}>
-          <Plug aria-hidden className="h-4 w-4" />
-          {tr('חיבור המודעות שלכם')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setGuideOpen(true)}>
+            <Plug aria-hidden className="h-4 w-4" />
+            {tr('חיבור המודעות שלכם')}
+          </Button>
+          <CardRefresh scope="reports" title={tr('מאיפה מגיעים הלקוחות')} />
+        </div>
       </div>
       {report.byAttribution.length === 0 ? (
         <p className="text-sm text-ink-muted">{tr('אין פניות בתקופה הזו.')}</p>

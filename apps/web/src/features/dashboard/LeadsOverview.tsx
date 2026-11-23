@@ -6,6 +6,7 @@ import { errorMessage } from '../auth/serverErrors';
 import { LeadSourceIcon } from '../leads/SourceIcon';
 import { durationLabel, useReportSummary } from '../reports/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
+import { CardRefresh } from '../shell/CardRefresh';
 import { tr } from '../../i18n';
 
 const DAYS = 7;
@@ -27,12 +28,15 @@ export function LeadsOverview() {
         <h2 id="overview-title" className="text-lg font-semibold text-ink">
           {tr('הפניות ב-7 הימים האחרונים')}
         </h2>
-        <Link
-          to={businessWebPaths.section(business.id, 'reports')}
-          className="text-sm font-medium text-brand-700 hover:underline"
-        >
-          {tr('לכל הדוחות')}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to={businessWebPaths.section(business.id, 'reports')}
+            className="text-sm font-medium text-brand-700 hover:underline"
+          >
+            {tr('לכל הדוחות')}
+          </Link>
+          <CardRefresh scope="reports" title={tr('הפניות ב-7 הימים האחרונים')} />
+        </div>
       </div>
       {report.isPending ? (
         <Spinner label={tr('טוענים…')} />
