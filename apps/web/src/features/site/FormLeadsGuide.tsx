@@ -5,7 +5,7 @@ import { useCollapsed } from '../../lib/useCollapsed';
 import { Paste, Step, Steps } from '../reports/AdsGuideDialog';
 import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
-import { shopifySnippet } from './EmbedGuide';
+// The Shopify line is hidden for now; to bring it back, import `shopifySnippet` from './EmbedGuide'.
 import { useEmbedInfo } from './embedApi';
 import { tr } from '../../i18n';
 
@@ -51,22 +51,28 @@ export function FormLeadsGuide({ businessId }: { businessId: string }) {
                   </span>
                 </Step>
                 <Step>
-                  {tr('שלחו פנייה לדוגמה מהאתר, ובדקו שהיא מופיעה ב')}
-                  <Link
-                    to={businessWebPaths.section(business.id, 'leads')}
-                    className="font-medium text-brand-700 underline"
-                  >
-                    {tr('דף הלידים')}
-                  </Link>
-                  .
+                  {/* One inline line: the link continues the sentence ("...מופיעה בדף הלידים") with no gap, and
+                      its two words never split across lines. */}
+                  <span>
+                    {tr('שלחו פנייה לדוגמה מהאתר, ובדקו שהיא מופיעה ב')}
+                    <Link
+                      to={businessWebPaths.section(business.id, 'leads')}
+                      className="whitespace-nowrap font-medium text-brand-700 underline"
+                    >
+                      {tr('דף הלידים')}
+                    </Link>
+                    .
+                  </span>
                 </Step>
               </Steps>
+              {/*
               <p className="text-xs text-ink-muted">
                 {tr(
                   'ב-Shopify: במקום השורה הרגילה הדביקו את השורה הזו, והיא מחברת את טופס "צור קשר":',
                 )}
               </p>
               <Paste text={shopifySnippet(info.data)} />
+              */}
             </>
           )}
         </div>

@@ -188,10 +188,13 @@ describe('existing website (D-094)', () => {
     expect(screen.getByText(/בטופס צריך לפחות שם וטלפון/)).toBeInTheDocument();
     expect(screen.queryByText(/data-copy/)).not.toBeInTheDocument();
     expect(screen.queryByText(/תיבת אישור/)).not.toBeInTheDocument();
-    // Shopify has its own line, which connects the contact form.
-    expect(
-      screen.getAllByText(/data-key="K" data-forms="form\[action\*='\/contact'\]"/).length,
-    ).toBeGreaterThan(0);
+    // The Shopify line is hidden for now.
+    expect(screen.queryByText(/data-forms="form\[action/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ב-Shopify/)).not.toBeInTheDocument();
+    // The link continues the sentence: "…מופיעה בדף הלידים.", all in one line.
+    expect(screen.getByRole('link', { name: 'דף הלידים' }).parentElement).toHaveTextContent(
+      'שלחו פנייה לדוגמה מהאתר, ובדקו שהיא מופיעה בדף הלידים.',
+    );
     expect(screen.getByRole('link', { name: 'דף הלידים' })).toHaveAttribute(
       'href',
       `/b/${testBusiness.id}/leads`,
