@@ -1,4 +1,4 @@
-import { businessWebPaths, type Behavior } from '@simplecatch/shared';
+import { businessWebPaths, sectionTypeLabels, type Behavior } from '@simplecatch/shared';
 import { MousePointerClick } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui';
@@ -7,6 +7,13 @@ import { tr } from '../../i18n';
 
 const percent = (part: number, whole: number) =>
   whole > 0 ? `${Math.round((part / whole) * 100)}%` : '—';
+
+/** `services` → "Services", `services-2` → "Services (2)"; a name the owner gave is shown as it is. */
+function sectionName(name: string) {
+  const m = /^(.+?)(?:-(\d+))?$/.exec(name);
+  const label = m && (sectionTypeLabels as Record<string, string | undefined>)[m[1]!];
+  return label ? `${tr(label)}${m![2] ? ` (${m![2]})` : ''}` : name;
+}
 
 /** "3 of 120 (2.5%)"; blank when the leads can't be told apart from the visits. */
 const conversion = (leads: number, visits: number) =>
@@ -91,6 +98,41 @@ export function BehaviorCard({
               />
             </section>
           </div>
+          {b.sections.length > 0 && (
+            <div className="scrollbar-visible overflow-x-auto">
+              <table className="w-full min-w-[420px] text-sm">
+                <caption className="pb-2 text-start text-sm font-medium text-ink">
+                  {tr('הסקשנים שהגולשים ראו')}
+                </caption>
+                <thead className="text-ink-muted">
+                  <tr>
+                    <th className="py-1.5 text-start font-medium">{tr('סקשן')}</th>
+                    <th className="py-1.5 text-start font-medium">{tr('דף')}</th>
+                    <th className="py-1.5 text-end font-medium">{tr('נצפה')}</th>
+                    <th className="py-1.5 text-end font-medium">{tr('מצפיות הדף')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...b.sections]
+                    .sort((x, y) => x.path.localeCompare(y.path) || y.views - x.views)
+                    .map((x) => (
+                      <tr key={`${x.path}#${x.name}`} className="border-t border-surface-border">
+                        <td className="py-2 font-medium text-ink">{sectionName(x.name)}</td>
+                        <td className="py-2">
+                          <bdi dir="ltr" className="text-ink-muted">
+                            {x.path}
+                          </bdi>
+                        </td>
+                        <td className="py-2 text-end tabular-nums text-ink">{x.views}</td>
+                        <td className="py-2 text-end tabular-nums text-ink">
+                          {x.pageViews >= x.views ? percent(x.views, x.pageViews) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {b.ctas.length > 0 && (
             <section className="flex flex-col gap-3">
               <h3 className="text-sm font-medium text-ink">{tr('לחיצות על כפתורים שנבחרו')}</h3>
@@ -135,7 +177,7 @@ export function BehaviorCard({
           )}
           <p className="text-xs text-ink-muted">
             {tr(
-              'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף. לחיצות על טלפון, גלילה והתחלת טופס נמדדות רק באתר שמוטמע בו הסקריפט; באתר שנבנה ב-SimpleCatch נספרים צפיות, דפי נחיתה ומכשירים.',
+              'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף. סקשן נחשב כנצפה אחרי חצי שנייה על המסך.',
             )}
           </p>
         </>

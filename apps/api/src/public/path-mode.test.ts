@@ -71,8 +71,14 @@ describe('free hosting: sites under a path, images in Postgres, web app from the
     expect(page.body).toContain(`action="/s/salon${LEAD_FORM_PATH}"`);
     expect(page.body).toContain('href="/s/salon/"');
     expect(page.body).not.toMatch(/\shref="\/(?!s\/salon\/|\/)/);
-    // Images stay on the app's own /media (same origin); only links and the form move.
-    expect(page.body).not.toContain('src="/s/');
+    // Images stay on the app's own /media (same origin); only links, the form and our script move.
+    expect(page.body.replace('<script defer src="/s/salon/__sc.js"></script>', '')).not.toContain(
+      'src="/s/',
+    );
+    expect(page.body).toContain('<script defer src="/s/salon/__sc.js"></script>');
+    const script = await pub.inject({ method: 'GET', url: '/s/salon/__sc.js' });
+    expect(script.statusCode).toBe(200);
+    expect(script.headers['content-type']).toContain('application/javascript');
     expect((await pub.inject({ method: 'GET', url: '/s/salon' })).statusCode).toBe(200);
     expect((await pub.inject({ method: 'GET', url: '/s/nobody/' })).statusCode).toBe(404);
     expect((await pub.inject({ method: 'GET', url: '/s/salon/nope' })).statusCode).toBe(404);

@@ -109,6 +109,7 @@ const emptyReport: ReportSummary = {
     devices: { mobile: 0, tablet: 0, desktop: 0 },
     clicks: { phone: 0, whatsapp: 0, email: 0 },
     scroll: { p50: 0, p90: 0 },
+    sections: [],
     ctas: [],
     formStarts: 0,
   },

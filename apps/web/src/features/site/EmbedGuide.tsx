@@ -7,6 +7,9 @@ import { tr } from '../../i18n';
 const CTA_EXAMPLE = '<button data-sc-click="book-appointment">Book</button>';
 const TRACK_EXAMPLE = 'data-track="#book-btn=book-appointment; .buy-now=buy"';
 
+const SECTION_EXAMPLE = '<section data-sc-section="pricing">…</section>';
+const SECTIONS_TRACK_EXAMPLE = 'data-track-sections="#pricing=pricing; .faq-block=faq"';
+
 const FORM_EXAMPLE = `<form data-simplecatch data-success="Thank you!">
   <input name="name" required>
   <input name="phone" required>
@@ -61,6 +64,14 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
               'בונה אתרים שלא מאפשר להוסיף תכונות? כתבו על תגית הסקריפט data-track עם רשימה של מסמן=שם, מופרדים בנקודה-פסיק:',
             )}
             <Paste text={TRACK_EXAMPLE} />
+          </Step>
+          <Step>
+            {tr(
+              'רוצים לדעת אילו חלקים בדף הגולשים באמת רואים (מחירון, שאלות נפוצות...)? תנו שם לחלק, ונספור כשהוא היה על המסך לפחות חצי שנייה:',
+            )}
+            <Paste text={SECTION_EXAMPLE} />
+            {tr('או, בלי לגעת באתר עצמו, כתבו על תגית הסקריפט:')}
+            <Paste text={SECTIONS_TRACK_EXAMPLE} />
           </Step>
           <Step>
             {tr(

@@ -962,12 +962,20 @@ export const enPart3: Record<string, string> = {
     'Landing pages: how many entered and how many left an inquiry',
   דף: 'Page',
   כניסות: 'Visits',
-  'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף. לחיצות על טלפון, גלילה והתחלת טופס נמדדות רק באתר שמוטמע בו הסקריפט; באתר שנבנה ב-SimpleCatch נספרים צפיות, דפי נחיתה ומכשירים.':
-    'Numbers are approximate: ad blockers and bots affect them, and a short page that fits the screen counts as seen to the end. Taps on phone links, scrolling and forms started are measured only on a website with the script; on a site built in SimpleCatch, page views, landing pages and devices are counted.',
+  'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף. סקשן נחשב כנצפה אחרי חצי שנייה על המסך.':
+    'Numbers are approximate: ad blockers and bots affect them, and a short page that fits the screen counts as seen to the end. A section counts as seen after half a second on screen.',
+  'הסקשנים שהגולשים ראו': 'Sections visitors saw',
+  סקשן: 'Section',
+  נצפה: 'Seen',
+  'מצפיות הדף': 'Of the page’s views',
   'לחיצות על כפתורים שנבחרו': 'Clicks on chosen buttons',
   'כפתורים שנבחרו לספירה': 'Buttons chosen for counting',
   'רוצים לספור לחיצות על כפתור מסוים (למשל "קבע תור")? הוסיפו לכפתור שם, ותראו אותו בדוחות:':
     'Want to count clicks on a particular button (for example "Book an appointment")? Give the button a name and you will see it in Reports:',
   'בונה אתרים שלא מאפשר להוסיף תכונות? כתבו על תגית הסקריפט data-track עם רשימה של מסמן=שם, מופרדים בנקודה-פסיק:':
     'A site builder that doesn’t let you add attributes? Add data-track to the script tag with a list of selector=name, separated by semicolons:',
+  'רוצים לדעת אילו חלקים בדף הגולשים באמת רואים (מחירון, שאלות נפוצות...)? תנו שם לחלק, ונספור כשהוא היה על המסך לפחות חצי שנייה:':
+    'Want to know which parts of a page visitors really see (pricing, FAQ…)? Give a part a name, and we count it when it was on screen for at least half a second:',
+  'או, בלי לגעת באתר עצמו, כתבו על תגית הסקריפט:':
+    'Or, without touching the site itself, write on the script tag:',
 };

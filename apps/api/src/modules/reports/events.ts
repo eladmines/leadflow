@@ -1,5 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
-import { normalizeCtaName, normalizePagePath, type BehaviorEvent } from '@simplecatch/shared';
+import {
+  normalizeCtaName,
+  normalizePagePath,
+  sectionLabel,
+  type BehaviorEvent,
+} from '@simplecatch/shared';
 
 /**
  * F32 — what visitors do on a website with the embed script, as counts: business × local day ×
@@ -30,6 +35,11 @@ export const deviceOf = (ua: string | undefined): 'mobile' | 'tablet' | 'desktop
 export function eventLabel(kind: BehaviorEvent, label: string | undefined): string | null {
   if (kind === 'page' || kind === 'landing') return normalizePagePath(label);
   if (kind === 'cta') return normalizeCtaName(label) || null;
+  if (kind === 'section') {
+    // `<path>#<name>`: rebuilt from its parts, so the stored label is always clean and short.
+    const at = (label ?? '').indexOf('#');
+    return at < 0 ? null : sectionLabel(label!.slice(0, at), label!.slice(at + 1)) || null;
+  }
   const allowed = ONE_OF[kind];
   return allowed && label !== undefined && allowed.includes(label) ? label : null;
 }

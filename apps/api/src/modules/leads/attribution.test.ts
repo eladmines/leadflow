@@ -247,6 +247,77 @@ describe('where website leads come from (F26)', () => {
       clicks: { phone: 0, whatsapp: 0, email: 0 },
     });
   });
+  it("SimpleCatch's own sites carry one first-party script that reports taps, scroll and sections (F32, D-192)", async () => {
+    const o = await liveSite('sec-salon');
+    const UA =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1';
+    const page = await pub.inject({
+      method: 'GET',
+      url: '/',
+      headers: { host: host('sec-salon'), 'user-agent': UA },
+    });
+    expect(page.body).toContain('<script defer src="/__sc.js"></script></body>');
+    expect(page.headers['content-security-policy']).toContain("script-src 'self'");
+    expect(page.headers['content-security-policy']).toContain("connect-src 'self'");
+    expect(page.headers['content-security-policy']).toContain("default-src 'none'");
+
+    const js = await pub.inject({
+      method: 'GET',
+      url: '/__sc.js',
+      headers: { host: host('sec-salon') },
+    });
+    expect(js.statusCode).toBe(200);
+    expect(js.headers['content-type']).toContain('application/javascript');
+    expect(() => new Function(js.body)).not.toThrow();
+
+    const site = (await req(ctx.app, 'GET', sp.site(o.id), o.token)).json().site;
+    const sections = site.sections as { id: string; type: string }[];
+    const services = sections.find((x) => x.type === 'services')!;
+    const contact = sections.find((x) => x.type === 'contact')!;
+    const report = (e: unknown, ua = UA) =>
+      pub.inject({
+        method: 'POST',
+        url: '/__sc',
+        headers: { host: host('sec-salon'), 'content-type': 'text/plain', 'user-agent': ua },
+        payload: JSON.stringify(e),
+      });
+    const ok = await report({
+      p: '/',
+      ev: [
+        { k: 'click', l: 'phone' },
+        { k: 'scroll', l: '50' },
+        { k: 'form', l: 'start' },
+        { k: 'device', l: 'toaster' }, // not an allowed kind from this script: the batch is dropped
+      ],
+    });
+    expect(ok.statusCode).toBe(204);
+    await report({
+      p: '/',
+      ev: [
+        { k: 'click', l: 'phone' },
+        { k: 'scroll', l: '50' },
+        { k: 'form', l: 'start' },
+      ],
+      sec: [`s-${services.id}`, `s-${contact.id}`, 's-not-a-section', `s-${services.id}`],
+    });
+    await report({ p: '/', ev: [], sec: [`s-${services.id}`] }, 'Googlebot/2.1');
+    await report('not json');
+    await new Promise((r) => setTimeout(r, 100));
+
+    const rep = (
+      await req(ctx.app, 'GET', `${apiPaths.reports.summary(o.id)}?days=7`, o.token)
+    ).json();
+    expect(rep.behavior.clicks.phone).toBe(1);
+    expect(rep.behavior.scroll.p50).toBe(1);
+    expect(rep.behavior.formStarts).toBe(1);
+    expect(rep.behavior.sections).toEqual(
+      expect.arrayContaining([
+        { path: '/', name: 'services', views: 1, pageViews: expect.any(Number) },
+        { path: '/', name: 'contact', views: 1, pageViews: expect.any(Number) },
+      ]),
+    );
+    expect(rep.behavior.sections).toHaveLength(2);
+  });
 });
 
 describe('WhatsApp leads from Meta ads (F26)', () => {

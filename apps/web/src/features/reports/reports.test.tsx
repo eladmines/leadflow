@@ -40,6 +40,7 @@ const summary: ReportSummary = {
     devices: { mobile: 0, tablet: 0, desktop: 0 },
     clicks: { phone: 0, whatsapp: 0, email: 0 },
     scroll: { p50: 0, p90: 0 },
+    sections: [],
     ctas: [],
     formStarts: 0,
   },
@@ -139,6 +140,11 @@ describe('reports page', () => {
         devices: { mobile: 30, tablet: 0, desktop: 10 },
         clicks: { phone: 7, whatsapp: 9, email: 1 },
         scroll: { p50: 100, p90: 50 },
+        sections: [
+          { path: '/', name: 'services', views: 30, pageViews: 120 },
+          { path: '/', name: 'services-2', views: 6, pageViews: 120 },
+          { path: '/', name: 'my-offer', views: 12, pageViews: 120 },
+        ],
         ctas: [{ name: 'קבע תור', count: 14 }],
         formStarts: 12,
       },
@@ -151,6 +157,11 @@ describe('reports page', () => {
     expect(await screen.findByText('מה גולשים עושים באתר')).toBeInTheDocument();
     expect(screen.getByText('גללו עד סוף הדף').nextElementSibling).toHaveTextContent('25%');
     expect(screen.getByText('עד אמצע הדף: 50%')).toBeInTheDocument();
+    // Sections: a type shows its name, a repeated one is numbered, an owner's name stays; with the share of page views.
+    expect(screen.getByRole('cell', { name: 'שירותים' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'שירותים (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'my-offer' })).toBeInTheDocument();
+    expect(screen.getByText('25%', { selector: 'td' })).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'כפתורים שנבחרו לספירה' })).toHaveTextContent(
       'קבע תור',
     );

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // The script is plain ES5 text served by the API; run it here the way a browser would.
 import { EMBED_SCRIPT } from '../../../../api/src/modules/embed/script';
+import { SITE_SCRIPT } from '../../../../api/src/modules/embed/site-script';
 
 const SRC = 'https://app.example.com/api/v1/embed/lead.js';
 const sent: { url: string; body: Record<string, unknown> }[] = [];
@@ -28,6 +29,47 @@ function load(attrs: Record<string, string> = {}) {
   for (const [k, v] of Object.entries(attrs)) tag.setAttribute(k, v);
   Object.defineProperty(document, 'currentScript', { value: tag, configurable: true });
   new Function(EMBED_SCRIPT)();
+}
+
+/** A stand-in for IntersectionObserver: the test decides what is on screen. */
+type Entry = {
+  target: Element;
+  isIntersecting: boolean;
+  intersectionRatio: number;
+  intersectionRect: { height: number };
+  rootBounds: { height: number };
+};
+const observers: { cb: (e: Entry[]) => void; seen: Element[] }[] = [];
+class FakeObserver {
+  seen: Element[] = [];
+  constructor(public cb: (e: Entry[]) => void) {
+    observers.push(this);
+  }
+  observe(el: Element) {
+    this.seen.push(el);
+  }
+  unobserve() {}
+}
+/** `el` is on screen: this much of it, and this many pixels of a 800px-high screen. */
+const show = (el: Element, ratio: number, px: number) =>
+  observers.forEach((o) =>
+    o.cb([
+      {
+        target: el,
+        isIntersecting: ratio > 0,
+        intersectionRatio: ratio,
+        intersectionRect: { height: px },
+        rootBounds: { height: 800 },
+      },
+    ]),
+  );
+
+/** Runs the script that sits on SimpleCatch's own sites, loaded from `src`. */
+function loadSite(src: string) {
+  const tag = document.createElement('script');
+  tag.setAttribute('src', src);
+  Object.defineProperty(document, 'currentScript', { value: tag, configurable: true });
+  new Function(SITE_SCRIPT)();
 }
 
 const shopifyForm = `
@@ -149,6 +191,80 @@ describe('embed script (F30, F31)', () => {
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();
     expect(sent.find((s) => s.url.endsWith('/lead'))!.body.consent).toBeUndefined();
+  });
+
+  describe('sections (F32)', () => {
+    beforeEach(() => {
+      observers.length = 0;
+      vi.stubGlobal('IntersectionObserver', FakeObserver);
+      vi.useFakeTimers();
+    });
+    afterEach(() => vi.useRealTimers());
+    const leave = () => window.dispatchEvent(new Event('pagehide'));
+    it('counts a named section once, after half a second with half of it on screen', () => {
+      document.body.innerHTML = `<section id="p" data-sc-section="pricing"></section><section id="f"></section><section id="x" data-sc-section="seen-too-short"></section>`;
+      history.replaceState(null, '', '/sale/');
+      load({ 'data-track-sections': '#f=faq; [[bad=oops' });
+      const [pricing, faq, short] = ['p', 'f', 'x'].map((id) => document.getElementById(id)!);
+      show(pricing!, 0.3, 100); // not enough of it
+      vi.advanceTimersByTime(600);
+      show(pricing!, 0.6, 300); // half of it
+      show(faq!, 0.2, 500); // a tall section: more than half the screen counts
+      show(short!, 1, 300);
+      vi.advanceTimersByTime(300);
+      show(short!, 0, 0); // gone before half a second
+      vi.advanceTimersByTime(600);
+      show(pricing!, 1, 300); // again: not counted twice
+      vi.advanceTimersByTime(600);
+      leave();
+      expect(sent.filter((s) => s.url.endsWith('/event')).at(-1)!.body.events).toEqual(
+        expect.arrayContaining([
+          { k: 'section', l: '/sale/#pricing' },
+          { k: 'section', l: '/sale/#faq' },
+        ]),
+      );
+      const sections = sent
+        .flatMap((s) => (s.body.events as { k: string; l: string }[] | undefined) ?? [])
+        .filter((e) => e.k === 'section');
+      expect(sections).toHaveLength(2);
+    });
+
+    it('on a SimpleCatch site: reports section ids, scroll and taps to its own address, under a path too', () => {
+      document.body.innerHTML = `<header id="s-hero"></header><main><section id="s-abc"></section><section id="s-def"></section></main><a id="t" href="tel:+972501234567">Call</a><a id="w" href="https://wa.me/9725">W</a><a id="o" href="https://wa.me.evil.example/">no</a>`;
+      history.replaceState(null, '', '/s/salon/about');
+      loadSite('/s/salon/__sc.js');
+      const els = ['s-hero', 's-abc', 's-def'].map((id) => document.getElementById(id)!);
+      show(els[1]!, 1, 700);
+      vi.advanceTimersByTime(600);
+      show(els[0]!, 1, 700);
+      vi.advanceTimersByTime(600);
+      document.getElementById('t')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.getElementById('w')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.getElementById('o')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      leave();
+      expect(sent.map((s) => s.url)).toEqual(['/s/salon/__sc', '/s/salon/__sc', '/s/salon/__sc']);
+      expect(sent[0]!.body).toEqual({ p: '/about', ev: [{ k: 'click', l: 'phone' }] });
+      expect(sent[1]!.body).toEqual({ p: '/about', ev: [{ k: 'click', l: 'whatsapp' }] });
+      expect(sent[2]!.body).toEqual({
+        p: '/about',
+        ev: [
+          { k: 'scroll', l: '50' },
+          { k: 'scroll', l: '90' },
+        ],
+        sec: ['s-abc', 's-hero'],
+      });
+    });
+
+    it('on a SimpleCatch site at its own address the path is the page path', () => {
+      document.body.innerHTML = `<main><section id="s-abc"></section></main>`;
+      history.replaceState(null, '', '/');
+      loadSite('/__sc.js');
+      show(document.getElementById('s-abc')!, 1, 700);
+      vi.advanceTimersByTime(600);
+      leave();
+      expect(sent).toHaveLength(1);
+      expect(sent[0]).toMatchObject({ url: '/__sc', body: { p: '/', sec: ['s-abc'] } });
+    });
   });
 
   describe('behavior (F32)', () => {

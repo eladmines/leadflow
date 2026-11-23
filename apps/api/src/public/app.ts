@@ -34,6 +34,7 @@ import type { StorageProvider } from '../integrations/storage';
 import { registerMediaServing } from '../modules/media/serve';
 import { readAttributionCookie, rememberVisit } from './attribution';
 import { deviceOf, recordEvents } from '../modules/reports/events';
+import { SITE_SCRIPT } from '../modules/embed/site-script';
 import { isBotAgent, localDay, recordVisit } from '../modules/reports/visits';
 
 /**
@@ -46,10 +47,13 @@ import { isBotAgent, localDay, recordVisit } from '../modules/reports/visits';
 
 const SUBDOMAIN = /^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/;
 
-/** Static sites only: no scripts, styles inline + Google Fonts, nothing may frame the page. */
+/**
+ * Static sites: the only script is our own first-party one (D-192: counts, no cookies), reporting back
+ * to the site's own address; styles inline + Google Fonts; nothing may frame the page.
+ */
 const SECURITY_HEADERS = {
   'content-security-policy':
-    "default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+    "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
   'x-frame-options': 'DENY',
@@ -72,6 +76,14 @@ interface PublicAppDeps {
   storage?: StorageProvider;
   logStream?: LogStream;
 }
+
+/** What the site script reports: a few kinds of events and the sections it saw (their element ids). */
+const siteEventSchema = z.object({
+  ev: z
+    .array(z.object({ k: z.enum(['click', 'scroll', 'form']), l: z.string().max(20).optional() }))
+    .max(12),
+  sec: z.array(z.string().max(60)).max(30).optional(),
+});
 
 const publishedContent = z.object({
   theme: themeSchema,
@@ -129,28 +141,60 @@ export async function buildPublicApp({
     return SUBDOMAIN.test(sub) ? sub : null;
   };
 
-  /** The business behind a site name, for counting visits (a few minutes' cache). */
-  const visitTargets = new Map<string, { businessId: string; timezone: string; expires: number }>();
+  /** The business behind a site name, with where its sections are (a few minutes' cache). */
+  interface SiteTarget {
+    businessId: string;
+    timezone: string;
+    /** `<section id>` → its page path and name (`services`, `services-2`…). */
+    sections: Map<string, { path: string; name: string }>;
+    expires: number;
+  }
+  const siteTargets = new Map<string, SiteTarget>();
+  const siteTarget = async (subdomain: string): Promise<SiteTarget | null> => {
+    const hit = siteTargets.get(subdomain);
+    if (hit && hit.expires > Date.now()) return hit;
+    const site = await prisma.site.findUnique({
+      where: { subdomain },
+      select: {
+        businessId: true,
+        business: { select: { timezone: true } },
+        publishedVersion: { select: { content: true } },
+      },
+    });
+    if (!site) return null;
+    const sections = new Map<string, { path: string; name: string }>();
+    const content = publishedContent.safeParse(site.publishedVersion?.content);
+    if (content.success) {
+      const pages = [
+        { path: '/', list: content.data.sections },
+        ...content.data.pages.map((p) => ({ path: `/${p.slug}`, list: p.sections })),
+      ];
+      for (const page of pages) {
+        const seen = new Map<string, number>();
+        for (const sec of page.list) {
+          const n = (seen.get(sec.type) ?? 0) + 1;
+          seen.set(sec.type, n);
+          sections.set(sec.id, { path: page.path, name: n > 1 ? `${sec.type}-${n}` : sec.type });
+        }
+      }
+    }
+    const target = {
+      businessId: site.businessId,
+      timezone: site.business.timezone,
+      sections,
+      expires: Date.now() + 300_000,
+    };
+    siteTargets.set(subdomain, target);
+    return target;
+  };
   const countView = async (
     subdomain: string,
     visit: { attribution: Attribution; entry: boolean },
     pagePath: string,
     ua: string | undefined,
   ) => {
-    let target = visitTargets.get(subdomain);
-    if (!target || target.expires < Date.now()) {
-      const site = await prisma.site.findUnique({
-        where: { subdomain },
-        select: { businessId: true, business: { select: { timezone: true } } },
-      });
-      if (!site) return;
-      target = {
-        businessId: site.businessId,
-        timezone: site.business.timezone,
-        expires: Date.now() + 300_000,
-      };
-      visitTargets.set(subdomain, target);
-    }
+    const target = await siteTarget(subdomain);
+    if (!target) return;
     const events: { k: BehaviorEvent; l: string }[] = [{ k: 'page', l: pagePath }];
     if (visit.entry) {
       events.push({ k: 'landing', l: pagePath }, { k: 'device', l: deviceOf(ua) });
@@ -226,10 +270,13 @@ export async function buildPublicApp({
       // Never cached by browsers: every view gets a fresh form token (its nonce is the lead's
       // idempotency key), and a new publish shows immediately. The server-side cache stays.
       const html = withBase(
-        pageHtml.replaceAll(
-          FORM_TOKEN_PLACEHOLDER,
-          createFormToken(config.FORM_TOKEN_SECRET, subdomain),
-        ),
+        pageHtml
+          .replaceAll(FORM_TOKEN_PLACEHOLDER, createFormToken(config.FORM_TOKEN_SECRET, subdomain))
+          // F32 (D-192): our own counting script, from the site's own address.
+          .replace(
+            '</body>',
+            `<script defer src="${byPath ? `/s/${subdomain}` : ''}${SITE_SCRIPT_PATH}"></script></body>`,
+          ),
         subdomain,
       );
       const visit = rememberVisit(req, reply, {
@@ -279,7 +326,52 @@ export async function buildPublicApp({
     );
   };
 
+  /** F32 (D-192): the counting script, and where it reports (the site's own address). */
+  const SITE_SCRIPT_PATH = '/__sc.js';
+  const SITE_EVENTS_PATH = '/__sc';
+  const siteScript = async (_req: FastifyRequest, reply: FastifyReply) =>
+    send(reply, 200, 'application/javascript', SITE_SCRIPT, 'public, max-age=3600');
+  const siteEvents = async (req: FastifyRequest, reply: FastifyReply, sub: string | null) => {
+    const done = () => reply.code(204).send();
+    if (!sub || isBotAgent(req.headers['user-agent'])) return done();
+    let raw: unknown = req.body;
+    try {
+      if (typeof raw === 'string') raw = JSON.parse(raw);
+    } catch {
+      return done();
+    }
+    const body = siteEventSchema.safeParse(raw);
+    if (!body.success) return done();
+    const target = await siteTarget(sub);
+    if (!target) return done();
+    const events: { k: BehaviorEvent; l?: string }[] = body.data.ev;
+    for (const id of new Set(body.data.sec ?? [])) {
+      const sec = target.sections.get(id.replace(/^s-/, ''));
+      if (sec) events.push({ k: 'section', l: `${sec.path}#${sec.name}` });
+    }
+    try {
+      await recordEvents(prisma, target.businessId, localDay(target.timezone, new Date()), events);
+    } catch (err) {
+      req.log.error({ errName: (err as Error)?.name }, 'site event count failed');
+    }
+    return done();
+  };
+  const eventsLimit = {
+    rateLimit: {
+      max: config.EMBED_EVENT_RATE_LIMIT_MAX,
+      timeWindow: config.LEAD_FORM_RATE_LIMIT_WINDOW,
+      keyGenerator: (req: FastifyRequest) =>
+        `${req.ip}|${req.host}|${(req.params as { sub?: string }).sub ?? ''}`,
+    },
+  };
+
   if (byPath) {
+    app.get(`/s/:sub${SITE_SCRIPT_PATH}`, siteScript);
+    app.post<{ Params: { sub: string } }>(
+      `/s/:sub${SITE_EVENTS_PATH}`,
+      { bodyLimit: 16 * 1024, config: eventsLimit },
+      (req, reply) => siteEvents(req, reply, validSubdomain(req.params.sub)),
+    );
     app.get<{ Params: { sub: string } }>('/s/:sub', (req, reply) =>
       serveSite(req, reply, validSubdomain(req.params.sub), '/'),
     );
@@ -287,6 +379,10 @@ export async function buildPublicApp({
       serveSite(req, reply, validSubdomain(req.params.sub), `/${req.params['*'].split('?')[0]}`),
     );
   } else {
+    app.get(SITE_SCRIPT_PATH, siteScript);
+    app.post(SITE_EVENTS_PATH, { bodyLimit: 16 * 1024, config: eventsLimit }, (req, reply) =>
+      siteEvents(req, reply, subdomainOf(req.host)),
+    );
     app.get('/*', (req, reply) =>
       serveSite(req, reply, subdomainOf(req.host), req.url.split('?')[0]!),
     );

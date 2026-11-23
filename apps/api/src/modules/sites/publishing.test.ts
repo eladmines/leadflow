@@ -393,7 +393,12 @@ describe('public site server', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toContain('text/html');
     expect(res.headers['content-security-policy']).toContain("default-src 'none'");
-    expect(res.headers['content-security-policy']).not.toContain('script-src');
+    // The only script is our own, first-party one (D-192): nothing else may run or connect anywhere.
+    expect(res.headers['content-security-policy']).toContain("script-src 'self';");
+    expect(res.headers['content-security-policy']).toContain("connect-src 'self';");
+    expect(res.headers['content-security-policy']).not.toMatch(/script-src[^;]*(https?:|unsafe)/);
+    expect(res.body.match(/<script\b/g)).toHaveLength(1);
+    expect(res.body).toContain('<script defer src="/__sc.js"></script>');
     expect(res.headers['x-frame-options']).toBe('DENY');
     expect(res.headers['cache-control']).toBe('no-store');
     // Each view gets its own form token (the placeholder never leaks to visitors).

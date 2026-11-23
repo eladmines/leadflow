@@ -327,6 +327,27 @@ describe('leads from a website built elsewhere (F30)', () => {
       expect(b.ctas).toHaveLength(3);
     });
 
+    it('counts sections seen per page, rebuilding a clean label from its parts', async () => {
+      const o = await ownerWithBusiness(ctx.app, 'beh-e');
+      const { key } = await keyOf(o);
+      await events({
+        key,
+        events: [
+          { k: 'page', l: '/sale/' },
+          { k: 'section', l: '/sale/#pricing' },
+          { k: 'section', l: '/sale?x=1#pricing' },
+          { k: 'section', l: '/sale#  ' }, // no name
+          { k: 'section', l: 'no hash at all' },
+          { k: 'section', l: `/${'p'.repeat(100)}#${'n'.repeat(80)}` },
+        ],
+      });
+      const b = await behavior(o);
+      expect(b.sections).toContainEqual({ path: '/sale', name: 'pricing', views: 2, pageViews: 1 });
+      expect(b.sections).toHaveLength(2);
+      const long = b.sections.find((x: { name: string }) => x.name.startsWith('n'))!;
+      expect(`${long.path}#${long.name}`.length).toBeLessThanOrEqual(100);
+    });
+
     it('stores only known labels, ignores bots, wrong keys and other businesses', async () => {
       const a = await ownerWithBusiness(ctx.app, 'beh-b');
       const other = await ownerWithBusiness(ctx.app, 'beh-c');

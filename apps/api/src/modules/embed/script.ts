@@ -5,11 +5,13 @@
  * Fields are found by name: name, phone, email, message, consent (a checkbox the visitor ticks),
  * and the same names Shopify's contact form uses (`contact[name]`, `contact[body]`…).
  * F32: it also counts what visitors do (page, landing page, device, taps on phone/WhatsApp/email
- * links and on buttons the owner named, scroll depth, a form started), never who they are.
+ * links and on buttons the owner named, sections seen (data-sc-section), scroll depth, a form started), never who they are.
  * Options, on the form or on the script tag: `data-consent-implied` (the form's own text already asks
  * for consent), `data-passthrough` (after sending, the form is submitted normally too, e.g. to
  * Shopify). On the script tag, `data-forms="<css selector>"` binds forms that can't carry attributes.
  */
+import { CLICK_KIND_JS, WATCH_SECTIONS_JS } from './script-parts';
+
 export const EMBED_SCRIPT = `(function () {
   var s = document.currentScript;
   if (!s) return;
@@ -78,6 +80,7 @@ export const EMBED_SCRIPT = `(function () {
   }
   emit(first, false);
 
+${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
   // Buttons the owner chose to count: data-sc-click="name" on the element, or on the script tag
   // data-track="selector=name; selector=name" for builders that can't add attributes.
   var TRACK = [];
@@ -107,9 +110,7 @@ export const EMBED_SCRIPT = `(function () {
     var el = e.target;
     while (el && el.nodeType === 1 && el.tagName !== 'A') el = el.parentNode;
     var href = el && el.getAttribute ? (el.getAttribute('href') || '') : '';
-    var kind = /^tel:/i.test(href) ? 'phone'
-      : /^mailto:/i.test(href) ? 'email'
-      : /^(whatsapp:|https?:\\/\\/(wa\\.me|api\\.whatsapp\\.com|web\\.whatsapp\\.com)\\b)/i.test(href) ? 'whatsapp' : '';
+    var kind = clickKind(href);
     if (kind) events.unshift({ k: 'click', l: kind });
     if (events.length) emit(events, true);
   }, true);
@@ -122,6 +123,23 @@ export const EMBED_SCRIPT = `(function () {
     started = true;
     emit([{ k: 'form', l: 'start' }], true);
   }, true);
+
+  // Sections the owner named: data-sc-section="name" on the element, or on the script tag
+  // data-track-sections="selector=name; selector=name". Counted once per page view when seen.
+  var seenSections = [];
+  (function () {
+    var items = [], byName = {};
+    function add(el, name) { if (el && name && !byName[name]) { byName[name] = 1; items.push({ el: el, key: name }); } }
+    var tagged = document.querySelectorAll('[data-sc-section]');
+    for (var i = 0; i < tagged.length; i++) add(tagged[i], tagged[i].getAttribute('data-sc-section'));
+    (s.getAttribute('data-track-sections') || '').split(';').forEach(function (pair) {
+      var j = pair.lastIndexOf('=');
+      if (j <= 0) return;
+      var name = pair.slice(j + 1).trim();
+      try { add(document.querySelector(pair.slice(0, j).trim()), name); } catch (e) {}
+    });
+    watchSections(items, function (name) { seenSections.push({ k: 'section', l: path + '#' + name }); });
+  })();
 
   // How far down the page they got, sent once when they leave. A page that fits the screen counts as seen.
   var depth = 0;
@@ -139,7 +157,7 @@ export const EMBED_SCRIPT = `(function () {
     if (left) return;
     left = true;
     measure();
-    var ev = [];
+    var ev = seenSections.slice(0, 8);
     if (depth >= 50) ev.push({ k: 'scroll', l: '50' });
     if (depth >= 90) ev.push({ k: 'scroll', l: '90' });
     if (ev.length) emit(ev, true);

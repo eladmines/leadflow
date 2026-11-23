@@ -76,6 +76,8 @@ export const BEHAVIOR_EVENTS = [
   'form',
   /** A click on an element the owner chose to count (`data-sc-click` or `data-track`). Label: its name. */
   'cta',
+  /** A section of a page was on screen for a moment. Label: `<page path>#<section name>`. */
+  'section',
 ] as const;
 export type BehaviorEvent = (typeof BEHAVIOR_EVENTS)[number];
 
@@ -96,6 +98,12 @@ export function normalizeCtaName(input: string | undefined | null): string {
     .trim()
     .slice(0, 40)
     .trim();
+}
+
+/** A section as one label: its page path and name, at most 100 characters in all. */
+export function sectionLabel(path: string | undefined | null, name: string | undefined | null) {
+  const n = normalizeCtaName(name);
+  return n ? `${normalizePagePath(path).slice(0, 59)}#${n}` : '';
 }
 
 /** A page address as one stable label: path only, no query or trailing slash, at most 100 characters. */

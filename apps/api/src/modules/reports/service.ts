@@ -70,6 +70,7 @@ export class ReportService {
       }
     }
     const landings = by('landing');
+    const pages = by('page');
     // A landing page with inquiries but no counted visits (a site without the script) isn't shown.
     return {
       pageViews: sum('page'),
@@ -92,6 +93,14 @@ export class ReportService {
         email: sum('click', 'email'),
       },
       scroll: { p50: sum('scroll', '50'), p90: sum('scroll', '90') },
+      sections: [...by('section')]
+        .map(([label, views]) => {
+          const at = label.indexOf('#');
+          const path = label.slice(0, at);
+          return { path, name: label.slice(at + 1), views, pageViews: pages.get(path) ?? 0 };
+        })
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 30),
       ctas: [...by('cta')]
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
