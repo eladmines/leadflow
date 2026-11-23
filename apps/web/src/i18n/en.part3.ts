@@ -936,4 +936,11 @@ export const enPart3: Record<string, string> = {
     'Tag each ad’s link (see "Connect your ads" in Reports). The script keeps it for 30 days in the visitor’s browser and sends it with the inquiry.',
   'הסקריפט לא אוסף פרטים אישיים: רק את שם הקמפיין, הקישור המפנה והדף. ערך מזהה הקליק (gclid) לא נשמר.':
     'The script collects no personal details: only the campaign name, the referring link and the page. The click id (gclid) value is not stored.',
+  'חנות Shopify': 'Shopify store',
+  'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את הקובץ layout/theme.liquid.':
+    'In Shopify admin: Online Store → Themes → ⋯ → Edit code, and open the file layout/theme.liquid.',
+  'הדביקו את השורה הזו לפני </body>. היא סופרת כניסות לחנות, ושולחת אלינו כל פנייה מטופס "צור קשר" (ובנוסף ממשיכה לשלוח אותה גם ל-Shopify):':
+    'Paste this line before </body>. It counts visits to the store and sends us every "Contact us" form inquiry (it still goes to Shopify as well):',
+  'כדי שהפנייה תתקבל כליד צריך שהטלפון בטופס יהיה שדה חובה (בערכות רבות הוא רשות), ושהטופס יסביר שמשאירים פרטים ליצירת קשר. כניסות נספרות בחנות עצמה; דף התשלום של Shopify חסום לסקריפטים חיצוניים.':
+    'For an inquiry to arrive as a lead, the phone must be a required field in the form (in many themes it is optional), and the form should say that details are left to be contacted. Visits are counted in the store itself; Shopify’s checkout blocks external scripts.',
 };

@@ -2,8 +2,11 @@
  * F30: the script a business pastes on its own website. Plain ES5 (runs on any site), no
  * dependencies. It remembers where the visitor came from (ad click, UTM, referrer) in
  * localStorage for 30 days, and posts every `<form data-simplecatch>` to SimpleCatch with it.
- * Fields are found by name: name, phone, email, message, consent (a checkbox the visitor ticks;
- * `data-consent-implied` on the form means the form's own text already asks for it).
+ * Fields are found by name: name, phone, email, message, consent (a checkbox the visitor ticks),
+ * and the same names Shopify's contact form uses (`contact[name]`, `contact[body]`…).
+ * Options, on the form or on the script tag: `data-consent-implied` (the form's own text already asks
+ * for consent), `data-passthrough` (after sending, the form is submitted normally too, e.g. to
+ * Shopify). On the script tag, `data-forms="<css selector>"` binds forms that can't carry attributes.
  */
 export const EMBED_SCRIPT = `(function () {
   var s = document.currentScript;
@@ -78,12 +81,18 @@ export const EMBED_SCRIPT = `(function () {
     x.send(JSON.stringify(body));
   }
 
-  function val(form, name) {
-    var el = form.elements[name];
-    if (!el) return undefined;
-    if (el.type === 'checkbox') return el.checked ? 'on' : '';
-    return el.value;
+  var PHONE = ['phone', 'contact[phone]', 'contact[Phone]'];
+  // The first field found among the candidate names (ours, then Shopify's).
+  function val(form, names) {
+    for (var i = 0; i < names.length; i++) {
+      var el = form.elements[names[i]];
+      if (!el) continue;
+      if (el.type === 'checkbox') return el.checked ? 'on' : '';
+      return el.value;
+    }
+    return undefined;
   }
+  function opt(form, name) { return form.hasAttribute(name) || s.hasAttribute(name); }
 
   function bind(form) {
     if (form.__sc) return;
@@ -95,16 +104,23 @@ export const EMBED_SCRIPT = `(function () {
       busy = true;
       var btn = form.querySelector('[type=submit]');
       if (btn) btn.disabled = true;
+      var passthrough = opt(form, 'data-passthrough');
       send({
-        _id: id, name: val(form, 'name'), phone: val(form, 'phone'), email: val(form, 'email'),
-        message: val(form, 'message'), consent: form.hasAttribute('data-consent-implied') ? 'on' : val(form, 'consent'),
-        website: val(form, 'website')
+        _id: id,
+        name: val(form, ['name', 'contact[name]', 'contact[Name]']),
+        phone: val(form, PHONE),
+        email: val(form, ['email', 'contact[email]', 'contact[Email]']),
+        message: val(form, ['message', 'contact[body]', 'contact[message]', 'contact[Message]']),
+        consent: opt(form, 'data-consent-implied') ? 'on' : val(form, ['consent', 'contact[consent]']),
+        website: val(form, ['website'])
       }, function (ok, errors) {
         busy = false;
         if (btn) btn.disabled = false;
         var ev = document.createEvent('CustomEvent');
         ev.initCustomEvent(ok ? 'simplecatch:sent' : 'simplecatch:error', true, false, { errors: errors });
         form.dispatchEvent(ev);
+        // The form's own destination still gets it (it was only paused to send ours first).
+        if (passthrough) { HTMLFormElement.prototype.submit.call(form); return; }
         if (ok) {
           var note = document.createElement('p');
           note.textContent = form.getAttribute('data-success') || 'Thank you! We will be in touch.';
@@ -117,8 +133,15 @@ export const EMBED_SCRIPT = `(function () {
   }
 
   function bindAll() {
-    var f = document.querySelectorAll('form[data-simplecatch]');
-    for (var i = 0; i < f.length; i++) bind(f[i]);
+    var sel = 'form[data-simplecatch]';
+    var extra = s.getAttribute('data-forms');
+    if (extra) sel += ',' + extra;
+    var f = document.querySelectorAll(sel);
+    for (var i = 0; i < f.length; i++) {
+      // A form picked only by the selector must have a phone field: a newsletter box can't be a lead.
+      if (!f[i].hasAttribute('data-simplecatch') && !val(f[i], PHONE)) continue;
+      bind(f[i]);
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAll);
   else bindAll();

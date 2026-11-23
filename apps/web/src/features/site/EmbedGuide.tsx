@@ -13,6 +13,10 @@ const FORM_EXAMPLE = `<form data-simplecatch data-success="Thank you!">
   <button type="submit">Send</button>
 </form>`;
 
+/** The script tag for a Shopify theme: binds the contact form by its address and keeps Shopify's own copy. */
+const shopifySnippet = (info: { scriptUrl: string; key: string }) =>
+  `<script async src="${info.scriptUrl}" data-key="${info.key}" data-forms="form[action*='/contact']" data-consent-implied data-passthrough></script>`;
+
 /**
  * F30: leads and ad tracking for a website built elsewhere. The owner pastes one script tag; forms
  * marked `data-simplecatch` then send their leads here, with the ad that brought each one.
@@ -51,6 +55,29 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
             )}
           </Step>
         </Steps>
+      )}
+      {info.data && (
+        <div className="flex flex-col gap-3 rounded-2xl bg-surface-muted p-4">
+          <h3 className="text-sm font-semibold text-ink">{tr('חנות Shopify')}</h3>
+          <Steps>
+            <Step>
+              {tr(
+                'בניהול Shopify: Online Store ← Themes ← ⋯ ← Edit code, ופתחו את הקובץ layout/theme.liquid.',
+              )}
+            </Step>
+            <Step>
+              {tr(
+                'הדביקו את השורה הזו לפני </body>. היא סופרת כניסות לחנות, ושולחת אלינו כל פנייה מטופס "צור קשר" (ובנוסף ממשיכה לשלוח אותה גם ל-Shopify):',
+              )}
+              <Paste text={shopifySnippet(info.data)} />
+            </Step>
+          </Steps>
+          <p className="text-xs text-ink-muted">
+            {tr(
+              'כדי שהפנייה תתקבל כליד צריך שהטלפון בטופס יהיה שדה חובה (בערכות רבות הוא רשות), ושהטופס יסביר שמשאירים פרטים ליצירת קשר. כניסות נספרות בחנות עצמה; דף התשלום של Shopify חסום לסקריפטים חיצוניים.',
+            )}
+          </p>
+        </div>
       )}
       <p className="text-xs text-ink-muted">
         {tr(
