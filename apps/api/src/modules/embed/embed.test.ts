@@ -302,6 +302,31 @@ describe('leads from a website built elsewhere (F30)', () => {
       expect(b.formStarts).toBe(1);
     });
 
+    it('counts the buttons an owner named, with a clean short name', async () => {
+      const o = await ownerWithBusiness(ctx.app, 'beh-d');
+      const { key } = await keyOf(o);
+      await events({
+        key,
+        events: [
+          { k: 'page', l: '/' },
+          { k: 'cta', l: 'book-appointment' },
+          { k: 'cta', l: 'book-appointment' },
+          { k: 'cta', l: '  קבע\n\u0007  תור  ' },
+          { k: 'cta', l: 'x'.repeat(100) },
+          { k: 'cta', l: '   ' },
+        ],
+      });
+      const b = await behavior(o);
+      expect(b.ctas).toEqual(
+        expect.arrayContaining([
+          { name: 'book-appointment', count: 2 },
+          { name: 'קבע תור', count: 1 },
+          { name: 'x'.repeat(40), count: 1 },
+        ]),
+      );
+      expect(b.ctas).toHaveLength(3);
+    });
+
     it('stores only known labels, ignores bots, wrong keys and other businesses', async () => {
       const a = await ownerWithBusiness(ctx.app, 'beh-b');
       const other = await ownerWithBusiness(ctx.app, 'beh-c');

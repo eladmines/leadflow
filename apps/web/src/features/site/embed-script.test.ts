@@ -188,6 +188,28 @@ describe('embed script (F30, F31)', () => {
       ]);
     });
 
+    it('counts the buttons the owner named, by attribute or by selector (even from an inner element)', () => {
+      document.body.innerHTML = `
+        <button id="a" data-sc-click="book-appointment"><span id="in">Book</span></button>
+        <button id="b" class="buy">Buy</button>
+        <button id="c" type="submit" name="go">Not counted</button>
+        <div data-sc-click="card"><button id="d" data-sc-click="inner">Nested</button></div>`;
+      load({
+        'data-track': '#b=buy; button[type=submit][name=go]=; [[broken=oops; .buy=buy-again',
+      });
+      sent.length = 0;
+      for (const id of ['in', 'b', 'c', 'd']) {
+        document.getElementById(id)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+      expect(events()).toEqual([
+        { k: 'cta', l: 'book-appointment' },
+        { k: 'cta', l: 'buy' },
+        { k: 'cta', l: 'buy-again' },
+        { k: 'cta', l: 'inner' },
+        { k: 'cta', l: 'card' },
+      ]);
+    });
+
     it('counts a form started once, only in a form the script listens to', () => {
       document.body.innerHTML = `
         <form data-simplecatch><input id="a" name="name"><input id="b" name="phone"></form>

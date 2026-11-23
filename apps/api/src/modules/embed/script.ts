@@ -5,7 +5,7 @@
  * Fields are found by name: name, phone, email, message, consent (a checkbox the visitor ticks),
  * and the same names Shopify's contact form uses (`contact[name]`, `contact[body]`…).
  * F32: it also counts what visitors do (page, landing page, device, taps on phone/WhatsApp/email
- * links, scroll depth, a form started), never who they are.
+ * links and on buttons the owner named, scroll depth, a form started), never who they are.
  * Options, on the form or on the script tag: `data-consent-implied` (the form's own text already asks
  * for consent), `data-passthrough` (after sending, the form is submitted normally too, e.g. to
  * Shopify). On the script tag, `data-forms="<css selector>"` binds forms that can't carry attributes.
@@ -78,15 +78,40 @@ export const EMBED_SCRIPT = `(function () {
   }
   emit(first, false);
 
-  // Taps on phone, WhatsApp and email links (sent at once: the page may be left right after).
+  // Buttons the owner chose to count: data-sc-click="name" on the element, or on the script tag
+  // data-track="selector=name; selector=name" for builders that can't add attributes.
+  var TRACK = [];
+  (s.getAttribute('data-track') || '').split(';').forEach(function (pair) {
+    var i = pair.lastIndexOf('=');
+    if (i > 0) TRACK.push([pair.slice(0, i).trim(), pair.slice(i + 1).trim()]);
+  });
+  function matches(node, sel) {
+    var m = node.matches || node.msMatchesSelector || node.webkitMatchesSelector;
+    try { return !!m && m.call(node, sel); } catch (e) { return false; }
+  }
+
+  // Taps on phone, WhatsApp and email links, and on the buttons above (sent at once: the page may
+  // be left right after).
   document.addEventListener('click', function (e) {
+    var events = [], named = {};
+    for (var node = e.target; node && node.nodeType === 1; node = node.parentNode) {
+      var name = node.getAttribute('data-sc-click');
+      if (name && !named[name]) { named[name] = 1; events.push({ k: 'cta', l: name }); }
+      for (var t = 0; t < TRACK.length; t++) {
+        if (TRACK[t][1] && !named[TRACK[t][1]] && matches(node, TRACK[t][0])) {
+          named[TRACK[t][1]] = 1;
+          events.push({ k: 'cta', l: TRACK[t][1] });
+        }
+      }
+    }
     var el = e.target;
     while (el && el.nodeType === 1 && el.tagName !== 'A') el = el.parentNode;
     var href = el && el.getAttribute ? (el.getAttribute('href') || '') : '';
     var kind = /^tel:/i.test(href) ? 'phone'
       : /^mailto:/i.test(href) ? 'email'
       : /^(whatsapp:|https?:\\/\\/(wa\\.me|api\\.whatsapp\\.com|web\\.whatsapp\\.com)\\b)/i.test(href) ? 'whatsapp' : '';
-    if (kind) emit([{ k: 'click', l: kind }], true);
+    if (kind) events.unshift({ k: 'click', l: kind });
+    if (events.length) emit(events, true);
   }, true);
 
   // A form started: the first field the visitor touches in a form SimpleCatch listens to.

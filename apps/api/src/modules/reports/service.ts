@@ -92,6 +92,10 @@ export class ReportService {
         email: sum('click', 'email'),
       },
       scroll: { p50: sum('scroll', '50'), p90: sum('scroll', '90') },
+      ctas: [...by('cta')]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10),
       formStarts: sum('form', 'start'),
     };
   }

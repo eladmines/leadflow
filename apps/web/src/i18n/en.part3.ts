@@ -964,4 +964,10 @@ export const enPart3: Record<string, string> = {
   כניסות: 'Visits',
   'המספרים משוערים: חוסמי פרסומות ובוטים משפיעים, ודף קצר שנכנס כולו למסך נחשב כנצפה עד הסוף. לחיצות על טלפון, גלילה והתחלת טופס נמדדות רק באתר שמוטמע בו הסקריפט; באתר שנבנה ב-SimpleCatch נספרים צפיות, דפי נחיתה ומכשירים.':
     'Numbers are approximate: ad blockers and bots affect them, and a short page that fits the screen counts as seen to the end. Taps on phone links, scrolling and forms started are measured only on a website with the script; on a site built in SimpleCatch, page views, landing pages and devices are counted.',
+  'לחיצות על כפתורים שנבחרו': 'Clicks on chosen buttons',
+  'כפתורים שנבחרו לספירה': 'Buttons chosen for counting',
+  'רוצים לספור לחיצות על כפתור מסוים (למשל "קבע תור")? הוסיפו לכפתור שם, ותראו אותו בדוחות:':
+    'Want to count clicks on a particular button (for example "Book an appointment")? Give the button a name and you will see it in Reports:',
+  'בונה אתרים שלא מאפשר להוסיף תכונות? כתבו על תגית הסקריפט data-track עם רשימה של מסמן=שם, מופרדים בנקודה-פסיק:':
+    'A site builder that doesn’t let you add attributes? Add data-track to the script tag with a list of selector=name, separated by semicolons:',
 };

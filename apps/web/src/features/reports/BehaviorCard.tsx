@@ -91,6 +91,15 @@ export function BehaviorCard({
               />
             </section>
           </div>
+          {b.ctas.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h3 className="text-sm font-medium text-ink">{tr('לחיצות על כפתורים שנבחרו')}</h3>
+              <HBars
+                label={tr('כפתורים שנבחרו לספירה')}
+                rows={b.ctas.map((c) => ({ key: c.name, name: c.name, count: c.count }))}
+              />
+            </section>
+          )}
           {b.landing.length > 0 && (
             <div className="scrollbar-visible overflow-x-auto">
               <table className="w-full min-w-[420px] text-sm">

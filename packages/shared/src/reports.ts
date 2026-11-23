@@ -47,6 +47,8 @@ export const behaviorSchema = z.object({
   }),
   /** Page views that reached half the page, and 90% of it. */
   scroll: z.object({ p50: z.number().int(), p90: z.number().int() }),
+  /** Buttons the owner chose to count (`data-sc-click` / `data-track`), most clicked first. */
+  ctas: z.array(z.object({ name: z.string(), count: z.number().int() })),
   /** Forms started (a first field filled). Sent ones are the website leads. */
   formStarts: z.number().int(),
 });

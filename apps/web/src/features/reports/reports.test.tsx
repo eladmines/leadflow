@@ -40,6 +40,7 @@ const summary: ReportSummary = {
     devices: { mobile: 0, tablet: 0, desktop: 0 },
     clicks: { phone: 0, whatsapp: 0, email: 0 },
     scroll: { p50: 0, p90: 0 },
+    ctas: [],
     formStarts: 0,
   },
   byAttribution: [
@@ -138,6 +139,7 @@ describe('reports page', () => {
         devices: { mobile: 30, tablet: 0, desktop: 10 },
         clicks: { phone: 7, whatsapp: 9, email: 1 },
         scroll: { p50: 100, p90: 50 },
+        ctas: [{ name: 'קבע תור', count: 14 }],
         formStarts: 12,
       },
     };
@@ -149,6 +151,9 @@ describe('reports page', () => {
     expect(await screen.findByText('מה גולשים עושים באתר')).toBeInTheDocument();
     expect(screen.getByText('גללו עד סוף הדף').nextElementSibling).toHaveTextContent('25%');
     expect(screen.getByText('עד אמצע הדף: 50%')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'כפתורים שנבחרו לספירה' })).toHaveTextContent(
+      'קבע תור',
+    );
     expect(screen.getByText('4 מתוך 40 (10%)')).toBeInTheDocument();
     expect(screen.getByText('75%', { exact: false })).toBeInTheDocument();
   });

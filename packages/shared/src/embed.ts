@@ -74,6 +74,8 @@ export const BEHAVIOR_EVENTS = [
   'scroll',
   /** The visitor started filling a form (label `start`). */
   'form',
+  /** A click on an element the owner chose to count (`data-sc-click` or `data-track`). Label: its name. */
+  'cta',
 ] as const;
 export type BehaviorEvent = (typeof BEHAVIOR_EVENTS)[number];
 
@@ -84,6 +86,17 @@ export const embedEventRequestSchema = z.object({
     .max(12),
 });
 export type EmbedEventRequest = z.infer<typeof embedEventRequestSchema>;
+
+/** The name of a counted button: plain text, one line, at most 40 characters; empty means not countable. */
+export function normalizeCtaName(input: string | undefined | null): string {
+  return (input ?? '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 40)
+    .trim();
+}
 
 /** A page address as one stable label: path only, no query or trailing slash, at most 100 characters. */
 export function normalizePagePath(input: string | undefined | null): string {

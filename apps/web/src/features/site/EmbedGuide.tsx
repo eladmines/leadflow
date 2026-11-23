@@ -4,6 +4,9 @@ import { errorMessage } from '../auth/serverErrors';
 import { useEmbedInfo } from './embedApi';
 import { tr } from '../../i18n';
 
+const CTA_EXAMPLE = '<button data-sc-click="book-appointment">Book</button>';
+const TRACK_EXAMPLE = 'data-track="#book-btn=book-appointment; .buy-now=buy"';
+
 const FORM_EXAMPLE = `<form data-simplecatch data-success="Thank you!">
   <input name="name" required>
   <input name="phone" required>
@@ -48,6 +51,16 @@ export function EmbedGuide({ businessId }: { businessId: string }) {
               'בטופס יצירת הקשר הוסיפו לתגית form את data-simplecatch. השדות מזוהים לפי השם: name, phone, email, message ו-consent (תיבת אישור):',
             )}
             <Paste text={FORM_EXAMPLE} />
+          </Step>
+          <Step>
+            {tr(
+              'רוצים לספור לחיצות על כפתור מסוים (למשל "קבע תור")? הוסיפו לכפתור שם, ותראו אותו בדוחות:',
+            )}
+            <Paste text={CTA_EXAMPLE} />
+            {tr(
+              'בונה אתרים שלא מאפשר להוסיף תכונות? כתבו על תגית הסקריפט data-track עם רשימה של מסמן=שם, מופרדים בנקודה-פסיק:',
+            )}
+            <Paste text={TRACK_EXAMPLE} />
           </Step>
           <Step>
             {tr(

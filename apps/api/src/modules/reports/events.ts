@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { normalizePagePath, type BehaviorEvent } from '@simplecatch/shared';
+import { normalizeCtaName, normalizePagePath, type BehaviorEvent } from '@simplecatch/shared';
 
 /**
  * F32 — what visitors do on a website with the embed script, as counts: business × local day ×
@@ -29,6 +29,7 @@ export const deviceOf = (ua: string | undefined): 'mobile' | 'tablet' | 'desktop
 /** The label to store, or null when the event isn't acceptable. */
 export function eventLabel(kind: BehaviorEvent, label: string | undefined): string | null {
   if (kind === 'page' || kind === 'landing') return normalizePagePath(label);
+  if (kind === 'cta') return normalizeCtaName(label) || null;
   const allowed = ONE_OF[kind];
   return allowed && label !== undefined && allowed.includes(label) ? label : null;
 }
