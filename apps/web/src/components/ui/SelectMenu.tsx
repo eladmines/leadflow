@@ -353,40 +353,43 @@ export function SelectMenu({
           </span>
         )}
       </label>
-      <button
-        ref={buttonRef}
-        type="button"
-        id={buttonId}
-        name={name}
-        role="combobox"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={open ? listId : undefined}
-        aria-activedescendant={!hasSearch ? activeId : undefined}
-        aria-required={required}
-        disabled={disabled}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
-        onClick={() => (open ? setOpen(false) : openList())}
-        onKeyDown={onKeyDown}
-        className={cn(
-          compact ? compactClasses(!!error) : inputClasses(!!error),
-          'flex cursor-pointer items-center justify-between gap-2 text-start disabled:cursor-not-allowed disabled:opacity-60',
-        )}
-      >
-        <span className={cn('truncate', !selected && 'text-ink-subtle')}>
-          {selected?.label ?? placeholder ?? ''}
-        </span>
-        <ChevronDown
-          aria-hidden
+      {/* The list is placed against the button's own box, not the whole control (label and hint). */}
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          type="button"
+          id={buttonId}
+          name={name}
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          aria-activedescendant={!hasSearch ? activeId : undefined}
+          aria-required={required}
+          disabled={disabled}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
+          onClick={() => (open ? setOpen(false) : openList())}
+          onKeyDown={onKeyDown}
           className={cn(
-            'h-4 w-4 shrink-0 text-ink-subtle transition-transform',
-            open && 'rotate-180',
+            compact ? compactClasses(!!error) : inputClasses(!!error),
+            'flex cursor-pointer items-center justify-between gap-2 text-start disabled:cursor-not-allowed disabled:opacity-60',
           )}
-        />
-      </button>
+        >
+          <span className={cn('truncate', !selected && 'text-ink-subtle')}>
+            {selected?.label ?? placeholder ?? ''}
+          </span>
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              'h-4 w-4 shrink-0 text-ink-subtle transition-transform',
+              open && 'rotate-180',
+            )}
+          />
+        </button>
 
-      {open && (floating ? createPortal(listBox, document.body) : listBox)}
+        {open && (floating ? createPortal(listBox, document.body) : listBox)}
+      </div>
 
       {hint && !error && (
         <p id={hintId} className="text-xs text-ink-muted">

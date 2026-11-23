@@ -172,6 +172,28 @@ describe('SelectMenu: compact, hidden label, and which way it opens', () => {
     expect(screen.getByRole('dialog')).toContainElement(inside);
   });
 
+  it('in a pop-up the list sits right under the field, not under its hint or error', async () => {
+    const user = userEvent.setup();
+    render(
+      <div role="dialog" aria-label="חלון">
+        <SelectMenu
+          label="שלב"
+          hint="הלקוח רואה ימים ושעות פנויים מהיומן."
+          options={options}
+          value=""
+          onChange={() => {}}
+        />
+      </div>,
+    );
+    await user.click(screen.getByRole('combobox', { name: 'שלב' }));
+    const box = screen.getByRole('listbox').parentElement!;
+    // The list's positioning parent holds the button and the list, and not the hint beside them.
+    const anchor = box.parentElement!;
+    expect(anchor).toHaveClass('relative');
+    expect(anchor).toContainElement(screen.getByRole('combobox', { name: 'שלב' }));
+    expect(anchor).not.toContainElement(screen.getByText('הלקוח רואה ימים ושעות פנויים מהיומן.'));
+  });
+
   it('never scrolls the page: not when it opens, not when the pointer moves over the options', async () => {
     const user = userEvent.setup();
     const scroll = vi.fn();
