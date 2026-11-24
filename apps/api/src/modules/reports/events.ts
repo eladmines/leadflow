@@ -32,7 +32,7 @@ export const deviceOf = (ua: string | undefined): 'mobile' | 'tablet' | 'desktop
       : 'desktop';
 
 /** The label to store, or null when the event isn't acceptable. */
-export function eventLabel(kind: BehaviorEvent, label: string | undefined): string | null {
+function eventLabel(kind: BehaviorEvent, label: string | undefined): string | null {
   if (kind === 'page' || kind === 'landing') return normalizePagePath(label);
   if (kind === 'cta') return normalizeCtaName(label) || null;
   if (kind === 'section' || kind === 'sclick') {

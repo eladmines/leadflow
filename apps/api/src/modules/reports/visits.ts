@@ -16,7 +16,7 @@ export const isBotAgent = (ua: string | undefined) => !ua || BOT.test(ua);
 const MAX_ROWS_PER_DAY = 300;
 
 /** What a visit is counted under: the same names the lead report uses (F26). */
-export function visitKey(a: Attribution) {
+function visitKey(a: Attribution) {
   const named = a.source === 'utm' || a.source === 'referral';
   return {
     source: a.source,

@@ -11,7 +11,7 @@ import { isRtl, tr } from '../../i18n';
  */
 
 /** A CSS selector, or a function that finds the element when the tour opens. */
-export type TourTarget = string | (() => HTMLElement | null);
+type TourTarget = string | (() => HTMLElement | null);
 
 export interface TourStep {
   target?: TourTarget;

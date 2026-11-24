@@ -4,13 +4,13 @@ import { RdapLookup } from './rdap';
 import type { DomainExpiry, DomainLookup } from './types';
 import { IsocWhoisLookup } from './whois-il';
 
-export type { DomainExpiry, DomainLookup } from './types';
+export type { DomainExpiry } from './types';
 export { MemoryDomainExpiry } from './memory';
 export { expiryFromRdap, RdapLookup } from './rdap';
 export { expiryFromIsocWhois, IsocWhoisLookup } from './whois-il';
 
 /** `.il` goes to ISOC-IL's WHOIS; everything RDAP knows goes to RDAP; the rest isn't supported. */
-export class RegistryDomainExpiry implements DomainExpiry {
+class RegistryDomainExpiry implements DomainExpiry {
   constructor(
     private readonly rdap = new RdapLookup(),
     private readonly isoc = new IsocWhoisLookup(),
