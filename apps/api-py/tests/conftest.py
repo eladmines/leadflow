@@ -44,6 +44,8 @@ def make_settings(**overrides) -> Settings:
         "EMAIL_TRANSPORT": "memory",
         "EMAIL_VERIFICATION": "on",
         "RUN_BACKGROUND_JOBS": False,
+        "SITE_STOCK_IMAGES": False,
+        "LEAD_FORM_RATE_LIMIT_MAX": 1000,
     }
     return Settings(**{**base, **overrides})
 
@@ -314,3 +316,34 @@ async def make_lead(
     db.add(lead)
     await db.commit()
     return {"id": str(lead.id), "name": name}
+
+
+# -- public site server ------------------------------------------------------------------------
+
+LEAD_FORM_PATH = "/__lead"
+
+
+def site_host(settings: Settings, sub: str) -> str:
+    return f"{sub}.{settings.PUBLIC_SITE_HOST}"
+
+
+@pytest_asyncio.fixture
+async def public(app) -> AsyncIterator[AsyncClient]:
+    """The public site server, sharing the API's database, cache, email and storage."""
+    from app.public.app import create_public_app
+
+    st = app.state
+    papp = create_public_app(st.settings, st.sessionmaker, st.email, st.site_cache, st.storage)
+    async with AsyncClient(transport=ASGITransport(app=papp), base_url="http://pub") as c:
+        c.cookies.jar.set_policy(DefaultCookiePolicy(allowed_domains=[]))
+        yield c
+
+
+async def wait_for(predicate, timeout: float = 2.0) -> None:
+    import asyncio
+
+    for _ in range(int(timeout / 0.02)):
+        if predicate():
+            return
+        await asyncio.sleep(0.02)
+    raise AssertionError("condition not met in time")

@@ -1,9 +1,10 @@
 """Settings from the environment (same variable names as the Node API's .env)."""
 
+import secrets
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +34,23 @@ class Settings(BaseSettings):
     MEDIA_PUBLIC_BASE: str = "/media"  # same-origin /media locally, a CDN origin in production
     MEDIA_QUOTA_BYTES: int = 200 * 1024 * 1024  # per business
     SITE_STOCK_DIR: str = "../api/assets/stock"
+
+    # F06: customer sites. `host`: each site on its own subdomain of PUBLIC_SITE_HOST (wildcard
+    # domain). `path`: sites under APP_URL/s/<subdomain> (hosting without a domain).
+    PUBLIC_PORT: int = 4100
+    PUBLIC_SITE_HOST: str = "lvh.me:4100"
+    PUBLIC_SITE_PROTOCOL: Literal["http", "https"] | None = None
+    PUBLIC_SITE_MODE: Literal["host", "path"] = "host"
+    SITE_STOCK_IMAGES: bool = True  # new sites start with the template's sample photos (D-069)
+    WEB_DIST_DIR: str | None = None  # built web app to serve from the API's port
+
+    # F07: lead forms. FORM_TOKEN_SECRET signs form tokens and embed keys (random per boot outside
+    # production, which refuses to start without one).
+    FORM_TOKEN_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(32), min_length=32)
+    LEAD_FORM_RATE_LIMIT_MAX: int = 5
+    LEAD_FORM_RATE_LIMIT_WINDOW: int = 600_000  # milliseconds
+    EMBED_EVENT_RATE_LIMIT_MAX: int = 240
+    EMBED_VISIT_RATE_LIMIT_MAX: int = 60
 
     # Background jobs (task reminders). Off in tests, which call the job functions directly.
     RUN_BACKGROUND_JOBS: bool = True
@@ -64,6 +82,14 @@ class Settings(BaseSettings):
     @classmethod
     def _empty_is_unset(cls, v: object) -> object:
         return None if v == "" else v
+
+    @property
+    def site_protocol(self) -> str:
+        return self.PUBLIC_SITE_PROTOCOL or ("https" if self.NODE_ENV == "production" else "http")
+
+    @property
+    def app_url(self) -> str:
+        return self.APP_URL or "http://localhost:5173"
 
     @property
     def verification_on(self) -> bool:

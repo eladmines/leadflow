@@ -17,15 +17,19 @@ from app.middleware import error_response, request_context
 from app.modules.appointments import routes as appointment_routes
 from app.modules.auth import routes as auth_routes
 from app.modules.businesses import routes as business_routes
+from app.modules.embed import routes as embed_routes
 from app.modules.leads import routes as lead_routes
 from app.modules.media import routes as media_routes
 from app.modules.notifications import routes as notification_routes
 from app.modules.quotes import routes as quote_routes
 from app.modules.reports import routes as report_routes
+from app.modules.sites import routes as site_routes
+from app.modules.sites.cache import PublishedSiteCache
 from app.modules.tasks import routes as task_routes
 from app.modules.tasks.reminders import start_task_reminders, stop
 from app.modules.team import routes as team_routes
 from app.routes import health
+from app.web_app import WebApp
 
 log = logging.getLogger("simplecatch")
 
@@ -38,6 +42,7 @@ def create_app(
     settings: Settings | None = None,
     email: EmailSender | None = None,
     storage: StorageProvider | None = None,
+    site_cache: PublishedSiteCache | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.DATABASE_URL)
@@ -63,6 +68,7 @@ def create_app(
     app.state.email = email or create_email_sender(settings)
     app.state.storage = storage or create_storage(settings, app.state.sessionmaker)
     app.state.rate_limiter = RateLimiter()
+    app.state.site_cache = site_cache or PublishedSiteCache()
 
     app.middleware("http")(request_context)
     app.add_middleware(
@@ -86,8 +92,14 @@ def create_app(
             fields.setdefault(".".join(loc) or "_", err["msg"].removeprefix("Value error, "))
         return error_response("VALIDATION_ERROR", 400, _rid(request), fields=fields)
 
+    web_app = WebApp(settings.WEB_DIST_DIR) if settings.WEB_DIST_DIR else None
+
     @app.exception_handler(StarletteHTTPException)
     async def _http(request: Request, exc: StarletteHTTPException):  # type: ignore[no-untyped-def]
+        if exc.status_code == 404 and web_app is not None:
+            page = await web_app.handle(request)
+            if page is not None:
+                return page
         if exc.status_code == 404:
             return error_response("NOT_FOUND", 404, _rid(request))
         if exc.status_code == 429:
@@ -107,6 +119,8 @@ def create_app(
     app.include_router(business_routes.tenant)
     app.include_router(team_routes.router)
     app.include_router(team_routes.tenant)
+    app.include_router(embed_routes.public)
+    app.include_router(embed_routes.tenant)
     app.include_router(media_routes.public)
     app.include_router(media_routes.tenant)
     app.include_router(appointment_routes.tenant)
@@ -114,6 +128,7 @@ def create_app(
     app.include_router(quote_routes.public)
     app.include_router(quote_routes.tenant)
     app.include_router(report_routes.tenant)
+    app.include_router(site_routes.tenant)
     app.include_router(task_routes.tenant)
     app.include_router(notification_routes.tenant)
     return app

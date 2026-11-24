@@ -6,6 +6,8 @@
 // After the TypeScript is retired, these files become the source of truth.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { siteText, buildTemplateDraft, TEMPLATE_KEYS } from '../../../packages/shared/src/index.ts';
+import { SITE_SCRIPT } from '../../api/src/modules/embed/site-script.ts';
+import { EMBED_SCRIPT } from '../../api/src/modules/embed/script.ts';
 
 const out = new URL('../app/shared/data/', import.meta.url).pathname;
 const write = (name, text) => writeFileSync(out + name, text);
@@ -80,4 +82,7 @@ for (const lang of ['he', 'en']) {
   }
 }
 write('site_templates.json', JSON.stringify(templates, null, 1) + '\n');
-console.log('wrote site_i18n.json, site.css, site_templates.json');
+// 4. The two page scripts (plain ES5 text).
+write('site_script.js', SITE_SCRIPT);
+write('embed_script.js', EMBED_SCRIPT);
+console.log('wrote site_i18n.json, site.css, site_templates.json, site_script.js, embed_script.js');
