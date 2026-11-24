@@ -316,3 +316,75 @@ def new_lead_template(
         ]
     )
     return RenderedEmail(subject, html, text)
+
+
+def quote_template(
+    business_name: str,
+    customer_name: str,
+    number: int,
+    total: str,
+    valid_until: str | None,
+    link: str,
+    lang: Language = "he",
+) -> RenderedEmail:
+    """F18: a quote sent to the customer (transactional, sent on the business's request)."""
+    en = lang == "en"
+    subject = f"Quote no. {number} from {business_name}" if en else f"הצעת מחיר מס׳ {number} מ{business_name}"
+    hello = f"Hello {customer_name}," if en else f"שלום {customer_name},"
+    valid = None
+    if valid_until:
+        valid = f"The quote is valid until {valid_until}." if en else f"ההצעה בתוקף עד {valid_until}."
+    view = "View and approve the quote" if en else "לצפייה בהצעה ולאישור"
+    line = (
+        f"{_esc(business_name)} sent you a quote for <strong>{_esc(total)}</strong>."
+        if en
+        else f"{_esc(business_name)} שלחו לך הצעת מחיר על סך <strong>{_esc(total)}</strong>."
+    )
+    valid_html = f'<p style="margin:0 0 8px;color:#6b7280;">{_esc(valid)}</p>' if valid else ""
+    html = _layout(
+        subject,
+        f"""{_h1(hello)}
+<p style="margin:0 0 8px;">{line}</p>
+{valid_html}
+{_button(link, view, lang)}""",
+        lang,
+    )
+    text = "\n".join(
+        [
+            hello,
+            f"{business_name} sent you a quote for {total}."
+            if en
+            else f"{business_name} שלחו לך הצעת מחיר על סך {total}.",
+            *([valid] if valid else []),
+            "",
+            f"{view}: {link}",
+        ]
+    )
+    return RenderedEmail(subject, html, text)
+
+
+def quote_decision_template(
+    business_name: str,
+    customer_name: str,
+    number: int,
+    accepted: bool,
+    total: str,
+    link: str,
+    lang: Language = "he",
+) -> RenderedEmail:
+    """F18: the customer accepted or declined a quote (sent to owners and managers)."""
+    en = lang == "en"
+    if en:
+        subject = f"{customer_name} {'accepted' if accepted else 'declined'} quote no. {number}"
+    else:
+        subject = f"{customer_name} {'אישר/ה' if accepted else 'דחה/תה'} את הצעת המחיר מס׳ {number}"
+    amount = f"{'Quote amount' if en else 'סכום ההצעה'}: {total}"
+    html = _layout(
+        subject,
+        f"""{_h1(subject)}
+<p style="margin:0 0 8px;">{_esc(amount)}</p>
+{_button(link, "Open the quote" if en else "לפתיחת ההצעה", lang)}""",
+        lang,
+    )
+    text = "\n".join([subject, amount, "", link])
+    return RenderedEmail(subject, html, text)

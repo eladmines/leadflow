@@ -27,13 +27,17 @@ def client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def rate_limited(route: str):
-    """Dependency factory: counts requests per IP for this route (failures count too)."""
+def rate_limited(route: str, limit: int | None = None, window_ms: int | None = None):
+    """Dependency factory: counts requests per IP for this route (failures count too). The limit
+    defaults to the auth one (`AUTH_RATE_LIMIT_*`)."""
 
     async def check(request: Request) -> None:
         s = request.app.state.settings
         request.app.state.rate_limiter.hit(
-            route, client_ip(request), s.AUTH_RATE_LIMIT_MAX, s.AUTH_RATE_LIMIT_WINDOW / 1000
+            route,
+            client_ip(request),
+            limit or s.AUTH_RATE_LIMIT_MAX,
+            (window_ms or s.AUTH_RATE_LIMIT_WINDOW) / 1000,
         )
 
     return check

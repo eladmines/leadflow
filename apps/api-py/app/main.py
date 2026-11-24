@@ -12,11 +12,16 @@ from app.core.ratelimit import RateLimiter
 from app.db.session import make_engine, make_sessionmaker
 from app.errors import AppError
 from app.integrations.email import EmailSender, create_email_sender
+from app.integrations.storage import StorageProvider, create_storage
 from app.middleware import error_response, request_context
+from app.modules.appointments import routes as appointment_routes
 from app.modules.auth import routes as auth_routes
 from app.modules.businesses import routes as business_routes
 from app.modules.leads import routes as lead_routes
+from app.modules.media import routes as media_routes
 from app.modules.notifications import routes as notification_routes
+from app.modules.quotes import routes as quote_routes
+from app.modules.reports import routes as report_routes
 from app.modules.tasks import routes as task_routes
 from app.modules.tasks.reminders import start_task_reminders, stop
 from app.modules.team import routes as team_routes
@@ -29,7 +34,11 @@ def _rid(request: Request) -> str:
     return getattr(request.state, "request_id", "-")
 
 
-def create_app(settings: Settings | None = None, email: EmailSender | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    email: EmailSender | None = None,
+    storage: StorageProvider | None = None,
+) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.DATABASE_URL)
 
@@ -52,6 +61,7 @@ def create_app(settings: Settings | None = None, email: EmailSender | None = Non
     app.state.engine = engine
     app.state.sessionmaker = make_sessionmaker(engine)
     app.state.email = email or create_email_sender(settings)
+    app.state.storage = storage or create_storage(settings, app.state.sessionmaker)
     app.state.rate_limiter = RateLimiter()
 
     app.middleware("http")(request_context)
@@ -97,7 +107,13 @@ def create_app(settings: Settings | None = None, email: EmailSender | None = Non
     app.include_router(business_routes.tenant)
     app.include_router(team_routes.router)
     app.include_router(team_routes.tenant)
+    app.include_router(media_routes.public)
+    app.include_router(media_routes.tenant)
+    app.include_router(appointment_routes.tenant)
     app.include_router(lead_routes.tenant)
+    app.include_router(quote_routes.public)
+    app.include_router(quote_routes.tenant)
+    app.include_router(report_routes.tenant)
     app.include_router(task_routes.tenant)
     app.include_router(notification_routes.tenant)
     return app

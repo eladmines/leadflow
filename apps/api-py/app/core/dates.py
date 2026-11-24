@@ -36,3 +36,26 @@ def format_short(dt: datetime, tz: str) -> str:
     except Exception:
         local = dt
     return f"{local.day}.{local.month}.{local.year}, {local.hour:02d}:{local.minute:02d}"
+
+
+_HE_DAY_SHORT = ["יום ב׳", "יום ג׳", "יום ד׳", "יום ה׳", "יום ו׳", "שבת", "יום א׳"]  # Monday first
+_HE_MONTH_SHORT = [
+    "בינו׳", "בפבר׳", "במרץ", "באפר׳", "במאי", "ביוני",
+    "ביולי", "באוג׳", "בספט׳", "באוק׳", "בנוב׳", "בדצמ׳",
+]  # fmt: skip
+_EN_DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+_EN_MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"]
+
+
+def format_when(dt: datetime, tz: str, lang: str, with_time: bool = True) -> str:
+    """Short weekday, day, month and (optionally) time: 'יום ה׳, 15 בינו׳, 12:05' or
+    'Thu 15 Jan, 12:05' (as ICU writes them for he-IL and en-GB)."""
+    try:
+        local = dt.astimezone(ZoneInfo(tz))
+    except Exception:
+        local = dt
+    wd = local.weekday()
+    time = f", {local.hour:02d}:{local.minute:02d}" if with_time else ""
+    if lang == "en":
+        return f"{_EN_DAY_SHORT[wd]} {local.day} {_EN_MONTH_SHORT[local.month - 1]}{time}"
+    return f"{_HE_DAY_SHORT[wd]}, {local.day} {_HE_MONTH_SHORT[local.month - 1]}{time}"

@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     SMTP_PASS: str | None = None
     SMTP_SECURE: bool = False
     EMAIL_FROM: str = "SimpleCatch <no-reply@simplecatch.local>"
+    # F05: media. `disk` keeps images in MEDIA_DIR; `database` keeps them in Postgres (for hosts
+    # whose disk is wiped on restart).
+    STORAGE_DRIVER: Literal["disk", "database"] = "disk"
+    MEDIA_DIR: str = ".data/media"
+    MEDIA_PUBLIC_BASE: str = "/media"  # same-origin /media locally, a CDN origin in production
+    MEDIA_QUOTA_BYTES: int = 200 * 1024 * 1024  # per business
+    SITE_STOCK_DIR: str = "../api/assets/stock"
+
     # Background jobs (task reminders). Off in tests, which call the job functions directly.
     RUN_BACKGROUND_JOBS: bool = True
     AUTH_RATE_LIMIT_MAX: int = 10

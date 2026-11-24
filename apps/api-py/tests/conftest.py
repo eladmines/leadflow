@@ -16,6 +16,7 @@ from app.core.constants import CSRF_HEADER_NAME, CSRF_HEADER_VALUE, SESSION_COOK
 from app.core.crypto import sha256_hex
 from app.db import models
 from app.integrations.email import MemoryEmailSender
+from app.integrations.storage import LocalDiskStorage
 from app.main import create_app
 
 ORIGIN = "http://localhost:5173"
@@ -70,8 +71,8 @@ async def clean_db(settings: Settings):
 
 
 @pytest_asyncio.fixture
-async def app(settings: Settings):
-    app = create_app(settings, email=MemoryEmailSender())
+async def app(settings: Settings, tmp_path):
+    app = create_app(settings, email=MemoryEmailSender(), storage=LocalDiskStorage(str(tmp_path / "media")))
     yield app
     await app.state.engine.dispose()
 

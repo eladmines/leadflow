@@ -26,10 +26,9 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | team: invitations (invite, re-invite, resend, revoke), preview/accept, role change, removal; invite email template | done (8 tests) |
 | notifications (notify helper, list, mark read); tasks (CRUD, visibility rules, lead links + activity, reminder job with timezone-aware Hebrew/English dates) | done (24 tests) |
 | leads: list/search/filters, create, detail + history, update, notes, tags, delete, pipeline, duplicates, CSV export; customers list + spreadsheet import; website-form intake service; attribution classifier (diff-tested against TS) | done (47 tests) |
-| reports | next |
+| reports: summary (stages, sources, series, hours, response time, attribution + campaigns, visits, behaviour), event/visit counters; appointments: services, calendar with per-staff advisory-lock clash check, requests, free-time availability, website/WhatsApp booking paths; quotes: numbering, totals, send/accept flow, public page, emails; media: Pillow re-encode, disk + database storage, quota, serving | done (46 tests) |
+| sites (render/publish), public site server, embed | next |
 | leads, customers import/export, reports | |
-| appointments, quotes, media | |
-| sites (render/publish), public site server, embed | |
 | whatsapp (bot, webhooks), channels, conversations, domain | |
 | email, storage, Meta/Gmail integrations | |
 | Alembic baseline, Docker/Render config, retire `apps/api`, generate web types from OpenAPI | |
