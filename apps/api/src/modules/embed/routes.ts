@@ -55,7 +55,7 @@ export const embedPublicRoutes: FastifyPluginAsync = async (app) => {
   app.get(apiPaths.embed.script, async (_req, reply) =>
     reply
       .header('content-type', 'application/javascript; charset=utf-8')
-      .header('cache-control', 'public, max-age=3600')
+      .header('cache-control', 'public, max-age=300')
       .header('access-control-allow-origin', '*')
       .send(EMBED_SCRIPT),
   );

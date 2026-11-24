@@ -108,6 +108,8 @@ describe('embed script (F30, F31)', () => {
     sessionStorage.clear();
     document.body.innerHTML = '';
     vi.stubGlobal('XMLHttpRequest', FakeXhr);
+    // No fetch unless a test gives one: the script then falls back to the request the tests capture.
+    vi.stubGlobal('fetch', undefined);
     history.replaceState(null, '', '/');
   });
   afterEach(() => {
@@ -418,26 +420,35 @@ describe('embed script (F30, F31)', () => {
       expect(alertSpy).not.toHaveBeenCalled();
     });
 
-    it('sends the copy as a beacon, which survives the page change when the form posts normally', async () => {
+    it('sends the copy with fetch keepalive and no credentials, so it survives the page change', async () => {
       document.body.innerHTML = customerForm;
-      const beacon = vi.fn(() => true);
-      Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true });
-      try {
-        load({ 'data-forms': '#f' });
-        const form = document.getElementById('f') as HTMLFormElement;
-        fill(form, { '[name=n]': 'דנה כהן', '[name=p]': '052-7654321' });
-        sent.length = 0;
-        await submit(form);
-        expect(beacon).toHaveBeenCalledTimes(1);
-        const [url, blob] = beacon.mock.calls[0] as unknown as [string, Blob];
-        expect(url).toBe('https://app.example.com/api/v1/embed/lead');
-        expect(blob.type).toBe('text/plain');
-        expect(blob.size).toBeGreaterThan(50);
-        // No second, ordinary request for the same form.
-        expect(sent.filter((x) => x.url.endsWith('/embed/lead'))).toHaveLength(0);
-      } finally {
-        Reflect.deleteProperty(navigator, 'sendBeacon');
-      }
+      const doFetch = vi.fn(() => Promise.resolve(new Response('{"ok":true}')));
+      vi.stubGlobal('fetch', doFetch);
+      load({ 'data-forms': '#f' });
+      const form = document.getElementById('f') as HTMLFormElement;
+      fill(form, { '[name=n]': 'דנה כהן', '[name=p]': '052-7654321' });
+      sent.length = 0;
+      doFetch.mockClear();
+      await submit(form);
+      const calls = doFetch.mock.calls as unknown as [string, RequestInit][];
+      const lead = calls.find(([url]) => url.endsWith('/api/v1/embed/lead'))!;
+      expect(lead[0]).toBe('https://app.example.com/api/v1/embed/lead');
+      // No credentials: our answers carry "Access-Control-Allow-Origin: *", which a request with
+      // credentials (a beacon) would make the browser reject.
+      expect(lead[1]).toMatchObject({
+        method: 'POST',
+        keepalive: true,
+        credentials: 'omit',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain' },
+      });
+      expect(JSON.parse(lead[1].body as string)).toMatchObject({
+        key: 'KEY',
+        name: 'דנה כהן',
+        phone: '052-7654321',
+      });
+      // No second, ordinary request for the same form.
+      expect(sent.filter((x) => x.url.endsWith('/embed/lead'))).toHaveLength(0);
     });
 
     it('passes a filled trap field on, so the server drops the bot', async () => {

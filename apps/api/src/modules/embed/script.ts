@@ -9,7 +9,7 @@
  * links and on buttons the owner named, sections seen (data-sc-section), scroll depth, a form started),
  * never who they are.
  * Forms: `data-forms="<css selector>"` on the script tag picks forms that keep sending themselves; we send
- * a copy (a beacon, so it survives the page change) and change nothing. `data-simplecatch` on a form
+ * a copy (a keepalive request, so it survives the page change) and change nothing. `data-simplecatch` on a form
  * means we take it over instead (we send it and show `data-success`).
  */
 import { CLICK_KIND_JS, WATCH_SECTIONS_JS } from './script-parts';
@@ -64,12 +64,24 @@ export const EMBED_SCRIPT = `(function () {
 
   // F32: what the visitor does on the page, as counts (no visitor id, no page sequence).
   var path = location.pathname;
+  // Sends text/plain JSON that must survive the page being left right after (a form posting normally,
+  // a tap on a link): fetch with keepalive and no credentials. Our answers say Access-Control-Allow-Origin: *,
+  // which a beacon (always sent with credentials) makes the browser reject; fetch is the fallback of
+  // choice, then a beacon, else false.
+  function survive(url, data) {
+    try {
+      if (window.fetch) {
+        fetch(url, { method: 'POST', body: data, keepalive: true, credentials: 'omit', mode: 'cors', headers: { 'Content-Type': 'text/plain' } }).catch(function () {});
+        return true;
+      }
+      if (navigator.sendBeacon) return navigator.sendBeacon(url, new Blob([data], { type: 'text/plain' }));
+    } catch (e) {}
+    return false;
+  }
   function emit(events, beacon) {
     var data = JSON.stringify({ key: key, events: events });
     var url = origin + '/api/v1/embed/event';
-    try {
-      if (beacon && navigator.sendBeacon && navigator.sendBeacon(url, new Blob([data], { type: 'text/plain' }))) return;
-    } catch (e) {}
+    if (beacon && survive(url, data)) return;
     var x = new XMLHttpRequest();
     x.open('POST', url);
     x.setRequestHeader('Content-Type', 'text/plain');
@@ -189,12 +201,8 @@ ${CLICK_KIND_JS}${WATCH_SECTIONS_JS}
       params: src.params, referrer: src.referrer, landing: src.landing,
       page: location.href.split(/[?#]/)[0]
     };
-    // A copy of a form that is about to leave the page: a beacon survives the page change.
-    if (beacon) {
-      try {
-        if (navigator.sendBeacon && navigator.sendBeacon(endpoint, new Blob([JSON.stringify(body)], { type: 'text/plain' }))) { done(true, []); return; }
-      } catch (e) {}
-    }
+    // A copy of a form that is about to leave the page must survive the page change.
+    if (beacon && survive(endpoint, JSON.stringify(body))) { done(true, []); return; }
     var x = new XMLHttpRequest();
     x.open('POST', endpoint);
     x.setRequestHeader('Content-Type', 'text/plain');
