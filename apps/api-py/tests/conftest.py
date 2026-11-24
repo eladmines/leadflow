@@ -211,3 +211,57 @@ def last_email_token(email: MemoryEmailSender, to: str) -> str:
     m = re.search(r"[?&]token=([A-Za-z0-9_-]{43})", msgs[-1].text)
     assert m, "no token link in email"
     return m.group(1)
+
+
+# -- business helpers --------------------------------------------------------------------------
+
+_seq = 0
+
+BUSINESSES = "/api/v1/businesses"
+
+
+def business_url(business_id, tail: str = "") -> str:
+    return f"{BUSINESSES}/{business_id}{tail}"
+
+
+async def req(client, method: str, url: str, token: str | None = None, body=None):
+    """JSON request with the CSRF marker and an optional session cookie."""
+    h = {**HEADERS, **(cookie(token) if token else {})}
+    return await client.request(method, url, headers=h, **({"json": body} if body is not None else {}))
+
+
+async def new_user(client, label: str = "user"):
+    """Registers a fresh user (unique email); returns (token, user_id)."""
+    global _seq
+    _seq += 1
+    _, token, user = await register_user(client, email=f"{label}-{_seq}-{uuid.uuid4().hex[:6]}@example.com")
+    return token, user["id"]
+
+
+DEFAULT_BUSINESS = {"name": "מספרת שירן", "industry": "beauty"}
+
+
+async def create_business(client, token: str, body=None) -> dict:
+    res = await req(client, "POST", BUSINESSES, token, body or DEFAULT_BUSINESS)
+    assert res.status_code == 201, res.text
+    return res.json()["business"]
+
+
+async def owner_with_business(client, label: str = "owner") -> dict:
+    token, user_id = await new_user(client, label)
+    return {"token": token, "user_id": user_id, "business": await create_business(client, token)}
+
+
+async def add_member(db: AsyncSession, business_id: str, user_id: str, role: str) -> None:
+    now = datetime.now(UTC)
+    db.add(
+        models.Membership(
+            id=uuid.uuid4(),
+            user_id=uuid.UUID(user_id),
+            business_id=uuid.UUID(business_id),
+            role=models.MembershipRole(role),
+            created_at=now,
+            updated_at=now,
+        )
+    )
+    await db.commit()

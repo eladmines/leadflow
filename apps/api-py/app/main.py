@@ -14,6 +14,7 @@ from app.errors import AppError
 from app.integrations.email import EmailSender, create_email_sender
 from app.middleware import error_response, request_context
 from app.modules.auth import routes as auth_routes
+from app.modules.businesses import routes as business_routes
 from app.routes import health
 
 log = logging.getLogger("simplecatch")
@@ -84,4 +85,6 @@ def create_app(settings: Settings | None = None, email: EmailSender | None = Non
 
     app.include_router(health.router)
     app.include_router(auth_routes.router)
+    app.include_router(business_routes.router)
+    app.include_router(business_routes.tenant)
     return app
