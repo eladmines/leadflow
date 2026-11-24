@@ -1,0 +1,1256 @@
+{
+ "he/beauty": {
+  "templateKey": "beauty",
+  "theme": {
+   "language": "he",
+   "palette": "rose",
+   "font": "rubik",
+   "logoAssetId": null
+  },
+  "seo": {
+   "title": "§N§",
+   "description": "§N§ — טיפולים מקצועיים באווירה נעימה. קבעו תור עוד היום."
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "טיפולים מקצועיים באווירה אישית ונעימה. נשמח לראות אותך!",
+    "buttonLabel": "לקביעת תור",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "הטיפולים שלנו",
+    "items": [
+     {
+      "name": "תספורת ועיצוב",
+      "description": "התאמה אישית למבנה הפנים ולסגנון שלך."
+     },
+     {
+      "name": "צבע וגוונים",
+      "description": "צבעים איכותיים ושמירה על בריאות השיער."
+     },
+     {
+      "name": "טיפולי פנים",
+      "description": "ניקוי, הזנה ורענון העור."
+     }
+    ]
+   },
+   {
+    "id": "pricing",
+    "type": "pricing",
+    "visible": true,
+    "title": "מחירון",
+    "note": "המחירים משתנים לפי אורך השיער וסוג הטיפול.",
+    "items": [
+     {
+      "name": "תספורת נשים",
+      "price": "₪150"
+     },
+     {
+      "name": "תספורת גברים",
+      "price": "₪80"
+     },
+     {
+      "name": "צבע שורש",
+      "price": "₪220"
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "נעים להכיר",
+    "body": "ב§N§ אנחנו מאמינים שכל ביקור צריך להיות רגע של פינוק. אנחנו מקפידים על חומרים איכותיים, יחס אישי וזמנים מדויקים.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "מה הלקוחות מספרים",
+    "items": [
+     {
+      "quote": "שירות מדהים ותוצאה בדיוק כמו שרציתי. ממליצה בחום!",
+      "author": "מיכל"
+     },
+     {
+      "quote": "מקצועיות, סבלנות ואווירה נעימה. כבר קבעתי תור הבא.",
+      "author": "נועה"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": false,
+    "title": "שאלות נפוצות",
+    "items": [
+     {
+      "question": "צריך לקבוע תור מראש?",
+      "answer": "מומלץ לקבוע תור מראש. נשתדל לקבל גם ללא תור לפי הזמינות."
+     },
+     {
+      "question": "יש חניה בקרבת מקום?",
+      "answer": "כן, יש חניה ציבורית במרחק הליכה קצר."
+     }
+    ]
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "יצירת קשר",
+    "subtitle": "נשמח לענות על כל שאלה ולתאם תור.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "שליחה",
+     "successMessage": "תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.",
+     "askAppointment": true
+    }
+   }
+  ]
+ },
+ "he/trades": {
+  "templateKey": "trades",
+  "theme": {
+   "language": "he",
+   "palette": "navy",
+   "font": "heebo",
+   "logoAssetId": null
+  },
+  "seo": {
+   "title": "§N§",
+   "description": {
+    "$areas": "§N§ — שירות מקצועי, אמין ומהיר ב§A§. התקשרו עכשיו.",
+    "$noAreas": "§N§ — שירות מקצועי, אמין ומהיר. התקשרו עכשיו."
+   }
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": {
+     "$areas": "שירות מקצועי, אמין ומהיר ב§A§. עובדים נקי, עומדים בזמנים.",
+     "$noAreas": "שירות מקצועי, אמין ומהיר. עובדים נקי, עומדים בזמנים."
+    },
+    "buttonLabel": "התקשרו עכשיו",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "השירותים שלנו",
+    "items": [
+     {
+      "name": "תיקונים ותקלות",
+      "description": "אבחון מהיר ופתרון במקום ברוב המקרים."
+     },
+     {
+      "name": "התקנות",
+      "description": "התקנה מקצועית לפי התקן, עם אחריות."
+     },
+     {
+      "name": "שירות חירום",
+      "description": "זמינים גם לקריאות דחופות."
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "למה לבחור בנו",
+    "body": "ניסיון של שנים, מחיר הוגן שנקבע מראש ואחריות על העבודה. אנחנו מגיעים בזמן, משאירים נקי ועונים לטלפון.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "לקוחות ממליצים",
+    "items": [
+     {
+      "quote": "הגיעו באותו יום, פתרו את התקלה ונתנו מחיר הוגן.",
+      "author": "יוסי"
+     },
+     {
+      "quote": "עבודה נקייה ומקצועית. בהחלט נזמין שוב.",
+      "author": "רונית"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": true,
+    "title": "שאלות נפוצות",
+    "items": [
+     {
+      "question": "כמה עולה קריאת שירות?",
+      "answer": "המחיר נקבע מראש בטלפון לפי סוג העבודה, בלי הפתעות."
+     },
+     {
+      "question": "יש אחריות על העבודה?",
+      "answer": "כן, כל עבודה מגיעה עם אחריות."
+     }
+    ]
+   },
+   {
+    "id": "cta",
+    "type": "cta",
+    "visible": true,
+    "title": "צריכים עזרה עכשיו?",
+    "subtitle": "התקשרו ונחזור אליכם בהקדם.",
+    "buttonLabel": "דברו איתנו"
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "יצירת קשר",
+    "subtitle": {
+     "$areas": "נותנים שירות ב§A§.",
+     "$noAreas": "נשמח לעזור."
+    },
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "שליחה",
+     "successMessage": "תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.",
+     "askAppointment": false
+    }
+   }
+  ]
+ },
+ "he/garage": {
+  "templateKey": "garage",
+  "theme": {
+   "language": "he",
+   "palette": "graphite",
+   "font": "heebo",
+   "logoAssetId": null
+  },
+  "seo": {
+   "title": "§N§",
+   "description": {
+    "$areas": "§N§ — טיפולים, תיקונים והכנה לטסט ב§A§. קבעו טיפול עוד היום.",
+    "$noAreas": "§N§ — טיפולים, תיקונים והכנה לטסט. קבעו טיפול עוד היום."
+   }
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "טיפולים תקופתיים, תיקונים ואבחון ממוחשב. מחיר ברור לפני שמתחילים, והרכב חוזר אליכם בזמן.",
+    "buttonLabel": "לקביעת טיפול",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "מה אנחנו עושים",
+    "items": [
+     {
+      "name": "טיפולים תקופתיים",
+      "description": "שמן, מסננים ובדיקות לפי הוראות היצרן."
+     },
+     {
+      "name": "אבחון ממוחשב",
+      "description": "איתור תקלות מדויק לפני שמחליפים חלקים."
+     },
+     {
+      "name": "מכונאות ובלמים",
+      "description": "תיקוני מנוע, מתלים, בלמים ומצמד."
+     },
+     {
+      "name": "הכנה לטסט",
+      "description": "בדיקה מקדימה ותיקון כל מה שצריך לעבור בפעם הראשונה."
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "למה אצלנו",
+    "body": "ב§N§ מסבירים מה צריך לתקן ולמה, נותנים הצעת מחיר לפני העבודה ולא מחליפים חלק בלי אישור שלכם.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "pricing",
+    "type": "pricing",
+    "visible": false,
+    "title": "מחירים לדוגמה",
+    "note": "המחיר הסופי תלוי בדגם הרכב. נשמח לתת הצעת מחיר בטלפון.",
+    "items": [
+     {
+      "name": "טיפול שמן ומסננים",
+      "price": "החל מ-₪350"
+     },
+     {
+      "name": "הכנה לטסט",
+      "price": "החל מ-₪250"
+     }
+    ]
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "לקוחות מספרים",
+    "items": [
+     {
+      "quote": "הסבירו בדיוק מה צריך ולא ניסו למכור לי מה שלא צריך.",
+      "author": "אבי"
+     },
+     {
+      "quote": "הרכב היה מוכן באותו יום ובמחיר שסיכמנו.",
+      "author": "דנה"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": true,
+    "title": "שאלות נפוצות",
+    "items": [
+     {
+      "question": "צריך לקבוע תור מראש?",
+      "answer": "מומלץ לתאם מראש כדי שנוכל להתחיל לעבוד על הרכב מיד כשתגיעו."
+     },
+     {
+      "question": "אפשר לקבל הצעת מחיר לפני התיקון?",
+      "answer": "כן. אחרי האבחון נעדכן אתכם במחיר, ונתחיל רק אחרי אישור שלכם."
+     }
+    ]
+   },
+   {
+    "id": "cta",
+    "type": "cta",
+    "visible": true,
+    "title": "הרכב צריך טיפול?",
+    "subtitle": "התקשרו ונמצא לכם תור קרוב.",
+    "buttonLabel": "דברו איתנו"
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "איך מגיעים",
+    "subtitle": "השאירו פרטים ונחזור אליכם לתיאום.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "שליחה",
+     "successMessage": "תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.",
+     "askAppointment": true
+    }
+   }
+  ]
+ },
+ "he/clinic": {
+  "templateKey": "clinic",
+  "theme": {
+   "language": "he",
+   "palette": "teal",
+   "font": "assistant",
+   "logoAssetId": null
+  },
+  "seo": {
+   "title": "§N§",
+   "description": "§N§ — טיפול מקצועי ואישי בסביבה רגועה. קבעו פגישת היכרות."
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "טיפול מקצועי ואישי, בקצב שלך ובסביבה רגועה. נתחיל בפגישת היכרות ונבנה יחד את הדרך.",
+    "buttonLabel": "לקביעת פגישה",
+    "buttonAction": "contact",
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "איך אני יכול/ה לעזור",
+    "items": [
+     {
+      "name": "פגישת היכרות",
+      "description": "שיחה ראשונה להבנת הצרכים והמטרות שלך."
+     },
+     {
+      "name": "תוכנית טיפול אישית",
+      "description": "תהליך שמותאם לך, עם יעדים ברורים."
+     },
+     {
+      "name": "ליווי ומעקב",
+      "description": "בדיקת התקדמות ועדכון התוכנית לאורך הדרך."
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "נעים להכיר",
+    "body": "כאן כדאי לספר על ההכשרה, הניסיון והגישה הטיפולית שלך, ולמי הטיפול מתאים.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "מטופלים מספרים",
+    "items": [
+     {
+      "quote": "הרגשתי שמקשיבים לי באמת. התהליך שינה לי את השגרה.",
+      "author": "שירה"
+     },
+     {
+      "quote": "מקצועיות, סבלנות ויחס אישי מהפגישה הראשונה.",
+      "author": "עומר"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": true,
+    "title": "שאלות נפוצות",
+    "items": [
+     {
+      "question": "כמה זמן נמשכת פגישה?",
+      "answer": "פגישה רגילה נמשכת כשעה. פגישת ההיכרות קצרה יותר."
+     },
+     {
+      "question": "יש החזר מביטוח משלים?",
+      "answer": "בחלק מהביטוחים המשלימים יש החזר. נשמח לתת קבלה מסודרת."
+     },
+     {
+      "question": "איך קובעים פגישה ראשונה?",
+      "answer": "משאירים פרטים בטופס או מתקשרים, ונתאם מועד שנוח לך."
+     }
+    ]
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "קביעת פגישה",
+    "subtitle": "השאירו פרטים ואחזור אליכם לתיאום. הפרטים נשמרים בדיסקרטיות.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "שליחה",
+     "successMessage": "תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.",
+     "askAppointment": true
+    }
+   }
+  ]
+ },
+ "he/food": {
+  "templateKey": "food",
+  "theme": {
+   "language": "he",
+   "palette": "forest",
+   "font": "frank",
+   "logoAssetId": null
+  },
+  "seo": {
+   "title": "§N§",
+   "description": "§N§ — אוכל טרי, קפה טוב ואווירה נעימה. הזמינו שולחן או אירוע."
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "אוכל טרי שמוכן במקום, קפה טוב ואווירה שמזמינה להישאר. מחכים לכם.",
+    "buttonLabel": "להזמנת שולחן",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "מה מחכה לכם",
+    "items": [
+     {
+      "name": "ארוחות בוקר",
+      "description": "כל בוקר, עם לחם טרי ומוצרים מקומיים."
+     },
+     {
+      "name": "צהריים וערב",
+      "description": "מנות עונתיות שמשתנות לפי מה שטרי בשוק."
+     },
+     {
+      "name": "אירועים קטנים",
+      "description": "ימי הולדת, ישיבות וחגיגות משפחתיות."
+     }
+    ]
+   },
+   {
+    "id": "pricing",
+    "type": "pricing",
+    "visible": true,
+    "title": "מהתפריט",
+    "note": "התפריט המלא והמחירים העדכניים במקום.",
+    "items": [
+     {
+      "name": "ארוחת בוקר זוגית",
+      "price": "₪138"
+     },
+     {
+      "name": "סלט הבית",
+      "price": "₪54"
+     },
+     {
+      "name": "קפה ומאפה",
+      "price": "₪28"
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "הסיפור שלנו",
+    "body": "§N§ נולד מאהבה לאוכל פשוט וטוב. אנחנו מכינים הכול במקום, עובדים עם ספקים מקומיים ושמחים לראות לקוחות חוזרים.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "אומרים עלינו",
+    "items": [
+     {
+      "quote": "ארוחת הבוקר הכי טובה באזור, והשירות חם ומהיר.",
+      "author": "טל"
+     },
+     {
+      "quote": "חגגנו כאן יום הולדת והכול היה מושלם.",
+      "author": "ליאת"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": false,
+    "title": "שאלות נפוצות",
+    "items": [
+     {
+      "question": "יש מנות טבעוניות?",
+      "answer": "כן, יש בתפריט כמה מנות טבעוניות וצמחוניות."
+     },
+     {
+      "question": "אפשר להזמין לאירוע?",
+      "answer": "בטח. השאירו פרטים ונחזור אליכם עם הצעה."
+     }
+    ]
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "הזמנות ואירועים",
+    "subtitle": "רוצים לשריין שולחן או לחגוג אצלנו? השאירו פרטים.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "שליחה",
+     "successMessage": "תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.",
+     "askAppointment": false
+    }
+   }
+  ]
+ },
+ "en/beauty": {
+  "templateKey": "beauty",
+  "theme": {
+   "language": "en",
+   "logoAssetId": null,
+   "palette": "rose",
+   "font": "rubik"
+  },
+  "seo": {
+   "title": "§N§",
+   "description": "§N§ — professional treatments in a relaxed setting. Book your appointment today."
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "Professional treatments in a warm, personal setting. We look forward to seeing you!",
+    "buttonLabel": "Book an appointment",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "Our treatments",
+    "items": [
+     {
+      "name": "Cut & style",
+      "description": "Tailored to your face shape and personal style."
+     },
+     {
+      "name": "Colour & highlights",
+      "description": "Quality colours that keep your hair healthy."
+     },
+     {
+      "name": "Facials",
+      "description": "Cleansing, nourishing and refreshing your skin."
+     }
+    ]
+   },
+   {
+    "id": "pricing",
+    "type": "pricing",
+    "visible": true,
+    "title": "Prices",
+    "note": "Prices vary with hair length and type of treatment.",
+    "items": [
+     {
+      "name": "Women's haircut",
+      "price": "$45"
+     },
+     {
+      "name": "Men's haircut",
+      "price": "$25"
+     },
+     {
+      "name": "Root colour",
+      "price": "$65"
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "Nice to meet you",
+    "body": "At §N§ we believe every visit should be a moment of pampering. We use quality products, give every client personal attention and keep to time.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "What our clients say",
+    "items": [
+     {
+      "quote": "Amazing service and exactly the result I wanted. Highly recommended!",
+      "author": "Emma"
+     },
+     {
+      "quote": "Professional, patient and a lovely atmosphere. Already booked my next visit.",
+      "author": "Olivia"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": false,
+    "title": "FAQ",
+    "items": [
+     {
+      "question": "Do I need to book ahead?",
+      "answer": "We recommend booking ahead. We'll do our best to fit in walk-ins when we can."
+     },
+     {
+      "question": "Is there parking nearby?",
+      "answer": "Yes, there's public parking a short walk away."
+     }
+    ]
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "Contact us",
+    "subtitle": "We'd be happy to answer any question and book your appointment.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "Send",
+     "successMessage": "Thank you! We've received your details and will get back to you soon.",
+     "askAppointment": true
+    }
+   }
+  ]
+ },
+ "en/trades": {
+  "templateKey": "trades",
+  "theme": {
+   "language": "en",
+   "logoAssetId": null,
+   "palette": "navy",
+   "font": "heebo"
+  },
+  "seo": {
+   "title": "§N§",
+   "description": {
+    "$areas": "§N§ — professional, reliable and fast service in §A§. Call now.",
+    "$noAreas": "§N§ — professional, reliable and fast service. Call now."
+   }
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": {
+     "$areas": "Professional, reliable and fast service in §A§. Clean work, always on time.",
+     "$noAreas": "Professional, reliable and fast service. Clean work, always on time."
+    },
+    "buttonLabel": "Call now",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "Our services",
+    "items": [
+     {
+      "name": "Repairs & faults",
+      "description": "Quick diagnosis, and fixed on the spot in most cases."
+     },
+     {
+      "name": "Installations",
+      "description": "Professional installation to standard, with a warranty."
+     },
+     {
+      "name": "Emergency service",
+      "description": "Available for urgent calls too."
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "Why choose us",
+    "body": "Years of experience, a fair price agreed in advance and a warranty on our work. We arrive on time, leave the place clean and answer the phone.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "Customers recommend us",
+    "items": [
+     {
+      "quote": "They came the same day, fixed the problem and charged a fair price.",
+      "author": "Mark"
+     },
+     {
+      "quote": "Clean, professional work. We will definitely call them again.",
+      "author": "Rachel"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": true,
+    "title": "FAQ",
+    "items": [
+     {
+      "question": "How much does a call-out cost?",
+      "answer": "The price is agreed in advance over the phone, based on the job. No surprises."
+     },
+     {
+      "question": "Is the work guaranteed?",
+      "answer": "Yes, every job comes with a warranty."
+     }
+    ]
+   },
+   {
+    "id": "cta",
+    "type": "cta",
+    "visible": true,
+    "title": "Need help now?",
+    "subtitle": "Call us and we'll get back to you soon.",
+    "buttonLabel": "Talk to us"
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "Contact us",
+    "subtitle": {
+     "$areas": "We serve §A§.",
+     "$noAreas": "We'd be happy to help."
+    },
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "Send",
+     "successMessage": "Thank you! We've received your details and will get back to you soon.",
+     "askAppointment": false
+    }
+   }
+  ]
+ },
+ "en/garage": {
+  "templateKey": "garage",
+  "theme": {
+   "language": "en",
+   "logoAssetId": null,
+   "palette": "graphite",
+   "font": "heebo"
+  },
+  "seo": {
+   "title": "§N§",
+   "description": {
+    "$areas": "§N§ — servicing, repairs and MOT preparation in §A§. Book your service today.",
+    "$noAreas": "§N§ — servicing, repairs and MOT preparation. Book your service today."
+   }
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "Regular servicing, repairs and computer diagnostics. A clear price before we start, and your car back on time.",
+    "buttonLabel": "Book a service",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "What we do",
+    "items": [
+     {
+      "name": "Regular servicing",
+      "description": "Oil, filters and checks to the manufacturer's schedule."
+     },
+     {
+      "name": "Computer diagnostics",
+      "description": "Finding the fault precisely before replacing parts."
+     },
+     {
+      "name": "Mechanics & brakes",
+      "description": "Engine, suspension, brake and clutch repairs."
+     },
+     {
+      "name": "MOT preparation",
+      "description": "A pre-check and fixing whatever is needed to pass first time."
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "Why us",
+    "body": "At §N§ we explain what needs fixing and why, give you a quote before any work, and never replace a part without your approval.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "pricing",
+    "type": "pricing",
+    "visible": false,
+    "title": "Sample prices",
+    "note": "The final price depends on your car's model. We're happy to quote over the phone.",
+    "items": [
+     {
+      "name": "Oil & filter service",
+      "price": "From $95"
+     },
+     {
+      "name": "MOT preparation",
+      "price": "From $70"
+     }
+    ]
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "Our customers say",
+    "items": [
+     {
+      "quote": "They explained exactly what was needed and didn't try to sell me anything else.",
+      "author": "James"
+     },
+     {
+      "quote": "The car was ready the same day, at the price we agreed.",
+      "author": "Sarah"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": true,
+    "title": "FAQ",
+    "items": [
+     {
+      "question": "Do I need to book ahead?",
+      "answer": "We recommend booking so we can start on your car as soon as you arrive."
+     },
+     {
+      "question": "Can I get a quote before the repair?",
+      "answer": "Yes. After the diagnosis we'll tell you the price and only start once you approve."
+     }
+    ]
+   },
+   {
+    "id": "cta",
+    "type": "cta",
+    "visible": true,
+    "title": "Does your car need a service?",
+    "subtitle": "Call us and we'll find you an early slot.",
+    "buttonLabel": "Talk to us"
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "Find us",
+    "subtitle": "Leave your details and we'll get back to you to arrange a time.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "Send",
+     "successMessage": "Thank you! We've received your details and will get back to you soon.",
+     "askAppointment": true
+    }
+   }
+  ]
+ },
+ "en/clinic": {
+  "templateKey": "clinic",
+  "theme": {
+   "language": "en",
+   "logoAssetId": null,
+   "palette": "teal",
+   "font": "assistant"
+  },
+  "seo": {
+   "title": "§N§",
+   "description": "§N§ — professional, personal care in a calm setting. Book an introductory session."
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "Professional, personal care at your own pace in a calm setting. We'll start with an introductory session and plan the way together.",
+    "buttonLabel": "Book a session",
+    "buttonAction": "contact",
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "How I can help",
+    "items": [
+     {
+      "name": "Introductory session",
+      "description": "A first conversation to understand your needs and goals."
+     },
+     {
+      "name": "Personal care plan",
+      "description": "A process tailored to you, with clear goals."
+     },
+     {
+      "name": "Ongoing support",
+      "description": "Checking progress and updating the plan along the way."
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "Nice to meet you",
+    "body": "Tell visitors about your training, experience and approach, and who your care is for.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "What clients say",
+    "items": [
+     {
+      "quote": "I felt truly listened to. The process changed my daily routine.",
+      "author": "Hannah"
+     },
+     {
+      "quote": "Professional, patient and personal from the very first session.",
+      "author": "Daniel"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": true,
+    "title": "FAQ",
+    "items": [
+     {
+      "question": "How long is a session?",
+      "answer": "A regular session lasts about an hour. The introductory session is shorter."
+     },
+     {
+      "question": "Is it covered by insurance?",
+      "answer": "Some health insurance plans cover part of the cost. We'll gladly give you a proper receipt."
+     },
+     {
+      "question": "How do I book a first session?",
+      "answer": "Leave your details in the form or call, and we'll find a time that suits you."
+     }
+    ]
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "Book a session",
+    "subtitle": "Leave your details and I'll get back to you to arrange a time. Your details are kept private.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "Send",
+     "successMessage": "Thank you! We've received your details and will get back to you soon.",
+     "askAppointment": true
+    }
+   }
+  ]
+ },
+ "en/food": {
+  "templateKey": "food",
+  "theme": {
+   "language": "en",
+   "logoAssetId": null,
+   "palette": "forest",
+   "font": "frank"
+  },
+  "seo": {
+   "title": "§N§",
+   "description": "§N§ — fresh food, good coffee and a warm atmosphere. Book a table or an event."
+  },
+  "sections": [
+   {
+    "id": "hero",
+    "type": "hero",
+    "visible": true,
+    "title": "§N§",
+    "subtitle": "Fresh food made on site, good coffee and an atmosphere that makes you want to stay. See you soon.",
+    "buttonLabel": "Book a table",
+    "buttonAction": {
+     "$phone": "call",
+     "$noPhone": "contact"
+    },
+    "imageAssetId": null
+   },
+   {
+    "id": "services",
+    "type": "services",
+    "visible": true,
+    "title": "What we offer",
+    "items": [
+     {
+      "name": "Breakfast",
+      "description": "Every morning, with fresh bread and local produce."
+     },
+     {
+      "name": "Lunch & dinner",
+      "description": "Seasonal dishes that change with what's fresh at the market."
+     },
+     {
+      "name": "Small events",
+      "description": "Birthdays, meetings and family celebrations."
+     }
+    ]
+   },
+   {
+    "id": "pricing",
+    "type": "pricing",
+    "visible": true,
+    "title": "From the menu",
+    "note": "The full menu and current prices are available on site.",
+    "items": [
+     {
+      "name": "Breakfast for two",
+      "price": "$38"
+     },
+     {
+      "name": "House salad",
+      "price": "$15"
+     },
+     {
+      "name": "Coffee & pastry",
+      "price": "$8"
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "type": "about",
+    "visible": true,
+    "title": "Our story",
+    "body": "§N§ was born from a love of simple, good food. We make everything on site, work with local suppliers and love seeing familiar faces.",
+    "imageAssetId": null,
+    "imageAlt": ""
+   },
+   {
+    "id": "testimonials",
+    "type": "testimonials",
+    "visible": true,
+    "title": "What people say",
+    "items": [
+     {
+      "quote": "The best breakfast in the area, with warm and quick service.",
+      "author": "Tom"
+     },
+     {
+      "quote": "We celebrated a birthday here and everything was perfect.",
+      "author": "Lucy"
+     }
+    ]
+   },
+   {
+    "id": "faq",
+    "type": "faq",
+    "visible": false,
+    "title": "FAQ",
+    "items": [
+     {
+      "question": "Do you have vegan dishes?",
+      "answer": "Yes, the menu has several vegan and vegetarian dishes."
+     },
+     {
+      "question": "Can I book for an event?",
+      "answer": "Of course. Leave your details and we'll get back to you with an offer."
+     }
+    ]
+   },
+   {
+    "id": "contact",
+    "type": "contact",
+    "visible": true,
+    "title": "Bookings & events",
+    "subtitle": "Want to reserve a table or celebrate with us? Leave your details.",
+    "showPhone": true,
+    "showAddress": true,
+    "showHours": true,
+    "form": {
+     "enabled": true,
+     "askEmail": true,
+     "askMessage": true,
+     "buttonLabel": "Send",
+     "successMessage": "Thank you! We've received your details and will get back to you soon.",
+     "askAppointment": false
+    }
+   }
+  ]
+ }
+}
