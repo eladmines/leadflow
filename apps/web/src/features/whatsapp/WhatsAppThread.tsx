@@ -15,6 +15,7 @@ import { formatDateTime, timeAgo } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { usePauseBot, useSendWhatsApp, useWhatsAppThread } from './api';
 import { tr, intlLocale } from '../../i18n';
+import { messageBody } from '../../lib/messageBody';
 
 const timeFmt = new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute: '2-digit' });
 
@@ -133,7 +134,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
                       : tr('הלקוח כתב:')}
                   </span>
                   {m.subject && <p className="text-xs font-semibold">{m.subject}</p>}
-                  <p className="whitespace-pre-line break-words">{m.body}</p>
+                  <p className="whitespace-pre-line break-words">{messageBody(m.body)}</p>
                   <p className="flex items-center gap-1.5 text-xs text-ink-muted">
                     <time dateTime={m.createdAt} title={formatDateTime(m.createdAt)}>
                       {timeAgo(m.createdAt)}

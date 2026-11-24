@@ -1176,4 +1176,36 @@ export const enPart3: Record<string, string> = {
   '(לפי שעון העסק)': "(by the business's clock)",
   '"סוף היום" ו"מחר בבוקר" לפי שעון העסק ({0}), לא לפי המכשיר שלכם.':
     '"End of the day" and "tomorrow morning" follow the business\'s clock ({0}), not your device.',
+  'כל ההודעות מוואטסאפ ומפייסבוק במקום אחד.':
+    'All your WhatsApp and Facebook messages in one place.',
+  'מה קורה כשלקוח כותב בוואטסאפ: מענה לפי הסטטוס שלך, קביעת תורים והצצה לעסק.':
+    'What happens when a customer writes on WhatsApp: a reply based on your status, booking appointments and a peek at your business.',
+  'האתר הקיים של העסק, לצפייה בלבד.': "The business's existing website, view only.",
+  'מצאו את ה-id של הטופס. בקוד של הטופס יש תגית form, והמילה אחרי id= היא ה-id. למשל, כאן ה-id הוא contact-form:':
+    "Find the form's id. In the form's code there is a form tag, and the word after id= is the id. For example, here the id is contact-form:",
+  'תוקף הטופס פג. רעננו את הדף ונסו שוב.': 'The form has expired. Refresh the page and try again.',
+  'לבקשת תור יש לבחור גם תאריך וגם שעה': 'To request an appointment, choose both a date and a time',
+  'המועד שנבחר לתור אינו תקין': 'The chosen appointment time is not valid',
+  'אפשר לבקש תור רק למועד עתידי (עד 4 חודשים קדימה)':
+    'You can only request an appointment in the future (up to 4 months ahead)',
+  אינסטגרם: 'Instagram',
+  'אפשר לייבא עד {0} שורות בכל פעם': 'You can import up to {0} rows at a time',
+  'ליד חדש מאינסטגרם': 'New lead from Instagram',
+  'פנייה חדשה באינסטגרם': 'New message on Instagram',
+  'הדומיין של האתר פג': "The site's domain has expired",
+  'הדומיין של האתר עומד לפוג': "The site's domain is about to expire",
+  '{0} · פג לפני {1} ימים. חדשו אותו מיד.': '{0} · expired {1} days ago. Renew it right away.',
+  '{0} · פג היום': '{0} · expires today',
+  '{0} · פג בעוד {1} ימים': '{0} · expires in {1} days',
+  וידאו: 'Video',
+  'הודעה קולית': 'Voice message',
+  מסמך: 'Document',
+  מדבקה: 'Sticker',
+  מיקום: 'Location',
+  'איש קשר': 'Contact',
+  'הודעה מסוג שעדיין לא נתמך': 'A message type that is not supported yet',
+  'מייל ללא טקסט': 'Email with no text',
+  היומן: 'The calendar',
+  'אחרי המענה, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
+    "After the reply, or to a customer who didn't finish booking, a message is sent with a link, up to 3 photos and a video from the business. At most once a day per customer. The switch turns it on and off.",
 };

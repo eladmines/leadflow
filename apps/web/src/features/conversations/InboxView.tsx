@@ -21,6 +21,7 @@ import { intlLocale, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
 import { useClassify, useConversation, useConversations, useMarkRead, useReply } from './api';
+import { messageBody } from '../../lib/messageBody';
 
 /** WhatsApp green, Facebook blue: the channel's colour on its chip and dot. */
 const CHANNEL_STYLE: Record<Channel, { label: string; chip: string; dot: string }> = {
@@ -228,7 +229,7 @@ function ConversationRow({
         <span className="flex items-center gap-2">
           <span className="truncate text-xs text-ink-muted" dir="auto">
             {c.lastMessage?.direction === 'OUT' && `${tr('אתם:')} `}
-            {c.lastMessage?.body ?? ''}
+            {messageBody(c.lastMessage?.body ?? '')}
           </span>
           {c.unread && (
             <span className="ms-auto h-2 w-2 shrink-0 rounded-full bg-brand-600">
@@ -353,7 +354,7 @@ function ConversationPane({
                   </p>
                 )}
                 <p className="whitespace-pre-line break-words" dir="auto">
-                  {m.body}
+                  {messageBody(m.body)}
                 </p>
                 <p className="flex items-center gap-1.5 text-xs text-ink-muted">
                   <time dateTime={m.createdAt} title={formatDateTime(m.createdAt)}>

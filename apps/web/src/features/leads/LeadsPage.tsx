@@ -58,6 +58,7 @@ import { sourceName } from './Attribution';
 import { stageColor } from './stageColors';
 import { useWhatsAppInbox } from '../whatsapp/api';
 import { tr, intlLocale } from '../../i18n';
+import { messageBody } from '../../lib/messageBody';
 
 const leadPath = (businessId: string, leadId: string) =>
   `${businessWebPaths.section(businessId, 'leads')}/${leadId}`;
@@ -89,7 +90,7 @@ function LeadPreview({ lead, compact = false }: { lead: Lead; compact?: boolean 
           compact ? 'line-clamp-2 text-ink-muted' : 'line-clamp-3 text-ink',
         )}
       >
-        {last.body}
+        {messageBody(last.body)}
       </p>
     </div>
   );
