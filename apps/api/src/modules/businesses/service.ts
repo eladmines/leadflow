@@ -59,6 +59,9 @@ export class BusinessService {
   }
 
   async create(userId: string, input: CreateBusinessRequest): Promise<BusinessDto> {
+    // One owned business per user for now (the owner's own; businesses they were invited to don't count).
+    const owned = await this.prisma.membership.count({ where: { userId, role: 'OWNER' } });
+    if (owned > 0) throw new AppError('CONFLICT', businessMessages.onlyOneBusiness);
     const { business } = await this.prisma.$transaction(async (tx) => {
       const created = await businessRepo.createWithOwner(tx, userId, input);
       await recordAudit(tx, {

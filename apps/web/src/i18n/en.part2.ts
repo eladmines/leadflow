@@ -220,7 +220,6 @@ export const enPart2: Record<string, string> = {
   'תפריט ניווט': 'Navigation menu',
   'סגירת התפריט': 'Close menu',
   'העסק הנוכחי': 'Current business',
-  'הוספת עסק': 'Add a business',
   'בפיתוח — יתווסף בקרוב': 'In development — coming soon',
   'משימה חדשה': 'New task',
   'מעבר לעמוד': 'Go to page',

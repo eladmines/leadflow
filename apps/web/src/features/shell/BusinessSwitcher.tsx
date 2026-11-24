@@ -1,7 +1,6 @@
 import { businessWebPaths, type Business } from '@simplecatch/shared';
-import { Plus } from 'lucide-react';
 import { useId } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { SelectMenu } from '../../components/ui';
 import { useBusinesses } from '../businesses/api';
 import { tr } from '../../i18n';
@@ -53,14 +52,6 @@ export function BusinessSwitcher({
           </div>
         </div>
       )}
-      <Link
-        to={businessWebPaths.onboarding}
-        onClick={onNavigate}
-        className="inline-flex items-center gap-1 self-start px-1 text-xs font-medium text-brand-700 hover:underline"
-      >
-        <Plus aria-hidden className="h-3.5 w-3.5" />
-        {tr('הוספת עסק')}
-      </Link>
     </div>
   );
 }

@@ -71,6 +71,7 @@ describe('onboarding wizard', () => {
   it('step 1 validates in Hebrew, then creates the business and moves to step 2', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
+      [`GET ${bp.list}`]: () => json(200, { businesses: [] }),
       [`POST ${bp.create}`]: () => json(201, { business: draft }),
       [detailKey]: () => json(200, { business: draft }),
     });

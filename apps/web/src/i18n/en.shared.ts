@@ -141,6 +141,7 @@ export const enShared: Record<string, string> = {
   'שם העסק יכול להכיל עד {0} תווים': 'The business name can be up to {0} characters',
   'יש לבחור תחום פעילות': 'Choose an industry',
   'יש להזין מספר טלפון': 'Enter a phone number',
+  'בשלב זה אפשר לנהל עסק אחד בלבד לכל משתמש': 'For now, each user can manage only one business',
   'מספר הטלפון אינו תקין. לדוגמה: 050-1234567':
     'This phone number is not valid. Example: 050-1234567',
   'הכתובת יכולה להכיל עד {0} תווים': 'The address can be up to {0} characters',

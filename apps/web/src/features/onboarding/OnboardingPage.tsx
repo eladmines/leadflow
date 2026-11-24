@@ -8,6 +8,7 @@ import { errorMessage } from '../auth/serverErrors';
 import { UnverifiedEmailBanner } from '../auth/UnverifiedEmailBanner';
 import {
   useBusiness,
+  useBusinesses,
   useCompleteOnboarding,
   useCreateBusiness,
   useUpdateBusiness,
@@ -40,6 +41,23 @@ function WizardFrame({ step, children }: { step: number; children: React.ReactNo
 export function NewBusinessPage() {
   const navigate = useNavigate();
   const create = useCreateBusiness();
+  const businesses = useBusinesses();
+
+  // One owned business per user: someone who has one goes to it, not to a second wizard.
+  if (businesses.isPending) return <FullPageSpinner label={tr('טוענים את העסקים שלך…')} />;
+  const owned = businesses.data?.find((b) => b.role === 'OWNER');
+  if (owned) {
+    return (
+      <Navigate
+        to={
+          owned.status === 'ONBOARDING'
+            ? businessWebPaths.onboardingFor(owned.id)
+            : businessWebPaths.home(owned.id)
+        }
+        replace
+      />
+    );
+  }
   return (
     <WizardFrame step={1}>
       <StepBusiness

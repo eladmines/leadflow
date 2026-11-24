@@ -212,6 +212,7 @@ export const businessMessages = {
   nameTooLong: `שם העסק יכול להכיל עד ${BUSINESS_NAME_MAX_LENGTH} תווים`,
   industryRequired: 'יש לבחור תחום פעילות',
   phoneRequired: 'יש להזין מספר טלפון',
+  onlyOneBusiness: 'בשלב זה אפשר לנהל עסק אחד בלבד לכל משתמש',
   phoneInvalid: 'מספר הטלפון אינו תקין. לדוגמה: 050-1234567',
   addressTooLong: `הכתובת יכולה להכיל עד ${ADDRESS_MAX_LENGTH} תווים`,
   websiteInvalid: 'כתובת האתר אינה תקינה. לדוגמה: www.my-business.co.il',

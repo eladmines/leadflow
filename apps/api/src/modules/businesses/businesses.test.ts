@@ -4,7 +4,6 @@ import { createTestApp, resetDb } from '../../../test/helpers';
 import {
   addMember,
   bpaths,
-  createBusiness,
   newUser,
   ownerWithBusiness,
   req,
@@ -72,14 +71,19 @@ describe('businesses', () => {
 
     it("lists only the caller's businesses", async () => {
       const a = await ownerWithBusiness(ctx.app, 'a');
-      await createBusiness(ctx.app, a.token, { name: 'סניף שני', industry: 'beauty' });
       await ownerWithBusiness(ctx.app, 'b');
       const res = await req(ctx.app, 'GET', bpaths.list, a.token);
       expect(res.statusCode).toBe(200);
-      expect(res.json().businesses.map((b: { name: string }) => b.name)).toEqual([
-        'מספרת שירן',
-        'סניף שני',
-      ]);
+      expect(res.json().businesses.map((b: { name: string }) => b.name)).toEqual(['מספרת שירן']);
+    });
+
+    it('allows one owned business per user', async () => {
+      const a = await ownerWithBusiness(ctx.app, 'a');
+      const res = await req(ctx.app, 'POST', bpaths.create, a.token, {
+        name: 'סניף שני',
+        industry: 'beauty',
+      });
+      expect(res.statusCode).toBe(409);
     });
   });
 
