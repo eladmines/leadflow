@@ -39,7 +39,7 @@ from app.modules.tasks.reminders import start_task_reminders
 from app.modules.team import routes as team_routes
 from app.modules.whatsapp import routes as whatsapp_routes
 from app.modules.whatsapp.gmail_sync import start_gmail_sync
-from app.modules.whatsapp.service import NoBot
+from app.modules.whatsapp.nudges import start_booking_nudges
 from app.routes import health
 from app.web_app import WebApp
 
@@ -67,7 +67,12 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         jobs = (
-            [start_task_reminders(app), start_domain_watch(app), start_gmail_sync(app)]
+            [
+                start_task_reminders(app),
+                start_domain_watch(app),
+                start_gmail_sync(app),
+                start_booking_nudges(app),
+            ]
             if settings.RUN_BACKGROUND_JOBS
             else []
         )
@@ -95,7 +100,6 @@ def create_app(
     app.state.messenger_sender = messenger_sender or create_messenger_sender(settings)
     app.state.meta_api = meta_api or create_meta_api(settings)
     app.state.gmail_api = gmail_api or create_gmail_api(settings)
-    app.state.bot = NoBot()
 
     app.middleware("http")(request_context)
     app.add_middleware(

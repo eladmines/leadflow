@@ -6,7 +6,7 @@ import asyncio
 import logging
 from typing import Any
 
-from app.modules.whatsapp.service import WhatsAppService
+from app.modules.whatsapp.service import build_service
 
 log = logging.getLogger("simplecatch")
 
@@ -17,16 +17,7 @@ def start_gmail_sync(app: Any, interval_s: float = 120) -> "asyncio.Task[None]":
             await asyncio.sleep(interval_s)
             try:
                 async with app.state.sessionmaker() as db:
-                    st = app.state
-                    await WhatsAppService(
-                        db,
-                        st.settings,
-                        st.whatsapp_sender,
-                        st.messenger_sender,
-                        st.email,
-                        st.gmail_api,
-                        st.bot,
-                    ).sync_gmail()
+                    await build_service(app.state, db).sync_gmail()
             except Exception as err:
                 log.error("gmail sync run failed", extra={"errName": type(err).__name__})
 

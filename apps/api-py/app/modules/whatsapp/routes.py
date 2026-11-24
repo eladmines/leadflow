@@ -15,7 +15,8 @@ from app.deps import Db, Tenant, require_permission, tenant_router
 from app.errors import AppError
 from app.integrations.whatsapp import verify_webhook_signature
 from app.modules.whatsapp import schemas as s
-from app.modules.whatsapp.service import InboundMessage, WhatsAppService
+from app.modules.whatsapp.service import InboundMessage, WhatsAppService, build_service
+from app.shared import whatsapp as sw
 from app.shared.attribution import attribution_from_meta_referral
 
 WEBHOOK = "/api/v1/integrations/whatsapp/webhook"
@@ -38,10 +39,7 @@ UNSUPPORTED = "[הודעה מסוג שעדיין לא נתמך]"
 
 
 def service_for(request: Request, db: Db) -> WhatsAppService:
-    st = request.app.state
-    return WhatsAppService(
-        db, st.settings, st.whatsapp_sender, st.messenger_sender, st.email, st.gmail_api, st.bot
-    )
+    return build_service(request.app.state, db)
 
 
 def message_text(m: dict[str, Any]) -> str:
@@ -315,3 +313,79 @@ async def classify(number_id: str, body: s.ClassifyRequest, ctx: Tenant, request
 async def forget_personal(number_id: str, ctx: Tenant, request: Request, db: Db):
     await service_for(request, db).forget_personal(ctx, number_id)
     return Response(status_code=204)
+
+
+# -- booking bot settings, statuses and the "meanwhile" video ---------------------------------------
+
+
+@tenant.get(
+    "/whatsapp/bot", response_model=sw.BotResponse, response_model_exclude_unset=True, dependencies=INBOX
+)
+async def get_bot(ctx: Tenant, request: Request, db: Db):
+    return await service_for(request, db).bot_settings(ctx)
+
+
+@tenant.put(
+    "/whatsapp/bot", response_model=sw.BotResponse, response_model_exclude_unset=True, dependencies=INBOX
+)
+async def put_bot(body: sw.BotSettingsRequest, ctx: Tenant, request: Request, db: Db):
+    return await service_for(request, db).update_bot_settings(ctx, body)
+
+
+@tenant.put(
+    "/whatsapp/status", response_model=sw.BotResponse, response_model_exclude_unset=True, dependencies=INBOX
+)
+async def put_status(body: sw.SetStatusRequest, ctx: Tenant, request: Request, db: Db):
+    return await service_for(request, db).set_status(ctx, body)
+
+
+async def _read_video(request: Request) -> bytes:
+    """The uploaded MP4 (one file, up to WhatsApp's 16 MB)."""
+    invalid = sw.M["videoInvalid"]
+    if not request.headers.get("content-type", "").startswith("multipart/form-data"):
+        raise AppError("VALIDATION_ERROR", invalid)
+    too_large = AppError("VALIDATION_ERROR", sw.M["videoTooLarge"], {"video": sw.M["videoTooLarge"]})
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > sw.SHOWCASE_VIDEO_MAX_BYTES + 64 * 1024:
+        raise too_large
+    try:
+        form = await request.form(max_files=1, max_fields=5)
+    except Exception as err:
+        raise AppError("VALIDATION_ERROR", invalid) from err
+    upload = next((v for v in form.values() if hasattr(v, "read") and hasattr(v, "filename")), None)
+    if upload is None:
+        raise AppError("VALIDATION_ERROR", invalid)
+    data = await upload.read(sw.SHOWCASE_VIDEO_MAX_BYTES + 1)
+    if len(data) > sw.SHOWCASE_VIDEO_MAX_BYTES:
+        raise too_large
+    return data
+
+
+@tenant.put(
+    "/whatsapp/showcase/video",
+    response_model=sw.BotResponse,
+    response_model_exclude_unset=True,
+    dependencies=INBOX,
+)
+async def put_video(ctx: Tenant, request: Request, db: Db):
+    return await service_for(request, db).set_showcase_video(ctx, await _read_video(request))
+
+
+@tenant.get("/whatsapp/showcase/video", dependencies=INBOX)
+async def get_video(ctx: Tenant, request: Request, db: Db):
+    video = await service_for(request, db).showcase_video(ctx)
+    return Response(
+        video,
+        media_type="video/mp4",
+        headers={"cache-control": "private, no-store", "x-content-type-options": "nosniff"},
+    )
+
+
+@tenant.delete(
+    "/whatsapp/showcase/video",
+    response_model=sw.BotResponse,
+    response_model_exclude_unset=True,
+    dependencies=INBOX,
+)
+async def delete_video(ctx: Tenant, request: Request, db: Db):
+    return await service_for(request, db).delete_showcase_video(ctx)

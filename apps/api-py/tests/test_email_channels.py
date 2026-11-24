@@ -15,7 +15,7 @@ from sqlalchemy import func, select, update
 from app.db import models
 from app.integrations.gmail import GmailMessage, MemoryGmailApi, to_message
 from app.integrations.whatsapp import sign_webhook_body
-from app.modules.whatsapp.service import WhatsAppService
+from app.modules.whatsapp.service import build_service
 from tests.conftest import add_member, business_url, make_settings, new_user, owner_with_business, req
 
 BUSINESS_ID = "22222222-3333-4444-8555-666666666666"
@@ -256,11 +256,7 @@ def gmail(app):
 
 @pytest.fixture
 def sync(app, db, gmail):
-    st = app.state
-    svc = WhatsAppService(
-        db, st.settings, st.whatsapp_sender, st.messenger_sender, st.email, st.gmail_api, st.bot
-    )
-    return svc.sync_gmail
+    return build_service(app.state, db).sync_gmail
 
 
 async def connect(client, label):

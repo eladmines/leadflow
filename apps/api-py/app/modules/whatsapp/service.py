@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from html import escape
-from typing import Any, Literal, Protocol
+from typing import Any, Literal
 
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -37,12 +37,16 @@ from app.errors import AppError
 from app.integrations.email import EmailMessage, EmailSender
 from app.integrations.gmail import GmailApi, GmailMessage, GmailOutgoing
 from app.integrations.messenger import MessengerSender
+from app.integrations.storage import StorageProvider
 from app.integrations.whatsapp import WhatsAppSender
 from app.modules.audit import add_audit
 from app.modules.channels.registry import ChannelRegistry
 from app.modules.leads.service import LeadService, attribution_columns, ensure_stages
 from app.modules.notifications.service import MANAGERS, notify_safe
+from app.modules.whatsapp import auto_reply as ar
 from app.modules.whatsapp import schemas as s
+from app.modules.whatsapp.bot import BookingBot, BotMessage
+from app.shared import whatsapp as sw
 from app.shared.attribution import parse_attribution
 from app.shared.phone import format_israeli_phone
 
@@ -155,17 +159,6 @@ class ReceiveResult:
     isNew: bool = False
 
 
-class Bot(Protocol):
-    async def handle(self, business_id: uuid.UUID, msg: dict[str, Any]) -> str: ...
-
-
-class NoBot:
-    """Until the booking bot is ported: it never handles a message."""
-
-    async def handle(self, business_id: uuid.UUID, msg: dict[str, Any]) -> str:
-        return "none"
-
-
 class WhatsAppService:
     def __init__(
         self,
@@ -175,12 +168,13 @@ class WhatsAppService:
         messenger: MessengerSender,
         email: EmailSender,
         gmail: GmailApi,
-        bot: Bot | None = None,
+        storage: StorageProvider,
     ) -> None:
         self.db, self.settings, self.email, self.gmail = db, settings, email, gmail
         self.leads = LeadService(db)
         self.channels = ChannelRegistry(db, settings, whatsapp, messenger)
-        self.bot: Bot = bot or NoBot()
+        self.storage = storage
+        self.bot = BookingBot(db, self.channels.whatsapp, storage, self.ensure_customer)
 
     async def connected_to(self, business_id: uuid.UUID) -> bool:
         return await self.channels.is_connected(business_id)
@@ -446,9 +440,7 @@ class WhatsAppService:
     async def _run_bot(self, business_id: uuid.UUID, msg: InboundMessage) -> str:
         """The booking bot's turn (D-102); a bot failure never loses the customer's message."""
         try:
-            return await self.bot.handle(
-                business_id, {"from": msg.from_, "body": msg.body, "replyId": msg.replyId}
-            )
+            return await self.bot.handle(business_id, BotMessage(msg.from_, msg.body, msg.replyId))
         except Exception as err:
             await self.db.rollback()
             log.error("whatsapp bot failed", extra={"errName": type(err).__name__})
@@ -837,6 +829,214 @@ class WhatsAppService:
         )
         await self.db.commit()
 
+    # -- booking bot, automatic replies and statuses -------------------------------------------------
+
+    async def nudge_abandoned_bookings(self, now: datetime | None = None) -> int:
+        """Showcase for booking conversations that stopped in the middle (D-106; background job)."""
+        return await self.bot.nudge_abandoned(now)
+
+    async def _business(self, business_id: uuid.UUID) -> Business:
+        return (
+            await self.db.execute(
+                select(Business).where(Business.id == business_id).execution_options(populate_existing=True)
+            )
+        ).scalar_one()
+
+    async def bot_settings(self, ctx: TenantContext) -> sw.BotResponse:
+        """Booking bot settings (D-102)."""
+        b = await self._business(ctx.business_id)
+        lang = ar.language_of(b.language)
+        statuses = ar.statuses_of(b.whatsapp_statuses, lang)
+        active = ar.active_of(b.whatsapp_active_status, statuses, datetime.now(UTC))
+        chosen = b.whatsapp_bot_flow if b.whatsapp_bot_flow in sw.BOT_FLOWS else None
+        sc = sw.parse_showcase(b.whatsapp_bot_showcase) or sw.disabled_showcase()
+        video = ar.showcase_video_of(b.whatsapp_bot_showcase)
+        return sw.BotResponse(
+            connected=await self.channels.is_connected(ctx.business_id, "whatsapp"),
+            settings=sw.BotSettingsOut(
+                mode=ar.mode_of(b.whatsapp_reply_mode),
+                autoReplyText=b.whatsapp_auto_reply_text,
+                autoReplyDefault=sw.auto_reply_default_for(lang),
+                statuses=ar.status_dtos(statuses),
+                questions=[sw.QuestionOut(**q) for q in ar.questions_of(b.whatsapp_questions)],
+                questionsEnabled=b.whatsapp_questions_enabled,
+                activeStatus=sw.ActiveStatus(id=active["status"]["id"], until=active["until"])
+                if active
+                else None,
+                enabled=b.whatsapp_bot_enabled,
+                autoConfirm=b.whatsapp_bot_auto_confirm,
+                texts=sw.parse_bot_texts(b.whatsapp_bot_texts),
+                holdDate=b.whatsapp_bot_hold_date,
+                flow=chosen or sw.bot_flow_for(b.industry),
+                flowIsDefault=chosen is None,
+                defaults=sw.bot_default_texts_for(b.industry, lang),
+                showcase=sw.ShowcaseOut(
+                    enabled=sc["enabled"],
+                    **({"text": sc["text"]} if sc.get("text") else {}),
+                    defaultText=sw.showcase_default_text(b.industry, lang),
+                    link=sc["link"],
+                    assetIds=sc["assetIds"],
+                    video=sw.VideoOut(sizeBytes=video["bytes"]) if video else None,
+                ),
+            ),
+        )
+
+    async def update_bot_settings(self, ctx: TenantContext, data: sw.BotSettingsRequest) -> sw.BotResponse:
+        b = await self._business(ctx.business_id)
+        current_mode = ar.mode_of(b.whatsapp_reply_mode)
+        # Older clients send only `enabled`: on = booking; off leaves the automatic reply as it was.
+        mode = data.mode or (
+            "booking" if data.enabled else ("off" if current_mode == "booking" else current_mode)
+        )
+        enabled = mode == "booking"
+        video = ar.showcase_video_of(b.whatsapp_bot_showcase)
+        dropped: list[str] = []
+        if data.statuses is not None:
+            merged, dropped = ar.merge_statuses(ar.statuses_of(b.whatsapp_statuses), data.statuses)
+            b.whatsapp_statuses = merged
+            if ar.active_of(b.whatsapp_active_status, merged, datetime.now(UTC)) is None:
+                b.whatsapp_active_status = None  # a deleted status can't stay on
+        if data.questions is not None:
+            b.whatsapp_questions = [q.model_dump() for q in data.questions]
+        if data.questionsEnabled is not None:
+            b.whatsapp_questions_enabled = data.questionsEnabled
+        b.whatsapp_reply_mode = mode
+        b.whatsapp_auto_reply_text = data.autoReplyText
+        b.whatsapp_bot_enabled = enabled
+        b.whatsapp_bot_auto_confirm = data.autoConfirm
+        b.whatsapp_bot_texts = data.texts.custom()
+        sc = data.showcase
+        showcase: dict[str, Any] = {"enabled": sc.enabled, "link": sc.link, "assetIds": sc.assetIds}
+        if sc.text:
+            showcase["text"] = sc.text
+        # The video is uploaded on its own (D-151); saving the settings keeps it.
+        if video:
+            showcase.update(videoKey=video["key"], videoBytes=video["bytes"])
+        b.whatsapp_bot_showcase = showcase
+        b.whatsapp_bot_flow = data.flow
+        b.whatsapp_bot_hold_date = data.holdDate
+        b.updated_at = now_ms()
+        if not enabled:  # leaving the booking bot ends conversations in progress
+            await self.db.execute(
+                delete(WhatsAppBotSession).where(WhatsAppBotSession.business_id == ctx.business_id)
+            )
+        # Only the business's own photos can go into the showcase.
+        if sc.assetIds:
+            from app.db.models import Asset
+
+            ids = {uuid.UUID(i) for i in sc.assetIds}
+            owned = (
+                await self.db.execute(
+                    select(func.count())
+                    .select_from(Asset)
+                    .where(Asset.id.in_(ids), Asset.business_id == ctx.business_id)
+                )
+            ).scalar_one()
+            if owned != len(ids):
+                await self.db.rollback()
+                raise AppError(
+                    "VALIDATION_ERROR", sw.M["imageMissing"], {"showcase.assetIds": sw.M["imageMissing"]}
+                )
+        add_audit(
+            self.db,
+            "whatsapp.bot_updated",
+            business_id=ctx.business_id,
+            actor_user_id=ctx.user_id,
+            entity_type="business",
+            entity_id=ctx.business_id,
+            # Which messages are custom, not their wording.
+            metadata={
+                "mode": mode,
+                "customAutoReply": data.autoReplyText is not None,
+                **({"statuses": len(data.statuses)} if data.statuses is not None else {}),
+                **({"questions": len(data.questions)} if data.questions is not None else {}),
+                **({"questionsEnabled": data.questionsEnabled} if data.questionsEnabled is not None else {}),
+                "enabled": enabled,
+                "autoConfirm": data.autoConfirm,
+                "customTexts": list(data.texts.custom()),
+                "showcase": sc.enabled,
+            },
+        )
+        await self.db.commit()
+        for key in dropped:  # videos of deleted statuses (after the change is saved)
+            try:
+                await self.storage.delete(key)
+            except Exception:
+                pass
+        return await self.bot_settings(ctx)
+
+    async def set_status(self, ctx: TenantContext, data: sw.SetStatusRequest) -> sw.BotResponse:
+        """Turns a status on (until a time, or until changed) or off (D-123)."""
+        b = await self._business(ctx.business_id)
+        if data.id and not any(x["id"] == data.id for x in ar.statuses_of(b.whatsapp_statuses)):
+            raise AppError("NOT_FOUND")
+        if data.until:
+            try:
+                until = datetime.fromisoformat(data.until.replace("Z", "+00:00"))
+            except ValueError as err:
+                raise AppError("VALIDATION_ERROR", "Invalid", {"until": "Invalid"}) from err
+            if until <= datetime.now(UTC):
+                raise AppError("VALIDATION_ERROR", sw.M["untilPast"], {"until": sw.M["untilPast"]})
+        b.whatsapp_active_status = {"id": data.id, "until": data.until} if data.id else None
+        b.updated_at = now_ms()
+        add_audit(
+            self.db,
+            "whatsapp.status_set",
+            business_id=ctx.business_id,
+            actor_user_id=ctx.user_id,
+            entity_type="business",
+            entity_id=ctx.business_id,
+            metadata={"status": data.id, "until": data.until},
+        )
+        await self.db.commit()
+        return await self.bot_settings(ctx)
+
+    async def set_showcase_video(self, ctx: TenantContext, video: bytes) -> sw.BotResponse:
+        """Stores the "meanwhile" video (D-151), replacing the old one."""
+        key = ar.check_showcase_video(ctx.business_id, video)
+        b = await self._business(ctx.business_id)
+        await self.storage.put(key, video, "video/mp4")
+        old = ar.showcase_video_of(b.whatsapp_bot_showcase)
+        b.whatsapp_bot_showcase = {
+            **ar.showcase_object(b.whatsapp_bot_showcase),
+            "videoKey": key,
+            "videoBytes": len(video),
+        }
+        b.updated_at = now_ms()
+        await self.db.commit()
+        if old:
+            try:
+                await self.storage.delete(old["key"])
+            except Exception:
+                pass
+        return await self.bot_settings(ctx)
+
+    async def delete_showcase_video(self, ctx: TenantContext) -> sw.BotResponse:
+        b = await self._business(ctx.business_id)
+        old = ar.showcase_video_of(b.whatsapp_bot_showcase)
+        if not old:
+            return await self.bot_settings(ctx)
+        rest = ar.showcase_object(b.whatsapp_bot_showcase)
+        rest.pop("videoKey", None)
+        rest.pop("videoBytes", None)
+        b.whatsapp_bot_showcase = rest
+        b.updated_at = now_ms()
+        await self.db.commit()
+        try:
+            await self.storage.delete(old["key"])
+        except Exception:
+            pass
+        return await self.bot_settings(ctx)
+
+    async def showcase_video(self, ctx: TenantContext) -> bytes:
+        """The video's bytes, for the owner's preview (this business's only)."""
+        b = await self._business(ctx.business_id)
+        v = ar.showcase_video_of(b.whatsapp_bot_showcase)
+        video = await self.storage.get(v["key"]) if v else None
+        if not video:
+            raise AppError("NOT_FOUND")
+        return video
+
     # -- threads and replies ---------------------------------------------------------------------
 
     async def thread(self, ctx: TenantContext, lead_id: str) -> s.ThreadResponse:
@@ -1187,3 +1387,11 @@ class WhatsAppService:
             log.error("email send failed", extra={"errName": type(err).__name__})
             raise AppError("INTERNAL_ERROR", M["sendFailed"]) from err
         return await self._store_out(ctx, number, contact_id, lead_id, f"o:{uuid.uuid4()}", text, subject)
+
+
+def build_service(app_state: Any, db: AsyncSession) -> WhatsAppService:
+    """The service wired from the app's settings, senders and storage."""
+    st = app_state
+    return WhatsAppService(
+        db, st.settings, st.whatsapp_sender, st.messenger_sender, st.email, st.gmail_api, st.storage
+    )

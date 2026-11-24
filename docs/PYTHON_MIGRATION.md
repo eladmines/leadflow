@@ -32,7 +32,7 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | domain expiry checks (RDAP and ISOC-IL WHOIS readers, reminders, daily watch) | done (18 tests) |
 | channels: Settings → Channels (WhatsApp token, Facebook/Instagram sign-in with signed state, Gmail sign-in, forwarding address, disconnect), sealed tokens (AES-256-GCM, same format as Node), Meta/Gmail/WhatsApp/Messenger clients with in-memory fakes | done (8 tests) |
 | whatsapp messaging: Meta webhooks (WhatsApp, Messenger, Instagram, signed), inbound email webhook, Gmail sync, leads from messages, replies with the 24-hour window, inbox and number classification, unified conversations (WhatsApp, Facebook, Instagram, email) | done (59 tests) |
-| whatsapp auto-reply and status settings, booking bot and its settings routes | |
+| whatsapp bot: booking bot (services → day → time, event requests, owner questions, call-backs, cancelling, showcase with photos and video, abandoned-conversation nudges), automatic replies and statuses, bot settings routes; default texts per industry and language generated from the TypeScript (`tools/gen_bot_data.mjs`) | done (42 tests) |
 | Alembic baseline, Docker/Render config, retire `apps/api`, generate web types from OpenAPI | |
 
 ## Running it
