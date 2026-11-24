@@ -23,7 +23,8 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | `/health`, `/health/db` | done |
 | auth: register, login, logout, me, verify email, password reset, profile, change password; audit log, argon2 (Node hashes verify unchanged), rate limit, email senders (memory/SMTP/Brevo/disabled) + account templates | done (57 tests) |
 | businesses (create with one-owned-business rule, onboarding, members, notification prefs); shared phone, industries, validators (phone port diff-tested against the TS original) | done (21 tests) |
-| team, notifications, tasks | next |
+| team: invitations (invite, re-invite, resend, revoke), preview/accept, role change, removal; invite email template | done (8 tests) |
+| notifications, tasks | next |
 | leads, customers import/export, reports | |
 | appointments, quotes, media | |
 | sites (render/publish), public site server, embed | |

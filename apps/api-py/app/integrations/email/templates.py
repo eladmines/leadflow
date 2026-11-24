@@ -158,3 +158,63 @@ def password_changed_template(full_name: str, reset_link: str, lang: Language = 
     )
     text = "\n".join([hello, changed, not_you, reset_link])
     return RenderedEmail(subject, html, text)
+
+
+def invite_template(
+    business_name: str,
+    inviter_name: str | None,
+    role_label: str,
+    link: str,
+    days: int,
+    lang: Language = "he",
+) -> RenderedEmail:
+    """F09: a team invitation."""
+    en = lang == "en"
+    subject = (
+        f"You're invited to join {business_name}'s team on SimpleCatch"
+        if en
+        else f"הוזמנת להצטרף לצוות של {business_name} ב-SimpleCatch"
+    )
+    if en:
+        who = f"{inviter_name or 'Someone'} invited you to join {business_name}"
+    else:
+        invited = f"{inviter_name} הזמין/ה אותך" if inviter_name else "הוזמנת"
+        who = f"{invited} להצטרף ל{business_name}"
+    role = f"Your role on the team: {role_label}." if en else f"התפקיד שלך בצוות: {role_label}."
+    role_html = (
+        f"Your role on the team: <strong>{_esc(role_label)}</strong>. "
+        "SimpleCatch keeps the business's enquiries, customers and website in one place."
+        if en
+        else f"התפקיד שלך בצוות: <strong>{_esc(role_label)}</strong>. "
+        "ב-SimpleCatch מנהלים את הפניות, הלקוחות והאתר של העסק במקום אחד."
+    )
+    valid = (
+        f"The invitation is valid for {days} days. To join, sign in (or sign up) with this email address."
+        if en
+        else f"ההזמנה תקפה ל-{days} ימים. כדי להצטרף צריך להתחבר (או להירשם) עם כתובת האימייל הזו."
+    )
+    ignore = (
+        "If you weren't expecting this invitation, you can ignore this email."
+        if en
+        else "אם לא ציפית להזמנה, אפשר להתעלם מהודעה זו."
+    )
+    html = _layout(
+        subject,
+        f"""{_h1(who)}
+<p style="margin:0 0 8px;">{role_html}</p>
+{_button(link, "Join the team" if en else "הצטרפות לצוות", lang)}
+<p style="margin:0 0 8px;">{valid}</p>
+<p style="margin:0;color:#6b7280;">{ignore}</p>""",
+        lang,
+    )
+    text = "\n".join(
+        [
+            f"{who} on SimpleCatch." if en else f"{who} ב-SimpleCatch.",
+            role,
+            "",
+            f"{'Join' if en else 'להצטרפות'}: {link}",
+            "",
+            valid,
+        ]
+    )
+    return RenderedEmail(subject, html, text)
