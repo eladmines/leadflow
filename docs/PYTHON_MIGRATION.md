@@ -34,7 +34,8 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | whatsapp messaging: Meta webhooks (WhatsApp, Messenger, Instagram, signed), inbound email webhook, Gmail sync, leads from messages, replies with the 24-hour window, inbox and number classification, unified conversations (WhatsApp, Facebook, Instagram, email) | done (59 tests) |
 | whatsapp bot: booking bot (services → day → time, event requests, owner questions, call-backs, cancelling, showcase with photos and video, abandoned-conversation nudges), automatic replies and statuses, bot settings routes; default texts per industry and language generated from the TypeScript (`tools/gen_bot_data.mjs`) | done (42 tests) |
 | Alembic baseline (the Prisma migrations in order; an empty database built with it matches the Prisma-built schema exactly: columns, indexes, constraints, enums, trigger; checked with `tools/compare_schemas.py`) | done |
-| Docker/Render config, retire `apps/api`, generate web types from OpenAPI | |
+| Deployment: `apps/api-py/Dockerfile` (web build + API in one image, one port), `scripts/prepare_db.py` (stamps a Prisma-migrated database at the baseline, then `alembic upgrade head`; tried on an empty and a Prisma-style database), `render.python.yaml` (not active until cutover), production config rules (APP_URL / RENDER_EXTERNAL_URL, FORM_TOKEN_SECRET, secure cookies, default web origin), a Python job in CI. The image itself was not built here (no access to the base images) | done |
+| Generate web types from OpenAPI, switch Render over (`render.python.yaml` → `render.yaml`), retire `apps/api` | |
 
 ## Database migrations
 Alembic (`apps/api-py/alembic`) replaces Prisma Migrate. Revision `0001` is the whole schema as the Prisma migrations built it.

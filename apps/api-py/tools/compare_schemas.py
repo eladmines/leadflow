@@ -1,12 +1,13 @@
+"""Compares two databases' schemas (columns, indexes, constraints, enums, triggers, functions),
+ignoring alembic's and Prisma's bookkeeping tables. Usage: PW=<password> python tools/compare_schemas.py <db_a> <db_b>
+Used to prove that `alembic upgrade head` on an empty database builds the same schema Prisma did."""
+
 import asyncio
 import os
 import sys
 
 import asyncpg
 
-"""Compares two databases' schemas (columns, indexes, constraints, enums, triggers, functions),
-ignoring alembic's and Prisma's bookkeeping tables. Usage: PW=<password> python tools/compare_schemas.py <db_a> <db_b>
-Used to prove that `alembic upgrade head` on an empty database builds the same schema Prisma did."""
 PW = os.environ["PW"]
 Q = {
     "columns": "select table_name,column_name,data_type,udt_name,is_nullable,column_default,character_maximum_length,datetime_precision from information_schema.columns where table_schema='public' and table_name not in ('_prisma_migrations','alembic_version') order by 1,2",

@@ -135,3 +135,27 @@ async def test_tenant_scope_and_permissions(app, client, db):
     ).status_code == 200
     forbidden = await client.post(f"{base}/owner-only", headers={**HEADERS, **cookie(emp_token)})
     assert forbidden.status_code == 403 and forbidden.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_production_config_fails_fast():
+    import pytest as _pytest
+    from pydantic import ValidationError
+
+    from app.config import Settings
+
+    base = {"DATABASE_URL": "postgresql://u:p@h/db", "NODE_ENV": "production"}
+    with _pytest.raises(ValidationError, match="APP_URL"):
+        Settings(**base, FORM_TOKEN_SECRET="x" * 32)
+    with _pytest.raises(ValidationError, match="FORM_TOKEN_SECRET"):
+        Settings(**base, APP_URL="https://app.example.com")
+    with _pytest.raises(ValidationError, match="COOKIE_SECURE"):
+        Settings(**base, APP_URL="https://a.example.com", FORM_TOKEN_SECRET="x" * 32, COOKIE_SECURE=False)
+    with _pytest.raises(ValidationError, match="memory"):
+        Settings(
+            **base, APP_URL="https://a.example.com", FORM_TOKEN_SECRET="x" * 32, EMAIL_TRANSPORT="memory"
+        )
+    ok = Settings(**base, RENDER_EXTERNAL_URL="https://leadflow.onrender.com", FORM_TOKEN_SECRET="x" * 32)
+    # Render's address stands in for APP_URL, and its origin is the allowed web origin.
+    assert ok.app_url == "https://leadflow.onrender.com"
+    assert ok.allowed_origins == {"https://leadflow.onrender.com"}
+    assert ok.cookie_secure is True

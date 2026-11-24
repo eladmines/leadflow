@@ -104,7 +104,7 @@ def create_app(
     app.middleware("http")(request_context)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.WEB_ORIGINS,
+        allow_origins=sorted(settings.allowed_origins),
         allow_credentials=True,
         allow_methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Content-Type", "X-Requested-With", "X-SimpleCatch-Locale"],

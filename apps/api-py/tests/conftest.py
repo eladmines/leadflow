@@ -64,7 +64,7 @@ async def clean_db(settings: Settings):
         rows = await conn.execute(
             text(
                 "SELECT tablename FROM pg_tables "
-                "WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'"
+                "WHERE schemaname = 'public' AND tablename NOT IN ('_prisma_migrations', 'alembic_version')"
             )
         )
         tables = ", ".join(f'"public"."{r[0]}"' for r in rows)

@@ -3,6 +3,7 @@
 import secrets
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,6 +16,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     WEB_ORIGINS: list[str] = []
     APP_URL: str | None = None
+    RENDER_EXTERNAL_URL: str | None = None  # Render's public address, used when APP_URL isn't set
     COOKIE_SECURE: bool | None = None
 
     # F01: authentication and email
@@ -110,6 +112,7 @@ class Settings(BaseSettings):
         "SMTP_USER",
         "SMTP_PASS",
         "APP_URL",
+        "RENDER_EXTERNAL_URL",
         "WHATSAPP_BUSINESS_ID",
         "WHATSAPP_PHONE_NUMBER_ID",
         "WHATSAPP_ACCESS_TOKEN",
@@ -130,6 +133,23 @@ class Settings(BaseSettings):
     @classmethod
     def _empty_is_unset(cls, v: object) -> object:
         return None if v == "" else v
+
+    @model_validator(mode="after")
+    def _production_rules(self) -> "Settings":
+        """Fails fast on a misconfigured deployment (same rules as the Node API)."""
+        if self.EMAIL_TRANSPORT == "brevo" and not self.BREVO_API_KEY:
+            raise ValueError("BREVO_API_KEY is required when EMAIL_TRANSPORT is 'brevo'")
+        if self.NODE_ENV != "production":
+            return self
+        if not (self.APP_URL or self.RENDER_EXTERNAL_URL):
+            raise ValueError("APP_URL is required in production")
+        if self.COOKIE_SECURE is False:
+            raise ValueError("COOKIE_SECURE must be true in production")
+        if "FORM_TOKEN_SECRET" not in self.model_fields_set:
+            raise ValueError("FORM_TOKEN_SECRET is required in production")
+        if self.EMAIL_TRANSPORT == "memory":
+            raise ValueError("EMAIL_TRANSPORT 'memory' is not allowed in production")
+        return self
 
     @model_validator(mode="after")
     def _channel_secrets_present(self) -> "Settings":
@@ -166,7 +186,7 @@ class Settings(BaseSettings):
 
     @property
     def app_url(self) -> str:
-        return self.APP_URL or "http://localhost:5173"
+        return self.APP_URL or self.RENDER_EXTERNAL_URL or "http://localhost:5173"
 
     @property
     def verification_on(self) -> bool:
@@ -181,7 +201,10 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins(self) -> set[str]:
-        return set(self.WEB_ORIGINS)
+        if self.WEB_ORIGINS:
+            return set(self.WEB_ORIGINS)
+        parts = urlsplit(self.app_url)
+        return {f"{parts.scheme}://{parts.netloc}"}
 
 
 @lru_cache
