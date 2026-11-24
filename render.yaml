@@ -20,8 +20,8 @@ services:
       pnpm --filter @simplecatch/web build &&
       (curl -LsSf https://astral.sh/uv/install.sh | UV_UNMANAGED_INSTALL="$PWD/.uv-bin" sh) &&
       cd apps/api-py &&
-      UV_PYTHON_INSTALL_DIR="$PWD/../../.uv-python" UV_PYTHON_PREFERENCE=only-managed
-      "$PWD/../../.uv-bin/uv" sync --frozen --no-dev
+      env -u UV_NO_MANAGED_PYTHON UV_PYTHON_DOWNLOADS=automatic UV_PYTHON_PREFERENCE=only-managed
+      UV_PYTHON_INSTALL_DIR="$PWD/../../.uv-python" "$PWD/../../.uv-bin/uv" sync --frozen --no-dev
     # The database is migrated on every start (a database the old Node API migrated is stamped at the
     # Alembic baseline first); then one server answers the API, the web app and the customer sites.
     startCommand: >-
