@@ -1,7 +1,7 @@
 {
  "components": {
   "schemas": {
-   "AboutSection": {
+   "AboutSection-Input": {
     "properties": {
      "body": {
       "title": "Body",
@@ -28,25 +28,11 @@
       "title": "Imageassetid"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
      },
      "title": {
       "title": "Title",
@@ -68,6 +54,65 @@
      "type",
      "title",
      "body"
+    ],
+    "title": "AboutSection",
+    "type": "object"
+   },
+   "AboutSection-Output": {
+    "properties": {
+     "body": {
+      "title": "Body",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "imageAlt": {
+      "default": "",
+      "title": "Imagealt",
+      "type": "string"
+     },
+     "imageAssetId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Imageassetid"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "about",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "body",
+     "imageAssetId",
+     "imageAlt"
     ],
     "title": "AboutSection",
     "type": "object"
@@ -1074,6 +1119,91 @@
       "type": "string"
      },
      "industry": {
+      "enum": [
+       "trades",
+       "beauty",
+       "studio",
+       "garage",
+       "events",
+       "catering",
+       "photo",
+       "therapy",
+       "tutoring",
+       "services",
+       "barber",
+       "nails",
+       "makeup",
+       "spa",
+       "tattoo",
+       "hairremoval",
+       "yoga",
+       "fitness",
+       "dance",
+       "martialarts",
+       "florist",
+       "designer",
+       "weddings",
+       "venue",
+       "rentals",
+       "bartender",
+       "bakery",
+       "restaurant",
+       "cafe",
+       "foodtruck",
+       "physio",
+       "psychology",
+       "nutrition",
+       "dental",
+       "alternative",
+       "vet",
+       "speech",
+       "optics",
+       "coaching",
+       "kids",
+       "music",
+       "languages",
+       "driving",
+       "electrician",
+       "plumber",
+       "painter",
+       "renovation",
+       "hvac",
+       "locksmith",
+       "carpentry",
+       "cleaning",
+       "moving",
+       "gardening",
+       "pestcontrol",
+       "handyman",
+       "security",
+       "solar",
+       "pool",
+       "aluminum",
+       "carwash",
+       "tires",
+       "motorcycle",
+       "towing",
+       "accounting",
+       "law",
+       "realestate",
+       "insurance",
+       "architecture",
+       "graphic",
+       "marketing",
+       "it",
+       "translation",
+       "printing",
+       "tailor",
+       "laundry",
+       "pets",
+       "travel",
+       "retail",
+       "jewelry",
+       "videography",
+       "childcare",
+       "eldercare",
+       "other"
+      ],
       "title": "Industry",
       "type": "string"
      },
@@ -1096,14 +1226,12 @@
      "openingHours": {
       "anyOf": [
        {
-        "additionalProperties": true,
-        "type": "object"
+        "$ref": "#/components/schemas/OpeningHours"
        },
        {
         "type": "null"
        }
-      ],
-      "title": "Openinghours"
+      ]
      },
      "phone": {
       "anyOf": [
@@ -1620,7 +1748,7 @@
     "title": "ConnectWhatsAppRequest",
     "type": "object"
    },
-   "ContactForm": {
+   "ContactForm-Input": {
     "description": "Lead form inside the contact section (F07).",
     "properties": {
      "askAppointment": {
@@ -1655,6 +1783,46 @@
      "askMessage",
      "buttonLabel",
      "successMessage"
+    ],
+    "title": "ContactForm",
+    "type": "object"
+   },
+   "ContactForm-Output": {
+    "description": "Lead form inside the contact section (F07).",
+    "properties": {
+     "askAppointment": {
+      "default": false,
+      "title": "Askappointment",
+      "type": "boolean"
+     },
+     "askEmail": {
+      "title": "Askemail",
+      "type": "boolean"
+     },
+     "askMessage": {
+      "title": "Askmessage",
+      "type": "boolean"
+     },
+     "buttonLabel": {
+      "title": "Buttonlabel",
+      "type": "string"
+     },
+     "enabled": {
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "successMessage": {
+      "title": "Successmessage",
+      "type": "string"
+     }
+    },
+    "required": [
+     "enabled",
+     "askEmail",
+     "askMessage",
+     "buttonLabel",
+     "successMessage",
+     "askAppointment"
     ],
     "title": "ContactForm",
     "type": "object"
@@ -1701,25 +1869,18 @@
     "title": "ContactOut",
     "type": "object"
    },
-   "ContactSection": {
+   "ContactSection-Input": {
     "properties": {
      "form": {
-      "$ref": "#/components/schemas/ContactForm"
+      "$ref": "#/components/schemas/ContactForm-Input"
      },
      "id": {
       "title": "Id",
       "type": "string"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "showAddress": {
       "title": "Showaddress",
@@ -1734,14 +1895,7 @@
       "type": "boolean"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
      },
      "subtitle": {
       "title": "Subtitle",
@@ -1770,6 +1924,66 @@
      "showPhone",
      "showAddress",
      "showHours"
+    ],
+    "title": "ContactSection",
+    "type": "object"
+   },
+   "ContactSection-Output": {
+    "properties": {
+     "form": {
+      "$ref": "#/components/schemas/ContactForm-Output"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "showAddress": {
+      "title": "Showaddress",
+      "type": "boolean"
+     },
+     "showHours": {
+      "title": "Showhours",
+      "type": "boolean"
+     },
+     "showPhone": {
+      "title": "Showphone",
+      "type": "boolean"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
+     },
+     "subtitle": {
+      "title": "Subtitle",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "contact",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "subtitle",
+     "showPhone",
+     "showAddress",
+     "showHours",
+     "form"
     ],
     "title": "ContactSection",
     "type": "object"
@@ -2281,7 +2495,7 @@
     "title": "Cta",
     "type": "object"
    },
-   "CtaSection": {
+   "CtaSection-Input": {
     "properties": {
      "buttonLabel": {
       "title": "Buttonlabel",
@@ -2292,25 +2506,57 @@
       "type": "string"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
+     },
+     "subtitle": {
+      "title": "Subtitle",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "cta",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "subtitle",
+     "buttonLabel"
+    ],
+    "title": "CtaSection",
+    "type": "object"
+   },
+   "CtaSection-Output": {
+    "properties": {
+     "buttonLabel": {
+      "title": "Buttonlabel",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
      },
      "subtitle": {
       "title": "Subtitle",
@@ -2963,7 +3209,7 @@
     "title": "FaqItem",
     "type": "object"
    },
-   "FaqSection": {
+   "FaqSection-Input": {
     "properties": {
      "id": {
       "title": "Id",
@@ -2977,25 +3223,11 @@
       "type": "array"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
      },
      "title": {
       "title": "Title",
@@ -3021,7 +3253,51 @@
     "title": "FaqSection",
     "type": "object"
    },
-   "GalleryItem": {
+   "FaqSection-Output": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/FaqItem"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "faq",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "items"
+    ],
+    "title": "FaqSection",
+    "type": "object"
+   },
+   "GalleryItem-Input": {
     "properties": {
      "assetId": {
       "title": "Assetid",
@@ -3039,7 +3315,26 @@
     "title": "GalleryItem",
     "type": "object"
    },
-   "GallerySection": {
+   "GalleryItem-Output": {
+    "properties": {
+     "assetId": {
+      "title": "Assetid",
+      "type": "string"
+     },
+     "caption": {
+      "default": "",
+      "title": "Caption",
+      "type": "string"
+     }
+    },
+    "required": [
+     "assetId",
+     "caption"
+    ],
+    "title": "GalleryItem",
+    "type": "object"
+   },
+   "GallerySection-Input": {
     "properties": {
      "id": {
       "title": "Id",
@@ -3047,31 +3342,61 @@
      },
      "items": {
       "items": {
-       "$ref": "#/components/schemas/GalleryItem"
+       "$ref": "#/components/schemas/GalleryItem-Input"
       },
       "title": "Items",
       "type": "array"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "gallery",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "items"
+    ],
+    "title": "GallerySection",
+    "type": "object"
+   },
+   "GallerySection-Output": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/GalleryItem-Output"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
      },
      "title": {
       "title": "Title",
@@ -3110,7 +3435,7 @@
     "title": "HTTPValidationError",
     "type": "object"
    },
-   "HeroSection": {
+   "HeroSection-Input": {
     "properties": {
      "buttonAction": {
       "enum": [
@@ -3140,36 +3465,15 @@
       "title": "Imageassetid"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "secondaryLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Secondarylabel"
+      "title": "Secondarylabel",
+      "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
      },
      "subtitle": {
       "title": "Subtitle",
@@ -3197,6 +3501,77 @@
      "subtitle",
      "buttonLabel",
      "buttonAction"
+    ],
+    "title": "HeroSection",
+    "type": "object"
+   },
+   "HeroSection-Output": {
+    "properties": {
+     "buttonAction": {
+      "enum": [
+       "call",
+       "contact"
+      ],
+      "title": "Buttonaction",
+      "type": "string"
+     },
+     "buttonLabel": {
+      "title": "Buttonlabel",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "imageAssetId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Imageassetid"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "secondaryLabel": {
+      "title": "Secondarylabel",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
+     },
+     "subtitle": {
+      "title": "Subtitle",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "hero",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "subtitle",
+     "buttonLabel",
+     "buttonAction",
+     "imageAssetId"
     ],
     "title": "HeroSection",
     "type": "object"
@@ -4455,7 +4830,7 @@
     "title": "PriceItem",
     "type": "object"
    },
-   "PricingSection": {
+   "PricingSection-Input": {
     "properties": {
      "id": {
       "title": "Id",
@@ -4469,29 +4844,64 @@
       "type": "array"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "note": {
       "title": "Note",
       "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "pricing",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "note",
+     "items"
+    ],
+    "title": "PricingSection",
+    "type": "object"
+   },
+   "PricingSection-Output": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/PriceItem"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "note": {
+      "title": "Note",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
      },
      "title": {
       "title": "Title",
@@ -5037,7 +5447,7 @@
     "properties": {
      "pages": {
       "items": {
-       "$ref": "#/components/schemas/SitePage"
+       "$ref": "#/components/schemas/SitePage-Input"
       },
       "title": "Pages",
       "type": "array"
@@ -5051,45 +5461,45 @@
       "items": {
        "discriminator": {
         "mapping": {
-         "about": "#/components/schemas/AboutSection",
-         "contact": "#/components/schemas/ContactSection",
-         "cta": "#/components/schemas/CtaSection",
-         "faq": "#/components/schemas/FaqSection",
-         "gallery": "#/components/schemas/GallerySection",
-         "hero": "#/components/schemas/HeroSection",
-         "pricing": "#/components/schemas/PricingSection",
-         "services": "#/components/schemas/ServicesSection",
-         "testimonials": "#/components/schemas/TestimonialsSection"
+         "about": "#/components/schemas/AboutSection-Input",
+         "contact": "#/components/schemas/ContactSection-Input",
+         "cta": "#/components/schemas/CtaSection-Input",
+         "faq": "#/components/schemas/FaqSection-Input",
+         "gallery": "#/components/schemas/GallerySection-Input",
+         "hero": "#/components/schemas/HeroSection-Input",
+         "pricing": "#/components/schemas/PricingSection-Input",
+         "services": "#/components/schemas/ServicesSection-Input",
+         "testimonials": "#/components/schemas/TestimonialsSection-Input"
         },
         "propertyName": "type"
        },
        "oneOf": [
         {
-         "$ref": "#/components/schemas/HeroSection"
+         "$ref": "#/components/schemas/HeroSection-Input"
         },
         {
-         "$ref": "#/components/schemas/AboutSection"
+         "$ref": "#/components/schemas/AboutSection-Input"
         },
         {
-         "$ref": "#/components/schemas/GallerySection"
+         "$ref": "#/components/schemas/GallerySection-Input"
         },
         {
-         "$ref": "#/components/schemas/ServicesSection"
+         "$ref": "#/components/schemas/ServicesSection-Input"
         },
         {
-         "$ref": "#/components/schemas/PricingSection"
+         "$ref": "#/components/schemas/PricingSection-Input"
         },
         {
-         "$ref": "#/components/schemas/TestimonialsSection"
+         "$ref": "#/components/schemas/TestimonialsSection-Input"
         },
         {
-         "$ref": "#/components/schemas/FaqSection"
+         "$ref": "#/components/schemas/FaqSection-Input"
         },
         {
-         "$ref": "#/components/schemas/ContactSection"
+         "$ref": "#/components/schemas/ContactSection-Input"
         },
         {
-         "$ref": "#/components/schemas/CtaSection"
+         "$ref": "#/components/schemas/CtaSection-Input"
         }
        ]
       },
@@ -5111,7 +5521,7 @@
       "type": "string"
      },
      "theme": {
-      "$ref": "#/components/schemas/Theme"
+      "$ref": "#/components/schemas/Theme-Input"
      }
     },
     "required": [
@@ -5175,105 +5585,124 @@
     "title": "SectionRow",
     "type": "object"
    },
-   "SectionStyle": {
+   "SectionStyle-Input": {
     "description": "Look of a section, chosen from the site palette (D-082). All optional = defaults.",
     "properties": {
      "align": {
-      "anyOf": [
-       {
-        "enum": [
-         "start",
-         "center"
-        ],
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+      "enum": [
+       "start",
+       "center"
       ],
-      "title": "Align"
+      "title": "Align",
+      "type": "string"
      },
      "bg": {
-      "anyOf": [
-       {
-        "enum": [
-         "auto",
-         "white",
-         "soft",
-         "brand",
-         "dark"
-        ],
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+      "enum": [
+       "auto",
+       "white",
+       "soft",
+       "brand",
+       "dark"
       ],
-      "title": "Bg"
+      "title": "Bg",
+      "type": "string"
      },
      "button": {
-      "anyOf": [
-       {
-        "enum": [
-         "solid",
-         "outline"
-        ],
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+      "enum": [
+       "solid",
+       "outline"
       ],
-      "title": "Button"
+      "title": "Button",
+      "type": "string"
      },
      "spacing": {
-      "anyOf": [
-       {
-        "enum": [
-         "compact",
-         "normal",
-         "airy"
-        ],
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+      "enum": [
+       "compact",
+       "normal",
+       "airy"
       ],
-      "title": "Spacing"
+      "title": "Spacing",
+      "type": "string"
      },
      "titleColor": {
-      "anyOf": [
-       {
-        "enum": [
-         "ink",
-         "brand",
-         "accent"
-        ],
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+      "enum": [
+       "ink",
+       "brand",
+       "accent"
       ],
-      "title": "Titlecolor"
+      "title": "Titlecolor",
+      "type": "string"
      },
      "titleSize": {
-      "anyOf": [
-       {
-        "enum": [
-         "normal",
-         "large"
-        ],
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+      "enum": [
+       "normal",
+       "large"
       ],
-      "title": "Titlesize"
+      "title": "Titlesize",
+      "type": "string"
      }
     },
+    "title": "SectionStyle",
+    "type": "object"
+   },
+   "SectionStyle-Output": {
+    "description": "Look of a section, chosen from the site palette (D-082). All optional = defaults.",
+    "properties": {
+     "align": {
+      "enum": [
+       "start",
+       "center"
+      ],
+      "title": "Align",
+      "type": "string"
+     },
+     "bg": {
+      "enum": [
+       "auto",
+       "white",
+       "soft",
+       "brand",
+       "dark"
+      ],
+      "title": "Bg",
+      "type": "string"
+     },
+     "button": {
+      "enum": [
+       "solid",
+       "outline"
+      ],
+      "title": "Button",
+      "type": "string"
+     },
+     "spacing": {
+      "enum": [
+       "compact",
+       "normal",
+       "airy"
+      ],
+      "title": "Spacing",
+      "type": "string"
+     },
+     "titleColor": {
+      "enum": [
+       "ink",
+       "brand",
+       "accent"
+      ],
+      "title": "Titlecolor",
+      "type": "string"
+     },
+     "titleSize": {
+      "enum": [
+       "normal",
+       "large"
+      ],
+      "title": "Titlesize",
+      "type": "string"
+     }
+    },
+    "required": [],
     "title": "SectionStyle",
     "type": "object"
    },
@@ -5476,7 +5905,7 @@
     "title": "ServiceResponse",
     "type": "object"
    },
-   "ServicesSection": {
+   "ServicesSection-Input": {
     "properties": {
      "id": {
       "title": "Id",
@@ -5490,25 +5919,55 @@
       "type": "array"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "services",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "items"
+    ],
+    "title": "ServicesSection",
+    "type": "object"
+   },
+   "ServicesSection-Output": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/ServiceItem"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
      },
      "title": {
       "title": "Title",
@@ -5681,8 +6140,7 @@
      },
      "pages": {
       "items": {
-       "additionalProperties": true,
-       "type": "object"
+       "$ref": "#/components/schemas/SitePage-Output"
       },
       "title": "Pages",
       "type": "array"
@@ -5729,16 +6187,55 @@
      },
      "sections": {
       "items": {
-       "additionalProperties": true,
-       "type": "object"
+       "discriminator": {
+        "mapping": {
+         "about": "#/components/schemas/AboutSection-Output",
+         "contact": "#/components/schemas/ContactSection-Output",
+         "cta": "#/components/schemas/CtaSection-Output",
+         "faq": "#/components/schemas/FaqSection-Output",
+         "gallery": "#/components/schemas/GallerySection-Output",
+         "hero": "#/components/schemas/HeroSection-Output",
+         "pricing": "#/components/schemas/PricingSection-Output",
+         "services": "#/components/schemas/ServicesSection-Output",
+         "testimonials": "#/components/schemas/TestimonialsSection-Output"
+        },
+        "propertyName": "type"
+       },
+       "oneOf": [
+        {
+         "$ref": "#/components/schemas/HeroSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/AboutSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/GallerySection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/ServicesSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/PricingSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/TestimonialsSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/FaqSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/ContactSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/CtaSection-Output"
+        }
+       ]
       },
       "title": "Sections",
       "type": "array"
      },
      "seo": {
-      "additionalProperties": true,
-      "title": "Seo",
-      "type": "object"
+      "$ref": "#/components/schemas/Seo"
      },
      "status": {
       "enum": [
@@ -5761,13 +6258,18 @@
       "title": "Subdomain"
      },
      "templateKey": {
+      "enum": [
+       "trades",
+       "beauty",
+       "garage",
+       "clinic",
+       "food"
+      ],
       "title": "Templatekey",
       "type": "string"
      },
      "theme": {
-      "additionalProperties": true,
-      "title": "Theme",
-      "type": "object"
+      "$ref": "#/components/schemas/Theme-Output"
      },
      "updatedAt": {
       "title": "Updatedat",
@@ -5793,7 +6295,7 @@
     "title": "SiteOut",
     "type": "object"
    },
-   "SitePage": {
+   "SitePage-Input": {
     "properties": {
      "id": {
       "title": "Id",
@@ -5807,45 +6309,127 @@
       "items": {
        "discriminator": {
         "mapping": {
-         "about": "#/components/schemas/AboutSection",
-         "contact": "#/components/schemas/ContactSection",
-         "cta": "#/components/schemas/CtaSection",
-         "faq": "#/components/schemas/FaqSection",
-         "gallery": "#/components/schemas/GallerySection",
-         "hero": "#/components/schemas/HeroSection",
-         "pricing": "#/components/schemas/PricingSection",
-         "services": "#/components/schemas/ServicesSection",
-         "testimonials": "#/components/schemas/TestimonialsSection"
+         "about": "#/components/schemas/AboutSection-Input",
+         "contact": "#/components/schemas/ContactSection-Input",
+         "cta": "#/components/schemas/CtaSection-Input",
+         "faq": "#/components/schemas/FaqSection-Input",
+         "gallery": "#/components/schemas/GallerySection-Input",
+         "hero": "#/components/schemas/HeroSection-Input",
+         "pricing": "#/components/schemas/PricingSection-Input",
+         "services": "#/components/schemas/ServicesSection-Input",
+         "testimonials": "#/components/schemas/TestimonialsSection-Input"
         },
         "propertyName": "type"
        },
        "oneOf": [
         {
-         "$ref": "#/components/schemas/HeroSection"
+         "$ref": "#/components/schemas/HeroSection-Input"
         },
         {
-         "$ref": "#/components/schemas/AboutSection"
+         "$ref": "#/components/schemas/AboutSection-Input"
         },
         {
-         "$ref": "#/components/schemas/GallerySection"
+         "$ref": "#/components/schemas/GallerySection-Input"
         },
         {
-         "$ref": "#/components/schemas/ServicesSection"
+         "$ref": "#/components/schemas/ServicesSection-Input"
         },
         {
-         "$ref": "#/components/schemas/PricingSection"
+         "$ref": "#/components/schemas/PricingSection-Input"
         },
         {
-         "$ref": "#/components/schemas/TestimonialsSection"
+         "$ref": "#/components/schemas/TestimonialsSection-Input"
         },
         {
-         "$ref": "#/components/schemas/FaqSection"
+         "$ref": "#/components/schemas/FaqSection-Input"
         },
         {
-         "$ref": "#/components/schemas/ContactSection"
+         "$ref": "#/components/schemas/ContactSection-Input"
         },
         {
-         "$ref": "#/components/schemas/CtaSection"
+         "$ref": "#/components/schemas/CtaSection-Input"
+        }
+       ]
+      },
+      "title": "Sections",
+      "type": "array"
+     },
+     "seo": {
+      "$ref": "#/components/schemas/Seo"
+     },
+     "slug": {
+      "title": "Slug",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "slug",
+     "title",
+     "inMenu",
+     "seo",
+     "sections"
+    ],
+    "title": "SitePage",
+    "type": "object"
+   },
+   "SitePage-Output": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "inMenu": {
+      "title": "Inmenu",
+      "type": "boolean"
+     },
+     "sections": {
+      "items": {
+       "discriminator": {
+        "mapping": {
+         "about": "#/components/schemas/AboutSection-Output",
+         "contact": "#/components/schemas/ContactSection-Output",
+         "cta": "#/components/schemas/CtaSection-Output",
+         "faq": "#/components/schemas/FaqSection-Output",
+         "gallery": "#/components/schemas/GallerySection-Output",
+         "hero": "#/components/schemas/HeroSection-Output",
+         "pricing": "#/components/schemas/PricingSection-Output",
+         "services": "#/components/schemas/ServicesSection-Output",
+         "testimonials": "#/components/schemas/TestimonialsSection-Output"
+        },
+        "propertyName": "type"
+       },
+       "oneOf": [
+        {
+         "$ref": "#/components/schemas/HeroSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/AboutSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/GallerySection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/ServicesSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/PricingSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/TestimonialsSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/FaqSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/ContactSection-Output"
+        },
+        {
+         "$ref": "#/components/schemas/CtaSection-Output"
         }
        ]
       },
@@ -6197,7 +6781,7 @@
     "title": "TestimonialItem",
     "type": "object"
    },
-   "TestimonialsSection": {
+   "TestimonialsSection-Input": {
     "properties": {
      "id": {
       "title": "Id",
@@ -6211,25 +6795,11 @@
       "type": "array"
      },
      "navLabel": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Navlabel"
+      "title": "Navlabel",
+      "type": "string"
      },
      "style": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/SectionStyle"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/SectionStyle-Input"
      },
      "title": {
       "title": "Title",
@@ -6255,7 +6825,51 @@
     "title": "TestimonialsSection",
     "type": "object"
    },
-   "Theme": {
+   "TestimonialsSection-Output": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/TestimonialItem"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "navLabel": {
+      "title": "Navlabel",
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/components/schemas/SectionStyle-Output"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "type": {
+      "const": "testimonials",
+      "title": "Type",
+      "type": "string"
+     },
+     "visible": {
+      "title": "Visible",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "visible",
+     "type",
+     "title",
+     "items"
+    ],
+    "title": "TestimonialsSection",
+    "type": "object"
+   },
+   "Theme-Input": {
     "properties": {
      "custom": {
       "anyOf": [
@@ -6278,29 +6892,15 @@
       "type": "string"
      },
      "labels": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/ThemeLabels"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "$ref": "#/components/schemas/ThemeLabels-Input"
      },
      "language": {
-      "anyOf": [
-       {
-        "enum": [
-         "he",
-         "en"
-        ],
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+      "enum": [
+       "he",
+       "en"
       ],
-      "title": "Language"
+      "title": "Language",
+      "type": "string"
      },
      "logoAssetId": {
       "anyOf": [
@@ -6333,31 +6933,40 @@
     "title": "Theme",
     "type": "object"
    },
-   "ThemeLabels": {
+   "Theme-Output": {
     "properties": {
-     "cardLink": {
+     "custom": {
       "anyOf": [
        {
-        "type": "string"
+        "$ref": "#/components/schemas/CustomColors"
        },
        {
         "type": "null"
        }
-      ],
-      "title": "Cardlink"
+      ]
      },
-     "mobileCall": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
+     "font": {
+      "enum": [
+       "rubik",
+       "heebo",
+       "assistant",
+       "frank"
       ],
-      "title": "Mobilecall"
+      "title": "Font",
+      "type": "string"
      },
-     "mobileContact": {
+     "labels": {
+      "$ref": "#/components/schemas/ThemeLabels-Output"
+     },
+     "language": {
+      "enum": [
+       "he",
+       "en"
+      ],
+      "title": "Language",
+      "type": "string"
+     },
+     "logoAssetId": {
       "anyOf": [
        {
         "type": "string"
@@ -6366,9 +6975,64 @@
         "type": "null"
        }
       ],
-      "title": "Mobilecontact"
+      "title": "Logoassetid"
+     },
+     "palette": {
+      "enum": [
+       "teal",
+       "rose",
+       "navy",
+       "forest",
+       "plum",
+       "graphite"
+      ],
+      "title": "Palette",
+      "type": "string"
      }
     },
+    "required": [
+     "palette",
+     "custom",
+     "font",
+     "logoAssetId"
+    ],
+    "title": "Theme",
+    "type": "object"
+   },
+   "ThemeLabels-Input": {
+    "properties": {
+     "cardLink": {
+      "title": "Cardlink",
+      "type": "string"
+     },
+     "mobileCall": {
+      "title": "Mobilecall",
+      "type": "string"
+     },
+     "mobileContact": {
+      "title": "Mobilecontact",
+      "type": "string"
+     }
+    },
+    "title": "ThemeLabels",
+    "type": "object"
+   },
+   "ThemeLabels-Output": {
+    "properties": {
+     "cardLink": {
+      "title": "Cardlink",
+      "type": "string"
+     },
+     "mobileCall": {
+      "title": "Mobilecall",
+      "type": "string"
+     },
+     "mobileContact": {
+      "title": "Mobilecontact",
+      "type": "string"
+     }
+    },
+    "required": [],
     "title": "ThemeLabels",
     "type": "object"
    },

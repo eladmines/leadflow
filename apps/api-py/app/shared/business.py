@@ -211,11 +211,11 @@ class NotificationPrefs(BaseModel):
 class BusinessDto(BaseModel):
     id: str
     name: str
-    industry: str
+    industry: Literal[INDUSTRIES]  # type: ignore[valid-type]
     phone: str | None
     address: str | None
     serviceAreas: list[str]
-    openingHours: dict[str, Any] | None
+    openingHours: OpeningHours | None
     websiteUrl: str | None
     timezone: str
     language: Language

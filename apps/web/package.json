@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "api:types": "openapi-typescript ../api-py/openapi.json -o src/api/generated.ts"
+    "api:types": "openapi-typescript ../api-py/openapi.json -o src/api/generated.ts --default-non-nullable=false"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

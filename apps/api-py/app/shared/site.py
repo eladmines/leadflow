@@ -114,15 +114,43 @@ def _id(v: Any) -> str:
 Id = Annotated[str, BeforeValidator(_id)]
 
 
+def _site_schema(schema: dict[str, Any], cls: type[BaseModel]) -> None:
+    """The keys that are left out when unset are optional and never null in the response schema."""
+    omitted = getattr(cls, "_omit_when_unset", frozenset()) - getattr(cls, "_nullable_in_schema", frozenset())
+    required = schema.get("required", [])
+    for name in omitted:
+        field = cls.model_fields.get(name)
+        key = (field.alias or name) if field else name
+        if key in required:
+            required.remove(key)
+        prop = schema.get("properties", {}).get(key)
+        any_of = prop.get("anyOf") if prop else None
+        if any_of:
+            rest = [x for x in any_of if x != {"type": "null"}]
+            if len(rest) == 1:
+                prop.pop("anyOf")
+                prop.update(rest[0])
+            else:
+                prop["anyOf"] = rest
+
+
 class SiteModel(BaseModel):
     """Optional keys that were absent are omitted again when dumped (Zod's `.optional()`), while
-    defaults and explicit nulls are kept."""
+    defaults and explicit nulls are kept (so, in the response schema, defaulted fields are required)."""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(
+        extra="ignore", json_schema_serialization_defaults_required=True, json_schema_extra=_site_schema
+    )
     _omit_when_unset: ClassVar[frozenset[str]] = frozenset()
+    _nullable_in_schema: ClassVar[frozenset[str]] = frozenset()
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, core_schema: Any, handler: Any) -> Any:
+        # Describe the fields, not the opaque custom serializer below.
+        return handler({k: v for k, v in core_schema.items() if k != "serialization"})
 
     @model_serializer(mode="wrap")
-    def _serialize(self, handler: Any) -> dict[str, Any]:
+    def _serialize(self, handler: Any) -> Any:
         data = handler(self)
         for key in self._omit_when_unset:
             if data.get(key) is None and key not in self.model_fields_set:
@@ -467,6 +495,7 @@ class ThemeLabels(SiteModel):
 
 class Theme(SiteModel):
     _omit_when_unset = frozenset({"language", "custom", "labels"})
+    _nullable_in_schema = frozenset({"custom"})  # the web may send null to clear it
     language: Literal["he", "en"] | None = None  # customer website language (D-142); unset = Hebrew
     palette: PaletteKey
     custom: CustomColors | None = None  # owner-chosen colours replace the palette's (D-083)

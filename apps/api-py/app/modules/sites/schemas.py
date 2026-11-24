@@ -1,8 +1,10 @@
 """Site API response shapes (packages/shared/src/site.ts)."""
 
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel
+
+from app.shared.site import Section, Seo, SitePage, Theme
 
 
 class PublishedVersionOut(BaseModel):
@@ -19,11 +21,11 @@ class SiteOut(BaseModel):
     publicDomain: str  # host suffix shown next to the subdomain field
     publicPrefix: str | None  # set when sites live under a path instead (D-119)
     published: PublishedVersionOut | None
-    templateKey: str
-    theme: dict[str, Any]
-    seo: dict[str, Any]
-    sections: list[dict[str, Any]]
-    pages: list[dict[str, Any]]
+    templateKey: Literal["trades", "beauty", "garage", "clinic", "food"]
+    theme: Theme
+    seo: Seo
+    sections: list[Section]
+    pages: list[SitePage]
     revision: int  # optimistic-locking counter: every successful draft save increments it
     status: Literal["DRAFT", "PUBLISHED", "SUSPENDED"]
     updatedAt: str

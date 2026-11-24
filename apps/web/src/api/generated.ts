@@ -1670,7 +1670,33 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** AboutSection */
-        AboutSection: {
+        "AboutSection-Input": {
+            /** Body */
+            body: string;
+            /** Id */
+            id: string;
+            /**
+             * Imagealt
+             * @default
+             */
+            imageAlt?: string;
+            /** Imageassetid */
+            imageAssetId?: string | null;
+            /** Navlabel */
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "about";
+            /** Visible */
+            visible: boolean;
+        };
+        /** AboutSection */
+        "AboutSection-Output": {
             /** Body */
             body: string;
             /** Id */
@@ -1681,10 +1707,10 @@ export interface components {
              */
             imageAlt: string;
             /** Imageassetid */
-            imageAssetId?: string | null;
+            imageAssetId: string | null;
             /** Navlabel */
-            navLabel?: string | null;
-            style?: components["schemas"]["SectionStyle"] | null;
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Title */
             title: string;
             /**
@@ -1734,7 +1760,7 @@ export interface components {
              * Text
              * @default
              */
-            text: string;
+            text?: string;
         };
         /** AppointmentListResponse */
         AppointmentListResponse: {
@@ -1918,12 +1944,12 @@ export interface components {
              * Id
              * @default
              */
-            id: string;
+            id?: string;
             /**
              * Text
              * @default
              */
-            text: string;
+            text?: string;
         };
         /** BotResponse */
         BotResponse: {
@@ -1980,7 +2006,7 @@ export interface components {
              * Holddate
              * @default false
              */
-            holdDate: boolean;
+            holdDate?: boolean;
             /** Mode */
             mode?: ("off" | "auto_reply" | "booking") | null;
             /** Questions */
@@ -2034,8 +2060,11 @@ export interface components {
             createdAt: string;
             /** Id */
             id: string;
-            /** Industry */
-            industry: string;
+            /**
+             * Industry
+             * @enum {string}
+             */
+            industry: "trades" | "beauty" | "studio" | "garage" | "events" | "catering" | "photo" | "therapy" | "tutoring" | "services" | "barber" | "nails" | "makeup" | "spa" | "tattoo" | "hairremoval" | "yoga" | "fitness" | "dance" | "martialarts" | "florist" | "designer" | "weddings" | "venue" | "rentals" | "bartender" | "bakery" | "restaurant" | "cafe" | "foodtruck" | "physio" | "psychology" | "nutrition" | "dental" | "alternative" | "vet" | "speech" | "optics" | "coaching" | "kids" | "music" | "languages" | "driving" | "electrician" | "plumber" | "painter" | "renovation" | "hvac" | "locksmith" | "carpentry" | "cleaning" | "moving" | "gardening" | "pestcontrol" | "handyman" | "security" | "solar" | "pool" | "aluminum" | "carwash" | "tires" | "motorcycle" | "towing" | "accounting" | "law" | "realestate" | "insurance" | "architecture" | "graphic" | "marketing" | "it" | "translation" | "printing" | "tailor" | "laundry" | "pets" | "travel" | "retail" | "jewelry" | "videography" | "childcare" | "eldercare" | "other";
             /**
              * Language
              * @enum {string}
@@ -2045,10 +2074,7 @@ export interface components {
             name: string;
             /** Onboardingstep */
             onboardingStep: number;
-            /** Openinghours */
-            openingHours: {
-                [key: string]: unknown;
-            } | null;
+            openingHours: components["schemas"]["OpeningHours"] | null;
             /** Phone */
             phone: string | null;
             /**
@@ -2133,12 +2159,12 @@ export interface components {
              * Currentpassword
              * @default
              */
-            currentPassword: string;
+            currentPassword?: string;
             /**
              * Newpassword
              * @default
              */
-            newPassword: string;
+            newPassword?: string;
         };
         /** ChangeTemplateRequest */
         ChangeTemplateRequest: {
@@ -2225,18 +2251,39 @@ export interface components {
              * Accesstoken
              * @default
              */
-            accessToken: string;
+            accessToken?: string;
             /**
              * Phonenumberid
              * @default
              */
-            phoneNumberId: string;
+            phoneNumberId?: string;
         };
         /**
          * ContactForm
          * @description Lead form inside the contact section (F07).
          */
-        ContactForm: {
+        "ContactForm-Input": {
+            /**
+             * Askappointment
+             * @default false
+             */
+            askAppointment?: boolean;
+            /** Askemail */
+            askEmail: boolean;
+            /** Askmessage */
+            askMessage: boolean;
+            /** Buttonlabel */
+            buttonLabel: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Successmessage */
+            successMessage: string;
+        };
+        /**
+         * ContactForm
+         * @description Lead form inside the contact section (F07).
+         */
+        "ContactForm-Output": {
             /**
              * Askappointment
              * @default false
@@ -2265,19 +2312,45 @@ export interface components {
             phone: string | null;
         };
         /** ContactSection */
-        ContactSection: {
-            form?: components["schemas"]["ContactForm"];
+        "ContactSection-Input": {
+            form?: components["schemas"]["ContactForm-Input"];
             /** Id */
             id: string;
             /** Navlabel */
-            navLabel?: string | null;
+            navLabel?: string;
             /** Showaddress */
             showAddress: boolean;
             /** Showhours */
             showHours: boolean;
             /** Showphone */
             showPhone: boolean;
-            style?: components["schemas"]["SectionStyle"] | null;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Subtitle */
+            subtitle: string;
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "contact";
+            /** Visible */
+            visible: boolean;
+        };
+        /** ContactSection */
+        "ContactSection-Output": {
+            form: components["schemas"]["ContactForm-Output"];
+            /** Id */
+            id: string;
+            /** Navlabel */
+            navLabel?: string;
+            /** Showaddress */
+            showAddress: boolean;
+            /** Showhours */
+            showHours: boolean;
+            /** Showphone */
+            showPhone: boolean;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Subtitle */
             subtitle: string;
             /** Title */
@@ -2366,18 +2439,18 @@ export interface components {
              * Industry
              * @default
              */
-            industry: string;
+            industry?: string;
             /**
              * Language
              * @default he
              * @enum {string}
              */
-            language: "he" | "en";
+            language?: "he" | "en";
             /**
              * Name
              * @default
              */
-            name: string;
+            name?: string;
         };
         /**
          * CreateLeadRequest
@@ -2394,7 +2467,7 @@ export interface components {
              * Name
              * @default
              */
-            name: string;
+            name?: string;
             /** Ownerid */
             ownerId?: string | null;
             /** Phone */
@@ -2408,7 +2481,7 @@ export interface components {
              * Discount
              * @default 0
              */
-            discount: number;
+            discount?: number;
             /** Items */
             items?: components["schemas"]["QuoteItem"][];
             /**
@@ -2420,19 +2493,19 @@ export interface components {
              * Notes
              * @default
              */
-            notes: string;
+            notes?: string;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /** Validuntil */
             validUntil?: string | null;
             /**
              * Vatrate
              * @default 18
              */
-            vatRate: number;
+            vatRate?: number;
         };
         /** CreateSiteRequest */
         CreateSiteRequest: {
@@ -2461,12 +2534,12 @@ export interface components {
              * Remind
              * @default true
              */
-            remind: boolean;
+            remind?: boolean;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
         };
         /** Cta */
         Cta: {
@@ -2476,14 +2549,35 @@ export interface components {
             name: string;
         };
         /** CtaSection */
-        CtaSection: {
+        "CtaSection-Input": {
             /** Buttonlabel */
             buttonLabel: string;
             /** Id */
             id: string;
             /** Navlabel */
-            navLabel?: string | null;
-            style?: components["schemas"]["SectionStyle"] | null;
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Subtitle */
+            subtitle: string;
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "cta";
+            /** Visible */
+            visible: boolean;
+        };
+        /** CtaSection */
+        "CtaSection-Output": {
+            /** Buttonlabel */
+            buttonLabel: string;
+            /** Id */
+            id: string;
+            /** Navlabel */
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Subtitle */
             subtitle: string;
             /** Title */
@@ -2547,12 +2641,12 @@ export interface components {
              * Name
              * @default
              */
-            name: string;
+            name?: string;
             /**
              * Phone
              * @default
              */
-            phone: string;
+            phone?: string;
         };
         /** CustomerListResponse */
         CustomerListResponse: {
@@ -2695,14 +2789,33 @@ export interface components {
             question: string;
         };
         /** FaqSection */
-        FaqSection: {
+        "FaqSection-Input": {
             /** Id */
             id: string;
             /** Items */
             items: components["schemas"]["FaqItem"][];
             /** Navlabel */
-            navLabel?: string | null;
-            style?: components["schemas"]["SectionStyle"] | null;
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "faq";
+            /** Visible */
+            visible: boolean;
+        };
+        /** FaqSection */
+        "FaqSection-Output": {
+            /** Id */
+            id: string;
+            /** Items */
+            items: components["schemas"]["FaqItem"][];
+            /** Navlabel */
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Title */
             title: string;
             /**
@@ -2714,7 +2827,17 @@ export interface components {
             visible: boolean;
         };
         /** GalleryItem */
-        GalleryItem: {
+        "GalleryItem-Input": {
+            /** Assetid */
+            assetId: string;
+            /**
+             * Caption
+             * @default
+             */
+            caption?: string;
+        };
+        /** GalleryItem */
+        "GalleryItem-Output": {
             /** Assetid */
             assetId: string;
             /**
@@ -2724,14 +2847,33 @@ export interface components {
             caption: string;
         };
         /** GallerySection */
-        GallerySection: {
+        "GallerySection-Input": {
             /** Id */
             id: string;
             /** Items */
-            items: components["schemas"]["GalleryItem"][];
+            items: components["schemas"]["GalleryItem-Input"][];
             /** Navlabel */
-            navLabel?: string | null;
-            style?: components["schemas"]["SectionStyle"] | null;
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "gallery";
+            /** Visible */
+            visible: boolean;
+        };
+        /** GallerySection */
+        "GallerySection-Output": {
+            /** Id */
+            id: string;
+            /** Items */
+            items: components["schemas"]["GalleryItem-Output"][];
+            /** Navlabel */
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Title */
             title: string;
             /**
@@ -2748,7 +2890,7 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /** HeroSection */
-        HeroSection: {
+        "HeroSection-Input": {
             /**
              * Buttonaction
              * @enum {string}
@@ -2761,10 +2903,40 @@ export interface components {
             /** Imageassetid */
             imageAssetId?: string | null;
             /** Navlabel */
-            navLabel?: string | null;
+            navLabel?: string;
             /** Secondarylabel */
-            secondaryLabel?: string | null;
-            style?: components["schemas"]["SectionStyle"] | null;
+            secondaryLabel?: string;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Subtitle */
+            subtitle: string;
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "hero";
+            /** Visible */
+            visible: boolean;
+        };
+        /** HeroSection */
+        "HeroSection-Output": {
+            /**
+             * Buttonaction
+             * @enum {string}
+             */
+            buttonAction: "call" | "contact";
+            /** Buttonlabel */
+            buttonLabel: string;
+            /** Id */
+            id: string;
+            /** Imageassetid */
+            imageAssetId: string | null;
+            /** Navlabel */
+            navLabel?: string;
+            /** Secondarylabel */
+            secondaryLabel?: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Subtitle */
             subtitle: string;
             /** Title */
@@ -2905,12 +3077,12 @@ export interface components {
              * Email
              * @default
              */
-            email: string;
+            email?: string;
             /**
              * Role
              * @default
              */
-            role: string;
+            role?: string;
         };
         /**
          * InviteTokenRequest
@@ -2921,7 +3093,7 @@ export interface components {
              * Token
              * @default
              */
-            token: string;
+            token?: string;
         };
         /** ItemOut */
         ItemOut: {
@@ -3035,12 +3207,12 @@ export interface components {
              * Email
              * @default
              */
-            email: string;
+            email?: string;
             /**
              * Password
              * @default
              */
-            password: string;
+            password?: string;
         };
         /**
          * MarkReadRequest
@@ -3167,12 +3339,12 @@ export interface components {
              * Newpassword
              * @default
              */
-            newPassword: string;
+            newPassword?: string;
             /**
              * Token
              * @default
              */
-            token: string;
+            token?: string;
         };
         /** PasswordResetRequest */
         PasswordResetRequest: {
@@ -3180,7 +3352,7 @@ export interface components {
              * Email
              * @default
              */
-            email: string;
+            email?: string;
         };
         /** PauseBotRequest */
         PauseBotRequest: {
@@ -3249,16 +3421,37 @@ export interface components {
             price: string;
         };
         /** PricingSection */
-        PricingSection: {
+        "PricingSection-Input": {
             /** Id */
             id: string;
             /** Items */
             items: components["schemas"]["PriceItem"][];
             /** Navlabel */
-            navLabel?: string | null;
+            navLabel?: string;
             /** Note */
             note: string;
-            style?: components["schemas"]["SectionStyle"] | null;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "pricing";
+            /** Visible */
+            visible: boolean;
+        };
+        /** PricingSection */
+        "PricingSection-Output": {
+            /** Id */
+            id: string;
+            /** Items */
+            items: components["schemas"]["PriceItem"][];
+            /** Navlabel */
+            navLabel?: string;
+            /** Note */
+            note: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Title */
             title: string;
             /**
@@ -3344,7 +3537,7 @@ export interface components {
              * Description
              * @default
              */
-            description: string;
+            description?: string;
             /** Quantity */
             quantity?: number;
             /** Unitprice */
@@ -3404,22 +3597,22 @@ export interface components {
              * Acceptterms
              * @default false
              */
-            acceptTerms: boolean;
+            acceptTerms?: boolean;
             /**
              * Email
              * @default
              */
-            email: string;
+            email?: string;
             /**
              * Fullname
              * @default
              */
-            fullName: string;
+            fullName?: string;
             /**
              * Password
              * @default
              */
-            password: string;
+            password?: string;
         };
         /** ReplyStatus */
         ReplyStatus: {
@@ -3427,17 +3620,17 @@ export interface components {
              * Id
              * @default
              */
-            id: string;
+            id?: string;
             /**
              * Label
              * @default
              */
-            label: string;
+            label?: string;
             /**
              * Text
              * @default
              */
-            text: string;
+            text?: string;
         };
         /** ReportSummary */
         ReportSummary: {
@@ -3474,18 +3667,18 @@ export interface components {
          */
         SaveDraftRequest: {
             /** Pages */
-            pages?: components["schemas"]["SitePage"][];
+            pages?: components["schemas"]["SitePage-Input"][];
             /** Revision */
             revision: number;
             /** Sections */
-            sections: (components["schemas"]["HeroSection"] | components["schemas"]["AboutSection"] | components["schemas"]["GallerySection"] | components["schemas"]["ServicesSection"] | components["schemas"]["PricingSection"] | components["schemas"]["TestimonialsSection"] | components["schemas"]["FaqSection"] | components["schemas"]["ContactSection"] | components["schemas"]["CtaSection"])[];
+            sections: (components["schemas"]["HeroSection-Input"] | components["schemas"]["AboutSection-Input"] | components["schemas"]["GallerySection-Input"] | components["schemas"]["ServicesSection-Input"] | components["schemas"]["PricingSection-Input"] | components["schemas"]["TestimonialsSection-Input"] | components["schemas"]["FaqSection-Input"] | components["schemas"]["ContactSection-Input"] | components["schemas"]["CtaSection-Input"])[];
             seo: components["schemas"]["Seo"];
             /**
              * Templatekey
              * @enum {string}
              */
             templateKey: "beauty" | "trades" | "garage" | "clinic" | "food";
-            theme: components["schemas"]["Theme"];
+            theme: components["schemas"]["Theme-Input"];
         };
         /** Scroll */
         Scroll: {
@@ -3511,19 +3704,73 @@ export interface components {
          * SectionStyle
          * @description Look of a section, chosen from the site palette (D-082). All optional = defaults.
          */
-        SectionStyle: {
-            /** Align */
-            align?: ("start" | "center") | null;
-            /** Bg */
-            bg?: ("auto" | "white" | "soft" | "brand" | "dark") | null;
-            /** Button */
-            button?: ("solid" | "outline") | null;
-            /** Spacing */
-            spacing?: ("compact" | "normal" | "airy") | null;
-            /** Titlecolor */
-            titleColor?: ("ink" | "brand" | "accent") | null;
-            /** Titlesize */
-            titleSize?: ("normal" | "large") | null;
+        "SectionStyle-Input": {
+            /**
+             * Align
+             * @enum {string}
+             */
+            align?: "start" | "center";
+            /**
+             * Bg
+             * @enum {string}
+             */
+            bg?: "auto" | "white" | "soft" | "brand" | "dark";
+            /**
+             * Button
+             * @enum {string}
+             */
+            button?: "solid" | "outline";
+            /**
+             * Spacing
+             * @enum {string}
+             */
+            spacing?: "compact" | "normal" | "airy";
+            /**
+             * Titlecolor
+             * @enum {string}
+             */
+            titleColor?: "ink" | "brand" | "accent";
+            /**
+             * Titlesize
+             * @enum {string}
+             */
+            titleSize?: "normal" | "large";
+        };
+        /**
+         * SectionStyle
+         * @description Look of a section, chosen from the site palette (D-082). All optional = defaults.
+         */
+        "SectionStyle-Output": {
+            /**
+             * Align
+             * @enum {string}
+             */
+            align?: "start" | "center";
+            /**
+             * Bg
+             * @enum {string}
+             */
+            bg?: "auto" | "white" | "soft" | "brand" | "dark";
+            /**
+             * Button
+             * @enum {string}
+             */
+            button?: "solid" | "outline";
+            /**
+             * Spacing
+             * @enum {string}
+             */
+            spacing?: "compact" | "normal" | "airy";
+            /**
+             * Titlecolor
+             * @enum {string}
+             */
+            titleColor?: "ink" | "brand" | "accent";
+            /**
+             * Titlesize
+             * @enum {string}
+             */
+            titleSize?: "normal" | "large";
         };
         /** SendQuoteRequest */
         SendQuoteRequest: {
@@ -3531,7 +3778,7 @@ export interface components {
              * Email
              * @default false
              */
-            email: boolean;
+            email?: boolean;
         };
         /** SendRequest */
         SendRequest: {
@@ -3539,7 +3786,7 @@ export interface components {
              * Text
              * @default
              */
-            text: string;
+            text?: string;
         };
         /** SendResponse */
         SendResponse: {
@@ -3606,14 +3853,33 @@ export interface components {
             service: components["schemas"]["ServiceOut"];
         };
         /** ServicesSection */
-        ServicesSection: {
+        "ServicesSection-Input": {
             /** Id */
             id: string;
             /** Items */
             items: components["schemas"]["ServiceItem"][];
             /** Navlabel */
-            navLabel?: string | null;
-            style?: components["schemas"]["SectionStyle"] | null;
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "services";
+            /** Visible */
+            visible: boolean;
+        };
+        /** ServicesSection */
+        "ServicesSection-Output": {
+            /** Id */
+            id: string;
+            /** Items */
+            items: components["schemas"]["ServiceItem"][];
+            /** Navlabel */
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Title */
             title: string;
             /**
@@ -3666,9 +3932,7 @@ export interface components {
             /** Id */
             id: string;
             /** Pages */
-            pages: {
-                [key: string]: unknown;
-            }[];
+            pages: components["schemas"]["SitePage-Output"][];
             /** Publicdomain */
             publicDomain: string;
             /** Publicprefix */
@@ -3679,13 +3943,8 @@ export interface components {
             /** Revision */
             revision: number;
             /** Sections */
-            sections: {
-                [key: string]: unknown;
-            }[];
-            /** Seo */
-            seo: {
-                [key: string]: unknown;
-            };
+            sections: (components["schemas"]["HeroSection-Output"] | components["schemas"]["AboutSection-Output"] | components["schemas"]["GallerySection-Output"] | components["schemas"]["ServicesSection-Output"] | components["schemas"]["PricingSection-Output"] | components["schemas"]["TestimonialsSection-Output"] | components["schemas"]["FaqSection-Output"] | components["schemas"]["ContactSection-Output"] | components["schemas"]["CtaSection-Output"])[];
+            seo: components["schemas"]["Seo"];
             /**
              * Status
              * @enum {string}
@@ -3693,23 +3952,37 @@ export interface components {
             status: "DRAFT" | "PUBLISHED" | "SUSPENDED";
             /** Subdomain */
             subdomain: string | null;
-            /** Templatekey */
-            templateKey: string;
-            /** Theme */
-            theme: {
-                [key: string]: unknown;
-            };
+            /**
+             * Templatekey
+             * @enum {string}
+             */
+            templateKey: "trades" | "beauty" | "garage" | "clinic" | "food";
+            theme: components["schemas"]["Theme-Output"];
             /** Updatedat */
             updatedAt: string;
         };
         /** SitePage */
-        SitePage: {
+        "SitePage-Input": {
             /** Id */
             id: string;
             /** Inmenu */
             inMenu: boolean;
             /** Sections */
-            sections: (components["schemas"]["HeroSection"] | components["schemas"]["AboutSection"] | components["schemas"]["GallerySection"] | components["schemas"]["ServicesSection"] | components["schemas"]["PricingSection"] | components["schemas"]["TestimonialsSection"] | components["schemas"]["FaqSection"] | components["schemas"]["ContactSection"] | components["schemas"]["CtaSection"])[];
+            sections: (components["schemas"]["HeroSection-Input"] | components["schemas"]["AboutSection-Input"] | components["schemas"]["GallerySection-Input"] | components["schemas"]["ServicesSection-Input"] | components["schemas"]["PricingSection-Input"] | components["schemas"]["TestimonialsSection-Input"] | components["schemas"]["FaqSection-Input"] | components["schemas"]["ContactSection-Input"] | components["schemas"]["CtaSection-Input"])[];
+            seo: components["schemas"]["Seo"];
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+        };
+        /** SitePage */
+        "SitePage-Output": {
+            /** Id */
+            id: string;
+            /** Inmenu */
+            inMenu: boolean;
+            /** Sections */
+            sections: (components["schemas"]["HeroSection-Output"] | components["schemas"]["AboutSection-Output"] | components["schemas"]["GallerySection-Output"] | components["schemas"]["ServicesSection-Output"] | components["schemas"]["PricingSection-Output"] | components["schemas"]["TestimonialsSection-Output"] | components["schemas"]["FaqSection-Output"] | components["schemas"]["ContactSection-Output"] | components["schemas"]["CtaSection-Output"])[];
             seo: components["schemas"]["Seo"];
             /** Slug */
             slug: string;
@@ -3828,14 +4101,33 @@ export interface components {
             quote: string;
         };
         /** TestimonialsSection */
-        TestimonialsSection: {
+        "TestimonialsSection-Input": {
             /** Id */
             id: string;
             /** Items */
             items: components["schemas"]["TestimonialItem"][];
             /** Navlabel */
-            navLabel?: string | null;
-            style?: components["schemas"]["SectionStyle"] | null;
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Input"];
+            /** Title */
+            title: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "testimonials";
+            /** Visible */
+            visible: boolean;
+        };
+        /** TestimonialsSection */
+        "TestimonialsSection-Output": {
+            /** Id */
+            id: string;
+            /** Items */
+            items: components["schemas"]["TestimonialItem"][];
+            /** Navlabel */
+            navLabel?: string;
+            style?: components["schemas"]["SectionStyle-Output"];
             /** Title */
             title: string;
             /**
@@ -3847,16 +4139,19 @@ export interface components {
             visible: boolean;
         };
         /** Theme */
-        Theme: {
+        "Theme-Input": {
             custom?: components["schemas"]["CustomColors"] | null;
             /**
              * Font
              * @enum {string}
              */
             font: "rubik" | "heebo" | "assistant" | "frank";
-            labels?: components["schemas"]["ThemeLabels"] | null;
-            /** Language */
-            language?: ("he" | "en") | null;
+            labels?: components["schemas"]["ThemeLabels-Input"];
+            /**
+             * Language
+             * @enum {string}
+             */
+            language?: "he" | "en";
             /** Logoassetid */
             logoAssetId?: string | null;
             /**
@@ -3865,14 +4160,45 @@ export interface components {
              */
             palette: "teal" | "rose" | "navy" | "forest" | "plum" | "graphite";
         };
+        /** Theme */
+        "Theme-Output": {
+            custom: components["schemas"]["CustomColors"] | null;
+            /**
+             * Font
+             * @enum {string}
+             */
+            font: "rubik" | "heebo" | "assistant" | "frank";
+            labels?: components["schemas"]["ThemeLabels-Output"];
+            /**
+             * Language
+             * @enum {string}
+             */
+            language?: "he" | "en";
+            /** Logoassetid */
+            logoAssetId: string | null;
+            /**
+             * Palette
+             * @enum {string}
+             */
+            palette: "teal" | "rose" | "navy" | "forest" | "plum" | "graphite";
+        };
         /** ThemeLabels */
-        ThemeLabels: {
+        "ThemeLabels-Input": {
             /** Cardlink */
-            cardLink?: string | null;
+            cardLink?: string;
             /** Mobilecall */
-            mobileCall?: string | null;
+            mobileCall?: string;
             /** Mobilecontact */
-            mobileContact?: string | null;
+            mobileContact?: string;
+        };
+        /** ThemeLabels */
+        "ThemeLabels-Output": {
+            /** Cardlink */
+            cardLink?: string;
+            /** Mobilecall */
+            mobileCall?: string;
+            /** Mobilecontact */
+            mobileContact?: string;
         };
         /** ThreadResponse */
         ThreadResponse: {
@@ -3970,7 +4296,7 @@ export interface components {
              * Role
              * @default
              */
-            role: string;
+            role?: string;
         };
         /** UpdateProfileRequest */
         UpdateProfileRequest: {
@@ -3978,7 +4304,7 @@ export interface components {
              * Fullname
              * @default
              */
-            fullName: string;
+            fullName?: string;
         };
         /**
          * UpdateTaskRequest
@@ -4006,26 +4332,26 @@ export interface components {
              * Discount
              * @default 0
              */
-            discount: number;
+            discount?: number;
             /** Items */
             items?: components["schemas"]["QuoteItem"][];
             /**
              * Notes
              * @default
              */
-            notes: string;
+            notes?: string;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /** Validuntil */
             validUntil?: string | null;
             /**
              * Vatrate
              * @default 18
              */
-            vatRate: number;
+            vatRate?: number;
         };
         /** UpsertServiceRequest */
         UpsertServiceRequest: {
@@ -4033,14 +4359,14 @@ export interface components {
              * Active
              * @default true
              */
-            active: boolean;
+            active?: boolean;
             /** Durationmin */
             durationMin?: number;
             /**
              * Name
              * @default
              */
-            name: string;
+            name?: string;
             /** Price */
             price?: number | null;
         };
@@ -4063,7 +4389,7 @@ export interface components {
              * Token
              * @default
              */
-            token: string;
+            token?: string;
         };
         /** VideoOut */
         VideoOut: {
