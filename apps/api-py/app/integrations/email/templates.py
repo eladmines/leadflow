@@ -218,3 +218,40 @@ def invite_template(
         ]
     )
     return RenderedEmail(subject, html, text)
+
+
+def task_reminder_template(
+    name: str,
+    title: str,
+    due_text: str,
+    lead_name: str | None,
+    link: str,
+    lang: Language = "he",
+) -> RenderedEmail:
+    """F10: a task is due."""
+    en = lang == "en"
+    subject = f"Reminder: {title}" if en else f"תזכורת: {title}"
+    due = "Due" if en else "מועד"
+    lead = "Lead" if en else "ליד"
+    heading = f"Hello {_esc(name)}, it's time for a task" if en else f"שלום {_esc(name)}, הגיע הזמן למשימה"
+    lead_html = f'<p style="margin:0 0 4px;color:#6b7280;">{lead}: {_esc(lead_name)}</p>' if lead_name else ""
+    html = _layout(
+        subject,
+        f"""<h1 style="font-size:20px;margin:0 0 16px;">{heading}</h1>
+<p style="margin:0 0 4px;font-size:16px;"><strong>{_esc(title)}</strong></p>
+<p style="margin:0 0 4px;color:#6b7280;">{due}: {_esc(due_text)}</p>
+{lead_html}
+{_button(link, "Open in SimpleCatch" if en else "לפתיחה ב-SimpleCatch", lang)}""",
+        lang,
+    )
+    text = "\n".join(
+        [
+            f"Hello {name}, it's time for a task:" if en else f"שלום {name}, הגיע הזמן למשימה:",
+            title,
+            f"{due}: {due_text}",
+            *([f"{lead}: {lead_name}"] if lead_name else []),
+            "",
+            link,
+        ]
+    )
+    return RenderedEmail(subject, html, text)

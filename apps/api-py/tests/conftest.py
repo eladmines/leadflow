@@ -8,7 +8,7 @@ from http.cookiejar import DefaultCookiePolicy
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.config import Settings
@@ -41,6 +41,7 @@ def make_settings(**overrides) -> Settings:
         "APP_URL": ORIGIN,
         "EMAIL_TRANSPORT": "memory",
         "EMAIL_VERIFICATION": "on",
+        "RUN_BACKGROUND_JOBS": False,
     }
     return Settings(**{**base, **overrides})
 
@@ -265,3 +266,49 @@ async def add_member(db: AsyncSession, business_id: str, user_id: str, role: str
         )
     )
     await db.commit()
+
+
+async def make_lead(
+    db: AsyncSession,
+    business_id: str,
+    owner_id: str | None = None,
+    name: str = "רון לוי",
+    phone: str = "+972521112233",
+) -> dict:
+    """A lead seeded straight into the database (the leads module is not ported yet)."""
+    now = datetime.now(UTC)
+    bid = uuid.UUID(business_id)
+    stage = (
+        (await db.execute(select(models.PipelineStage).where(models.PipelineStage.business_id == bid)))
+        .scalars()
+        .first()
+    )
+    if stage is None:
+        stage = models.PipelineStage(
+            id=uuid.uuid4(),
+            business_id=bid,
+            name="חדש",
+            position=0,
+            kind=models.StageKind.OPEN,
+            created_at=now,
+        )
+        db.add(stage)
+        await db.flush()
+    contact = models.Contact(
+        id=uuid.uuid4(), business_id=bid, name=name, phone=phone, created_at=now, updated_at=now
+    )
+    db.add(contact)
+    await db.flush()
+    lead = models.Lead(
+        id=uuid.uuid4(),
+        business_id=bid,
+        contact_id=contact.id,
+        stage_id=stage.id,
+        source=models.LeadSource.MANUAL,
+        owner_id=uuid.UUID(owner_id) if owner_id else None,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(lead)
+    await db.commit()
+    return {"id": str(lead.id), "name": name}

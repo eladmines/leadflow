@@ -15,6 +15,9 @@ from app.integrations.email import EmailSender, create_email_sender
 from app.middleware import error_response, request_context
 from app.modules.auth import routes as auth_routes
 from app.modules.businesses import routes as business_routes
+from app.modules.notifications import routes as notification_routes
+from app.modules.tasks import routes as task_routes
+from app.modules.tasks.reminders import start_task_reminders, stop
 from app.modules.team import routes as team_routes
 from app.routes import health
 
@@ -31,7 +34,10 @@ def create_app(settings: Settings | None = None, email: EmailSender | None = Non
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        job = start_task_reminders(app) if settings.RUN_BACKGROUND_JOBS else None
         yield
+        if job:
+            await stop(job)
         await app.state.email.close()
         await engine.dispose()
 
@@ -90,4 +96,6 @@ def create_app(settings: Settings | None = None, email: EmailSender | None = Non
     app.include_router(business_routes.tenant)
     app.include_router(team_routes.router)
     app.include_router(team_routes.tenant)
+    app.include_router(task_routes.tenant)
+    app.include_router(notification_routes.tenant)
     return app

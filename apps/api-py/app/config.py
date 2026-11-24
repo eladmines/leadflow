@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     SMTP_PASS: str | None = None
     SMTP_SECURE: bool = False
     EMAIL_FROM: str = "SimpleCatch <no-reply@simplecatch.local>"
+    # Background jobs (task reminders). Off in tests, which call the job functions directly.
+    RUN_BACKGROUND_JOBS: bool = True
     AUTH_RATE_LIMIT_MAX: int = 10
     AUTH_RATE_LIMIT_WINDOW: int = 900_000  # milliseconds
 
