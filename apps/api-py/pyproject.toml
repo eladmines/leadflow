@@ -36,6 +36,7 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["E501"]
+"tools/*" = ["E501"]
 "app/integrations/email/templates.py" = ["E501"]
 "app/modules/reports/events.py" = ["E501"]
 "app/shared/site_render.py" = ["E501"]

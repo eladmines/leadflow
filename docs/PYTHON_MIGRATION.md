@@ -33,7 +33,17 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | channels: Settings → Channels (WhatsApp token, Facebook/Instagram sign-in with signed state, Gmail sign-in, forwarding address, disconnect), sealed tokens (AES-256-GCM, same format as Node), Meta/Gmail/WhatsApp/Messenger clients with in-memory fakes | done (8 tests) |
 | whatsapp messaging: Meta webhooks (WhatsApp, Messenger, Instagram, signed), inbound email webhook, Gmail sync, leads from messages, replies with the 24-hour window, inbox and number classification, unified conversations (WhatsApp, Facebook, Instagram, email) | done (59 tests) |
 | whatsapp bot: booking bot (services → day → time, event requests, owner questions, call-backs, cancelling, showcase with photos and video, abandoned-conversation nudges), automatic replies and statuses, bot settings routes; default texts per industry and language generated from the TypeScript (`tools/gen_bot_data.mjs`) | done (42 tests) |
-| Alembic baseline, Docker/Render config, retire `apps/api`, generate web types from OpenAPI | |
+| Alembic baseline (the Prisma migrations in order; an empty database built with it matches the Prisma-built schema exactly: columns, indexes, constraints, enums, trigger; checked with `tools/compare_schemas.py`) | done |
+| Docker/Render config, retire `apps/api`, generate web types from OpenAPI | |
+
+## Database migrations
+Alembic (`apps/api-py/alembic`) replaces Prisma Migrate. Revision `0001` is the whole schema as the Prisma migrations built it.
+```
+cd apps/api-py
+uv run alembic upgrade head            # a new, empty database
+uv run alembic stamp 0001              # the existing database Prisma already migrated (once, at cutover)
+```
+New changes are hand-written revisions (`uv run alembic revision -m "..."`), keeping `app/db/models.py` in step.
 
 ## Running it
 ```
