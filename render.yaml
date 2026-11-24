@@ -1,22 +1,41 @@
-# One Docker web service runs the Python API (FastAPI), the web app and the
+# One web service runs the Python API (FastAPI), the web app and the
 # customer sites (under /s/<name>). The database is Neon's free Postgres (DATABASE_URL).
 # Step-by-step: docs/DEPLOY.md.
-# On every start the container migrates the database (apps/api-py/scripts/prepare_db.py): a database
-# the old Node API had migrated is stamped at the Alembic baseline first, then new migrations apply.
+# (apps/api-py/Dockerfile builds the same thing as an image, for hosts that run Docker.)
 services:
   - type: web
     name: leadflow
-    runtime: docker
-    dockerfilePath: ./apps/api-py/Dockerfile
-    dockerContext: .
+    runtime: node
     plan: free
     region: frankfurt
     branch: main
     autoDeploy: true
     healthCheckPath: /health
+    # Node builds the web app; uv installs Python and the API's dependencies next to the code (inside
+    # the project folder, so they are still there when the service starts).
+    buildCommand: >-
+      corepack enable &&
+      NODE_ENV=development pnpm install --frozen-lockfile --filter @simplecatch/web... &&
+      pnpm --filter @simplecatch/shared build &&
+      pnpm --filter @simplecatch/web build &&
+      (curl -LsSf https://astral.sh/uv/install.sh | UV_UNMANAGED_INSTALL="$PWD/.uv-bin" sh) &&
+      cd apps/api-py &&
+      UV_PYTHON_INSTALL_DIR="$PWD/../../.uv-python" UV_PYTHON_PREFERENCE=only-managed
+      "$PWD/../../.uv-bin/uv" sync --frozen --no-dev
+    # The database is migrated on every start (a database the old Node API migrated is stamped at the
+    # Alembic baseline first); then one server answers the API, the web app and the customer sites.
+    startCommand: >-
+      cd apps/api-py &&
+      .venv/bin/python scripts/prepare_db.py &&
+      exec .venv/bin/uvicorn app.server:create_server --factory --host 0.0.0.0 --port $PORT
+      --proxy-headers --forwarded-allow-ips='*'
     envVars:
+      - key: NODE_VERSION
+        value: '22'
       - key: NODE_ENV
         value: production
+      - key: WEB_DIST_DIR
+        value: ../web/dist
       # APP_URL and WEB_ORIGINS: set in the Render dashboard to https://app.simplecatch.co.il (docs/DEPLOY.md);
       # without them APP_URL defaults to Render's own address (RENDER_EXTERNAL_URL).
       - key: PUBLIC_SITE_MODE
