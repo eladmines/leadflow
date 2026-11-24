@@ -3,16 +3,19 @@ import secrets
 import uuid
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
+from http.cookiejar import DefaultCookiePolicy
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.config import Settings
 from app.core.constants import CSRF_HEADER_NAME, CSRF_HEADER_VALUE, SESSION_COOKIE_NAME
 from app.core.crypto import sha256_hex
 from app.db import models
+from app.integrations.email import MemoryEmailSender
 from app.main import create_app
 
 ORIGIN = "http://localhost:5173"
@@ -30,21 +33,57 @@ def _test_url() -> str:
     return url
 
 
-@pytest.fixture(scope="session")
+def make_settings(**overrides) -> Settings:
+    base = {
+        "DATABASE_URL": _test_url(),
+        "WEB_ORIGINS": [ORIGIN],
+        "NODE_ENV": "test",
+        "APP_URL": ORIGIN,
+        "EMAIL_TRANSPORT": "memory",
+        "EMAIL_VERIFICATION": "on",
+    }
+    return Settings(**{**base, **overrides})
+
+
+@pytest.fixture
 def settings() -> Settings:
-    return Settings(DATABASE_URL=_test_url(), WEB_ORIGINS=[ORIGIN], NODE_ENV="test")
+    return make_settings()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clean_db(settings: Settings):
+    """Every test starts from empty tables (same approach as the Node API's resetDb)."""
+    engine = create_async_engine(settings.DATABASE_URL)
+    async with engine.begin() as conn:
+        rows = await conn.execute(
+            text(
+                "SELECT tablename FROM pg_tables "
+                "WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'"
+            )
+        )
+        tables = ", ".join(f'"public"."{r[0]}"' for r in rows)
+        if tables:
+            await conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def app(settings: Settings):
-    app = create_app(settings)
+    app = create_app(settings, email=MemoryEmailSender())
     yield app
     await app.state.engine.dispose()
+
+
+@pytest.fixture
+def email(app) -> MemoryEmailSender:
+    return app.state.email
 
 
 @pytest_asyncio.fixture
 async def client(app) -> AsyncIterator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        # Tests send the session cookie explicitly; never let the client keep one between calls.
+        c.cookies.jar.set_policy(DefaultCookiePolicy(allowed_domains=[]))
         yield c
 
 
@@ -86,9 +125,7 @@ async def make_user_session(db: AsyncSession, tag: str) -> tuple[models.User, st
     return user, token
 
 
-async def make_business(
-    db: AsyncSession, owner: models.User, role: str = "OWNER"
-) -> models.Business:
+async def make_business(db: AsyncSession, owner: models.User, role: str = "OWNER") -> models.Business:
     now = datetime.now(UTC)
     business = models.Business(id=uuid.uuid4(), name="Test Biz", industry="beauty", updated_at=now)
     db.add(business)
@@ -106,5 +143,71 @@ async def make_business(
     return business
 
 
-def cookies(token: str) -> dict[str, str]:
-    return {SESSION_COOKIE_NAME: token}
+def cookie(token: str) -> dict[str, str]:
+    """Request headers carrying the session cookie."""
+    return {"cookie": f"{SESSION_COOKIE_NAME}={token}"}
+
+
+# -- HTTP helpers for the auth tests -----------------------------------------------------------
+
+PASSWORD = "Sup3r-secret-pass!"
+
+
+def register_body(**overrides):
+    return {
+        "fullName": "דנה כהן",
+        "email": "dana@example.com",
+        "password": PASSWORD,
+        "acceptTerms": True,
+        **overrides,
+    }
+
+
+async def post(client, url, body=None, token=None, headers=None):
+    """POST with the CSRF marker, an optional JSON body and an optional session token."""
+    h = {**HEADERS, **(cookie(token) if token else {}), **(headers or {})}
+    return await client.post(url, headers=h, **({"json": body} if body is not None else {}))
+
+
+async def get(client, url, token=None):
+    return await client.get(url, headers=cookie(token) if token else {})
+
+
+def session_cookie_of(res):
+    """The parsed Set-Cookie for the session cookie, or None."""
+    from http.cookies import SimpleCookie
+
+    for raw in res.headers.get_list("set-cookie"):
+        jar = SimpleCookie()
+        jar.load(raw)
+        if SESSION_COOKIE_NAME in jar:
+            morsel = jar[SESSION_COOKIE_NAME]
+            return morsel, raw
+    return None
+
+
+def session_token_of(res) -> str:
+    found = session_cookie_of(res)
+    assert found and found[0].value, f"no session cookie (status {res.status_code}): {res.text}"
+    return found[0].value
+
+
+def clears_session_cookie(res) -> bool:
+    found = session_cookie_of(res)
+    return bool(found) and found[0].value == "" and found[0]["max-age"] == "0"
+
+
+async def register_user(client, **overrides):
+    res = await post(client, "/api/v1/auth/register", register_body(**overrides))
+    assert res.status_code == 201, res.text
+    return res, session_token_of(res), res.json()["user"]
+
+
+def last_email_token(email: MemoryEmailSender, to: str) -> str:
+    import re
+
+    msgs = email.to(to)
+    assert msgs, f"no email sent to {to}"
+    m = re.search(r"[?&]token=([A-Za-z0-9_-]{43})", msgs[-1].text)
+    assert m, "no token link in email"
+    return m.group(1)

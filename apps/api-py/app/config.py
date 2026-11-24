@@ -16,6 +16,19 @@ class Settings(BaseSettings):
     APP_URL: str | None = None
     COOKIE_SECURE: bool | None = None
 
+    # F01: authentication and email
+    EMAIL_TRANSPORT: Literal["smtp", "brevo", "disabled", "memory"] = "smtp"
+    EMAIL_VERIFICATION: Literal["on", "off"] = "off"
+    BREVO_API_KEY: str | None = None
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_USER: str | None = None
+    SMTP_PASS: str | None = None
+    SMTP_SECURE: bool = False
+    EMAIL_FROM: str = "SimpleCatch <no-reply@simplecatch.local>"
+    AUTH_RATE_LIMIT_MAX: int = 10
+    AUTH_RATE_LIMIT_WINDOW: int = 900_000  # milliseconds
+
     @field_validator("WEB_ORIGINS", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
@@ -31,6 +44,21 @@ class Settings(BaseSettings):
             if v.startswith(prefix):
                 return "postgresql+asyncpg://" + v[len(prefix) :].split("?")[0]
         return v
+
+    @field_validator("APP_URL")
+    @classmethod
+    def _trim_app_url(cls, v: str | None) -> str | None:
+        return v.rstrip("/") if v else v
+
+    @field_validator("BREVO_API_KEY", "SMTP_USER", "SMTP_PASS", "APP_URL", mode="before")
+    @classmethod
+    def _empty_is_unset(cls, v: object) -> object:
+        return None if v == "" else v
+
+    @property
+    def verification_on(self) -> bool:
+        """Users are asked to verify their email: turned on and email actually goes out."""
+        return self.EMAIL_VERIFICATION == "on" and self.EMAIL_TRANSPORT != "disabled"
 
     @property
     def cookie_secure(self) -> bool:

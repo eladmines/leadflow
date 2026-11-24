@@ -121,9 +121,7 @@ class PrismaMigration(Base):
     started_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(True), nullable=False, server_default=text("now()")
     )
-    applied_steps_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("0")
-    )
+    applied_steps_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     finished_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(True))
     logs: Mapped[str | None] = mapped_column(Text)
     rolled_back_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(True))
@@ -156,9 +154,7 @@ class Business(Base):
     whatsapp_bot_auto_confirm: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
-    whatsapp_bot_enabled: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("false")
-    )
+    whatsapp_bot_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     whatsapp_bot_hold_date: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
@@ -200,24 +196,16 @@ class Business(Base):
     event_counts: Mapped[list["EventCount"]] = relationship("EventCount", back_populates="business")
     invitations: Mapped[list["Invitation"]] = relationship("Invitation", back_populates="business")
     memberships: Mapped[list["Membership"]] = relationship("Membership", back_populates="business")
-    notifications: Mapped[list["Notification"]] = relationship(
-        "Notification", back_populates="business"
-    )
-    oauth_pending: Mapped[list["OauthPending"]] = relationship(
-        "OauthPending", back_populates="business"
-    )
-    pipeline_stages: Mapped[list["PipelineStage"]] = relationship(
-        "PipelineStage", back_populates="business"
-    )
+    notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="business")
+    oauth_pending: Mapped[list["OauthPending"]] = relationship("OauthPending", back_populates="business")
+    pipeline_stages: Mapped[list["PipelineStage"]] = relationship("PipelineStage", back_populates="business")
     services: Mapped[list["Service"]] = relationship("Service", back_populates="business")
     visit_counts: Mapped[list["VisitCount"]] = relationship("VisitCount", back_populates="business")
     leads: Mapped[list["Lead"]] = relationship("Lead", back_populates="business")
     whatsapp_numbers: Mapped[list["WhatsAppNumber"]] = relationship(
         "WhatsAppNumber", back_populates="business"
     )
-    appointments: Mapped[list["Appointment"]] = relationship(
-        "Appointment", back_populates="business"
-    )
+    appointments: Mapped[list["Appointment"]] = relationship("Appointment", back_populates="business")
     quotes: Mapped[list["Quote"]] = relationship("Quote", back_populates="business")
     tasks: Mapped[list["Task"]] = relationship("Task", back_populates="business")
     whatsapp_bot_sessions: Mapped[list["WhatsAppBotSession"]] = relationship(
@@ -260,15 +248,11 @@ class SiteVersion(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMP(True, 3), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
-    page_html: Mapped[object] = mapped_column(
-        JSONB, nullable=False, server_default=text("'{}'::jsonb")
-    )
+    page_html: Mapped[object] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
 
     created_by: Mapped[Optional["User"]] = relationship("User", back_populates="site_versions")
-    site: Mapped["Site"] = relationship(
-        "Site", foreign_keys=[site_id], back_populates="site_versions_site"
-    )
+    site: Mapped["Site"] = relationship("Site", foreign_keys=[site_id], back_populates="site_versions_site")
     sites_published_version: Mapped[list["Site"]] = relationship(
         "Site", foreign_keys="[Site.published_version_id]", back_populates="published_version"
     )
@@ -328,9 +312,7 @@ class Site(Base):
     published_version: Mapped[Optional["SiteVersion"]] = relationship(
         "SiteVersion", foreign_keys=[published_version_id], back_populates="sites_published_version"
     )
-    form_submissions: Mapped[list["FormSubmission"]] = relationship(
-        "FormSubmission", back_populates="site"
-    )
+    form_submissions: Mapped[list["FormSubmission"]] = relationship("FormSubmission", back_populates="site")
 
 
 class StoredObject(Base):
@@ -371,18 +353,12 @@ class User(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(True, 3), nullable=False)
     email_verified_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
 
-    site_versions: Mapped[list["SiteVersion"]] = relationship(
-        "SiteVersion", back_populates="created_by"
-    )
+    site_versions: Mapped[list["SiteVersion"]] = relationship("SiteVersion", back_populates="created_by")
     audit_logs: Mapped[list["AuditLog"]] = relationship("AuditLog", back_populates="actor_user")
     auth_tokens: Mapped[list["AuthToken"]] = relationship("AuthToken", back_populates="user")
-    invitations: Mapped[list["Invitation"]] = relationship(
-        "Invitation", back_populates="invited_by"
-    )
+    invitations: Mapped[list["Invitation"]] = relationship("Invitation", back_populates="invited_by")
     memberships: Mapped[list["Membership"]] = relationship("Membership", back_populates="user")
-    notifications: Mapped[list["Notification"]] = relationship(
-        "Notification", back_populates="user"
-    )
+    notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="user")
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="user")
     leads: Mapped[list["Lead"]] = relationship("Lead", back_populates="owner")
     whatsapp_numbers: Mapped[list["WhatsAppNumber"]] = relationship(
@@ -562,9 +538,7 @@ class Contact(Base):
     whatsapp_numbers: Mapped[list["WhatsAppNumber"]] = relationship(
         "WhatsAppNumber", back_populates="contact"
     )
-    appointments: Mapped[list["Appointment"]] = relationship(
-        "Appointment", back_populates="contact"
-    )
+    appointments: Mapped[list["Appointment"]] = relationship("Appointment", back_populates="contact")
     whatsapp_messages: Mapped[list["WhatsAppMessage"]] = relationship(
         "WhatsAppMessage", back_populates="contact"
     )
@@ -686,9 +660,7 @@ class Membership(Base):
         TIMESTAMP(True, 3), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(True, 3), nullable=False)
-    notify_new_leads: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("true")
-    )
+    notify_new_leads: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     invited_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
 
     business: Mapped["Business"] = relationship("Business", back_populates="memberships")
@@ -821,9 +793,7 @@ class Service(Base):
     price: Mapped[int | None] = mapped_column(Integer)
 
     business: Mapped["Business"] = relationship("Business", back_populates="services")
-    appointments: Mapped[list["Appointment"]] = relationship(
-        "Appointment", back_populates="service"
-    )
+    appointments: Mapped[list["Appointment"]] = relationship("Appointment", back_populates="service")
 
 
 class Session(Base):
@@ -845,9 +815,7 @@ class Session(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     token_hash: Mapped[str] = mapped_column(CHAR(64), nullable=False)
     expires_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(True, 3), nullable=False)
-    absolute_expires_at: Mapped[datetime.datetime] = mapped_column(
-        TIMESTAMP(True, 3), nullable=False
-    )
+    absolute_expires_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(True, 3), nullable=False)
     last_seen_at: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMP(True, 3), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
@@ -871,9 +839,7 @@ class VisitCount(Base):
             onupdate="CASCADE",
             name="visit_counts_business_id_fkey",
         ),
-        PrimaryKeyConstraint(
-            "business_id", "day", "source", "name", "campaign", name="visit_counts_pkey"
-        ),
+        PrimaryKeyConstraint("business_id", "day", "source", "name", "campaign", name="visit_counts_pkey"),
     )
 
     business_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
@@ -950,9 +916,7 @@ class Lead(Base):
     message: Mapped[str | None] = mapped_column(String(1000))
     expected_value: Mapped[int | None] = mapped_column(Integer)
     next_action_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
-    tags: Mapped[list[str] | None] = mapped_column(
-        ARRAY(Text()), server_default=text("ARRAY[]::text[]")
-    )
+    tags: Mapped[list[str] | None] = mapped_column(ARRAY(Text()), server_default=text("ARRAY[]::text[]"))
     attribution: Mapped[object | None] = mapped_column(JSONB)
     attribution_source: Mapped[str | None] = mapped_column(String(20))
 
@@ -962,9 +926,7 @@ class Lead(Base):
     stage: Mapped["PipelineStage"] = relationship("PipelineStage", back_populates="leads")
     activities: Mapped[list["Activity"]] = relationship("Activity", back_populates="lead")
     appointments: Mapped[list["Appointment"]] = relationship("Appointment", back_populates="lead")
-    form_submissions: Mapped[list["FormSubmission"]] = relationship(
-        "FormSubmission", back_populates="lead"
-    )
+    form_submissions: Mapped[list["FormSubmission"]] = relationship("FormSubmission", back_populates="lead")
     quotes: Mapped[list["Quote"]] = relationship("Quote", back_populates="lead")
     tasks: Mapped[list["Task"]] = relationship("Task", back_populates="lead")
     whatsapp_messages: Mapped[list["WhatsAppMessage"]] = relationship(
@@ -1032,12 +994,8 @@ class WhatsAppNumber(Base):
     attribution: Mapped[object | None] = mapped_column(JSONB)
 
     business: Mapped["Business"] = relationship("Business", back_populates="whatsapp_numbers")
-    classified_by: Mapped[Optional["User"]] = relationship(
-        "User", back_populates="whatsapp_numbers"
-    )
-    contact: Mapped[Optional["Contact"]] = relationship(
-        "Contact", back_populates="whatsapp_numbers"
-    )
+    classified_by: Mapped[Optional["User"]] = relationship("User", back_populates="whatsapp_numbers")
+    contact: Mapped[Optional["Contact"]] = relationship("Contact", back_populates="whatsapp_numbers")
     whatsapp_bot_sessions: Mapped[list["WhatsAppBotSession"]] = relationship(
         "WhatsAppBotSession", back_populates="number"
     )
@@ -1057,9 +1015,7 @@ class Activity(Base):
             name="activities_lead_id_fkey",
         ),
         PrimaryKeyConstraint("id", name="activities_pkey"),
-        Index(
-            "activities_business_id_lead_id_created_at_idx", "business_id", "lead_id", "created_at"
-        ),
+        Index("activities_business_id_lead_id_created_at_idx", "business_id", "lead_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
@@ -1369,9 +1325,7 @@ class WhatsAppBotSession(Base):
     data: Mapped[object | None] = mapped_column(JSONB)
 
     business: Mapped["Business"] = relationship("Business", back_populates="whatsapp_bot_sessions")
-    number: Mapped["WhatsAppNumber"] = relationship(
-        "WhatsAppNumber", back_populates="whatsapp_bot_sessions"
-    )
+    number: Mapped["WhatsAppNumber"] = relationship("WhatsAppNumber", back_populates="whatsapp_bot_sessions")
 
 
 class WhatsAppMessage(Base):
@@ -1446,11 +1400,7 @@ class WhatsAppMessage(Base):
     subject: Mapped[str | None] = mapped_column(String(300))
 
     business: Mapped["Business"] = relationship("Business", back_populates="whatsapp_messages")
-    contact: Mapped[Optional["Contact"]] = relationship(
-        "Contact", back_populates="whatsapp_messages"
-    )
+    contact: Mapped[Optional["Contact"]] = relationship("Contact", back_populates="whatsapp_messages")
     lead: Mapped[Optional["Lead"]] = relationship("Lead", back_populates="whatsapp_messages")
-    number: Mapped["WhatsAppNumber"] = relationship(
-        "WhatsAppNumber", back_populates="whatsapp_messages"
-    )
+    number: Mapped["WhatsAppNumber"] = relationship("WhatsAppNumber", back_populates="whatsapp_messages")
     sender: Mapped[Optional["User"]] = relationship("User", back_populates="whatsapp_messages")

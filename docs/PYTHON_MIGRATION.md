@@ -21,8 +21,8 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | SQLAlchemy models (29 tables, 13 enums) | done |
 | Session auth, tenant scope (404 for outsiders), permission matrix | done |
 | `/health`, `/health/db` | done |
-| auth (register, login, logout, verify, reset, me) | next |
-| businesses, team, notifications, tasks | |
+| auth: register, login, logout, me, verify email, password reset, profile, change password; audit log, argon2 (Node hashes verify unchanged), rate limit, email senders (memory/SMTP/Brevo/disabled) + account templates | done (57 tests) |
+| businesses, team, notifications, tasks | next |
 | leads, customers import/export, reports | |
 | appointments, quotes, media | |
 | sites (render/publish), public site server, embed | |

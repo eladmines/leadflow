@@ -6,7 +6,7 @@ import uuid
 from fastapi import APIRouter
 
 from app.deps import Auth, Tenant, require_permission, tenant_router
-from tests.conftest import HEADERS, cookies, make_business, make_user_session
+from tests.conftest import HEADERS, cookie, make_business, make_user_session
 
 UUID_RE = re.compile(r"^[\w-]{8,64}$")
 
@@ -78,7 +78,7 @@ async def test_anonymous_is_401(app, client):
 
 async def test_a_bad_cookie_is_401_and_cleared(app, client):
     mount_probe_routes(app)
-    res = await client.get("/api/v1/_probe/me", cookies=cookies("x" * 43))
+    res = await client.get("/api/v1/_probe/me", headers=cookie("x" * 43))
     assert res.status_code == 401
     assert "lf_session" in res.headers.get("set-cookie", "")
 
@@ -86,7 +86,7 @@ async def test_a_bad_cookie_is_401_and_cleared(app, client):
 async def test_valid_session_resolves_the_user(app, client, db):
     mount_probe_routes(app)
     user, token = await make_user_session(db, "me")
-    res = await client.get("/api/v1/_probe/me", cookies=cookies(token))
+    res = await client.get("/api/v1/_probe/me", headers=cookie(token))
     assert res.status_code == 200 and res.json()["email"] == user.email
 
 
@@ -96,12 +96,12 @@ async def test_tenant_scope_404s_outsiders_and_non_uuids(app, client, db):
     biz = await make_business(db, owner)
     _, outsider = await make_user_session(db, "x")
     url = f"/api/v1/businesses/{biz.id}/probe"
-    assert (await client.get(url, cookies=cookies(outsider))).status_code == 404
+    assert (await client.get(url, headers=cookie(outsider))).status_code == 404
     assert (
-        await client.get("/api/v1/businesses/not-a-uuid/probe", cookies=cookies(outsider))
+        await client.get("/api/v1/businesses/not-a-uuid/probe", headers=cookie(outsider))
     ).status_code == 404
     assert (
-        await client.get(f"/api/v1/businesses/{uuid.uuid4()}/probe", cookies=cookies(outsider))
+        await client.get(f"/api/v1/businesses/{uuid.uuid4()}/probe", headers=cookie(outsider))
     ).status_code == 404
     assert (await client.get(url)).status_code == 401
 
@@ -128,14 +128,10 @@ async def test_tenant_scope_and_permissions(app, client, db):
     await db.commit()
 
     base = f"/api/v1/businesses/{biz.id}"
-    assert (await client.get(f"{base}/probe", cookies=cookies(owner_token))).json() == {
-        "role": "OWNER"
-    }
-    assert (await client.get(f"{base}/probe", cookies=cookies(emp_token))).json() == {
-        "role": "EMPLOYEE"
-    }
+    assert (await client.get(f"{base}/probe", headers=cookie(owner_token))).json() == {"role": "OWNER"}
+    assert (await client.get(f"{base}/probe", headers=cookie(emp_token))).json() == {"role": "EMPLOYEE"}
     assert (
-        await client.post(f"{base}/owner-only", headers=HEADERS, cookies=cookies(owner_token))
+        await client.post(f"{base}/owner-only", headers={**HEADERS, **cookie(owner_token)})
     ).status_code == 200
-    forbidden = await client.post(f"{base}/owner-only", headers=HEADERS, cookies=cookies(emp_token))
+    forbidden = await client.post(f"{base}/owner-only", headers={**HEADERS, **cookie(emp_token)})
     assert forbidden.status_code == 403 and forbidden.json()["error"]["code"] == "FORBIDDEN"

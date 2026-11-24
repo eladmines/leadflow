@@ -8,9 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import Settings, get_settings
+from app.core.ratelimit import RateLimiter
 from app.db.session import make_engine, make_sessionmaker
 from app.errors import AppError
+from app.integrations.email import EmailSender, create_email_sender
 from app.middleware import error_response, request_context
+from app.modules.auth import routes as auth_routes
 from app.routes import health
 
 log = logging.getLogger("simplecatch")
@@ -20,13 +23,14 @@ def _rid(request: Request) -> str:
     return getattr(request.state, "request_id", "-")
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, email: EmailSender | None = None) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.DATABASE_URL)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
+        await app.state.email.close()
         await engine.dispose()
 
     app = FastAPI(
@@ -38,6 +42,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.engine = engine
     app.state.sessionmaker = make_sessionmaker(engine)
+    app.state.email = email or create_email_sender(settings)
+    app.state.rate_limiter = RateLimiter()
 
     app.middleware("http")(request_context)
     app.add_middleware(
@@ -58,7 +64,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         fields: dict[str, str] = {}
         for err in exc.errors():
             loc = [str(p) for p in err["loc"] if p not in ("body", "query", "path")]
-            fields.setdefault(".".join(loc) or "_", err["msg"])
+            fields.setdefault(".".join(loc) or "_", err["msg"].removeprefix("Value error, "))
         return error_response("VALIDATION_ERROR", 400, _rid(request), fields=fields)
 
     @app.exception_handler(StarletteHTTPException)
@@ -77,4 +83,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return error_response("INTERNAL_ERROR", 500, _rid(request))
 
     app.include_router(health.router)
+    app.include_router(auth_routes.router)
     return app

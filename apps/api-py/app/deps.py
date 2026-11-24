@@ -59,9 +59,7 @@ def cookie_options(request: Request) -> dict:
 
 
 def set_session_cookie(request: Request, response: Response, token: str) -> None:
-    response.set_cookie(
-        SESSION_COOKIE_NAME, token, max_age=SESSION_ABSOLUTE_TTL_S, **cookie_options(request)
-    )
+    response.set_cookie(SESSION_COOKIE_NAME, token, max_age=SESSION_ABSOLUTE_TTL_S, **cookie_options(request))
 
 
 def clear_session_cookie(request: Request, response: Response) -> None:
