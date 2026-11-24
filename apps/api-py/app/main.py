@@ -13,11 +13,16 @@ from app.db.session import make_engine, make_sessionmaker
 from app.errors import AppError
 from app.integrations.domain import DomainExpiry, create_domain_expiry
 from app.integrations.email import EmailSender, create_email_sender
+from app.integrations.gmail import GmailApi, create_gmail_api
+from app.integrations.messenger import MessengerSender, create_messenger_sender
+from app.integrations.meta import MetaApi, create_meta_api
 from app.integrations.storage import StorageProvider, create_storage
+from app.integrations.whatsapp import WhatsAppSender, create_whatsapp_sender
 from app.middleware import error_response, request_context
 from app.modules.appointments import routes as appointment_routes
 from app.modules.auth import routes as auth_routes
 from app.modules.businesses import routes as business_routes
+from app.modules.channels import routes as channel_routes
 from app.modules.domain import routes as domain_routes
 from app.modules.domain.service import start_domain_watch, stop_task
 from app.modules.embed import routes as embed_routes
@@ -47,6 +52,10 @@ def create_app(
     storage: StorageProvider | None = None,
     site_cache: PublishedSiteCache | None = None,
     domain_expiry: DomainExpiry | None = None,
+    whatsapp_sender: WhatsAppSender | None = None,
+    messenger_sender: MessengerSender | None = None,
+    meta_api: MetaApi | None = None,
+    gmail_api: GmailApi | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.DATABASE_URL)
@@ -74,6 +83,10 @@ def create_app(
     app.state.rate_limiter = RateLimiter()
     app.state.site_cache = site_cache or PublishedSiteCache()
     app.state.domain_expiry = domain_expiry or create_domain_expiry(settings)
+    app.state.whatsapp_sender = whatsapp_sender or create_whatsapp_sender(settings)
+    app.state.messenger_sender = messenger_sender or create_messenger_sender(settings)
+    app.state.meta_api = meta_api or create_meta_api(settings)
+    app.state.gmail_api = gmail_api or create_gmail_api(settings)
 
     app.middleware("http")(request_context)
     app.add_middleware(
@@ -124,6 +137,8 @@ def create_app(
     app.include_router(business_routes.tenant)
     app.include_router(team_routes.router)
     app.include_router(team_routes.tenant)
+    app.include_router(channel_routes.public)
+    app.include_router(channel_routes.tenant)
     app.include_router(domain_routes.tenant)
     app.include_router(embed_routes.public)
     app.include_router(embed_routes.tenant)

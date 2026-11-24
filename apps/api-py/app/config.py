@@ -55,6 +55,30 @@ class Settings(BaseSettings):
     # F33: `live` looks domains up at their registries (RDAP, ISOC-IL WHOIS); `off` never does.
     DOMAIN_LOOKUP: Literal["live", "off"] = "live"
 
+    # F12/F23: WhatsApp and Messenger. One number / Page from the environment as a fallback;
+    # businesses connect their own (F25). `local` records outgoing messages without calling Meta.
+    WHATSAPP_PROVIDER: Literal["local", "cloud"] = "local"
+    WHATSAPP_BUSINESS_ID: str | None = None
+    WHATSAPP_PHONE_NUMBER_ID: str | None = None
+    WHATSAPP_ACCESS_TOKEN: str | None = None
+    WHATSAPP_APP_SECRET: str | None = None  # verifies the X-Hub-Signature-256 of every webhook call
+    WHATSAPP_VERIFY_TOKEN: str | None = None  # the word Meta echoes back when the webhook is registered
+    WHATSAPP_GRAPH_VERSION: str = "v21.0"
+    MESSENGER_PROVIDER: Literal["local", "cloud"] = "local"
+    MESSENGER_BUSINESS_ID: str | None = None
+    MESSENGER_PAGE_ID: str | None = None
+    MESSENGER_PAGE_ACCESS_TOKEN: str | None = None
+
+    # F25: channels each business connects itself. CHANNEL_SECRETS_KEY is 32 bytes, base64; unset =
+    # derived from FORM_TOKEN_SECRET.
+    CHANNEL_SECRETS_KEY: str | None = None
+    META_APP_ID: str | None = None
+    META_LOGIN_CONFIG_ID: str | None = None
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    EMAIL_INBOUND_DOMAIN: str | None = None  # F27: the domain forwarding addresses live on
+    EMAIL_INBOUND_SECRET: str | None = None  # signs the inbound-email webhook
+
     # Background jobs (task reminders). Off in tests, which call the job functions directly.
     RUN_BACKGROUND_JOBS: bool = True
     AUTH_RATE_LIMIT_MAX: int = 10
@@ -81,7 +105,28 @@ class Settings(BaseSettings):
     def _trim_app_url(cls, v: str | None) -> str | None:
         return v.rstrip("/") if v else v
 
-    @field_validator("BREVO_API_KEY", "SMTP_USER", "SMTP_PASS", "APP_URL", mode="before")
+    @field_validator(
+        "BREVO_API_KEY",
+        "SMTP_USER",
+        "SMTP_PASS",
+        "APP_URL",
+        "WHATSAPP_BUSINESS_ID",
+        "WHATSAPP_PHONE_NUMBER_ID",
+        "WHATSAPP_ACCESS_TOKEN",
+        "WHATSAPP_APP_SECRET",
+        "WHATSAPP_VERIFY_TOKEN",
+        "MESSENGER_BUSINESS_ID",
+        "MESSENGER_PAGE_ID",
+        "MESSENGER_PAGE_ACCESS_TOKEN",
+        "CHANNEL_SECRETS_KEY",
+        "META_APP_ID",
+        "META_LOGIN_CONFIG_ID",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "EMAIL_INBOUND_DOMAIN",
+        "EMAIL_INBOUND_SECRET",
+        mode="before",
+    )
     @classmethod
     def _empty_is_unset(cls, v: object) -> object:
         return None if v == "" else v

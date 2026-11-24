@@ -17,6 +17,7 @@ dependencies = [
   "httpx>=0.28",
   "pillow>=11",
   "aiosmtplib>=5.1.3",
+  "cryptography>=50.0.2",
 ]
 
 [dependency-groups]
@@ -41,6 +42,8 @@ select = ["E", "F", "I", "UP", "B"]
 "app/shared/site_templates.py" = ["E501"]
 "app/shared/site.py" = ["E501"]
 "app/public/app.py" = ["E501"]
+"app/integrations/*/__init__.py" = ["E501"]
+"app/modules/channels/*.py" = ["E501"]
 "app/modules/sites/service.py" = ["E501"]
 "app/modules/sites/routes.py" = ["E501"]
 "app/modules/reports/visits.py" = ["E501"]
