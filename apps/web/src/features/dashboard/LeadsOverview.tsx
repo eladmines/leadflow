@@ -147,7 +147,7 @@ function Funnel({ report, businessId }: { report: ReportSummary; businessId: str
               to={businessWebPaths.section(businessId, 'leads')}
               className="truncate hover:text-brand-700 hover:underline"
             >
-              {s.name}
+              {tr(s.name)}
             </Link>
             <span className="tabular-nums">{s.count}</span>
           </li>
