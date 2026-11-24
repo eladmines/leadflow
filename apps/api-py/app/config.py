@@ -112,6 +112,7 @@ class Settings(BaseSettings):
         "SMTP_USER",
         "SMTP_PASS",
         "APP_URL",
+        "COOKIE_SECURE",
         "RENDER_EXTERNAL_URL",
         "WHATSAPP_BUSINESS_ID",
         "WHATSAPP_PHONE_NUMBER_ID",
