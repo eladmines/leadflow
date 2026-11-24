@@ -1,0 +1,381 @@
+{
+ "out": [
+  {
+   "input": {
+    "params": {
+     "gclid": "abc"
+    }
+   },
+   "output": {
+    "source": "google_ads",
+    "clickIdType": "gclid",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "Google Ads",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "gbraid": "x"
+    }
+   },
+   "output": {
+    "source": "google_ads",
+    "clickIdType": "gclid",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "Google Ads",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "google",
+     "utm_medium": "cpc",
+     "utm_campaign": "spring"
+    }
+   },
+   "output": {
+    "source": "google_ads",
+    "medium": "cpc",
+    "campaign": "spring",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "Google Ads",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "google",
+     "utm_medium": "organic"
+    }
+   },
+   "output": {
+    "source": "google",
+    "medium": "organic",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "גוגל (חיפוש)",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "Facebook",
+     "utm_medium": "paid_social",
+     "utm_campaign": "c1"
+    }
+   },
+   "output": {
+    "source": "meta_ads",
+    "medium": "paid_social",
+    "campaign": "c1",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "מודעות פייסבוק / אינסטגרם",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "instagram"
+    }
+   },
+   "output": {
+    "source": "meta",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "פייסבוק / אינסטגרם",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {
+     "fbclid": "zzz"
+    }
+   },
+   "output": {
+    "source": "meta",
+    "clickIdType": "fbclid",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "פייסבוק / אינסטגרם",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "fbclid": "zzz",
+     "utm_medium": "cpc"
+    }
+   },
+   "output": {
+    "source": "meta_ads",
+    "medium": "cpc",
+    "clickIdType": "fbclid",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "מודעות פייסבוק / אינסטגרם",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "ttclid": "t"
+    }
+   },
+   "output": {
+    "source": "tiktok",
+    "clickIdType": "ttclid",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "TikTok",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "tiktok"
+    }
+   },
+   "output": {
+    "source": "tiktok",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "TikTok",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {
+     "msclkid": "m"
+    }
+   },
+   "output": {
+    "source": "microsoft_ads",
+    "clickIdType": "msclkid",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "Microsoft Ads",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "bing"
+    }
+   },
+   "output": {
+    "source": "microsoft_ads",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "Microsoft Ads",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "newsletter",
+     "utm_medium": "email",
+     "utm_campaign": "nov"
+    }
+   },
+   "output": {
+    "source": "utm",
+    "utmSource": "newsletter",
+    "medium": "email",
+    "campaign": "nov",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "newsletter",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {},
+    "referrer": "https://www.google.com/search?q=x"
+   },
+   "output": {
+    "source": "google",
+    "referrerHost": "www.google.com",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "גוגל (חיפוש)",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {},
+    "referrer": "https://www.google.co.il/"
+   },
+   "output": {
+    "source": "google",
+    "referrerHost": "www.google.co.il",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "גוגל (חיפוש)",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {},
+    "referrer": "https://l.facebook.com/l.php?u=1"
+   },
+   "output": {
+    "source": "meta",
+    "referrerHost": "l.facebook.com",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "פייסבוק / אינסטגרם",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {},
+    "referrer": "https://www.instagram.com/"
+   },
+   "output": {
+    "source": "meta",
+    "referrerHost": "www.instagram.com",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "פייסבוק / אינסטגרם",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {},
+    "referrer": "https://example.org/blog"
+   },
+   "output": {
+    "source": "referral",
+    "referrerHost": "example.org",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "example.org",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {},
+    "referrer": "https://shiran.lvh.me:4100/about",
+    "selfHost": "shiran.lvh.me:4100"
+   },
+   "output": {
+    "source": "direct",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "ישיר",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {},
+    "referrer": "not a url"
+   },
+   "output": {
+    "source": "direct",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "ישיר",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {}
+   },
+   "output": {
+    "source": "direct",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "ישיר",
+   "campaign": false
+  },
+  {
+   "input": {
+    "params": {
+     "utm_source": "  Spring  ",
+     "utm_term": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "utm_content": "y"
+    },
+    "landingPath": "/promo?x=1"
+   },
+   "output": {
+    "source": "utm",
+    "utmSource": "Spring",
+    "term": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "content": "y",
+    "landingPath": "/promo",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "Spring",
+   "campaign": true
+  },
+  {
+   "input": {
+    "params": {
+     "utm_medium": "cpc"
+    },
+    "referrer": "https://www.bing.com/"
+   },
+   "output": {
+    "source": "referral",
+    "medium": "cpc",
+    "referrerHost": "www.bing.com",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   },
+   "name": "bing.com",
+   "campaign": true
+  }
+ ],
+ "refs": [
+  {
+   "input": {
+    "source_id": "123",
+    "source_type": "ad",
+    "headline": "Hi"
+   },
+   "output": {
+    "source": "meta_ads",
+    "adId": "123",
+    "adHeadline": "Hi",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   }
+  },
+  {
+   "input": {
+    "ctwa_clid": "abc",
+    "ad_id": 77
+   },
+   "output": {
+    "source": "meta_ads",
+    "clickIdType": "ctwa",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   }
+  },
+  {
+   "input": {
+    "source_type": "post",
+    "source_id": "5"
+   },
+   "output": null
+  },
+  {
+   "input": {},
+   "output": null
+  },
+  {
+   "input": {
+    "source_type": "ad",
+    "headline": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "output": {
+    "source": "meta_ads",
+    "adHeadline": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "seenAt": "2026-11-24T10:00:00.000Z"
+   }
+  }
+ ]
+}

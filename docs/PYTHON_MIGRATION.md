@@ -25,7 +25,8 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | businesses (create with one-owned-business rule, onboarding, members, notification prefs); shared phone, industries, validators (phone port diff-tested against the TS original) | done (21 tests) |
 | team: invitations (invite, re-invite, resend, revoke), preview/accept, role change, removal; invite email template | done (8 tests) |
 | notifications (notify helper, list, mark read); tasks (CRUD, visibility rules, lead links + activity, reminder job with timezone-aware Hebrew/English dates) | done (24 tests) |
-| leads (+ customers import/export, reports) | next |
+| leads: list/search/filters, create, detail + history, update, notes, tags, delete, pipeline, duplicates, CSV export; customers list + spreadsheet import; website-form intake service; attribution classifier (diff-tested against TS) | done (47 tests) |
+| reports | next |
 | leads, customers import/export, reports | |
 | appointments, quotes, media | |
 | sites (render/publish), public site server, embed | |

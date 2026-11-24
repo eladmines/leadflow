@@ -255,3 +255,64 @@ def task_reminder_template(
         ]
     )
     return RenderedEmail(subject, html, text)
+
+
+def new_lead_template(
+    business_name: str,
+    name: str,
+    phone: str,
+    email: str | None,
+    message: str | None,
+    link: str,
+    settings_link: str,
+    lang: Language = "he",
+) -> RenderedEmail:
+    """F07: a new website lead, sent to owners and managers. Personal data stays out of the
+    subject."""
+    en = lang == "en"
+    subject = f"New website enquiry — {business_name}" if en else f"פנייה חדשה מהאתר — {business_name}"
+    rows: list[tuple[str, str]] = [("Name" if en else "שם", name), ("Phone" if en else "טלפון", phone)]
+    if email:
+        rows.append(("Email" if en else "אימייל", email))
+    if message:
+        rows.append(("Message" if en else "הודעה", message))
+    title = "A new enquiry came in from your website" if en else "התקבלה פנייה חדשה מהאתר"
+    table = "".join(
+        f'<tr><td style="padding:6px 0;color:#6b7280;width:80px;vertical-align:top;">{k}</td>'
+        f'<td style="padding:6px 0;white-space:pre-wrap;">{_esc(v)}</td></tr>'
+        for k, v in rows
+    )
+    hint = (
+        "Get back to the customer quickly — enquiries answered fast close more often."
+        if en
+        else "כדאי לחזור ללקוח מהר — פניות שנענות מהר נסגרות יותר."
+    )
+    href = _esc(settings_link)
+    off = (
+        f'Don\'t want these notifications? <a href="{href}" style="color:#9ca3af;">'
+        "You can turn them off in your account settings</a>."
+        if en
+        else f'לא רוצים לקבל את ההתראות האלה? <a href="{href}" style="color:#9ca3af;">'
+        "אפשר לכבות אותן בהגדרות החשבון</a>."
+    )
+    html = _layout(
+        subject,
+        f"""<h1 style="font-size:20px;margin:0 0 16px;">{title}</h1>
+<table style="border-collapse:collapse;width:100%;margin:0 0 8px;">{table}</table>
+{_button(link, "View the lead" if en else "לצפייה בליד", lang)}
+<p style="margin:0;color:#6b7280;">{hint}</p>
+<p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">{off}</p>""",
+        lang,
+    )
+    text = "\n".join(
+        [
+            title,
+            "",
+            *[f"{k}: {v}" for k, v in rows],
+            "",
+            f"{'View the lead' if en else 'לצפייה בליד'}: {link}",
+            "",
+            f"{'Turn these notifications off' if en else 'לכיבוי ההתראות האלה'}: {settings_link}",
+        ]
+    )
+    return RenderedEmail(subject, html, text)

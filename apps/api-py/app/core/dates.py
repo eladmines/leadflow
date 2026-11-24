@@ -27,3 +27,12 @@ def format_full(dt: datetime, tz: str, lang: str) -> str:
     if lang == "en":
         return f"{_EN_DAYS[wd]} {local.day} {_EN_MONTHS[local.month - 1]} {local.year} at {time}"
     return f"יום {_HE_DAYS[wd]}, {local.day} ב{_HE_MONTHS[local.month - 1]} {local.year} בשעה {time}"
+
+
+def format_short(dt: datetime, tz: str) -> str:
+    """Short date and time as Hebrew ICU writes it: '1.11.2026, 11:05'."""
+    try:
+        local = dt.astimezone(ZoneInfo(tz))
+    except Exception:
+        local = dt
+    return f"{local.day}.{local.month}.{local.year}, {local.hour:02d}:{local.minute:02d}"
