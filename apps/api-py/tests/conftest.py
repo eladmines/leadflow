@@ -26,8 +26,8 @@ HEADERS = {CSRF_HEADER_NAME: CSRF_HEADER_VALUE, "Origin": ORIGIN}
 def _test_url() -> str:
     url = os.environ.get("TEST_DATABASE_URL")
     if not url:
-        # Reuse the Node API's .env so both stacks test against the same local database.
-        with open("../api/.env") as env:
+        # The same local .env the server reads.
+        with open(".env") as env:
             for line in env:
                 if line.startswith("TEST_DATABASE_URL="):
                     url = line.split("=", 1)[1].strip()
@@ -48,7 +48,8 @@ def make_settings(**overrides) -> Settings:
         "DOMAIN_LOOKUP": "off",
         "LEAD_FORM_RATE_LIMIT_MAX": 1000,
     }
-    return Settings(**{**base, **overrides})
+    # `_env_file=None`: a developer's local .env never leaks into the tests.
+    return Settings(**{**base, **overrides}, _env_file=None)
 
 
 @pytest.fixture

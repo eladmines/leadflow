@@ -6,5 +6,4 @@
 e2e
 test-results
 playwright-report
-apps/api
 **/.env

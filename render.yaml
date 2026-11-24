@@ -1,36 +1,26 @@
-# Free test hosting on Render (D-119): one web service runs the API, the web app and the
+# One Docker web service runs the Python API (FastAPI), the web app and the
 # customer sites (under /s/<name>). The database is Neon's free Postgres (DATABASE_URL).
 # Step-by-step: docs/DEPLOY.md.
+# On every start the container migrates the database (apps/api-py/scripts/prepare_db.py): a database
+# the old Node API had migrated is stamped at the Alembic baseline first, then new migrations apply.
 services:
   - type: web
     name: leadflow
-    runtime: node
+    runtime: docker
+    dockerfilePath: ./apps/api-py/Dockerfile
+    dockerContext: .
     plan: free
     region: frankfurt
     branch: main
     autoDeploy: true
     healthCheckPath: /health
-    # Dev dependencies are needed to build (tsup, vite, prisma), so install them explicitly.
-    buildCommand: >-
-      corepack enable &&
-      NODE_ENV=development pnpm install --frozen-lockfile &&
-      pnpm --filter @simplecatch/shared build &&
-      pnpm --filter @simplecatch/api exec prisma generate &&
-      pnpm --filter @simplecatch/api build &&
-      pnpm --filter @simplecatch/web build
-    # Migrations run on every start; they are no-ops when the database is up to date.
-    startCommand: cd apps/api && pnpm exec prisma migrate deploy && node dist/server.js
     envVars:
-      - key: NODE_VERSION
-        value: '22'
       - key: NODE_ENV
         value: production
       # APP_URL and WEB_ORIGINS: set in the Render dashboard to https://app.simplecatch.co.il (docs/DEPLOY.md);
       # without them APP_URL defaults to Render's own address (RENDER_EXTERNAL_URL).
       - key: PUBLIC_SITE_MODE
         value: path
-      - key: WEB_DIST_DIR
-        value: ../web/dist
       - key: STORAGE_DRIVER
         value: database
       - key: FORM_TOKEN_SECRET

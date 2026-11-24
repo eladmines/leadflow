@@ -22,6 +22,7 @@ RUN uv sync --frozen --no-dev
 COPY apps/api-py/app app
 COPY apps/api-py/alembic alembic
 COPY apps/api-py/alembic.ini ./
+COPY apps/api-py/assets assets
 COPY apps/api-py/scripts scripts
 COPY --from=web /repo/apps/web/dist /srv/web
 ENV WEB_DIST_DIR=/srv/web NODE_ENV=production PATH="/srv/api/.venv/bin:$PATH"

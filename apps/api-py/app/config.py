@@ -2,11 +2,11 @@
 
 import secrets
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     NODE_ENV: Literal["development", "test", "production"] = "development"
     DATABASE_URL: str
-    WEB_ORIGINS: list[str] = []
+    WEB_ORIGINS: Annotated[list[str], NoDecode] = []  # comma-separated in the environment
     APP_URL: str | None = None
     RENDER_EXTERNAL_URL: str | None = None  # Render's public address, used when APP_URL isn't set
     COOKIE_SECURE: bool | None = None
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     MEDIA_DIR: str = ".data/media"
     MEDIA_PUBLIC_BASE: str = "/media"  # same-origin /media locally, a CDN origin in production
     MEDIA_QUOTA_BYTES: int = 200 * 1024 * 1024  # per business
-    SITE_STOCK_DIR: str = "../api/assets/stock"
+    SITE_STOCK_DIR: str = "assets/stock"
 
     # F06: customer sites. `host`: each site on its own subdomain of PUBLIC_SITE_HOST (wildcard
     # domain). `path`: sites under APP_URL/s/<subdomain> (hosting without a domain).

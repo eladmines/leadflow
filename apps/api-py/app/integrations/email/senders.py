@@ -70,6 +70,8 @@ class SmtpEmailSender:
             # Upgrades with STARTTLS when the server offers it (Mailpit doesn't).
             start_tls=None,
             timeout=15,
+            # Without it the library looks up this machine's own name, which can take seconds.
+            local_hostname="localhost",
         )
 
     async def close(self) -> None:

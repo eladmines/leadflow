@@ -7,15 +7,17 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @simplecatch/api --filter @simplecatch/web dev",
+    "dev": "pnpm run --parallel \"/^dev:/\"",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "db:migrate": "pnpm --filter @simplecatch/api db:migrate",
-    "db:seed": "pnpm --filter @simplecatch/api db:seed",
-    "e2e": "playwright test"
+    "db:migrate": "cd apps/api-py && uv run python scripts/prepare_db.py",
+    "e2e": "playwright test",
+    "dev:api": "cd apps/api-py && uv run watchfiles \"python -m app.dev_server\" app",
+    "dev:web": "pnpm --filter @simplecatch/web dev",
+    "test:api": "cd apps/api-py && uv run pytest"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

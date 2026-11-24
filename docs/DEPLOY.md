@@ -111,8 +111,7 @@ three things that are yours to choose, so nothing is switched on until you set t
 3. For replies: `EMAIL_TRANSPORT` other than `disabled` (see step 2), with the sending domain verified
    (SPF/DKIM) at the email provider so replies from `…@mail.example.com` are accepted.
 
-Then Settings → Channels → Email → **Create address**. Locally, `pnpm --filter @simplecatch/api
-mail:simulate --to <address>` stands in for the inbound service.
+Then Settings → Channels → Email → **Create address**. Locally, `uv run python scripts/mail_simulate.py --to <address>` (in `apps/api-py`) stands in for the inbound service.
 
 ### Gmail instead of forwarding (F29, D-188)
 
@@ -147,7 +146,8 @@ To make an account look lived-in (about 20 leads with history, tasks, appointmen
 WhatsApp conversations, all tagged "דוגמה"), run from the repository on your computer:
 
 ```bash
-DATABASE_URL='<the Neon connection string>' pnpm --filter @simplecatch/api seed:demo --email <the account's email>
+cd apps/api-py
+DATABASE_URL='<the Neon connection string>' uv run python scripts/seed_demo.py --email <the account's email>
 ```
 
 The same command with `--remove` at the end deletes it again. The account must have finished

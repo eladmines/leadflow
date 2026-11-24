@@ -143,7 +143,7 @@ def test_production_config_fails_fast():
 
     from app.config import Settings
 
-    base = {"DATABASE_URL": "postgresql://u:p@h/db", "NODE_ENV": "production"}
+    base = {"DATABASE_URL": "postgresql://u:p@h/db", "NODE_ENV": "production", "_env_file": None}
     with _pytest.raises(ValidationError, match="APP_URL"):
         Settings(**base, FORM_TOKEN_SECRET="x" * 32)
     with _pytest.raises(ValidationError, match="FORM_TOKEN_SECRET"):
@@ -159,3 +159,13 @@ def test_production_config_fails_fast():
     assert ok.app_url == "https://leadflow.onrender.com"
     assert ok.allowed_origins == {"https://leadflow.onrender.com"}
     assert ok.cookie_secure is True
+
+
+def test_web_origins_read_from_a_comma_separated_environment_value(monkeypatch):
+    from app.config import Settings
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@h/db")
+    monkeypatch.setenv("WEB_ORIGINS", "http://localhost:5173, https://app.example.com")
+    assert Settings().WEB_ORIGINS == ["http://localhost:5173", "https://app.example.com"]
+    monkeypatch.setenv("WEB_ORIGINS", "http://localhost:5173")
+    assert Settings().allowed_origins == {"http://localhost:5173"}

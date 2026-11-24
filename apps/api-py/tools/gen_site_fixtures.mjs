@@ -1,5 +1,5 @@
 // Fixtures for tests/test_site_render.py: what the TypeScript builders and renderer produce for a
-// broad set of inputs. Run from apps/api:  npx tsx ../api-py/tools/gen_site_fixtures.mjs
+// broad set of inputs. Run from the repo root:  npx tsx apps/api-py/tools/gen_site_fixtures.mjs
 import { writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import {

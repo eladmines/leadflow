@@ -35,19 +35,18 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Create test database
-        run: PGPASSWORD=leadflow psql -h localhost -U leadflow -c 'CREATE DATABASE leadflow_test'
       - run: pnpm lint
       - run: pnpm typecheck
       - name: The web app's API types match the Python API's OpenAPI schema
         run: pnpm --filter @simplecatch/web api:types && git diff --exit-code apps/web/src/api/generated.ts
       - run: pnpm test
       - run: pnpm build
-      - name: Apply migrations to dev database (for e2e)
-        run: pnpm --filter @simplecatch/api db:deploy
+      - uses: astral-sh/setup-uv@v5
+      - name: Python API for the e2e (dependencies, and the dev database schema)
+        run: cd apps/api-py && cp .env.example .env && uv sync --frozen && uv run python scripts/prepare_db.py
       - run: pnpm exec playwright install --with-deps chromium
       - name: End-to-end tests
-        run: cp apps/api/.env.example apps/api/.env && pnpm e2e
+        run: pnpm e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

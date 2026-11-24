@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-// The script is plain ES5 text served by the API; run it here the way a browser would.
-import { EMBED_SCRIPT } from '../../../../api/src/modules/embed/script';
-import { SITE_SCRIPT } from '../../../../api/src/modules/embed/site-script';
+// The scripts are plain ES5 text served by the API (apps/api-py/app/shared/data); run them here the
+// way a browser would.
+import EMBED_SCRIPT from '../../../../api-py/app/shared/data/embed_script.js?raw';
+import SITE_SCRIPT from '../../../../api-py/app/shared/data/site_script.js?raw';
 
 const SRC = 'https://app.example.com/api/v1/embed/sc.js';
 const sent: { url: string; body: Record<string, unknown> }[] = [];

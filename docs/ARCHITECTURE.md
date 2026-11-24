@@ -5,7 +5,7 @@ Decisions and their reasons are in `DECISIONS.md`.
 
 ## 1. Shape: modular monolith
 
-One API process (`apps/api`) with modules per feature (`src/modules/<feature>`), one shared
+One API process (`apps/api-py`, FastAPI) with modules per feature (`app/modules/<feature>`), one shared
 PostgreSQL database, one admin SPA (`apps/web`), and a contract package (`packages/shared`).
 We don't split into microservices; background work runs in-process until queues are needed (F12).
 
@@ -13,14 +13,14 @@ We don't split into microservices; background work runs in-process until queues 
 Browser (admin, Hebrew RTL / English LTR) ──► apps/web (Vite SPA; in prod served by the API, D-119)
             │  same-site cookie, JSON
             ▼
-         apps/api (Fastify) ──► PostgreSQL (managed: Supabase/Neon; local: docker :5432)
+         apps/api-py (FastAPI) ──► PostgreSQL (managed: Supabase/Neon; local: docker :5432)
             │        │
             │        ├─► StorageProvider (local disk, or Postgres via STORAGE_DRIVER)  [F05]
             │        ├─► EmailSender (SMTP→Mailpit local / Brevo over HTTPS / off)    [F01]
             │        ├─► WhatsApp + Messenger (Meta Cloud API, per-business tokens)    [F12, F23–F25]
             │        └─► AI provider (planned)                                         [F16]
             ▼
-Visitors ──► public site server in the API (apps/api, port 4100) resolving the site by
+Visitors ──► public site server in the API (apps/api-py, port 4100) resolving the site by
              Host (`<sub>.lvh.me` locally) or by path (`/s/<name>` on the Render test host);
              published HTML is read from Postgres                                       [F06]
 ```
@@ -34,8 +34,8 @@ Cloudflare Worker for sites is planned, not built (see `DEPLOYMENT.md`, D-010/D-
 
 | Layer     | Choice                                                                                        |
 | --------- | --------------------------------------------------------------------------------------------- |
-| API       | Node 22+, Fastify 5, fastify-type-provider-zod, pino logging                                  |
-| Data      | PostgreSQL 16, Prisma 6 (migrations via `prisma migrate`)                                     |
+| API       | Python 3.12, FastAPI, Pydantic 2, uvicorn                                                     |
+| Data      | PostgreSQL 16, SQLAlchemy 2 (async) + Alembic migrations                                      |
 | Contracts | Zod 3 in `packages/shared` (Hebrew validation messages)                                       |
 | Web       | React 18, Vite 6, React Router 6, TanStack Query 5, Tailwind 3 (logical utilities), Heebo     |
 | Tests     | Vitest 3 (API against a real Postgres test DB; web with jsdom), Playwright (desktop + mobile) |
@@ -85,7 +85,7 @@ serving, not today's behaviour.
 
 ## 7. Configuration and environments
 
-- Env validated with Zod at boot (`apps/api/src/config/env.ts`); the app fails fast.
+- Env validated with pydantic-settings at boot (`apps/api-py/app/config.py`); the app fails fast.
 - Separate dev/test databases locally; dev/staging/prod with separate secrets later (doc 04).
 - Secrets only in env or a secret manager; never in the repo or the browser.
 

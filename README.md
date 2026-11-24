@@ -4,13 +4,14 @@ A Hebrew/RTL SaaS for small businesses: website, leads, CRM, WhatsApp and an AI 
 
 ## Quick start
 
-Requires Node 22+, pnpm 9, Docker.
+Requires Node 22+, pnpm 9, Python 3.12 with [uv](https://docs.astral.sh/uv/), Docker.
 
 ```bash
 docker compose up -d
-cp apps/api/.env.example apps/api/.env
+cp apps/api-py/.env.example apps/api-py/.env
 pnpm install
-pnpm db:migrate
+(cd apps/api-py && uv sync)
+pnpm db:migrate        # Alembic: builds or updates the schema
 pnpm dev
 ```
 
@@ -22,7 +23,8 @@ pnpm dev
 ## Checks
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm lint && pnpm typecheck && pnpm test && pnpm test:api && pnpm build
+(cd apps/api-py && uv run ruff check . && uv run ruff format --check .)
 pnpm exec playwright install chromium   # first time
 pnpm e2e
 ```
@@ -30,9 +32,9 @@ pnpm e2e
 ## Repo layout
 
 ```
-apps/api        Fastify + Prisma API (modular monolith)
+apps/api-py     FastAPI + SQLAlchemy + Alembic API (modular monolith; it replaced the Node API)
 apps/web        React + Vite admin app (Hebrew RTL)
-packages/shared Zod contracts, error codes, roles/permissions
+packages/shared Zod contracts, error codes, roles/permissions (the web app's source of types for now)
 e2e/            Playwright tests
 docs/           Architecture, decisions, roadmap, backlog, feature specs
 ```

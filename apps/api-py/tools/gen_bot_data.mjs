@@ -1,5 +1,5 @@
 // Generates app/shared/data/bot_texts.json: the WhatsApp bot's default texts per industry and
-// language, from the TypeScript originals. Run from apps/api:  npx tsx ../api-py/tools/gen_bot_data.mjs
+// language, from the TypeScript originals. Run from the repo root:  npx tsx apps/api-py/tools/gen_bot_data.mjs
 import { writeFileSync } from 'node:fs';
 import {
   INDUSTRIES,

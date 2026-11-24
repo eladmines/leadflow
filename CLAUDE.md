@@ -14,12 +14,12 @@ Product source of truth: the planning PDFs (PRD v4.0 + docs 02–09). Engineerin
 
 ```bash
 docker compose up -d            # Postgres (localhost:5432) + Mailpit (UI localhost:8025)
-cp apps/api/.env.example apps/api/.env   # first time only
-pnpm install
-pnpm db:migrate                 # prisma migrate dev (apps/api)
-pnpm --filter @simplecatch/api exec prisma generate   # after pulling/merging schema changes (stale client = type errors)
+cp apps/api-py/.env.example apps/api-py/.env   # first time only
+pnpm install && (cd apps/api-py && uv sync)
+pnpm db:migrate                 # Alembic: builds/updates the schema (apps/api-py)
 pnpm dev                        # API :4000 + web :5173 (web proxies /api) + public sites :4100 (http://<sub>.lvh.me:4100)
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm lint && pnpm typecheck && pnpm test && pnpm test:api && pnpm build   # test:api = pytest
+(cd apps/api-py && uv run ruff check . && uv run ruff format --check .)
 pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` first; e2e starts its own servers)
 ```
 
@@ -36,7 +36,7 @@ pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` 
 4. **Errors** use the shared shape `{ error: { code, message, fields?, requestId } }`. Throw
    `AppError` for expected errors. Never leak stack traces, SQL or provider errors to clients.
 5. **Secrets and PII.** Never hardcode secrets, never log them. Logger redaction lives in
-   `apps/api/src/lib/logger.ts`; extend it when adding sensitive fields. Store only hashes of tokens.
+   the API's logging setup (`apps/api-py/app`); extend it when adding sensitive fields. Store only hashes of tokens.
 6. **Bilingual app, RTL and LTR (D-100).** The web app defaults to Hebrew (RTL, D-186) with English (LTR) as an
    option. Write copy in Hebrew wrapped in `tr('…')` (`apps/web/src/i18n`) and add its English to
    `apps/web/src/i18n/en.*.ts`; shared labels/messages are wrapped where they're shown. `dir` follows the
@@ -45,27 +45,27 @@ pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` 
    Emails, phones and URLs get `dir="ltr"`. Customer-facing copy (website, WhatsApp, emails) follows the business's language (D-142, D-143): add both Hebrew and English.
 7. **Accessibility.** Labeled inputs, visible focus, keyboard reachable, colour never the only signal.
    Every screen has loading, empty, error and no-permission states.
-8. **External integrations** sit behind an interface in `apps/api/src/integrations/*`, with a
+8. **External integrations** sit behind an interface in `apps/api-py/app/integrations/*`, with a
    local/test adapter. No paid service without a recorded decision.
 9. **Don't invent product requirements.** If the docs are silent, propose it in `docs/DECISIONS.md`
    as _Proposed_ and flag it to the orchestrator.
-10. **Pinned stack** (don't bump majors without a decision): Fastify 5, Prisma 6, Zod 3, TypeScript 5.9,
+10. **Pinned stack** (don't bump majors without a decision): FastAPI, SQLAlchemy 2, Alembic, Pydantic 2, Zod 3 (web), TypeScript 5.9,
     React 18, Vite 6, Tailwind 3, Vitest 3, React Router 6, TanStack Query 5.
 
 ## Code conventions
 
-- API module layout: `src/modules/<feature>/{routes,service,repo}.ts` + `*.test.ts` next to them.
-- Build the app with `buildApp()`; test through `app.inject()` against the real test DB
-  (`test/helpers.ts`: `createTestApp`, `resetDb`).
+- API module layout (`apps/api-py/app/modules/<feature>/`): `routes.py`, `service.py`, `schemas.py`; tests in `apps/api-py/tests/test_<feature>.py`.
+- Build the app with `create_app()`; tests call it through httpx's ASGI transport against the real test DB (`tests/conftest.py`: `client`, `db`, `owner_with_business`, …; the tables are emptied between tests).
+- Response models are Pydantic; after changing one run `uv run python scripts/export_openapi.py` and `pnpm --filter @simplecatch/web api:types` (CI fails when the generated files are stale).
 - Web: `src/features/<feature>/` for screens and hooks, `src/components/ui/` for the shared kit, `apiFetch` for all calls.
-- Migrations: `pnpm --filter @simplecatch/api exec prisma migrate dev --name <change>`; never edit an applied migration.
+- Migrations: `cd apps/api-py && uv run alembic revision -m "<change>"` (hand-written SQL/ops), keep `app/db/models.py` in step; never edit an applied revision.
 
 ## File ownership (multi-agent work)
 
 | Owner        | May write                                                                                                    |
 | ------------ | ------------------------------------------------------------------------------------------------------------ |
-| architect    | `docs/features/**`, `packages/shared/src/**`, `apps/api/prisma/schema.prisma`, append to `docs/DECISIONS.md` |
-| backend      | `apps/api/**`                                                                                                |
+| architect    | `docs/features/**`, `packages/shared/src/**`, `apps/api-py/app/db/models.py`, `apps/api-py/alembic/**`, append to `docs/DECISIONS.md` |
+| backend      | `apps/api-py/**`                                                                                              |
 | frontend     | `apps/web/**`                                                                                                |
 | qa           | `e2e/**`, `apps/*/test/qa/**`, the QA section of `docs/features/Fxx.md`                                      |
 | orchestrator | root config, lockfile and dependencies, `docs/FEATURE_BACKLOG.md`, `docs/ROADMAP.md`, `CLAUDE.md`            |

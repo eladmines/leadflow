@@ -34,7 +34,7 @@ export default defineConfig({
     {
       // Many e2e registrations share one IP, so raise the auth rate limit for this server only.
       // Rate limiting itself is covered by the API integration tests (security.test.ts).
-      command: 'pnpm --filter @simplecatch/api dev',
+      command: 'cd apps/api-py && uv run python -m app.dev_server',
       // Verification is off by default (D-133); the e2e keeps its flow covered.
       env: { AUTH_RATE_LIMIT_MAX: '1000', EMAIL_VERIFICATION: 'on' },
       url: 'http://localhost:4000/health',
