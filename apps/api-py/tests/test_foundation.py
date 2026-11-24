@@ -169,3 +169,19 @@ def test_web_origins_read_from_a_comma_separated_environment_value(monkeypatch):
     assert Settings().WEB_ORIGINS == ["http://localhost:5173", "https://app.example.com"]
     monkeypatch.setenv("WEB_ORIGINS", "http://localhost:5173")
     assert Settings().allowed_origins == {"http://localhost:5173"}
+
+
+def test_cloud_providers_without_an_environment_number_still_start():
+    """Render sets WHATSAPP_PROVIDER / MESSENGER_PROVIDER to `cloud` with every number connected per
+    business, so no environment number or token exists; the app must boot (it crashed once)."""
+    from app.integrations.messenger import create_messenger_sender
+    from app.integrations.whatsapp import create_whatsapp_sender
+    from tests.conftest import make_settings
+
+    s = make_settings(WHATSAPP_PROVIDER="cloud", MESSENGER_PROVIDER="cloud")
+    assert create_whatsapp_sender(s) is not None
+    assert create_messenger_sender(s) is not None
+    from app.main import create_app
+
+    app = create_app(s)
+    assert app.state.whatsapp_sender is not None

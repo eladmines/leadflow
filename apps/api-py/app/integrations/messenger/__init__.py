@@ -127,8 +127,10 @@ class CloudMessengerSender:
 def create_messenger_sender(settings: Settings) -> MessengerSender:
     """Picks the adapter from `MESSENGER_PROVIDER` (F23)."""
     if settings.MESSENGER_PROVIDER == "cloud":
-        assert settings.MESSENGER_PAGE_ID and settings.MESSENGER_PAGE_ACCESS_TOKEN
+        # Optional, like the WhatsApp number: Pages are connected per business (F25).
         return CloudMessengerSender(
-            settings.MESSENGER_PAGE_ID, settings.MESSENGER_PAGE_ACCESS_TOKEN, settings.WHATSAPP_GRAPH_VERSION
+            settings.MESSENGER_PAGE_ID or "",
+            settings.MESSENGER_PAGE_ACCESS_TOKEN or "",
+            settings.WHATSAPP_GRAPH_VERSION,
         )
     return MemoryMessengerSender()

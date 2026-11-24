@@ -213,9 +213,13 @@ class CloudWhatsAppSender:
 def create_whatsapp_sender(settings: Settings) -> WhatsAppSender:
     """Picks the adapter from `WHATSAPP_PROVIDER`."""
     if settings.WHATSAPP_PROVIDER == "cloud":
-        assert settings.WHATSAPP_PHONE_NUMBER_ID and settings.WHATSAPP_ACCESS_TOKEN
+        # The environment's own number is optional: businesses connect theirs in Settings → Channels
+        # (F25). Without it this sender is never picked (the registry only uses it for the business
+        # named in WHATSAPP_BUSINESS_ID, which then requires these settings).
         return CloudWhatsAppSender(
-            settings.WHATSAPP_PHONE_NUMBER_ID, settings.WHATSAPP_ACCESS_TOKEN, settings.WHATSAPP_GRAPH_VERSION
+            settings.WHATSAPP_PHONE_NUMBER_ID or "",
+            settings.WHATSAPP_ACCESS_TOKEN or "",
+            settings.WHATSAPP_GRAPH_VERSION,
         )
     return MemoryWhatsAppSender()
 
