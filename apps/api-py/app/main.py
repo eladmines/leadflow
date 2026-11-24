@@ -11,12 +11,15 @@ from app.config import Settings, get_settings
 from app.core.ratelimit import RateLimiter
 from app.db.session import make_engine, make_sessionmaker
 from app.errors import AppError
+from app.integrations.domain import DomainExpiry, create_domain_expiry
 from app.integrations.email import EmailSender, create_email_sender
 from app.integrations.storage import StorageProvider, create_storage
 from app.middleware import error_response, request_context
 from app.modules.appointments import routes as appointment_routes
 from app.modules.auth import routes as auth_routes
 from app.modules.businesses import routes as business_routes
+from app.modules.domain import routes as domain_routes
+from app.modules.domain.service import start_domain_watch, stop_task
 from app.modules.embed import routes as embed_routes
 from app.modules.leads import routes as lead_routes
 from app.modules.media import routes as media_routes
@@ -26,7 +29,7 @@ from app.modules.reports import routes as report_routes
 from app.modules.sites import routes as site_routes
 from app.modules.sites.cache import PublishedSiteCache
 from app.modules.tasks import routes as task_routes
-from app.modules.tasks.reminders import start_task_reminders, stop
+from app.modules.tasks.reminders import start_task_reminders
 from app.modules.team import routes as team_routes
 from app.routes import health
 from app.web_app import WebApp
@@ -43,16 +46,17 @@ def create_app(
     email: EmailSender | None = None,
     storage: StorageProvider | None = None,
     site_cache: PublishedSiteCache | None = None,
+    domain_expiry: DomainExpiry | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.DATABASE_URL)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        job = start_task_reminders(app) if settings.RUN_BACKGROUND_JOBS else None
+        jobs = [start_task_reminders(app), start_domain_watch(app)] if settings.RUN_BACKGROUND_JOBS else []
         yield
-        if job:
-            await stop(job)
+        for job in jobs:
+            await stop_task(job)
         await app.state.email.close()
         await engine.dispose()
 
@@ -69,6 +73,7 @@ def create_app(
     app.state.storage = storage or create_storage(settings, app.state.sessionmaker)
     app.state.rate_limiter = RateLimiter()
     app.state.site_cache = site_cache or PublishedSiteCache()
+    app.state.domain_expiry = domain_expiry or create_domain_expiry(settings)
 
     app.middleware("http")(request_context)
     app.add_middleware(
@@ -119,6 +124,7 @@ def create_app(
     app.include_router(business_routes.tenant)
     app.include_router(team_routes.router)
     app.include_router(team_routes.tenant)
+    app.include_router(domain_routes.tenant)
     app.include_router(embed_routes.public)
     app.include_router(embed_routes.tenant)
     app.include_router(media_routes.public)

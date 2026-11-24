@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     EMBED_EVENT_RATE_LIMIT_MAX: int = 240
     EMBED_VISIT_RATE_LIMIT_MAX: int = 60
 
+    # F33: `live` looks domains up at their registries (RDAP, ISOC-IL WHOIS); `off` never does.
+    DOMAIN_LOOKUP: Literal["live", "off"] = "live"
+
     # Background jobs (task reminders). Off in tests, which call the job functions directly.
     RUN_BACKGROUND_JOBS: bool = True
     AUTH_RATE_LIMIT_MAX: int = 10

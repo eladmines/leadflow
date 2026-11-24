@@ -59,3 +59,20 @@ def format_when(dt: datetime, tz: str, lang: str, with_time: bool = True) -> str
     if lang == "en":
         return f"{_EN_DAY_SHORT[wd]} {local.day} {_EN_MONTH_SHORT[local.month - 1]}{time}"
     return f"{_HE_DAY_SHORT[wd]}, {local.day} {_HE_MONTH_SHORT[local.month - 1]}{time}"
+
+
+_HE_MONTH_LONG = [
+    "בינואר", "בפברואר", "במרץ", "באפריל", "במאי", "ביוני",
+    "ביולי", "באוגוסט", "בספטמבר", "באוקטובר", "בנובמבר", "בדצמבר",
+]  # fmt: skip
+_EN_MONTH_LONG = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]  # fmt: skip
+
+
+def format_long_date(dt: datetime, lang: str) -> str:
+    """A date as ICU writes it with dateStyle 'long' in UTC: '17 בינואר 2027' / '17 January 2027'."""
+    d = dt.astimezone(ZoneInfo("UTC"))
+    months = _EN_MONTH_LONG if lang == "en" else _HE_MONTH_LONG
+    return f"{d.day} {months[d.month - 1]} {d.year}"

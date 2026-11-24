@@ -45,6 +45,7 @@ def make_settings(**overrides) -> Settings:
         "EMAIL_VERIFICATION": "on",
         "RUN_BACKGROUND_JOBS": False,
         "SITE_STOCK_IMAGES": False,
+        "DOMAIN_LOOKUP": "off",
         "LEAD_FORM_RATE_LIMIT_MAX": 1000,
     }
     return Settings(**{**base, **overrides})

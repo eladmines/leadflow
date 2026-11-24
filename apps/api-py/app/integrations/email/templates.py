@@ -388,3 +388,43 @@ def quote_decision_template(
     )
     text = "\n".join([subject, amount, "", link])
     return RenderedEmail(subject, html, text)
+
+
+def domain_expiry_template(
+    domain: str, expires_text: str, days_left: int, link: str, lang: Language = "he"
+) -> RenderedEmail:
+    """F33: the website's domain is about to expire (or has)."""
+    en = lang == "en"
+    expired = days_left < 0
+    if expired:
+        subject = f"Your domain {domain} has expired" if en else f"הדומיין {domain} פג"
+    else:
+        subject = (
+            f"Your domain {domain} expires in {days_left} days"
+            if en
+            else f"הדומיין {domain} פג בעוד {days_left} ימים"
+        )
+    if expired:
+        lead = (
+            "Renew it now: until then your website and any email on this domain may stop working."
+            if en
+            else "כדאי לחדש מיד: עד אז האתר וכל מייל על הדומיין עלולים להפסיק לעבוד."
+        )
+    else:
+        lead = (
+            "Renew it with the company you bought it from, so your website and email keep working."
+            if en
+            else "כדאי לחדש אותו אצל החברה שממנה קניתם אותו, כדי שהאתר והמייל ימשיכו לעבוד."
+        )
+    when = "Expires" if en else "מועד פקיעה"
+    html = _layout(
+        subject,
+        f"""{_h1(subject)}
+<p style="margin:0 0 4px;font-size:16px;"><strong>{_esc(domain)}</strong></p>
+<p style="margin:0 0 12px;color:#6b7280;">{when}: {_esc(expires_text)}</p>
+<p style="margin:0 0 8px;">{lead}</p>
+{_button(link, "Open in SimpleCatch" if en else "לפתיחה ב-SimpleCatch", lang)}""",
+        lang,
+    )
+    text = "\n".join([subject, f"{when}: {expires_text}", "", lead, "", link])
+    return RenderedEmail(subject, html, text)
