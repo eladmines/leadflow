@@ -219,9 +219,9 @@ class BusinessDto(BaseModel):
     websiteUrl: str | None
     timezone: str
     language: Language
-    status: str
+    status: Literal["ONBOARDING", "ACTIVE", "SUSPENDED"]
     onboardingStep: int
-    role: str
+    role: Literal["OWNER", "MANAGER", "EMPLOYEE"]
     createdAt: str
 
 
@@ -232,9 +232,9 @@ class BusinessResponse(BaseModel):
 class BusinessSummary(BaseModel):
     id: str
     name: str
-    status: str
+    status: Literal["ONBOARDING", "ACTIVE", "SUSPENDED"]
     onboardingStep: int
-    role: str
+    role: Literal["OWNER", "MANAGER", "EMPLOYEE"]
 
 
 class BusinessListResponse(BaseModel):
@@ -245,7 +245,7 @@ class Member(BaseModel):
     userId: str
     fullName: str
     email: str
-    role: str
+    role: Literal["OWNER", "MANAGER", "EMPLOYEE"]
     joinedAt: str
 
 

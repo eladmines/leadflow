@@ -7,7 +7,7 @@ business; the server decides who gets it using the same visibility rules as the 
 import logging
 import uuid
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select, update
@@ -38,7 +38,17 @@ LIST_SIZE = 30
 
 class NotificationOut(BaseModel):
     id: str
-    type: str
+    type: Literal[
+        "lead.new",
+        "whatsapp.message",
+        "whatsapp.new_number",
+        "appointment.booked",
+        "appointment.cancelled",
+        "quote.accepted",
+        "quote.rejected",
+        "task.due",
+        "domain.expiring",
+    ]
     data: dict[str, Any]
     readAt: str | None
     createdAt: str

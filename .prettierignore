@@ -1,3 +1,5 @@
 pnpm-lock.yaml
 dist
 apps/api/prisma/migrations
+apps/web/src/api/generated.ts
+apps/api-py

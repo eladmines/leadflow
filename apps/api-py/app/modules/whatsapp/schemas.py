@@ -4,6 +4,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, BeforeValidator, Field
 
+from app.core.wire import Wire
 from app.modules.auth.schemas import _Request
 
 WHATSAPP_WINDOW_MS = 24 * 60 * 60 * 1000
@@ -57,7 +58,7 @@ class Sender(BaseModel):
     name: str
 
 
-class MessageOut(BaseModel):
+class MessageOut(Wire):
     id: str
     direction: Literal["IN", "OUT"]
     body: str
@@ -68,7 +69,7 @@ class MessageOut(BaseModel):
     channel: Literal["whatsapp", "messenger", "instagram", "email"] | None = None
 
 
-class ThreadResponse(BaseModel):
+class ThreadResponse(Wire):
     connected: bool
     messages: list[MessageOut]
     replyUntil: str | None
@@ -80,7 +81,7 @@ class SendResponse(BaseModel):
     message: MessageOut
 
 
-class InboxNumber(BaseModel):
+class InboxNumber(Wire):
     id: str
     phone: str
     channel: Literal["whatsapp", "messenger", "instagram", "email"] | None = None
@@ -94,7 +95,7 @@ class InboxResponse(BaseModel):
     numbers: list[InboxNumber]
 
 
-class PersonalNumber(BaseModel):
+class PersonalNumber(Wire):
     id: str
     phone: str
     channel: Literal["whatsapp", "messenger", "instagram", "email"] | None = None

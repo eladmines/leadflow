@@ -7,8 +7,10 @@ server, kept in a first-party cookie until the form is sent. WhatsApp/Messenger 
 
 import re
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlsplit
+
+from app.core.wire import Wire
 
 ATTRIBUTION_SOURCES = (
     "google_ads",
@@ -201,3 +203,20 @@ def attribution_from_meta_referral(
         "adHeadline": referral["headline"] if isinstance(referral.get("headline"), str) else None,
     }
     return parse_attribution({k: v for k, v in raw.items() if v is not None})
+
+
+class Attribution(Wire):
+    """The attribution contract as sent to the web app (packages/shared/src/attribution.ts)."""
+
+    source: Literal[ATTRIBUTION_SOURCES]  # type: ignore[valid-type]
+    seenAt: str
+    utmSource: str | None = None
+    medium: str | None = None
+    campaign: str | None = None
+    term: str | None = None
+    content: str | None = None
+    clickIdType: Literal[CLICK_ID_TYPES] | None = None  # type: ignore[valid-type]
+    referrerHost: str | None = None
+    landingPath: str | None = None
+    adId: str | None = None
+    adHeadline: str | None = None

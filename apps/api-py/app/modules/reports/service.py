@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -128,13 +128,13 @@ class Series(BaseModel):
 class StageRow(BaseModel):
     id: str
     name: str
-    kind: str
+    kind: Literal["OPEN", "WON", "LOST"]
     count: int
     value: int
 
 
 class SourceRow(BaseModel):
-    source: str
+    source: Literal["website_form", "manual", "whatsapp", "facebook", "email", "instagram"]
     count: int
 
 
@@ -143,8 +143,15 @@ class LeadCounts(BaseModel):
     previous: int
 
 
+class DateRange(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    from_: str = Field(alias="from")
+    to: str
+    days: int
+
+
 class ReportSummary(BaseModel):
-    range: dict[str, Any]
+    range: DateRange
     leads: LeadCounts
     closeRate: float | None
     wonValue: int

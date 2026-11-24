@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.timeutil import iso
+from app.core.wire import Wire
 from app.db.models import (
     Contact,
     Lead,
@@ -36,7 +37,7 @@ class LastMessage(BaseModel):
     at: str
 
 
-class ConversationSummary(BaseModel):
+class ConversationSummary(Wire):
     id: str
     channel: Channel
     status: Literal["UNCLASSIFIED", "BUSINESS"]

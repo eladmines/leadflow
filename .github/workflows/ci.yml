@@ -39,6 +39,8 @@ jobs:
         run: PGPASSWORD=leadflow psql -h localhost -U leadflow -c 'CREATE DATABASE leadflow_test'
       - run: pnpm lint
       - run: pnpm typecheck
+      - name: The web app's API types match the Python API's OpenAPI schema
+        run: pnpm --filter @simplecatch/web api:types && git diff --exit-code apps/web/src/api/generated.ts
       - run: pnpm test
       - run: pnpm build
       - name: Apply migrations to dev database (for e2e)
@@ -79,4 +81,6 @@ jobs:
       - run: uv run ruff format --check .
       - name: Build the schema from the Alembic baseline
         run: uv run python scripts/prepare_db.py
+      - name: openapi.json is up to date
+        run: uv run python scripts/export_openapi.py --check
       - run: uv run pytest -q

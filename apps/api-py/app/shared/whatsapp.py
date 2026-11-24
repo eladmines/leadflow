@@ -10,6 +10,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, BeforeValidator, Field
 
+from app.core.wire import Wire
 from app.modules.auth.schemas import _Request
 
 _DATA: dict[str, Any] = json.loads(
@@ -301,13 +302,33 @@ class VideoOut(BaseModel):
     sizeBytes: int
 
 
-class ShowcaseOut(BaseModel):
+class ShowcaseOut(Wire):
     enabled: bool
     text: str | None = None
     defaultText: str
     link: str | None
     assetIds: list[str]
-    video: VideoOut | None = None
+    video: VideoOut | None
+
+
+class BotTextsOut(Wire):
+    greeting: str | None = None
+    confirmed: str | None = None
+    pending: str | None = None
+    handoff: str | None = None
+    noTimes: str | None = None
+    eventReceived: str | None = None
+    dateTaken: str | None = None
+
+
+class BotDefaultsOut(BaseModel):
+    greeting: str
+    confirmed: str
+    pending: str
+    handoff: str
+    noTimes: str
+    eventReceived: str
+    dateTaken: str
 
 
 class BotSettingsOut(BaseModel):
@@ -320,11 +341,11 @@ class BotSettingsOut(BaseModel):
     activeStatus: ActiveStatus | None
     enabled: bool
     autoConfirm: bool
-    texts: dict[str, str]
+    texts: BotTextsOut
     holdDate: bool
     flow: Literal["appointment", "event"]
     flowIsDefault: bool
-    defaults: dict[str, str]
+    defaults: BotDefaultsOut
     showcase: ShowcaseOut
 
 

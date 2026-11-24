@@ -7,6 +7,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from app.modules.auth.schemas import _Request
+from app.shared.attribution import Attribution
 from app.shared.business import _phone as validate_phone
 
 LEAD_SOURCES = ("website_form", "manual", "whatsapp", "facebook", "instagram", "email")
@@ -347,7 +348,7 @@ class ContactOut(BaseModel):
 class StageOut(BaseModel):
     id: str
     name: str
-    kind: str
+    kind: Literal["OPEN", "WON", "LOST"]
 
 
 class PersonOut(BaseModel):
@@ -357,7 +358,7 @@ class PersonOut(BaseModel):
 
 class LastWhatsApp(BaseModel):
     body: str
-    direction: str
+    direction: Literal["IN", "OUT"]
     createdAt: str
 
 
@@ -365,9 +366,9 @@ class LeadOut(BaseModel):
     id: str
     contact: ContactOut
     stage: StageOut
-    source: str
+    source: Literal["website_form", "manual", "whatsapp", "facebook", "email", "instagram"]
     sourceUrl: str | None
-    attribution: dict[str, Any] | None
+    attribution: Attribution | None
     message: str | None
     owner: PersonOut | None
     expectedValue: int | None
@@ -388,7 +389,21 @@ class LeadListResponse(BaseModel):
 
 class ActivityOut(BaseModel):
     id: str
-    type: str
+    type: Literal[
+        "lead.created",
+        "lead.stage_changed",
+        "lead.assigned",
+        "lead.updated",
+        "lead.note",
+        "task.created",
+        "task.completed",
+        "appointment.created",
+        "appointment.updated",
+        "quote.created",
+        "quote.sent",
+        "quote.accepted",
+        "quote.rejected",
+    ]
     data: dict[str, Any]
     actor: PersonOut | None
     createdAt: str
@@ -407,7 +422,7 @@ class PipelineStageOut(BaseModel):
     id: str
     name: str
     position: int
-    kind: str
+    kind: Literal["OPEN", "WON", "LOST"]
 
 
 class PipelineResponse(BaseModel):
@@ -442,7 +457,7 @@ class CustomerPurchase(BaseModel):
 class CustomerBooking(BaseModel):
     appointmentId: str
     startsAt: str
-    status: str
+    status: Literal["REQUESTED", "CONFIRMED", "COMPLETED", "NO_SHOW", "CANCELLED"]
     serviceName: str | None
     leadId: str | None
 
@@ -455,7 +470,7 @@ class Customer(BaseModel):
     totalValue: int
     lastPurchaseAt: str | None
     lastActivityAt: str
-    attribution: dict[str, Any] | None
+    attribution: Attribution | None
     purchases: list[CustomerPurchase]
     bookings: list[CustomerBooking]
 
