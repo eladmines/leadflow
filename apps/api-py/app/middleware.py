@@ -15,8 +15,9 @@ _REQ_ID = re.compile(r"^[\w-]{8,64}$")
 
 # Webhooks and public forms: no cookies, authenticated by a signature or key instead.
 CSRF_EXEMPT = {
-    "/api/v1/whatsapp/webhook",
-    "/api/v1/whatsapp/messenger-webhook",
+    "/api/v1/integrations/whatsapp/webhook",
+    "/api/v1/integrations/messenger/webhook",
+    "/api/v1/integrations/email/inbound",
     "/api/v1/embed/lead",
     "/api/v1/embed/visit",
     "/api/v1/embed/event",

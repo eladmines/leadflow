@@ -4,7 +4,7 @@ import secrets
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -130,6 +130,35 @@ class Settings(BaseSettings):
     @classmethod
     def _empty_is_unset(cls, v: object) -> object:
         return None if v == "" else v
+
+    @model_validator(mode="after")
+    def _channel_secrets_present(self) -> "Settings":
+        """A connected business needs the secrets to verify Meta's calls and (for `cloud`) to send."""
+        for business, provider, cloud in (
+            (
+                self.WHATSAPP_BUSINESS_ID,
+                self.WHATSAPP_PROVIDER,
+                ("WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_ACCESS_TOKEN"),
+            ),
+            (
+                self.MESSENGER_BUSINESS_ID,
+                self.MESSENGER_PROVIDER,
+                ("MESSENGER_PAGE_ID", "MESSENGER_PAGE_ACCESS_TOKEN"),
+            ),
+        ):
+            if not business:
+                continue
+            name = (
+                "WHATSAPP_BUSINESS_ID" if business == self.WHATSAPP_BUSINESS_ID else "MESSENGER_BUSINESS_ID"
+            )
+            for key in (
+                "WHATSAPP_APP_SECRET",
+                "WHATSAPP_VERIFY_TOKEN",
+                *(cloud if provider == "cloud" else ()),
+            ):
+                if not getattr(self, key):
+                    raise ValueError(f"{key} is required when {name} is set")
+        return self
 
     @property
     def site_protocol(self) -> str:

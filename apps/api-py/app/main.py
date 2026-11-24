@@ -23,6 +23,7 @@ from app.modules.appointments import routes as appointment_routes
 from app.modules.auth import routes as auth_routes
 from app.modules.businesses import routes as business_routes
 from app.modules.channels import routes as channel_routes
+from app.modules.conversations import routes as conversation_routes
 from app.modules.domain import routes as domain_routes
 from app.modules.domain.service import start_domain_watch, stop_task
 from app.modules.embed import routes as embed_routes
@@ -36,6 +37,9 @@ from app.modules.sites.cache import PublishedSiteCache
 from app.modules.tasks import routes as task_routes
 from app.modules.tasks.reminders import start_task_reminders
 from app.modules.team import routes as team_routes
+from app.modules.whatsapp import routes as whatsapp_routes
+from app.modules.whatsapp.gmail_sync import start_gmail_sync
+from app.modules.whatsapp.service import NoBot
 from app.routes import health
 from app.web_app import WebApp
 
@@ -62,7 +66,11 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        jobs = [start_task_reminders(app), start_domain_watch(app)] if settings.RUN_BACKGROUND_JOBS else []
+        jobs = (
+            [start_task_reminders(app), start_domain_watch(app), start_gmail_sync(app)]
+            if settings.RUN_BACKGROUND_JOBS
+            else []
+        )
         yield
         for job in jobs:
             await stop_task(job)
@@ -87,6 +95,7 @@ def create_app(
     app.state.messenger_sender = messenger_sender or create_messenger_sender(settings)
     app.state.meta_api = meta_api or create_meta_api(settings)
     app.state.gmail_api = gmail_api or create_gmail_api(settings)
+    app.state.bot = NoBot()
 
     app.middleware("http")(request_context)
     app.add_middleware(
@@ -137,8 +146,11 @@ def create_app(
     app.include_router(business_routes.tenant)
     app.include_router(team_routes.router)
     app.include_router(team_routes.tenant)
+    app.include_router(whatsapp_routes.webhooks)
     app.include_router(channel_routes.public)
     app.include_router(channel_routes.tenant)
+    app.include_router(whatsapp_routes.tenant)
+    app.include_router(conversation_routes.tenant)
     app.include_router(domain_routes.tenant)
     app.include_router(embed_routes.public)
     app.include_router(embed_routes.tenant)

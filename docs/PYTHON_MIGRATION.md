@@ -31,7 +31,8 @@ schemas, and the web app's TypeScript types are generated from FastAPI's OpenAPI
 | sites, part 2: sites service and routes (create, revision-locked drafts, subdomain, publish, versions, rollback, template change, delete), public site server (host or `/s/` path routing, security headers, form tokens, lead form with bot defences and appointment requests, attribution cookie, visit and behaviour counting, rate limits), combined one-port server (`app/server.py`), web-app static serving, embed script and endpoints for other websites | done (70 tests) |
 | domain expiry checks (RDAP and ISOC-IL WHOIS readers, reminders, daily watch) | done (18 tests) |
 | channels: Settings → Channels (WhatsApp token, Facebook/Instagram sign-in with signed state, Gmail sign-in, forwarding address, disconnect), sealed tokens (AES-256-GCM, same format as Node), Meta/Gmail/WhatsApp/Messenger clients with in-memory fakes | done (8 tests) |
-| whatsapp webhooks, conversations, auto-reply, booking bot | |
+| whatsapp messaging: Meta webhooks (WhatsApp, Messenger, Instagram, signed), inbound email webhook, Gmail sync, leads from messages, replies with the 24-hour window, inbox and number classification, unified conversations (WhatsApp, Facebook, Instagram, email) | done (59 tests) |
+| whatsapp auto-reply and status settings, booking bot and its settings routes | |
 | Alembic baseline, Docker/Render config, retire `apps/api`, generate web types from OpenAPI | |
 
 ## Running it
