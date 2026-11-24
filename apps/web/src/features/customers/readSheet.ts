@@ -119,7 +119,7 @@ export async function readSheet(file: File): Promise<Sheet> {
   );
 }
 
-const FIELDS = ['name', 'phone', 'email', 'value'] as const;
+export const FIELDS = ['name', 'phone', 'email', 'value'] as const;
 export type Field = (typeof FIELDS)[number];
 
 const HINTS: Record<Field, string[]> = {
