@@ -396,7 +396,7 @@ class WhatsAppService:
         )
 
     async def sync_gmail(self, now: datetime | None = None) -> int:
-        """F29, every couple of minutes: the new inbox mail of every connected Gmail. A revoked
+        """F29, every ten minutes: the new inbox mail of every connected Gmail. A revoked
         grant is logged and skipped; one business never blocks another."""
         now = now or datetime.now(UTC)
         ids = (

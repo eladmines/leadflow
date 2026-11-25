@@ -1,4 +1,4 @@
-"""F29, D-188: every couple of minutes the new inbox mail of every connected Gmail becomes a
+"""F29, D-188: every ten minutes the new inbox mail of every connected Gmail becomes a
 conversation. In-process like the other background jobs; does nothing until a business connects
 Gmail."""
 
@@ -11,7 +11,7 @@ from app.modules.whatsapp.service import build_service
 log = logging.getLogger("simplecatch")
 
 
-def start_gmail_sync(app: Any, interval_s: float = 120) -> "asyncio.Task[None]":
+def start_gmail_sync(app: Any, interval_s: float = 600) -> "asyncio.Task[None]":
     async def loop() -> None:
         while True:
             await asyncio.sleep(interval_s)
