@@ -1,3 +1,4 @@
+import asyncio
 import os
 import secrets
 import uuid
@@ -9,6 +10,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select, text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.config import Settings
@@ -61,16 +63,25 @@ def settings() -> Settings:
 async def clean_db(settings: Settings):
     """Every test starts from empty tables (same approach as the Node API's resetDb)."""
     engine = create_async_engine(settings.DATABASE_URL)
-    async with engine.begin() as conn:
-        rows = await conn.execute(
-            text(
-                "SELECT tablename FROM pg_tables "
-                "WHERE schemaname = 'public' AND tablename NOT IN ('_prisma_migrations', 'alembic_version')"
-            )
-        )
-        tables = ", ".join(f'"public"."{r[0]}"' for r in rows)
-        if tables:
-            await conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+    # A fire-and-forget task of the previous test (a notification email, a count) may still hold
+    # locks; if Postgres picks the truncate as the deadlock victim, run it again.
+    for attempt in range(6):
+        try:
+            async with engine.begin() as conn:
+                rows = await conn.execute(
+                    text(
+                        "SELECT tablename FROM pg_tables "
+                        "WHERE schemaname = 'public' AND tablename NOT IN ('_prisma_migrations', 'alembic_version')"
+                    )
+                )
+                tables = ", ".join(f'"public"."{r[0]}"' for r in rows)
+                if tables:
+                    await conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+            break
+        except DBAPIError as err:
+            if "deadlock" not in str(err).lower() or attempt == 5:
+                raise
+            await asyncio.sleep(0.2 * (attempt + 1))
     await engine.dispose()
 
 
