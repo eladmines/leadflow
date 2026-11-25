@@ -250,3 +250,39 @@ async def test_the_public_decision_is_rate_limited(client, db):
         for _ in range(22)
     ]
     assert codes[0] == 200 and codes[1] == 409 and codes[-1] == 429
+
+
+async def _stage_of(client, bid, token, lead_id):
+    leads = (await req(client, "GET", business_url(bid, "/leads"), token)).json()["leads"]
+    return next(lead["stage"]["name"] for lead in leads if lead["id"] == lead_id)
+
+
+async def test_sending_a_quote_moves_an_early_lead_to_quote_sent_and_never_moves_one_back(client, db):
+    o, bid, lead = await _setup(client)
+    assert await _stage_of(client, bid, o["token"], lead["id"]) == "חדש"
+    q = (await req(client, "POST", quotes(bid), o["token"], body(lead["id"]))).json()["quote"]
+    # A draft changes nothing.
+    assert await _stage_of(client, bid, o["token"], lead["id"]) == "חדש"
+    await req(client, "POST", quotes(bid, f"/{q['id']}/send"), o["token"], {"email": False})
+    assert await _stage_of(client, bid, o["token"], lead["id"]) == "הצעה נשלחה"
+    history = (
+        (await db.execute(select(models.Activity).where(models.Activity.type == "lead.stage_changed")))
+        .scalars()
+        .all()
+    )
+    assert [(a.data["from"], a.data["to"]) for a in history] == [("חדש", "הצעה נשלחה")]
+
+    # Sending another quote leaves it where it is (no second move).
+    q2 = (await req(client, "POST", quotes(bid), o["token"], body(lead["id"]))).json()["quote"]
+    await req(client, "POST", quotes(bid, f"/{q2['id']}/send"), o["token"], {"email": False})
+    assert await _stage_of(client, bid, o["token"], lead["id"]) == "הצעה נשלחה"
+
+    # A lead that is already waiting stays in "waiting".
+    stages = (await req(client, "GET", business_url(bid, "/pipeline"), o["token"])).json()["stages"]
+    waiting = next(s for s in stages if s["name"] == "ממתין")
+    await req(
+        client, "PATCH", business_url(bid, f"/leads/{lead['id']}"), o["token"], {"stageId": waiting["id"]}
+    )
+    q3 = (await req(client, "POST", quotes(bid), o["token"], body(lead["id"]))).json()["quote"]
+    await req(client, "POST", quotes(bid, f"/{q3['id']}/send"), o["token"], {"email": False})
+    assert await _stage_of(client, bid, o["token"], lead["id"]) == "ממתין"

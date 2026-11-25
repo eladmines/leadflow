@@ -26,8 +26,10 @@ from app.db.models import (
     Membership,
     MembershipRole,
     MembershipStatus,
+    PipelineStage,
     Quote,
     QuoteStatus,
+    StageKind,
     User,
     UserStatus,
 )
@@ -37,6 +39,9 @@ from app.integrations.email import EmailMessage, EmailSender
 from app.integrations.email.templates import quote_decision_template, quote_template
 from app.modules.notifications.service import MANAGERS, notify_safe
 from app.modules.quotes import schemas as s
+
+# The default pipeline stage a lead moves to when a quote is sent to it.
+QUOTE_SENT_STAGE = "הצעה נשלחה"
 
 log = logging.getLogger("simplecatch")
 
@@ -263,6 +268,42 @@ class QuoteService:
             ),
         )
 
+    async def _advance_lead(self, ctx: TenantContext, lead_id: uuid.UUID) -> None:
+        """Sending a quote moves a lead that is still early in the pipeline to "Quote sent", so that
+        stage always means a quote went out. A lead further along (waiting, won, lost) stays put."""
+        target = (
+            await self.db.execute(
+                select(PipelineStage).where(
+                    PipelineStage.business_id == ctx.business_id, PipelineStage.name == QUOTE_SENT_STAGE
+                )
+            )
+        ).scalar_one_or_none()
+        if target is None:
+            return
+        current = (
+            await self.db.execute(
+                select(PipelineStage.name, PipelineStage.position, PipelineStage.kind)
+                .join(Lead, Lead.stage_id == PipelineStage.id)
+                .where(Lead.id == lead_id)
+            )
+        ).one_or_none()
+        if current is None or current.kind != StageKind.OPEN or current.position >= target.position:
+            return
+        await self.db.execute(
+            update(Lead).where(Lead.id == lead_id).values(stage_id=target.id, updated_at=now_ms())
+        )
+        self.db.add(
+            Activity(
+                id=uuid.uuid4(),
+                business_id=ctx.business_id,
+                lead_id=lead_id,
+                actor_id=ctx.user_id,
+                type="lead.stage_changed",
+                data={"from": current.name, "to": target.name, "toKind": target.kind.value},
+                created_at=now_ms(),
+            )
+        )
+
     async def send(self, ctx: TenantContext, quote_id: str, email: bool) -> s.QuoteOut:
         """Marks the quote sent (creating its link once) and optionally emails the customer."""
         q = await self._find_visible(ctx, quote_id)
@@ -277,6 +318,7 @@ class QuoteService:
         q.public_token = q.public_token or generate_token()
         q.updated_at = now_ms()
         self._activity(ctx.business_id, q.lead_id, ctx.user_id, "quote.sent", q.number, total)
+        await self._advance_lead(ctx, q.lead_id)
         await self.db.commit()
         row = await self._load(q.id)
         if email and row.lead.contact.email:
