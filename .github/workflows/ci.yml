@@ -82,4 +82,17 @@ jobs:
         run: uv run python scripts/prepare_db.py
       - name: openapi.json is up to date
         run: uv run python scripts/export_openapi.py --check
-      - run: uv run pytest -q
+      - name: pytest
+        run: |
+          set -o pipefail
+          uv run pytest -q -rf --tb=short 2>&1 | tee pytest.log
+      # The failing test names and their errors, as annotations on the run (visible without the log).
+      - name: Show the failed tests
+        if: failure()
+        run: |
+          grep -E '^(FAILED|ERROR) ' pytest.log | head -20 | while IFS= read -r line; do
+            echo "::error title=pytest::${line:0:500}"
+          done
+          grep -E '^E  ' pytest.log | head -20 | while IFS= read -r line; do
+            echo "::error title=pytest detail::${line:0:500}"
+          done
