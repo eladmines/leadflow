@@ -48,27 +48,77 @@ const statusTone: Record<AppointmentStatus, string> = {
   CANCELLED: 'border-surface-border bg-surface text-ink-subtle line-through',
 };
 
-function AppointmentChip({ a, onOpen }: { a: Appointment; onOpen: (a: Appointment) => void }) {
+/** Pending requests as a table: when, who, what, and the status; a row opens the request. */
+function RequestsTable({
+  id,
+  items,
+  onOpen,
+}: {
+  id: string;
+  items: Appointment[];
+  onOpen: (a: Appointment) => void;
+}) {
+  const th = 'px-3 py-2 text-start font-medium';
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(a)}
-      className={cn(
-        'flex w-full flex-col items-start gap-0.5 rounded-lg border px-2.5 py-2 text-start text-xs transition-shadow hover:shadow-card',
-        statusTone[a.status],
-      )}
+    <div
+      id={id}
+      className="scrollbar-visible overflow-x-auto rounded-lg border border-surface-border bg-surface"
     >
-      <bdi dir="ltr" className="font-semibold tabular-nums">
-        {timeFmt.format(new Date(a.startsAt))}–{timeFmt.format(new Date(a.endsAt))}
-      </bdi>
-      <span className="truncate text-sm font-medium text-ink">{a.customer.name}</span>
-      <span className="truncate text-ink-muted">
-        {[a.service?.name, a.staff?.name].filter(Boolean).join(' · ')}
-      </span>
-      {a.status !== 'CONFIRMED' && (
-        <span className="font-medium">{tr(appointmentStatusLabels[a.status])}</span>
-      )}
-    </button>
+      <table className="w-full min-w-[34rem] text-sm">
+        <thead className="bg-surface-muted text-xs text-ink-muted">
+          <tr>
+            <th className={th}>{tr('תאריך')}</th>
+            <th className={th}>{tr('שעות')}</th>
+            <th className={th}>{tr('לקוח')}</th>
+            <th className={th}>{tr('סוג')}</th>
+            <th className={th}>{tr('סטטוס')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((a) => (
+            <tr
+              key={a.id}
+              onClick={() => onOpen(a)}
+              className="cursor-pointer border-t border-surface-border first:border-t-0 hover:bg-surface-muted/60"
+            >
+              <td className="px-3 py-2.5 text-ink-muted">
+                {shortDayFmt.format(new Date(a.startsAt))}
+              </td>
+              <td className="px-3 py-2.5">
+                <bdi dir="ltr" className="tabular-nums text-ink">
+                  {timeFmt.format(new Date(a.startsAt))}–{timeFmt.format(new Date(a.endsAt))}
+                </bdi>
+              </td>
+              <td className="px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpen(a);
+                  }}
+                  className="font-medium text-brand-700 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-brand-400"
+                >
+                  {a.customer.name}
+                </button>
+              </td>
+              <td className="px-3 py-2.5 text-ink-muted">
+                {[a.service?.name, a.staff?.name].filter(Boolean).join(' · ') || '—'}
+              </td>
+              <td className="px-3 py-2.5">
+                <span
+                  className={cn(
+                    'rounded-full border px-2 py-0.5 text-xs font-medium',
+                    statusTone[a.status],
+                  )}
+                >
+                  {tr(appointmentStatusLabels[a.status])}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -172,15 +222,7 @@ export function AppointmentsPage() {
                   label={tr('בקשות ממתינות לאישור')}
                 />
               </div>
-              {requestsOpen && (
-                <ul id={requestsId} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {pending.map((r) => (
-                    <li key={r.id}>
-                      <AppointmentChip a={r} onOpen={setOpen} />
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {requestsOpen && <RequestsTable id={requestsId} items={pending} onOpen={setOpen} />}
             </Card>
           </div>
         )}

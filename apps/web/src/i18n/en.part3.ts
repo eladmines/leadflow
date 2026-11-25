@@ -1206,6 +1206,7 @@ export const enPart3: Record<string, string> = {
   'הודעה מסוג שעדיין לא נתמך': 'A message type that is not supported yet',
   'מייל ללא טקסט': 'Email with no text',
   היומן: 'The calendar',
+  שעות: 'Time',
   'אחרי המענה, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
     "After the reply, or to a customer who didn't finish booking, a message is sent with a link, up to 3 photos and a video from the business. At most once a day per customer. The switch turns it on and off.",
 };
