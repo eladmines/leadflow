@@ -24,6 +24,7 @@ import { inputClasses } from '../../components/ui/Field';
 import { ApiError } from '../../lib/api';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
+import { CustomerPicker } from './CustomerPicker';
 import { useLeadDetail } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import {
@@ -61,7 +62,10 @@ export function QuoteEditorPage() {
   const [params] = useSearchParams();
   const isNew = quoteId === 'new';
   const existing = useQuote(business.id, isNew ? null : quoteId);
-  const leadId = isNew ? (params.get('leadId') ?? '') : (existing.data?.lead.id ?? '');
+  // A new quote starts from a lead (the link on the lead's page) or one chosen in the form.
+  const [pickedId, setPickedId] = useState(params.get('leadId') ?? '');
+  const [pickedName, setPickedName] = useState('');
+  const leadId = isNew ? pickedId : (existing.data?.lead.id ?? '');
   const lead = useLeadDetail(business.id, leadId);
 
   const create = useCreateQuote(business.id);
@@ -120,6 +124,10 @@ export function QuoteEditorPage() {
 
   const submit = async () => {
     setErrors({});
+    if (isNew && !leadId) {
+      setErrors({ leadId: tr('יש לבחור לקוח') });
+      return false;
+    }
     try {
       if (isNew) {
         const res = await create.mutateAsync({ ...payload, leadId });
@@ -142,9 +150,6 @@ export function QuoteEditorPage() {
   if (!isNew && existing.isPending) return <Spinner label={tr('טוענים את ההצעה…')} />;
   if (!isNew && existing.isError)
     return <Alert tone="danger">{errorMessage(existing.error)}</Alert>;
-  if (isNew && !leadId) {
-    return <Alert tone="info">{tr('כדי ליצור הצעת מחיר, פתחו ליד ובחרו "הצעת מחיר חדשה".')}</Alert>;
-  }
   const status = q ? displayStatus(q) : 'DRAFT';
   const customer = lead.data?.lead.contact ?? q?.customer;
   const mutationError =
@@ -292,6 +297,20 @@ export function QuoteEditorPage() {
       )}
 
       <Card className="flex flex-col gap-4">
+        {isNew && (
+          <CustomerPicker
+            businessId={business.id}
+            selected={
+              leadId ? { id: leadId, name: lead.data?.lead.contact.name ?? pickedName } : null
+            }
+            onSelect={(l) => {
+              setPickedId(l?.id ?? '');
+              setPickedName(l?.name ?? '');
+              setErrors(({ leadId: _drop, ...rest }) => rest);
+            }}
+            error={errors.leadId}
+          />
+        )}
         <Field
           label={tr('כותרת (לא חובה)')}
           placeholder={tr('למשל: שיפוץ חדר רחצה')}

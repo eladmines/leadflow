@@ -60,25 +60,33 @@ const quote = (over: Partial<Quote> = {}): Quote => ({
 });
 
 describe('quotes page', () => {
-  it('starts a new quote by choosing a lead, then opens the editor for it', async () => {
+  it('creates a quote from the page: the customer is chosen inside the form', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
       [`GET ${qp.list(id)}`]: () => json(200, { quotes: [] }),
       [`GET ${apiPaths.leads.list(id)}`]: () => json(200, { leads: [lead] }),
       [`GET ${apiPaths.leads.detail(id, leadId)}`]: () => json(200, { lead, activities: [] }),
+      [`POST ${qp.list(id)}`]: () => json(201, { quote: quote() }),
+      [`GET ${qp.quote(id, quote().id)}`]: () => json(200, { quote: quote() }),
     });
     const { user, location } = renderApp(businessWebPaths.section(id, 'quotes'));
-    await user.click(await screen.findByRole('button', { name: 'הצעת מחיר חדשה' }));
-    const dialog = await screen.findByRole('dialog', { name: 'הצעת מחיר חדשה' });
-    await user.type(within(dialog).getByLabelText('חיפוש לקוח'), 'רון');
+    await user.click(await screen.findByRole('link', { name: 'הצעת מחיר חדשה' }));
+    expect(location()).toBe(`${businessWebPaths.section(id, 'quotes')}/new`);
+
+    // Saving without a customer asks for one.
+    await user.type(await screen.findByLabelText('תיאור שורה 1'), 'עבודה');
+    await user.type(screen.getByLabelText('מחיר יחידה שורה 1'), '500');
+    await user.click(screen.getByRole('button', { name: 'שמירה כטיוטה' }));
+    expect(await screen.findByText('יש לבחור לקוח')).toBeInTheDocument();
+    expect(callsTo(fetchMock, 'POST', qp.list(id))).toHaveLength(0);
+
+    await user.type(screen.getByLabelText('חיפוש לקוח'), 'רון');
+    await user.click(await screen.findByRole('button', { name: /רון לוי/ }));
+    await user.click(screen.getByRole('button', { name: 'שמירה כטיוטה' }));
+    await waitFor(() => expect(callsTo(fetchMock, 'POST', qp.list(id))).toHaveLength(1));
+    expect(callsTo(fetchMock, 'POST', qp.list(id))[0]).toMatchObject({ leadId });
     await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some(([url]) => String(url).includes('q=%D7%A8%D7%95%D7%9F')),
-      ).toBe(true),
-    );
-    await user.click(await within(dialog).findByRole('button', { name: /רון לוי/ }));
-    await waitFor(() =>
-      expect(location()).toBe(`${businessWebPaths.section(id, 'quotes')}/new?leadId=${leadId}`),
+      expect(location()).toBe(`${businessWebPaths.section(id, 'quotes')}/${quote().id}`),
     );
   });
 });

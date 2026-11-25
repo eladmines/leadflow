@@ -390,8 +390,8 @@ export const enPart3: Record<string, string> = {
   '"שלי" מראה רק את המשימות שלכם; "של כל הצוות" את כולן.': `"Mine" shows only your tasks; "Everyone's" shows all of them.`,
   'באיחור, היום והלאה. מסמנים משימה כבוצעה בלחיצה; משימה של ליד מקשרת אליו.':
     'Overdue, today and later. Tick a task to mark it done; a task on a lead links to it.',
-  'כל ההצעות של העסק. הצעה חדשה נוצרת מתוך ליד, בכפתור "הצעת מחיר חדשה" בכרטיס הליד, כך שהיא כבר מכירה את הלקוח.':
-    'All the business\'s quotes. A new quote starts from a lead, with "New quote" on the lead card, so it already knows the customer.',
+  'כל ההצעות של העסק. הצעה חדשה נוצרת בכפתור "הצעת מחיר חדשה" כאן, או מכרטיס הליד. את הלקוח בוחרים בתוך הטופס.':
+    'All the business\'s quotes. Create a new one with the "New quote" button here, or from a lead\'s page. You choose the customer inside the form.',
   'טיוטה: עוד לא נשלחה. נשלחה: מחכה ללקוח. אושרה או נדחתה: הלקוח החליט, וקיבלתם על זה התראה.':
     'Draft: not sent yet. Sent: waiting for the customer. Accepted or rejected: the customer decided, and you were notified.',
   'כמה פניות הגיעו בכל יום. כל עמודה היא יום אחד.':
@@ -1207,7 +1207,7 @@ export const enPart3: Record<string, string> = {
   'מייל ללא טקסט': 'Email with no text',
   היומן: 'The calendar',
   שעות: 'Time',
-  'בחרו את הלקוח שההצעה מיועדת לו.': 'Choose the customer the quote is for.',
+  'יש לבחור לקוח': 'Choose a customer',
   'חיפוש לקוח': 'Search customers',
   'חיפוש לפי שם, טלפון או מייל': 'Search by name, phone or email',
   'לא נמצא לקוח. אפשר להוסיף לקוח חדש.': 'No customer found. You can add a new one.',
