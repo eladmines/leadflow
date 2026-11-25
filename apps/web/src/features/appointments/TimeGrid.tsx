@@ -26,6 +26,9 @@ const toMin = (hhmm: string) => {
   return (h ?? 0) * 60 + (m ?? 0);
 };
 const minutesIntoDay = (d: Date) => d.getHours() * 60 + d.getMinutes();
+const DAY_END = 24 * 60;
+/** Where an appointment ends on the day it starts: midnight when it runs past it. */
+const endInDay = (start: Date, end: Date) => (sameDay(start, end) ? minutesIntoDay(end) : DAY_END);
 const at = (day: Date, minutes: number) =>
   new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes);
 
@@ -100,7 +103,7 @@ export function TimeGrid({
       const s = new Date(a.startsAt);
       if (!days.some((d) => sameDay(d, s))) continue;
       from = Math.min(from, minutesIntoDay(s));
-      to = Math.max(to, minutesIntoDay(new Date(a.endsAt)));
+      to = Math.max(to, endInDay(s, new Date(a.endsAt)));
     }
     from = Math.floor(from / SLOT_MIN) * SLOT_MIN;
     to = Math.ceil(to / SLOT_MIN) * SLOT_MIN;
@@ -236,7 +239,7 @@ export function TimeGrid({
                 const s = new Date(a.startsAt);
                 const e = new Date(a.endsAt);
                 const top = (minutesIntoDay(s) - range.from) * pxPerMin;
-                const height = Math.max(22, ((e.getTime() - s.getTime()) / 60_000) * pxPerMin - 2);
+                const height = Math.max(22, (endInDay(s, e) - minutesIntoDay(s)) * pxPerMin - 2);
                 const { lane, of } = laneOf.get(a.id) ?? { lane: 0, of: 1 };
                 return (
                   <button

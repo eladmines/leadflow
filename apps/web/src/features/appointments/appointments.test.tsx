@@ -69,6 +69,31 @@ describe('appointments page', () => {
     expect(screen.getAllByRole('columnheader')).toHaveLength(7);
   });
 
+  it('keeps an evening booking that runs past midnight inside the day column', async () => {
+    const start = new Date();
+    start.setHours(20, 30, 0, 0);
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${ap.list(id)}`]: () =>
+        json(200, {
+          appointments: [
+            appt({
+              startsAt: start.toISOString(),
+              endsAt: new Date(start.getTime() + 4 * 3_600_000).toISOString(),
+            }),
+          ],
+        }),
+    });
+    renderApp(page);
+    const block = await screen.findByRole('button', { name: /רון לוי/ });
+    const column = block.parentElement!;
+    const px = (v: string) => Number.parseFloat(v);
+    expect(px(block.style.top) + px(block.style.height)).toBeLessThanOrEqual(
+      px(column.style.height),
+    );
+  });
+
   describe('free slots (D-101)', () => {
     // A Monday well in the future, so no slot is in the past.
     const monday = new Date();
