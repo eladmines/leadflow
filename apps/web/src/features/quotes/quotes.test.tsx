@@ -83,9 +83,13 @@ describe('quotes page', () => {
     // Nothing is listed by default, even when the field is focused.
     await user.click(screen.getByLabelText('חיפוש לקוח'));
     expect(screen.queryByRole('list', { name: 'לקוחות' })).not.toBeInTheDocument();
-    // "All customers" opens the whole list without typing; typing narrows it.
+    // "All customers" opens a window with the whole list.
     await user.click(screen.getByRole('button', { name: 'כל הלקוחות' }));
-    expect(await screen.findByRole('button', { name: /רון לוי/ })).toBeInTheDocument();
+    const all = await screen.findByRole('dialog', { name: 'כל הלקוחות' });
+    expect(await within(all).findByRole('button', { name: /רון לוי/ })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    // Typing lists matches under the field.
     await user.type(screen.getByLabelText('חיפוש לקוח'), 'רון');
     await user.click(await screen.findByRole('button', { name: /רון לוי/ }));
     await user.click(screen.getByRole('button', { name: 'שמירה כטיוטה' }));
