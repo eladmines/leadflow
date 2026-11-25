@@ -79,14 +79,14 @@ function AllList({ businessId, onPick }: { businessId: string; onPick: (lead: Pi
         placeholder={tr('הקלידו שם, טלפון או מייל')}
         className={`${inputClasses(false)} w-full`}
       />
-      <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-surface-border">
+      <div className="scrollbar-visible max-h-[50vh] overflow-y-scroll rounded-lg border border-surface-border">
         <Results state={leads} onPick={onPick} />
       </div>
     </>
   );
 }
 
-/** Typing in the field: a list of five rows that scrolls (h-10 per row). */
+/** Typing in the field: a list of five rows that scrolls (h-10 per row), its scrollbar always shown. */
 function Suggestions({
   businessId,
   q,
@@ -98,7 +98,7 @@ function Suggestions({
 }) {
   const leads = useLeads(businessId, { q });
   return (
-    <div className="max-h-[12.5rem] overflow-y-auto rounded-lg border border-surface-border bg-surface shadow-card">
+    <div className="scrollbar-visible max-h-[12.5rem] overflow-y-scroll rounded-lg border border-surface-border bg-surface shadow-card">
       <Results state={leads} onPick={onPick} />
     </div>
   );
