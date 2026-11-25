@@ -180,6 +180,8 @@ export const enShared: Record<string, string> = {
   'יש לכתוב הערה': 'Write a note',
   'ההערה ארוכה מדי (עד 2,000 תווים)': 'The note is too long (up to 2,000 characters)',
   'השלב שנבחר אינו קיים': "The selected stage doesn't exist",
+  'כדי להעביר ל"הצעה נשלחה" צריך קודם ליצור ולשלוח הצעת מחיר לליד':
+    'To move a lead to "Quote sent", first create and send it a quote',
   'אפשר לשייך רק לחבר צוות פעיל בעסק': 'You can only assign to an active team member',
   'תגית יכולה להכיל עד 30 תווים': 'A tag can be up to 30 characters',
   'אפשר עד 10 תגיות לליד': 'Up to 10 tags per lead',

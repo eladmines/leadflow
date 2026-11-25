@@ -20,6 +20,9 @@ LEAD_SOURCE_LABELS = {
     "email": "מייל",
 }
 STAGE_KINDS = ("OPEN", "WON", "LOST")
+# The default stage a lead is in once a quote went out to it: a lead gets there by sending a quote.
+QUOTE_SENT_STAGE = "הצעה נשלחה"
+QUOTE_STAGE_NEEDS_QUOTE = 'כדי להעביר ל"הצעה נשלחה" צריך קודם ליצור ולשלוח הצעת מחיר לליד'
 DEFAULT_PIPELINE_STAGES = [
     ("חדש", "OPEN"),
     ("נוצר קשר", "OPEN"),

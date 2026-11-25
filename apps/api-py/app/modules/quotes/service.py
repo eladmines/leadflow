@@ -37,11 +37,9 @@ from app.deps import TenantContext
 from app.errors import AppError
 from app.integrations.email import EmailMessage, EmailSender
 from app.integrations.email.templates import quote_decision_template, quote_template
+from app.modules.leads.schemas import QUOTE_SENT_STAGE
 from app.modules.notifications.service import MANAGERS, notify_safe
 from app.modules.quotes import schemas as s
-
-# The default pipeline stage a lead moves to when a quote is sent to it.
-QUOTE_SENT_STAGE = "הצעה נשלחה"
 
 log = logging.getLogger("simplecatch")
 

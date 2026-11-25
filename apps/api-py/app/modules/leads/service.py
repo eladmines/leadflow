@@ -9,7 +9,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, exists, func, or_, select
 from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
@@ -324,6 +324,7 @@ class LeadService:
 
         stages = await ensure_stages(self.db, ctx.business_id)
         stage = await self._require_stage(ctx.business_id, data.stageId) if data.stageId else stages[0]
+        await self._require_quote_for_stage(None, stage)
         owner_id = data.ownerId if can_assign else ctx.user_id
         if owner_id:
             await self._require_member(ctx.business_id, owner_id)
@@ -525,6 +526,19 @@ class LeadService:
 
     # -- update / notes / delete ----------------------------------------------------
 
+    async def _require_quote_for_stage(self, lead_id: uuid.UUID | None, stage: PipelineStage) -> None:
+        """ "Quote sent" means a quote went out: a lead can only be put there once one was sent to it
+        (sending a quote moves the lead there by itself)."""
+        if stage.name != s.QUOTE_SENT_STAGE:
+            return
+        if lead_id is not None:
+            sent = await self.db.execute(
+                select(exists().where(Quote.lead_id == lead_id, Quote.status != QuoteStatus.DRAFT))
+            )
+            if sent.scalar():
+                return
+        raise AppError("VALIDATION_ERROR", s.QUOTE_STAGE_NEEDS_QUOTE, {"stageId": s.QUOTE_STAGE_NEEDS_QUOTE})
+
     async def update(self, ctx: TenantContext, lead_id: str, data: s.UpdateLeadRequest) -> s.LeadOut:
         """Updates a visible lead; stage moves, assignments and field edits each land in the
         history."""
@@ -537,6 +551,7 @@ class LeadService:
 
         if "stageId" in given and data.stageId is not None and data.stageId != lead.stage_id:
             stage = await self._require_stage(ctx.business_id, data.stageId)
+            await self._require_quote_for_stage(lead.id, stage)
             activities.append(
                 (
                     "lead.stage_changed",

@@ -286,3 +286,40 @@ async def test_sending_a_quote_moves_an_early_lead_to_quote_sent_and_never_moves
     q3 = (await req(client, "POST", quotes(bid), o["token"], body(lead["id"]))).json()["quote"]
     await req(client, "POST", quotes(bid, f"/{q3['id']}/send"), o["token"], {"email": False})
     assert await _stage_of(client, bid, o["token"], lead["id"]) == "ממתין"
+
+
+async def test_a_lead_cannot_be_put_in_quote_sent_without_a_sent_quote(client, db):
+    o, bid, lead = await _setup(client)
+    tok = o["token"]
+    stages = (await req(client, "GET", business_url(bid, "/pipeline"), tok)).json()["stages"]
+    quote_sent = next(s for s in stages if s["name"] == "הצעה נשלחה")
+    move = lambda: req(  # noqa: E731
+        client, "PATCH", business_url(bid, f"/leads/{lead['id']}"), tok, {"stageId": quote_sent["id"]}
+    )
+
+    refused = await move()
+    assert refused.status_code == 400
+    assert "ליצור ולשלוח הצעת מחיר" in refused.json()["error"]["message"]
+    assert await _stage_of(client, bid, tok, lead["id"]) == "חדש"
+
+    # A draft is not a sent quote.
+    q = (await req(client, "POST", quotes(bid), tok, body(lead["id"]))).json()["quote"]
+    assert (await move()).status_code == 400
+
+    # A new lead can't start there either.
+    created = await req(
+        client,
+        "POST",
+        business_url(bid, "/leads"),
+        tok,
+        {"name": "דנה", "phone": "052-9998877", "stageId": quote_sent["id"]},
+    )
+    assert created.status_code == 400
+
+    # Once the quote is sent the lead is there (by itself), and the stage is accepted for it.
+    await req(client, "POST", quotes(bid, f"/{q['id']}/send"), tok, {"email": False})
+    assert await _stage_of(client, bid, tok, lead["id"]) == "הצעה נשלחה"
+    other = next(s for s in stages if s["name"] == "ממתין")
+    await req(client, "PATCH", business_url(bid, f"/leads/{lead['id']}"), tok, {"stageId": other["id"]})
+    assert (await move()).status_code == 200
+    assert await _stage_of(client, bid, tok, lead["id"]) == "הצעה נשלחה"

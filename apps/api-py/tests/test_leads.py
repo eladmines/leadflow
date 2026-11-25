@@ -149,7 +149,7 @@ async def test_employees_see_and_update_only_their_leads_and_cannot_assign(clien
     assert note_other.status_code == 404
 
     own = await req(
-        client, "PATCH", leads_url(t["id"], f"/{mine['id']}"), emp["token"], {"stageId": t["stages"][2]["id"]}
+        client, "PATCH", leads_url(t["id"], f"/{mine['id']}"), emp["token"], {"stageId": t["stages"][3]["id"]}
     )
     assert own.status_code == 200
     unassign = await req(
