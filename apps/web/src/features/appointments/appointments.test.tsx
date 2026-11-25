@@ -200,6 +200,11 @@ describe('appointments page', () => {
     });
     const { user } = renderApp(page);
     expect(await screen.findByText('בקשות ממתינות לאישור (1)')).toBeInTheDocument();
+    // Folded by default; the button opens the list.
+    const toggle = screen.getByRole('button', { name: /הצגה: בקשות ממתינות לאישור/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await user.click(screen.getAllByRole('button', { name: /רון לוי/ })[0]!);
     const dialog = await screen.findByRole('dialog', { name: 'רון לוי' });
     expect(within(dialog).getByText(/בקשה מהאתר/)).toBeInTheDocument();

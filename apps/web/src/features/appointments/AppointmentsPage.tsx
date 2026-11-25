@@ -5,9 +5,17 @@ import {
   type AppointmentStatus,
 } from '@simplecatch/shared';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Button, Card, EmptyState, SelectMenu, Spinner } from '../../components/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  CollapseButton,
+  EmptyState,
+  SelectMenu,
+  Spinner,
+} from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
@@ -86,6 +94,9 @@ export function AppointmentsPage() {
   const [open, setOpen] = useState<Appointment | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  // Folded by default: the list can be long and the calendar is the page.
+  const [requestsOpen, setRequestsOpen] = useState(false);
+  const requestsId = useId();
 
   const set = (patch: Record<string, string | undefined>) =>
     setParams(
@@ -148,17 +159,28 @@ export function AppointmentsPage() {
         {pending.length > 0 && (
           <div className="border-b border-surface-border p-4">
             <Card className="flex flex-col gap-3 border-warning-600/30 bg-warning-50/60">
-              <h2 className="text-sm font-semibold text-ink">
-                {tr('בקשות ממתינות לאישור (')}
-                {pending.length})
-              </h2>
-              <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {pending.map((r) => (
-                  <li key={r.id}>
-                    <AppointmentChip a={r} onOpen={setOpen} />
-                  </li>
-                ))}
-              </ul>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-ink">
+                  {tr('בקשות ממתינות לאישור (')}
+                  {pending.length})
+                </h2>
+                <CollapseButton
+                  showText
+                  collapsed={!requestsOpen}
+                  onToggle={() => setRequestsOpen((o) => !o)}
+                  controls={requestsId}
+                  label={tr('בקשות ממתינות לאישור')}
+                />
+              </div>
+              {requestsOpen && (
+                <ul id={requestsId} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {pending.map((r) => (
+                    <li key={r.id}>
+                      <AppointmentChip a={r} onOpen={setOpen} />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           </div>
         )}
