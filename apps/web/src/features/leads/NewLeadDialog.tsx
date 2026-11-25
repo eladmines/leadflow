@@ -7,6 +7,7 @@ import {
   normalizePhone,
   splitPhone,
   type CreateLeadRequest,
+  type Lead,
 } from '@simplecatch/shared';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -30,9 +31,12 @@ import { tr } from '../../i18n';
 export function NewLeadDialog({
   open,
   onOpenChange,
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  /** Where to go once it is saved; the lead's page when not given. */
+  onCreated?: (lead: Lead) => void;
 }) {
   const business = useCurrentBusiness();
   const navigate = useNavigate();
@@ -68,7 +72,8 @@ export function NewLeadDialog({
     try {
       const { lead } = await create.mutateAsync(values);
       close(false);
-      navigate(`${businessWebPaths.section(business.id, 'leads')}/${lead.id}`);
+      if (onCreated) onCreated(lead);
+      else navigate(`${businessWebPaths.section(business.id, 'leads')}/${lead.id}`);
     } catch (err) {
       setFormError(
         applyServerErrors(err, form.setError, [

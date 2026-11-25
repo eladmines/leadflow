@@ -5,23 +5,26 @@ import {
   QUOTE_STATUSES,
   type QuoteStatus,
 } from '@simplecatch/shared';
-import { FileText } from 'lucide-react';
+import { FileText, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Alert, buttonClasses, EmptyState, Spinner } from '../../components/ui';
+import { Alert, Button, EmptyState, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { dateFmt, displayStatus, quoteStatusTone, useQuotes } from './api';
+import { NewQuoteDialog } from './NewQuoteDialog';
 import { tr } from '../../i18n';
 
-/** F18: all quotes, newest first, filterable by status. New quotes start from a lead. */
+/** F18: all quotes, newest first, filterable by status. A new quote starts from a lead. */
 export function QuotesPage() {
   const business = useCurrentBusiness();
   const [params, setParams] = useSearchParams();
   const status = (params.get('status') as QuoteStatus | null) ?? undefined;
   const quotes = useQuotes(business.id, { status });
   const base = businessWebPaths.section(business.id, 'quotes');
+  const [newOpen, setNewOpen] = useState(false);
   const open = (quotes.data ?? []).filter((q) => q.status === 'SENT' && !q.expired);
   const openTotal = open.reduce((s, q) => s + q.totals.total, 0);
 
@@ -36,7 +39,13 @@ export function QuotesPage() {
           inPanel
           refresh
           title={tr('הצעות מחיר')}
-          description={tr('כל ההצעות של העסק. הצעה חדשה נפתחת מתוך כרטיס הליד.')}
+          description={tr('כל ההצעות של העסק. אפשר ליצור הצעה חדשה גם מכרטיס הליד.')}
+          actions={
+            <Button onClick={() => setNewOpen(true)}>
+              <Plus aria-hidden className="h-4 w-4" />
+              {tr('הצעת מחיר חדשה')}
+            </Button>
+          }
         />
         <div className="flex flex-wrap items-center gap-3 border-b border-surface-border p-4">
           <div
@@ -80,17 +89,7 @@ export function QuotesPage() {
             icon={FileText}
             tone="bg-orange-500"
             title={status ? tr('אין הצעות בסטטוס הזה') : tr('עדיין אין הצעות מחיר')}
-            description={tr('פתחו ליד מ"לידים" ובחרו "הצעת מחיר חדשה".')}
-            action={
-              !status && (
-                <Link
-                  to={businessWebPaths.section(business.id, 'leads')}
-                  className={buttonClasses('secondary', 'md')}
-                >
-                  {tr('ללידים')}
-                </Link>
-              )
-            }
+            description={tr('לוחצים על "הצעת מחיר חדשה", בוחרים לקוח, ובונים את ההצעה.')}
           />
         ) : (
           <div className="scrollbar-visible overflow-x-auto">
@@ -147,6 +146,7 @@ export function QuotesPage() {
           </div>
         )}
       </section>
+      <NewQuoteDialog open={newOpen} onOpenChange={setNewOpen} />
     </>
   );
 }

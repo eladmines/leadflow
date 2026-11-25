@@ -1207,6 +1207,14 @@ export const enPart3: Record<string, string> = {
   'מייל ללא טקסט': 'Email with no text',
   היומן: 'The calendar',
   שעות: 'Time',
+  'בחרו את הלקוח שההצעה מיועדת לו.': 'Choose the customer the quote is for.',
+  'חיפוש לקוח': 'Search customers',
+  'חיפוש לפי שם, טלפון או מייל': 'Search by name, phone or email',
+  'לא נמצא לקוח. אפשר להוסיף לקוח חדש.': 'No customer found. You can add a new one.',
+  'כל ההצעות של העסק. אפשר ליצור הצעה חדשה גם מכרטיס הליד.':
+    "All the business's quotes. You can also create a new quote from a lead's page.",
+  'לוחצים על "הצעת מחיר חדשה", בוחרים לקוח, ובונים את ההצעה.':
+    'Click "New quote", choose a customer, and build the quote.',
   'קודם יוצרים הצעת מחיר': 'Create a quote first',
   'כדי להעביר את {0} ל"הצעה נשלחה" צריך קודם ליצור ולשלוח לו הצעת מחיר. אחרי השליחה הוא יעבור לשלב הזה בעצמו.':
     'To move {0} to "Quote sent", first create and send a quote. Once it is sent, the lead moves to that stage by itself.',

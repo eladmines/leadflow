@@ -59,6 +59,30 @@ const quote = (over: Partial<Quote> = {}): Quote => ({
   ...over,
 });
 
+describe('quotes page', () => {
+  it('starts a new quote by choosing a lead, then opens the editor for it', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`GET ${qp.list(id)}`]: () => json(200, { quotes: [] }),
+      [`GET ${apiPaths.leads.list(id)}`]: () => json(200, { leads: [lead] }),
+      [`GET ${apiPaths.leads.detail(id, leadId)}`]: () => json(200, { lead, activities: [] }),
+    });
+    const { user, location } = renderApp(businessWebPaths.section(id, 'quotes'));
+    await user.click(await screen.findByRole('button', { name: 'הצעת מחיר חדשה' }));
+    const dialog = await screen.findByRole('dialog', { name: 'הצעת מחיר חדשה' });
+    await user.type(within(dialog).getByLabelText('חיפוש לקוח'), 'רון');
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([url]) => String(url).includes('q=%D7%A8%D7%95%D7%9F')),
+      ).toBe(true),
+    );
+    await user.click(await within(dialog).findByRole('button', { name: /רון לוי/ }));
+    await waitFor(() =>
+      expect(location()).toBe(`${businessWebPaths.section(id, 'quotes')}/new?leadId=${leadId}`),
+    );
+  });
+});
+
 describe('quote editor', () => {
   it('computes totals live and creates the draft from a lead', async () => {
     const fetchMock = mockApi({
