@@ -97,6 +97,9 @@ class DomainExpiryService:
                 try:
                     async with self.sessionmaker() as session:
                         await self._fresh(session).check(business_id, now)
+                    # Right after the answer is saved, before anything else is awaited, so a screen
+                    # that sees the date never also sees "checking".
+                    _in_flight.discard(business_id)
                 except Exception as err:
                     log.error("domain lookup on view failed", extra={"errName": type(err).__name__})
                 finally:

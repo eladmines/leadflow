@@ -373,7 +373,8 @@ async def test_opening_the_screen_starts_the_lookup_by_itself_and_the_date_appea
     assert first["checking"] if first["check"] is None else first["check"] == "ok"
     later = first
     for _ in range(80):
-        if later["check"] is not None:
+        # The answer is saved a moment before the in-flight flag clears: wait for both.
+        if later["check"] is not None and not later["checking"]:
             break
         await asyncio.sleep(0.025)
         later = await get()
