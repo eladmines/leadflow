@@ -7,15 +7,7 @@ import {
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  Alert,
-  Button,
-  Card,
-  EmptyState,
-  MoreMenu,
-  SelectMenu,
-  Spinner,
-} from '../../components/ui';
+import { Alert, Button, Card, EmptyState, SelectMenu, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
@@ -140,18 +132,15 @@ export function AppointmentsPage() {
                 <Plus aria-hidden className="h-4 w-4" />
                 {tr('תור חדש')}
               </Button>
-              {/* One main button (D-139); services behind "More". */}
               {manager && (
-                <MoreMenu>
-                  <Button
-                    variant="secondary"
-                    aria-expanded={servicesOpen}
-                    onClick={() => setServicesOpen((o) => !o)}
-                  >
-                    <Settings2 aria-hidden className="h-4 w-4" />
-                    {tr('שירותים')}
-                  </Button>
-                </MoreMenu>
+                <Button
+                  variant="secondary"
+                  aria-expanded={servicesOpen}
+                  onClick={() => setServicesOpen((o) => !o)}
+                >
+                  <Settings2 aria-hidden className="h-4 w-4" />
+                  {tr('שירותים')}
+                </Button>
               )}
             </div>
           }
