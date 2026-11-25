@@ -54,6 +54,7 @@ import {
   useUpdateLead,
 } from './api';
 import { NewLeadDialog } from './NewLeadDialog';
+import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
 import { sourceName } from './Attribution';
 import { stageColor } from './stageColors';
 import { useWhatsAppInbox } from '../whatsapp/api';
@@ -343,13 +344,18 @@ function Board({
 }) {
   const update = useUpdateLead(businessId);
   const [over, setOver] = useState<string | null>(null);
+  // A lead moved to "Quote sent" without a quote: offer to write one instead of an error.
+  const [needsQuote, setNeedsQuote] = useState<Lead | null>(null);
   const move = (lead: Lead, stage: PipelineStage) => {
     if (lead.stage.id === stage.id) return;
-    update.mutate({
-      leadId: lead.id,
-      body: { stageId: stage.id },
-      stage: { id: stage.id, name: tr(stage.name), kind: stage.kind },
-    });
+    update.mutate(
+      {
+        leadId: lead.id,
+        body: { stageId: stage.id },
+        stage: { id: stage.id, name: tr(stage.name), kind: stage.kind },
+      },
+      { onError: (err) => isQuoteNeeded(err) && setNeedsQuote(lead) },
+    );
   };
   const onDrop = (e: DragEvent, stage: PipelineStage) => {
     e.preventDefault();
@@ -360,7 +366,14 @@ function Board({
 
   return (
     <>
-      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+      {update.isError && !isQuoteNeeded(update.error) && (
+        <Alert tone="danger">{errorMessage(update.error)}</Alert>
+      )}
+      <QuoteNeededDialog
+        businessId={businessId}
+        lead={needsQuote}
+        onClose={() => setNeedsQuote(null)}
+      />
       {/* relative: the cards' sr-only labels are positioned inside the scroller (and clipped by
           it), so off-screen columns can't widen the page. On wide screens the board is as tall as
           the screen allows and scrolls inside itself, so its side scrollbar is always in view

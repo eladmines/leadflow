@@ -57,6 +57,7 @@ import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { LeadSourceIcon } from './SourceIcon';
+import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
 import { tr, intlLocale } from '../../i18n';
 
 const fieldLabels: Record<string, string> = {
@@ -212,13 +213,24 @@ function Details({ lead }: { lead: Lead }) {
   const update = useUpdateLead(business.id);
   const [value, setValue] = useState(lead.expectedValue?.toString() ?? '');
   const [next, setNext] = useState(lead.nextActionAt ? toLocalInput(lead.nextActionAt) : '');
+  const [needsQuote, setNeedsQuote] = useState(false);
   const save = (body: Parameters<typeof update.mutate>[0]['body']) =>
-    update.mutate({ leadId: lead.id, body });
+    update.mutate(
+      { leadId: lead.id, body },
+      { onError: (err) => isQuoteNeeded(err) && setNeedsQuote(true) },
+    );
 
   return (
     <Card className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold text-ink">{tr('פרטי הטיפול')}</h2>
-      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+      {update.isError && !isQuoteNeeded(update.error) && (
+        <Alert tone="danger">{errorMessage(update.error)}</Alert>
+      )}
+      <QuoteNeededDialog
+        businessId={business.id}
+        lead={needsQuote ? lead : null}
+        onClose={() => setNeedsQuote(false)}
+      />
       <SelectMenu
         id="lead-stage"
         label={tr('שלב')}

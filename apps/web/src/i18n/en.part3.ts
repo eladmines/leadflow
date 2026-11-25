@@ -1207,6 +1207,10 @@ export const enPart3: Record<string, string> = {
   'מייל ללא טקסט': 'Email with no text',
   היומן: 'The calendar',
   שעות: 'Time',
+  'קודם יוצרים הצעת מחיר': 'Create a quote first',
+  'כדי להעביר את {0} ל"הצעה נשלחה" צריך קודם ליצור ולשלוח לו הצעת מחיר. אחרי השליחה הוא יעבור לשלב הזה בעצמו.':
+    'To move {0} to "Quote sent", first create and send a quote. Once it is sent, the lead moves to that stage by itself.',
+  'יצירת הצעת מחיר': 'Create a quote',
   'אחרי המענה, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
     "After the reply, or to a customer who didn't finish booking, a message is sent with a link, up to 3 photos and a video from the business. At most once a day per customer. The switch turns it on and off.",
 };

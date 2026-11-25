@@ -132,6 +132,29 @@ describe('pipeline board', () => {
     );
   });
 
+  it('offers to write a quote instead of an error when a lead is moved to "Quote sent" without one', async () => {
+    const needed = 'כדי להעביר ל"הצעה נשלחה" צריך קודם ליצור ולשלוח הצעת מחיר לליד';
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.list(id)}`]: () => json(200, { leads: [lead()] }),
+      [`PATCH ${lp.detail(id, lead().id)}`]: () =>
+        apiError(400, 'VALIDATION_ERROR', needed, { stageId: needed }),
+    });
+    const { user } = renderApp(leadsPath);
+    await choose(user, await screen.findByLabelText('העברת דנה כהן לשלב'), contacted!.name);
+    const dialog = await screen.findByRole('dialog', { name: 'קודם יוצרים הצעת מחיר' });
+    expect(within(dialog).getByText(/דנה כהן/)).toBeInTheDocument();
+    expect(within(dialog).getByRole('link', { name: 'יצירת הצעת מחיר' })).toHaveAttribute(
+      'href',
+      `${businessWebPaths.section(id, 'quotes')}/new?leadId=${lead().id}`,
+    );
+    // No red error next to the board, and the lead is back in its column.
+    expect(screen.queryByText(needed)).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'ביטול' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
   it('search goes into the URL and the API query', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
