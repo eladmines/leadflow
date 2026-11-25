@@ -80,6 +80,12 @@ describe('quotes page', () => {
     expect(await screen.findByText('יש לבחור לקוח')).toBeInTheDocument();
     expect(callsTo(fetchMock, 'POST', qp.list(id))).toHaveLength(0);
 
+    // Nothing is listed by default, even when the field is focused.
+    await user.click(screen.getByLabelText('חיפוש לקוח'));
+    expect(screen.queryByRole('list', { name: 'לקוחות' })).not.toBeInTheDocument();
+    // "All customers" opens the whole list without typing; typing narrows it.
+    await user.click(screen.getByRole('button', { name: 'כל הלקוחות' }));
+    expect(await screen.findByRole('button', { name: /רון לוי/ })).toBeInTheDocument();
     await user.type(screen.getByLabelText('חיפוש לקוח'), 'רון');
     await user.click(await screen.findByRole('button', { name: /רון לוי/ }));
     await user.click(screen.getByRole('button', { name: 'שמירה כטיוטה' }));

@@ -1209,7 +1209,8 @@ export const enPart3: Record<string, string> = {
   שעות: 'Time',
   'יש לבחור לקוח': 'Choose a customer',
   'חיפוש לקוח': 'Search customers',
-  'חיפוש לפי שם, טלפון או מייל': 'Search by name, phone or email',
+  'הקלידו שם, טלפון או מייל': 'Type a name, phone or email',
+  'כל הלקוחות': 'All customers',
   'לא נמצא לקוח. אפשר להוסיף לקוח חדש.': 'No customer found. You can add a new one.',
   'כל ההצעות של העסק. אפשר ליצור הצעה חדשה גם מכרטיס הליד.':
     "All the business's quotes. You can also create a new quote from a lead's page.",
