@@ -101,6 +101,9 @@ describe('quotes page', () => {
     // Typing lists matches under the field.
     await user.type(screen.getByLabelText('חיפוש לקוח'), 'רון');
     await user.click(await screen.findByRole('button', { name: /רון לוי/ }));
+    // The chosen customer stays shown, with the email in brackets.
+    expect(await screen.findByText('ron@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'החלפה' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'שמירה כטיוטה' }));
     await waitFor(() => expect(callsTo(fetchMock, 'POST', qp.list(id))).toHaveLength(1));
     expect(callsTo(fetchMock, 'POST', qp.list(id))[0]).toMatchObject({ leadId });

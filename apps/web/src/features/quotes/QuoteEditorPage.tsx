@@ -65,6 +65,7 @@ export function QuoteEditorPage() {
   // A new quote starts from a lead (the link on the lead's page) or one chosen in the form.
   const [pickedId, setPickedId] = useState(params.get('leadId') ?? '');
   const [pickedName, setPickedName] = useState('');
+  const [pickedEmail, setPickedEmail] = useState<string | null>(null);
   const leadId = isNew ? pickedId : (existing.data?.lead.id ?? '');
   const lead = useLeadDetail(business.id, leadId);
 
@@ -297,19 +298,36 @@ export function QuoteEditorPage() {
       )}
 
       <Card className="flex flex-col gap-4">
-        {isNew && (
+        {/* The customer stays in view while the quote is filled in (and on a saved quote). */}
+        {isNew ? (
           <CustomerPicker
             businessId={business.id}
             selected={
-              leadId ? { id: leadId, name: lead.data?.lead.contact.name ?? pickedName } : null
+              leadId
+                ? {
+                    id: leadId,
+                    name: lead.data?.lead.contact.name ?? pickedName,
+                    email: lead.data ? lead.data.lead.contact.email : pickedEmail,
+                  }
+                : null
             }
             onSelect={(l) => {
               setPickedId(l?.id ?? '');
               setPickedName(l?.name ?? '');
+              setPickedEmail(l?.email ?? null);
               setErrors(({ leadId: _drop, ...rest }) => rest);
             }}
             error={errors.leadId}
           />
+        ) : (
+          q && (
+            <CustomerPicker
+              locked
+              businessId={business.id}
+              selected={{ id: q.lead.id, name: q.customer.name, email: q.customer.email }}
+              onSelect={() => undefined}
+            />
+          )
         )}
         <Field
           label={tr('כותרת (לא חובה)')}

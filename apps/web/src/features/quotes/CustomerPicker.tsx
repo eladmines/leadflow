@@ -8,7 +8,7 @@ import { useLeads } from '../leads/api';
 import { NewLeadDialog } from '../leads/NewLeadDialog';
 import { tr } from '../../i18n';
 
-type Picked = { id: string; name: string };
+type Picked = { id: string; name: string; email?: string | null };
 
 const useDebounced = (value: string, ms = 250) => {
   const [v, setV] = useState(value);
@@ -27,7 +27,7 @@ function Rows({ leads, onPick }: { leads: Lead[]; onPick: (lead: Picked) => void
         <li key={l.id} className="border-t border-surface-border first:border-t-0">
           <button
             type="button"
-            onClick={() => onPick({ id: l.id, name: l.contact.name })}
+            onClick={() => onPick({ id: l.id, name: l.contact.name, email: l.contact.email })}
             className="flex h-10 w-full items-center justify-between gap-3 px-3 text-start text-sm hover:bg-surface-muted"
           >
             <span className="truncate font-medium text-ink">{l.contact.name}</span>
@@ -114,11 +114,14 @@ export function CustomerPicker({
   selected,
   onSelect,
   error,
+  locked = false,
 }: {
   businessId: string;
   selected: Picked | null;
   onSelect: (lead: Picked | null) => void;
   error?: string;
+  /** A saved quote keeps its customer: shown, not changeable. */
+  locked?: boolean;
 }) {
   const [text, setText] = useState('');
   const q = useDebounced(text.trim());
@@ -148,10 +151,21 @@ export function CustomerPicker({
       <span className="text-sm font-medium text-ink">{tr('לקוח')}</span>
       {selected ? (
         <div className="flex items-center justify-between gap-2 rounded-lg border border-surface-border bg-surface-muted px-3 py-2">
-          <span className="truncate text-sm font-medium text-ink">{selected.name}</span>
-          <Button variant="ghost" onClick={() => onSelect(null)}>
-            {tr('החלפה')}
-          </Button>
+          <span className="min-w-0 truncate text-sm text-ink">
+            <span className="font-medium">{selected.name}</span>
+            {selected.email && (
+              <span className="text-ink-muted">
+                {' ('}
+                <bdi dir="ltr">{selected.email}</bdi>
+                {')'}
+              </span>
+            )}
+          </span>
+          {!locked && (
+            <Button variant="ghost" onClick={() => onSelect(null)}>
+              {tr('החלפה')}
+            </Button>
+          )}
         </div>
       ) : (
         <div ref={box} className="relative flex flex-col gap-2">
@@ -189,7 +203,9 @@ export function CustomerPicker({
         asCustomer
         open={newLead}
         onOpenChange={setNewLead}
-        onCreated={(lead) => pick({ id: lead.id, name: lead.contact.name })}
+        onCreated={(lead) =>
+          pick({ id: lead.id, name: lead.contact.name, email: lead.contact.email })
+        }
       />
     </div>
   );
