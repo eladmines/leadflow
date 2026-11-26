@@ -128,6 +128,48 @@ inbound-mail service. Set it up once, in Google Cloud Console (full steps in `do
 In _Testing_ mode Google signs a person out after 7 days (they reconnect). For everyone, the app has to be
 published and verified by Google (restricted scopes), which takes weeks.
 
+## 6. Messaging worker (optional, free, 10 minutes)
+
+By default the server processes WhatsApp, Messenger and email messages itself, inside each
+request. With this step on, a second process in the same Render service (the **messaging worker**)
+does that work, and RabbitMQ sits between the two (D-202, `docs/MESSAGING_SERVICE.md`). It stays
+free: the worker shares the free instance, and RabbitMQ is CloudAMQP's free plan.
+
+**A. RabbitMQ: CloudAMQP (free).**
+
+1. Sign up at cloudamqp.com and **Create New Instance**. Plan: the free one (_Little Lemur_). Name:
+   `simplecatch`. Region: close to Render's Frankfurt, e.g. _AWS eu-central-1 (Frankfurt)_.
+2. Open the instance and copy the **AMQP URL** (it starts with `amqps://`). It holds the password:
+   paste it only into Render, never into the code or a chat.
+
+**B. Render.** In the service → **Environment**:
+
+1. Add `RABBITMQ_URL` = the AMQP URL.
+2. Add `MESSAGE_BUS` = `rabbitmq`.
+3. **Save, rebuild and deploy.**
+
+**C. Check it.** In Render → **Logs** after the deploy:
+
+- `starting: api, worker` and `messaging worker started` mean both processes are up.
+- Send the business's WhatsApp number a message: the conversation appears in the app as before.
+  In CloudAMQP → **RabbitMQ Manager** → _Queues_ you see `messaging.inbound` and
+  `messaging.outbound` (and their `.retry` / `.dlq`).
+- Anything in a `.dlq` queue is a message that failed 5 times: look in the logs for
+  `inbound event failed` / `outbound send failed`.
+
+**Turning it off:** delete `MESSAGE_BUS` in Render and deploy. The server goes back to processing
+inside requests. Nothing is lost: events and queued replies are in the database, and the inline
+path picks them up the next time it handles that conversation.
+
+**Good to know:**
+
+- The worker sleeps with the free instance (after 15 minutes without visitors). A webhook wakes
+  both, and messages that arrived meanwhile wait in the database, not in memory.
+- Both processes share the free instance's 512 MB. If Render reports _out of memory_, turn the
+  worker off (above) or move to a paid instance.
+- Later, the worker can become its own Render service without code changes: give it the start
+  command `python -m app.workers.messaging` and run only the API here.
+
 ## Good to know
 
 - **Sleeping:** after 15 minutes without visitors the server sleeps; the next visit takes about a

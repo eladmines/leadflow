@@ -24,11 +24,12 @@ services:
       UV_PYTHON_INSTALL_DIR="$PWD/../../.uv-python" "$PWD/../../.uv-bin/uv" sync --frozen --no-dev
     # The database is migrated on every start (a database the old Node API migrated is stamped at the
     # Alembic baseline first); then one server answers the API, the web app and the customer sites.
+    # With MESSAGE_BUS=rabbitmq the messaging worker runs next to it in this same instance (D-202,
+    # docs/DEPLOY.md step 6); without it, only the API runs, as before.
     startCommand: >-
       cd apps/api-py &&
       .venv/bin/python scripts/prepare_db.py &&
-      exec .venv/bin/uvicorn app.server:create_server --factory --host 0.0.0.0 --port $PORT
-      --proxy-headers --forwarded-allow-ips='*'
+      exec .venv/bin/python scripts/run_production.py
     envVars:
       - key: NODE_VERSION
         value: '22'
@@ -77,6 +78,15 @@ services:
         sync: false
       - key: EMAIL_INBOUND_SECRET
         sync: false
+      # Messaging worker (D-202, docs/DEPLOY.md step 6). Set both in the Render dashboard to turn it
+      # on: MESSAGE_BUS=rabbitmq and RABBITMQ_URL (CloudAMQP's free plan). Unset = inline, as before.
+      - key: MESSAGE_BUS
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      # The worker's /health is internal to the instance (Render checks the API's /health).
+      - key: WORKER_HEALTH_PORT
+        value: '4200'
   # The public landing page: plain files, no build, free (apps/landing/README.md). It links to the
   # app above through APP_URL at the top of apps/landing/main.js.
   - type: web

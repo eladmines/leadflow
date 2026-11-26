@@ -27,4 +27,5 @@ COPY apps/api-py/scripts scripts
 COPY --from=web /repo/apps/web/dist /srv/web
 ENV WEB_DIST_DIR=/srv/web NODE_ENV=production PATH="/srv/api/.venv/bin:$PATH"
 EXPOSE 10000
-CMD ["sh", "-c", "python scripts/prepare_db.py && exec uvicorn app.server:create_server --factory --host 0.0.0.0 --port ${PORT:-10000} --proxy-headers --forwarded-allow-ips='*'"]
+# The API, plus the messaging worker when MESSAGE_BUS=rabbitmq (D-202; scripts/run_production.py).
+CMD ["sh", "-c", "python scripts/prepare_db.py && exec python scripts/run_production.py"]

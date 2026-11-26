@@ -158,7 +158,8 @@ Each phase ships on its own and leaves the system working.
 ## 5. Decisions (owner, 2026-11-26)
 
 1. **Broker:** RabbitMQ (dead-letter queues, a well-known tool).
-2. **Hosting:** self-hosted as a container; no paid managed plan.
+2. **Hosting:** ~~self-hosted as a container~~ → free (owner, 2026-11-26): CloudAMQP's free plan,
+   and the worker as a second process in the free Render instance (see "Running it").
 3. **User-initiated sends:** queued too, shown `queued` → `sent` live.
 4. **Dependencies:** `aio-pika` (phase 1); `opentelemetry-api`, `-sdk`, `-exporter-otlp-proto-http`,
    `-instrumentation-fastapi`, `-instrumentation-httpx` (phase 3).
@@ -168,12 +169,12 @@ Each phase ships on its own and leaves the system working.
 - Locally: `docker compose up -d` (Postgres, Mailpit, RabbitMQ, Jaeger), then `pnpm dev` runs the
   API and the worker with `MESSAGE_BUS=rabbitmq` and tracing on. Queues: http://localhost:15672 ·
   traces: http://localhost:16686 · worker health: http://localhost:4200/health.
-- Production (`render.yaml`) is one free web service and Render's background workers are a paid
-  plan, so it keeps the defaults: `MESSAGE_BUS=inline` and `RUN_BACKGROUND_JOBS` on. Moving to the
-  worker means three changes together: a RabbitMQ the services can reach, a worker service
-  (`python -m app.workers.messaging` with `MESSAGE_BUS=rabbitmq`), and on the API
-  `MESSAGE_BUS=rabbitmq` + `RUN_BACKGROUND_JOBS=false`. Choosing that host is a deployment
-  decision still to be made.
+- Production (`render.yaml`, free): `scripts/run_production.py` starts the API and, when
+  `MESSAGE_BUS=rabbitmq` is set in the Render dashboard, the messaging worker next to it in the
+  same instance, with `RUN_BACKGROUND_JOBS=false` for the API. If either process exits, both stop
+  and Render restarts the service. RabbitMQ is CloudAMQP's free plan (`RABBITMQ_URL`). Without
+  `MESSAGE_BUS` it runs inline exactly as before. Setup and checks: `docs/DEPLOY.md` step 6.
+  Moving the worker to its own service later is configuration only.
 
 ## 6. What it's not
 
