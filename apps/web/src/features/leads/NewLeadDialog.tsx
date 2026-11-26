@@ -32,11 +32,15 @@ export function NewLeadDialog({
   open,
   onOpenChange,
   onCreated,
+  asCustomer = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   /** Where to go once it is saved; the lead's page when not given. */
   onCreated?: (lead: Lead) => void;
+  /** Adding a customer for a quote: worded as a customer, with just the contact and owner (the
+   *  lead starts in the first stage, with no inquiry text). */
+  asCustomer?: boolean;
 }) {
   const business = useCurrentBusiness();
   const navigate = useNavigate();
@@ -89,7 +93,11 @@ export function NewLeadDialog({
   });
 
   return (
-    <DialogShell open={open} onOpenChange={close} title={tr('ליד חדש')}>
+    <DialogShell
+      open={open}
+      onOpenChange={close}
+      title={asCustomer ? tr('לקוח חדש') : tr('ליד חדש')}
+    >
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         {formError && <Alert tone="danger">{formError}</Alert>}
         <Field
@@ -144,11 +152,13 @@ export function NewLeadDialog({
           </Alert>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Select
-            label={tr('שלב')}
-            options={(stages.data ?? []).map((s) => ({ value: s.id, label: tr(s.name) }))}
-            {...form.register('stageId', { setValueAs: (v: string) => v || undefined })}
-          />
+          {!asCustomer && (
+            <Select
+              label={tr('שלב')}
+              options={(stages.data ?? []).map((s) => ({ value: s.id, label: tr(s.name) }))}
+              {...form.register('stageId', { setValueAs: (v: string) => v || undefined })}
+            />
+          )}
           {canAssign && (
             <Select
               label={tr('אחראי')}
@@ -161,18 +171,20 @@ export function NewLeadDialog({
             />
           )}
         </div>
-        <Textarea
-          label={tr('פרטי הפנייה')}
-          rows={3}
-          error={errors.message?.message}
-          {...form.register('message')}
-        />
+        {!asCustomer && (
+          <Textarea
+            label={tr('פרטי הפנייה')}
+            rows={3}
+            error={errors.message?.message}
+            {...form.register('message')}
+          />
+        )}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => close(false)}>
             {tr('ביטול')}
           </Button>
           <Button type="submit" loading={isSubmitting}>
-            {tr('יצירת ליד')}
+            {asCustomer ? tr('הוספת לקוח') : tr('יצירת ליד')}
           </Button>
         </div>
       </form>

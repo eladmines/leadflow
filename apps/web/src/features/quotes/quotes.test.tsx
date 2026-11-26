@@ -66,6 +66,7 @@ describe('quotes page', () => {
       [`GET ${qp.list(id)}`]: () => json(200, { quotes: [] }),
       [`GET ${apiPaths.leads.list(id)}`]: () => json(200, { leads: [lead] }),
       [`GET ${apiPaths.leads.detail(id, leadId)}`]: () => json(200, { lead, activities: [] }),
+      [`GET ${apiPaths.businesses.members(id)}`]: () => json(200, { members: [] }),
       [`POST ${qp.list(id)}`]: () => json(201, { quote: quote() }),
       [`GET ${qp.quote(id, quote().id)}`]: () => json(200, { quote: quote() }),
     });
@@ -83,6 +84,14 @@ describe('quotes page', () => {
     // Nothing is listed by default, even when the field is focused.
     await user.click(screen.getByLabelText('חיפוש לקוח'));
     expect(screen.queryByRole('list', { name: 'לקוחות' })).not.toBeInTheDocument();
+    // "New customer" is worded as a customer: no stage, no inquiry text.
+    await user.click(screen.getByRole('button', { name: 'לקוח חדש' }));
+    const add = await screen.findByRole('dialog', { name: 'לקוח חדש' });
+    expect(within(add).getByRole('button', { name: 'הוספת לקוח' })).toBeInTheDocument();
+    expect(within(add).queryByLabelText('שלב')).not.toBeInTheDocument();
+    expect(within(add).queryByLabelText('פרטי הפנייה')).not.toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     // "All customers" opens a window with the whole list.
     await user.click(screen.getByRole('button', { name: 'כל הלקוחות' }));
     const all = await screen.findByRole('dialog', { name: 'כל הלקוחות' });

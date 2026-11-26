@@ -1211,6 +1211,7 @@ export const enPart3: Record<string, string> = {
   'חיפוש לקוח': 'Search customers',
   'הקלידו שם, טלפון או מייל': 'Type a name, phone or email',
   'כל הלקוחות': 'All customers',
+  'הוספת לקוח': 'Add customer',
   'חיפוש ברשימת הלקוחות': 'Search the customer list',
   'לא נמצא לקוח. אפשר להוסיף לקוח חדש.': 'No customer found. You can add a new one.',
   'כל ההצעות של העסק. אפשר ליצור הצעה חדשה גם מכרטיס הליד.':

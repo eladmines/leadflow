@@ -186,6 +186,7 @@ export function CustomerPicker({
         <AllList businessId={businessId} onPick={pick} />
       </DialogShell>
       <NewLeadDialog
+        asCustomer
         open={newLead}
         onOpenChange={setNewLead}
         onCreated={(lead) => pick({ id: lead.id, name: lead.contact.name })}
