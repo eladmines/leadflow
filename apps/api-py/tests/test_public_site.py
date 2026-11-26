@@ -146,15 +146,19 @@ async def test_a_campaign_visit_sets_the_attribution_cookie_and_is_counted(clien
     assert set_cookie.startswith("lf_src=") and "HttpOnly" in set_cookie and "SameSite=lax" in set_cookie
     # No click id value, no visitor id: only names.
     await wait_for(lambda: True)
-    for _ in range(100):
-        rows = (await db.execute(select(models.VisitCount))).scalars().all()
-        if rows:
-            break
-        import asyncio
+    # The visit and its events are counted by background tasks of their own: wait for both (the
+    # events landing after the visit made this test flaky on slower machines).
+    import asyncio
 
+    expected = {("page", "/"), ("landing", "/"), ("device", "mobile")}
+    for _ in range(250):
+        db.expire_all()
+        rows = (await db.execute(select(models.VisitCount))).scalars().all()
+        events = {(e.kind, e.label): e.count for e in (await db.execute(select(models.EventCount))).scalars()}
+        if rows and expected <= events.keys():
+            break
         await asyncio.sleep(0.02)
     assert [(r.source, r.name, r.campaign, r.count) for r in rows] == [("utm", "newsletter", "nov", 1)]
-    events = {(e.kind, e.label): e.count for e in (await db.execute(select(models.EventCount))).scalars()}
     assert events[("page", "/")] == 1 and events[("landing", "/")] == 1 and events[("device", "mobile")] == 1
 
     # The lead made from that visit remembers where it came from.
