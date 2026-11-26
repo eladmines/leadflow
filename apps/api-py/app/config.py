@@ -81,7 +81,9 @@ class Settings(BaseSettings):
     EMAIL_INBOUND_DOMAIN: str | None = None  # F27: the domain forwarding addresses live on
     EMAIL_INBOUND_SECRET: str | None = None  # signs the inbound-email webhook
 
-    # Background jobs (task reminders). Off in tests, which call the job functions directly.
+    # Scheduled background jobs (app/jobs.py) inside the API. On by default so a deployment without the
+    # messaging worker keeps them; off wherever the worker runs (`pnpm dev`, D-202) and in tests,
+    # which call the job functions directly.
     RUN_BACKGROUND_JOBS: bool = True
     AUTH_RATE_LIMIT_MAX: int = 10
     AUTH_RATE_LIMIT_WINDOW: int = 900_000  # milliseconds

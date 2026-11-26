@@ -18,6 +18,7 @@ from app.integrations.messenger import MessengerSender, create_messenger_sender
 from app.integrations.meta import MetaApi, create_meta_api
 from app.integrations.storage import StorageProvider, create_storage
 from app.integrations.whatsapp import WhatsAppSender, create_whatsapp_sender
+from app.jobs import start_background_jobs, stop_background_jobs
 from app.middleware import error_response, request_context
 from app.modules.appointments import routes as appointment_routes
 from app.modules.auth import routes as auth_routes
@@ -25,7 +26,6 @@ from app.modules.businesses import routes as business_routes
 from app.modules.channels import routes as channel_routes
 from app.modules.conversations import routes as conversation_routes
 from app.modules.domain import routes as domain_routes
-from app.modules.domain.service import start_domain_watch, stop_task
 from app.modules.embed import routes as embed_routes
 from app.modules.leads import routes as lead_routes
 from app.modules.media import routes as media_routes
@@ -35,11 +35,8 @@ from app.modules.reports import routes as report_routes
 from app.modules.sites import routes as site_routes
 from app.modules.sites.cache import PublishedSiteCache
 from app.modules.tasks import routes as task_routes
-from app.modules.tasks.reminders import start_task_reminders
 from app.modules.team import routes as team_routes
 from app.modules.whatsapp import routes as whatsapp_routes
-from app.modules.whatsapp.gmail_sync import start_gmail_sync
-from app.modules.whatsapp.nudges import start_booking_nudges
 from app.routes import health
 from app.web_app import WebApp
 
@@ -66,19 +63,9 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        jobs = (
-            [
-                start_task_reminders(app),
-                start_domain_watch(app),
-                start_gmail_sync(app),
-                start_booking_nudges(app),
-            ]
-            if settings.RUN_BACKGROUND_JOBS
-            else []
-        )
+        jobs = start_background_jobs(app) if settings.RUN_BACKGROUND_JOBS else []
         yield
-        for job in jobs:
-            await stop_task(job)
+        await stop_background_jobs(jobs)
         await app.state.email.close()
         await engine.dispose()
 

@@ -17,7 +17,7 @@ docker compose up -d            # Postgres (localhost:5432) + Mailpit (UI localh
 cp apps/api-py/.env.example apps/api-py/.env   # first time only
 pnpm install && (cd apps/api-py && uv sync)
 pnpm db:migrate                 # Alembic: builds/updates the schema (apps/api-py)
-pnpm dev                        # API :4000 + web :5173 (web proxies /api) + public sites :4100 (http://<sub>.lvh.me:4100)
+pnpm dev                        # API :4000 + web :5173 (web proxies /api) + public sites :4100 (http://<sub>.lvh.me:4100) + messaging worker (scheduled jobs, D-202)
 pnpm lint && pnpm typecheck && pnpm test && pnpm test:api && pnpm build   # test:api = pytest
 (cd apps/api-py && uv run ruff check . && uv run ruff format --check .)
 pnpm e2e                        # Playwright, desktop + mobile (stop `pnpm dev` first; e2e starts its own servers)
