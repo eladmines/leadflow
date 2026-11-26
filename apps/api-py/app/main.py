@@ -16,6 +16,7 @@ from app.integrations.email import EmailSender, create_email_sender
 from app.integrations.gmail import GmailApi, create_gmail_api
 from app.integrations.messenger import MessengerSender, create_messenger_sender
 from app.integrations.meta import MetaApi, create_meta_api
+from app.integrations.queue import MessageBus, create_message_bus
 from app.integrations.storage import StorageProvider, create_storage
 from app.integrations.whatsapp import WhatsAppSender, create_whatsapp_sender
 from app.jobs import start_background_jobs, stop_background_jobs
@@ -27,6 +28,7 @@ from app.modules.channels import routes as channel_routes
 from app.modules.conversations import routes as conversation_routes
 from app.modules.domain import routes as domain_routes
 from app.modules.embed import routes as embed_routes
+from app.modules.inbound.service import start_outbox_relay
 from app.modules.leads import routes as lead_routes
 from app.modules.media import routes as media_routes
 from app.modules.notifications import routes as notification_routes
@@ -57,6 +59,7 @@ def create_app(
     messenger_sender: MessengerSender | None = None,
     meta_api: MetaApi | None = None,
     gmail_api: GmailApi | None = None,
+    message_bus: MessageBus | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.DATABASE_URL)
@@ -64,8 +67,12 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         jobs = start_background_jobs(app) if settings.RUN_BACKGROUND_JOBS else []
+        if app.state.bus is not None:
+            jobs.append(start_outbox_relay(app))
         yield
         await stop_background_jobs(jobs)
+        if app.state.bus is not None:
+            await app.state.bus.close()
         await app.state.email.close()
         await engine.dispose()
 
@@ -87,6 +94,7 @@ def create_app(
     app.state.messenger_sender = messenger_sender or create_messenger_sender(settings)
     app.state.meta_api = meta_api or create_meta_api(settings)
     app.state.gmail_api = gmail_api or create_gmail_api(settings)
+    app.state.bus = message_bus or create_message_bus(settings)
 
     app.middleware("http")(request_context)
     app.add_middleware(

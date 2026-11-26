@@ -1,7 +1,8 @@
 """The messaging worker (D-202): a separate process that serves no HTTP.
 
-Phase 0 runs the scheduled background jobs (`app.jobs`) here instead of in the API. Later phases
-add the broker consumers for inbound and outbound messages (docs/MESSAGING_SERVICE.md).
+It runs the scheduled background jobs (`app.jobs`, phase 0) and, with `MESSAGE_BUS=rabbitmq`,
+consumes the inbound webhook events the API stored (phase 1, `app.modules.inbound`).
+See docs/MESSAGING_SERVICE.md.
 
     uv run python -m app.workers.messaging
 
@@ -17,6 +18,7 @@ import signal
 from app.config import Settings, get_settings
 from app.jobs import JOB_NAMES
 from app.main import create_app
+from app.modules.inbound.service import handle
 
 log = logging.getLogger("simplecatch")
 
@@ -26,7 +28,12 @@ async def run(settings: Settings | None = None, stop: asyncio.Event | None = Non
     stop = stop or asyncio.Event()
     app = create_app(settings)
     async with app.router.lifespan_context(app):
-        log.info("messaging worker started", extra={"jobs": ", ".join(JOB_NAMES)})
+        if app.state.bus is not None:
+            await app.state.bus.consume(lambda body: handle(app.state, body))
+        log.info(
+            "messaging worker started",
+            extra={"jobs": ", ".join(JOB_NAMES), "consuming": app.state.bus is not None},
+        )
         await stop.wait()
     log.info("messaging worker stopped")
 

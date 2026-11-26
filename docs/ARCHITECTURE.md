@@ -9,8 +9,10 @@ One API process (`apps/api-py`, FastAPI) with modules per feature (`app/modules/
 PostgreSQL database, one admin SPA (`apps/web`), and a contract package (`packages/shared`).
 The core stays one service. The exception is message processing, which moves into a separate **messaging
 worker** (D-202, `docs/MESSAGING_SERVICE.md`): same Python package and database, its own process
-(`python -m app.workers.messaging`). Phase 0 (done): it runs the scheduled jobs (`app/jobs.py`). Next: an outbox
-and RabbitMQ between the webhooks and the worker.
+(`python -m app.workers.messaging`). It runs the scheduled jobs (`app/jobs.py`) and processes incoming webhooks:
+the API stores each signed delivery in `inbound_events` (the outbox) and answers 200, a relay publishes it to
+RabbitMQ, and the worker processes it with retries and a dead-letter queue. `MESSAGE_BUS=inline` (the default)
+keeps processing inside the request, with no broker.
 
 ```
 Browser (admin, Hebrew RTL / English LTR) ──► apps/web (Vite SPA; in prod served by the API, D-119)

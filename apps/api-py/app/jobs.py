@@ -9,11 +9,12 @@ import asyncio
 from typing import Any
 
 from app.modules.domain.service import start_domain_watch, stop_task
+from app.modules.inbound.service import start_inbound_cleanup
 from app.modules.tasks.reminders import start_task_reminders
 from app.modules.whatsapp.gmail_sync import start_gmail_sync
 from app.modules.whatsapp.nudges import start_booking_nudges
 
-JOB_NAMES = ("task reminders", "domain watch", "gmail sync", "booking nudges")
+JOB_NAMES = ("task reminders", "domain watch", "gmail sync", "booking nudges", "inbound cleanup")
 
 
 def start_background_jobs(app: Any) -> "list[asyncio.Task[None]]":
@@ -23,6 +24,7 @@ def start_background_jobs(app: Any) -> "list[asyncio.Task[None]]":
         start_domain_watch(app),
         start_gmail_sync(app),
         start_booking_nudges(app),
+        start_inbound_cleanup(app),
     ]
 
 
