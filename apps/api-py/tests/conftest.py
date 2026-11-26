@@ -46,6 +46,7 @@ def make_settings(**overrides) -> Settings:
         "EMAIL_TRANSPORT": "memory",
         "EMAIL_VERIFICATION": "on",
         "RUN_BACKGROUND_JOBS": False,
+        "WORKER_HEALTH_PORT": 0,
         "SITE_STOCK_IMAGES": False,
         "DOMAIN_LOOKUP": "off",
         "LEAD_FORM_RATE_LIMIT_MAX": 1000,

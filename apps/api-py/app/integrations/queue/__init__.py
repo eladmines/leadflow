@@ -65,6 +65,10 @@ class MessageBus(Protocol):
         """Starts consuming in the background and returns."""
         ...
 
+    async def depths(self) -> dict[str, int]:
+        """Messages waiting in every queue (work, retry, DLQ) of both streams."""
+        ...
+
     async def close(self) -> None: ...
 
 
@@ -98,6 +102,14 @@ class MemoryMessageBus:
                 queue.append(body)
             elif outcome.kind == "dead":
                 self.dead.append(body)
+
+    async def depths(self) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for stream in STREAMS:
+            out[stream] = len(self.queued[stream])
+            out[retry_queue(stream)] = 0
+            out[dead_letter_queue(stream)] = sum(1 for b in self.dead if b in self.published[stream])
+        return out
 
     async def close(self) -> None:
         pass
@@ -168,6 +180,15 @@ class RabbitMessageBus:
                 await message.ack()
 
         await queue.consume(on_message)
+
+    async def depths(self) -> dict[str, int]:
+        channel = await self._open()
+        out: dict[str, int] = {}
+        for stream in STREAMS:
+            for name in (stream, retry_queue(stream), dead_letter_queue(stream)):
+                queue = await channel.declare_queue(name, passive=True)
+                out[name] = int(queue.declaration_result.message_count or 0)
+        return out
 
     async def close(self) -> None:
         if self._connection is not None:

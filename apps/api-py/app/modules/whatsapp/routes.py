@@ -10,6 +10,7 @@ from fastapi import APIRouter, Query, Request
 from pydantic import ValidationError
 from starlette.responses import JSONResponse, PlainTextResponse, Response
 
+from app.core.tracing import tracer
 from app.deps import Db, Tenant, require_permission, tenant_router
 from app.errors import AppError
 from app.integrations.whatsapp import verify_webhook_signature
@@ -67,11 +68,14 @@ async def _accept(request: Request, provider: str, raw: bytes, payload: Any) -> 
     Meta retries and the stored row is processed again); with a broker the outbox relay publishes
     it to the messaging worker and the webhook answers at once."""
     state = request.app.state
-    event, new = await store(state, provider, raw, payload)
-    if state.settings.MESSAGE_BUS == "inline":
-        await run_event(state, event.id)
-    elif new and (wake := getattr(state, "relay_wake", None)) is not None:
-        wake.set()
+    with tracer.start_as_current_span("webhook accept", attributes={"messaging.provider": provider}) as span:
+        event, new = await store(state, provider, raw, payload)
+        span.set_attribute("inbound.event_id", str(event.id))
+        span.set_attribute("inbound.duplicate", not new)
+        if state.settings.MESSAGE_BUS == "inline":
+            await run_event(state, event.id)
+        elif new and (wake := getattr(state, "relay_wake", None)) is not None:
+            wake.set()
     return JSONResponse({"ok": True})
 
 

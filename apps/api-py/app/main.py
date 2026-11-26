@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import Settings, get_settings
 from app.core.ratelimit import RateLimiter
+from app.core.tracing import instrument_api, setup_tracing
 from app.db.session import make_engine, make_sessionmaker
 from app.errors import AppError
 from app.integrations.domain import DomainExpiry, create_domain_expiry
@@ -60,8 +61,10 @@ def create_app(
     meta_api: MetaApi | None = None,
     gmail_api: GmailApi | None = None,
     message_bus: MessageBus | None = None,
+    service: str = "simplecatch-api",
 ) -> FastAPI:
     settings = settings or get_settings()
+    tracing = setup_tracing(settings, service)
     engine = make_engine(settings.DATABASE_URL)
 
     @asynccontextmanager
@@ -95,6 +98,8 @@ def create_app(
     app.state.meta_api = meta_api or create_meta_api(settings)
     app.state.gmail_api = gmail_api or create_gmail_api(settings)
     app.state.bus = message_bus or create_message_bus(settings)
+    if tracing and service == "simplecatch-api":
+        instrument_api(app)
 
     app.middleware("http")(request_context)
     app.add_middleware(

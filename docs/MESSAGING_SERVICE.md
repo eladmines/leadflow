@@ -1,6 +1,6 @@
 # Messaging service (D-202, _Accepted_ 2026-11-26)
 
-**Status:** phases 0, 1 and 2 done; phase 3 (own DB role, tracing, health checks) next. Decisions are in §5.
+**Status:** phases 0–2 done, phase 3 done except the worker's own DB role (postponed until the worker runs on its own host). Decisions are in §5.
 
 WhatsApp / Messenger / Instagram / email message processing moves out of the API into its own
 deployable **messaging worker**, connected through a transactional outbox and a message broker.
@@ -89,7 +89,9 @@ Same Python package, different entrypoints (shared models and services, separate
 - `app/modules/inbound/`: `service.py` (store, relay, consumer, cleanup), `processor.py`.
 - `app/modules/outbound/service.py`: queue, dispatch, ordered flush, sweep.
 - `app/jobs.py`: the scheduled jobs. Migrations `0002_inbound_events.py`, `0003_queued_sends.py`.
-- `docker-compose.yml`: `rabbitmq` (management UI on http://localhost:15672, guest/guest).
+- `app/core/tracing.py`: tracing setup and context helpers. `app/workers/health.py`: `/health`.
+- `docker-compose.yml`: `rabbitmq` (management UI on http://localhost:15672, guest/guest) and
+  `jaeger` (http://localhost:16686).
 
 ### Tenancy, security, privacy
 
@@ -99,8 +101,22 @@ Same Python package, different entrypoints (shared models and services, separate
 - Broker messages carry only the event id. Payloads (message text, phone numbers) stay in Postgres
   and are deleted 7 days after processing (30 days if never processed, long enough to look into a
   dead-lettered event). Logs and `last_error` hold the exception class, never its message.
-- Phase 3: trace context on every event (OpenTelemetry), so one message can be followed from the
-  webhook through the worker to the outbound send.
+- Traces carry ids, kinds and outcomes only; `/health` reports counts and ages only.
+
+### Observability (phase 3)
+
+- **Tracing** (`app/core/tracing.py`, OpenTelemetry): one incoming message is one trace across two
+  services: `simplecatch-api` (HTTP request → `webhook accept` → `outbox publish`) and
+  `simplecatch-worker` (`process inbound event`). A reply is another trace: `dispatch outbound` →
+  `send queued messages` → `send message` → the HTTP call to Meta. The webhook's context is saved
+  on `inbound_events.traceparent` (the relay runs later); broker messages carry a W3C
+  `traceparent` next to the id. Exported over OTLP/HTTP only when `OTEL_EXPORTER_OTLP_ENDPOINT` is
+  set; `pnpm dev` sends to the Jaeger in docker compose (http://localhost:16686).
+- **Worker health** (`app/workers/health.py`): `GET http://localhost:4200/health`
+  (`WORKER_HEALTH_PORT`, 0 = off). Reports database and broker reachability, inbound events waiting
+  / their oldest age / given up, outbound messages queued / oldest age / failed in 24 h, and the
+  depth of all six RabbitMQ queues. 503 only when the database or broker is unreachable (a restart
+  helps); a backlog over 2 minutes or anything dead-lettered is 200 `"degraded"` with the reason.
 
 ### Database ownership
 
@@ -116,7 +132,7 @@ mean distributed transactions for no product gain.
 | 0 ✅  | Worker process runs the existing background jobs (`app/jobs.py`, `app/workers/messaging.py`); `pnpm dev` runs it and the API with `RUN_BACKGROUND_JOBS=false` | none                                | S    |
 | 1 ✅  | Inbound: webhook → `inbound_events` (outbox) → relay → RabbitMQ → worker; row-locked idempotent consumer; retry queue and DLQ; `MESSAGE_BUS` switch           | RabbitMQ container                  | M    |
 | 2 ✅  | Outbound: queued sends in order per conversation, retries/backoff, permanent vs passing failures, sweep, `queued` status in the UI                            | —                                   | M    |
-| 3     | Own DB role, OpenTelemetry tracing across API ↔ worker, queue depth / DLQ health checks                                                                       | collector (local: Jaeger container) | S–M  |
+| 3 ◐   | ✅ OpenTelemetry tracing across API ↔ worker; ✅ worker `/health` (depths, DLQ, ages); ⏸ own DB role                                                          | collector (local: Jaeger container) | S–M  |
 
 Each phase ships on its own and leaves the system working.
 
@@ -133,6 +149,10 @@ Each phase ships on its own and leaves the system working.
   failure retries and holds the rest back; a refusal fails and the next one goes; the last attempt
   fails; a busy conversation is retried; bot buttons keep their kind; a Messenger echo is replaced;
   stale queues are republished; one round trip through a real RabbitMQ.
+- `tests/test_tracing.py`: an incoming message and a reply are each one connected trace (parent →
+  child across the stored row and the broker message); a failed send is an error span; no span
+  holds message text or phone numbers. `tests/test_worker_health.py`: ok, degraded (backlog, given
+  up, dead-lettered), down (no database, no broker), inline.
 - e2e runs inline, so Playwright needs no broker or worker.
 
 ## 5. Decisions (owner, 2026-11-26)
@@ -140,12 +160,14 @@ Each phase ships on its own and leaves the system working.
 1. **Broker:** RabbitMQ (dead-letter queues, a well-known tool).
 2. **Hosting:** self-hosted as a container; no paid managed plan.
 3. **User-initiated sends:** queued too, shown `queued` → `sent` live.
-4. **Dependencies:** `aio-pika` (added in phase 1); `opentelemetry-*` with phase 3.
+4. **Dependencies:** `aio-pika` (phase 1); `opentelemetry-api`, `-sdk`, `-exporter-otlp-proto-http`,
+   `-instrumentation-fastapi`, `-instrumentation-httpx` (phase 3).
 
 ### Running it
 
-- Locally: `docker compose up -d` (now includes RabbitMQ), then `pnpm dev` runs the API and the
-  worker with `MESSAGE_BUS=rabbitmq`. Queues are visible at http://localhost:15672.
+- Locally: `docker compose up -d` (Postgres, Mailpit, RabbitMQ, Jaeger), then `pnpm dev` runs the
+  API and the worker with `MESSAGE_BUS=rabbitmq` and tracing on. Queues: http://localhost:15672 ·
+  traces: http://localhost:16686 · worker health: http://localhost:4200/health.
 - Production (`render.yaml`) is one free web service and Render's background workers are a paid
   plan, so it keeps the defaults: `MESSAGE_BUS=inline` and `RUN_BACKGROUND_JOBS` on. Moving to the
   worker means three changes together: a RabbitMQ the services can reach, a worker service

@@ -15,8 +15,8 @@
     "format": "prettier --write .",
     "db:migrate": "cd apps/api-py && uv run python scripts/prepare_db.py",
     "e2e": "playwright test",
-    "dev:api": "cd apps/api-py && RUN_BACKGROUND_JOBS=false MESSAGE_BUS=rabbitmq uv run watchfiles \"python -m app.dev_server\" app",
-    "dev:worker": "cd apps/api-py && MESSAGE_BUS=rabbitmq uv run watchfiles \"python -m app.workers.messaging\" app",
+    "dev:api": "cd apps/api-py && RUN_BACKGROUND_JOBS=false MESSAGE_BUS=rabbitmq OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run watchfiles \"python -m app.dev_server\" app",
+    "dev:worker": "cd apps/api-py && MESSAGE_BUS=rabbitmq OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run watchfiles \"python -m app.workers.messaging\" app",
     "dev:web": "pnpm --filter @simplecatch/web dev",
     "test:api": "cd apps/api-py && uv run pytest"
   },

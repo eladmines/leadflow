@@ -17,9 +17,12 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from opentelemetry import trace as trace_api
+from opentelemetry.trace import SpanKind
 from sqlalchemy import delete, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from app.core.tracing import carrier_of, context_of, current_traceparent, tracer
 from app.db.models import InboundEvent
 from app.integrations.queue import ACK, DEAD, Outcome, retry_in
 from app.modules.inbound.processor import PROCESSORS, process
@@ -51,7 +54,13 @@ async def store(state: Any, provider: str, raw: bytes, payload: Any) -> tuple[In
         new_id = (
             await db.execute(
                 pg_insert(InboundEvent)
-                .values(id=uuid.uuid4(), provider=provider, dedupe_key=key, payload=payload)
+                .values(
+                    id=uuid.uuid4(),
+                    provider=provider,
+                    dedupe_key=key,
+                    payload=payload,
+                    traceparent=current_traceparent(),
+                )
                 .on_conflict_do_nothing(index_elements=["dedupe_key"])
                 .returning(InboundEvent.id)
             )
@@ -75,6 +84,9 @@ async def run_event(state: Any, event_id: uuid.UUID) -> bool:
         ).scalar_one_or_none()
         if event is None or event.processed_at is not None:
             return False
+        span = trace_api.get_current_span()
+        span.set_attribute("messaging.provider", event.provider)
+        span.set_attribute("inbound.attempt", event.attempts + 1)
         try:
             async with state.sessionmaker() as db:
                 await process(build_service(state, db), event.provider, event.payload)
@@ -111,31 +123,44 @@ async def handle(state: Any, body: dict[str, Any]) -> Outcome:
         event_id = uuid.UUID(str(body.get("eventId")))
     except ValueError:
         return DEAD
-    try:
-        await run_event(state, event_id)
-    except EventFailed as failed:
-        return DEAD if failed.attempts >= MAX_ATTEMPTS else retry_in(backoff_s(failed.attempts))
-    return ACK
+    with tracer.start_as_current_span(
+        "process inbound event",
+        context=context_of(body.get("trace")),
+        kind=SpanKind.CONSUMER,
+        attributes={"inbound.event_id": str(event_id)},
+    ) as span:
+        try:
+            ran = await run_event(state, event_id)
+        except EventFailed as failed:
+            span.set_attribute("inbound.attempts", failed.attempts)
+            span.set_status(trace_api.StatusCode.ERROR)
+            return DEAD if failed.attempts >= MAX_ATTEMPTS else retry_in(backoff_s(failed.attempts))
+        span.set_attribute("inbound.skipped", not ran)
+        return ACK
 
 
 async def publish_pending(state: Any, limit: int = RELAY_BATCH) -> int:
     """The outbox relay: publishes a batch of unpublished events; returns how many."""
     async with state.sessionmaker() as db:
-        ids = (
-            (
-                await db.execute(
-                    select(InboundEvent.id)
-                    .where(InboundEvent.published_at.is_(None), InboundEvent.processed_at.is_(None))
-                    .order_by(InboundEvent.received_at)
-                    .limit(limit)
-                    .with_for_update(skip_locked=True)
-                )
+        rows = (
+            await db.execute(
+                select(InboundEvent.id, InboundEvent.traceparent)
+                .where(InboundEvent.published_at.is_(None), InboundEvent.processed_at.is_(None))
+                .order_by(InboundEvent.received_at)
+                .limit(limit)
+                .with_for_update(skip_locked=True)
             )
-            .scalars()
-            .all()
-        )
-        for event_id in ids:
-            await state.bus.publish({"eventId": str(event_id)})
+        ).all()
+        ids = [event_id for event_id, _ in rows]
+        for event_id, traceparent in rows:
+            # A child of the webhook's span, though it runs later (maybe in another process).
+            with tracer.start_as_current_span(
+                "outbox publish",
+                context=context_of(traceparent),
+                kind=SpanKind.PRODUCER,
+                attributes={"inbound.event_id": str(event_id)},
+            ):
+                await state.bus.publish({"eventId": str(event_id), "trace": carrier_of()})
         if ids:
             await db.execute(
                 update(InboundEvent).where(InboundEvent.id.in_(ids)).values(published_at=datetime.now(UTC))

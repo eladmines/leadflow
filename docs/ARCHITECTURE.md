@@ -12,7 +12,7 @@ worker** (D-202, `docs/MESSAGING_SERVICE.md`): same Python package and database,
 (`python -m app.workers.messaging`). It runs the scheduled jobs (`app/jobs.py`) and processes incoming webhooks:
 the API stores each signed delivery in `inbound_events` (the outbox) and answers 200, a relay publishes it to
 RabbitMQ, and the worker processes it with retries and a dead-letter queue. `MESSAGE_BUS=inline` (the default)
-keeps processing inside the request, with no broker.
+keeps processing inside the request, with no broker. OpenTelemetry traces follow a message across both processes, and the worker serves its own `/health`.
 
 ```
 Browser (admin, Hebrew RTL / English LTR) ──► apps/web (Vite SPA; in prod served by the API, D-119)

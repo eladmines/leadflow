@@ -90,6 +90,11 @@ class Settings(BaseSettings):
     # and processed by the messaging worker.
     MESSAGE_BUS: Literal["inline", "rabbitmq"] = "inline"
     RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
+    # Tracing (D-202 phase 3): an OTLP/HTTP collector, e.g. http://localhost:4318 (Jaeger in docker
+    # compose). Unset = tracing off.
+    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = None
+    # The messaging worker's GET /health (app/workers/health.py). 0 = no endpoint.
+    WORKER_HEALTH_PORT: int = 4200
     AUTH_RATE_LIMIT_MAX: int = 10
     AUTH_RATE_LIMIT_WINDOW: int = 900_000  # milliseconds
 

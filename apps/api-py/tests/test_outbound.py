@@ -115,7 +115,8 @@ async def test_a_reply_is_queued_then_sent_by_the_worker(app, client, db, bus, w
     message = res.json()["message"]
     assert message["status"] == "queued" and message["sender"]["id"] == owner["user_id"]
     assert wa.sent == []  # nothing left the API
-    assert bus.published[OUTBOUND] == [{"numberId": str(number.id)}]  # an id only
+    assert [m["numberId"] for m in bus.published[OUTBOUND]] == [str(number.id)]  # an id (+ trace) only
+    assert set(bus.published[OUTBOUND][0]) <= {"numberId", "trace"}
 
     await bus.drain(sender(app), OUTBOUND)
     assert [m.text for m in wa.sent] == ["מתי נוח לך?"]
@@ -266,7 +267,7 @@ async def test_stale_queues_are_published_again(app, client, db, bus, wa):
     )
     await db.commit()
     assert await outbound.republish_stale(app.state) == 1
-    assert bus.published[OUTBOUND][-1] == {"numberId": str(number.id)}
+    assert bus.published[OUTBOUND][-1]["numberId"] == str(number.id)
 
 
 async def test_unknown_and_malformed_messages(app):

@@ -24,10 +24,13 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
+from opentelemetry import trace as trace_api
+from opentelemetry.trace import SpanKind
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.timeutil import now_ms
+from app.core.tracing import carrier_of, context_of, tracer
 from app.db.models import WhatsAppDirection, WhatsAppMessage, WhatsAppNumber
 from app.integrations.queue import ACK, DEAD, OUTBOUND, Outcome, retry_in
 from app.integrations.whatsapp import WhatsAppChoice, WhatsAppSendError
@@ -89,13 +92,21 @@ def queue_message(
 
 async def dispatch(state: Any, number_id: uuid.UUID) -> None:
     """After the queued rows are committed: send now (inline) or hand them to the worker."""
-    if state.bus is None:
-        await flush_number(state, number_id, retries=False)
-        return
-    try:
-        await state.bus.publish({"numberId": str(number_id)}, OUTBOUND)
-    except Exception as err:  # the rows are saved; the worker's sweep picks them up
-        log.error("outbound publish failed", extra={"errName": type(err).__name__})
+    with tracer.start_as_current_span(
+        "dispatch outbound",
+        kind=SpanKind.PRODUCER,
+        attributes={
+            "outbound.number_id": str(number_id),
+            "messaging.bus": "inline" if state.bus is None else "rabbitmq",
+        },
+    ):
+        if state.bus is None:
+            await flush_number(state, number_id, retries=False)
+            return
+        try:
+            await state.bus.publish({"numberId": str(number_id), "trace": carrier_of()}, OUTBOUND)
+        except Exception as err:  # the rows are saved; the worker's sweep picks them up
+            log.error("outbound publish failed", extra={"errName": type(err).__name__})
 
 
 def _lock_key(number_id: uuid.UUID) -> int:
@@ -184,7 +195,25 @@ async def _send(state: Any, via: Any, number: WhatsAppNumber, payload: dict[str,
 
 
 async def _send_one(state: Any, db: AsyncSession, message: WhatsAppMessage, retries: bool) -> Result:
+    with tracer.start_as_current_span(
+        "send message",
+        attributes={
+            "outbound.message_id": str(message.id),
+            "outbound.kind": str((message.send_payload or {}).get("kind")),
+            "outbound.attempt": message.send_attempts + 1,
+        },
+    ) as span:
+        result = await _send_one_traced(state, db, message, retries)
+        span.set_attribute("outbound.result", result)
+        if result != "sent":
+            span.set_status(trace_api.StatusCode.ERROR)
+        return result
+
+
+async def _send_one_traced(state: Any, db: AsyncSession, message: WhatsAppMessage, retries: bool) -> Result:
     number = await db.get(WhatsAppNumber, message.number_id)
+    if number is not None:
+        trace_api.get_current_span().set_attribute("messaging.channel", number.channel or "whatsapp")
     payload = message.send_payload or {}
     try:
         via = await _sender_for(state, db, number) if number else None
@@ -228,7 +257,15 @@ async def handle(state: Any, body: dict[str, Any]) -> Outcome:
         number_id = uuid.UUID(str(body.get("numberId")))
     except ValueError:
         return DEAD
-    return await flush_number(state, number_id)
+    with tracer.start_as_current_span(
+        "send queued messages",
+        context=context_of(body.get("trace")),
+        kind=SpanKind.CONSUMER,
+        attributes={"outbound.number_id": str(number_id)},
+    ) as span:
+        outcome = await flush_number(state, number_id)
+        span.set_attribute("outbound.outcome", outcome.kind)
+        return outcome
 
 
 async def republish_stale(state: Any, now: datetime | None = None) -> int:
@@ -249,7 +286,7 @@ async def republish_stale(state: Any, now: datetime | None = None) -> int:
             .all()
         )
     for number_id in ids:
-        await state.bus.publish({"numberId": str(number_id)}, OUTBOUND)
+        await state.bus.publish({"numberId": str(number_id), "trace": carrier_of()}, OUTBOUND)
     return len(ids)
 
 
