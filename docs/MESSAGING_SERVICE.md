@@ -1,6 +1,6 @@
 # Messaging service (D-202, _Accepted_ 2026-11-26)
 
-**Status:** phases 0 and 1 done; phase 2 (outbound) next. Decisions are in §5.
+**Status:** phases 0, 1 and 2 done; phase 3 (own DB role, tracing, health checks) next. Decisions are in §5.
 
 WhatsApp / Messenger / Instagram / email message processing moves out of the API into its own
 deployable **messaging worker**, connected through a transactional outbox and a message broker.
@@ -65,8 +65,19 @@ Meta (WhatsApp, Messenger, Instagram) / inbound email
   retries, the stored row is found again and processed. No broker needed.
 - **Scheduled jobs** run in the worker; the API runs with `RUN_BACKGROUND_JOBS=false` wherever the
   worker runs. The jobs include the hourly cleanup of old events.
-- **Outbound (phase 2):** sends the bot makes and user-initiated sends go to `messaging.outbound`.
-  The message row is written as `queued` and moves to `sent` / `failed`, with the same retry and DLQ.
+- **Outbound (phase 2, `app/modules/outbound/service.py`):** every WhatsApp / Messenger / Instagram
+  reply, from a team member or the bot, is stored as a `queued` `whatsapp_messages` row with what
+  to send (`send_payload`: text, buttons, list, or a storage key for a photo/video, never the
+  bytes) and a sequence number (`send_seq`). Then the conversation is dispatched: inline it is
+  flushed at once; with a broker `{"numberId"}` goes on `messaging.outbound`. A flush takes a
+  per-number advisory lock (busy → retry in 1 s) and sends the queued messages in `send_seq`
+  order. A passing failure (network, 429, Meta 5xx) stops the flush and retries with backoff,
+  holding the later messages back so the bot's text → list → photo never arrive out of order. A
+  refusal (4xx), a disconnected channel or the 5th attempt marks the message `failed` and the
+  flush goes on. Once sent, the row takes the provider's id; a Messenger echo that landed first is
+  replaced by our row. A sweep in the worker republishes conversations with a message queued for
+  over 30 s (a lost dispatch). The thread shows "Sending…" and polls every 2 s while something is
+  queued. Email and Gmail replies are still sent directly.
 
 ### Code layout
 
@@ -76,7 +87,8 @@ Same Python package, different entrypoints (shared models and services, separate
 - `app/integrations/queue/`: `MessageBus` with `MemoryMessageBus` (tests) and `RabbitMessageBus`
   (rule 8), and the queue topology.
 - `app/modules/inbound/`: `service.py` (store, relay, consumer, cleanup), `processor.py`.
-- `app/jobs.py`: the scheduled jobs. `alembic/versions/0002_inbound_events.py`: the table.
+- `app/modules/outbound/service.py`: queue, dispatch, ordered flush, sweep.
+- `app/jobs.py`: the scheduled jobs. Migrations `0002_inbound_events.py`, `0003_queued_sends.py`.
 - `docker-compose.yml`: `rabbitmq` (management UI on http://localhost:15672, guest/guest).
 
 ### Tenancy, security, privacy
@@ -103,7 +115,7 @@ mean distributed transactions for no product gain.
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ---- |
 | 0 ✅  | Worker process runs the existing background jobs (`app/jobs.py`, `app/workers/messaging.py`); `pnpm dev` runs it and the API with `RUN_BACKGROUND_JOBS=false` | none                                | S    |
 | 1 ✅  | Inbound: webhook → `inbound_events` (outbox) → relay → RabbitMQ → worker; row-locked idempotent consumer; retry queue and DLQ; `MESSAGE_BUS` switch           | RabbitMQ container                  | M    |
-| 2     | Outbound: queued sends, retries/backoff, per-number rate limiting, `queued` status in UI                                                                      | —                                   | M    |
+| 2 ✅  | Outbound: queued sends in order per conversation, retries/backoff, permanent vs passing failures, sweep, `queued` status in the UI                            | —                                   | M    |
 | 3     | Own DB role, OpenTelemetry tracing across API ↔ worker, queue depth / DLQ health checks                                                                       | collector (local: Jaeger container) | S–M  |
 
 Each phase ships on its own and leaves the system working.
@@ -117,6 +129,10 @@ Each phase ships on its own and leaves the system working.
   processes the event; a row held by another consumer is skipped; old events are deleted.
 - One test runs against a real RabbitMQ (docker compose locally, a service container in CI): retry
   through the TTL queue and dead-lettering into the DLQ. It is skipped when no broker is running.
+- `tests/test_outbound.py`: a reply is queued and sent by the worker; order is kept; a passing
+  failure retries and holds the rest back; a refusal fails and the next one goes; the last attempt
+  fails; a busy conversation is retried; bot buttons keep their kind; a Messenger echo is replaced;
+  stale queues are republished; one round trip through a real RabbitMQ.
 - e2e runs inline, so Playwright needs no broker or worker.
 
 ## 5. Decisions (owner, 2026-11-26)
@@ -140,5 +156,7 @@ Each phase ships on its own and leaves the system working.
 ## 6. What it's not
 
 - Not a split of leads / CRM / quotes / sites into services.
-- Not a change to the public API contract in `packages/shared`, apart from a `queued`
-  delivery status in phase 2.
+- Not a change to the public API contract in `packages/shared`, apart from the `queued`
+  delivery status (phase 2).
+- Per-number rate limiting is not built: Meta's 429 is retried with backoff instead. Add it if
+  volume ever needs it.

@@ -4449,6 +4449,7 @@
      "status": {
       "enum": [
        "received",
+       "queued",
        "sent",
        "delivered",
        "read",

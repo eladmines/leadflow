@@ -3272,7 +3272,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "received" | "sent" | "delivered" | "read" | "failed";
+            status: "received" | "queued" | "sent" | "delivered" | "read" | "failed";
             /** Subject */
             subject?: string;
         };

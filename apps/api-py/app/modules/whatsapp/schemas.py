@@ -9,7 +9,7 @@ from app.modules.auth.schemas import _Request
 
 WHATSAPP_WINDOW_MS = 24 * 60 * 60 * 1000
 WHATSAPP_TEXT_MAX = 4096
-WHATSAPP_STATUSES = ("received", "sent", "delivered", "read", "failed")
+WHATSAPP_STATUSES = ("received", "queued", "sent", "delivered", "read", "failed")
 CHANNELS = ("whatsapp", "messenger", "instagram", "email")
 
 MESSAGES = {
@@ -62,7 +62,7 @@ class MessageOut(Wire):
     id: str
     direction: Literal["IN", "OUT"]
     body: str
-    status: Literal["received", "sent", "delivered", "read", "failed"]
+    status: Literal["received", "queued", "sent", "delivered", "read", "failed"]
     subject: str | None = None
     sender: Sender | None
     createdAt: str

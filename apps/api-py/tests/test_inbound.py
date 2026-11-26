@@ -69,7 +69,7 @@ async def test_webhook_only_stores_then_the_worker_processes(app, client, db, bu
     assert await count(db, models.WhatsAppMessage) == 0  # nothing processed inside the request
 
     assert await inbound.publish_pending(app.state) == 1
-    assert bus.published == [{"eventId": str(event.id)}]  # ids only, no message text
+    assert bus.published[INBOUND] == [{"eventId": str(event.id)}]  # ids only, no message text
     assert await inbound.publish_pending(app.state) == 0
 
     await bus.drain(worker(app))
@@ -87,7 +87,7 @@ async def test_a_repeated_delivery_is_stored_and_processed_once(app, client, db,
     await post(client, payload)
     assert len(await events(db)) == 1
     await inbound.publish_pending(app.state)
-    bus.queued.append(bus.published[0])  # the broker delivers it twice (at least once)
+    bus.queued[INBOUND].append(bus.published[INBOUND][0])  # the broker delivers it twice (at least once)
     await bus.drain(worker(app))
     assert await count(db, models.WhatsAppMessage) == 1
 

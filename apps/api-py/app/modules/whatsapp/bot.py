@@ -51,6 +51,7 @@ from app.integrations.whatsapp import WhatsAppChoice, WhatsAppSender
 from app.modules.appointments.availability import BusinessInfo, free_times, today_in
 from app.modules.appointments.service import CALL_BACK_MINUTES, AppointmentService
 from app.modules.notifications.service import MANAGERS, notify_safe
+from app.modules.outbound.service import Dispatch, choices_payload, queue_message
 from app.modules.whatsapp import auto_reply as ar
 from app.modules.whatsapp.bot_words import WORDS, Words, event_day, long_day, short_day
 from app.shared import whatsapp as sw
@@ -216,8 +217,10 @@ class BookingBot:
         senders: Senders,
         storage: StorageProvider,
         ensure_customer: EnsureCustomer,
+        dispatch: Dispatch,
     ) -> None:
         self.db, self.senders, self.storage, self.ensure_customer = db, senders, storage, ensure_customer
+        self.dispatch = dispatch
         self.appointments = AppointmentService(db)
 
     # ------------------------------------------------------------------ entry
@@ -1193,7 +1196,7 @@ class BookingBot:
             except Exception:
                 video = None
             if video:
-                await self._say_media(chat, "video", video)
+                await self._say_media(chat, "video", chat.business.showcase_video)
         ids = sc.get("assetIds") or []
         assets = {}
         if ids:
@@ -1209,7 +1212,8 @@ class BookingBot:
             if not file:
                 continue
             try:
-                await self._say_media(chat, "image", ar.to_whatsapp_jpeg(file))
+                ar.to_whatsapp_jpeg(file)  # a photo that can't be converted is left out, as before
+                await self._say_media(chat, "image", key)
             except Exception as err:
                 log.error("whatsapp showcase image failed", extra={"errName": type(err).__name__})
         if offer_booking:
@@ -1462,55 +1466,39 @@ class BookingBot:
         buttons: list[WhatsAppChoice] | None = None,
         preview: bool = False,
     ) -> None:
-        """Sends and stores one bot message (no sender: it shows as an automatic reply)."""
+        """Queues one bot message (no sender: it shows as an automatic reply). D-202: sent now
+        (inline) or by the messaging worker, after the ones queued before it."""
         options = buttons if buttons is not None else (choices["rows"] if choices else [])
-        try:
-            if buttons is not None:
-                sent = await chat.sender.send_buttons(chat.phone, body, buttons)
-            elif choices is not None:
-                sent = await chat.sender.send_list(chat.phone, body, choices["button"], choices["rows"])
-            else:
-                sent = await chat.sender.send_text(chat.phone, body, preview)
-        except Exception as err:
-            log.error(
-                "whatsapp bot send failed",
-                extra={
-                    "errName": type(err).__name__,
-                    "status": getattr(err, "status", None),
-                    "code": getattr(err, "code", None),
-                },
-            )
-            return
+        if buttons is not None:
+            payload: dict[str, Any] = {"kind": "buttons", "body": body, "buttons": choices_payload(buttons)}
+        elif choices is not None:
+            payload = {
+                "kind": "list",
+                "body": body,
+                "button": choices["button"],
+                "rows": choices_payload(choices["rows"]),
+            }
+        else:
+            payload = {"kind": "text", "text": body, "preview": preview}
         stored = "\n".join([body, *(f"• {o.title}" for o in options)])
-        await self._store_out(chat, sent["id"], stored[:4096])
+        await self._queue(chat, stored[:4096], payload)
 
-    async def _say_media(self, chat: Chat, kind: str, data: bytes) -> None:
-        """Sends and stores a video or photo (shown as "[וידאו]" / "[תמונה]")."""
-        try:
-            sent = await (chat.sender.send_video if kind == "video" else chat.sender.send_image)(
-                chat.phone, data
-            )
-        except Exception as err:
-            log.error(f"whatsapp showcase {kind} failed", extra={"errName": type(err).__name__})
-            return
-        await self._store_out(chat, sent["id"], "[וידאו]" if kind == "video" else "[תמונה]")
+    async def _say_media(self, chat: Chat, kind: str, key: str) -> None:
+        """Queues a video or photo from storage (shown as "[וידאו]" / "[תמונה]")."""
+        await self._queue(chat, "[וידאו]" if kind == "video" else "[תמונה]", {"kind": kind, "key": key})
 
-    async def _store_out(self, chat: Chat, wa_id: str, body: str) -> None:
-        self.db.add(
-            WhatsAppMessage(
-                id=uuid.uuid4(),
-                business_id=chat.business.id,
-                number_id=chat.number_id,
-                contact_id=chat.link.get("contactId"),
-                lead_id=chat.link.get("leadId"),
-                direction=WhatsAppDirection.OUT,
-                wa_message_id=wa_id,
-                body=body,
-                status="sent",
-                created_at=now_ms(),
-            )
+    async def _queue(self, chat: Chat, body: str, payload: dict[str, Any]) -> None:
+        queue_message(
+            self.db,
+            business_id=chat.business.id,
+            number_id=chat.number_id,
+            contact_id=chat.link.get("contactId"),
+            lead_id=chat.link.get("leadId"),
+            body=body,
+            payload=payload,
         )
         await self.db.commit()
+        await self.dispatch(chat.number_id)
 
     async def _link_of(self, business_id: uuid.UUID, status: Any, phone: str) -> dict[str, uuid.UUID | None]:
         if status != WhatsAppNumberStatus.BUSINESS:

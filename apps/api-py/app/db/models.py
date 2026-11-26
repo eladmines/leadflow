@@ -1375,6 +1375,12 @@ class WhatsAppMessage(Base):
         ),
         Index("whatsapp_messages_number_id_created_at_idx", "number_id", "created_at"),
         Index("whatsapp_messages_wa_message_id_key", "wa_message_id", unique=True),
+        Index(
+            "whatsapp_messages_queued_idx",
+            "number_id",
+            "send_seq",
+            postgresql_where=text("status = 'queued'"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
@@ -1398,6 +1404,10 @@ class WhatsAppMessage(Base):
     lead_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     sender_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     subject: Mapped[str | None] = mapped_column(String(300))
+    # D-202 phase 2: while `status` is "queued", what to send (cleared once sent or failed).
+    send_payload: Mapped[dict | None] = mapped_column(JSONB)
+    send_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    send_seq: Mapped[int | None] = mapped_column(BigInteger)  # nextval('whatsapp_messages_send_seq')
 
     business: Mapped["Business"] = relationship("Business", back_populates="whatsapp_messages")
     contact: Mapped[Optional["Contact"]] = relationship("Contact", back_populates="whatsapp_messages")

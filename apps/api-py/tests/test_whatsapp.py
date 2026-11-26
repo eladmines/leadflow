@@ -311,22 +311,30 @@ async def test_window_closed(client, db, wa):
     assert wa.sent == []
 
 
-async def test_failed_send_not_stored_or_leaked(client, db, wa):
+async def test_failed_send_is_shown_as_failed_without_leaking(client, db, wa):
+    """D-202 phase 2: a reply is queued first, so one Meta refuses stays in the thread as "failed"
+    (it used to be dropped with a 500). Meta's code never reaches the client."""
     owner = await connected(client, db)
     await customer(db)
     await post(client, text_event("972501112233", "היי"))
     (lead,) = await leads_of(client, owner["token"])
     wa.fail_with = WhatsAppSendError(400, 131047)
     res = await req(client, "POST", thread_url(BUSINESS_ID, lead["id"]), owner["token"], {"text": "היי"})
-    assert res.status_code == 500
-    assert res.json()["error"]["message"] == WM["sendFailed"]
+    assert res.status_code == 201
+    assert res.json()["message"]["status"] == "failed"
     assert "131047" not in res.text
-    assert (
-        await count(
-            db, models.WhatsAppMessage, models.WhatsAppMessage.direction == models.WhatsAppDirection.OUT
+    out = (
+        (
+            await db.execute(
+                select(models.WhatsAppMessage).where(
+                    models.WhatsAppMessage.direction == models.WhatsAppDirection.OUT
+                )
+            )
         )
-        == 0
+        .scalars()
+        .all()
     )
+    assert [(m.status, m.send_payload, m.send_attempts) for m in out] == [("failed", None, 1)]
 
 
 async def test_validates_reply_text(client, db):

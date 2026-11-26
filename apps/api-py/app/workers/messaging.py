@@ -1,7 +1,8 @@
 """The messaging worker (D-202): a separate process that serves no HTTP.
 
 It runs the scheduled background jobs (`app.jobs`, phase 0) and, with `MESSAGE_BUS=rabbitmq`,
-consumes the inbound webhook events the API stored (phase 1, `app.modules.inbound`).
+consumes the inbound webhook events the API stored (phase 1, `app.modules.inbound`) and sends the
+queued outgoing messages (phase 2, `app.modules.outbound`).
 See docs/MESSAGING_SERVICE.md.
 
     uv run python -m app.workers.messaging
@@ -16,9 +17,13 @@ import logging
 import signal
 
 from app.config import Settings, get_settings
+from app.integrations.queue import INBOUND, OUTBOUND
 from app.jobs import JOB_NAMES
 from app.main import create_app
+from app.modules.domain.service import stop_task
 from app.modules.inbound.service import handle
+from app.modules.outbound.service import handle as handle_outbound
+from app.modules.outbound.service import start_outbound_sweep
 
 log = logging.getLogger("simplecatch")
 
@@ -28,13 +33,18 @@ async def run(settings: Settings | None = None, stop: asyncio.Event | None = Non
     stop = stop or asyncio.Event()
     app = create_app(settings)
     async with app.router.lifespan_context(app):
+        sweep = None
         if app.state.bus is not None:
-            await app.state.bus.consume(lambda body: handle(app.state, body))
+            await app.state.bus.consume(lambda body: handle(app.state, body), INBOUND)
+            await app.state.bus.consume(lambda body: handle_outbound(app.state, body), OUTBOUND)
+            sweep = start_outbound_sweep(app)
         log.info(
             "messaging worker started",
             extra={"jobs": ", ".join(JOB_NAMES), "consuming": app.state.bus is not None},
         )
         await stop.wait()
+        if sweep is not None:
+            await stop_task(sweep)
     log.info("messaging worker stopped")
 
 
