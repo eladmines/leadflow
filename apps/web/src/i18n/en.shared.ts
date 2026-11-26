@@ -325,6 +325,7 @@ export const enShared: Record<string, string> = {
     'This number already belongs to a customer. To remove it, delete the lead.',
   'אפשר לבטל רק סימון של מספר פרטי': 'Only a personal marking can be undone',
   התקבלה: 'Received',
+  'בשליחה…': 'Sending…',
   נמסרה: 'Delivered',
   נקראה: 'Read',
   'לא נמסרה': 'Not delivered',

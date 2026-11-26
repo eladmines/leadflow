@@ -24,10 +24,20 @@ export function useWhatsAppThread(businessId: string, leadId: string) {
   return useQuery({
     queryKey: threadKey(businessId, leadId),
     queryFn: () => apiFetch<WhatsAppThreadResponse>(apiPaths.whatsapp.thread(businessId, leadId)),
-    refetchInterval: (query) => (query.state.data?.connected ? 15_000 : false),
+    refetchInterval: (query) =>
+      hasQueued(query.state.data?.messages)
+        ? QUEUED_POLL_MS
+        : query.state.data?.connected
+          ? 15_000
+          : false,
     refetchOnWindowFocus: true,
   });
 }
+
+/** While a reply waits for the messaging worker (D-202), poll quickly so it turns "sent" soon. */
+export const QUEUED_POLL_MS = 2_000;
+export const hasQueued = (messages: { status: string }[] | undefined) =>
+  Boolean(messages?.some((m) => m.status === 'queued'));
 
 export function useSendWhatsApp(businessId: string, leadId: string) {
   const queryClient = useQueryClient();

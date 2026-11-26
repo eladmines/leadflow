@@ -81,8 +81,15 @@ class Settings(BaseSettings):
     EMAIL_INBOUND_DOMAIN: str | None = None  # F27: the domain forwarding addresses live on
     EMAIL_INBOUND_SECRET: str | None = None  # signs the inbound-email webhook
 
-    # Background jobs (task reminders). Off in tests, which call the job functions directly.
+    # Scheduled background jobs (app/jobs.py) inside the API. On by default so a deployment without the
+    # messaging worker keeps them; off wherever the worker runs (`pnpm dev`, D-202) and in tests,
+    # which call the job functions directly.
     RUN_BACKGROUND_JOBS: bool = True
+    # Incoming webhooks (D-202 phase 1). inline: stored and processed during the request (no broker;
+    # tests, e2e and the single deployed service). rabbitmq: stored, published by the outbox relay
+    # and processed by the messaging worker.
+    MESSAGE_BUS: Literal["inline", "rabbitmq"] = "inline"
+    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
     AUTH_RATE_LIMIT_MAX: int = 10
     AUTH_RATE_LIMIT_WINDOW: int = 900_000  # milliseconds
 

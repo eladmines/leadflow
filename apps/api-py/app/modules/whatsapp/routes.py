@@ -4,7 +4,6 @@ settings routes come with the bot)."""
 
 import json
 import re
-from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Request
@@ -14,102 +13,32 @@ from starlette.responses import JSONResponse, PlainTextResponse, Response
 from app.deps import Db, Tenant, require_permission, tenant_router
 from app.errors import AppError
 from app.integrations.whatsapp import verify_webhook_signature
+from app.modules.inbound.service import run_event, store
 from app.modules.whatsapp import schemas as s
-from app.modules.whatsapp.service import InboundMessage, WhatsAppService, build_service
+from app.modules.whatsapp.service import WhatsAppService, build_service
 from app.shared import whatsapp as sw
-from app.shared.attribution import attribution_from_meta_referral
 
 WEBHOOK = "/api/v1/integrations/whatsapp/webhook"
 MESSENGER_WEBHOOK = "/api/v1/integrations/messenger/webhook"
 EMAIL_INBOUND = "/api/v1/integrations/email/inbound"
 EMAIL_SIGNATURE_HEADER = "x-leadflow-signature"
-DELIVERY = ("sent", "delivered", "read", "failed")
-
-MEDIA_LABELS = {
-    "image": "תמונה",
-    "video": "סרטון",
-    "audio": "הודעה קולית",
-    "voice": "הודעה קולית",
-    "document": "מסמך",
-    "sticker": "מדבקה",
-    "location": "מיקום",
-    "contacts": "איש קשר",
-}
-UNSUPPORTED = "[הודעה מסוג שעדיין לא נתמך]"
 
 
 def service_for(request: Request, db: Db) -> WhatsAppService:
     return build_service(request.app.state, db)
 
 
-def message_text(m: dict[str, Any]) -> str:
-    """Text of an incoming message; media shows as "[תמונה] caption" (files aren't downloaded)."""
-    kind = str(m.get("type") or "")
-    part = m.get(kind) if isinstance(m.get(kind), dict) else {}
-    if kind == "text":
-        return str(part.get("body") or "")
-    if kind == "button":
-        return str(part.get("text") or "")
-    if kind == "interactive":
-        reply = part.get("button_reply") or part.get("list_reply") or {}
-        return str(reply.get("title") or "") if isinstance(reply, dict) else ""
-    label = MEDIA_LABELS.get(kind)
-    if not label:
-        return UNSUPPORTED
-    caption = part.get("caption") if isinstance(part.get("caption"), str) else ""
-    return f"[{label}] {caption}" if caption else f"[{label}]"
-
-
-def reply_id(m: dict[str, Any]) -> str | None:
-    """Id of the tapped button or list row (the booking bot's choices)."""
-    if m.get("type") != "interactive":
-        return None
-    part = m.get("interactive") if isinstance(m.get("interactive"), dict) else {}
-    reply = part.get("button_reply") or part.get("list_reply")
-    rid = reply.get("id") if isinstance(reply, dict) else None
-    return rid[:200] if isinstance(rid, str) else None
-
-
-def ad_referral(referral: Any) -> dict[str, Any] | None:
-    return attribution_from_meta_referral(referral) if isinstance(referral, dict) else None
-
-
-def messenger_text(m: dict[str, Any]) -> str:
-    if m.get("text"):
-        return str(m["text"])
-    atts = m.get("attachments")
-    kind = (atts[0].get("type") if atts and isinstance(atts[0], dict) else "") or ""
-    label = MEDIA_LABELS.get("document" if kind == "file" else kind)
-    return f"[{label}]" if label else UNSUPPORTED
-
-
-def _seconds(value: Any) -> datetime:
-    try:
-        sec = float(value)
-        if sec > 0:
-            return datetime.fromtimestamp(sec, UTC)
-    except (TypeError, ValueError, OverflowError):
-        pass
-    return datetime.now(UTC)
-
-
-def _millis(value: Any) -> datetime:
-    if isinstance(value, int | float) and not isinstance(value, bool) and value > 0:
-        return datetime.fromtimestamp(value / 1000, UTC)
-    return datetime.now(UTC)
-
-
-async def _signed_json(request: Request, secret: str | None, header: str) -> Any:
-    """The body of a webhook whose signature checks out; None when it isn't usable JSON."""
+async def _signed_json(request: Request, secret: str | None, header: str) -> tuple[bytes, Any]:
+    """The raw body and JSON of a webhook whose signature checks out; JSON is None when unusable."""
     if not secret:
         raise AppError("NOT_FOUND")
     raw = await request.body()
     if not verify_webhook_signature(raw, request.headers.get(header), secret):
         raise AppError("UNAUTHENTICATED")
     try:
-        return json.loads(raw)
+        return raw, json.loads(raw)
     except ValueError:
-        return None
+        return raw, None
 
 
 webhooks = APIRouter(tags=["whatsapp"])
@@ -133,111 +62,55 @@ async def verify(
     return _handshake(request, mode, token, challenge)
 
 
+async def _accept(request: Request, provider: str, raw: bytes, payload: Any) -> JSONResponse:
+    """D-202: the delivery is stored first. Inline, it is processed now (a failure answers 500, so
+    Meta retries and the stored row is processed again); with a broker the outbox relay publishes
+    it to the messaging worker and the webhook answers at once."""
+    state = request.app.state
+    event, new = await store(state, provider, raw, payload)
+    if state.settings.MESSAGE_BUS == "inline":
+        await run_event(state, event.id)
+    elif new and (wake := getattr(state, "relay_wake", None)) is not None:
+        wake.set()
+    return JSONResponse({"ok": True})
+
+
 @webhooks.post(WEBHOOK)
-async def whatsapp_webhook(request: Request, db: Db):
+async def whatsapp_webhook(request: Request):
     """Meta's webhook. Every POST must carry a valid signature; the number it was sent to decides
     the business (F25). Meta only needs a 200; anything else makes it retry."""
-    body = await _signed_json(request, request.app.state.settings.WHATSAPP_APP_SECRET, "x-hub-signature-256")
-    svc = service_for(request, db)
-    entries = body.get("entry") if isinstance(body, dict) else None
-    for entry in entries if isinstance(entries, list) else []:
-        for change in (entry.get("changes") if isinstance(entry, dict) else None) or []:
-            v = change.get("value") if isinstance(change, dict) else None
-            if not isinstance(v, dict):
-                continue
-            number_id = (v.get("metadata") or {}).get("phone_number_id")
-            names = {
-                str(c.get("wa_id") or ""): (c.get("profile") or {}).get("name")
-                for c in v.get("contacts") or []
-                if isinstance(c, dict)
-            }
-            for m in v.get("messages") or []:
-                if not isinstance(m, dict):
-                    continue
-                sender = re.sub(r"\D", "", str(m.get("from") or ""))
-                mid = str(m.get("id") or "")
-                if not sender or not mid:
-                    continue
-                await svc.receive(
-                    InboundMessage(
-                        to=number_id if isinstance(number_id, str) else None,
-                        waMessageId=mid[:128],
-                        from_=f"+{sender}",
-                        profileName=names.get(sender),
-                        body=message_text(m),
-                        replyId=reply_id(m),
-                        attribution=ad_referral(m.get("referral")),
-                        receivedAt=_seconds(m.get("timestamp")),
-                    )
-                )
-            for st in v.get("statuses") or []:
-                if isinstance(st, dict) and isinstance(st.get("id"), str) and st.get("status") in DELIVERY:
-                    await svc.update_status(st["id"], st["status"])
-    return JSONResponse({"ok": True})
+    raw, body = await _signed_json(
+        request, request.app.state.settings.WHATSAPP_APP_SECRET, "x-hub-signature-256"
+    )
+    if not isinstance(body, dict):
+        return JSONResponse({"ok": True})
+    return await _accept(request, "whatsapp", raw, body)
 
 
 @webhooks.post(MESSENGER_WEBHOOK)
-async def messenger_webhook(request: Request, db: Db):
+async def messenger_webhook(request: Request):
     """Facebook Messenger's and Instagram's webhook (F23, F28): same Meta app, same signature."""
-    body = await _signed_json(request, request.app.state.settings.WHATSAPP_APP_SECRET, "x-hub-signature-256")
+    raw, body = await _signed_json(
+        request, request.app.state.settings.WHATSAPP_APP_SECRET, "x-hub-signature-256"
+    )
     if not isinstance(body, dict) or body.get("object") not in ("page", "instagram"):
         return JSONResponse({"ok": True})
-    instagram = body["object"] == "instagram"
-    channel, prefix = ("instagram", "ig") if instagram else ("messenger", "fb")
-    svc = service_for(request, db)
-    for entry in body.get("entry") or []:
-        for event in (entry.get("messaging") if isinstance(entry, dict) else None) or []:
-            if not isinstance(event, dict):
-                continue
-            m = event.get("message")
-            sender = (event.get("sender") or {}).get("id")
-            if not isinstance(m, dict) or not isinstance(m.get("mid"), str) or not isinstance(sender, str):
-                continue
-            recipient = (event.get("recipient") or {}).get("id")
-            if m.get("is_echo"):
-                customer = re.sub(r"[^\d]", "", recipient or "")[:40] if isinstance(recipient, str) else ""
-                if not customer:
-                    continue
-                await svc.receive_echo(
-                    channel=channel,
-                    page_id=sender,
-                    customer=f"{prefix}:{customer}",
-                    wa_message_id=m["mid"][:128],
-                    body=messenger_text(m),
-                    sent_at=_millis(event.get("timestamp")),
-                )
-                continue
-            psid = re.sub(r"[^\d]", "", sender)[:40]
-            if not psid:
-                continue
-            await svc.receive(
-                InboundMessage(
-                    channel=channel,
-                    to=recipient if isinstance(recipient, str) else None,
-                    waMessageId=m["mid"][:128],
-                    from_=f"{prefix}:{psid}",
-                    body=messenger_text(m),
-                    attribution=ad_referral(m.get("referral") or event.get("referral")),
-                    receivedAt=_millis(event.get("timestamp")),
-                )
-            )
-    return JSONResponse({"ok": True})
+    return await _accept(request, "messenger", raw, body)
 
 
 @webhooks.post(EMAIL_INBOUND)
-async def email_webhook(request: Request, db: Db):
+async def email_webhook(request: Request):
     """F27 (D-177): the inbound-email webhook, signed with EMAIL_INBOUND_SECRET over the raw body.
     Valid requests always get 200; what can't be used is dropped quietly."""
     cfg = request.app.state.settings
     if not cfg.EMAIL_INBOUND_DOMAIN:
         raise AppError("NOT_FOUND")
-    body = await _signed_json(request, cfg.EMAIL_INBOUND_SECRET, EMAIL_SIGNATURE_HEADER)
+    raw, body = await _signed_json(request, cfg.EMAIL_INBOUND_SECRET, EMAIL_SIGNATURE_HEADER)
     try:
         mail = s.EmailInbound.model_validate(_normalise_mail(body))
-    except (ValidationError, AttributeError, TypeError):
+    except (ValidationError, AttributeError, TypeError, KeyError):
         return JSONResponse({"ok": True})
-    await service_for(request, db).receive_email(mail)
-    return JSONResponse({"ok": True})
+    return await _accept(request, "email", raw, mail.model_dump(mode="json", by_alias=True))
 
 
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")

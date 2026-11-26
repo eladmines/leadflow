@@ -1375,6 +1375,12 @@ class WhatsAppMessage(Base):
         ),
         Index("whatsapp_messages_number_id_created_at_idx", "number_id", "created_at"),
         Index("whatsapp_messages_wa_message_id_key", "wa_message_id", unique=True),
+        Index(
+            "whatsapp_messages_queued_idx",
+            "number_id",
+            "send_seq",
+            postgresql_where=text("status = 'queued'"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
@@ -1398,9 +1404,44 @@ class WhatsAppMessage(Base):
     lead_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     sender_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     subject: Mapped[str | None] = mapped_column(String(300))
+    # D-202 phase 2: while `status` is "queued", what to send (cleared once sent or failed).
+    send_payload: Mapped[dict | None] = mapped_column(JSONB)
+    send_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    send_seq: Mapped[int | None] = mapped_column(BigInteger)  # nextval('whatsapp_messages_send_seq')
 
     business: Mapped["Business"] = relationship("Business", back_populates="whatsapp_messages")
     contact: Mapped[Optional["Contact"]] = relationship("Contact", back_populates="whatsapp_messages")
     lead: Mapped[Optional["Lead"]] = relationship("Lead", back_populates="whatsapp_messages")
     number: Mapped["WhatsAppNumber"] = relationship("WhatsAppNumber", back_populates="whatsapp_messages")
     sender: Mapped[Optional["User"]] = relationship("User", back_populates="whatsapp_messages")
+
+
+class InboundEvent(Base):
+    """A signed webhook delivery, stored before it is processed (D-202): the transactional outbox.
+
+    Not tenant-owned yet: the business is decided while processing, from the receiving number or
+    address, as before. Holds message text and phone numbers, so processed events are deleted after
+    a few days (`app/modules/inbound/service.py`)."""
+
+    __tablename__ = "inbound_events"
+    __table_args__ = (
+        PrimaryKeyConstraint("id", name="inbound_events_pkey"),
+        Index("inbound_events_dedupe_key_key", "dedupe_key", unique=True),
+        Index(
+            "inbound_events_unpublished_idx",
+            "received_at",
+            postgresql_where=text("published_at IS NULL AND processed_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    provider: Mapped[str] = mapped_column(String(16), nullable=False)
+    dedupe_key: Mapped[str] = mapped_column(CHAR(64), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    received_at: Mapped[datetime.datetime] = mapped_column(
+        TIMESTAMP(True, 3), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+    published_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
+    processed_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    last_error: Mapped[str | None] = mapped_column(String(200))

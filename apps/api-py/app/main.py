@@ -16,8 +16,10 @@ from app.integrations.email import EmailSender, create_email_sender
 from app.integrations.gmail import GmailApi, create_gmail_api
 from app.integrations.messenger import MessengerSender, create_messenger_sender
 from app.integrations.meta import MetaApi, create_meta_api
+from app.integrations.queue import MessageBus, create_message_bus
 from app.integrations.storage import StorageProvider, create_storage
 from app.integrations.whatsapp import WhatsAppSender, create_whatsapp_sender
+from app.jobs import start_background_jobs, stop_background_jobs
 from app.middleware import error_response, request_context
 from app.modules.appointments import routes as appointment_routes
 from app.modules.auth import routes as auth_routes
@@ -25,8 +27,8 @@ from app.modules.businesses import routes as business_routes
 from app.modules.channels import routes as channel_routes
 from app.modules.conversations import routes as conversation_routes
 from app.modules.domain import routes as domain_routes
-from app.modules.domain.service import start_domain_watch, stop_task
 from app.modules.embed import routes as embed_routes
+from app.modules.inbound.service import start_outbox_relay
 from app.modules.leads import routes as lead_routes
 from app.modules.media import routes as media_routes
 from app.modules.notifications import routes as notification_routes
@@ -35,11 +37,8 @@ from app.modules.reports import routes as report_routes
 from app.modules.sites import routes as site_routes
 from app.modules.sites.cache import PublishedSiteCache
 from app.modules.tasks import routes as task_routes
-from app.modules.tasks.reminders import start_task_reminders
 from app.modules.team import routes as team_routes
 from app.modules.whatsapp import routes as whatsapp_routes
-from app.modules.whatsapp.gmail_sync import start_gmail_sync
-from app.modules.whatsapp.nudges import start_booking_nudges
 from app.routes import health
 from app.web_app import WebApp
 
@@ -60,25 +59,20 @@ def create_app(
     messenger_sender: MessengerSender | None = None,
     meta_api: MetaApi | None = None,
     gmail_api: GmailApi | None = None,
+    message_bus: MessageBus | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.DATABASE_URL)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        jobs = (
-            [
-                start_task_reminders(app),
-                start_domain_watch(app),
-                start_gmail_sync(app),
-                start_booking_nudges(app),
-            ]
-            if settings.RUN_BACKGROUND_JOBS
-            else []
-        )
+        jobs = start_background_jobs(app) if settings.RUN_BACKGROUND_JOBS else []
+        if app.state.bus is not None:
+            jobs.append(start_outbox_relay(app))
         yield
-        for job in jobs:
-            await stop_task(job)
+        await stop_background_jobs(jobs)
+        if app.state.bus is not None:
+            await app.state.bus.close()
         await app.state.email.close()
         await engine.dispose()
 
@@ -100,6 +94,7 @@ def create_app(
     app.state.messenger_sender = messenger_sender or create_messenger_sender(settings)
     app.state.meta_api = meta_api or create_meta_api(settings)
     app.state.gmail_api = gmail_api or create_gmail_api(settings)
+    app.state.bus = message_bus or create_message_bus(settings)
 
     app.middleware("http")(request_context)
     app.add_middleware(

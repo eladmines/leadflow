@@ -43,6 +43,7 @@ from app.modules.audit import add_audit
 from app.modules.channels.registry import ChannelRegistry
 from app.modules.leads.service import LeadService, attribution_columns, ensure_stages
 from app.modules.notifications.service import MANAGERS, notify_safe
+from app.modules.outbound.service import Dispatch, dispatch, queue_message
 from app.modules.whatsapp import auto_reply as ar
 from app.modules.whatsapp import schemas as s
 from app.modules.whatsapp.bot import BookingBot, BotMessage
@@ -53,7 +54,7 @@ from app.shared.phone import format_israeli_phone
 log = logging.getLogger("simplecatch")
 M = s.M
 
-STATUS_RANK = {"received": 0, "sent": 1, "delivered": 2, "read": 3, "failed": 4}
+STATUS_RANK = {"received": 0, "queued": 0, "sent": 1, "delivered": 2, "read": 3, "failed": 4}
 INBOX_MESSAGES = 20
 EMAIL_PREFIX = "mail:"
 FACEBOOK_USER = "משתמש/ת פייסבוק"
@@ -169,12 +170,14 @@ class WhatsAppService:
         email: EmailSender,
         gmail: GmailApi,
         storage: StorageProvider,
+        dispatch: Dispatch,
     ) -> None:
         self.db, self.settings, self.email, self.gmail = db, settings, email, gmail
         self.leads = LeadService(db)
         self.channels = ChannelRegistry(db, settings, whatsapp, messenger)
         self.storage = storage
-        self.bot = BookingBot(db, self.channels.whatsapp, storage, self.ensure_customer)
+        self.dispatch = dispatch
+        self.bot = BookingBot(db, self.channels.whatsapp, storage, self.ensure_customer, dispatch)
 
     async def connected_to(self, business_id: uuid.UUID) -> bool:
         return await self.channels.is_connected(business_id)
@@ -1220,44 +1223,19 @@ class WhatsAppService:
                 if social
                 else M["windowClosed"],
             )
-        try:
-            sent = await via.send_text(psid_of(number.phone) if social else number.phone, text)
-        except Exception as err:
-            log.error(
-                "instagram send failed"
-                if instagram
-                else "messenger send failed"
-                if social
-                else "whatsapp send failed",
-                extra={
-                    "errName": type(err).__name__,
-                    "status": getattr(err, "status", None),
-                    "code": getattr(err, "code", None),
-                },
-            )
-            raise AppError("INTERNAL_ERROR", M["sendFailed"]) from err
-        # Messenger's echo of this very reply can land first; it then gets this sender.
-        row = (
-            await self.db.execute(select(WhatsAppMessage).where(WhatsAppMessage.wa_message_id == sent["id"]))
-        ).scalar_one_or_none()
-        if row:
-            row.sender_id = ctx.user_id
-        else:
-            row = WhatsAppMessage(
-                id=uuid.uuid4(),
-                business_id=ctx.business_id,
-                number_id=number.id,
-                contact_id=contact_id,
-                lead_id=lead_id,
-                direction=WhatsAppDirection.OUT,
-                wa_message_id=sent["id"],
-                body=text,
-                status="sent",
-                sender_id=ctx.user_id,
-                created_at=now_ms(),
-            )
-            self.db.add(row)
+        # D-202 phase 2: queued, then sent now (inline) or by the messaging worker, in order.
+        row = queue_message(
+            self.db,
+            business_id=ctx.business_id,
+            number_id=number.id,
+            contact_id=contact_id,
+            lead_id=lead_id,
+            body=text,
+            payload={"kind": "text", "text": text},
+            sender_id=ctx.user_id,
+        )
         await self.db.commit()
+        await self.dispatch(number.id)
         return await self._dto(row.id, number.channel)
 
     async def _dto(self, message_id: uuid.UUID, channel: str) -> s.MessageOut:
@@ -1392,6 +1370,17 @@ class WhatsAppService:
 def build_service(app_state: Any, db: AsyncSession) -> WhatsAppService:
     """The service wired from the app's settings, senders and storage."""
     st = app_state
+
+    async def send_queued(number_id: uuid.UUID) -> None:
+        await dispatch(st, number_id)
+
     return WhatsAppService(
-        db, st.settings, st.whatsapp_sender, st.messenger_sender, st.email, st.gmail_api, st.storage
+        db,
+        st.settings,
+        st.whatsapp_sender,
+        st.messenger_sender,
+        st.email,
+        st.gmail_api,
+        st.storage,
+        send_queued,
     )

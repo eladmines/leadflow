@@ -15,6 +15,7 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { hasQueued, QUEUED_POLL_MS } from '../whatsapp/api';
 
 /** F24 unified inbox (D-158). Messages arrive by webhook, so the inbox polls while it's open. */
 const inboxKey = (businessId: string) => ['businesses', businessId, 'conversations'] as const;
@@ -53,7 +54,7 @@ export function useConversation(businessId: string, id: string | null) {
     queryKey: detailKey(businessId, id ?? ''),
     queryFn: () => apiFetch<ConversationResponse>(apiPaths.conversations.detail(businessId, id!)),
     enabled: Boolean(id),
-    refetchInterval: 15_000,
+    refetchInterval: (query) => (hasQueued(query.state.data?.messages) ? QUEUED_POLL_MS : 15_000),
     refetchOnWindowFocus: true,
   });
 }

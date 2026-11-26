@@ -23,5 +23,20 @@ services:
       - '1025:1025'
       - '8025:8025'
 
+  # Broker between the webhooks and the messaging worker (D-202). UI: http://localhost:15672 (guest/guest)
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
 volumes:
   pgdata:
+  rabbitmqdata:

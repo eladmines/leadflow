@@ -46,11 +46,22 @@ export const channelSchema = z.enum(CHANNELS);
 export type Channel = z.infer<typeof channelSchema>;
 
 export const WHATSAPP_DIRECTIONS = ['IN', 'OUT'] as const;
-/** Delivery status from Meta for outgoing messages; incoming ones are `received`. */
-export const WHATSAPP_STATUSES = ['received', 'sent', 'delivered', 'read', 'failed'] as const;
+/**
+ * Delivery status from Meta for outgoing messages; incoming ones are `received`. An outgoing message
+ * is `queued` until the messaging worker has handed it to Meta (D-202).
+ */
+export const WHATSAPP_STATUSES = [
+  'received',
+  'queued',
+  'sent',
+  'delivered',
+  'read',
+  'failed',
+] as const;
 
 export const whatsappStatusLabels: Record<(typeof WHATSAPP_STATUSES)[number], string> = {
   received: 'התקבלה',
+  queued: 'בשליחה…',
   sent: 'נשלחה',
   delivered: 'נמסרה',
   read: 'נקראה',
