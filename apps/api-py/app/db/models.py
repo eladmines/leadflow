@@ -1445,3 +1445,4 @@ class InboundEvent(Base):
     processed_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     last_error: Mapped[str | None] = mapped_column(String(200))
+    traceparent: Mapped[str | None] = mapped_column(String(64))  # W3C trace context of the webhook

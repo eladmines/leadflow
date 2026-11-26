@@ -69,7 +69,10 @@ async def test_webhook_only_stores_then_the_worker_processes(app, client, db, bu
     assert await count(db, models.WhatsAppMessage) == 0  # nothing processed inside the request
 
     assert await inbound.publish_pending(app.state) == 1
-    assert bus.published[INBOUND] == [{"eventId": str(event.id)}]  # ids only, no message text
+    # The event id (plus trace context, D-202 phase 3), never the message text.
+    assert [{k: v for k, v in m.items() if k != "trace"} for m in bus.published[INBOUND]] == [
+        {"eventId": str(event.id)}
+    ]
     assert await inbound.publish_pending(app.state) == 0
 
     await bus.drain(worker(app))

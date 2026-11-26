@@ -24,6 +24,7 @@ from app.modules.domain.service import stop_task
 from app.modules.inbound.service import handle
 from app.modules.outbound.service import handle as handle_outbound
 from app.modules.outbound.service import start_outbound_sweep
+from app.workers.health import health_app
 
 log = logging.getLogger("simplecatch")
 
@@ -31,21 +32,43 @@ log = logging.getLogger("simplecatch")
 async def run(settings: Settings | None = None, stop: asyncio.Event | None = None) -> None:
     settings = (settings or get_settings()).model_copy(update={"RUN_BACKGROUND_JOBS": True})
     stop = stop or asyncio.Event()
-    app = create_app(settings)
+    app = create_app(settings, service="simplecatch-worker")
     async with app.router.lifespan_context(app):
         sweep = None
         if app.state.bus is not None:
             await app.state.bus.consume(lambda body: handle(app.state, body), INBOUND)
             await app.state.bus.consume(lambda body: handle_outbound(app.state, body), OUTBOUND)
             sweep = start_outbound_sweep(app)
+        health = _serve_health(app, settings.WORKER_HEALTH_PORT)
         log.info(
             "messaging worker started",
-            extra={"jobs": ", ".join(JOB_NAMES), "consuming": app.state.bus is not None},
+            extra={
+                "jobs": ", ".join(JOB_NAMES),
+                "consuming": app.state.bus is not None,
+                "healthPort": settings.WORKER_HEALTH_PORT or None,
+            },
         )
         await stop.wait()
+        if health is not None:
+            server, task = health
+            server.should_exit = True
+            await task
         if sweep is not None:
             await stop_task(sweep)
     log.info("messaging worker stopped")
+
+
+def _serve_health(app, port: int):
+    """GET /health on its own small server (the worker serves nothing else); None when off."""
+    if not port:
+        return None
+    import uvicorn
+
+    server = uvicorn.Server(
+        uvicorn.Config(health_app(app.state), host="0.0.0.0", port=port, log_level="warning", lifespan="off")
+    )
+    server.install_signal_handlers = lambda: None  # type: ignore[method-assign]  # the worker owns signals
+    return server, asyncio.create_task(server.serve())
 
 
 async def main() -> None:
