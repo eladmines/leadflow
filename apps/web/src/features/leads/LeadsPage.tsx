@@ -20,6 +20,7 @@ import {
   Download,
   Inbox,
   List,
+  ListChecks,
   Mail,
   MessageCircle,
   Phone,
@@ -503,6 +504,9 @@ export function LeadsPage() {
   // With field filters in the address, wait for the definitions instead of loading everything.
   const cfReady = Object.keys(rawCf).length === 0 || !leadFields.isPending;
   const leads = useLeads(business.id, query, cf, cfReady);
+  // Lead fields are set up from Leads (D-206): More → "שדות לידים", and from the filter panel.
+  const canManageFields = can(business.role, 'leadFields.manage');
+  const fieldsPath = businessWebPaths.section(business.id, 'leads/fields');
   const [cardFieldIds, setCardFieldIds] = useCardFields(business.id);
   const cardFields = cardFieldIds.flatMap((fid) => fieldsForFilters.filter((f) => f.id === fid));
   const queryClient = useQueryClient();
@@ -641,6 +645,12 @@ export function LeadsPage() {
                     <Download aria-hidden className="h-4 w-4" />
                     {tr('ייצוא לאקסל')}
                   </a>
+                )}
+                {canManageFields && (
+                  <Link to={fieldsPath} className={buttonClasses('secondary', 'md')}>
+                    <ListChecks aria-hidden className="h-4 w-4" />
+                    {tr('שדות לידים')}
+                  </Link>
                 )}
               </MoreMenu>
             </div>
@@ -798,7 +808,12 @@ export function LeadsPage() {
                 ]}
               />
             )}
-            <CustomFieldFilters fields={fieldsForFilters} filters={cf} onChange={setFieldFilter} />
+            <CustomFieldFilters
+              fields={fieldsForFilters}
+              filters={cf}
+              onChange={setFieldFilter}
+              manageTo={canManageFields ? fieldsPath : undefined}
+            />
             {activeFilters > 0 && (
               <button
                 type="button"

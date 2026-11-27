@@ -127,7 +127,7 @@ export const navItems: NavItem[] = [
     segment: 'settings',
     color: { icon: 'text-slate-500', tile: 'bg-slate-500' },
     group: 'management',
-    label: tr('הגדרות וחיוב'),
+    label: tr('הגדרות'),
     icon: Settings,
   },
 ];

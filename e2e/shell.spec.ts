@@ -85,9 +85,9 @@ test.describe('mobile', () => {
     await expect(trigger).toBeFocused();
 
     await trigger.click();
-    await drawer.getByRole('link', { name: 'הגדרות וחיוב' }).click();
+    await drawer.getByRole('link', { name: 'הגדרות' }).click();
     await expect(drawer).toBeHidden();
-    await expect(page.getByRole('heading', { name: 'הגדרות וחיוב', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'הגדרות', level: 1 })).toBeVisible();
     expect(await overflow()).toBe(false);
   });
 });

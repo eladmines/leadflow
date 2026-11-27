@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   businessDetailsSchema,
+  businessWebPaths,
   can,
   defaultOpeningHours,
   formatIsraeliPhone,
@@ -12,9 +13,9 @@ import {
   type BusinessDetails,
   type OpeningHours,
 } from '@simplecatch/shared';
-import { Building2, Clock, CreditCard, MapPin, type LucideIcon } from 'lucide-react';
+import { Building2, Clock, MapPin, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -37,7 +38,6 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { tr } from '../../i18n';
 import { ChannelsSection } from './ChannelsSection';
-import { LeadFieldsSection } from './LeadFieldsSection';
 
 const industryOptions = INDUSTRIES.map((value) => ({ value, label: tr(industryLabels[value]) }));
 
@@ -100,7 +100,7 @@ export function Section({
   );
 }
 
-const TABS = ['details', 'channels', 'fields', 'billing'] as const;
+const TABS = ['details', 'channels'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Save feedback for one section: success is announced politely, errors as an alert. */
@@ -128,18 +128,23 @@ export function SettingsPage() {
   const labels: Record<Tab, string> = {
     details: tr('פרטי העסק'),
     channels: tr('ערוצים'),
-    fields: tr('שדות לידים'),
-    billing: tr('מנוי וחיוב'),
   };
+
+  // Billing and lead fields moved out of Settings (D-206); old links land on their new pages.
+  if (asked === 'billing') {
+    return <Navigate replace to={businessWebPaths.section(business.id, 'billing')} />;
+  }
+  if (asked === 'fields') {
+    return <Navigate replace to={businessWebPaths.section(business.id, 'leads/fields')} />;
+  }
 
   return (
     <>
       <PageHeader
-        title={tr('הגדרות וחיוב')}
+        title={tr('הגדרות')}
         description={tr('פרטי העסק כפי שיוצגו ללקוחות באתר ובפניות.')}
       />
-      {/* Lead fields have their own permission (managers too) and their own no-permission state. */}
-      {!canEdit && tab !== 'fields' && (
+      {!canEdit && (
         <Alert tone="info">{tr('רק בעל/ת העסק יכול/ה לשנות את ההגדרות. אפשר לצפות בפרטים.')}</Alert>
       )}
       <ScrollTabs
@@ -182,16 +187,6 @@ export function SettingsPage() {
           </div>
         )}
         {tab === 'channels' && <ChannelsSection canEdit={canEdit} />}
-        {tab === 'fields' && <LeadFieldsSection />}
-        {tab === 'billing' && (
-          <Section title={tr('מנוי וחיוב')} icon={CreditCard} tone="bg-violet-500">
-            <p className="text-sm text-ink-muted">
-              {tr(
-                'בחירת מסלול, אמצעי תשלום וחשבוניות יתווספו בהמשך. בינתיים החשבון פעיל בתקופת ניסיון.',
-              )}
-            </p>
-          </Section>
-        )}
       </div>
     </>
   );

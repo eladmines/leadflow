@@ -10,8 +10,7 @@ import {
 } from '@simplecatch/shared';
 import { useState } from 'react';
 import { cn } from '../../lib/cn';
-import { Link } from 'react-router-dom';
-import { Alert, Card, Spinner, buttonClasses } from '../../components/ui';
+import { Alert, Card, Spinner } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { isRtl, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -20,6 +19,7 @@ import { activeFields, archivedFields, useLeadFields } from '../leadFields/api';
 import { formatCustomValue, toRaw, type RawValue } from '../leadFields/format';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useUpdateLead } from './api';
+import { ManageFieldsLink } from './CustomFieldFilters';
 
 /**
  * The lead card's "Details" block (F34): each active custom field, editable in place (a PATCH
@@ -31,7 +31,13 @@ export function CustomFieldsCard({ lead }: { lead: Lead }) {
   const canEdit = can(business.role, 'leads.update');
   const values: CustomFieldValues = lead.customFields ?? {};
 
-  const heading = <h2 className="text-lg font-semibold text-ink">{tr('פרטים')}</h2>;
+  const canManage = can(business.role, 'leadFields.manage');
+  const heading = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="text-lg font-semibold text-ink">{tr('פרטים')}</h2>
+      {canManage && <ManageFieldsLink to={businessWebPaths.section(business.id, 'leads/fields')} />}
+    </div>
+  );
 
   if (fields.isPending) {
     return (
@@ -57,19 +63,13 @@ export function CustomFieldsCard({ lead }: { lead: Lead }) {
 
   if (active.length === 0 && archived.length === 0) {
     // Nothing to fill in: point those who can add fields to the settings; others see nothing.
-    if (!can(business.role, 'leadFields.manage')) return null;
+    if (!canManage) return null;
     return (
       <Card className="flex flex-col gap-3">
         {heading}
         <p className="text-sm text-ink-muted">
           {tr('אפשר להוסיף לכל ליד שדות משלכם, למשל תאריך האירוע או דגם הרכב.')}
         </p>
-        <Link
-          to={`${businessWebPaths.section(business.id, 'settings')}?tab=fields`}
-          className={buttonClasses('secondary', 'sm', 'self-start')}
-        >
-          {tr('להגדרת השדות')}
-        </Link>
       </Card>
     );
   }

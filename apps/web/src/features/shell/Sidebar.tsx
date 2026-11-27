@@ -1,7 +1,7 @@
 import { businessWebPaths, can, roleLabels, type Business } from '@simplecatch/shared';
-import { LogOut, Search } from 'lucide-react';
-import { useId } from 'react';
-import { NavLink } from 'react-router-dom';
+import { ChevronDown, CreditCard, LogOut, Search, UserRound } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useUnreadConversations } from '../conversations/api';
 import { Alert, Logo } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -44,48 +44,188 @@ export function SearchButton({
   );
 }
 
-/** Who is signed in, a link to their account, and sign out: the top bar (desktop) or drawer. */
+/**
+ * The signed-in user (D-206): a button with the avatar, name and role that opens a menu with
+ * My account, Plan & billing (owners only, `business.update`) and Sign out. Menu-button pattern:
+ * Enter/Space/↓ open on the first item, ↑ on the last; arrows, Home and End move; Escape closes
+ * and returns focus; Tab or a click outside closes. In the top bar (desktop) or the drawer.
+ */
 export function UserCard({
   business,
   onNavigate,
+  placement = 'down',
 }: {
   business: Business;
   onNavigate?: () => void;
+  /** Where the menu opens: under the button (top bar) or above it (bottom of the drawer). */
+  placement?: 'down' | 'up';
 }) {
   const user = useMe().data?.user;
   const { signOut, isPending, error } = useSignOut();
+  const id = useId();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  // Which item gets focus once the menu is shown (keyboard opening); null = none (pointer).
+  const [focusOnOpen, setFocusOnOpen] = useState<'first' | 'last' | null>(null);
+  const navigate = useNavigate();
+  const section = (s: string) => businessWebPaths.section(business.id, s);
+
+  const items = () =>
+    Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+
+  useEffect(() => {
+    if (!open || !focusOnOpen) return;
+    const all = items();
+    (focusOnOpen === 'first' ? all[0] : all[all.length - 1])?.focus();
+    setFocusOnOpen(null);
+  }, [open, focusOnOpen]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const close = (refocus: boolean) => {
+    setOpen(false);
+    if (refocus) buttonRef.current?.focus();
+  };
+
+  const go = (to: string) => {
+    close(false);
+    onNavigate?.();
+    navigate(to);
+  };
+
+  const onMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const all = items();
+    const i = all.indexOf(document.activeElement as HTMLElement);
+    const move = (n: number) => {
+      e.preventDefault();
+      all[(n + all.length) % all.length]?.focus();
+    };
+    switch (e.key) {
+      case 'ArrowDown':
+        return move(i + 1);
+      case 'ArrowUp':
+        return move(i - 1);
+      case 'Home':
+        return move(0);
+      case 'End':
+        return move(all.length - 1);
+      case 'Escape':
+        e.preventDefault();
+        // Inside the drawer, Escape closes only this menu, not the drawer.
+        e.stopPropagation();
+        return close(true);
+      case 'Tab':
+        return close(false);
+    }
+  };
+
+  const itemClasses =
+    'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm text-ink hover:bg-surface-muted focus-visible:bg-surface-muted focus-visible:outline-none disabled:opacity-60';
+
   return (
-    <div className="flex flex-col gap-2">
+    <div ref={rootRef} className="relative flex flex-col gap-2">
       {error && <Alert tone="danger">{error}</Alert>}
-      <div className="flex items-center gap-2.5">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? `${id}-menu` : undefined}
+        aria-label={tr('תפריט המשתמש: {0}', user?.fullName ?? '')}
+        onClick={() => {
+          setOpen((o) => !o);
+          // Enter / Space on the button arrive here as a click with no pointer position.
+          setFocusOnOpen(null);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen(true);
+            setFocusOnOpen(e.key === 'ArrowUp' ? 'last' : 'first');
+          }
+        }}
+        className="flex w-full items-center gap-2.5 rounded-lg p-1 text-start hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-brand-500"
+      >
         <span
           aria-hidden
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[13px] font-semibold text-white"
         >
           {user?.fullName.trim().charAt(0)}
         </span>
-        <div className="min-w-0 flex-1 leading-tight">
-          <NavLink
-            to={businessWebPaths.section(business.id, 'account')}
-            onClick={onNavigate}
-            className="block truncate text-sm font-medium text-ink hover:underline"
-            aria-label={tr('החשבון שלי: {0}', user?.fullName ?? '')}
-          >
-            {user?.fullName}
-          </NavLink>
-          <p className="truncate text-xs text-ink-muted">{tr(roleLabels[business.role])}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => void signOut()}
-          disabled={isPending}
-          aria-label={tr('התנתקות')}
-          title={tr('התנתקות')}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-60"
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-sm font-medium text-ink">{user?.fullName}</span>
+          <span className="block truncate text-xs text-ink-muted">
+            {tr(roleLabels[business.role])}
+          </span>
+        </span>
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            'h-4 w-4 shrink-0 text-ink-subtle transition-transform',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+      {open && (
+        <div
+          ref={menuRef}
+          id={`${id}-menu`}
+          role="menu"
+          aria-label={tr('תפריט המשתמש')}
+          onKeyDown={onMenuKeyDown}
+          className={cn(
+            'absolute end-0 z-40 flex w-56 flex-col gap-px rounded-xl border border-surface-border bg-surface p-1.5 shadow-lift',
+            placement === 'down' ? 'top-full mt-2' : 'bottom-full mb-2',
+          )}
         >
-          <LogOut aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
-        </button>
-      </div>
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
+            onClick={() => go(section('account'))}
+            className={itemClasses}
+          >
+            <UserRound aria-hidden className="h-4 w-4 text-ink-muted" />
+            {tr('החשבון שלי')}
+          </button>
+          {can(business.role, 'business.update') && (
+            <button
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              onClick={() => go(section('billing'))}
+              className={itemClasses}
+            >
+              <CreditCard aria-hidden className="h-4 w-4 text-ink-muted" />
+              {tr('מנוי וחיוב')}
+            </button>
+          )}
+          <div role="separator" className="my-1 h-px bg-surface-border" />
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
+            disabled={isPending}
+            onClick={() => {
+              close(true);
+              void signOut();
+            }}
+            className={itemClasses}
+          >
+            <LogOut aria-hidden className="h-4 w-4 text-ink-muted rtl:-scale-x-100" />
+            {tr('התנתקות')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -196,7 +336,7 @@ export function Sidebar({
 
       {inDrawer && (
         <div className="border-t border-surface-border px-1 pt-3">
-          <UserCard business={business} onNavigate={onNavigate} />
+          <UserCard business={business} onNavigate={onNavigate} placement="up" />
         </div>
       )}
     </div>

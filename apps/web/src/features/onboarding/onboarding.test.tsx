@@ -199,7 +199,8 @@ describe('business workspace', () => {
       [`POST ${apiPaths.auth.logout}`]: noContent,
     });
     const { user, location } = renderApp(businessWebPaths.home(testBusiness.id));
-    await user.click(await screen.findByRole('button', { name: 'התנתקות' }));
+    await user.click(await screen.findByRole('button', { name: 'תפריט המשתמש: דנה כהן' }));
+    await user.click(screen.getByRole('menuitem', { name: 'התנתקות' }));
     await waitFor(() => expect(location()).toBe('/login'));
     expect(callsTo(fetchMock, 'POST', apiPaths.auth.logout)).toHaveLength(1);
   });

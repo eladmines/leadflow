@@ -47,14 +47,14 @@ import {
   useLeadFields,
   useReorderLeadFields,
   useUpdateLeadField,
-} from '../leadFields/api';
-import { isNumberText, leadFieldTypeLabel, rangeText } from '../leadFields/format';
+} from './api';
+import { isNumberText, leadFieldTypeLabel, rangeText } from './format';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NoPermission } from '../shell/NoPermission';
-import { Section } from './SettingsPage';
+import { Section } from '../settings/SettingsPage';
 
 /**
- * Settings → Lead fields (F34): the business's own fields on every lead. Owners and managers
+ * Lead fields (F34; Leads → More → "שדות לידים", D-206): the business's own fields on every lead. Owners and managers
  * (`leadFields.manage`) add, edit, reorder, archive and restore them; the server enforces it.
  */
 export function LeadFieldsSection() {

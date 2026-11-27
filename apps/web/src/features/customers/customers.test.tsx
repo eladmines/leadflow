@@ -41,7 +41,8 @@ describe('customers page (D-163)', () => {
       [`GET ${apiPaths.customers.list(id)}`]: () => json(200, { customers: [dana] }),
     });
     const { user } = renderApp(page);
-    const row = await screen.findByRole('button', { name: /דנה כהן/ });
+    // Anchored: the user menu's button ("תפריט המשתמש: דנה כהן") also holds the name.
+    const row = await screen.findByRole('button', { name: /^דנה כהן/ });
     expect(within(row).getByText('Google Ads')).toBeInTheDocument();
     expect(row.textContent).toContain(shekel.format(2500));
     expect(within(row).getByText('2 רכישות')).toBeInTheDocument();

@@ -15,6 +15,8 @@ import { VerifyEmailPage } from '../features/auth/VerifyEmailPage';
 import { AppEntry } from '../features/businesses/AppEntry';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { BillingPage } from '../features/billing/BillingPage';
+import { LeadFieldsPage } from '../features/leadFields/LeadFieldsPage';
 import { BusinessLayout } from '../features/shell/BusinessLayout';
 import { ComingSoonPage } from '../features/shell/ComingSoonPage';
 import { ReportsPage } from '../features/reports/ReportsPage';
@@ -124,6 +126,7 @@ export function AppRoutes() {
           ))}
         <Route path="site" element={<SitePage />} />
         <Route path="leads" element={<LeadsPage />} />
+        <Route path="leads/fields" element={<LeadFieldsPage />} />
         <Route path="leads/:leadId" element={<LeadDetailPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="automations" element={<AutomationsPage />} />
@@ -136,6 +139,7 @@ export function AppRoutes() {
         <Route path="team" element={<TeamPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="billing" element={<BillingPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
