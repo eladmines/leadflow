@@ -37,6 +37,7 @@ import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
 import { tr } from '../../i18n';
 import { ChannelsSection } from './ChannelsSection';
+import { LeadFieldsSection } from './LeadFieldsSection';
 
 const industryOptions = INDUSTRIES.map((value) => ({ value, label: tr(industryLabels[value]) }));
 
@@ -99,7 +100,7 @@ export function Section({
   );
 }
 
-const TABS = ['details', 'channels', 'billing'] as const;
+const TABS = ['details', 'channels', 'fields', 'billing'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Save feedback for one section: success is announced politely, errors as an alert. */
@@ -127,6 +128,7 @@ export function SettingsPage() {
   const labels: Record<Tab, string> = {
     details: tr('פרטי העסק'),
     channels: tr('ערוצים'),
+    fields: tr('שדות לידים'),
     billing: tr('מנוי וחיוב'),
   };
 
@@ -136,7 +138,8 @@ export function SettingsPage() {
         title={tr('הגדרות וחיוב')}
         description={tr('פרטי העסק כפי שיוצגו ללקוחות באתר ובפניות.')}
       />
-      {!canEdit && (
+      {/* Lead fields have their own permission (managers too) and their own no-permission state. */}
+      {!canEdit && tab !== 'fields' && (
         <Alert tone="info">{tr('רק בעל/ת העסק יכול/ה לשנות את ההגדרות. אפשר לצפות בפרטים.')}</Alert>
       )}
       <ScrollTabs
@@ -179,6 +182,7 @@ export function SettingsPage() {
           </div>
         )}
         {tab === 'channels' && <ChannelsSection canEdit={canEdit} />}
+        {tab === 'fields' && <LeadFieldsSection />}
         {tab === 'billing' && (
           <Section title={tr('מנוי וחיוב')} icon={CreditCard} tone="bg-violet-500">
             <p className="text-sm text-ink-muted">

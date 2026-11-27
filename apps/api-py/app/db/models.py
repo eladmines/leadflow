@@ -10,8 +10,10 @@ from sqlalchemy import (
     CHAR,
     BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
+    Double,
     Enum,
     ForeignKeyConstraint,
     Index,
@@ -202,6 +204,9 @@ class Business(Base):
     services: Mapped[list["Service"]] = relationship("Service", back_populates="business")
     visit_counts: Mapped[list["VisitCount"]] = relationship("VisitCount", back_populates="business")
     leads: Mapped[list["Lead"]] = relationship("Lead", back_populates="business")
+    lead_field_definitions: Mapped[list["LeadFieldDefinition"]] = relationship(
+        "LeadFieldDefinition", back_populates="business"
+    )
     whatsapp_numbers: Mapped[list["WhatsAppNumber"]] = relationship(
         "WhatsAppNumber", back_populates="business"
     )
@@ -893,6 +898,13 @@ class Lead(Base):
         Index("leads_business_id_next_action_at_idx", "business_id", "next_action_at"),
         Index("leads_business_id_owner_id_idx", "business_id", "owner_id"),
         Index("leads_business_id_stage_id_idx", "business_id", "stage_id"),
+        Index(
+            "leads_custom_fields_idx",
+            "custom_fields",
+            postgresql_using="gin",
+            postgresql_ops={"custom_fields": "jsonb_path_ops"},
+        ),
+        CheckConstraint("jsonb_typeof(custom_fields) = 'object'", name="leads_custom_fields_check"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
@@ -919,6 +931,9 @@ class Lead(Base):
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(Text()), server_default=text("ARRAY[]::text[]"))
     attribution: Mapped[object | None] = mapped_column(JSONB)
     attribution_source: Mapped[str | None] = mapped_column(String(20))
+    # F34 (D-203): `{ "<lead_field_definitions.id>": value }`; empty values are removed, never null.
+    # Personal data: never log it or put it on a trace attribute.
+    custom_fields: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
     business: Mapped["Business"] = relationship("Business", back_populates="leads")
     contact: Mapped["Contact"] = relationship("Contact", back_populates="leads")
@@ -932,6 +947,59 @@ class Lead(Base):
     whatsapp_messages: Mapped[list["WhatsAppMessage"]] = relationship(
         "WhatsAppMessage", back_populates="lead"
     )
+
+
+class LeadFieldDefinition(Base):
+    """A business's own lead field (F34, D-203). Values live in `leads.custom_fields` under this
+    id. The type never changes; archiving (`archived_at`) hides the field but keeps its values.
+    `options` (select only): `[{"id", "label", "archived_at"?}]` in display order."""
+
+    __tablename__ = "lead_field_definitions"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["business_id"],
+            ["businesses.id"],
+            ondelete="CASCADE",
+            onupdate="CASCADE",
+            name="lead_field_definitions_business_id_fkey",
+        ),
+        PrimaryKeyConstraint("id", name="lead_field_definitions_pkey"),
+        CheckConstraint(
+            "type IN ('text', 'number', 'date', 'select', 'boolean')",
+            name="lead_field_definitions_type_check",
+        ),
+        CheckConstraint("jsonb_typeof(options) = 'array'", name="lead_field_definitions_options_check"),
+        Index(
+            "lead_field_definitions_business_id_archived_at_position_idx",
+            "business_id",
+            "archived_at",
+            "position",
+        ),
+        Index(
+            "lead_field_definitions_active_label_key",
+            "business_id",
+            text("lower(label)"),
+            unique=True,
+            postgresql_where=text("archived_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    business_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    label: Mapped[str] = mapped_column(String(40), nullable=False)
+    type: Mapped[str] = mapped_column(String(16), nullable=False)
+    options: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    required: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    number_min: Mapped[float | None] = mapped_column(Double)
+    number_max: Mapped[float | None] = mapped_column(Double)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        TIMESTAMP(True, 3), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(True, 3), nullable=False)
+    archived_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
+
+    business: Mapped["Business"] = relationship("Business", back_populates="lead_field_definitions")
 
 
 class WhatsAppNumber(Base):

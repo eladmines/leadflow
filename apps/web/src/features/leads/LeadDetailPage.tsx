@@ -58,6 +58,7 @@ import { displayStatus, useQuotes } from '../quotes/api';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { LeadSourceIcon } from './SourceIcon';
 import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
+import { CustomFieldChanges, CustomFieldsCard } from './CustomFieldsCard';
 import { tr, intlLocale } from '../../i18n';
 
 const fieldLabels: Record<string, string> = {
@@ -65,6 +66,7 @@ const fieldLabels: Record<string, string> = {
   nextActionAt: tr('תאריך טיפול הבא'),
   message: tr('פרטי הפנייה'),
   tags: tr('תגיות'),
+  customFields: tr('שדות נוספים'),
 };
 
 const apptWhenFmt = new Intl.DateTimeFormat(intlLocale(), {
@@ -340,6 +342,7 @@ function Notes({ leadId, activities }: { leadId: string; activities: Activity[] 
               ) : (
                 <p className="text-sm text-ink">{activityText(a)}</p>
               )}
+              {a.type === 'lead.updated' && <CustomFieldChanges activity={a} />}
               <p className="text-xs text-ink-muted">
                 {a.actor?.name ? `${a.actor.name} · ` : ''}
                 <time dateTime={a.createdAt} title={formatDateTime(a.createdAt)}>
@@ -486,10 +489,11 @@ export function LeadDetailPage() {
           </p>
         )}
       </section>
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <LeadTabs lead={lead} activities={activities} />
-        <div className="flex flex-col gap-6 lg:order-first">
+        <div className="flex min-w-0 flex-col gap-6 lg:order-first">
           <Details key={lead.updatedAt} lead={lead} />
+          <CustomFieldsCard lead={lead} />
           <WhereFrom attribution={lead.attribution} />
         </div>
       </div>

@@ -4,7 +4,9 @@ import {
   type CreateLeadRequest,
   type DuplicatesResponse,
   type Lead,
+  leadFieldFilterParams,
   type LeadDetailResponse,
+  type LeadFieldFilters,
   type LeadListQuery,
   type LeadListResponse,
   type LeadResponse,
@@ -19,22 +21,34 @@ import { tr, intlLocale } from '../../i18n';
 const lp = apiPaths.leads;
 
 export const leadsQueryKey = (businessId: string) => ['businesses', businessId, 'leads'] as const;
-const leadListKey = (businessId: string, query: LeadListQuery) =>
-  [...leadsQueryKey(businessId), 'list', query] as const;
+const leadListKey = (businessId: string, query: LeadListQuery, cf: LeadFieldFilters) =>
+  [...leadsQueryKey(businessId), 'list', query, cf] as const;
 const leadDetailKey = (businessId: string, leadId: string) =>
   [...leadsQueryKey(businessId), 'detail', leadId] as const;
 
-function toQueryString(query: LeadListQuery) {
+function toQueryString(query: LeadListQuery, cf: LeadFieldFilters = {}) {
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(query)) if (v) params.set(k, String(v));
+  // F34: `cf[<fieldId>]=…` / `cf[<fieldId>][from|to]=…`.
+  for (const [k, v] of leadFieldFilterParams(cf)) params.append(k, v);
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
 
-export function useLeads(businessId: string, query: LeadListQuery = {}) {
+/**
+ * The leads list. `cf` = custom-field filters (only usable ones: see `usableFilters`); `enabled`
+ * waits, for example, until the field definitions are known.
+ */
+export function useLeads(
+  businessId: string,
+  query: LeadListQuery = {},
+  cf: LeadFieldFilters = {},
+  enabled = true,
+) {
   return useQuery({
-    queryKey: leadListKey(businessId, query),
-    queryFn: () => apiFetch<LeadListResponse>(`${lp.list(businessId)}${toQueryString(query)}`),
+    queryKey: leadListKey(businessId, query, cf),
+    queryFn: () => apiFetch<LeadListResponse>(`${lp.list(businessId)}${toQueryString(query, cf)}`),
+    enabled,
     select: (data) => data.leads,
     placeholderData: keepPreviousData,
     // New website leads arrive without any action in the app; refresh in the background.

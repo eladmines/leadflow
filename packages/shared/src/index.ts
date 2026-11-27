@@ -9,6 +9,7 @@ export * from './site-templates-en';
 export * from './site-render';
 export * from './site-i18n';
 export * from './leads';
+export * from './leadFields';
 export * from './team';
 export * from './media';
 export * from './tasks';

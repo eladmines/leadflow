@@ -309,32 +309,39 @@ function GuideLink({ href, children }: { href: string; children: ReactNode }) {
 /** Where the two details come from, step by step (opens by itself: most owners need it). */
 function WhatsAppGuide() {
   return (
-    <details open className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted">
-      <summary className="cursor-pointer font-medium text-ink">
-        {tr('איך משיגים את הפרטים?')}
-      </summary>
-      <ol className="mt-2 flex list-decimal flex-col gap-2 ps-5">
-        <li>
-          {tr('נכנסים ל-')}
-          <GuideLink href={META_APPS_URL}>Meta for Developers</GuideLink>
-          {tr(', פותחים את האפליקציה של העסק (או יוצרים אחת) ומוסיפים אליה את המוצר WhatsApp.')}
-        </li>
-        <li>{tr('ב-WhatsApp ← API Setup מעתיקים את ה-Phone number ID של המספר.')}</li>
-        <li>
-          {tr('לטוקן קבוע: ב-')}
-          <GuideLink href={META_SYSTEM_USERS_URL}>Business Settings → System users</GuideLink>
-          {tr(
-            ' יוצרים משתמש מערכת, משייכים לו את האפליקציה ויוצרים טוקן עם ההרשאות whatsapp_business_messaging ו-whatsapp_business_management.',
-          )}
-        </li>
-      </ol>
-      <p className="mt-2">
-        {tr('הטוקן הזמני שמופיע ב-API Setup פג אחרי 24 שעות, ואז החיבור מפסיק לעבוד.')}
-      </p>
-      <p className="mt-2">
-        <GuideLink href={META_GUIDE_URL}>{tr('המדריך המלא של Meta')}</GuideLink>
-      </p>
-    </details>
+    <>
+      <Alert tone="warning" title={tr('לפני שמחברים מספר')}>
+        {tr(
+          'אם המספר פעיל באפליקציית WhatsApp Business, החיבור עלול לנתק אותו מהאפליקציה, והודעות ילכו רק למערכת. מומלץ לחבר מספר חדש, או לוודא קודם מול Meta שהמספר יישאר זמין באפליקציה.',
+        )}
+      </Alert>
+      <details open className="rounded-lg bg-surface-muted p-3 text-sm text-ink-muted">
+        <summary className="cursor-pointer font-medium text-ink">
+          {tr('איך משיגים את הפרטים?')}
+        </summary>
+        <ol className="mt-2 flex list-decimal flex-col gap-2 ps-5">
+          <li>
+            {tr('נכנסים ל-')}
+            <GuideLink href={META_APPS_URL}>Meta for Developers</GuideLink>
+            {tr(', פותחים את האפליקציה של העסק (או יוצרים אחת) ומוסיפים אליה את המוצר WhatsApp.')}
+          </li>
+          <li>{tr('ב-WhatsApp ← API Setup מעתיקים את ה-Phone number ID של המספר.')}</li>
+          <li>
+            {tr('לטוקן קבוע: ב-')}
+            <GuideLink href={META_SYSTEM_USERS_URL}>Business Settings → System users</GuideLink>
+            {tr(
+              ' יוצרים משתמש מערכת, משייכים לו את האפליקציה ויוצרים טוקן עם ההרשאות whatsapp_business_messaging ו-whatsapp_business_management.',
+            )}
+          </li>
+        </ol>
+        <p className="mt-2">
+          {tr('הטוקן הזמני שמופיע ב-API Setup פג אחרי 24 שעות, ואז החיבור מפסיק לעבוד.')}
+        </p>
+        <p className="mt-2">
+          <GuideLink href={META_GUIDE_URL}>{tr('המדריך המלא של Meta')}</GuideLink>
+        </p>
+      </details>
+    </>
   );
 }
 

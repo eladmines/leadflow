@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import (
 
 
 def make_engine(url: str) -> AsyncEngine:
-    return create_async_engine(url, pool_pre_ping=True)
+    # `hide_parameters`: a logged SQLAlchemy error never prints bound values (custom lead field
+    # values, phones, emails), only the statement (F34 privacy, rule 5).
+    return create_async_engine(url, pool_pre_ping=True, hide_parameters=True)
 
 
 def make_sessionmaker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:

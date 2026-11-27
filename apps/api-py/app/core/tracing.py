@@ -49,11 +49,34 @@ def setup_tracing(settings: Settings, service_name: str) -> bool:
     return True
 
 
+_URL_ATTRIBUTES = ("http.target", "http.url", "url.full")
+
+
+def drop_query_string(span: Any, scope: dict[str, Any]) -> None:
+    """Server request hook: the query string never reaches a span. It can hold personal data
+    (the leads search `q`, custom lead field filters `cf[...]`, F34), so URL attributes keep only
+    the path and `url.query` is redacted."""
+    if span is None or not span.is_recording() or not scope.get("query_string"):
+        return
+    attrs = getattr(span, "attributes", None) or {}
+    for key in _URL_ATTRIBUTES:
+        value = attrs.get(key)
+        if isinstance(value, str) and "?" in value:
+            span.set_attribute(key, value.split("?", 1)[0])
+    if "url.query" in attrs:
+        span.set_attribute("url.query", "REDACTED")
+
+
 def instrument_api(app: Any) -> None:
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
     # Health checks and the SPA's files would only add noise.
-    FastAPIInstrumentor.instrument_app(app, excluded_urls="health,assets", exclude_spans=["receive", "send"])
+    FastAPIInstrumentor.instrument_app(
+        app,
+        excluded_urls="health,assets",
+        exclude_spans=["receive", "send"],
+        server_request_hook=drop_query_string,
+    )
 
 
 def current_traceparent() -> str | None:

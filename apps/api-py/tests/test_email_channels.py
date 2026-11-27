@@ -103,11 +103,17 @@ async def test_forwarding_address_once_owner_only(client, db):
 
 async def test_email_becomes_lead_and_next_joins_it(client, db):
     owner, address = await setup_mail(client, db)
+    # F34: a required custom field never blocks a lead from a channel.
+    field = {"label": "דגם", "type": "text", "required": True}
+    assert (
+        await req(client, "POST", business_url(BUSINESS_ID, "/lead-fields"), owner["token"], field)
+    ).status_code == 201
     assert (await post_mail(client, mail(address))).status_code == 200
     assert (await post_mail(client, mail(address, subject="Re: תור", text="ובשעה 10?"))).status_code == 200
     leads = await leads_of(client, owner["token"])
     assert len(leads) == 1
     assert leads[0]["source"] == "email"
+    assert leads[0]["customFields"] == {}
     assert (
         leads[0]["contact"]["name"] == "דנה כהן"
         and leads[0]["contact"]["email"] == "dana@example.com"

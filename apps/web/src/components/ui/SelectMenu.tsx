@@ -323,7 +323,7 @@ export function SelectMenu({
               o.value === value ? 'font-semibold text-brand-700' : 'text-ink',
             )}
           >
-            <span className="flex-1">{o.label}</span>
+            <span className="min-w-0 flex-1 break-words">{o.label}</span>
             {o.value === value && <Check aria-hidden className="h-4 w-4" />}
           </li>
         ))}
@@ -340,7 +340,9 @@ export function SelectMenu({
     <div
       ref={rootRef}
       onBlur={onRootBlur}
-      className={cn('relative flex flex-col gap-1.5', className)}
+      // min-w-0 / max-w-full: a long chosen label is cut short with an ellipsis instead of widening
+      // the control (and the page) past its container; the full text stays in the title.
+      className={cn('relative flex min-w-0 max-w-full flex-col gap-1.5', className)}
     >
       <label
         htmlFor={buttonId}
@@ -373,10 +375,13 @@ export function SelectMenu({
           onKeyDown={onKeyDown}
           className={cn(
             compact ? compactClasses(!!error) : inputClasses(!!error),
-            'flex cursor-pointer items-center justify-between gap-2 text-start disabled:cursor-not-allowed disabled:opacity-60',
+            'flex min-w-0 cursor-pointer items-center justify-between gap-2 text-start disabled:cursor-not-allowed disabled:opacity-60',
           )}
         >
-          <span className={cn('truncate', !selected && 'text-ink-subtle')}>
+          <span
+            title={selected?.label}
+            className={cn('min-w-0 truncate', !selected && 'text-ink-subtle')}
+          >
             {selected?.label ?? placeholder ?? ''}
           </span>
           <ChevronDown
