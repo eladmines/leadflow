@@ -7,7 +7,7 @@ Port of apps/api/src/modules/leads/service.ts. Tenant reads and writes are keyed
 import re
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from sqlalchemy import delete, exists, func, or_, select
 from sqlalchemy.dialects.postgresql import distinct_on
@@ -40,8 +40,15 @@ from app.db.models import (
 from app.deps import TenantContext
 from app.errors import AppError
 from app.modules.audit import add_audit
+from app.modules.lead_fields.service import filter_conditions, has_filter_params, load_definitions, to_rule
 from app.modules.leads import schemas as s
 from app.shared.attribution import parse_attribution
+from app.shared.lead_fields import (
+    apply_custom_fields_patch,
+    diff_custom_fields,
+    plain_number,
+    validate_custom_fields,
+)
 from app.shared.phone import normalize_israeli_phone, normalize_phone
 
 _UUID = re.compile(r"^[0-9a-f-]{36}$", re.I)
@@ -110,6 +117,16 @@ async def _last_whatsapp(db: AsyncSession, contact_ids: list[uuid.UUID]) -> dict
     return {m.contact_id: m for m in rows.scalars() if m.contact_id}
 
 
+def stored_custom_fields(lead: Lead) -> dict[str, Any]:
+    """A lead's custom values as sent on the wire: whole numbers as integers, no empty values."""
+    out: dict[str, Any] = {}
+    for key, value in (lead.custom_fields or {}).items():
+        if value is None or value == "":
+            continue
+        out[key] = plain_number(value) if isinstance(value, float) else value
+    return out
+
+
 def to_lead_dto(lead: Lead, last: WhatsAppMessage | None = None) -> s.LeadOut:
     return s.LeadOut(
         id=str(lead.id),
@@ -128,6 +145,7 @@ def to_lead_dto(lead: Lead, last: WhatsAppMessage | None = None) -> s.LeadOut:
         expectedValue=lead.expected_value,
         nextActionAt=iso(lead.next_action_at) if lead.next_action_at else None,
         tags=list(lead.tags or []),
+        customFields=stored_custom_fields(lead),
         lastWhatsApp=(
             s.LastWhatsApp(body=last.body, direction=last.direction.value, createdAt=iso(last.created_at))
             if last
@@ -173,9 +191,18 @@ class LeadService:
 
     # -- list ------------------------------------------------------------------
 
-    async def list_leads(self, ctx: TenantContext, q: s.LeadListQuery, take: int = 500) -> list[s.LeadOut]:
-        """Newest first, with search (name / phone / email) and filters."""
+    async def list_leads(
+        self,
+        ctx: TenantContext,
+        q: s.LeadListQuery,
+        take: int = 500,
+        params: list[tuple[str, str]] | None = None,
+    ) -> list[s.LeadOut]:
+        """Newest first, with search (name / phone / email) and filters. `params` is the raw query
+        string, for the F34 custom-field filters (`cf[<fieldId>]...`)."""
         conds = self._visible(ctx)
+        if params and has_filter_params(params):
+            conds.extend(filter_conditions(await load_definitions(self.db, ctx.business_id), params))
         text = (q.q or "").strip()
         if text:
             digits = re.sub(r"\D", "", text)
@@ -328,6 +355,10 @@ class LeadService:
         owner_id = data.ownerId if can_assign else ctx.user_id
         if owner_id:
             await self._require_member(ctx.business_id, owner_id)
+        # D-205: quick "add customer" paths skip required fields; sent values are still checked.
+        custom = await self._check_custom_fields(
+            ctx, data.customFields, "create", None, from_app=not data.skipRequiredCustomFields
+        )
 
         match = []
         if data.phone:
@@ -366,6 +397,7 @@ class LeadService:
             message=data.message,
             expected_value=data.expectedValue,
             tags=[],
+            custom_fields=custom,
             created_at=now,
             updated_at=now,
         )
@@ -539,6 +571,26 @@ class LeadService:
                 return
         raise AppError("VALIDATION_ERROR", s.QUOTE_STAGE_NEEDS_QUOTE, {"stageId": s.QUOTE_STAGE_NEEDS_QUOTE})
 
+    async def _check_custom_fields(
+        self,
+        ctx: TenantContext,
+        values: dict[str, Any] | None,
+        mode: Literal["create", "update"],
+        existing: dict[str, Any] | None,
+        *,
+        from_app: bool = True,
+    ) -> dict[str, Any]:
+        """F34: a lead's custom values checked against this business's definitions only (a field
+        id of another business is unknown here). In the app, so required fields apply.
+        'create' → the values; 'update' → a patch (`None` removes)."""
+        defs = await load_definitions(self.db, ctx.business_id)
+        result = validate_custom_fields(
+            [to_rule(d) for d in defs], values, mode=mode, from_app=from_app, existing=existing
+        )
+        if not result.ok:
+            raise AppError("VALIDATION_ERROR", None, result.fields)
+        return result.values
+
     async def update(self, ctx: TenantContext, lead_id: str, data: s.UpdateLeadRequest) -> s.LeadOut:
         """Updates a visible lead; stage moves, assignments and field edits each land in the
         history."""
@@ -546,6 +598,12 @@ class LeadService:
         if "ownerId" in given and not can(ctx.role, "leads.assign"):
             raise AppError("FORBIDDEN")
         lead = await self.find_visible(ctx, lead_id)
+        before = dict(lead.custom_fields or {})
+        custom_changes: list[dict[str, Any]] = []
+        if "customFields" in given and data.customFields is not None:
+            patch = await self._check_custom_fields(ctx, data.customFields, "update", before)
+            after = apply_custom_fields_patch(before, patch)
+            custom_changes = diff_custom_fields(before, after)
         activities: list[tuple[str, dict[str, Any]]] = []
         owner_changed = False
 
@@ -579,8 +637,15 @@ class LeadService:
         if "tags" in given and data.tags is not None and data.tags != list(lead.tags or []):
             lead.tags = data.tags
             changed.append("tags")
+        if custom_changes:
+            lead.custom_fields = after
+            changed.append("customFields")
         if changed:
-            activities.append(("lead.updated", {"fields": changed}))
+            payload: dict[str, Any] = {"fields": changed}
+            if custom_changes:
+                # Stored values (select = option id); the web shows them by label (F34 history).
+                payload["customFields"] = custom_changes
+            activities.append(("lead.updated", payload))
         if not activities:
             return (await self._dtos([lead]))[0]
 

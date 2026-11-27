@@ -1,6 +1,7 @@
 import { apiPaths, businessWebPaths, type PublicQuote, type Quote } from '@simplecatch/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { allFields } from '../../test/leadFields';
 import {
   callsTo,
   json,
@@ -110,6 +111,38 @@ describe('quotes page', () => {
     await waitFor(() =>
       expect(location()).toBe(`${businessWebPaths.section(id, 'quotes')}/${quote().id}`),
     );
+  });
+});
+
+describe('adding a customer from the quote screen (F34, D-205)', () => {
+  it('skips custom fields: none shown, required ones not demanded, the request says so', async () => {
+    const created = { ...lead, id: '5c000000-0000-4000-8000-000000000002', customFields: {} };
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      // The business has a required custom field ("מספר אורחים").
+      [`GET ${apiPaths.leadFields.list(id)}`]: () => json(200, { fields: allFields }),
+      [`GET ${apiPaths.businesses.members(id)}`]: () => json(200, { members: [] }),
+      [`GET ${apiPaths.leads.duplicates(id)}`]: () => json(200, { contacts: [] }),
+      [`POST ${apiPaths.leads.list(id)}`]: () => json(201, { lead: created }),
+    });
+    const { user } = renderApp(`${businessWebPaths.section(id, 'quotes')}/new`);
+    await user.click(await screen.findByRole('button', { name: 'לקוח חדש' }));
+    const add = await screen.findByRole('dialog', { name: 'לקוח חדש' });
+    expect(within(add).queryByLabelText(/מספר אורחים/)).not.toBeInTheDocument();
+    expect(within(add).queryByText('פרטים נוספים')).not.toBeInTheDocument();
+    await user.type(within(add).getByLabelText(/^שם/), 'רון לוי');
+    await user.type(within(add).getByLabelText('טלפון'), '052-1112233');
+    await user.click(within(add).getByRole('button', { name: 'הוספת לקוח' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'POST', apiPaths.leads.list(id))).toHaveLength(1),
+    );
+    expect(callsTo(fetchMock, 'POST', apiPaths.leads.list(id))[0]).toMatchObject({
+      name: 'רון לוי',
+      customFields: {},
+      skipRequiredCustomFields: true,
+    });
+    // The quick dialog never asks for the field definitions.
+    expect(callsTo(fetchMock, 'GET', apiPaths.leadFields.list(id))).toHaveLength(0);
   });
 });
 

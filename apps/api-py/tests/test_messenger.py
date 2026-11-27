@@ -105,6 +105,11 @@ async def test_handshake(client):
 
 async def test_new_sender_is_facebook_lead_with_their_name(client, db, messenger):
     owner = await setup(client, db)
+    # F34: a required custom field never blocks a lead from a channel.
+    field = {"label": "דגם", "type": "text", "required": True}
+    assert (
+        await req(client, "POST", business_url(BUSINESS_ID, "/lead-fields"), owner["token"], field)
+    ).status_code == 201
     messenger.names[PSID] = "דנה כהן"
     assert (await post(client, fb_text("היי, יש תור למחר?"))).status_code == 200
     again = fb_text("x")
@@ -116,6 +121,7 @@ async def test_new_sender_is_facebook_lead_with_their_name(client, db, messenger
     lead = (await db.execute(select(models.Lead))).scalars().one()
     contact = (await db.execute(select(models.Contact))).scalars().one()
     assert lead.source == models.LeadSource.FACEBOOK
+    assert lead.custom_fields == {}
     assert contact.name == "דנה כהן" and contact.phone is None
 
     await post(client, fb_text("ומה המחיר?"))

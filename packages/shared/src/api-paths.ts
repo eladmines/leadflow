@@ -2,6 +2,7 @@ import { authApiPaths } from './auth';
 import { businessApiPaths } from './business';
 import { siteApiPaths } from './site';
 import { leadsApiPaths } from './leads';
+import { leadFieldsApiPaths } from './leadFields';
 import { teamApiPaths } from './team';
 import { mediaApiPaths } from './media';
 import { tasksApiPaths } from './tasks';
@@ -25,6 +26,7 @@ export const apiPaths = {
   businesses: businessApiPaths,
   site: siteApiPaths,
   leads: leadsApiPaths,
+  leadFields: leadFieldsApiPaths,
   team: teamApiPaths,
   media: mediaApiPaths,
   tasks: tasksApiPaths,

@@ -46,6 +46,8 @@ describe('Settings → Channels (F25)', () => {
     await user.click(whatsapp);
     // The form explains where the two details come from, with links to Meta.
     expect(await screen.findByText('איך משיגים את הפרטים?')).toBeInTheDocument();
+    // The warning about a number that is in use in the WhatsApp Business app.
+    expect(screen.getByText('לפני שמחברים מספר')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Meta for Developers/ })).toHaveAttribute(
       'href',
       'https://developers.facebook.com/apps',

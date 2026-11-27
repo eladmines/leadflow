@@ -5,8 +5,11 @@ import {
   formatIsraeliPhone,
   ATTRIBUTION_SOURCES,
   LEAD_SOURCES,
+  leadFieldFilterParams,
   leadSourceLabels,
+  parseLeadFieldFilterParams,
   type Lead,
+  type LeadFieldDefinition,
   type LeadListQuery,
   type PipelineStage,
 } from '@simplecatch/shared';
@@ -60,6 +63,15 @@ import { stageColor } from './stageColors';
 import { useWhatsAppInbox } from '../whatsapp/api';
 import { tr, intlLocale } from '../../i18n';
 import { messageBody } from '../../lib/messageBody';
+import { activeFields, useLeadFields } from '../leadFields/api';
+import { usableFilters } from '../leadFields/format';
+import {
+  CardFieldsPicker,
+  CardFieldValues,
+  CustomFieldFilters,
+  useCardFields,
+  type SetFieldFilter,
+} from './CustomFieldFilters';
 
 const leadPath = (businessId: string, leadId: string) =>
   `${businessWebPaths.section(businessId, 'leads')}/${leadId}`;
@@ -139,10 +151,12 @@ function LeadCard({
   lead,
   stages,
   businessId,
+  cardFields,
 }: {
   lead: Lead;
   stages: PipelineStage[];
   businessId: string;
+  cardFields: LeadFieldDefinition[];
 }) {
   const phone = lead.contact.phone;
   return (
@@ -183,6 +197,7 @@ function LeadCard({
         </span>
       </header>
       <LeadPreview lead={lead} />
+      <CardFieldValues fields={cardFields} values={lead.customFields} />
       <TagChips tags={lead.tags} />
       <div className="flex flex-wrap gap-2">
         {phone && (
@@ -214,11 +229,13 @@ function BoardCard({
   stages,
   businessId,
   onMove,
+  cardFields,
 }: {
   lead: Lead;
   stages: PipelineStage[];
   businessId: string;
   onMove: (lead: Lead, stage: PipelineStage) => void;
+  cardFields: LeadFieldDefinition[];
 }) {
   return (
     <article
@@ -235,6 +252,7 @@ function BoardCard({
         </Link>
       </h3>
       <LeadPreview lead={lead} compact />
+      <CardFieldValues fields={cardFields} values={lead.customFields} />
       <TagChips tags={lead.tags} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
         <time dateTime={lead.createdAt}>{timeAgo(lead.createdAt)}</time>
@@ -336,11 +354,13 @@ function Board({
   stages,
   businessId,
   scroller,
+  cardFields,
 }: {
   leads: Lead[];
   stages: PipelineStage[];
   businessId: string;
   scroller: BoardScroll;
+  cardFields: LeadFieldDefinition[];
 }) {
   const update = useUpdateLead(businessId);
   const [over, setOver] = useState<string | null>(null);
@@ -425,6 +445,7 @@ function Board({
                         stages={stages}
                         businessId={businessId}
                         onMove={move}
+                        cardFields={cardFields}
                       />
                     </li>
                   ))}
@@ -438,11 +459,15 @@ function Board({
   );
 }
 
-/** The list filters, without UI-only params (view). */
-function exportParams(params: URLSearchParams) {
+const isFieldFilterKey = (key: string) => key.startsWith('cf[');
+
+/** The list filters, without UI-only params (view); custom-field filters only when usable. */
+function exportParams(params: URLSearchParams, cf: ReturnType<typeof usableFilters>) {
   const p = new URLSearchParams(params);
   p.delete('view');
   p.delete('new');
+  for (const key of [...p.keys()]) if (isFieldFilterKey(key)) p.delete(key);
+  for (const [k, v] of leadFieldFilterParams(cf)) p.append(k, v);
   return p.toString();
 }
 
@@ -462,7 +487,24 @@ export function LeadsPage() {
     campaign: params.get('campaign') ?? undefined,
     tag: params.get('tag') ?? undefined,
   };
-  const leads = useLeads(business.id, query);
+  // F34: custom-field filters from the address, minus stale ones (archived or unknown fields).
+  const leadFields = useLeadFields(business.id);
+  const fieldsForFilters = activeFields(leadFields.data);
+  const paramString = params.toString();
+  const rawCf = useMemo(
+    () => parseLeadFieldFilterParams(new URLSearchParams(paramString).entries()),
+    [paramString],
+  );
+  const cf = useMemo(
+    () => (leadFields.data ? usableFilters(rawCf, leadFields.data) : {}),
+    [rawCf, leadFields.data],
+  );
+  const cfCount = Object.keys(cf).length;
+  // With field filters in the address, wait for the definitions instead of loading everything.
+  const cfReady = Object.keys(rawCf).length === 0 || !leadFields.isPending;
+  const leads = useLeads(business.id, query, cf, cfReady);
+  const [cardFieldIds, setCardFieldIds] = useCardFields(business.id);
+  const cardFields = cardFieldIds.flatMap((fid) => fieldsForFilters.filter((f) => f.id === fid));
   const queryClient = useQueryClient();
   const stages = usePipeline(business.id);
   const members = useMembers(business.id, can(business.role, 'members.view'));
@@ -489,23 +531,23 @@ export function LeadsPage() {
     query.source ||
     query.from ||
     query.campaign ||
-    query.tag,
+    query.tag ||
+    cfCount,
   );
-  const activeFilters = [
-    query.stageId,
-    query.ownerId,
-    query.source,
-    query.from,
-    query.campaign,
-    query.tag,
-  ].filter(Boolean).length;
+  const activeFilters =
+    [query.stageId, query.ownerId, query.source, query.from, query.campaign, query.tag].filter(
+      Boolean,
+    ).length + cfCount;
   // Filters sit behind one button (D-138); open on arrival when some are already on.
-  const [filtersOpen, setFiltersOpen] = useState(activeFilters > 0);
+  const [filtersOpen, setFiltersOpen] = useState(
+    activeFilters > 0 || Object.keys(rawCf).length > 0,
+  );
   const clearFilters = () =>
     setParams(
       (p) => {
         const next = new URLSearchParams(p);
         for (const k of ['stageId', 'ownerId', 'source', 'from', 'campaign', 'tag']) next.delete(k);
+        for (const k of [...next.keys()]) if (isFieldFilterKey(k)) next.delete(k);
         return next;
       },
       { replace: true },
@@ -523,6 +565,21 @@ export function LeadsPage() {
       },
       { replace: true },
     );
+
+  const setFieldFilter: SetFieldFilter = useCallback(
+    (fieldId, part, value) =>
+      setParams(
+        (p) => {
+          const next = new URLSearchParams(p);
+          const key = part === 'value' ? `cf[${fieldId}]` : `cf[${fieldId}][${part}]`;
+          if (value) next.set(key, value);
+          else next.delete(key);
+          return next;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
 
   // Debounced search into the URL. Only when the text changed: a no-op update still navigates,
   // and a late timer could pull the user back here after they had already left the page.
@@ -577,7 +634,7 @@ export function LeadsPage() {
                 {can(business.role, 'leads.export') && (
                   <a
                     // Plain link: the browser downloads the CSV with the session cookie.
-                    href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params)}` : ''}`}
+                    href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params, cf)}` : ''}`}
                     download
                     className={buttonClasses('secondary', 'md')}
                   >
@@ -741,6 +798,7 @@ export function LeadsPage() {
                 ]}
               />
             )}
+            <CustomFieldFilters fields={fieldsForFilters} filters={cf} onChange={setFieldFilter} />
             {activeFilters > 0 && (
               <button
                 type="button"
@@ -751,6 +809,11 @@ export function LeadsPage() {
                 {tr('ניקוי הסינון')}
               </button>
             )}
+            <CardFieldsPicker
+              fields={fieldsForFilters}
+              value={cardFieldIds}
+              onChange={setCardFieldIds}
+            />
           </div>
         )}
 
@@ -793,6 +856,7 @@ export function LeadsPage() {
               stages={stages.data}
               businessId={business.id}
               scroller={scroller}
+              cardFields={cardFields}
             />
           ) : leads.data.length === 0 ? (
             <p className="py-10 text-center text-sm text-ink-muted">
@@ -806,7 +870,12 @@ export function LeadsPage() {
               <ul aria-label={tr('פניות')} className="grid gap-4 lg:grid-cols-2">
                 {leads.data.map((lead) => (
                   <li key={lead.id}>
-                    <LeadCard lead={lead} stages={stages.data} businessId={business.id} />
+                    <LeadCard
+                      lead={lead}
+                      stages={stages.data}
+                      businessId={business.id}
+                      cardFields={cardFields}
+                    />
                   </li>
                 ))}
               </ul>

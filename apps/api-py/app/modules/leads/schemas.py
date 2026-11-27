@@ -4,11 +4,13 @@ import re
 import uuid
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, WithJsonSchema
 
 from app.modules.auth.schemas import _Request
 from app.shared.attribution import Attribution
 from app.shared.business import _phone as validate_phone
+from app.shared.lead_fields import MAX_CUSTOM_FIELD_KEYS
+from app.shared.lead_fields import M as LEAD_FIELD_MESSAGES
 
 LEAD_SOURCES = ("website_form", "manual", "whatsapp", "facebook", "instagram", "email")
 LEAD_SOURCE_LABELS = {
@@ -176,6 +178,33 @@ def _note(v: Any) -> str:
     return s
 
 
+def _custom_fields_input(v: Any) -> dict[str, Any]:
+    """F34: the shape of `customFields` (`customFieldsInputSchema`). The per-business check (known
+    field, type, option, required) is `validate_custom_fields` in the service."""
+    if not isinstance(v, dict):
+        raise ValueError(LEAD_FIELD_MESSAGES["valuesInvalid"])
+    if len(v) > MAX_CUSTOM_FIELD_KEYS:
+        raise ValueError(LEAD_FIELD_MESSAGES["tooManyValues"])
+    for value in v.values():
+        if value is not None and not isinstance(value, str | int | float | bool):
+            raise ValueError(LEAD_FIELD_MESSAGES["valuesInvalid"])
+    return v
+
+
+_CUSTOM_FIELDS_INPUT_SCHEMA = {
+    "type": "object",
+    "additionalProperties": {
+        "anyOf": [{"type": "string"}, {"type": "number"}, {"type": "boolean"}, {"type": "null"}]
+    },
+}
+
+
+def _strict_bool(v: Any) -> bool:
+    if not isinstance(v, bool):
+        raise ValueError("Expected boolean")
+    return v
+
+
 def _enum(values: tuple[str, ...], message: str):
     def check(v: Any) -> str:
         if v not in values:
@@ -192,6 +221,12 @@ OptionalEmail = Annotated[str | None, BeforeValidator(_optional_email)]
 Shekels = Annotated[int | None, BeforeValidator(_shekels)]
 Tags = Annotated[list[str], BeforeValidator(_tags)]
 Note = Annotated[str, BeforeValidator(_note)]
+# `{ [fieldId]: value }`; `null`/`""` = no value. Any non-object (null included) is refused.
+CustomFieldsInput = Annotated[
+    dict[str, Any] | None,
+    BeforeValidator(_custom_fields_input),
+    WithJsonSchema(_CUSTOM_FIELDS_INPUT_SCHEMA),
+]
 
 
 # ---------------------------------------------------------------------------- requests
@@ -207,6 +242,11 @@ class CreateLeadRequest(_Request):
     stageId: uuid.UUID | None = None
     ownerId: uuid.UUID | None = None
     expectedValue: Shekels = None
+    # F34: checked per business (mode 'create', in the app: required fields needed).
+    customFields: CustomFieldsInput = Field(default_factory=dict)
+    # D-205: quick "add customer" paths in the app don't demand required custom fields (every
+    # value sent is still validated). Never stored.
+    skipRequiredCustomFields: Annotated[bool, BeforeValidator(_strict_bool)] = False
 
 
 class UpdateLeadRequest(BaseModel):
@@ -221,6 +261,8 @@ class UpdateLeadRequest(BaseModel):
     nextActionAt: str | None = None
     message: OptionalText = None
     tags: Tags | None = None
+    # F34: a patch (keys sent change; `null`/`""` removes a value; absent keys stay).
+    customFields: CustomFieldsInput = None
 
 
 class AddNoteRequest(_Request):
@@ -377,6 +419,9 @@ class LeadOut(BaseModel):
     expectedValue: int | None
     nextActionAt: str | None
     tags: list[str]
+    # F34: `{ [fieldId]: value }`, archived fields' values included; `{}` when none. `bool` comes
+    # first so `true` never turns into `1`.
+    customFields: dict[str, bool | int | float | str]
     lastWhatsApp: LastWhatsApp | None
     createdAt: str
     updatedAt: str

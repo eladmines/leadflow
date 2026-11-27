@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import Settings, get_settings
+from app.core.log_privacy import install_log_privacy
 from app.core.ratelimit import RateLimiter
 from app.core.tracing import instrument_api, setup_tracing
 from app.db.session import make_engine, make_sessionmaker
@@ -30,6 +31,7 @@ from app.modules.conversations import routes as conversation_routes
 from app.modules.domain import routes as domain_routes
 from app.modules.embed import routes as embed_routes
 from app.modules.inbound.service import start_outbox_relay
+from app.modules.lead_fields import routes as lead_field_routes
 from app.modules.leads import routes as lead_routes
 from app.modules.media import routes as media_routes
 from app.modules.notifications import routes as notification_routes
@@ -64,6 +66,7 @@ def create_app(
     service: str = "simplecatch-api",
 ) -> FastAPI:
     settings = settings or get_settings()
+    install_log_privacy()
     tracing = setup_tracing(settings, service)
     engine = make_engine(settings.DATABASE_URL)
 
@@ -162,6 +165,7 @@ def create_app(
     app.include_router(media_routes.tenant)
     app.include_router(appointment_routes.tenant)
     app.include_router(lead_routes.tenant)
+    app.include_router(lead_field_routes.tenant)
     app.include_router(quote_routes.public)
     app.include_router(quote_routes.tenant)
     app.include_router(report_routes.tenant)

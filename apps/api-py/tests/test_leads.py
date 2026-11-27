@@ -59,6 +59,7 @@ async def test_creates_a_manual_lead_needing_phone_or_email_and_reuses_a_matchin
     assert lead["expectedValue"] == 1500
     assert lead["contact"]["name"] == "רון לוי" and lead["contact"]["phone"] == "+972521112233"
     assert lead["tags"] == [] and lead["lastWhatsApp"] is None and lead["attribution"] is None
+    assert lead["customFields"] == {}  # F34: always sent
 
     await create(client, t["id"], t["owner"]["token"], {"name": "רוני", "phone": "0521112233"})
     contacts = (await db.execute(select(func.count()).select_from(models.Contact))).scalar_one()

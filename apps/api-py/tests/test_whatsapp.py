@@ -170,10 +170,16 @@ async def test_rejects_unsigned_events(client, db):
 async def test_business_number_becomes_lead_with_conversation(client, db):
     owner = await connected(client, db)
     await customer(db)
+    # F34: a required custom field never blocks a lead from a channel.
+    field = {"label": "דגם", "type": "text", "required": True}
+    assert (
+        await req(client, "POST", business_url(BUSINESS_ID, "/lead-fields"), owner["token"], field)
+    ).status_code == 201
     res = await post(client, text_event("972501112233", "היי, אפשר לקבוע תספורת לשבוע הבא?"))
     assert res.status_code == 200
     (lead,) = await leads_of(client, owner["token"])
     assert lead["source"] == "whatsapp"
+    assert lead["customFields"] == {}
     assert lead["message"] == "היי, אפשר לקבוע תספורת לשבוע הבא?"
     assert lead["contact"]["name"] == "דנה כהן" and lead["contact"]["phone"] == "+972501112233"
     assert lead["stage"]["name"] == "חדש"

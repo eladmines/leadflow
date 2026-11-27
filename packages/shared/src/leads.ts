@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { phoneSchema } from './business';
 import { ATTRIBUTION_SOURCES, attributionSchema } from './attribution';
+import { customFieldsInputSchema, customFieldValuesSchema } from './leadFields';
 
 /**
  * F07 — Lead capture. Visitors submit the contact-section form on a published site (a plain HTML
@@ -139,6 +140,11 @@ export const leadSchema = z.object({
   nextActionAt: z.string().datetime().nullable(),
   /** Free labels chosen by the business, e.g. "VIP", "חוזר" (lowercased duplicates removed). */
   tags: z.array(z.string()),
+  /**
+   * F34 custom fields: `{ [definitionId]: value }`, archived fields' values included. The API
+   * always sends it (`{}` when none); optional only so older payloads still parse.
+   */
+  customFields: customFieldValuesSchema.optional(),
   /** Latest WhatsApp message with this contact (F12), for list previews; absent = none. */
   lastWhatsApp: z
     .object({
@@ -188,7 +194,11 @@ const optionalUuidParam = z
   .transform((v) => (v ? v : undefined))
   .pipe(uuid.optional());
 
-/** GET /leads query: free-text search + filters. `ownerId=none` = unassigned. */
+/**
+ * GET /leads query: free-text search + filters. `ownerId=none` = unassigned.
+ * F34 custom-field filters travel as `cf[<fieldId>]=…` / `cf[<fieldId>][from|to]=…` next to these
+ * (see `leadFieldFilterParams` / `parseLeadFieldFilterParams` in `leadFields.ts`).
+ */
 export const leadListQuerySchema = z.object({
   q: z.string().trim().max(100).optional(),
   stageId: optionalUuidParam,
@@ -228,6 +238,17 @@ export const createLeadRequestSchema = z
     stageId: uuid.optional(),
     ownerId: uuid.nullable().optional(),
     expectedValue: shekels.nullable().optional(),
+    /**
+     * F34: shape only; checked per business with `validateCustomFields`, options from
+     * `createLeadCustomFieldsOptions(body)`.
+     */
+    customFields: customFieldsInputSchema.optional().default({}),
+    /**
+     * F34, D-205: `true` from quick "add customer" paths in the app (e.g. the quote screen's dialog):
+     * required custom fields are not demanded, but every value sent is still validated. Absent or
+     * `false` (the full New lead dialog) = required fields are enforced.
+     */
+    skipRequiredCustomFields: z.boolean().optional().default(false),
   })
   .refine((v) => v.phone || v.email, { message: crmMessages.contactRequired, path: ['phone'] });
 export type CreateLeadRequest = z.input<typeof createLeadRequestSchema>;
@@ -240,6 +261,11 @@ export const updateLeadRequestSchema = z.object({
   nextActionAt: z.string().datetime().nullable().optional(),
   message: optionalText(1000, leadMessages.messageTooLong).optional(),
   tags: leadTagsSchema.optional(),
+  /**
+   * F34: a patch of custom values (keys sent change; `null`/`""` removes a value; absent keys stay).
+   * Shape only; checked per business with `validateCustomFields` (mode 'update').
+   */
+  customFields: customFieldsInputSchema.optional(),
 });
 export type UpdateLeadRequest = z.input<typeof updateLeadRequestSchema>;
 

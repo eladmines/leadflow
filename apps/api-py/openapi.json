@@ -2257,9 +2257,111 @@
     "title": "CreateBusinessRequest",
     "type": "object"
    },
+   "CreateLeadFieldOption": {
+    "properties": {
+     "label": {
+      "default": "",
+      "title": "Label",
+      "type": "string"
+     }
+    },
+    "title": "CreateLeadFieldOption",
+    "type": "object"
+   },
+   "CreateLeadFieldRequest": {
+    "description": "POST /lead-fields. The server assigns ids (field and options) and puts the field last.",
+    "properties": {
+     "label": {
+      "default": "",
+      "title": "Label",
+      "type": "string"
+     },
+     "max": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "options": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/CreateLeadFieldOption"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Options"
+     },
+     "required": {
+      "default": false,
+      "title": "Required",
+      "type": "boolean"
+     },
+     "type": {
+      "default": "",
+      "enum": [
+       "text",
+       "number",
+       "date",
+       "select",
+       "boolean"
+      ],
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "title": "CreateLeadFieldRequest",
+    "type": "object"
+   },
    "CreateLeadRequest": {
     "description": "Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused.",
     "properties": {
+     "customFields": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "title": "Customfields",
+      "type": "object"
+     },
      "email": {
       "anyOf": [
        {
@@ -2320,6 +2422,11 @@
        }
       ],
       "title": "Phone"
+     },
+     "skipRequiredCustomFields": {
+      "default": false,
+      "title": "Skiprequiredcustomfields",
+      "type": "boolean"
      },
      "stageId": {
       "anyOf": [
@@ -4103,6 +4210,164 @@
     "title": "LeadDetailResponse",
     "type": "object"
    },
+   "LeadFieldListResponse": {
+    "properties": {
+     "fields": {
+      "items": {
+       "$ref": "#/components/schemas/LeadFieldOut"
+      },
+      "title": "Fields",
+      "type": "array"
+     }
+    },
+    "required": [
+     "fields"
+    ],
+    "title": "LeadFieldListResponse",
+    "type": "object"
+   },
+   "LeadFieldOptionOut": {
+    "properties": {
+     "archivedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Archivedat"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "archivedAt"
+    ],
+    "title": "LeadFieldOptionOut",
+    "type": "object"
+   },
+   "LeadFieldOut": {
+    "properties": {
+     "archivedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Archivedat"
+     },
+     "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "max": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "options": {
+      "items": {
+       "$ref": "#/components/schemas/LeadFieldOptionOut"
+      },
+      "title": "Options",
+      "type": "array"
+     },
+     "position": {
+      "title": "Position",
+      "type": "integer"
+     },
+     "required": {
+      "title": "Required",
+      "type": "boolean"
+     },
+     "type": {
+      "enum": [
+       "text",
+       "number",
+       "date",
+       "select",
+       "boolean"
+      ],
+      "title": "Type",
+      "type": "string"
+     },
+     "updatedAt": {
+      "title": "Updatedat",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "type",
+     "options",
+     "required",
+     "min",
+     "max",
+     "position",
+     "archivedAt",
+     "createdAt",
+     "updatedAt"
+    ],
+    "title": "LeadFieldOut",
+    "type": "object"
+   },
+   "LeadFieldResponse": {
+    "properties": {
+     "field": {
+      "$ref": "#/components/schemas/LeadFieldOut"
+     }
+    },
+    "required": [
+     "field"
+    ],
+    "title": "LeadFieldResponse",
+    "type": "object"
+   },
    "LeadListResponse": {
     "properties": {
      "leads": {
@@ -4137,6 +4402,26 @@
      "createdAt": {
       "title": "Createdat",
       "type": "string"
+     },
+     "customFields": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "integer"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "string"
+        }
+       ]
+      },
+      "title": "Customfields",
+      "type": "object"
      },
      "expectedValue": {
       "anyOf": [
@@ -4245,6 +4530,7 @@
      "expectedValue",
      "nextActionAt",
      "tags",
+     "customFields",
      "lastWhatsApp",
      "createdAt",
      "updatedAt"
@@ -5312,6 +5598,23 @@
      }
     },
     "title": "RegisterRequest",
+    "type": "object"
+   },
+   "ReorderLeadFieldsRequest": {
+    "description": "PUT /lead-fields/order: every active field id, once, in the new order.",
+    "properties": {
+     "ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Ids",
+      "type": "array"
+     }
+    },
+    "required": [
+     "ids"
+    ],
+    "title": "ReorderLeadFieldsRequest",
     "type": "object"
    },
    "ReplyStatus": {
@@ -7322,9 +7625,138 @@
     "title": "UpdateBusinessRequest",
     "type": "object"
    },
+   "UpdateLeadFieldOption": {
+    "description": "`id` = an existing option of this field (rename/restore); no id = a new option.",
+    "properties": {
+     "id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     },
+     "label": {
+      "default": "",
+      "title": "Label",
+      "type": "string"
+     }
+    },
+    "title": "UpdateLeadFieldOption",
+    "type": "object"
+   },
+   "UpdateLeadFieldRequest": {
+    "description": "PATCH /lead-fields/:fieldId. Every key optional; `type` is refused (it can't change).\n`options` is the full list of active options in order: a listed id renames or restores, no\nid adds, an option left out is archived. `archived` archives (true) or restores (false).",
+    "properties": {
+     "archived": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Archived"
+     },
+     "label": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Label"
+     },
+     "max": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "options": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/UpdateLeadFieldOption"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Options"
+     },
+     "required": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Required"
+     },
+     "type": {
+      "title": "Type",
+      "type": "null"
+     }
+    },
+    "title": "UpdateLeadFieldRequest",
+    "type": "object"
+   },
    "UpdateLeadRequest": {
     "description": "PATCH: every field optional; each change is recorded in the activity log. Use\n`model_fields_set` to tell \"absent\" from \"null\".",
     "properties": {
+     "customFields": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "title": "Customfields",
+      "type": "object"
+     },
      "expectedValue": {
       "anyOf": [
        {
@@ -9653,6 +10085,199 @@
      }
     },
     "summary": "Resend"
+   }
+  },
+  "/api/v1/businesses/{business_id}/lead-fields": {
+   "get": {
+    "operationId": "list_fields_api_v1_businesses__business_id__lead_fields_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "business_id",
+      "required": true,
+      "schema": {
+       "title": "Business Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LeadFieldListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Fields"
+   },
+   "post": {
+    "operationId": "create_field_api_v1_businesses__business_id__lead_fields_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "business_id",
+      "required": true,
+      "schema": {
+       "title": "Business Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateLeadFieldRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LeadFieldResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Create Field"
+   }
+  },
+  "/api/v1/businesses/{business_id}/lead-fields/order": {
+   "put": {
+    "operationId": "reorder_fields_api_v1_businesses__business_id__lead_fields_order_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "business_id",
+      "required": true,
+      "schema": {
+       "title": "Business Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReorderLeadFieldsRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LeadFieldListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Reorder Fields"
+   }
+  },
+  "/api/v1/businesses/{business_id}/lead-fields/{field_id}": {
+   "patch": {
+    "operationId": "update_field_api_v1_businesses__business_id__lead_fields__field_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "field_id",
+      "required": true,
+      "schema": {
+       "title": "Field Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "business_id",
+      "required": true,
+      "schema": {
+       "title": "Business Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateLeadFieldRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LeadFieldResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Update Field"
    }
   },
   "/api/v1/businesses/{business_id}/leads": {

@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Query, Response
+from fastapi import Query, Request, Response
 from sqlalchemy import select
 
 from app.core.csv import to_csv
@@ -11,6 +11,7 @@ from app.core.dates import format_short
 from app.db.models import Business
 from app.deps import Db, Tenant, require_permission, tenant_router
 from app.modules.audit import add_audit
+from app.modules.lead_fields.service import export_cell, export_columns, load_definitions
 from app.modules.leads import schemas as s
 from app.modules.leads.service import LeadService
 from app.shared.phone import format_israeli_phone
@@ -19,8 +20,10 @@ tenant = tenant_router()
 
 
 @tenant.get("/leads", response_model=s.LeadListResponse, dependencies=[require_permission("leads.view")])
-async def list_leads(ctx: Tenant, db: Db, q: Annotated[s.LeadListQuery, Query()]):
-    return {"leads": await LeadService(db).list_leads(ctx, q)}
+async def list_leads(request: Request, ctx: Tenant, db: Db, q: Annotated[s.LeadListQuery, Query()]):
+    # F34: `cf[<fieldId>]...` filters are read from the raw query string.
+    params = request.query_params.multi_items()
+    return {"leads": await LeadService(db).list_leads(ctx, q, params=params)}
 
 
 # Paying customers (D-163): one row per contact who bought.
@@ -43,8 +46,10 @@ async def import_customers(body: s.ImportCustomersRequest, ctx: Tenant, db: Db):
 
 # Declared before `/leads/{lead_id}` so the static segments win.
 @tenant.get("/leads/export.csv", dependencies=[require_permission("leads.export")])
-async def export_csv(ctx: Tenant, db: Db, q: Annotated[s.LeadListQuery, Query()]):
-    leads = await LeadService(db).list_leads(ctx, q, 10_000)
+async def export_csv(request: Request, ctx: Tenant, db: Db, q: Annotated[s.LeadListQuery, Query()]):
+    leads = await LeadService(db).list_leads(ctx, q, 10_000, params=request.query_params.multi_items())
+    # F34: one column per active custom field, in order, headed by its label as written.
+    fields = export_columns(await load_definitions(db, ctx.business_id))
     tz = (await db.execute(select(Business.timezone).where(Business.id == ctx.business_id))).scalar_one()
 
     def when(value: str) -> str:
@@ -63,6 +68,7 @@ async def export_csv(ctx: Tenant, db: Db, q: Annotated[s.LeadListQuery, Query()]
             "תגיות",
             "פרטי הפנייה",
             "נוצר",
+            *(f.label for f in fields),
         ],
         [
             [
@@ -77,6 +83,7 @@ async def export_csv(ctx: Tenant, db: Db, q: Annotated[s.LeadListQuery, Query()]
                 ", ".join(lead.tags),
                 lead.message,
                 when(lead.createdAt),
+                *(export_cell(f, lead.customFields.get(str(f.id))) for f in fields),
             ]
             for lead in leads
         ],

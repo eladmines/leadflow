@@ -31,6 +31,8 @@ PERMISSIONS: dict[str, tuple[Role, ...]] = {
     "appointments.view": _ALL,
     "appointments.view.all": _OM,
     "services.manage": _OM,
+    # D-203 (F34): manage the business's custom lead fields; filling follows `leads.update`.
+    "leadFields.manage": _OM,
     "quotes.view": _ALL,
     "reports.view": _OM,
     "whatsapp.inbox": _OM,

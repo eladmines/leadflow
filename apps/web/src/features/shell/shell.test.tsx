@@ -330,7 +330,7 @@ describe('settings', () => {
     ]);
   });
 
-  it('has three tabs, with the details, the hours and the service areas on one tab', async () => {
+  it('has four tabs, with the details, the hours and the service areas on one tab', async () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(section('settings'));
     await screen.findByLabelText(/שם העסק/);
@@ -338,7 +338,7 @@ describe('settings', () => {
       within(screen.getByRole('tablist', { name: 'חלקי ההגדרות' }))
         .getAllByRole('tab')
         .map((t) => t.textContent),
-    ).toEqual(['פרטי העסק', 'ערוצים', 'מנוי וחיוב']);
+    ).toEqual(['פרטי העסק', 'ערוצים', 'שדות לידים', 'מנוי וחיוב']);
     // In this order, each with its own save button.
     const panel = screen.getByRole('tabpanel');
     expect(

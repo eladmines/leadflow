@@ -39,7 +39,12 @@ Smallest complete customer journey: **register → onboard → build site → pu
 | F31 | Website visit counts in Reports (D-190)                 | Medium             | F26, F30          | F16           | Full pipeline              | **Built**                                           |
 | F32 | What visitors do on the website, as counts (D-191)      | Medium             | F30, F31          | F16           | Full pipeline              | **Built**                                           |
 | F33 | Domain expiry of the existing website, with reminders (D-193) | Medium             | D-094             | F16           | Full pipeline              | **Built** (needs outbound TCP 43 for `.il`)         |
+| F34 | [Custom lead fields](features/F34.md) (D-203)            | High               | F08               | F16           | Full pipeline              | Planned                                             |
 | F28 | Instagram DMs → conversations and leads (D-187)         | High               | F23, F24, F25     | F16           | Full pipeline                       | **Built**                                           |
+
+## Known issues
+
+- 2026-11-27 — **NUL / lone-surrogate characters crash free-text fields with a 500** (found by F34 QA, QA-F34-03). Postgres can't store `\u0000` or a lone UTF-16 surrogate; F34's fields now refuse them with a 400, but other free-text inputs (lead name, message, notes, and likely others) probably still return 500. Fix once, centrally (shared schemas + API input layer), with tests. Priority: medium (no data leak, but a 500 instead of a Hebrew validation error).
 
 ## Dependency graph (core journey)
 
