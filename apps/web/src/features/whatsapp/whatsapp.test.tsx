@@ -106,8 +106,8 @@ describe('WhatsApp on the lead page', () => {
     expect(items[0]).toHaveTextContent('היי, אפשר לקבוע תור?');
     expect(items[1]).toHaveTextContent('נשלחה על ידי סיגלית:');
     expect(items[1]).toHaveTextContent('נקראה');
-    // History is in its own tab (D-140).
-    await user.click(screen.getByRole('tab', { name: 'הערות והיסטוריה' }));
+    // The history is under "עוד פרטים" (D-211).
+    await user.click(screen.getByRole('button', { name: /^עוד פרטים/ }));
     expect(await screen.findByText('הליד נוצר מהודעת וואטסאפ')).toBeInTheDocument();
   });
 

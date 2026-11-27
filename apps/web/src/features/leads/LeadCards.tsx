@@ -8,8 +8,8 @@ import {
   type Quote,
   type Task,
 } from '@simplecatch/shared';
-import { AlarmClock, AlertTriangle, UserRound } from 'lucide-react';
-import { useRef, useState, type ReactNode, type RefObject } from 'react';
+import { AlarmClock, AlertTriangle, Check, ChevronDown, UserRound } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert, Button, buttonClasses, Card, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -19,19 +19,21 @@ import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NewTaskForm } from '../tasks/NewTaskForm';
 import { TaskItem } from '../tasks/TaskItem';
-import { dueLabel, useTasks } from '../tasks/api';
+import { dueLabel, useTasks, useUpdateTask } from '../tasks/api';
 import { useAppointments } from '../appointments/api';
 import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { shekel } from './api';
 
-/** How many items a card shows before "show all" (D-209). */
-const SUMMARY = 3;
-
-/** The lead page's cards (D-209); old `?tab=` links scroll to them. */
-export const LEAD_CARDS = ['tasks', 'appointments', 'quotes'] as const;
-export type LeadCardKey = (typeof LEAD_CARDS)[number];
-export const leadCardId = (key: LeadCardKey) => `lead-card-${key}`;
+/**
+ * The lead page's folded parts (D-211). Old `?tab=tasks|appointments|quotes` links open the
+ * matching one and focus its button.
+ */
+export const LEAD_SECTIONS = ['tasks', 'appointments', 'quotes', 'more'] as const;
+export type LeadSectionKey = (typeof LEAD_SECTIONS)[number];
+export const leadSectionId = (key: LeadSectionKey) => `lead-section-${key}`;
+/** The disclosure button of a section (what an old link focuses). */
+export const leadSectionButtonId = (key: LeadSectionKey) => `${leadSectionId(key)}-button`;
 
 const apptWhenFmt = new Intl.DateTimeFormat(intlLocale(), {
   weekday: 'short',
@@ -41,45 +43,71 @@ const apptWhenFmt = new Intl.DateTimeFormat(intlLocale(), {
   minute: '2-digit',
 });
 
+const disclosureClasses =
+  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2';
+
 /**
- * A side card of the lead page: a heading (focusable, so an old tab link can land on it), a "+"
- * action and its body.
+ * A folded one-line section (D-211): a heading button with a count or summary that opens the
+ * content below it (`aria-expanded`, keyboard: Enter/Space as any button).
  */
-function SideCard({
-  cardKey,
+export function Fold({
+  sectionKey,
   title,
-  action,
+  summary,
+  open,
+  onOpenChange,
   children,
 }: {
-  cardKey: LeadCardKey;
+  sectionKey: LeadSectionKey;
   title: string;
-  action?: ReactNode;
+  summary?: ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   children: ReactNode;
 }) {
-  const id = leadCardId(cardKey);
+  const id = leadSectionId(sectionKey);
   return (
-    <Card
-      id={id}
-      role="region"
-      aria-labelledby={`${id}-title`}
-      className="flex scroll-mt-24 flex-col gap-3"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2
-          id={`${id}-title`}
-          tabIndex={-1}
-          className="rounded text-lg font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+    <section id={id} className="scroll-mt-24 rounded-xl border border-surface-border bg-surface">
+      <h2>
+        <button
+          id={leadSectionButtonId(sectionKey)}
+          type="button"
+          aria-expanded={open}
+          aria-controls={`${id}-panel`}
+          onClick={() => onOpenChange(!open)}
+          className={cn(
+            'flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-surface-muted',
+            disclosureClasses,
+          )}
         >
-          {title}
-        </h2>
-        {action}
-      </div>
-      {children}
-    </Card>
+          <span className="font-semibold text-ink">{title}</span>
+          {summary && (
+            <span className="min-w-0 flex-1 truncate text-sm text-ink-muted">{summary}</span>
+          )}
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              'ms-auto h-4 w-4 shrink-0 text-ink-muted transition-transform',
+              open && 'rotate-180',
+            )}
+          />
+        </button>
+      </h2>
+      {open && (
+        <div
+          id={`${id}-panel`}
+          role="region"
+          aria-labelledby={leadSectionButtonId(sectionKey)}
+          className="flex flex-col gap-3 border-t border-surface-border px-4 py-3"
+        >
+          {children}
+        </div>
+      )}
+    </section>
   );
 }
 
-/** Loading, no-permission (403) or error, for one card's list. */
+/** Loading, no-permission (403) or error, for one list. */
 function ListStatus({
   query,
   loading,
@@ -110,202 +138,167 @@ function ListStatus({
   );
 }
 
-function ShowAll({
-  total,
-  all,
-  onToggle,
-  controls,
-}: {
-  total: number;
-  all: boolean;
-  onToggle: () => void;
-  controls: string;
-}) {
-  if (total <= SUMMARY) return null;
-  return (
-    <button
-      type="button"
-      aria-expanded={all}
-      aria-controls={controls}
-      onClick={onToggle}
-      className="self-start rounded text-sm font-medium text-brand-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
-    >
-      {all ? tr('הצגת פחות') : tr('הצג הכול ({0})', total)}
-    </button>
-  );
-}
-
-/** The "+" that opens a card's add form; says whether the form is open. */
-function AddButton({
-  label,
-  open,
-  controls,
-  onClick,
-  buttonRef,
-}: {
-  label: string;
-  open?: boolean;
-  controls?: string;
-  onClick: () => void;
-  buttonRef?: RefObject<HTMLButtonElement>;
-}) {
-  return (
-    <Button
-      ref={buttonRef}
-      type="button"
-      size="sm"
-      variant="secondary"
-      aria-expanded={open}
-      aria-controls={open ? controls : undefined}
-      onClick={onClick}
-    >
-      {label}
-    </Button>
-  );
-}
-
 const isLate = (dueAt: string, now = Date.now()) => new Date(dueAt).getTime() < now;
+const byDue = (a: Task, b: Task) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
 
 /**
- * The top of the lead page (D-209): the lead's next action is its nearest open task the member may
- * see (`lead.nextTask`), or a nudge to add one. Overdue is said in words, not only in red.
+ * Next action (D-209, D-211): the lead's nearest open task the member may see (`lead.nextTask`)
+ * with a "done" button and "+ משימה"; the lead's other open tasks behind "כל המשימות (N)".
+ * Overdue is said in words, not only in red.
  */
-export function NextAction({ lead, onAddTask }: { lead: Lead; onAddTask: () => void }) {
+export function NextAction({
+  lead,
+  formOpen,
+  onFormOpenChange,
+  tasksOpen,
+  onTasksOpenChange,
+}: {
+  lead: Lead;
+  formOpen: boolean;
+  onFormOpenChange: (open: boolean) => void;
+  tasksOpen: boolean;
+  onTasksOpenChange: (open: boolean) => void;
+}) {
+  const business = useCurrentBusiness();
+  const tasks = useTasks(business.id, { leadId: lead.id });
+  const update = useUpdateTask(business.id);
+  const addRef = useRef<HTMLButtonElement>(null);
   const next = lead.nextTask ?? null;
   const late = next ? isLate(next.dueAt) : false;
+  const open = (tasks.data ?? []).filter((t) => t.status === 'OPEN').sort(byDue);
+  const formId = `${leadSectionId('tasks')}-form`;
+  const listId = `${leadSectionId('tasks')}-panel`;
+  const closeForm = () => {
+    onFormOpenChange(false);
+    addRef.current?.focus();
+  };
+
   return (
-    <div
-      role="group"
-      aria-label={tr('הפעולה הבאה')}
-      className={cn(
-        'flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3',
-        late ? 'border-danger-600/40 bg-danger-50' : 'border-surface-border bg-surface-muted',
-      )}
+    <Card
+      role="region"
+      aria-labelledby="lead-next-title"
+      className={cn('flex flex-col gap-3', late && 'border-danger-600/40')}
     >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="lead-next-title" className="text-base font-semibold text-ink">
+          {tr('הפעולה הבאה')}
+        </h2>
+        <Button
+          ref={addRef}
+          type="button"
+          size="sm"
+          variant="secondary"
+          aria-expanded={formOpen}
+          aria-controls={formOpen ? formId : undefined}
+          onClick={() => (formOpen ? closeForm() : onFormOpenChange(true))}
+        >
+          {tr('+ משימה')}
+        </Button>
+      </div>
       {next ? (
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="min-w-0 text-sm text-ink [overflow-wrap:anywhere]">
-            <span className="font-semibold">{tr('הפעולה הבאה:')}</span> <bdi>{next.title}</bdi>
-          </p>
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-            <span
-              className={cn(
-                'inline-flex items-center gap-1',
-                late && 'font-semibold text-danger-700',
-              )}
-            >
-              {late ? (
-                <AlertTriangle aria-hidden className="h-3.5 w-3.5" />
-              ) : (
-                <AlarmClock aria-hidden className="h-3.5 w-3.5" />
-              )}
-              <time dateTime={next.dueAt}>{dueLabel(next.dueAt)}</time>
-              {late && <span>· {tr('באיחור')}</span>}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <UserRound aria-hidden className="h-3.5 w-3.5" />
-              <span className="sr-only">{tr('אחראי:')}</span>
-              {next.assignee.name}
-            </span>
-          </p>
+        <div className="flex items-start gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <p className="min-w-0 font-medium text-ink [overflow-wrap:anywhere]">
+              <bdi>{next.title}</bdi>
+            </p>
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1',
+                  late && 'font-semibold text-danger-700',
+                )}
+              >
+                {late ? (
+                  <AlertTriangle aria-hidden className="h-3.5 w-3.5" />
+                ) : (
+                  <AlarmClock aria-hidden className="h-3.5 w-3.5" />
+                )}
+                <time dateTime={next.dueAt}>{dueLabel(next.dueAt)}</time>
+                {late && <span>· {tr('באיחור')}</span>}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <UserRound aria-hidden className="h-3.5 w-3.5" />
+                <span className="sr-only">{tr('אחראי:')}</span>
+                {next.assignee.name}
+              </span>
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            loading={update.isPending}
+            aria-label={tr('סימון כבוצעה: {0}', next.title)}
+            onClick={() => update.mutate({ id: next.id, body: { status: 'DONE' } })}
+          >
+            <Check aria-hidden className="h-4 w-4" />
+            {tr('בוצע')}
+          </Button>
         </div>
       ) : (
         <p className="text-sm text-ink-muted">
           {tr('אין פעולה הבאה. כדאי להוסיף משימה כדי לא לשכוח לחזור ללקוח.')}
         </p>
       )}
-      <Button type="button" size="sm" variant="secondary" onClick={onAddTask}>
-        {tr('+ משימה')}
-      </Button>
-    </div>
-  );
-}
-
-const byDue = (a: Task, b: Task) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
-
-/** The lead's open tasks, nearest first, and "+ משימה" (D-209). */
-export function LeadTasksCard({
-  lead,
-  formOpen,
-  onFormOpenChange,
-}: {
-  lead: Lead;
-  formOpen: boolean;
-  onFormOpenChange: (open: boolean) => void;
-}) {
-  const business = useCurrentBusiness();
-  const tasks = useTasks(business.id, { leadId: lead.id });
-  const [all, setAll] = useState(false);
-  const addRef = useRef<HTMLButtonElement>(null);
-  const open = (tasks.data ?? []).filter((t) => t.status === 'OPEN').sort(byDue);
-  const shown = all ? open : open.slice(0, SUMMARY);
-  const listId = `${leadCardId('tasks')}-list`;
-  const formId = `${leadCardId('tasks')}-form`;
-  const close = () => {
-    onFormOpenChange(false);
-    addRef.current?.focus();
-  };
-
-  return (
-    <SideCard
-      cardKey="tasks"
-      title={tr('משימות')}
-      action={
-        <AddButton
-          label={tr('+ משימה')}
-          open={formOpen}
-          controls={formId}
-          buttonRef={addRef}
-          onClick={() => (formOpen ? close() : onFormOpenChange(true))}
-        />
-      }
-    >
+      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
       {formOpen && (
         <div id={formId} className="flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
-          <NewTaskForm leadId={lead.id} compact autoFocus onCreated={close} />
-          <Button type="button" variant="ghost" size="sm" className="self-start" onClick={close}>
+          <NewTaskForm leadId={lead.id} compact autoFocus onCreated={closeForm} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            onClick={closeForm}
+          >
             {tr('ביטול')}
           </Button>
         </div>
       )}
-      <ListStatus
-        query={tasks}
-        loading={tr('טוענים את המשימות…')}
-        forbidden={tr('אין לך הרשאה לראות את המשימות של הליד הזה.')}
-      />
-      {tasks.isSuccess &&
-        (open.length > 0 ? (
-          <ul id={listId} aria-label={tr('משימות הליד')} className="divide-y divide-surface-border">
-            {shown.map((t) => (
-              <TaskItem key={t.id} task={t} businessId={business.id} showLead={false} />
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-ink-muted">{tr('אין משימות פתוחות לליד הזה.')}</p>
-        ))}
-      <ShowAll
-        total={tasks.isSuccess ? open.length : 0}
-        all={all}
-        onToggle={() => setAll((a) => !a)}
-        controls={listId}
-      />
-    </SideCard>
+      <div id={leadSectionId('tasks')} className="scroll-mt-24 border-t border-surface-border pt-2">
+        <button
+          id={leadSectionButtonId('tasks')}
+          type="button"
+          aria-expanded={tasksOpen}
+          aria-controls={listId}
+          onClick={() => onTasksOpenChange(!tasksOpen)}
+          className={cn(
+            'inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline',
+            disclosureClasses,
+          )}
+        >
+          {tasks.isSuccess ? tr('כל המשימות ({0})', open.length) : tr('כל המשימות')}
+          <ChevronDown
+            aria-hidden
+            className={cn('h-4 w-4 transition-transform', tasksOpen && 'rotate-180')}
+          />
+        </button>
+        {tasksOpen && (
+          <div id={listId} className="mt-2 flex flex-col gap-2">
+            <ListStatus
+              query={tasks}
+              loading={tr('טוענים את המשימות…')}
+              forbidden={tr('אין לך הרשאה לראות את המשימות של הליד הזה.')}
+            />
+            {tasks.isSuccess &&
+              (open.length > 0 ? (
+                <ul aria-label={tr('משימות הליד')} className="divide-y divide-surface-border">
+                  {open.map((t) => (
+                    <TaskItem key={t.id} task={t} businessId={business.id} showLead={false} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-ink-muted">{tr('אין משימות פתוחות לליד הזה.')}</p>
+              ))}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
 
-/** Upcoming first (nearest first), then past ones (latest first). */
-function orderAppointments(list: Appointment[], now: number) {
-  const at = (a: Appointment) => new Date(a.startsAt).getTime();
-  const upcoming = list.filter((a) => at(a) >= now).sort((a, b) => at(a) - at(b));
-  const past = list.filter((a) => at(a) < now).sort((a, b) => at(b) - at(a));
-  return [...upcoming, ...past];
-}
-
-/** The lead's appointments (last month to two months ahead), nearest first, and "+ תור". */
-export function LeadAppointmentsCard({ lead }: { lead: Lead }) {
+/** The lead's appointments (a month back, two ahead), with the visit's time fixed once. */
+export function useLeadAppointments(lead: Lead) {
   const business = useCurrentBusiness();
-  const [open, setOpen] = useState(false);
-  const [all, setAll] = useState(false);
   // Fixed once per visit, so the query key stays the same between renders.
   const [range] = useState(() => {
     const now = Date.now();
@@ -315,31 +308,53 @@ export function LeadAppointmentsCard({ lead }: { lead: Lead }) {
       to: new Date(now + 62 * 86_400_000).toISOString(),
     };
   });
-  const appts = useAppointments(business.id, {
+  const query = useAppointments(business.id, {
     from: range.from,
     to: range.to,
     leadId: lead.id,
   });
-  const list = orderAppointments(appts.data ?? [], range.now);
-  const shown = all ? list : list.slice(0, SUMMARY);
-  const listId = `${leadCardId('appointments')}-list`;
+  const at = (a: Appointment) => new Date(a.startsAt).getTime();
+  const list = query.data ?? [];
+  // Upcoming, nearest first; then past ones, latest first.
+  const ordered = [
+    ...list.filter((a) => at(a) >= range.now).sort((a, b) => at(a) - at(b)),
+    ...list.filter((a) => at(a) < range.now).sort((a, b) => at(b) - at(a)),
+  ];
+  const upcoming = list.filter((a) => at(a) >= range.now).length;
+  return { query, ordered, upcoming, now: range.now };
+}
 
+/** Inside the folded "תורים" section: the list and "+ תור". */
+export function LeadAppointments({
+  lead,
+  appts,
+}: {
+  lead: Lead;
+  appts: ReturnType<typeof useLeadAppointments>;
+}) {
+  const [open, setOpen] = useState(false);
+  const { query, ordered, now } = appts;
   return (
-    <SideCard
-      cardKey="appointments"
-      title={tr('תורים')}
-      action={<AddButton label={tr('+ תור')} onClick={() => setOpen(true)} />}
-    >
+    <>
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        className="self-start"
+        onClick={() => setOpen(true)}
+      >
+        {tr('+ תור')}
+      </Button>
       <ListStatus
-        query={appts}
+        query={query}
         loading={tr('טוענים את התורים…')}
         forbidden={tr('אין לך הרשאה לראות את התורים של הליד הזה.')}
       />
-      {appts.isSuccess &&
-        (list.length > 0 ? (
-          <ul id={listId} aria-label={tr('תורי הליד')} className="flex flex-col gap-1.5">
-            {shown.map((a) => {
-              const past = new Date(a.startsAt).getTime() < range.now;
+      {query.isSuccess &&
+        (ordered.length > 0 ? (
+          <ul aria-label={tr('תורי הליד')} className="flex flex-col gap-1.5">
+            {ordered.map((a) => {
+              const past = new Date(a.startsAt).getTime() < now;
               return (
                 <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
                   <span className={cn('min-w-0', past ? 'text-ink-muted' : 'text-ink')}>
@@ -356,19 +371,19 @@ export function LeadAppointmentsCard({ lead }: { lead: Lead }) {
         ) : (
           <p className="text-sm text-ink-muted">{tr('אין תורים קרובים.')}</p>
         ))}
-      <ShowAll
-        total={appts.isSuccess ? list.length : 0}
-        all={all}
-        onToggle={() => setAll((a) => !a)}
-        controls={listId}
-      />
       <NewAppointmentDialog open={open} onOpenChange={setOpen} lead={lead} />
-    </SideCard>
+    </>
   );
 }
 
-const newestFirst = (a: Quote, b: Quote) =>
+export const leadQuotesNewestFirst = (a: Quote, b: Quote) =>
   new Date(b.sentAt ?? b.createdAt).getTime() - new Date(a.sentAt ?? a.createdAt).getTime();
+
+export function useLeadQuotes(lead: Lead) {
+  const business = useCurrentBusiness();
+  const query = useQuotes(business.id, { leadId: lead.id });
+  return { query, list: [...(query.data ?? [])].sort(leadQuotesNewestFirst) };
+}
 
 const statusTone: Record<ReturnType<typeof displayStatus>, string> = {
   DRAFT: 'bg-surface-muted text-ink-muted ring-surface-border',
@@ -378,30 +393,36 @@ const statusTone: Record<ReturnType<typeof displayStatus>, string> = {
   EXPIRED: 'bg-warning-50 text-warning-600 ring-warning-600/30',
 };
 
-/**
- * The lead's quotes with status and total, newest first, and "+ הצעה" (D-209). The lead's value
- * comes only from here (D-207): won = accepted quotes, open = the latest sent quote still open.
- */
-export function LeadQuotesCard({ lead }: { lead: Lead }) {
-  const business = useCurrentBusiness();
-  const quotes = useQuotes(business.id, { leadId: lead.id });
-  const [all, setAll] = useState(false);
-  const base = businessWebPaths.section(business.id, 'quotes');
-  const list = [...(quotes.data ?? [])].sort(newestFirst);
-  const shown = all ? list : list.slice(0, SUMMARY);
-  const listId = `${leadCardId('quotes')}-list`;
+/** The lead's value as the folded quotes line says it: "₪X פתוח / ₪Y נסגר" (D-207, D-211). */
+export function quotesSummary(lead: Lead) {
   const value = lead.value ?? { won: 0, open: 0 };
+  return tr('{0} פתוח / {1} נסגר', shekel.format(value.open), shekel.format(value.won));
+}
+
+/**
+ * Inside the folded "הצעות מחיר" section: the lead's value from its quotes (won = accepted,
+ * open = the latest sent quote still open, D-207), each quote's status and total, "+ הצעה".
+ */
+export function LeadQuotes({
+  lead,
+  quotes,
+}: {
+  lead: Lead;
+  quotes: ReturnType<typeof useLeadQuotes>;
+}) {
+  const business = useCurrentBusiness();
+  const base = businessWebPaths.section(business.id, 'quotes');
+  const value = lead.value ?? { won: 0, open: 0 };
+  const { query, list } = quotes;
 
   return (
-    <SideCard
-      cardKey="quotes"
-      title={tr('הצעות מחיר')}
-      action={
-        <Link to={`${base}/new?leadId=${lead.id}`} className={buttonClasses('secondary', 'sm')}>
-          {tr('+ הצעה')}
-        </Link>
-      }
-    >
+    <>
+      <Link
+        to={`${base}/new?leadId=${lead.id}`}
+        className={cn(buttonClasses('secondary', 'sm'), 'self-start')}
+      >
+        {tr('+ הצעה')}
+      </Link>
       <div className="flex flex-col gap-1.5 rounded-xl bg-surface-muted p-3">
         <p className="text-xs font-medium text-ink-muted">{tr('ערך הליד, לפי הצעות המחיר')}</p>
         <dl className="grid grid-cols-2 gap-2 text-sm">
@@ -416,14 +437,14 @@ export function LeadQuotesCard({ lead }: { lead: Lead }) {
         </dl>
       </div>
       <ListStatus
-        query={quotes}
+        query={query}
         loading={tr('טוענים את הצעות המחיר…')}
         forbidden={tr('אין לך הרשאה לראות את הצעות המחיר של הליד הזה.')}
       />
-      {quotes.isSuccess &&
+      {query.isSuccess &&
         (list.length > 0 ? (
-          <ul id={listId} aria-label={tr('הצעות המחיר של הליד')} className="flex flex-col gap-1.5">
-            {shown.map((q) => {
+          <ul aria-label={tr('הצעות המחיר של הליד')} className="flex flex-col gap-1.5">
+            {list.map((q) => {
               const status = displayStatus(q);
               return (
                 <li key={q.id} className="flex items-center justify-between gap-2 text-sm">
@@ -447,12 +468,6 @@ export function LeadQuotesCard({ lead }: { lead: Lead }) {
             {tr('אין עדיין הצעות. ערך הליד נקבע לפי הצעות המחיר שלו.')}
           </p>
         ))}
-      <ShowAll
-        total={quotes.isSuccess ? list.length : 0}
-        all={all}
-        onToggle={() => setAll((a) => !a)}
-        controls={listId}
-      />
-    </SideCard>
+    </>
   );
 }

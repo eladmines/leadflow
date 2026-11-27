@@ -77,27 +77,53 @@ const listQueries = (fetchMock: ReturnType<typeof mockApi>) =>
     .filter((u) => u.split('?')[0] === lp.list(id))
     .map((u) => new URLSearchParams(u.split('?')[1] ?? ''));
 
-describe('lead card: Details block (F34)', () => {
-  it('shows each active field by type and archived values read-only', async () => {
+describe('lead card: "מה ביקשו" with custom fields (F34, D-211)', () => {
+  it('shows filled fields as plain text, empty and archived ones hidden; "עריכה" opens the form (D-211)', async () => {
     mockApi({
       [meKey]: me(testUser),
       [fieldsKey]: () => json(200, { fields: allFields }),
       [`GET ${lp.detail(id, lead().id)}`]: () => detail(),
     });
-    renderApp(detailPath());
-    expect(await screen.findByRole('heading', { name: 'פרטים', level: 2 })).toBeInTheDocument();
-    expect(await screen.findByLabelText('דגם הרכב')).toHaveValue('מאזדה 3');
+    const { user } = renderApp(detailPath());
+    const card = await screen.findByRole('region', { name: 'מה ביקשו' });
+    expect(within(card).getByText('מחפשים אולם לחתונה')).toBeInTheDocument();
+    const terms = await within(card).findAllByRole('term');
+    const rows = terms.map((dt) => `${dt.textContent} ${dt.nextElementSibling?.textContent}`);
+    expect(rows).toEqual([
+      expect.stringMatching(/^דגם הרכב: מאזדה 3$/),
+      expect.stringMatching(/^מספר אורחים: 120$/),
+      expect.stringMatching(/^סוג האירוע: כנס/),
+      expect.stringMatching(/^חנייה במקום: כן$/),
+    ]);
+    // No inputs until "עריכה".
+    expect(within(card).queryByRole('textbox')).not.toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'עריכה' }));
+    expect(within(card).getByLabelText('דגם הרכב')).toHaveValue('מאזדה 3');
     expect(screen.getByLabelText(/מספר אורחים/)).toHaveValue('120');
     expect(screen.getByText('ערך בין 1 ל־500')).toBeInTheDocument();
     expect(screen.getByLabelText('תאריך האירוע')).toHaveValue('');
     // A value whose option was removed keeps its label.
     expect(screen.getByRole('combobox', { name: 'סוג האירוע' })).toHaveTextContent('כנס (הוסרה)');
     expect(screen.getByRole('checkbox', { name: 'חנייה במקום' })).toBeChecked();
-    // The archived field's value, read-only.
+    // The archived field's value, read-only, under "עוד פרטים".
+    await user.click(screen.getByRole('button', { name: /^עוד פרטים/ }));
     const archived = screen.getByRole('region', { name: 'שדות בארכיון' });
     expect(within(archived).getByText('הערת מוקד')).toBeInTheDocument();
     expect(within(archived).getByText('לקוח חוזר')).toBeInTheDocument();
     expect(within(archived).queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('with no values filled, the read view says so and points to "עריכה"', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [fieldsKey]: () => json(200, { fields: allFields }),
+      [`GET ${lp.detail(id, lead().id)}`]: () => detail(lead({ customFields: {} })),
+    });
+    renderApp(detailPath());
+    const card = await screen.findByRole('region', { name: 'מה ביקשו' });
+    expect(
+      await within(card).findByText('עוד לא מולאו פרטים. אפשר להוסיף אותם ב"עריכה".'),
+    ).toBeInTheDocument();
   });
 
   it('edits fields freely and saves them together with one "שמירה" (D-207)', async () => {
@@ -108,6 +134,7 @@ describe('lead card: Details block (F34)', () => {
       [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead() }),
     });
     const { user } = renderApp(detailPath());
+    await user.click(await screen.findByRole('button', { name: 'עריכה' }));
     const car = await screen.findByLabelText('דגם הרכב');
     const save = screen.getByRole('button', { name: 'שמירה' });
     // Nothing changed yet.
@@ -137,7 +164,7 @@ describe('lead card: Details block (F34)', () => {
     expect(await screen.findByText('השינויים נשמרו')).toBeInTheDocument();
   });
 
-  it('Enter in a field saves; "ביטול שינויים" puts the stored values back', async () => {
+  it('Enter in a field saves; "ביטול" closes the form and drops the edits', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
       [fieldsKey]: () => json(200, { fields: allFields }),
@@ -145,9 +172,14 @@ describe('lead card: Details block (F34)', () => {
       [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead() }),
     });
     const { user } = renderApp(detailPath());
-    const car = await screen.findByLabelText('דגם הרכב');
-    await user.type(car, ' ספורט');
-    await user.click(screen.getByRole('button', { name: 'ביטול שינויים' }));
+    await user.click(await screen.findByRole('button', { name: 'עריכה' }));
+    await user.type(await screen.findByLabelText('דגם הרכב'), ' ספורט');
+    await user.click(screen.getByRole('button', { name: 'ביטול' }));
+    expect(screen.queryByLabelText('דגם הרכב')).not.toBeInTheDocument();
+    // Focus goes back to "עריכה"; the form opens with the stored values again.
+    expect(screen.getByRole('button', { name: 'עריכה' })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'עריכה' }));
+    const car = screen.getByLabelText('דגם הרכב');
     expect(car).toHaveValue('מאזדה 3');
     expect(screen.getByRole('button', { name: 'שמירה' })).toBeDisabled();
 
@@ -170,6 +202,7 @@ describe('lead card: Details block (F34)', () => {
         }),
     });
     const { user } = renderApp(detailPath());
+    await user.click(await screen.findByRole('button', { name: 'עריכה' }));
     const guests = await screen.findByLabelText(/מספר אורחים/);
     const save = screen.getByRole('button', { name: 'שמירה' });
     await user.clear(guests);
@@ -204,6 +237,7 @@ describe('lead card: Details block (F34)', () => {
       [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead() }),
     });
     const { user, location } = renderApp(detailPath());
+    await user.click(await screen.findByRole('button', { name: 'עריכה' }));
     const car = await screen.findByLabelText('דגם הרכב');
     // Without changes, nothing holds the way out.
     const idle = new Event('beforeunload', { cancelable: true });
@@ -216,7 +250,7 @@ describe('lead card: Details block (F34)', () => {
     expect(unload.defaultPrevented).toBe(true);
 
     // Switching tabs on the same page is not leaving it.
-    await user.click(screen.getByRole('tab', { name: 'הערות והיסטוריה' }));
+    await user.click(screen.getByRole('tab', { name: 'הערות' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     // The stage still saves at once, and the draft survives it.
     await choose(user, screen.getByLabelText('שלב'), testStages[1]!.name);
@@ -248,9 +282,12 @@ describe('lead card: Details block (F34)', () => {
         json(200, { lead: lead({ customFields: { [fieldIds.car]: 'מאזדה 3 ספורט' } }) }),
     });
     const { user, location } = renderApp(detailPath());
+    await user.click(await screen.findByRole('button', { name: 'עריכה' }));
     await user.type(await screen.findByLabelText('דגם הרכב'), ' ספורט');
     await user.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByText('השינויים נשמרו')).toBeInTheDocument();
+    // The form closes after saving.
+    expect(screen.queryByLabelText('דגם הרכב')).not.toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'כל הלידים' }));
     await waitFor(() => expect(location()).toBe(leadsPath));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -263,26 +300,28 @@ describe('lead card: Details block (F34)', () => {
       [fieldsKey]: () => json(200, { fields: allFields }),
       [`GET ${lp.detail(id, lead().id)}`]: () => detail(),
     });
-    renderApp(detailPath());
+    const { user } = renderApp(detailPath());
+    await user.click(await screen.findByRole('button', { name: 'עריכה' }));
     expect(await screen.findByLabelText('דגם הרכב')).toBeEnabled();
   });
 
-  it('without fields, an employee sees no Details block', async () => {
+  it('without fields, an employee sees the request and nothing to edit', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
       ...asRole('EMPLOYEE'),
       [`GET ${lp.detail(id, lead().id)}`]: () => detail(lead({ customFields: {} })),
     });
     renderApp(detailPath());
-    await screen.findByRole('heading', { name: 'פרטי הטיפול' });
+    const card = await screen.findByRole('region', { name: 'מה ביקשו' });
     await waitFor(() =>
       expect(callsTo(fetchMock, 'GET', apiPaths.leadFields.list(id))).toHaveLength(1),
     );
-    // While the fields load, the block shows a spinner; with none defined it goes away.
+    expect(within(card).getByText('מחפשים אולם לחתונה')).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: 'פרטים' })).not.toBeInTheDocument(),
+      expect(within(card).queryByText('טוענים את השדות…')).not.toBeInTheDocument(),
     );
-    expect(screen.queryByText('טוענים את השדות…')).not.toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: 'עריכה' })).not.toBeInTheDocument();
+    expect(within(card).queryByRole('link', { name: 'ניהול שדות' })).not.toBeInTheDocument();
   });
 
   it('a manager with no fields yet is pointed to the lead-fields page', async () => {
@@ -320,7 +359,9 @@ describe('lead card: Details block (F34)', () => {
           },
         ]),
     });
-    renderApp(`${detailPath()}?tab=notes`);
+    const { user } = renderApp(detailPath());
+    // D-211: the full history is under "עוד פרטים".
+    await user.click(await screen.findByRole('button', { name: /^עוד פרטים/ }));
     const history = await screen.findByRole('list', { name: 'היסטוריית הליד' });
     expect(within(history).getByText('עודכנו: תגיות, שדות נוספים')).toBeInTheDocument();
     await waitFor(() =>
@@ -503,7 +544,12 @@ describe('long labels never widen the page (QA-F34-04)', () => {
       [`GET ${lp.detail(id, lead().id)}`]: () =>
         detail(lead({ customFields: { [fieldIds.eventType]: optionIds.wedding } })),
     });
-    renderApp(detailPath());
+    const { user } = renderApp(detailPath());
+    // Read view: the value wraps instead of widening the page.
+    const card = await screen.findByRole('region', { name: 'מה ביקשו' });
+    const read = await within(card).findByText(longOption);
+    expect(read.closest('dd')).toHaveClass('min-w-0', '[overflow-wrap:anywhere]');
+    await user.click(within(card).getByRole('button', { name: 'עריכה' }));
     const control = await screen.findByRole('combobox', { name: longField });
     // The text is all there (screen readers read it); it is shown on one line with an ellipsis
     // and the whole of it in the tooltip.
@@ -512,11 +558,8 @@ describe('long labels never widen the page (QA-F34-04)', () => {
     expect(value).toHaveAttribute('title', longOption);
     expect(value).toHaveClass('truncate', 'min-w-0');
     expect(control).toHaveClass('min-w-0');
-    // The control and the side column may shrink below their text's width.
+    // The control may shrink below its text's width.
     expect(control.closest('.relative.flex')).toHaveClass('min-w-0', 'max-w-full');
-    const column = screen.getByRole('heading', { name: 'פרטים' }).closest('[data-lead-side]');
-    expect(column).toHaveClass('min-w-0');
-    expect(column?.parentElement).toHaveClass('grid-cols-1');
   });
 
   it('long labels wrap in the list cards and are cut short, with a tooltip, in Settings', async () => {
@@ -551,7 +594,8 @@ describe('invalid characters (NUL, lone surrogates)', () => {
       [fieldsKey]: () => json(200, { fields: allFields }),
       [`GET ${lp.detail(id, lead().id)}`]: () => detail(),
     });
-    renderApp(detailPath());
+    const { user } = renderApp(detailPath());
+    await user.click(await screen.findByRole('button', { name: 'עריכה' }));
     const car = await screen.findByLabelText('דגם הרכב');
     fireEvent.change(car, { target: { value: 'מאזדה\u0000' } });
     fireEvent.click(screen.getByRole('button', { name: 'שמירה' }));

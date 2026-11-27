@@ -275,8 +275,6 @@ export const enPart3: Record<string, string> = {
   'לחיצה על שם פותחת את הליד: פרטים, הערות, משימות, תורים, הצעות מחיר ושיחת וואטסאפ.':
     'Click a name to open the lead: details, notes, tasks, appointments, quotes and the WhatsApp conversation.',
   'כרטיס הליד': 'The lead',
-  'מי הלקוח, מאיפה הגיע ומה ביקש. כפתורי החיוג והאימייל פותחים שיחה בלחיצה.':
-    'Who the customer is, where they came from and what they asked for. The call and email buttons start a conversation.',
   'שיחת וואטסאפ': 'WhatsApp conversation',
   שיחות: 'Conversations',
   השיחות: 'Conversations',
@@ -381,8 +379,6 @@ export const enPart3: Record<string, string> = {
     "Click me on any page: a page tour that explains what's on it, the full product tour, and quick search.",
   'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט התורים או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.':
     "Everyone who contacted the business: from the website form, WhatsApp, the booking bot or added by you. Each lead moves through stages until it's closed.",
-  'השלב בתהליך, מי אחראי ותגיות. כל שינוי נשמר מיד ונרשם בהיסטוריה.':
-    "The stage, who's responsible, and tags. Every change is saved at once and recorded in the history.",
   'כותבים מה צריך לעשות ומתי, ולוחצים "הוספה". אפשר לשייך לעובד, ומקבלים מייל ופעמון כשמגיע הזמן.':
     'Write what needs doing and when, then click "Add". You can assign it to a teammate, and you get an email and a bell notification when it\'s due.',
   '"שלי" מראה רק את המשימות שלכם; "של כל הצוות" את כולן.': `"Mine" shows only your tasks; "Everyone's" shows all of them.`,

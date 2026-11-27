@@ -273,7 +273,6 @@ export const enPart1: Record<string, string> = {
   'הסרת התגית {0}': 'Remove tag {0}',
   'הגעת למספר התגיות המרבי': "You've reached the maximum number of tags",
   'למשל: VIP, חוזר, דחוף': 'e.g. VIP, returning, urgent',
-  'פרטי הטיפול': 'Handling details',
   שלב: 'Stage',
   אחראי: 'Owner',
   'ללא אחראי': 'Unassigned',

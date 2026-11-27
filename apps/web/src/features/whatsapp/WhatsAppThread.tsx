@@ -19,6 +19,9 @@ import { messageBody } from '../../lib/messageBody';
 
 const timeFmt = new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute: '2-digit' });
 
+/** The reply box, so the lead page's WhatsApp button can put the cursor there. */
+export const WHATSAPP_REPLY_ID = 'whatsapp-reply';
+
 /**
  * WhatsApp conversation with the lead's contact (F12 POC). Hidden for businesses without a
  * connected number, unless older messages exist.
@@ -166,6 +169,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         (replyUntil || mail ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
+              id={WHATSAPP_REPLY_ID}
               label={
                 mail
                   ? tr('תשובה במייל')

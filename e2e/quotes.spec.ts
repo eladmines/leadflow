@@ -28,9 +28,11 @@ async function ownerWithLead(page: Page) {
 
 test('quote from a lead, sent, accepted by the customer', async ({ page, browser }) => {
   const { id, leadId } = await ownerWithLead(page);
-  // D-209: quotes are a card on the lead page; "+ הצעה" opens the quote editor.
+  // D-211: quotes are a folded section on the lead page; "+ הצעה" opens the quote editor.
   await page.goto(`/b/${id}/leads/${leadId}`);
-  const quotesCard = page.getByRole('region', { name: 'הצעות מחיר' });
+  const openQuotes = () => page.getByRole('button', { name: /^הצעות מחיר/ }).click();
+  await openQuotes();
+  const quotesCard = page.getByRole('region', { name: /^הצעות מחיר/ });
   const amount = (label: RegExp) =>
     quotesCard.locator('dl > div').filter({ hasText: label }).locator('dd');
   await expect(amount(/^פתוח/)).toHaveText(/^\D*0\D*$/);
@@ -58,6 +60,7 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
 
   // Sent and still open: the lead's open value is the quote's total, in whole shekels (D-208).
   await page.goto(`/b/${id}/leads/${leadId}`);
+  await openQuotes();
   await expect(amount(/^פתוח/)).toContainText('886');
   await expect(amount(/^נסגר/)).toHaveText(/^\D*0\D*$/);
   await expect(quotesCard.getByRole('listitem').first()).toContainText('נשלחה');
@@ -72,7 +75,9 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   await expect(customer.getByText(/ההצעה אושרה/)).toBeVisible();
 
   await page.goto(`/b/${id}/leads/${leadId}`);
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   await expect(page.getByText('הצעת מחיר מס׳ 1001 אושרה על ידי הלקוח')).toBeVisible();
+  await openQuotes();
   // Accepted: the value moves from open to won (D-207).
   await expect(amount(/^נסגר/)).toContainText('886');
   await expect(amount(/^פתוח/)).toHaveText(/^\D*0\D*$/);

@@ -270,8 +270,9 @@ describe('tasks elsewhere', () => {
       [`POST ${tp.list(id)}`]: () => json(201, { task: task() }),
     });
     const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}/${leadId}`);
-    // D-209: tasks are a card on the lead page, not a tab; "+ משימה" opens the form.
-    const card = await screen.findByRole('region', { name: 'משימות' });
+    // D-211: the tasks sit behind the next action ("כל המשימות"); "+ משימה" opens the form.
+    const card = await screen.findByRole('region', { name: 'הפעולה הבאה' });
+    await user.click(await within(card).findByRole('button', { name: 'כל המשימות (1)' }));
     const list = await within(card).findByRole('list', { name: 'משימות הליד' });
     expect(within(list).getByText('לחזור לרון')).toBeInTheDocument();
     expect(within(card).queryByRole('form', { name: 'משימה חדשה' })).not.toBeInTheDocument();

@@ -142,9 +142,6 @@ export const enPart4: Record<string, string> = {
     "Business details, opening hours (which decide the hours offered for appointments) and service areas, all in one tab, each card with its own save button. The second tab: channels (connecting the business's WhatsApp and Facebook page).",
   // D-207 – D-210: lead page in cards, next action = nearest task, value from quotes.
   'יש שינויים שלא נשמרו': 'Unsaved changes',
-  'ביטול שינויים': 'Discard changes',
-  'הצגת פחות': 'Show less',
-  'הצג הכול ({0})': 'Show all ({0})',
   'הפעולה הבאה': 'Next action',
   'הפעולה הבאה:': 'Next action:',
   'אחראי:': 'Assignee:',
@@ -176,14 +173,34 @@ export const enPart4: Record<string, string> = {
   'לצאת בלי לשמור': 'Leave without saving',
   'לפי הצעות המחיר': 'From quotes',
   '{0} בהצעות פתוחות · לפי הצעות מחיר': '{0} in open quotes · from quotes',
-  'המשימה הפתוחה הקרובה של הליד: מה לעשות, מתי ומי אחראי. "+ משימה" מוסיף משימה חדשה.':
-    'The lead\'s nearest open task: what to do, when and who\'s responsible. "+ Task" adds a new one.',
-  'השדות שהגדרתם לכל ליד. ממלאים בחופשיות ושומרים בכפתור "שמירה".':
-    'The fields you set up for every lead. Fill them in freely and click "Save".',
-  'משימות, תורים והצעות מחיר': 'Tasks, appointments and quotes',
-  'כל אחד בכרטיס משלו, הקרובים קודם. ה־"+" בכל כרטיס מוסיף משימה, תור או הצעה. ערך הליד מחושב מהצעות המחיר: מה שאושר ומה שנשלח ועדיין פתוח.':
-    'Each in its own card, nearest first. The "+" on each card adds a task, an appointment or a quote. The lead\'s value comes from its quotes: what was accepted and what was sent and is still open.',
-  'שיחה והיסטוריה': 'Conversation and history',
-  'שתי לשוניות: השיחה עם הלקוח (אפשר לענות בוואטסאפ עד 24 שעות מההודעה האחרונה שלו) והערות והיסטוריה, כל מה שקרה בליד.':
-    'Two tabs: the conversation with the customer (you can reply on WhatsApp up to 24 hours after their last message) and notes & history, everything that happened with the lead.',
+  // D-211: a simpler lead page.
+  'אין עדיין פרטים על הבקשה.': 'No details about the request yet.',
+  'מה ביקשו': 'What they asked for',
+  'עוד לא מולאו פרטים. אפשר להוסיף אותם ב"עריכה".':
+    'No details filled in yet. Add them with "Edit".',
+  'עוד לא מולאו פרטים.': 'No details filled in yet.',
+  '{0} פתוח / {1} נסגר': '{0} open / {1} won',
+  'כל המשימות ({0})': 'All tasks ({0})',
+  'כל המשימות': 'All tasks',
+  'סימון כבוצעה: {0}': 'Mark as done: {0}',
+  '{0} קרובים': '{0} upcoming',
+  התקשרות: 'Call',
+  נוצר: 'Created',
+  'עדיין אין הערות.': 'No notes yet.',
+  'עוד פרטים': 'More details',
+  'פעולות מהירות': 'Quick actions',
+  'המשימה הפתוחה הקרובה: מה לעשות, מתי ומי אחראי. "בוצע" מסמן אותה, "+ משימה" מוסיף חדשה, ושאר המשימות ב"כל המשימות".':
+    'The nearest open task: what to do, when and who\'s responsible. "Done" marks it, "+ Task" adds a new one, and the other tasks are under "All tasks".',
+  'הצעות מחיר (עם ערך הליד), תורים ועוד פרטים: מקור, אחראי, תגיות והיסטוריה מלאה. לחיצה על שורה פותחת אותה.':
+    "Quotes (with the lead's value), appointments and more details: source, owner, tags and the full history. Click a row to open it.",
+  'השיחה עם הלקוח (אפשר לענות בוואטסאפ עד 24 שעות מההודעה האחרונה שלו) וההערות של הצוות.':
+    "The conversation with the customer (you can reply on WhatsApp up to 24 hours after their last message) and the team's notes.",
+  'מה הלקוח כתב והפרטים שמילאתם. "עריכה" פותחת את הטופס, ושומרים בכפתור "שמירה".':
+    'What the customer wrote and the details you filled in. "Edit" opens the form; save with "Save".',
+  'מי הלקוח, באיזה שלב הוא, וכפתורים להתקשר או לכתוב לו בוואטסאפ.':
+    "Who the customer is, which stage they're in, and buttons to call them or write on WhatsApp.",
+  'עוד בלחיצה': 'More, one click away',
+  'שיחה והערות': 'Conversation and notes',
+  'WhatsApp: מעבר לשיחה בעמוד': 'WhatsApp: go to the conversation on this page',
+  'WhatsApp: פתיחה בחלון חדש': 'WhatsApp: opens in a new window',
 };

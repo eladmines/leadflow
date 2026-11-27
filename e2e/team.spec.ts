@@ -96,6 +96,8 @@ test('owner invites an employee who registers from the email and joins with limi
   await page.reload();
   await expect(page.getByRole('list', { name: 'חברי הצוות' })).toContainText('יוסי מזרחי');
   await page.goto(`/b/${business.id}/leads/${lead.id}`);
+  // Owner and history are under "עוד פרטים" (D-211).
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   await choose(page, page.getByLabel('אחראי', { exact: true }), 'יוסי מזרחי');
   await expect(page.getByText('הליד שויך ליוסי מזרחי')).toBeVisible();
 

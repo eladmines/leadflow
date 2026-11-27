@@ -43,6 +43,8 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await dialog.getByLabel('פרטי הפנייה').fill('טיפול 10,000 ק"מ ליונדאי i20');
   await dialog.getByRole('button', { name: 'יצירת ליד' }).click();
   await expect(page.getByRole('heading', { name: 'אבי כהן', level: 1 })).toBeVisible();
+  // The full history is under "עוד פרטים" (D-211).
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   await expect(page.getByText('הליד נוצר ידנית')).toBeVisible();
 
   // Board: move to "נוצר קשר" — drag on desktop, stage menu on mobile.
@@ -62,6 +64,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await target.getByRole('link', { name: 'אבי כהן' }).click();
   await expect(page.getByLabel('שלב', { exact: true })).toContainText(/.+/);
   await choose(page, page.getByLabel('שלב', { exact: true }), 'ממתין');
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   await expect(page.getByText('השלב שונה מ"נוצר קשר" ל"ממתין"')).toBeVisible();
   await page.getByLabel('הוספת הערה').fill('נשלחה הצעה של ₪650, מחכה לאישור');
   await page.getByRole('button', { name: 'שמירת הערה' }).click();

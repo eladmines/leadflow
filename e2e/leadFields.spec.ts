@@ -141,8 +141,10 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await dialog.getByRole('button', { name: 'יצירת ליד' }).click();
   await expect(page.getByRole('heading', { name: 'אבי כהן', level: 1 })).toBeVisible();
 
-  // Lead card: the Details block shows the values; edits are saved with one "שמירה" (D-207).
-  await expect(page.getByRole('heading', { name: 'פרטים', exact: true })).toBeVisible();
+  // Lead card: "מה ביקשו" shows the values; "עריכה" opens the form, saved with one "שמירה"
+  // (D-207, D-211).
+  await expect(page.getByRole('heading', { name: 'מה ביקשו', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'עריכה' }).click();
   const save = page.getByRole('form', { name: 'פרטים' }).getByRole('button', { name: 'שמירה' });
   const model = page.getByLabel(/^דגם רכב/);
   await expect(model).toHaveValue('מאזדה 3');
@@ -156,6 +158,8 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await model.fill('טויוטה קורולה');
   await save.click();
   await expect(page.getByText('השינויים נשמרו')).toBeVisible();
+  // The full history is under "עוד פרטים" (D-211).
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   const history = page.getByRole('list', { name: 'היסטוריית הליד' });
   await expect(history).toContainText('דגם רכב');
   await expect(history).toContainText('טויוטה קורולה');
@@ -210,6 +214,7 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await expect(page.getByRole('dialog', { name: 'ליד חדש' }).getByText('סוג טיפול')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await page.getByRole('link', { name: 'אבי כהן' }).first().click();
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   await expect(page.getByRole('heading', { name: 'שדות בארכיון' })).toBeVisible();
   const archivedSection = page.getByRole('region', { name: 'שדות בארכיון' });
   await expect(archivedSection).toContainText('סוג טיפול');
@@ -327,6 +332,7 @@ test.describe('375px', () => {
     await noHorizontalScroll(page);
     await page.keyboard.press('Escape');
     await page.goto(`/b/${id}/leads/${lead.id}`);
+    await page.getByRole('button', { name: 'עריכה' }).click();
     await expect(page.getByLabel(/^שם ארוך מאוד/)).toBeVisible(); // fields loaded, not the spinner
     await expect(page.getByLabel(/^בחירה/)).toContainText('קצר');
     await noHorizontalScroll(page);
@@ -346,6 +352,8 @@ test.describe('375px', () => {
       })
     ).json();
     await page.goto(`/b/${id}/leads/${lead.id}`);
+    await noHorizontalScroll(page); // the read view
+    await page.getByRole('button', { name: 'עריכה' }).click();
     await expect(page.getByLabel(/^בחירה/)).toContainText('אפשרות ארוכה');
     await noHorizontalScroll(page);
   });
@@ -434,6 +442,7 @@ test('an employee sees the no-permission state and can still fill values', async
     })
   ).json();
   await emp.goto(`/b/${id}/leads/${lead.id}`);
+  await emp.getByRole('button', { name: 'עריכה' }).click();
   const input = emp.getByLabel(/^דגם רכב/);
   await input.fill('סקודה');
   await input.press('Enter');
@@ -502,7 +511,10 @@ test.describe('English', () => {
       })
     ).json();
     await page.goto(`/b/${id}/leads/${lead.id}`);
-    await expect(page.getByRole('heading', { name: 'Details', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'What they asked for', exact: true }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Edit' }).click();
     await page.getByLabel(/^Guests/).fill('99');
     await page.getByLabel(/^Guests/).press('Enter');
     await expect(page.getByText('The number must be at most 50')).toBeVisible();

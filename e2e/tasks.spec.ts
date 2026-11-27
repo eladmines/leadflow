@@ -38,24 +38,23 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   page,
 }) => {
   const { id, leadId } = await ownerWithLead(page);
-  // D-209: tasks are a card on the lead page; "+ משימה" opens the form. An old `?tab=tasks`
-  // link lands on that card.
+  // D-211: the tasks sit behind the next action ("כל המשימות"); "+ משימה" opens the form. An old
+  // `?tab=tasks` link opens and focuses that list.
   await page.goto(`/b/${id}/leads/${leadId}?tab=tasks`);
-  const tasksCard = page.getByRole('region', { name: 'משימות' });
-  await expect(tasksCard.getByRole('heading', { name: 'משימות' })).toBeFocused();
+  const nextAction = page.getByRole('region', { name: 'הפעולה הבאה' });
+  await expect(nextAction.getByRole('button', { name: /^כל המשימות/ })).toBeFocused();
   await expect(page).not.toHaveURL(/tab=/);
-  const nextAction = page.getByRole('group', { name: 'הפעולה הבאה' });
   await expect(nextAction).toContainText('אין פעולה הבאה');
-  await tasksCard.getByRole('button', { name: '+ משימה' }).click();
+  await nextAction.getByRole('button', { name: '+ משימה' }).click();
   const form = page.getByRole('form', { name: 'משימה חדשה' });
   await form.getByLabel('משימה חדשה').fill('להתקשר לגבי הטיפול');
   await form.getByLabel('מועד').fill(localIn(-30));
   await form.getByRole('button', { name: 'הוספה' }).click();
   await expect(page.getByRole('list', { name: 'משימות הליד' })).toContainText('להתקשר לגבי הטיפול');
   // The nearest open task is the next action, overdue in words.
-  await expect(nextAction).toContainText('הפעולה הבאה: להתקשר לגבי הטיפול');
+  await expect(nextAction).toContainText('להתקשר לגבי הטיפול');
   await expect(nextAction).toContainText('באיחור');
-  await page.getByRole('tab', { name: 'הערות והיסטוריה' }).click();
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   await expect(page.getByRole('list', { name: 'היסטוריית הליד' })).toContainText(
     'נוספה משימה: להתקשר לגבי הטיפול',
   );
@@ -69,31 +68,75 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   await expect(page.getByRole('heading', { name: 'אין משימות פתוחות' })).toBeVisible();
 
   await page.goto(`/b/${id}/leads/${leadId}`);
+  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
   await expect(page.getByRole('list', { name: 'היסטוריית הליד' })).toContainText(
     'בוצעה משימה: להתקשר לגבי הטיפול',
   );
   // Done: no next action any more.
-  await expect(page.getByRole('group', { name: 'הפעולה הבאה' })).toContainText('אין פעולה הבאה');
+  await expect(page.getByRole('region', { name: 'הפעולה הבאה' })).toContainText('אין פעולה הבאה');
 });
 
-test('on a phone the lead page shows the cards first, then the tabs, without side scrolling', async ({
+test('the next action\'s "בוצע" completes the task and the next one moves up', async ({ page }) => {
+  const { id, leadId } = await ownerWithLead(page);
+  const api = (data: object) =>
+    page.request.post(`/api/v1/businesses/${id}/tasks`, { headers: API_HEADERS, data });
+  await api({ title: 'להתקשר', dueAt: new Date(Date.now() + 3_600_000).toISOString(), leadId });
+  await api({
+    title: 'לשלוח הצעה',
+    dueAt: new Date(Date.now() + 86_400_000).toISOString(),
+    leadId,
+  });
+  await page.goto(`/b/${id}/leads/${leadId}`);
+  const nextAction = page.getByRole('region', { name: 'הפעולה הבאה' });
+  await expect(nextAction).toContainText('להתקשר');
+  await nextAction.getByRole('button', { name: 'סימון כבוצעה: להתקשר' }).click();
+  await expect(nextAction).toContainText('לשלוח הצעה');
+  await expect(nextAction.getByRole('button', { name: 'כל המשימות (1)' })).toBeVisible();
+});
+
+test('on a phone: next action and what they asked above the tabs, a quick-actions bar, no side scrolling', async ({
   page,
   isMobile,
 }) => {
   test.skip(!isMobile, 'the 375px layout');
   const { id, leadId } = await ownerWithLead(page);
   await page.goto(`/b/${id}/leads/${leadId}`);
-  const tasksCard = page.getByRole('region', { name: 'משימות' });
-  const quotesCard = page.getByRole('region', { name: 'הצעות מחיר' });
-  const tabs = page.getByRole('tab', { name: 'הערות והיסטוריה' });
+  const nextAction = page.getByRole('region', { name: 'הפעולה הבאה' });
+  const asked = page.getByRole('region', { name: 'מה ביקשו' });
+  const tabs = page.getByRole('tab', { name: 'הערות' });
   await expect(tabs).toBeAttached();
   const top = async (l: typeof tabs) => (await l.boundingBox())!.y;
-  expect(await top(tasksCard)).toBeLessThan(await top(tabs));
-  expect(await top(quotesCard)).toBeLessThan(await top(tabs));
+  expect(await top(nextAction)).toBeLessThan(await top(tabs));
+  expect(await top(asked)).toBeLessThan(await top(tabs));
+  const bar = page.getByRole('navigation', { name: 'פעולות מהירות' });
+  await expect(bar).toBeVisible();
+  await expect(bar.getByRole('link', { name: 'התקשרות' })).toHaveAttribute('href', /^tel:/);
+  await expect(bar.getByRole('link', { name: 'WhatsApp: פתיחה בחלון חדש' })).toHaveAttribute(
+    'href',
+    /wa\.me/,
+  );
+  // The end of the page scrolls clear of the bar.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const last = page.getByRole('button', { name: 'מחיקת הליד' });
+  expect((await last.boundingBox())!.y + (await last.boundingBox())!.height).toBeLessThanOrEqual(
+    (await bar.boundingBox())!.y,
+  );
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
+  await bar.getByRole('button', { name: '+ משימה' }).click();
+  await expect(
+    page.getByRole('form', { name: 'משימה חדשה' }).getByLabel('משימה חדשה'),
+  ).toBeFocused();
+});
+
+test('on desktop the quick-actions bar is hidden', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop layout');
+  const { id, leadId } = await ownerWithLead(page);
+  await page.goto(`/b/${id}/leads/${leadId}`);
+  await expect(page.getByRole('heading', { name: 'אבי כהן', level: 1 })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'פעולות מהירות' })).toBeHidden();
 });
 
 test('the reminder email arrives when a task is due', async ({ page, isMobile }) => {
