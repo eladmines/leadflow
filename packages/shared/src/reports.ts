@@ -19,7 +19,7 @@ const attributionRow = z.object({
   /** Leads in a Won stage ("became customers"). */
   won: z.number().int(),
   lost: z.number().int(),
-  /** Sum of the won leads' deal values (whole units). */
+  /** D-207: sum of these leads' accepted quotes (`Lead.value.won`), whole shekels. */
   wonValue: z.number().int(),
   /** F31: website visits from this source (or campaign) in the range. */
   visits: z.number().int(),
@@ -76,7 +76,9 @@ export const reportSummarySchema = z.object({
   leads: z.object({ current: z.number().int(), previous: z.number().int() }),
   /** Won / (won + lost) for leads created in the range; null when nothing was decided yet. */
   closeRate: z.number().nullable(),
+  /** D-207: Σ `Lead.value.won` (accepted quotes) of the leads created in the range, whole shekels. */
   wonValue: z.number().int(),
+  /** D-208/D-210: Σ `Lead.value.open` (latest sent quote, if still open) of those leads in OPEN stages. */
   openValue: z.number().int(),
   /** Average minutes from a lead arriving to the first human action on it (note, stage, assignment). */
   avgResponseMinutes: z.number().nullable(),
@@ -94,6 +96,7 @@ export const reportSummarySchema = z.object({
       name: z.string(),
       kind: z.enum(STAGE_KINDS),
       count: z.number().int(),
+      /** D-208: Σ `leadValueForStageKind(lead.value, kind)` — open for OPEN, won for WON, 0 for LOST. */
       value: z.number().int(),
     }),
   ),

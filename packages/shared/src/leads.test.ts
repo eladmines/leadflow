@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { defaultOpeningHours } from './business';
-import { FORM_TOKEN_PLACEHOLDER, LEAD_FORM_PATH, leadSubmissionSchema } from './leads';
+import {
+  FORM_TOKEN_PLACEHOLDER,
+  LEAD_FORM_PATH,
+  agorotToShekels,
+  createLeadRequestSchema,
+  importCustomerRowSchema,
+  leadNextTaskSchema,
+  leadSchema,
+  leadSubmissionSchema,
+  leadValueForStageKind,
+  leadValueSchema,
+  updateLeadRequestSchema,
+} from './leads';
 import { renderSiteMessagePage, renderSitePage } from './site-render';
 import { buildTemplateDraft, type SiteBusinessInfo } from './site-templates';
 
@@ -106,5 +118,59 @@ describe('lead form rendering', () => {
     expect(html).toContain('noindex');
     expect(html).not.toMatch(/<script|<b>|<i>/);
     expect(html).toContain('#9b2f52');
+  });
+});
+
+describe('D-207/D-209 lead value from quotes, next task', () => {
+  const id = '5c000000-0000-4000-8000-000000000001';
+
+  it('rounds agorot to whole shekels, half-up', () => {
+    expect(agorotToShekels(0)).toBe(0);
+    expect(agorotToShekels(49)).toBe(0);
+    expect(agorotToShekels(50)).toBe(1);
+    expect(agorotToShekels(123_449)).toBe(1234);
+    expect(agorotToShekels(123_450)).toBe(1235);
+  });
+
+  it('a board column sums open for OPEN, won for WON and nothing for LOST', () => {
+    const v = { won: 700, open: 300 };
+    expect(leadValueForStageKind(v, 'OPEN')).toBe(300);
+    expect(leadValueForStageKind(v, 'WON')).toBe(700);
+    expect(leadValueForStageKind(v, 'LOST')).toBe(0);
+  });
+
+  it('the value is read-only: requests drop expectedValue, the import drops value', () => {
+    const created = createLeadRequestSchema.parse({
+      name: 'דנה',
+      phone: '0521234567',
+      expectedValue: 1500,
+    });
+    expect('expectedValue' in created).toBe(false);
+    const patch = updateLeadRequestSchema.parse({
+      expectedValue: 2000,
+      nextActionAt: '2026-11-01T09:00:00.000Z',
+      customFields: { [id]: 'x' },
+    });
+    expect(patch).toEqual({ customFields: { [id]: 'x' } });
+    expect(importCustomerRowSchema.parse({ name: 'דנה', value: '1,500' })).toEqual({ name: 'דנה' });
+  });
+
+  it('a lead carries its nearest open task, or null', () => {
+    const task = {
+      id,
+      title: 'להתקשר',
+      dueAt: '2026-11-01T09:00:00.000Z',
+      assignee: { id, name: 'דנה' },
+    };
+    expect(leadNextTaskSchema.parse(task)).toEqual(task);
+    expect(leadSchema.shape.nextTask.parse(null)).toBeNull();
+    expect(leadNextTaskSchema.safeParse({ ...task, dueAt: null }).success).toBe(false);
+  });
+
+  it('a lead carries a non-negative integer value', () => {
+    expect(leadValueSchema.safeParse({ won: 0, open: 1200 }).success).toBe(true);
+    expect(leadValueSchema.safeParse({ won: -1, open: 0 }).success).toBe(false);
+    expect(leadValueSchema.safeParse({ won: 1.5, open: 0 }).success).toBe(false);
+    expect(leadValueSchema.safeParse({ won: 0 }).success).toBe(false);
   });
 });

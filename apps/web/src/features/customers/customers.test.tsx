@@ -147,9 +147,10 @@ describe('import customers from a spreadsheet (D-179)', () => {
       expect(callsTo(fetchMock, 'POST', apiPaths.customers.import(id))).toEqual([
         {
           rows: [
-            { name: 'דנה כהן', phone: '0521234567', email: 'dana@example.com', value: '1500' },
-            { name: 'יוסי לוי', phone: '0527654321', email: '', value: '' },
-            { name: 'רונית', phone: '', email: '', value: '' },
+            // D-207: the amount column is not sent (a lead's value comes only from quotes).
+            { name: 'דנה כהן', phone: '0521234567', email: 'dana@example.com' },
+            { name: 'יוסי לוי', phone: '0527654321', email: '' },
+            { name: 'רונית', phone: '', email: '' },
           ],
         },
       ]),

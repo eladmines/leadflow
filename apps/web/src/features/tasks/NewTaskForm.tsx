@@ -20,8 +20,21 @@ const formSchema = createTaskRequestSchema.pick({ title: true }).extend({
 });
 type FormValues = z.infer<typeof formSchema>;
 
-/** Quick add. With `leadId`, the task is linked to that lead. */
-export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: boolean }) {
+/**
+ * Quick add. With `leadId`, the task is linked to that lead. `autoFocus` puts the cursor in the
+ * title (a form opened on demand); `onCreated` runs after a task was added.
+ */
+export function NewTaskForm({
+  leadId,
+  compact,
+  autoFocus,
+  onCreated,
+}: {
+  leadId?: string;
+  compact?: boolean;
+  autoFocus?: boolean;
+  onCreated?: () => void;
+}) {
   const business = useCurrentBusiness();
   const canAssign = can(business.role, 'tasks.view.all');
   const members = useMembers(business.id, canAssign);
@@ -54,6 +67,7 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
       });
       setPicked(null);
       form.reset({ title: '', dueLocal: defaultDueLocal(), assigneeId: v.assigneeId });
+      onCreated?.();
     } catch (err) {
       setFormError(applyServerErrors(err, form.setError, ['title']));
     }
@@ -71,6 +85,7 @@ export function NewTaskForm({ leadId, compact }: { leadId?: string; compact?: bo
         <Field
           label={tr('משימה חדשה')}
           placeholder={tr('למשל: להתקשר לגבי ההצעה')}
+          autoFocus={autoFocus}
           error={form.formState.errors.title?.message}
           {...form.register('title')}
         />

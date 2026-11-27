@@ -12,7 +12,10 @@ export const customerPurchaseSchema = z.object({
   leadId: z.string().uuid(),
   /** When it became a purchase: the quote's acceptance, else the lead's last change. */
   at: z.string().datetime(),
-  /** Deal value in whole units; null when none was entered. */
+  /**
+   * D-207: the lead's accepted quotes' total in whole shekels (`Lead.value.won`); null when the
+   * lead has no accepted quote (e.g. moved to a Won stage or imported), counted as 0 in totals.
+   */
   value: z.number().int().nullable(),
   /** `won` = moved to a Won stage, `quote` = accepted a quote (both = won). */
   via: z.enum(['won', 'quote']),
@@ -33,6 +36,7 @@ export const customerSchema = z.object({
   name: z.string(),
   phone: z.string().nullable(),
   email: z.string().nullable(),
+  /** D-207: sum of the purchases' values (accepted quotes only), whole shekels. */
   totalValue: z.number().int(),
   /** Null for someone who only booked. */
   lastPurchaseAt: z.string().datetime().nullable(),

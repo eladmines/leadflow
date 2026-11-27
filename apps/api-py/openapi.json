@@ -2340,7 +2340,7 @@
     "type": "object"
    },
    "CreateLeadRequest": {
-    "description": "Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused.",
+    "description": "Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused.\nD-207: no value field; an `expectedValue` key from an old client is ignored like any extra.",
     "properties": {
      "customFields": {
       "additionalProperties": {
@@ -2372,17 +2372,6 @@
        }
       ],
       "title": "Email"
-     },
-     "expectedValue": {
-      "anyOf": [
-       {
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Expectedvalue"
      },
      "message": {
       "anyOf": [
@@ -3715,7 +3704,7 @@
     "type": "object"
    },
    "ImportCustomerRow": {
-    "description": "A spreadsheet row as the browser sends it: raw text, checked per row on the server.",
+    "description": "A spreadsheet row as the browser sends it: raw text, checked per row on the server.\nD-207: no value column; a `value` key is ignored.",
     "properties": {
      "email": {
       "anyOf": [
@@ -3752,18 +3741,6 @@
        }
       ],
       "title": "Phone"
-     },
-     "value": {
-      "anyOf": [
-       {
-        "maxLength": 40,
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Value"
      }
     },
     "title": "ImportCustomerRow",
@@ -4384,6 +4361,34 @@
     "title": "LeadListResponse",
     "type": "object"
    },
+   "LeadNextTask": {
+    "description": "D-209: the lead's nearest open task the member may see.",
+    "properties": {
+     "assignee": {
+      "$ref": "#/components/schemas/PersonOut"
+     },
+     "dueAt": {
+      "title": "Dueat",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "dueAt",
+     "assignee"
+    ],
+    "title": "LeadNextTask",
+    "type": "object"
+   },
    "LeadOut": {
     "properties": {
      "attribution": {
@@ -4423,17 +4428,6 @@
       "title": "Customfields",
       "type": "object"
      },
-     "expectedValue": {
-      "anyOf": [
-       {
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Expectedvalue"
-     },
      "id": {
       "title": "Id",
       "type": "string"
@@ -4459,16 +4453,15 @@
       ],
       "title": "Message"
      },
-     "nextActionAt": {
+     "nextTask": {
       "anyOf": [
        {
-        "type": "string"
+        "$ref": "#/components/schemas/LeadNextTask"
        },
        {
         "type": "null"
        }
-      ],
-      "title": "Nextactionat"
+      ]
      },
      "owner": {
       "anyOf": [
@@ -4516,6 +4509,9 @@
      "updatedAt": {
       "title": "Updatedat",
       "type": "string"
+     },
+     "value": {
+      "$ref": "#/components/schemas/LeadValue"
      }
     },
     "required": [
@@ -4527,8 +4523,8 @@
      "attribution",
      "message",
      "owner",
-     "expectedValue",
-     "nextActionAt",
+     "value",
+     "nextTask",
      "tags",
      "customFields",
      "lastWhatsApp",
@@ -4578,6 +4574,27 @@
      "tags"
     ],
     "title": "LeadTagsResponse",
+    "type": "object"
+   },
+   "LeadValue": {
+    "description": "D-207/D-208/D-210: whole shekels from the lead's quotes. `won` = all accepted quotes;\n`open` = the latest sent quote while still sent and not expired.",
+    "properties": {
+     "open": {
+      "minimum": 0.0,
+      "title": "Open",
+      "type": "integer"
+     },
+     "won": {
+      "minimum": 0.0,
+      "title": "Won",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "won",
+     "open"
+    ],
+    "title": "LeadValue",
     "type": "object"
    },
    "LoginRequest": {
@@ -7735,7 +7752,7 @@
     "type": "object"
    },
    "UpdateLeadRequest": {
-    "description": "PATCH: every field optional; each change is recorded in the activity log. Use\n`model_fields_set` to tell \"absent\" from \"null\".",
+    "description": "PATCH: every field optional; each change is recorded in the activity log. Use\n`model_fields_set` to tell \"absent\" from \"null\". D-207/D-209: no `expectedValue` and no\n`nextActionAt`; those keys from an old client are ignored (extras), not stored.",
     "properties": {
      "customFields": {
       "additionalProperties": {
@@ -7757,17 +7774,6 @@
       "title": "Customfields",
       "type": "object"
      },
-     "expectedValue": {
-      "anyOf": [
-       {
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Expectedvalue"
-     },
      "message": {
       "anyOf": [
        {
@@ -7778,17 +7784,6 @@
        }
       ],
       "title": "Message"
-     },
-     "nextActionAt": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Nextactionat"
      },
      "ownerId": {
       "anyOf": [

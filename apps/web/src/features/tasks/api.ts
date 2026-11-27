@@ -29,16 +29,15 @@ export function useTasks(businessId: string, query: TaskListQuery = {}) {
   });
 }
 
-/** Task changes also touch lead history, so lead detail caches are refreshed too. */
+/** Task changes touch lead history and the lead's next task, so lead caches are refreshed too. */
 function useTaskMutation<T>(businessId: string, fn: (vars: T) => Promise<unknown>) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: fn,
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: tasksQueryKey(businessId) });
-      void queryClient.invalidateQueries({
-        queryKey: ['businesses', businessId, 'leads', 'detail'],
-      });
+      // Lead history and the lead's next task (D-209), on its page and in the lists.
+      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'leads'] });
     },
   });
 }
@@ -74,9 +73,8 @@ export function useUpdateTask(businessId: string) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: tasksQueryKey(businessId) });
-      void queryClient.invalidateQueries({
-        queryKey: ['businesses', businessId, 'leads', 'detail'],
-      });
+      // Lead history and the lead's next task (D-209), on its page and in the lists.
+      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'leads'] });
     },
   });
 }
@@ -111,9 +109,8 @@ export function useCompleteTasks(businessId: string) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: tasksQueryKey(businessId) });
-      void queryClient.invalidateQueries({
-        queryKey: ['businesses', businessId, 'leads', 'detail'],
-      });
+      // Lead history and the lead's next task (D-209), on its page and in the lists.
+      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'leads'] });
     },
   });
 }

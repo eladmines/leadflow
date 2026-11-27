@@ -10,7 +10,7 @@ from app.db import models
 from app.modules.reports.events import device_of, event_label, record_events
 from app.modules.reports.visits import is_bot_agent, local_day, record_visit
 from app.shared.attribution import classify_attribution
-from tests.conftest import add_member, business_url, new_user, owner_with_business, req
+from tests.conftest import add_member, business_url, make_quote, new_user, owner_with_business, req
 
 DAY = timedelta(days=1)
 
@@ -21,15 +21,14 @@ async def _setup(client, db):
     stages = (await req(client, "GET", business_url(bid, "/pipeline"), o["token"])).json()["stages"]
 
     async def mk(name, phone, value, stage, days_ago=0):
+        """A lead in stage #`stage`; D-207: its value comes from a quote of `value` shekels, accepted
+        in a Won stage and sent (still open) otherwise."""
         lead = (
-            await req(
-                client,
-                "POST",
-                business_url(bid, "/leads"),
-                o["token"],
-                {"name": name, "phone": phone, "expectedValue": value},
-            )
+            await req(client, "POST", business_url(bid, "/leads"), o["token"], {"name": name, "phone": phone})
         ).json()["lead"]
+        if value:
+            status = "ACCEPTED" if stages[stage]["kind"] == "WON" else "SENT"
+            await make_quote(db, bid, lead["id"], status, value * 100)
         if stage:
             await req(
                 client,
@@ -85,8 +84,10 @@ async def test_counts_leads_close_rate_values_stages_sources_and_the_series(clie
     r = res.json()
     assert r["leads"] == {"current": 3, "previous": 1}
     assert r["closeRate"] == 0.5 and r["wonValue"] == 2000 and r["openValue"] == 1000
-    assert [[s["name"], s["count"]] for s in r["byStage"]] == [
-        ["חדש", 1], ["נוצר קשר", 0], ["הצעה נשלחה", 0], ["ממתין", 0], ["נסגר", 1], ["אבוד", 1],
+    # D-208: by stage kind — open for OPEN, won for WON, nothing for LOST (its sent quote too).
+    assert [[s["name"], s["count"], s["value"]] for s in r["byStage"]] == [
+        ["חדש", 1, 1000], ["נוצר קשר", 0, 0], ["הצעה נשלחה", 0, 0], ["ממתין", 0, 0], ["נסגר", 1, 2000],
+        ["אבוד", 1, 0],
     ]  # fmt: skip
     assert r["bySource"] == [
         {"source": "website_form", "count": 0},

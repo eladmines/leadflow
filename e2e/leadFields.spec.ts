@@ -141,8 +141,9 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await dialog.getByRole('button', { name: 'יצירת ליד' }).click();
   await expect(page.getByRole('heading', { name: 'אבי כהן', level: 1 })).toBeVisible();
 
-  // Lead card: the Details block shows the values and edits in place.
+  // Lead card: the Details block shows the values; edits are saved with one "שמירה" (D-207).
   await expect(page.getByRole('heading', { name: 'פרטים', exact: true })).toBeVisible();
+  const save = page.getByRole('form', { name: 'פרטים' }).getByRole('button', { name: 'שמירה' });
   const model = page.getByLabel(/^דגם רכב/);
   await expect(model).toHaveValue('מאזדה 3');
   await expect(page.getByLabel(/^אורחים/)).toHaveValue('120');
@@ -150,10 +151,11 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await expect(page.getByLabel('VIP')).toBeChecked();
   // Clearing a required field is refused on the card.
   await model.fill('');
-  await model.press('Tab');
+  await save.click();
   await expect(page.getByText('זהו שדה חובה')).toBeVisible();
   await model.fill('טויוטה קורולה');
-  await model.press('Enter');
+  await save.click();
+  await expect(page.getByText('השינויים נשמרו')).toBeVisible();
   const history = page.getByRole('list', { name: 'היסטוריית הליד' });
   await expect(history).toContainText('דגם רכב');
   await expect(history).toContainText('טויוטה קורולה');

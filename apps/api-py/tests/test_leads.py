@@ -51,12 +51,16 @@ async def test_creates_a_manual_lead_needing_phone_or_email_and_reuses_a_matchin
         client,
         t["id"],
         t["owner"]["token"],
+        # D-207: an old client's `expectedValue` is ignored, not stored.
         {"name": "רון לוי", "phone": "052-1112233", "expectedValue": 1500, "message": "הגיע מהמלצה"},
     )
     assert res.status_code == 201
     lead = res.json()["lead"]
     assert lead["source"] == "manual" and lead["stage"]["name"] == "חדש" and lead["owner"] is None
-    assert lead["expectedValue"] == 1500
+    assert lead["value"] == {"won": 0, "open": 0} and lead["nextTask"] is None
+    assert "expectedValue" not in lead and "nextActionAt" not in lead
+    stored = (await db.execute(select(models.Lead.expected_value))).scalar_one()
+    assert stored is None
     assert lead["contact"]["name"] == "רון לוי" and lead["contact"]["phone"] == "+972521112233"
     assert lead["tags"] == [] and lead["lastWhatsApp"] is None and lead["attribution"] is None
     assert lead["customFields"] == {}  # F34: always sent
@@ -90,6 +94,8 @@ async def test_stage_moves_assignment_and_edits_are_recorded_with_the_actor(clie
         {
             "stageId": t["stages"][1]["id"],
             "ownerId": t["employee"]["user_id"],
+            "tags": ["VIP"],
+            # D-207/D-209: old keys are ignored (no 400, nothing stored, no history entry).
             "expectedValue": 2000,
             "nextActionAt": "2026-11-01T09:00:00.000Z",
         },
@@ -97,7 +103,10 @@ async def test_stage_moves_assignment_and_edits_are_recorded_with_the_actor(clie
     assert patched.status_code == 200
     p = patched.json()["lead"]
     assert p["stage"]["name"] == "נוצר קשר" and p["owner"]["id"] == t["employee"]["user_id"]
-    assert p["expectedValue"] == 2000 and p["nextActionAt"] == "2026-11-01T09:00:00.000Z"
+    assert p["tags"] == ["VIP"] and p["value"] == {"won": 0, "open": 0} and p["nextTask"] is None
+    assert "expectedValue" not in p and "nextActionAt" not in p
+    row = (await db.execute(select(models.Lead).where(models.Lead.id == lead["id"]))).scalar_one()
+    assert row.expected_value is None and row.next_action_at is None
 
     note = await req(client, "POST", f"{url}/notes", t["manager"]["token"], {"text": "דיברנו, שולחים הצעה"})
     assert note.status_code == 201
@@ -105,6 +114,8 @@ async def test_stage_moves_assignment_and_edits_are_recorded_with_the_actor(clie
     detail = (await req(client, "GET", url, t["owner"]["token"])).json()
     types = [a["type"] for a in detail["activities"]]
     assert {"lead.created", "lead.stage_changed", "lead.assigned", "lead.updated", "lead.note"} <= set(types)
+    updated = next(a for a in detail["activities"] if a["type"] == "lead.updated")
+    assert updated["data"] == {"fields": ["tags"]}
     change = next(a for a in detail["activities"] if a["type"] == "lead.stage_changed")
     assert change["data"]["from"] == "חדש" and change["data"]["to"] == "נוצר קשר"
     assert change["actor"]["id"] == t["manager"]["user_id"]
@@ -411,7 +422,6 @@ async def test_export_is_excel_friendly_csv_with_hebrew_headers_and_safe_cells(c
         {
             "name": "דנה, כהן",
             "phone": "052-7654321",
-            "expectedValue": 1500,
             "message": 'שורה ראשונה\nשורה "שנייה"',
         },
     )
@@ -429,8 +439,9 @@ async def test_export_is_excel_friendly_csv_with_hebrew_headers_and_safe_cells(c
     body = res.text
     assert body[0] == "﻿"
     header = body[1:].split("\r\n")[0]
-    assert header == "שם,טלפון,אימייל,שלב,מקור,אחראי,ערך משוער (₪),טיפול הבא,תגיות,פרטי הפנייה,נוצר"
-    assert '"דנה, כהן",052-7654321,,חדש,הוזן ידנית,,1500,,,"שורה ראשונה\nשורה ""שנייה""",' in body
+    # D-207/D-209: no estimated-value or next-action columns.
+    assert header == "שם,טלפון,אימייל,שלב,מקור,אחראי,תגיות,פרטי הפנייה,נוצר"
+    assert '"דנה, כהן",052-7654321,,חדש,הוזן ידנית,,,"שורה ראשונה\nשורה ""שנייה""",' in body
     assert """"'=HYPERLINK(""http://evil"",""x"")\"""" in body
     audit = (
         await db.execute(select(models.AuditLog).where(models.AuditLog.action == "leads.exported"))

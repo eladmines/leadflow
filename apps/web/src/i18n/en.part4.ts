@@ -140,4 +140,50 @@ export const enPart4: Record<string, string> = {
   'ניהול שדות': 'Manage fields',
   'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. בלשונית השנייה: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק).':
     "Business details, opening hours (which decide the hours offered for appointments) and service areas, all in one tab, each card with its own save button. The second tab: channels (connecting the business's WhatsApp and Facebook page).",
+  // D-207 – D-210: lead page in cards, next action = nearest task, value from quotes.
+  'יש שינויים שלא נשמרו': 'Unsaved changes',
+  'ביטול שינויים': 'Discard changes',
+  'הצגת פחות': 'Show less',
+  'הצג הכול ({0})': 'Show all ({0})',
+  'הפעולה הבאה': 'Next action',
+  'הפעולה הבאה:': 'Next action:',
+  'אחראי:': 'Assignee:',
+  'אין פעולה הבאה. כדאי להוסיף משימה כדי לא לשכוח לחזור ללקוח.':
+    'No next action. Add a task so you remember to get back to the customer.',
+  '+ משימה': '+ Task',
+  '+ תור': '+ Appointment',
+  '+ הצעה': '+ Quote',
+  'טוענים את המשימות…': 'Loading tasks…',
+  'אין לך הרשאה לראות את המשימות של הליד הזה.':
+    "You don't have permission to see this lead's tasks.",
+  'טוענים את התורים…': 'Loading appointments…',
+  'אין לך הרשאה לראות את התורים של הליד הזה.':
+    "You don't have permission to see this lead's appointments.",
+  'תורי הליד': "Lead's appointments",
+  'ערך הליד, לפי הצעות המחיר': "The lead's value, from its quotes",
+  'נסגר (הצעות שאושרו)': 'Won (accepted quotes)',
+  'פתוח (ההצעה האחרונה שנשלחה)': 'Open (latest sent quote)',
+  'טוענים את הצעות המחיר…': 'Loading quotes…',
+  'אין לך הרשאה לראות את הצעות המחיר של הליד הזה.':
+    "You don't have permission to see this lead's quotes.",
+  'הצעות המחיר של הליד': "Lead's quotes",
+  'אין עדיין הצעות. ערך הליד נקבע לפי הצעות המחיר שלו.':
+    "No quotes yet. The lead's value comes from its quotes.",
+  'לצאת בלי לשמור?': 'Leave without saving?',
+  'יש בפרטים של הליד שינויים שלא נשמרו. אם יוצאים עכשיו, הם לא יישמרו.':
+    "The lead's details have unsaved changes. If you leave now, they won't be saved.",
+  'להישאר בעמוד': 'Stay on this page',
+  'לצאת בלי לשמור': 'Leave without saving',
+  'לפי הצעות המחיר': 'From quotes',
+  '{0} בהצעות פתוחות · לפי הצעות מחיר': '{0} in open quotes · from quotes',
+  'המשימה הפתוחה הקרובה של הליד: מה לעשות, מתי ומי אחראי. "+ משימה" מוסיף משימה חדשה.':
+    'The lead\'s nearest open task: what to do, when and who\'s responsible. "+ Task" adds a new one.',
+  'השדות שהגדרתם לכל ליד. ממלאים בחופשיות ושומרים בכפתור "שמירה".':
+    'The fields you set up for every lead. Fill them in freely and click "Save".',
+  'משימות, תורים והצעות מחיר': 'Tasks, appointments and quotes',
+  'כל אחד בכרטיס משלו, הקרובים קודם. ה־"+" בכל כרטיס מוסיף משימה, תור או הצעה. ערך הליד מחושב מהצעות המחיר: מה שאושר ומה שנשלח ועדיין פתוח.':
+    'Each in its own card, nearest first. The "+" on each card adds a task, an appointment or a quote. The lead\'s value comes from its quotes: what was accepted and what was sent and is still open.',
+  'שיחה והיסטוריה': 'Conversation and history',
+  'שתי לשוניות: השיחה עם הלקוח (אפשר לענות בוואטסאפ עד 24 שעות מההודעה האחרונה שלו) והערות והיסטוריה, כל מה שקרה בליד.':
+    'Two tabs: the conversation with the customer (you can reply on WhatsApp up to 24 hours after their last message) and notes & history, everything that happened with the lead.',
 };

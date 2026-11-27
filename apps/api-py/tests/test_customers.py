@@ -7,25 +7,22 @@ from sqlalchemy import func, select
 
 from app.db import models
 from app.modules.leads.schemas import IMPORT_MAX_ROWS
-from tests.conftest import add_member, business_url, new_user, owner_with_business, req
+from tests.conftest import add_member, business_url, make_quote, new_user, owner_with_business, req
 
 
-async def _setup(client):
+async def _setup(client, db):
     o = await owner_with_business(client, "cust")
     bid = o["business"]["id"]
     stages = (await req(client, "GET", business_url(bid, "/pipeline"), o["token"])).json()["stages"]
     won = next(s for s in stages if s["kind"] == "WON")["id"]
 
     async def lead(name, phone, value, is_won):
+        """A lead; a won one gets an accepted quote of `value` shekels (D-207: value = quotes)."""
         created = (
-            await req(
-                client,
-                "POST",
-                business_url(bid, "/leads"),
-                o["token"],
-                {"name": name, "phone": phone, "expectedValue": value},
-            )
+            await req(client, "POST", business_url(bid, "/leads"), o["token"], {"name": name, "phone": phone})
         ).json()["lead"]
+        if is_won and value:
+            await make_quote(db, bid, created["id"], "ACCEPTED", value * 100)
         if is_won:
             await req(
                 client, "PATCH", business_url(bid, f"/leads/{created['id']}"), o["token"], {"stageId": won}
@@ -39,7 +36,7 @@ CUSTOMERS = "/customers"
 
 
 async def test_lists_only_people_who_bought_one_row_each_newest_purchase_first(client, db):
-    o, bid, lead = await _setup(client)
+    o, bid, lead = await _setup(client, db)
     first = await lead("דנה כהן", "052-1111111", 1000, True)
     await lead("יוסי לוי", "052-2222222", 500, False)
     second = await lead("דנה כהן", "052-1111111", 1500, True)  # same phone → same contact
@@ -74,27 +71,9 @@ async def test_lists_only_people_who_bought_one_row_each_newest_purchase_first(c
 
 
 async def test_an_accepted_quote_makes_a_customer_employees_see_only_their_own_outsiders_404(client, db):
-    o, bid, lead = await _setup(client)
+    o, bid, lead = await _setup(client, db)
     open_lead = await lead("רוני", "052-3333333", 800, False)
-    now = datetime.now(UTC)
-    db.add(
-        models.Quote(
-            id=uuid.uuid4(),
-            business_id=uuid.UUID(bid),
-            lead_id=uuid.UUID(open_lead["id"]),
-            number=1,
-            title="",
-            items=[],
-            discount=0,
-            vat_rate=0,
-            notes="",
-            status=models.QuoteStatus.ACCEPTED,
-            decided_at=now,
-            created_at=now,
-            updated_at=now,
-        )
-    )
-    await db.commit()
+    await make_quote(db, bid, open_lead["id"], "ACCEPTED", 80_000)
     c = (await req(client, "GET", business_url(bid, CUSTOMERS), o["token"])).json()["customers"][0]
     assert c["name"] == "רוני" and c["purchases"][0]["via"] == "quote" and c["purchases"][0]["value"] == 800
 
@@ -106,7 +85,7 @@ async def test_an_accepted_quote_makes_a_customer_employees_see_only_their_own_o
 
 
 async def test_people_who_booked_are_customers_too_but_not_requests(client, db):
-    o, bid, lead = await _setup(client)
+    o, bid, lead = await _setup(client, db)
     bus = uuid.UUID(bid)
     now = datetime.now(UTC)
 
@@ -204,6 +183,7 @@ async def test_import_creates_a_contact_and_a_won_lead_per_row(client, db):
         o["token"],
         {
             "rows": [
+                # D-207: a `value` cell from an old client is ignored.
                 {"name": "דנה כהן", "phone": "052-1111111", "email": "Dana@Example.com", "value": "₪1,500"},
                 {"name": "יוסי לוי", "phone": "0522222222"},
                 {"name": "רונית", "email": "ronit@example.com", "value": ""},
@@ -214,7 +194,12 @@ async def test_import_creates_a_contact_and_a_won_lead_per_row(client, db):
     customers = (await req(client, "GET", business_url(bid, CUSTOMERS), o["token"])).json()["customers"]
     assert len(customers) == 3
     dana = next(c for c in customers if c["name"] == "דנה כהן")
-    assert (dana["phone"], dana["email"], dana["totalValue"]) == ("+972521111111", "dana@example.com", 1500)
+    assert (dana["phone"], dana["email"], dana["totalValue"]) == ("+972521111111", "dana@example.com", 0)
+    assert dana["purchases"][0]["value"] is None and dana["purchases"][0]["via"] == "won"
+    stored = await db.execute(
+        select(models.Lead.expected_value).where(models.Lead.expected_value.is_not(None))
+    )
+    assert stored.first() is None
     count = await db.execute(
         select(func.count())
         .select_from(models.AuditLog)
@@ -244,18 +229,18 @@ async def test_import_skips_existing_customers_and_repeats_and_reports_bad_rows(
                 {"name": "ללא פרטים"},  # no phone or email
                 {"name": "טלפון שגוי", "phone": "abc"},
                 {"name": "מייל שגוי", "email": "not-an-email"},
-                {"name": "סכום שגוי", "phone": "0525555555", "value": "12abc"},
+                {"name": "סכום ישן", "phone": "0525555555", "value": "12abc"},  # D-207: value ignored
             ]
         },
     )
     assert res.status_code == 200
     body = res.json()
-    assert body["imported"] == 1 and body["duplicates"] == 2
-    assert [i["row"] for i in body["invalid"]] == [4, 5, 6, 7, 8]
+    assert body["imported"] == 2 and body["duplicates"] == 2
+    assert [i["row"] for i in body["invalid"]] == [4, 5, 6, 7]
     contacts = await db.execute(
         select(func.count()).select_from(models.Contact).where(models.Contact.business_id == bid)
     )
-    assert contacts.scalar_one() == 2
+    assert contacts.scalar_one() == 3
 
 
 async def test_import_turns_an_existing_lead_contact_into_a_customer_without_a_second_contact(client, db):

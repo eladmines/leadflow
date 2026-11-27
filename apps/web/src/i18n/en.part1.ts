@@ -277,7 +277,6 @@ export const enPart1: Record<string, string> = {
   שלב: 'Stage',
   אחראי: 'Owner',
   'ללא אחראי': 'Unassigned',
-  'ערך משוער (₪)': 'Estimated value (₪)',
   'שומר…': 'Saving…',
   'הערות והיסטוריה': 'Notes and history',
   'הוספת הערה': 'Add a note',

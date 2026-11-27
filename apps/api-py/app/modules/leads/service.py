@@ -6,7 +6,7 @@ Port of apps/api/src/modules/leads/service.ts. Tenant reads and writes are keyed
 
 import re
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any, Literal
 
 from sqlalchemy import delete, exists, func, or_, select
@@ -32,6 +32,8 @@ from app.db.models import (
     Quote,
     QuoteStatus,
     StageKind,
+    Task,
+    TaskStatus,
     User,
     WhatsAppMessage,
     WhatsAppNumber,
@@ -42,6 +44,8 @@ from app.errors import AppError
 from app.modules.audit import add_audit
 from app.modules.lead_fields.service import filter_conditions, has_filter_params, load_definitions, to_rule
 from app.modules.leads import schemas as s
+from app.modules.quotes.value import ZERO as ZERO_VALUE
+from app.modules.quotes.value import LeadValue, lead_values
 from app.shared.attribution import parse_attribution
 from app.shared.lead_fields import (
     apply_custom_fields_patch,
@@ -127,7 +131,42 @@ def stored_custom_fields(lead: Lead) -> dict[str, Any]:
     return out
 
 
-def to_lead_dto(lead: Lead, last: WhatsAppMessage | None = None) -> s.LeadOut:
+async def _next_tasks(
+    db: AsyncSession, ctx: TenantContext, lead_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, s.LeadNextTask]:
+    """D-209: per lead, its nearest open task this member may see (earliest due, overdue first;
+    ties by creation, then id), in one query. Employees only see tasks assigned to them."""
+    if not lead_ids:
+        return {}
+    conds: list[Any] = [
+        Task.business_id == ctx.business_id,
+        Task.lead_id.in_(lead_ids),
+        Task.status == TaskStatus.OPEN,
+    ]
+    if not can(ctx.role, "tasks.view.all"):
+        conds.append(Task.assignee_id == ctx.user_id)
+    rows = await db.execute(
+        select(Task.lead_id, Task.id, Task.title, Task.due_at, User.id, User.full_name)
+        .ext(distinct_on(Task.lead_id))
+        .join(User, User.id == Task.assignee_id)
+        .where(*conds)
+        .order_by(Task.lead_id, Task.due_at.asc(), Task.created_at.asc(), Task.id.asc())
+    )
+    return {
+        lead_id: s.LeadNextTask(
+            id=str(task_id), title=title, dueAt=iso(due_at), assignee=s.PersonOut(id=str(uid), name=name)
+        )
+        for lead_id, task_id, title, due_at, uid, name in rows
+        if lead_id
+    }
+
+
+def to_lead_dto(
+    lead: Lead,
+    last: WhatsAppMessage | None = None,
+    value: LeadValue = ZERO_VALUE,
+    next_task: s.LeadNextTask | None = None,
+) -> s.LeadOut:
     return s.LeadOut(
         id=str(lead.id),
         contact=s.ContactOut(
@@ -142,8 +181,8 @@ def to_lead_dto(lead: Lead, last: WhatsAppMessage | None = None) -> s.LeadOut:
         attribution=parse_attribution(lead.attribution),
         message=lead.message,
         owner=s.PersonOut(id=str(lead.owner.id), name=lead.owner.full_name) if lead.owner else None,
-        expectedValue=lead.expected_value,
-        nextActionAt=iso(lead.next_action_at) if lead.next_action_at else None,
+        value=s.LeadValue(won=value.won, open=value.open),
+        nextTask=next_task,
         tags=list(lead.tags or []),
         customFields=stored_custom_fields(lead),
         lastWhatsApp=(
@@ -160,7 +199,21 @@ class LeadService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def _dtos(self, leads: list[Lead]) -> list[s.LeadOut]:
+    async def _dtos(self, ctx: TenantContext, leads: list[Lead]) -> list[s.LeadOut]:
+        """Lead responses for this member: value from quotes (D-207) and the nearest open task
+        the member may see (D-209), each in one query keyed by `ctx.business_id`."""
+        ids = [lead.id for lead in leads]
+        last = await _last_whatsapp(self.db, [lead.contact_id for lead in leads])
+        values = await lead_values(self.db, ctx.business_id, ids)
+        tasks = await _next_tasks(self.db, ctx, ids)
+        return [
+            to_lead_dto(lead, last.get(lead.contact_id), values.get(lead.id, ZERO_VALUE), tasks.get(lead.id))
+            for lead in leads
+        ]
+
+    async def _new_lead_dtos(self, leads: list[Lead]) -> list[s.LeadOut]:
+        """The public form path (no member): a brand-new lead has no quotes and no tasks yet, so
+        value 0 and no next task. Never used for a member-facing response."""
         last = await _last_whatsapp(self.db, [lead.contact_id for lead in leads])
         return [to_lead_dto(lead, last.get(lead.contact_id)) for lead in leads]
 
@@ -244,7 +297,7 @@ class LeadService:
         rows = await self.db.execute(
             select(Lead).options(*_LEAD_LOAD).where(*conds).order_by(Lead.created_at.desc()).limit(take)
         )
-        return await self._dtos(list(rows.scalars().unique()))
+        return await self._dtos(ctx, list(rows.scalars().unique()))
 
     async def tags(self, ctx: TenantContext) -> list[str]:
         """Tags on the leads this member can see, most used first."""
@@ -303,7 +356,7 @@ class LeadService:
             for r in rows
             if r.type in s.ACTIVITY_TYPES
         ]
-        return s.LeadDetailResponse(lead=(await self._dtos([lead]))[0], activities=activities)
+        return s.LeadDetailResponse(lead=(await self._dtos(ctx, [lead]))[0], activities=activities)
 
     # -- checks ----------------------------------------------------------------
 
@@ -395,7 +448,6 @@ class LeadService:
             owner_id=owner_id,
             source=LeadSource.MANUAL,
             message=data.message,
-            expected_value=data.expectedValue,
             tags=[],
             custom_fields=custom,
             created_at=now,
@@ -424,7 +476,7 @@ class LeadService:
             metadata={"source": "manual"},
         )
         await self.db.commit()
-        return (await self._dtos([await self.find_visible(ctx, str(lead.id))]))[0]
+        return (await self._dtos(ctx, [await self.find_visible(ctx, str(lead.id))]))[0]
 
     async def create_from_website(
         self,
@@ -538,7 +590,7 @@ class LeadService:
                 .execution_options(populate_existing=True)
             )
         ).scalar_one()
-        return (await self._dtos([row]))[0], True
+        return (await self._new_lead_dtos([row]))[0], True
 
     async def _find_by_idempotency_key(
         self, business_id: uuid.UUID, site_id: uuid.UUID | None, key: str
@@ -554,7 +606,7 @@ class LeadService:
         lead = (
             await self.db.execute(select(Lead).options(*_LEAD_LOAD).where(Lead.id == lead_id))
         ).scalar_one()
-        return (await self._dtos([lead]))[0]
+        return (await self._new_lead_dtos([lead]))[0]
 
     # -- update / notes / delete ----------------------------------------------------
 
@@ -623,14 +675,6 @@ class LeadService:
             owner_changed = True
             activities.append(("lead.assigned", {"to": owner.full_name if owner else None}))
         changed: list[str] = []
-        if "expectedValue" in given and data.expectedValue != lead.expected_value:
-            lead.expected_value = data.expectedValue
-            changed.append("expectedValue")
-        if "nextActionAt" in given:
-            nxt = _parse_datetime(data.nextActionAt)
-            if nxt != lead.next_action_at:
-                lead.next_action_at = nxt
-                changed.append("nextActionAt")
         if "message" in given and data.message != lead.message:
             lead.message = data.message
             changed.append("message")
@@ -647,7 +691,7 @@ class LeadService:
                 payload["customFields"] = custom_changes
             activities.append(("lead.updated", payload))
         if not activities:
-            return (await self._dtos([lead]))[0]
+            return (await self._dtos(ctx, [lead]))[0]
 
         now = now_ms()
         lead.updated_at = now
@@ -673,7 +717,7 @@ class LeadService:
                 entity_id=lead.id,
             )
         await self.db.commit()
-        return (await self._dtos([await self.find_visible(ctx, str(lead.id))]))[0]
+        return (await self._dtos(ctx, [await self.find_visible(ctx, str(lead.id))]))[0]
 
     async def add_note(self, ctx: TenantContext, lead_id: str, text: str) -> s.ActivityOut:
         lead = await self.find_visible(ctx, lead_id)
@@ -782,7 +826,9 @@ class LeadService:
             *self._visible(ctx),
             or_(
                 Lead.stage.has(PipelineStage.kind == StageKind.WON),
-                Lead.quotes.any(Quote.status == QuoteStatus.ACCEPTED),
+                Lead.quotes.any(
+                    (Quote.business_id == ctx.business_id) & (Quote.status == QuoteStatus.ACCEPTED)
+                ),
             ),
         ]
         if contact_filter is not None:
@@ -802,10 +848,16 @@ class LeadService:
             .all()
         )
         decided: dict[uuid.UUID, datetime] = {}
+        # D-207: a purchase's value = the lead's accepted quotes; null when it has none.
+        values = await lead_values(self.db, ctx.business_id, [lead.id for lead in leads])
         if leads:
             res = await self.db.execute(
                 select(Quote.lead_id, func.max(Quote.decided_at))
-                .where(Quote.lead_id.in_([lead.id for lead in leads]), Quote.status == QuoteStatus.ACCEPTED)
+                .where(
+                    Quote.business_id == ctx.business_id,
+                    Quote.lead_id.in_([lead.id for lead in leads]),
+                    Quote.status == QuoteStatus.ACCEPTED,
+                )
                 .group_by(Quote.lead_id)
             )
             decided = {lid: at for lid, at in res if at}
@@ -829,7 +881,9 @@ class LeadService:
                     "bookings": [],
                 }
                 by_contact[lead.contact.id] = c
-            c["totalValue"] += lead.expected_value or 0
+            v = values.get(lead.id, ZERO_VALUE)
+            won = v.won if v.has_accepted else None
+            c["totalValue"] += won or 0
             if not c["lastPurchaseAt"] or at > c["lastPurchaseAt"]:
                 c["lastPurchaseAt"] = at
             if at > c["lastActivityAt"]:
@@ -839,7 +893,7 @@ class LeadService:
                 {
                     "leadId": str(lead.id),
                     "at": at,
-                    "value": lead.expected_value,
+                    "value": won,
                     "via": "won" if lead.stage.kind == StageKind.WON else "quote",
                 },
             )
@@ -924,7 +978,6 @@ class LeadService:
             email_raw = (r.email or "").strip().lower()
             reason = None
             phone = None
-            value = None
             if len(name) < 2 or len(name) > 80:
                 reason = m["nameInvalid"]
             elif not phone_raw and not email_raw:
@@ -935,14 +988,10 @@ class LeadService:
                     reason = m["phoneInvalid"]
                 elif email_raw and (not _EMAIL.match(email_raw) or len(email_raw) > 254):
                     reason = m["emailInvalid"]
-                else:
-                    value = s.parse_import_value(r.value)
-                    if value == "invalid":
-                        reason = m["valueInvalid"]
             if reason:
                 invalid.append(s.InvalidRow(row=row, reason=reason))
             else:
-                valid.append({"name": name, "phone": phone, "email": email_raw or None, "value": value})
+                valid.append({"name": name, "phone": phone, "email": email_raw or None})
 
         stages = await ensure_stages(self.db, ctx.business_id)
         won = next((st for st in stages if st.kind == StageKind.WON), None)
@@ -998,7 +1047,6 @@ class LeadService:
                 stage_id=won.id,
                 owner_id=None,
                 source=LeadSource.MANUAL,
-                expected_value=r["value"],
                 tags=[],
                 created_at=now,
                 updated_at=now,
@@ -1027,12 +1075,3 @@ class LeadService:
         )
         await self.db.commit()
         return s.ImportCustomersResponse(imported=imported, duplicates=duplicates, invalid=invalid)
-
-
-def _parse_datetime(value: str | None) -> datetime | None:
-    if not value:
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
-    except ValueError as err:
-        raise AppError("VALIDATION_ERROR", None, {"nextActionAt": "Invalid datetime"}) from err

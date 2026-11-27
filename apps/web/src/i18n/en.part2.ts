@@ -181,7 +181,6 @@ export const enPart2: Record<string, string> = {
   'עדיין אין פניות שנסגרו או אבדו': 'No won or lost inquiries yet',
   'מתוך {0} שהוכרעו': 'of {0} decided',
   'עסקאות שנסגרו': 'Deals won',
-  '{0} עוד פתוחים': '{0} still open',
   'עוד לא טיפלו באף פנייה': 'No inquiries handled yet',
   'לפי {0} פניות שטופלו': 'based on {0} handled inquiries',
   'פניות לפי שלב': 'Inquiries by stage',

@@ -28,8 +28,13 @@ async function ownerWithLead(page: Page) {
 
 test('quote from a lead, sent, accepted by the customer', async ({ page, browser }) => {
   const { id, leadId } = await ownerWithLead(page);
-  await page.goto(`/b/${id}/leads/${leadId}?tab=quotes`);
-  await page.getByRole('link', { name: 'הצעת מחיר חדשה' }).click();
+  // D-209: quotes are a card on the lead page; "+ הצעה" opens the quote editor.
+  await page.goto(`/b/${id}/leads/${leadId}`);
+  const quotesCard = page.getByRole('region', { name: 'הצעות מחיר' });
+  const amount = (label: RegExp) =>
+    quotesCard.locator('dl > div').filter({ hasText: label }).locator('dd');
+  await expect(amount(/^פתוח/)).toHaveText(/^\D*0\D*$/);
+  await quotesCard.getByRole('link', { name: '+ הצעה' }).click();
   await expect(page.getByRole('heading', { name: 'הצעת מחיר חדשה' })).toBeVisible();
 
   await page.getByLabel('תיאור שורה 1').fill('החלפת ברז');
@@ -51,6 +56,12 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   const link = await page.getByRole('link', { name: 'פתיחת עמוד ההצעה' }).getAttribute('href');
   expect(link).toMatch(/\/q\/[A-Za-z0-9_-]{43}$/);
 
+  // Sent and still open: the lead's open value is the quote's total, in whole shekels (D-208).
+  await page.goto(`/b/${id}/leads/${leadId}`);
+  await expect(amount(/^פתוח/)).toContainText('886');
+  await expect(amount(/^נסגר/)).toHaveText(/^\D*0\D*$/);
+  await expect(quotesCard.getByRole('listitem').first()).toContainText('נשלחה');
+
   // The customer, with no login.
   const customer = await (await browser.newContext()).newPage();
   await customer.goto(link!);
@@ -62,4 +73,8 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
 
   await page.goto(`/b/${id}/leads/${leadId}`);
   await expect(page.getByText('הצעת מחיר מס׳ 1001 אושרה על ידי הלקוח')).toBeVisible();
+  // Accepted: the value moves from open to won (D-207).
+  await expect(amount(/^נסגר/)).toContainText('886');
+  await expect(amount(/^פתוח/)).toHaveText(/^\D*0\D*$/);
+  await expect(quotesCard.getByRole('listitem').first()).toContainText('אושרה');
 });

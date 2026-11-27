@@ -119,6 +119,53 @@ export const leadSourceLabels: Record<(typeof LEAD_SOURCES)[number], string> = {
 // API
 // ---------------------------------------------------------------------------
 
+/**
+ * D-207/D-208/D-210 — a lead's money comes only from its quotes. Both amounts are whole shekels
+ * from quote `totals.total` (agorot: after discount, incl. VAT), rounded half-up once per lead
+ * (`agorotToShekels`). A lead with no qualifying quote has 0.
+ * - `won`: the sum of **all** its quotes with status `ACCEPTED` (also each purchase on Customers).
+ * - `open` (D-210): only the lead's **latest sent quote** — the one with the latest `sentAt`
+ *   among its quotes that were ever sent (ties: higher quote number) — and only while that quote is
+ *   still `SENT` and not expired (`validUntil` null or not before today in the business's time
+ *   zone, the same rule as the quote's `expired` flag). If the latest sent quote was accepted,
+ *   rejected or has expired, `open` is 0 even when an older sent quote is still open, so a revised
+ *   quote is never counted twice. Drafts never count.
+ * The value doesn't depend on the stage; aggregates pick by stage kind (board and reports: `open`
+ * for OPEN stages, `won` for WON stages, nothing for LOST; D-208, D-210 §3).
+ * D-209: the lead page's quotes card is where this value comes from.
+ */
+export const leadValueSchema = z.object({
+  won: z.number().int().min(0),
+  open: z.number().int().min(0),
+});
+export type LeadValue = z.infer<typeof leadValueSchema>;
+
+/** Agorot → whole shekels, half-up (non-negative amounts only). */
+export const agorotToShekels = (agorot: number): number => Math.floor((agorot + 50) / 100);
+
+/** What a board column / stage row sums for a lead in a stage of this kind (D-208). */
+export function leadValueForStageKind(
+  value: LeadValue,
+  kind: (typeof STAGE_KINDS)[number],
+): number {
+  return kind === 'WON' ? value.won : kind === 'OPEN' ? value.open : 0;
+}
+
+/**
+ * D-209 — a lead's next action is its nearest open task: among tasks linked to the lead with status
+ * `OPEN`, the one with the earliest `dueAt` (overdue ones included, so the most overdue comes
+ * first; ties by creation time, then id). Only tasks the member may see count (`tasks.view.all`, or
+ * the member's own tasks for employees), so an employee never learns of a teammate's task.
+ * The same shape as `Task` (F10) narrowed to what the lead needs; overdue = `dueAt` < now.
+ */
+export const leadNextTaskSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  dueAt: z.string().datetime(),
+  assignee: z.object({ id: z.string().uuid(), name: z.string() }),
+});
+export type LeadNextTask = z.infer<typeof leadNextTaskSchema>;
+
 export const leadSchema = z.object({
   id: z.string().uuid(),
   contact: z.object({
@@ -135,9 +182,16 @@ export const leadSchema = z.object({
   message: z.string().nullable(),
   /** Assigned team member (F08). */
   owner: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
-  /** Expected deal value in whole shekels. */
-  expectedValue: z.number().int().nullable(),
-  nextActionAt: z.string().datetime().nullable(),
+  /**
+   * D-207: the lead's value, derived from its quotes (read-only; there is no typed estimate).
+   * Whole shekels (incl. VAT, after discount), see `leadValueSchema`.
+   */
+  value: leadValueSchema,
+  /**
+   * D-209: the lead's next action = its nearest open task (read-only; replaces `nextActionAt`).
+   * See `leadNextTaskSchema`; null when there is no open task the member may see.
+   */
+  nextTask: leadNextTaskSchema.nullable(),
   /** Free labels chosen by the business, e.g. "VIP", "חוזר" (lowercased duplicates removed). */
   tags: z.array(z.string()),
   /**
@@ -168,7 +222,6 @@ export type LeadListResponse = z.infer<typeof leadListResponseSchema>;
 
 export const crmMessages = {
   contactRequired: 'יש להזין טלפון או אימייל',
-  valueInvalid: 'יש להזין סכום בשקלים (מספר שלם)',
   noteRequired: 'יש לכתוב הערה',
   noteTooLong: 'ההערה ארוכה מדי (עד 2,000 תווים)',
   stageInvalid: 'השלב שנבחר אינו קיים',
@@ -211,13 +264,10 @@ export const leadListQuerySchema = z.object({
 });
 export type LeadListQuery = z.input<typeof leadListQuerySchema>;
 
-const shekels = z
-  .number({ invalid_type_error: crmMessages.valueInvalid })
-  .int(crmMessages.valueInvalid)
-  .min(0, crmMessages.valueInvalid)
-  .max(100_000_000, crmMessages.valueInvalid);
-
-/** Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused. */
+/**
+ * Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused.
+ * D-207: no value field; an `expectedValue` key sent by an old client is stripped, not stored.
+ */
 export const createLeadRequestSchema = z
   .object({
     name: z
@@ -237,7 +287,6 @@ export const createLeadRequestSchema = z
     message: optionalText(1000, leadMessages.messageTooLong),
     stageId: uuid.optional(),
     ownerId: uuid.nullable().optional(),
-    expectedValue: shekels.nullable().optional(),
     /**
      * F34: shape only; checked per business with `validateCustomFields`, options from
      * `createLeadCustomFieldsOptions(body)`.
@@ -253,12 +302,15 @@ export const createLeadRequestSchema = z
   .refine((v) => v.phone || v.email, { message: crmMessages.contactRequired, path: ['phone'] });
 export type CreateLeadRequest = z.input<typeof createLeadRequestSchema>;
 
-/** PATCH /leads/:id — every field optional; each change is recorded in the activity log. */
+/**
+ * PATCH /leads/:id — every field optional; each change is recorded in the activity log. Fields
+ * sent together are validated first and saved in one transaction (the lead page's one "שמירה"
+ * sends `customFields`, D-207/D-209). No `expectedValue` (D-207) and no `nextActionAt` (D-209: the
+ * next action is a task); old keys are stripped, not stored.
+ */
 export const updateLeadRequestSchema = z.object({
   stageId: uuid.optional(),
   ownerId: uuid.nullable().optional(),
-  expectedValue: shekels.nullable().optional(),
-  nextActionAt: z.string().datetime().nullable().optional(),
   message: optionalText(1000, leadMessages.messageTooLong).optional(),
   tags: leadTagsSchema.optional(),
   /**
@@ -355,17 +407,17 @@ export const importMessages = {
   contactMissing: 'חסר טלפון או אימייל',
   phoneInvalid: 'מספר הטלפון אינו תקין',
   emailInvalid: 'כתובת האימייל אינה תקינה',
-  valueInvalid: 'הסכום אינו תקין',
   alreadyCustomer: 'כבר קיים כלקוח',
 } as const;
 
-/** A spreadsheet row as the browser sends it: raw text, checked per row on the server. */
+/**
+ * A spreadsheet row as the browser sends it: raw text, checked per row on the server.
+ * D-207: no value/amount column (a lead's value comes only from quotes); a `value` key is stripped.
+ */
 export const importCustomerRowSchema = z.object({
   name: z.string().max(200).optional(),
   phone: z.string().max(60).optional(),
   email: z.string().max(300).optional(),
-  /** Optional deal value in shekels (kept on the lead as its value). */
-  value: z.string().max(40).optional(),
 });
 export type ImportCustomerRow = z.infer<typeof importCustomerRowSchema>;
 
@@ -386,15 +438,6 @@ export const importCustomersResponseSchema = z.object({
   invalid: z.array(z.object({ row: z.number().int(), reason: z.string() })),
 });
 export type ImportCustomersResponse = z.infer<typeof importCustomersResponseSchema>;
-
-/** The deal value cell: digits with optional ₪, commas or a decimal part → whole shekels. */
-export function parseImportValue(raw: string | undefined): number | null | 'invalid' {
-  const t = (raw ?? '').replace(/[₪\s]/g, '').replace(/,/g, '');
-  if (!t) return null;
-  if (!/^\d+(\.\d+)?$/.test(t)) return 'invalid';
-  const n = Math.round(Number(t));
-  return n >= 0 && n <= 100_000_000 ? n : 'invalid';
-}
 
 export const leadsApiPaths = {
   list: (businessId: string) => `/api/v1/businesses/${businessId}/leads`,

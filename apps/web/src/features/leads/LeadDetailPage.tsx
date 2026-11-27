@@ -10,11 +10,10 @@ import {
   MAX_LEAD_TAGS,
   appointmentStatusLabels,
   formatAgorot,
-  quoteStatusLabels,
 } from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Mail, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -24,7 +23,6 @@ import {
   Card,
   DialogShell,
   EmptyState,
-  Field,
   SelectMenu,
   Spinner,
   Textarea,
@@ -38,7 +36,6 @@ import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import {
   formatDateTime,
-  shekel,
   timeAgo,
   useAddNote,
   useDeleteLead,
@@ -49,18 +46,23 @@ import {
 } from './api';
 import { stageColor } from './stageColors';
 import { WhereFrom } from './Attribution';
-import { NewTaskForm } from '../tasks/NewTaskForm';
-import { TaskItem } from '../tasks/TaskItem';
-import { useTasks, toLocalInput } from '../tasks/api';
-import { useAppointments } from '../appointments/api';
-import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
-import { displayStatus, useQuotes } from '../quotes/api';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { LeadSourceIcon } from './SourceIcon';
 import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
-import { CustomFieldChanges, CustomFieldsCard } from './CustomFieldsCard';
+import { CustomFieldChanges, CustomFieldsCard, useCustomFieldsDraft } from './CustomFieldsCard';
+import {
+  LEAD_CARDS,
+  leadCardId,
+  LeadAppointmentsCard,
+  LeadQuotesCard,
+  LeadTasksCard,
+  NextAction,
+  type LeadCardKey,
+} from './LeadCards';
+import { useUnsavedChangesGuard } from '../../lib/useUnsavedChangesGuard';
 import { tr, intlLocale } from '../../i18n';
 
+/** Old history entries keep their labels (the fields were removed by D-207 and D-209). */
 const fieldLabels: Record<string, string> = {
   expectedValue: tr('ערך משוער'),
   nextActionAt: tr('תאריך טיפול הבא'),
@@ -138,7 +140,6 @@ function activityText(a: Activity): string {
   }
 }
 
-/** `<input type="datetime-local">` speaks local time without a zone. */
 function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
   const business = useCurrentBusiness();
   const suggestions = useLeadTags(business.id).data ?? [];
@@ -213,8 +214,6 @@ function Details({ lead }: { lead: Lead }) {
   const canAssign = can(business.role, 'leads.assign');
   const members = useMembers(business.id, canAssign);
   const update = useUpdateLead(business.id);
-  const [value, setValue] = useState(lead.expectedValue?.toString() ?? '');
-  const [next, setNext] = useState(lead.nextActionAt ? toLocalInput(lead.nextActionAt) : '');
   const [needsQuote, setNeedsQuote] = useState(false);
   const save = (body: Parameters<typeof update.mutate>[0]['body']) =>
     update.mutate(
@@ -262,27 +261,6 @@ function Details({ lead }: { lead: Lead }) {
         </div>
       )}
       <TagEditor tags={lead.tags} onChange={(tags) => save({ tags })} />
-      <Field
-        label={tr('ערך משוער (₪)')}
-        ltr
-        inputMode="numeric"
-        value={value}
-        onChange={(e) => setValue(e.target.value.replace(/[^\d]/g, ''))}
-        onBlur={() => {
-          const n = value ? Number(value) : null;
-          if (n !== lead.expectedValue) save({ expectedValue: n });
-        }}
-      />
-      <Field
-        label={tr('תאריך טיפול הבא')}
-        type="datetime-local"
-        value={next}
-        onChange={(e) => setNext(e.target.value)}
-        onBlur={() => {
-          const iso = next ? new Date(next).toISOString() : null;
-          if (iso !== lead.nextActionAt) save({ nextActionAt: iso });
-        }}
-      />
       {update.isPending && (
         <p role="status" className="text-xs text-ink-muted">
           {tr('שומר…')}
@@ -357,36 +335,18 @@ function Notes({ leadId, activities }: { leadId: string; activities: Activity[] 
   );
 }
 
-function LeadTasks({ leadId }: { leadId: string }) {
-  const business = useCurrentBusiness();
-  const tasks = useTasks(business.id, { leadId });
-  const open = (tasks.data ?? []).filter((t) => t.status === 'OPEN');
-  return (
-    <Card className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold text-ink">{tr('משימות')}</h2>
-      {open.length > 0 ? (
-        <ul aria-label={tr('משימות הליד')} className="divide-y divide-surface-border">
-          {open.map((t) => (
-            <TaskItem key={t.id} task={t} businessId={business.id} showLead={false} />
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-ink-muted">{tr('אין משימות פתוחות לליד הזה.')}</p>
-      )}
-      <NewTaskForm leadId={leadId} compact />
-    </Card>
-  );
-}
-
-/** `/b/:businessId/leads/:leadId`: contact, stage, owner, value, next action, notes, history. */
 /** Sources whose first message already shows in the lead's conversation. */
 const CONVERSATION_SOURCES: readonly string[] = ['whatsapp', 'facebook', 'instagram', 'email'];
 
+/**
+ * `/b/:businessId/leads/:leadId` (D-209): contact and the next action on top; the details, tasks,
+ * appointments and quotes cards in the side column (first on a phone); the conversation and notes &
+ * history in two tabs.
+ */
 export function LeadDetailPage() {
   const business = useCurrentBusiness();
   const { leadId = '' } = useParams();
   const detail = useLeadDetail(business.id, leadId);
-  const pipeline = usePipeline(business.id);
   const back = businessWebPaths.section(business.id, 'leads');
 
   if (detail.isPending) return <Spinner label={tr('טוענים את הליד…')} />;
@@ -406,7 +366,18 @@ export function LeadDetailPage() {
     }
     return <Alert tone="danger">{errorMessage(detail.error)}</Alert>;
   }
-  const { lead, activities } = detail.data;
+  return <LeadPage lead={detail.data.lead} activities={detail.data.activities} />;
+}
+
+function LeadPage({ lead, activities }: { lead: Lead; activities: Activity[] }) {
+  const business = useCurrentBusiness();
+  const pipeline = usePipeline(business.id);
+  const back = businessWebPaths.section(business.id, 'leads');
+  const draft = useCustomFieldsDraft(lead);
+  const guard = useUnsavedChangesGuard(draft.dirty);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  useOldTabLinks();
+
   const phone = lead.contact.phone;
   const tone = stageColor(lead.stage, pipeline.data).tag;
 
@@ -440,12 +411,6 @@ export function LeadDetailPage() {
               </span>
               <span aria-hidden>·</span>
               <span>{formatDateTime(lead.createdAt)}</span>
-              {lead.expectedValue !== null && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span>{shekel.format(lead.expectedValue)}</span>
-                </>
-              )}
             </p>
           </div>
           <span
@@ -471,10 +436,12 @@ export function LeadDetailPage() {
             {lead.contact.email && (
               <a
                 href={`mailto:${lead.contact.email}`}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-surface px-4 py-2 text-sm text-ink ring-1 ring-surface-border hover:bg-surface-muted"
+                className="inline-flex min-w-0 items-center gap-1.5 rounded-xl bg-surface px-4 py-2 text-sm text-ink ring-1 ring-surface-border hover:bg-surface-muted"
               >
-                <Mail aria-hidden className="h-4 w-4" />
-                <bdi dir="ltr">{lead.contact.email}</bdi>
+                <Mail aria-hidden className="h-4 w-4 shrink-0" />
+                <bdi dir="ltr" className="truncate">
+                  {lead.contact.email}
+                </bdi>
               </a>
             )}
           </div>
@@ -488,27 +455,76 @@ export function LeadDetailPage() {
             {lead.message}
           </p>
         )}
+        <NextAction lead={lead} onAddTask={() => setTaskFormOpen(true)} />
       </section>
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <LeadTabs lead={lead} activities={activities} />
-        <div className="flex min-w-0 flex-col gap-6 lg:order-first">
-          <Details key={lead.updatedAt} lead={lead} />
-          <CustomFieldsCard lead={lead} />
+      {/* Phones: the cards first, then the tabs. Wide screens: cards at the side, tabs as the main column. */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+        <div data-lead-side className="flex min-w-0 flex-col gap-6">
+          <Details lead={lead} />
+          <CustomFieldsCard draft={draft} />
+          <LeadTasksCard lead={lead} formOpen={taskFormOpen} onFormOpenChange={setTaskFormOpen} />
+          <LeadAppointmentsCard lead={lead} />
+          <LeadQuotesCard lead={lead} />
           <WhereFrom attribution={lead.attribution} />
         </div>
+        <div className="min-w-0">
+          <LeadTabs lead={lead} activities={activities} />
+        </div>
       </div>
-      {can(business.role, 'leads.delete') && <DeleteLead lead={lead} />}
+      {can(business.role, 'leads.delete') && <DeleteLead lead={lead} leave={guard.leave} />}
+      <DialogShell
+        open={guard.blocked}
+        onOpenChange={(o) => !o && guard.stay()}
+        title={tr('לצאת בלי לשמור?')}
+      >
+        <p className="text-sm text-ink-muted">
+          {tr('יש בפרטים של הליד שינויים שלא נשמרו. אם יוצאים עכשיו, הם לא יישמרו.')}
+        </p>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" onClick={guard.stay}>
+            {tr('להישאר בעמוד')}
+          </Button>
+          <Button variant="danger" onClick={guard.proceed}>
+            {tr('לצאת בלי לשמור')}
+          </Button>
+        </div>
+      </DialogShell>
     </>
   );
 }
 
-const LEAD_TABS = ['notes', 'whatsapp', 'tasks', 'appointments', 'quotes'] as const;
+/**
+ * Old links with `?tab=tasks|appointments|quotes` (before D-209) land on the matching card: it is
+ * scrolled into view and its heading gets the focus; the parameter is dropped.
+ */
+function useOldTabLinks() {
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('tab');
+  const card = (LEAD_CARDS as readonly string[]).includes(asked ?? '')
+    ? (asked as LeadCardKey)
+    : null;
+  useEffect(() => {
+    if (!card) return;
+    const el = document.getElementById(leadCardId(card));
+    el?.scrollIntoView?.({ block: 'start' });
+    document.getElementById(`${leadCardId(card)}-title`)?.focus({ preventScroll: true });
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        next.delete('tab');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [card, setParams]);
+}
+
+const LEAD_TABS = ['whatsapp', 'notes'] as const;
 type LeadTab = (typeof LEAD_TABS)[number];
 
 /**
- * Everything about the lead beyond its details, one part at a time (D-140): notes and history,
- * WhatsApp, tasks, appointments, quotes. The tab is kept in the address (`?tab=`); a lead that
- * came from WhatsApp opens on the conversation.
+ * The conversation and notes & history (D-209), one at a time. The tab is kept in the address
+ * (`?tab=`); a lead that came from a conversation opens on it.
  */
 function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) {
   const [params, setParams] = useSearchParams();
@@ -532,9 +548,6 @@ function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) 
         : lead.source === 'instagram'
           ? 'Instagram'
           : 'WhatsApp',
-    tasks: tr('משימות'),
-    appointments: tr('תורים'),
-    quotes: tr('הצעות מחיר'),
   };
   return (
     <section className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card">
@@ -581,95 +594,20 @@ function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) 
       >
         {tab === 'notes' && <Notes leadId={lead.id} activities={activities} />}
         {tab === 'whatsapp' && <WhatsAppThread leadId={lead.id} />}
-        {tab === 'tasks' && <LeadTasks leadId={lead.id} />}
-        {tab === 'appointments' && <LeadAppointments lead={lead} />}
-        {tab === 'quotes' && <LeadQuotes leadId={lead.id} />}
       </div>
     </section>
   );
 }
 
-/** Appointments of this lead (last month to two months ahead) and a "book" button. */
-function LeadAppointments({ lead }: { lead: Lead }) {
-  const business = useCurrentBusiness();
-  const [open, setOpen] = useState(false);
-  const now = Date.now();
-  const appts = useAppointments(business.id, {
-    from: new Date(now - 30 * 86_400_000).toISOString(),
-    to: new Date(now + 31 * 86_400_000).toISOString(),
-    leadId: lead.id,
-  });
-  return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-ink">{tr('תורים')}</h2>
-        <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
-          {tr('קביעת תור')}
-        </Button>
-      </div>
-      {appts.data && appts.data.length > 0 ? (
-        <ul className="flex flex-col gap-1.5">
-          {appts.data.map((a) => (
-            <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-ink">
-                {apptWhen(a.startsAt)}
-                {a.service && <span className="text-ink-muted"> · {a.service.name}</span>}
-              </span>
-              <span className="text-xs text-ink-muted">
-                {tr(appointmentStatusLabels[a.status])}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-ink-muted">{tr('אין תורים קרובים.')}</p>
-      )}
-      <NewAppointmentDialog open={open} onOpenChange={setOpen} lead={lead} />
-    </Card>
-  );
-}
-
-/** Quotes for this lead and "new quote" (F18). */
-function LeadQuotes({ leadId }: { leadId: string }) {
-  const business = useCurrentBusiness();
-  const quotes = useQuotes(business.id, { leadId });
-  const base = businessWebPaths.section(business.id, 'quotes');
-  return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-ink">{tr('הצעות מחיר')}</h2>
-        <Link to={`${base}/new?leadId=${leadId}`} className={buttonClasses('secondary', 'sm')}>
-          {tr('הצעת מחיר חדשה')}
-        </Link>
-      </div>
-      {quotes.data && quotes.data.length > 0 ? (
-        <ul className="flex flex-col gap-1.5">
-          {quotes.data.map((q) => (
-            <li key={q.id} className="flex items-center justify-between gap-2 text-sm">
-              <Link to={`${base}/${q.id}`} className="text-brand-700 hover:underline">
-                {tr('מס׳')} {q.number} · {formatAgorot(q.totals.total)}
-              </Link>
-              <span className="text-xs text-ink-muted">
-                {tr(quoteStatusLabels[displayStatus(q)])}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-ink-muted">{tr('אין עדיין הצעות.')}</p>
-      )}
-    </Card>
-  );
-}
-
-function DeleteLead({ lead }: { lead: Lead }) {
+function DeleteLead({ lead, leave }: { lead: Lead; leave: (go: () => void) => void }) {
   const business = useCurrentBusiness();
   const remove = useDeleteLead(business.id);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const confirm = async () => {
     await remove.mutateAsync(lead.id);
-    navigate(businessWebPaths.section(business.id, 'leads'), { replace: true });
+    // Unsaved details of a deleted lead don't hold the way back.
+    leave(() => navigate(businessWebPaths.section(business.id, 'leads'), { replace: true }));
   };
 
   return (

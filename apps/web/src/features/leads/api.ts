@@ -122,6 +122,12 @@ export function useUpdateLead(businessId: string) {
       );
       return { snapshot };
     },
+    onSuccess: (data, { leadId }) => {
+      // The lead page shows the saved values straight away (no flash of the old ones).
+      queryClient.setQueryData<LeadDetailResponse>(leadDetailKey(businessId, leadId), (old) =>
+        old && data?.lead ? { ...old, lead: data.lead } : old,
+      );
+    },
     onError: (_err, _vars, context) => {
       for (const [key, data] of context?.snapshot ?? []) queryClient.setQueryData(key, data);
     },

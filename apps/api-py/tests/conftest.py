@@ -9,7 +9,7 @@ from http.cookiejar import DefaultCookiePolicy
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
@@ -330,6 +330,83 @@ async def make_lead(
     db.add(lead)
     await db.commit()
     return {"id": str(lead.id), "name": name}
+
+
+async def make_quote(
+    db: AsyncSession,
+    business_id: str,
+    lead_id: str,
+    status: str,
+    total: int,
+    *,
+    number: int | None = None,
+    sent_at: datetime | None = None,
+    valid_until=None,
+    created_at: datetime | None = None,
+    no_sent_at: bool = False,
+) -> models.Quote:
+    """A quote seeded straight into the database: one line of `total` agorot, no VAT. SENT and
+    decided quotes get `sent_at` = now unless given (`no_sent_at` for an old row without it)."""
+    now = datetime.now(UTC)
+    bid = uuid.UUID(business_id)
+    if number is None:
+        last = (
+            await db.execute(select(func.max(models.Quote.number)).where(models.Quote.business_id == bid))
+        ).scalar_one()
+        number = (last or 1000) + 1
+    if sent_at is None and status != "DRAFT" and not no_sent_at:
+        sent_at = now
+    q = models.Quote(
+        id=uuid.uuid4(),
+        business_id=bid,
+        lead_id=uuid.UUID(lead_id),
+        number=number,
+        title="",
+        items=[{"description": "שירות", "quantity": 1, "unitPrice": total}],
+        discount=0,
+        vat_rate=0,
+        notes="",
+        status=models.QuoteStatus(status),
+        valid_until=valid_until,
+        sent_at=sent_at,
+        decided_at=now if status in ("ACCEPTED", "REJECTED") else None,
+        created_at=created_at or now,
+        updated_at=now,
+    )
+    db.add(q)
+    await db.commit()
+    return q
+
+
+async def make_task(
+    db: AsyncSession,
+    business_id: str,
+    lead_id: str | None,
+    assignee_id: str,
+    title: str,
+    due_at: datetime,
+    *,
+    status: str = "OPEN",
+    created_at: datetime | None = None,
+) -> models.Task:
+    """A task seeded straight into the database."""
+    now = datetime.now(UTC)
+    task = models.Task(
+        id=uuid.uuid4(),
+        business_id=uuid.UUID(business_id),
+        title=title,
+        due_at=due_at,
+        status=models.TaskStatus(status),
+        assignee_id=uuid.UUID(assignee_id),
+        lead_id=uuid.UUID(lead_id) if lead_id else None,
+        remind=False,
+        completed_at=now if status == "DONE" else None,
+        created_at=created_at or now,
+        updated_at=now,
+    )
+    db.add(task)
+    await db.commit()
+    return task
 
 
 # -- public site server ------------------------------------------------------------------------

@@ -7,6 +7,7 @@ import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { useImportCustomers } from './api';
 import {
+  FIELDS,
   fixPhone,
   guessColumns,
   readSheet,
@@ -22,7 +23,6 @@ const fieldLabels: Record<Field, () => string> = {
   name: () => tr('שם'),
   phone: () => tr('טלפון'),
   email: () => tr('אימייל'),
-  value: () => tr('סכום'),
 };
 
 const previewRows = 3;
@@ -43,7 +43,7 @@ export function ImportDialog({
   const fileInput = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
   const [sheet, setSheet] = useState<Sheet | null>(null);
-  const [mapping, setMapping] = useState<Mapping>({ name: '', phone: '', email: '', value: '' });
+  const [mapping, setMapping] = useState<Mapping>({ name: '', phone: '', email: '' });
   const [readError, setReadError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportCustomersResponse | null>(null);
 
@@ -71,7 +71,6 @@ export function ImportDialog({
         name: guess.name === null ? '' : String(guess.name),
         phone: guess.phone === null ? '' : String(guess.phone),
         email: guess.email === null ? '' : String(guess.email),
-        value: guess.value === null ? '' : String(guess.value),
       });
     } catch (err) {
       setSheet(null);
@@ -96,7 +95,6 @@ export function ImportDialog({
           name: pick(row, 'name'),
           phone: fixPhone(pick(row, 'phone')),
           email: pick(row, 'email'),
-          value: pick(row, 'value'),
         })),
       },
       { onSuccess: setResult },
@@ -120,7 +118,7 @@ export function ImportDialog({
         <div className="flex flex-col gap-4">
           <p className="text-sm text-ink-muted">
             {tr(
-              'מעלים קובץ Excel (xlsx) או CSV. השורה הראשונה היא כותרות, ולכל לקוח שורה עם שם, וטלפון או אימייל. סכום הוא אופציונלי.',
+              'מעלים קובץ Excel (xlsx) או CSV. השורה הראשונה היא כותרות, ולכל לקוח שורה עם שם, וטלפון או אימייל.',
             )}
           </p>
           {readError && <Alert tone="danger">{readError}</Alert>}
@@ -175,7 +173,7 @@ export function ImportDialog({
               {tr('איזו עמודה היא איזה פרט?')}
             </legend>
             <div className="grid gap-3 sm:grid-cols-2">
-              {(['name', 'phone', 'email', 'value'] as const).map((field) => (
+              {FIELDS.map((field) => (
                 <SelectMenu
                   key={field}
                   label={fieldLabels[field]()}
@@ -203,7 +201,7 @@ export function ImportDialog({
               <caption className="sr-only">{tr('תצוגה מקדימה')}</caption>
               <thead className="bg-surface-muted text-ink-muted">
                 <tr>
-                  {(['name', 'phone', 'email', 'value'] as const).map((f) => (
+                  {FIELDS.map((f) => (
                     <th key={f} scope="col" className="px-3 py-2 text-start font-medium">
                       {fieldLabels[f]()}
                     </th>
@@ -213,7 +211,7 @@ export function ImportDialog({
               <tbody>
                 {sheet.rows.slice(0, previewRows).map((row, i) => (
                   <tr key={i} className="border-t border-surface-border">
-                    {(['name', 'phone', 'email', 'value'] as const).map((f) => (
+                    {FIELDS.map((f) => (
                       <td key={f} className="px-3 py-2" dir={f === 'name' ? 'auto' : 'ltr'}>
                         {f === 'phone' ? fixPhone(pick(row, f)) : pick(row, f) || '—'}
                       </td>

@@ -38,13 +38,23 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   page,
 }) => {
   const { id, leadId } = await ownerWithLead(page);
-  // The lead page shows one part at a time, in tabs (D-140).
+  // D-209: tasks are a card on the lead page; "+ משימה" opens the form. An old `?tab=tasks`
+  // link lands on that card.
   await page.goto(`/b/${id}/leads/${leadId}?tab=tasks`);
+  const tasksCard = page.getByRole('region', { name: 'משימות' });
+  await expect(tasksCard.getByRole('heading', { name: 'משימות' })).toBeFocused();
+  await expect(page).not.toHaveURL(/tab=/);
+  const nextAction = page.getByRole('group', { name: 'הפעולה הבאה' });
+  await expect(nextAction).toContainText('אין פעולה הבאה');
+  await tasksCard.getByRole('button', { name: '+ משימה' }).click();
   const form = page.getByRole('form', { name: 'משימה חדשה' });
   await form.getByLabel('משימה חדשה').fill('להתקשר לגבי הטיפול');
   await form.getByLabel('מועד').fill(localIn(-30));
   await form.getByRole('button', { name: 'הוספה' }).click();
   await expect(page.getByRole('list', { name: 'משימות הליד' })).toContainText('להתקשר לגבי הטיפול');
+  // The nearest open task is the next action, overdue in words.
+  await expect(nextAction).toContainText('הפעולה הבאה: להתקשר לגבי הטיפול');
+  await expect(nextAction).toContainText('באיחור');
   await page.getByRole('tab', { name: 'הערות והיסטוריה' }).click();
   await expect(page.getByRole('list', { name: 'היסטוריית הליד' })).toContainText(
     'נוספה משימה: להתקשר לגבי הטיפול',
@@ -62,6 +72,28 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   await expect(page.getByRole('list', { name: 'היסטוריית הליד' })).toContainText(
     'בוצעה משימה: להתקשר לגבי הטיפול',
   );
+  // Done: no next action any more.
+  await expect(page.getByRole('group', { name: 'הפעולה הבאה' })).toContainText('אין פעולה הבאה');
+});
+
+test('on a phone the lead page shows the cards first, then the tabs, without side scrolling', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'the 375px layout');
+  const { id, leadId } = await ownerWithLead(page);
+  await page.goto(`/b/${id}/leads/${leadId}`);
+  const tasksCard = page.getByRole('region', { name: 'משימות' });
+  const quotesCard = page.getByRole('region', { name: 'הצעות מחיר' });
+  const tabs = page.getByRole('tab', { name: 'הערות והיסטוריה' });
+  await expect(tabs).toBeAttached();
+  const top = async (l: typeof tabs) => (await l.boundingBox())!.y;
+  expect(await top(tasksCard)).toBeLessThan(await top(tabs));
+  expect(await top(quotesCard)).toBeLessThan(await top(tabs));
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test('the reminder email arrives when a task is due', async ({ page, isMobile }) => {

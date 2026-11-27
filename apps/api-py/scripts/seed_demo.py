@@ -340,7 +340,6 @@ async def run(db, email: str, remove: bool) -> int:
             source=m.LeadSource(source),
             source_url="https://example.com/" if source == "website_form" else None,
             message=content["asks"][i % len(content["asks"])],
-            expected_value=[450, 1200, 3800, 6500, 900][i % 5] if i % 3 == 0 else None,
             tags=[TAG, "VIP"] if i % 7 == 2 else [TAG],
             created_at=created,
             updated_at=created,

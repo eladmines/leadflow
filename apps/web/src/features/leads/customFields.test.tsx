@@ -52,8 +52,8 @@ const lead = (over: Partial<Lead> = {}): Lead => ({
   sourceUrl: null,
   message: 'מחפשים אולם לחתונה',
   owner: null,
-  expectedValue: null,
-  nextActionAt: null,
+  value: { won: 0, open: 0 },
+  nextTask: null,
   tags: [],
   customFields: {
     [fieldIds.car]: 'מאזדה 3',
@@ -100,7 +100,7 @@ describe('lead card: Details block (F34)', () => {
     expect(within(archived).queryByRole('textbox')).not.toBeInTheDocument();
   });
 
-  it('saves each field on its own: text on leaving it, choice and checkbox at once', async () => {
+  it('edits fields freely and saves them together with one "שמירה" (D-207)', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
       [fieldsKey]: () => json(200, { fields: allFields }),
@@ -109,16 +109,52 @@ describe('lead card: Details block (F34)', () => {
     });
     const { user } = renderApp(detailPath());
     const car = await screen.findByLabelText('דגם הרכב');
+    const save = screen.getByRole('button', { name: 'שמירה' });
+    // Nothing changed yet.
+    expect(save).toBeDisabled();
     await user.clear(car);
-    await user.type(car, 'טויוטה קורולה{Enter}');
+    await user.type(car, 'טויוטה קורולה');
+    await user.tab();
     await choose(user, screen.getByRole('combobox', { name: 'סוג האירוע' }), 'חתונה');
     await user.click(screen.getByRole('checkbox', { name: 'חנייה במקום' }));
+    // Nothing is sent while editing.
+    expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toHaveLength(0);
+    expect(screen.getByText('יש שינויים שלא נשמרו')).toBeInTheDocument();
+    expect(save).toBeEnabled();
+    await user.click(save);
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toEqual([
-        { customFields: { [fieldIds.car]: 'טויוטה קורולה' } },
-        { customFields: { [fieldIds.eventType]: optionIds.wedding } },
-        // Unticked = no value (D-204).
-        { customFields: { [fieldIds.parking]: null } },
+        {
+          customFields: {
+            [fieldIds.car]: 'טויוטה קורולה',
+            [fieldIds.eventType]: optionIds.wedding,
+            // Unticked = no value (D-204).
+            [fieldIds.parking]: null,
+          },
+        },
+      ]),
+    );
+    expect(await screen.findByText('השינויים נשמרו')).toBeInTheDocument();
+  });
+
+  it('Enter in a field saves; "ביטול שינויים" puts the stored values back', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [fieldsKey]: () => json(200, { fields: allFields }),
+      [`GET ${lp.detail(id, lead().id)}`]: () => detail(),
+      [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead() }),
+    });
+    const { user } = renderApp(detailPath());
+    const car = await screen.findByLabelText('דגם הרכב');
+    await user.type(car, ' ספורט');
+    await user.click(screen.getByRole('button', { name: 'ביטול שינויים' }));
+    expect(car).toHaveValue('מאזדה 3');
+    expect(screen.getByRole('button', { name: 'שמירה' })).toBeDisabled();
+
+    await user.type(car, ' ספורט{Enter}');
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toEqual([
+        { customFields: { [fieldIds.car]: 'מאזדה 3 ספורט' } },
       ]),
     );
   });
@@ -135,21 +171,89 @@ describe('lead card: Details block (F34)', () => {
     });
     const { user } = renderApp(detailPath());
     const guests = await screen.findByLabelText(/מספר אורחים/);
+    const save = screen.getByRole('button', { name: 'שמירה' });
     await user.clear(guests);
-    await user.tab();
+    await user.click(save);
     expect(await screen.findByText(leadFieldMessages.valueRequired)).toBeInTheDocument();
     await user.type(guests, '900');
-    await user.tab();
+    await user.click(save);
     expect(await screen.findByText(leadFieldMessages.valueNumberMax(500))).toBeInTheDocument();
     expect(guests).toHaveAttribute('aria-invalid', 'true');
     expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toHaveLength(0);
 
     // A refusal from the server lands on the field it names.
+    await user.clear(guests);
+    await user.type(guests, '120');
     const car = screen.getByLabelText('דגם הרכב');
     await user.type(car, ' ספורט');
-    await user.tab();
+    await user.click(save);
     expect(await screen.findByText(leadFieldMessages.valueTextTooLong)).toBeInTheDocument();
     expect(car).toHaveAttribute('aria-invalid', 'true');
+    // Only the changed field was sent; the edit is kept to fix and save again.
+    expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toEqual([
+      { customFields: { [fieldIds.car]: 'מאזדה 3 ספורט' } },
+    ]);
+    expect(car).toHaveValue('מאזדה 3 ספורט');
+  });
+
+  it('warns before leaving with unsaved changes; tabs and status still work', async () => {
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [fieldsKey]: () => json(200, { fields: allFields }),
+      [`GET ${lp.detail(id, lead().id)}`]: () => detail(),
+      [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead() }),
+    });
+    const { user, location } = renderApp(detailPath());
+    const car = await screen.findByLabelText('דגם הרכב');
+    // Without changes, nothing holds the way out.
+    const idle = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(idle);
+    expect(idle.defaultPrevented).toBe(false);
+
+    await user.type(car, ' ספורט');
+    const unload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(true);
+
+    // Switching tabs on the same page is not leaving it.
+    await user.click(screen.getByRole('tab', { name: 'הערות והיסטוריה' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // The stage still saves at once, and the draft survives it.
+    await choose(user, screen.getByLabelText('שלב'), testStages[1]!.name);
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toEqual([
+        { stageId: testStages[1]!.id },
+      ]),
+    );
+    expect(car).toHaveValue('מאזדה 3 ספורט');
+
+    await user.click(screen.getByRole('link', { name: 'כל הלידים' }));
+    let dialog = await screen.findByRole('dialog', { name: 'לצאת בלי לשמור?' });
+    await user.click(within(dialog).getByRole('button', { name: 'להישאר בעמוד' }));
+    expect(location()).toMatch(new RegExp(`^${detailPath()}`));
+    expect(screen.getByLabelText('דגם הרכב')).toHaveValue('מאזדה 3 ספורט');
+
+    await user.click(screen.getByRole('link', { name: 'כל הלידים' }));
+    dialog = await screen.findByRole('dialog', { name: 'לצאת בלי לשמור?' });
+    await user.click(within(dialog).getByRole('button', { name: 'לצאת בלי לשמור' }));
+    await waitFor(() => expect(location()).toBe(leadsPath));
+  });
+
+  it('after saving, leaving needs no confirmation', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [fieldsKey]: () => json(200, { fields: allFields }),
+      [`GET ${lp.detail(id, lead().id)}`]: () => detail(),
+      [`PATCH ${lp.detail(id, lead().id)}`]: () =>
+        json(200, { lead: lead({ customFields: { [fieldIds.car]: 'מאזדה 3 ספורט' } }) }),
+    });
+    const { user, location } = renderApp(detailPath());
+    await user.type(await screen.findByLabelText('דגם הרכב'), ' ספורט');
+    await user.click(screen.getByRole('button', { name: 'שמירה' }));
+    expect(await screen.findByText('השינויים נשמרו')).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'כל הלידים' }));
+    await waitFor(() => expect(location()).toBe(leadsPath));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('employees fill fields on leads they may update', async () => {
@@ -410,7 +514,7 @@ describe('long labels never widen the page (QA-F34-04)', () => {
     expect(control).toHaveClass('min-w-0');
     // The control and the side column may shrink below their text's width.
     expect(control.closest('.relative.flex')).toHaveClass('min-w-0', 'max-w-full');
-    const column = screen.getByRole('heading', { name: 'פרטים' }).closest('.lg\\:order-first');
+    const column = screen.getByRole('heading', { name: 'פרטים' }).closest('[data-lead-side]');
     expect(column).toHaveClass('min-w-0');
     expect(column?.parentElement).toHaveClass('grid-cols-1');
   });
@@ -450,7 +554,7 @@ describe('invalid characters (NUL, lone surrogates)', () => {
     renderApp(detailPath());
     const car = await screen.findByLabelText('דגם הרכב');
     fireEvent.change(car, { target: { value: 'מאזדה\u0000' } });
-    fireEvent.blur(car);
+    fireEvent.click(screen.getByRole('button', { name: 'שמירה' }));
     expect(await screen.findByText(leadFieldMessages.invalidCharacters)).toBeInTheDocument();
     expect(car).toHaveAttribute('aria-invalid', 'true');
     expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toHaveLength(0);

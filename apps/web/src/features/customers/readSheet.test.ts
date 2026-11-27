@@ -56,18 +56,17 @@ describe('reading a spreadsheet', () => {
   });
 
   it('matches columns by their headers, in Hebrew and English', () => {
+    // D-207: an amount column is not imported (a lead's value comes only from quotes).
     expect(guessColumns(['שם מלא', 'נייד', 'דוא"ל', 'סכום עסקה'])).toEqual({
       name: 0,
       phone: 1,
       email: 2,
-      value: 3,
     });
     expect(guessColumns(['Customer', 'Mobile', 'E-mail', 'Amount'])).toEqual({
       name: 0,
       phone: 1,
       email: 2,
-      value: 3,
     });
-    expect(guessColumns(['a', 'b'])).toEqual({ name: null, phone: null, email: null, value: null });
+    expect(guessColumns(['a', 'b'])).toEqual({ name: null, phone: null, email: null });
   });
 });

@@ -7,6 +7,7 @@ import {
   LEAD_SOURCES,
   leadFieldFilterParams,
   leadSourceLabels,
+  leadValueForStageKind,
   parseLeadFieldFilterParams,
   type Lead,
   type LeadFieldDefinition,
@@ -14,6 +15,8 @@ import {
   type PipelineStage,
 } from '@simplecatch/shared';
 import {
+  AlarmClock,
+  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   Columns3,
@@ -63,6 +66,7 @@ import { sourceName } from './Attribution';
 import { stageColor } from './stageColors';
 import { useWhatsAppInbox } from '../whatsapp/api';
 import { tr, intlLocale } from '../../i18n';
+import { dueLabel } from '../tasks/api';
 import { messageBody } from '../../lib/messageBody';
 import { activeFields, useLeadFields } from '../leadFields/api';
 import { usableFilters } from '../leadFields/format';
@@ -107,6 +111,35 @@ function LeadPreview({ lead, compact = false }: { lead: Lead; compact?: boolean 
         {messageBody(last.body)}
       </p>
     </div>
+  );
+}
+
+/**
+ * The lead's next action = its nearest open task (D-209): title and due time; overdue is said in
+ * words, not only by colour. Nothing when there is no open task.
+ */
+function NextTaskLine({ lead }: { lead: Lead }) {
+  const next = lead.nextTask ?? null;
+  if (!next) return null;
+  const late = new Date(next.dueAt).getTime() < Date.now();
+  return (
+    <p
+      className={cn(
+        'flex min-w-0 items-start gap-1 text-xs',
+        late ? 'font-medium text-danger-700' : 'text-ink-muted',
+      )}
+    >
+      {late ? (
+        <AlertTriangle aria-hidden className="mt-px h-3.5 w-3.5 shrink-0" />
+      ) : (
+        <AlarmClock aria-hidden className="mt-px h-3.5 w-3.5 shrink-0" />
+      )}
+      <span className="min-w-0 [overflow-wrap:anywhere]">
+        {tr('הפעולה הבאה:')} <bdi>{next.title}</bdi> ·{' '}
+        <time dateTime={next.dueAt}>{dueLabel(next.dueAt)}</time>
+        {late && ` · ${tr('באיחור')}`}
+      </span>
+    </p>
   );
 }
 
@@ -198,6 +231,7 @@ function LeadCard({
         </span>
       </header>
       <LeadPreview lead={lead} />
+      <NextTaskLine lead={lead} />
       <CardFieldValues fields={cardFields} values={lead.customFields} />
       <TagChips tags={lead.tags} />
       <div className="flex flex-wrap gap-2">
@@ -238,6 +272,8 @@ function BoardCard({
   onMove: (lead: Lead, stage: PipelineStage) => void;
   cardFields: LeadFieldDefinition[];
 }) {
+  // D-208: open value in an open stage, won value in a won stage, nothing when lost.
+  const amount = leadValueForStageKind(lead.value ?? { won: 0, open: 0 }, lead.stage.kind);
   return (
     <article
       draggable
@@ -253,12 +289,15 @@ function BoardCard({
         </Link>
       </h3>
       <LeadPreview lead={lead} compact />
+      <NextTaskLine lead={lead} />
       <CardFieldValues fields={cardFields} values={lead.customFields} />
       <TagChips tags={lead.tags} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
         <time dateTime={lead.createdAt}>{timeAgo(lead.createdAt)}</time>
-        {lead.expectedValue !== null && (
-          <span className="font-medium text-ink">{shekel.format(lead.expectedValue)}</span>
+        {amount > 0 && (
+          <span className="font-medium text-ink" title={tr('לפי הצעות המחיר')}>
+            {shekel.format(amount)}
+          </span>
         )}
         {lead.owner && (
           <span className="inline-flex items-center gap-1">
@@ -408,7 +447,11 @@ function Board({
           {stages.map((stage) => {
             const items = leads.filter((l) => l.stage.id === stage.id);
             const color = stageColor(stage, stages);
-            const total = items.reduce((sum, l) => sum + (l.expectedValue ?? 0), 0);
+            // D-208: by the column's kind (open quotes, accepted quotes, or nothing when lost).
+            const total = items.reduce(
+              (sum, l) => sum + leadValueForStageKind(l.value ?? { won: 0, open: 0 }, stage.kind),
+              0,
+            );
             return (
               <li
                 key={stage.id}
@@ -435,7 +478,9 @@ function Board({
                     </span>
                   </h2>
                   {total > 0 && (
-                    <span className="text-xs text-ink-muted">{shekel.format(total)}</span>
+                    <span className="text-xs text-ink-muted" title={tr('לפי הצעות המחיר')}>
+                      {shekel.format(total)}
+                    </span>
                   )}
                 </div>
                 <ul className="flex min-h-24 flex-col gap-2">

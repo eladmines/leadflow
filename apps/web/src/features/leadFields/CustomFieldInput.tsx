@@ -96,8 +96,9 @@ export function CustomFieldInput({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         onKeyDown={(e) => {
-          // Enter commits an inline field (saving happens on blur).
-          if (e.key === 'Enter' && field.type !== 'date') e.currentTarget.blur();
+          // With an `onBlur` handler, Enter commits the field by leaving it; without one (the lead
+          // page's Details, saved with one button, D-207) Enter submits the form as usual.
+          if (e.key === 'Enter' && onBlur && field.type !== 'date') e.currentTarget.blur();
         }}
         aria-invalid={error ? true : undefined}
         aria-describedby={[range ? hintId : null, errorId].filter(Boolean).join(' ') || undefined}

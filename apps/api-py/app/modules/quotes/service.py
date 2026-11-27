@@ -8,7 +8,7 @@ import asyncio
 import logging
 import re
 import uuid
-from datetime import UTC, date, datetime
+from datetime import date
 from typing import Any
 
 from sqlalchemy import delete, func, select, text, update
@@ -19,7 +19,6 @@ from app.config import Settings
 from app.core.permissions import can
 from app.core.security import generate_token
 from app.core.timeutil import iso, now_ms
-from app.core.timezone import date_in_zone
 from app.db.models import (
     Activity,
     Lead,
@@ -40,6 +39,7 @@ from app.integrations.email.templates import quote_decision_template, quote_temp
 from app.modules.leads.schemas import QUOTE_SENT_STAGE
 from app.modules.notifications.service import MANAGERS, notify_safe
 from app.modules.quotes import schemas as s
+from app.modules.quotes.value import quote_expired
 
 log = logging.getLogger("simplecatch")
 
@@ -66,11 +66,7 @@ def _ymd(d: date | None) -> str | None:
 
 
 def _is_expired(q: Quote) -> bool:
-    return (
-        q.status == QuoteStatus.SENT
-        and q.valid_until is not None
-        and q.valid_until.isoformat() < date_in_zone(datetime.now(UTC), q.business.timezone)
-    )
+    return quote_expired(q.status, q.valid_until, q.business.timezone)
 
 
 def check_discount(data: s.UpsertQuoteRequest) -> None:

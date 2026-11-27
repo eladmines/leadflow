@@ -128,8 +128,8 @@ describe('tasks page', () => {
       sourceUrl: null,
       message: null,
       owner: null,
-      expectedValue: null,
-      nextActionAt: null,
+      value: { won: 0, open: 0 },
+      nextTask: null,
       tags: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -175,8 +175,8 @@ describe('tasks page', () => {
       sourceUrl: null,
       message: null,
       owner: null,
-      expectedValue: null,
-      nextActionAt: null,
+      value: { won: 0, open: 0 },
+      nextTask: null,
       tags: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -255,8 +255,8 @@ describe('tasks elsewhere', () => {
         sourceUrl: null,
         message: null,
         owner: null,
-        expectedValue: null,
-        nextActionAt: null,
+        value: { won: 0, open: 0 },
+        nextTask: null,
         tags: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -270,10 +270,14 @@ describe('tasks elsewhere', () => {
       [`POST ${tp.list(id)}`]: () => json(201, { task: task() }),
     });
     const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}/${leadId}`);
-    await user.click(await screen.findByRole('tab', { name: 'משימות' }));
-    const list = await screen.findByRole('list', { name: 'משימות הליד' });
+    // D-209: tasks are a card on the lead page, not a tab; "+ משימה" opens the form.
+    const card = await screen.findByRole('region', { name: 'משימות' });
+    const list = await within(card).findByRole('list', { name: 'משימות הליד' });
     expect(within(list).getByText('לחזור לרון')).toBeInTheDocument();
-    const form = screen.getByRole('form', { name: 'משימה חדשה' });
+    expect(within(card).queryByRole('form', { name: 'משימה חדשה' })).not.toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: '+ משימה' }));
+    const form = within(card).getByRole('form', { name: 'משימה חדשה' });
+    expect(within(form).getByLabelText('משימה חדשה')).toHaveFocus();
     await user.type(within(form).getByLabelText('משימה חדשה'), 'לשלוח הצעת מחיר');
     await user.click(within(form).getByRole('button', { name: 'הוספה' }));
     await waitFor(() =>
@@ -281,6 +285,10 @@ describe('tasks elsewhere', () => {
         title: 'לשלוח הצעת מחיר',
         leadId,
       }),
+    );
+    // The form closes after adding.
+    await waitFor(() =>
+      expect(within(card).queryByRole('form', { name: 'משימה חדשה' })).not.toBeInTheDocument(),
     );
   });
 

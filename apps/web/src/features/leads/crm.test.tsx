@@ -40,8 +40,8 @@ const lead = (over: Partial<Lead> = {}): Lead => ({
   sourceUrl: null,
   message: 'אשמח לתור',
   owner: null,
-  expectedValue: 1500,
-  nextActionAt: null,
+  value: { won: 0, open: 0 },
+  nextTask: null,
   tags: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -70,21 +70,61 @@ const members = {
 };
 
 describe('pipeline board', () => {
-  it('groups leads by stage with counts and value totals', async () => {
+  it('groups leads by stage with counts and value totals by stage kind (D-208)', async () => {
+    const won = testStages[2]!;
     mockApi({
       [meKey]: me(testUser),
       ...members,
       [`GET ${lp.list(id)}`]: () =>
         json(200, {
-          leads: [lead(), lead({ id: '5c000000-0000-4000-8000-000000000002', expectedValue: 500 })],
+          leads: [
+            lead({ value: { won: 0, open: 1500 } }),
+            lead({ id: '5c000000-0000-4000-8000-000000000002', value: { won: 700, open: 500 } }),
+            // A won-stage lead counts its accepted quotes, never its open one (D-210 §3).
+            lead({
+              id: '5c000000-0000-4000-8000-000000000003',
+              stage: { id: won.id, name: won.name, kind: 'WON' },
+              value: { won: 3000, open: 999 },
+            }),
+          ],
         }),
     });
     renderApp(leadsPath);
     const board = await screen.findByRole('list', { name: 'לוח לידים' });
     const column = within(board).getByRole('listitem', { name: 'חדש: 2 לידים' });
     expect(within(column).getAllByRole('article')).toHaveLength(2);
+    // Open stage: the open values (1,500 + 500), not the won 700.
     expect(within(column).getByText(/2,000/)).toBeInTheDocument();
+    expect(within(column).getByText(/1,500/)).toBeInTheDocument();
+    const wonColumn = within(board).getByRole('listitem', { name: 'נסגר: 1 לידים' });
+    expect(within(wonColumn).getAllByText(/3,000/)).toHaveLength(2);
+    expect(within(wonColumn).queryByText(/999/)).not.toBeInTheDocument();
     expect(within(board).getByRole('listitem', { name: 'נוצר קשר: 0 לידים' })).toBeInTheDocument();
+  });
+
+  it('shows the next task on the cards, overdue in words (D-209)', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      ...members,
+      [`GET ${lp.list(id)}`]: () =>
+        json(200, {
+          leads: [
+            lead({
+              nextTask: {
+                id: '7b000000-0000-4000-8000-000000000001',
+                title: 'להתקשר לגבי ההצעה',
+                dueAt: new Date(Date.now() - 3_600_000).toISOString(),
+                assignee: { id: testUser.id, name: 'דנה כהן' },
+              },
+            }),
+          ],
+        }),
+    });
+    renderApp(`${leadsPath}?view=list`);
+    const card = (await screen.findAllByRole('article'))[0]!;
+    expect(within(card).getByText('להתקשר לגבי ההצעה').closest('p')).toHaveTextContent(
+      /הפעולה הבאה:.*להתקשר לגבי ההצעה.*באיחור/,
+    );
   });
 
   it('moves a lead with the keyboard-friendly stage menu (optimistic, then saved)', async () => {

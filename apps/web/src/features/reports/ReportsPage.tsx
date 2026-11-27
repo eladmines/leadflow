@@ -116,7 +116,8 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
           tone="bg-amber-500"
           label={tr('עסקאות שנסגרו')}
           value={shekel.format(r.wonValue)}
-          note={tr('{0} עוד פתוחים', shekel.format(r.openValue))}
+          // D-207: both amounts come from quotes (accepted / the latest sent one still open).
+          note={tr('{0} בהצעות פתוחות · לפי הצעות מחיר', shekel.format(r.openValue))}
         />
         <StatTile
           icon={Timer}

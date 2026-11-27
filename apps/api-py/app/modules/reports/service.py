@@ -27,6 +27,8 @@ from app.db.models import (
 from app.deps import TenantContext
 from app.modules.leads.schemas import LEAD_SOURCES
 from app.modules.leads.service import ensure_stages
+from app.modules.quotes.value import ZERO as ZERO_VALUE
+from app.modules.quotes.value import lead_values
 from app.modules.sites.published_content import section_map
 from app.shared.attribution import attribution_name, parse_attribution
 from app.shared.embed import normalize_page_path
@@ -52,7 +54,7 @@ class AttributionRow(BaseModel):
     leads: int
     won: int  # leads in a Won stage ("became customers")
     lost: int
-    wonValue: int  # sum of the won leads' deal values (whole units)
+    wonValue: int  # D-207: sum of these leads' accepted quotes (`Lead.value.won`), whole shekels
     visits: int  # F31: website visits from this source (or campaign) in the range
 
 
@@ -308,11 +310,20 @@ class ReportService:
             ).all()
         ]
 
-        # Stages and money.
+        # Stages and money (D-207, D-208, D-210): values come from the leads' quotes.
         kind_of = {st.id: st.kind for st in stages}
+        values = await lead_values(self.db, ctx.business_id, [lead.id for lead in leads], to)
 
         def value(xs: list[Lead]) -> int:
-            return sum(lead.expected_value or 0 for lead in xs)
+            """By stage kind: open for OPEN stages, won for WON, nothing for LOST."""
+            return sum(
+                values.get(lead.id, ZERO_VALUE).for_stage_kind(kind_of[lead.stage_id])
+                for lead in xs
+                if lead.stage_id in kind_of
+            )
+
+        def won_value(xs: list[Lead]) -> int:
+            return sum(values.get(lead.id, ZERO_VALUE).won for lead in xs)
 
         by_stage = []
         for st in stages:
@@ -336,7 +347,7 @@ class ReportService:
         # F26: where customers come from. A customer = a Won stage or an accepted quote.
         def is_customer(lead: Lead) -> bool:
             return kind_of.get(lead.stage_id) == StageKind.WON or any(
-                q.status == QuoteStatus.ACCEPTED for q in lead.quotes
+                q.status == QuoteStatus.ACCEPTED and q.business_id == ctx.business_id for q in lead.quotes
             )
 
         rows: dict[str, dict[str, Any]] = {}
@@ -355,9 +366,9 @@ class ReportService:
 
         def add(row: dict[str, Any], lead: Lead) -> None:
             row["leads"] += 1
+            row["wonValue"] += values.get(lead.id, ZERO_VALUE).won
             if is_customer(lead):
                 row["won"] += 1
-                row["wonValue"] += lead.expected_value or 0
             elif kind_of.get(lead.stage_id) == StageKind.LOST:
                 row["lost"] += 1
 
@@ -447,7 +458,7 @@ class ReportService:
             range={"from": iso(frm), "to": iso(to), "days": days},
             leads=LeadCounts(current=len(leads), previous=previous),
             closeRate=len(won) / (len(won) + len(lost)) if won or lost else None,
-            wonValue=value(won),
+            wonValue=won_value(leads),
             openValue=value([lead for lead in leads if kind_of.get(lead.stage_id) == StageKind.OPEN]),
             avgResponseMinutes=int(sum(minutes) / len(minutes) + 0.5) if minutes else None,
             respondedLeads=len(minutes),

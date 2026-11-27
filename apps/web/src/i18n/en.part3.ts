@@ -277,8 +277,6 @@ export const enPart3: Record<string, string> = {
   'כרטיס הליד': 'The lead',
   'מי הלקוח, מאיפה הגיע ומה ביקש. כפתורי החיוג והאימייל פותחים שיחה בלחיצה.':
     'Who the customer is, where they came from and what they asked for. The call and email buttons start a conversation.',
-  'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות.':
-    'The stage, the owner, estimated value, when to follow up, and tags.',
   'שיחת וואטסאפ': 'WhatsApp conversation',
   שיחות: 'Conversations',
   השיחות: 'Conversations',
@@ -383,8 +381,8 @@ export const enPart3: Record<string, string> = {
     "Click me on any page: a page tour that explains what's on it, the full product tour, and quick search.",
   'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט התורים או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.':
     "Everyone who contacted the business: from the website form, WhatsApp, the booking bot or added by you. Each lead moves through stages until it's closed.",
-  'השלב בתהליך, מי אחראי, ערך משוער, מתי לחזור ללקוח ותגיות. כל שינוי נשמר ונרשם בהיסטוריה.':
-    "The stage, who's responsible, estimated value, when to get back to the customer, and tags. Every change is saved and recorded in the history.",
+  'השלב בתהליך, מי אחראי ותגיות. כל שינוי נשמר מיד ונרשם בהיסטוריה.':
+    "The stage, who's responsible, and tags. Every change is saved at once and recorded in the history.",
   'כותבים מה צריך לעשות ומתי, ולוחצים "הוספה". אפשר לשייך לעובד, ומקבלים מייל ופעמון כשמגיע הזמן.':
     'Write what needs doing and when, then click "Add". You can assign it to a teammate, and you get an email and a bell notification when it\'s due.',
   '"שלי" מראה רק את המשימות שלכם; "של כל הצוות" את כולן.': `"Mine" shows only your tasks; "Everyone's" shows all of them.`,
@@ -535,9 +533,6 @@ export const enPart3: Record<string, string> = {
   'חלקי הליד': 'Lead sections',
   'אין שיחת וואטסאפ עם הליד. אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.':
     'No WhatsApp conversation with this lead. Once a WhatsApp number is connected to the business, messages will appear here.',
-  'הכול על הליד, בלשוניות': 'Everything about the lead, in tabs',
-  'הערות והיסטוריה (כל מה שקרה בליד), WhatsApp (אפשר לענות עד 24 שעות מההודעה האחרונה של הלקוח), משימות, תורים והצעות מחיר. לחיצה על לשונית מציגה את החלק שלה.':
-    "Notes & history (everything that happened with the lead), WhatsApp (you can reply up to 24 hours after the customer's last message), tasks, appointments and quotes. Click a tab to see that part.",
   'חלקי ההגדרות': 'Settings sections',
   'ההגדרות, בלשוניות': 'Settings, in tabs',
   'פרטי העסק (מופיעים באתר, בכפתור החיוג ובמיילים), אזורי שירות, שעות פעילות (קובעות אילו שעות מוצעות לתורים), ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי. כל לשונית נשמרת בכפתור משלה.':
@@ -862,9 +857,8 @@ export const enPart3: Record<string, string> = {
   'לא הצלחנו לקרוא את הקובץ. בדקו שהוא תקין ונסו לשמור אותו מחדש.':
     "We couldn't read the file. Check that it's valid and try saving it again.",
   'לא לייבא': "Don't import",
-  'מעלים קובץ Excel (xlsx) או CSV. השורה הראשונה היא כותרות, ולכל לקוח שורה עם שם, וטלפון או אימייל. סכום הוא אופציונלי.':
-    'Upload an Excel (xlsx) or CSV file. The first row is the headers, and each customer has a row with a name and a phone or email. The amount is optional.',
-  סכום: 'Amount',
+  'מעלים קובץ Excel (xlsx) או CSV. השורה הראשונה היא כותרות, ולכל לקוח שורה עם שם, וטלפון או אימייל.':
+    'Upload an Excel (xlsx) or CSV file. The first row is the headers, and each customer has a row with a name and a phone or email.',
   'עד {0} שורות בכל פעם. מי שכבר קיים כלקוח לא ייווצר פעמיים.':
     "Up to {0} rows at a time. Anyone who is already a customer isn't created twice.",
   עמודה: 'Column',

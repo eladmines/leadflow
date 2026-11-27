@@ -63,7 +63,6 @@ LEAD_MESSAGES = {
 }
 CRM_MESSAGES = {
     "contactRequired": "יש להזין טלפון או אימייל",
-    "valueInvalid": "יש להזין סכום בשקלים (מספר שלם)",
     "noteRequired": "יש לכתוב הערה",
     "noteTooLong": "ההערה ארוכה מדי (עד 2,000 תווים)",
     "stageInvalid": "השלב שנבחר אינו קיים",
@@ -79,7 +78,6 @@ IMPORT_MESSAGES = {
     "contactMissing": "חסר טלפון או אימייל",
     "phoneInvalid": "מספר הטלפון אינו תקין",
     "emailInvalid": "כתובת האימייל אינה תקינה",
-    "valueInvalid": "הסכום אינו תקין",
     "alreadyCustomer": "כבר קיים כלקוח",
 }
 MAX_LEAD_TAGS = 10
@@ -130,21 +128,6 @@ def _optional_email(v: Any) -> str | None:
     if len(s) > 254 or not _EMAIL.match(s):
         raise ValueError(LEAD_MESSAGES["emailInvalid"])
     return s
-
-
-def _shekels(v: Any) -> int | None:
-    if v is None:
-        return None
-    msg = CRM_MESSAGES["valueInvalid"]
-    if isinstance(v, bool) or not isinstance(v, int | float):
-        raise ValueError(msg)
-    if isinstance(v, float):
-        if not v.is_integer():
-            raise ValueError(msg)
-        v = int(v)
-    if v < 0 or v > 100_000_000:
-        raise ValueError(msg)
-    return v
 
 
 def _tags(v: Any) -> list[str]:
@@ -218,7 +201,6 @@ Name = Annotated[str, BeforeValidator(_name)]
 OptionalText = Annotated[str | None, BeforeValidator(_optional_text)]
 OptionalPhone = Annotated[str | None, BeforeValidator(_optional_phone)]
 OptionalEmail = Annotated[str | None, BeforeValidator(_optional_email)]
-Shekels = Annotated[int | None, BeforeValidator(_shekels)]
 Tags = Annotated[list[str], BeforeValidator(_tags)]
 Note = Annotated[str, BeforeValidator(_note)]
 # `{ [fieldId]: value }`; `null`/`""` = no value. Any non-object (null included) is refused.
@@ -233,7 +215,8 @@ CustomFieldsInput = Annotated[
 
 
 class CreateLeadRequest(_Request):
-    """Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused."""
+    """Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused.
+    D-207: no value field; an `expectedValue` key from an old client is ignored like any extra."""
 
     name: Name = ""
     phone: OptionalPhone = None
@@ -241,7 +224,6 @@ class CreateLeadRequest(_Request):
     message: OptionalText = None
     stageId: uuid.UUID | None = None
     ownerId: uuid.UUID | None = None
-    expectedValue: Shekels = None
     # F34: checked per business (mode 'create', in the app: required fields needed).
     customFields: CustomFieldsInput = Field(default_factory=dict)
     # D-205: quick "add customer" paths in the app don't demand required custom fields (every
@@ -251,14 +233,13 @@ class CreateLeadRequest(_Request):
 
 class UpdateLeadRequest(BaseModel):
     """PATCH: every field optional; each change is recorded in the activity log. Use
-    `model_fields_set` to tell "absent" from "null"."""
+    `model_fields_set` to tell "absent" from "null". D-207/D-209: no `expectedValue` and no
+    `nextActionAt`; those keys from an old client are ignored (extras), not stored."""
 
     model_config = ConfigDict(validate_default=False)
 
     stageId: uuid.UUID | None = None
     ownerId: uuid.UUID | None = None
-    expectedValue: Shekels = None
-    nextActionAt: str | None = None
     message: OptionalText = None
     tags: Tags | None = None
     # F34: a patch (keys sent change; `null`/`""` removes a value; absent keys stay).
@@ -308,27 +289,16 @@ class CustomerListQuery(BaseModel):
 
 
 class ImportCustomerRow(BaseModel):
-    """A spreadsheet row as the browser sends it: raw text, checked per row on the server."""
+    """A spreadsheet row as the browser sends it: raw text, checked per row on the server.
+    D-207: no value column; a `value` key is ignored."""
 
     name: str | None = Field(default=None, max_length=200)
     phone: str | None = Field(default=None, max_length=60)
     email: str | None = Field(default=None, max_length=300)
-    value: str | None = Field(default=None, max_length=40)  # optional deal value in shekels
 
 
 class ImportCustomersRequest(BaseModel):
     rows: Annotated[list[ImportCustomerRow], Field(min_length=1, max_length=IMPORT_MAX_ROWS)]
-
-
-def parse_import_value(raw: str | None) -> int | None | Literal["invalid"]:
-    """The deal value cell: digits with optional ₪, commas or a decimal part → whole shekels."""
-    t = re.sub(r"[₪\s]", "", raw or "").replace(",", "")
-    if not t:
-        return None
-    if not re.fullmatch(r"[0-9]+(\.[0-9]+)?", t):
-        return "invalid"
-    n = int(float(t) + 0.5)  # JavaScript's Math.round: halves round up
-    return n if 0 <= n <= 100_000_000 else "invalid"
 
 
 # ---------------------------------------------------------------------------- public form
@@ -407,6 +377,23 @@ class LastWhatsApp(BaseModel):
     createdAt: str
 
 
+class LeadValue(BaseModel):
+    """D-207/D-208/D-210: whole shekels from the lead's quotes. `won` = all accepted quotes;
+    `open` = the latest sent quote while still sent and not expired."""
+
+    won: int = Field(ge=0)
+    open: int = Field(ge=0)
+
+
+class LeadNextTask(BaseModel):
+    """D-209: the lead's nearest open task the member may see."""
+
+    id: str
+    title: str
+    dueAt: str
+    assignee: PersonOut
+
+
 class LeadOut(BaseModel):
     id: str
     contact: ContactOut
@@ -416,8 +403,8 @@ class LeadOut(BaseModel):
     attribution: Attribution | None
     message: str | None
     owner: PersonOut | None
-    expectedValue: int | None
-    nextActionAt: str | None
+    value: LeadValue  # D-207: read-only, from quotes
+    nextTask: LeadNextTask | None  # D-209: replaces the next-action date
     tags: list[str]
     # F34: `{ [fieldId]: value }`, archived fields' values included; `{}` when none. `bool` comes
     # first so `true` never turns into `1`.

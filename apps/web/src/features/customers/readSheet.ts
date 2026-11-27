@@ -119,13 +119,13 @@ export async function readSheet(file: File): Promise<Sheet> {
   );
 }
 
-export const FIELDS = ['name', 'phone', 'email', 'value'] as const;
+/** The columns a customer row has. D-207: no amount; a lead's value comes only from quotes. */
+export const FIELDS = ['name', 'phone', 'email'] as const;
 export type Field = (typeof FIELDS)[number];
 
 const HINTS: Record<Field, string[]> = {
   phone: ['טלפון', 'נייד', 'פלאפון', 'סלולר', 'phone', 'mobile', 'cell', 'tel'],
   email: ['מייל', 'אימייל', 'דואל', 'דוא"ל', 'email', 'e-mail', 'mail'],
-  value: ['סכום', 'מחיר', 'שווי', 'ערך', 'עסקה', 'value', 'amount', 'price', 'total'],
   name: ['שם', 'לקוח', 'name', 'customer', 'client'],
 };
 
@@ -135,11 +135,10 @@ export function guessColumns(headers: string[]): Record<Field, number | null> {
     name: null,
     phone: null,
     email: null,
-    value: null,
   };
   const taken = new Set<number>();
   // Most specific first, so "שם" doesn't claim "מייל של איש קשר" and the like.
-  for (const field of ['phone', 'email', 'value', 'name'] as const) {
+  for (const field of ['phone', 'email', 'name'] as const) {
     const at = headers.findIndex(
       (h, i) =>
         !taken.has(i) && HINTS[field].some((hint) => h.toLowerCase().includes(hint.toLowerCase())),
@@ -158,8 +157,8 @@ export const fixPhone = (v: string) => (/^5\d{8}$/.test(v) ? `0${v}` : v);
 /** A ready-to-fill CSV (UTF-8 with BOM, so Excel opens Hebrew correctly). */
 export function templateCsv(): string {
   const rows = [
-    [tr('שם'), tr('טלפון'), tr('אימייל'), tr('סכום')],
-    [tr('דנה כהן'), '052-1234567', 'dana@example.com', '1500'],
+    [tr('שם'), tr('טלפון'), tr('אימייל')],
+    [tr('דנה כהן'), '052-1234567', 'dana@example.com'],
   ];
   return `${BOM}${rows.map((r) => r.join(',')).join('\r\n')}\r\n`;
 }

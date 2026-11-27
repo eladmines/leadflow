@@ -2543,6 +2543,7 @@ export interface components {
         /**
          * CreateLeadRequest
          * @description Manual lead (F08). Needs a name and a phone or an email; a matching contact is reused.
+         *     D-207: no value field; an `expectedValue` key from an old client is ignored like any extra.
          */
         CreateLeadRequest: {
             /** Customfields */
@@ -2551,8 +2552,6 @@ export interface components {
             };
             /** Email */
             email?: string | null;
-            /** Expectedvalue */
-            expectedValue?: number | null;
             /** Message */
             message?: string | null;
             /**
@@ -3061,6 +3060,7 @@ export interface components {
         /**
          * ImportCustomerRow
          * @description A spreadsheet row as the browser sends it: raw text, checked per row on the server.
+         *     D-207: no value column; a `value` key is ignored.
          */
         ImportCustomerRow: {
             /** Email */
@@ -3069,8 +3069,6 @@ export interface components {
             name?: string | null;
             /** Phone */
             phone?: string | null;
-            /** Value */
-            value?: string | null;
         };
         /** ImportCustomersRequest */
         ImportCustomersRequest: {
@@ -3298,6 +3296,19 @@ export interface components {
             /** Leads */
             leads: components["schemas"]["LeadOut"][];
         };
+        /**
+         * LeadNextTask
+         * @description D-209: the lead's nearest open task the member may see.
+         */
+        LeadNextTask: {
+            assignee: components["schemas"]["PersonOut"];
+            /** Dueat */
+            dueAt: string;
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+        };
         /** LeadOut */
         LeadOut: {
             attribution: components["schemas"]["Attribution"] | null;
@@ -3308,15 +3319,12 @@ export interface components {
             customFields: {
                 [key: string]: boolean | number | string;
             };
-            /** Expectedvalue */
-            expectedValue: number | null;
             /** Id */
             id: string;
             lastWhatsApp: components["schemas"]["LastWhatsApp"] | null;
             /** Message */
             message: string | null;
-            /** Nextactionat */
-            nextActionAt: string | null;
+            nextTask: components["schemas"]["LeadNextTask"] | null;
             owner: components["schemas"]["PersonOut"] | null;
             /**
              * Source
@@ -3330,6 +3338,7 @@ export interface components {
             tags: string[];
             /** Updatedat */
             updatedAt: string;
+            value: components["schemas"]["LeadValue"];
         };
         /** LeadRef */
         LeadRef: {
@@ -3347,6 +3356,17 @@ export interface components {
         LeadTagsResponse: {
             /** Tags */
             tags: string[];
+        };
+        /**
+         * LeadValue
+         * @description D-207/D-208/D-210: whole shekels from the lead's quotes. `won` = all accepted quotes;
+         *     `open` = the latest sent quote while still sent and not expired.
+         */
+        LeadValue: {
+            /** Open */
+            open: number;
+            /** Won */
+            won: number;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -4464,19 +4484,16 @@ export interface components {
         /**
          * UpdateLeadRequest
          * @description PATCH: every field optional; each change is recorded in the activity log. Use
-         *     `model_fields_set` to tell "absent" from "null".
+         *     `model_fields_set` to tell "absent" from "null". D-207/D-209: no `expectedValue` and no
+         *     `nextActionAt`; those keys from an old client are ignored (extras), not stored.
          */
         UpdateLeadRequest: {
             /** Customfields */
             customFields?: {
                 [key: string]: string | number | boolean | null;
             };
-            /** Expectedvalue */
-            expectedValue?: number | null;
             /** Message */
             message?: string | null;
-            /** Nextactionat */
-            nextActionAt?: string | null;
             /** Ownerid */
             ownerId?: string | null;
             /** Stageid */
