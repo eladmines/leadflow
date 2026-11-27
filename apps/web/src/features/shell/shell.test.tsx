@@ -44,7 +44,7 @@ describe('app shell', () => {
       'הצעות מחיר',
       'דוחות',
       'צוות',
-      'הגדרות וחיוב',
+      'הגדרות',
     ]);
     expect(within(mainNav()).getByRole('link', { name: 'דשבורד' })).toHaveAttribute(
       'aria-current',
@@ -76,7 +76,7 @@ describe('app shell', () => {
     const { user, location } = renderApp(home);
     await user.click(await screen.findByRole('button', { name: 'פתיחת תפריט' }));
     const dialog = await screen.findByRole('dialog', { name: 'תפריט ניווט' });
-    await user.click(within(dialog).getByRole('link', { name: 'הגדרות וחיוב' }));
+    await user.click(within(dialog).getByRole('link', { name: 'הגדרות' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(location()).toBe(section('settings'));
   });
@@ -330,7 +330,7 @@ describe('settings', () => {
     ]);
   });
 
-  it('has four tabs, with the details, the hours and the service areas on one tab', async () => {
+  it('has two tabs, with the details, the hours and the service areas on one tab', async () => {
     mockApi({ [meKey]: me(testUser) });
     renderApp(section('settings'));
     await screen.findByLabelText(/שם העסק/);
@@ -338,7 +338,7 @@ describe('settings', () => {
       within(screen.getByRole('tablist', { name: 'חלקי ההגדרות' }))
         .getAllByRole('tab')
         .map((t) => t.textContent),
-    ).toEqual(['פרטי העסק', 'ערוצים', 'שדות לידים', 'מנוי וחיוב']);
+    ).toEqual(['פרטי העסק', 'ערוצים']);
     // In this order, each with its own save button.
     const panel = screen.getByRole('tabpanel');
     expect(

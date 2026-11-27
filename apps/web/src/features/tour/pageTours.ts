@@ -28,7 +28,8 @@ export type PageKey =
 export function pageKeyFor(pathname: string): PageKey | null {
   const [, , , section = '', sub] = pathname.split('/');
   if (section === '') return 'dashboard';
-  if (section === 'leads') return sub ? 'lead' : 'leads';
+  // `leads/fields` is the lead-fields page (D-206), not a lead.
+  if (section === 'leads') return sub === 'fields' ? null : sub ? 'lead' : 'leads';
   if (section === 'quotes') return sub ? 'quote' : 'quotes';
   const known: PageKey[] = [
     'site',
@@ -490,7 +491,7 @@ export const pageTours: Record<PageKey, TourStep[]> = {
       target: `[aria-label="${tr('חלקי ההגדרות')}"]`,
       title: tr('ההגדרות, בלשוניות'),
       body: tr(
-        'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. עוד: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי.',
+        'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. בלשונית השנייה: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק).',
       ),
     },
   ],

@@ -129,6 +129,10 @@ export function BusinessLayout() {
             <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm lg:hidden" />
             <Dialog.Content
               aria-describedby={undefined}
+              // Escape inside the user menu closes that menu only, not the whole drawer.
+              onEscapeKeyDown={(e) => {
+                if ((e.target as Element | null)?.closest?.('[role="menu"]')) e.preventDefault();
+              }}
               className="fixed inset-y-0 start-0 z-50 w-[85vw] max-w-xs overflow-y-auto rounded-e-3xl bg-surface shadow-lift focus:outline-none lg:hidden"
             >
               <Dialog.Title className="sr-only">{tr('תפריט ניווט')}</Dialog.Title>

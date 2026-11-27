@@ -95,12 +95,10 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   page,
 }) => {
   const id = await ownerWithBusiness(page);
-  await page.goto(`/b/${id}/settings?tab=fields`);
+  await page.goto(`/b/${id}/leads/fields`);
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-  await expect(page.getByRole('tab', { name: 'שדות לידים' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  // D-206: lead fields have their own page under Leads.
+  await expect(page.getByRole('heading', { name: 'שדות לידים', level: 1 })).toBeVisible();
   await expect(page.getByText('עדיין אין שדות משלכם')).toBeVisible(); // empty state
 
   await addFieldInUi(page, { label: 'דגם רכב', type: 'טקסט', required: true });
@@ -191,7 +189,7 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await expect(list).toContainText('אבי כהן');
 
   // Archive the choice field.
-  await page.goto(`/b/${id}/settings?tab=fields`);
+  await page.goto(`/b/${id}/leads/fields`);
   await page.getByRole('button', { name: 'העברת סוג טיפול לארכיון' }).click();
   await page.getByRole('button', { name: 'העברה לארכיון', exact: true }).click();
   await expect(page.getByRole('list', { name: 'שדות בארכיון' })).toContainText('סוג טיפול');
@@ -241,12 +239,12 @@ test('quick "new customer" from a quote is not blocked by a required field (D-20
 test('reorder arrows and inputs are reachable and usable by keyboard only', async ({ page }) => {
   const id = await ownerWithBusiness(page);
   for (const label of ['ראשון', 'שני', 'שלישי']) await apiField(page, id, { label, type: 'text' });
-  await page.goto(`/b/${id}/settings?tab=fields`);
+  await page.goto(`/b/${id}/leads/fields`);
   const active = page.getByRole('list', { name: 'שדות פעילים' });
   await expect(active.getByRole('listitem')).toHaveCount(3);
 
-  // Tab from the tab strip until "move שלישי up" has focus: keyboard reachable, in order.
-  await page.getByRole('tab', { name: 'שדות לידים' }).focus();
+  // Tab from the back link at the top until "move שלישי up" has focus: keyboard reachable, in order.
+  await page.getByRole('link', { name: 'כל הלידים' }).focus();
   const target = page.getByRole('button', { name: 'הזזת שלישי למעלה' });
   let reached = false;
   for (let i = 0; i < 40 && !reached; i++) {
@@ -295,7 +293,7 @@ test('error and retry when the fields can not load', async ({ page }) => {
         })
       : route.continue(),
   );
-  await page.goto(`/b/${id}/settings?tab=fields`);
+  await page.goto(`/b/${id}/leads/fields`);
   await expect(page.getByText('לא הצלחנו לטעון את השדות')).toBeVisible({ timeout: 15_000 });
   fail = false;
   await page.getByRole('button', { name: 'לנסות שוב' }).click();
@@ -319,7 +317,7 @@ test.describe('375px', () => {
         data: { name: 'רון', phone: '050-1112233', customFields: { [sel.id]: sel.options[0]!.id } },
       })
     ).json();
-    await page.goto(`/b/${id}/settings?tab=fields`);
+    await page.goto(`/b/${id}/leads/fields`);
     await expect(page.getByRole('list', { name: 'שדות פעילים' })).toBeVisible();
     await noHorizontalScroll(page);
     await page.getByRole('button', { name: 'הוספת שדה' }).first().click();
@@ -416,7 +414,7 @@ test('an employee sees the no-permission state and can still fill values', async
   const id = await ownerWithBusiness(page);
   const f = await apiField(page, id, { label: 'דגם רכב', type: 'text' });
   const { emp, ctx } = await employeeOf(browser, page, id);
-  await emp.goto(`/b/${id}/settings?tab=fields`);
+  await emp.goto(`/b/${id}/leads/fields`);
   await expect(emp.getByRole('button', { name: 'הוספת שדה' })).toHaveCount(0);
   await expect(emp.getByRole('list', { name: 'שדות פעילים' })).toHaveCount(0);
   await expect(emp.getByText(/שדות הלידים/)).toBeVisible(); // NoPermission names what's missing
@@ -478,10 +476,10 @@ test.describe('English', () => {
       required: true,
     });
     await apiField(page, id, { label: 'Guests', type: 'number', min: 1, max: 50 });
-    await page.goto(`/b/${id}/settings?tab=fields`);
+    await page.goto(`/b/${id}/leads/fields`);
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-    await expect(page.getByRole('tab', { name: 'Lead fields' })).toBeVisible();
-    const panel = page.getByRole('tabpanel');
+    await expect(page.getByRole('heading', { name: 'Lead fields', level: 1 })).toBeVisible();
+    const panel = page.locator('main');
     await expect(panel.getByRole('list', { name: 'Active fields' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Move Guests up' })).toBeVisible();
     // Only the business's own labels may be Hebrew.

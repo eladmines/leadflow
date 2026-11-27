@@ -19,12 +19,13 @@ const meKey = `GET ${apiPaths.auth.me}`;
 const path = businessWebPaths.section(testBusiness.id, 'account');
 
 describe('account page', () => {
-  it('is reachable from the name in the top bar', async () => {
+  it('is reachable from the user menu in the top bar', async () => {
     mockApi({ [meKey]: me(testUser) });
     const { user, location } = renderApp(businessWebPaths.home(testBusiness.id));
     // The name moved from the sidebar into the top bar (D-114).
     const bar = await screen.findByRole('banner', { name: 'סרגל עליון' });
-    await user.click(await within(bar).findByRole('link', { name: 'החשבון שלי: דנה כהן' }));
+    await user.click(await within(bar).findByRole('button', { name: 'תפריט המשתמש: דנה כהן' }));
+    await user.click(within(bar).getByRole('menuitem', { name: 'החשבון שלי' }));
     expect(location()).toBe(path);
     expect(await screen.findByRole('heading', { name: 'החשבון שלי' })).toBeInTheDocument();
   });

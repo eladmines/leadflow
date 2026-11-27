@@ -8,7 +8,15 @@ import {
   type LeadListResponse,
 } from '@simplecatch/shared';
 import { useQuery } from '@tanstack/react-query';
-import { CornerDownLeft, Plus, Search, UserRound, type LucideIcon } from 'lucide-react';
+import {
+  CornerDownLeft,
+  CreditCard,
+  ListChecks,
+  Plus,
+  Search,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
@@ -119,6 +127,24 @@ export function CommandPalette({
       icon: UserRound,
       to: section('account'),
     });
+    if (can(business.role, 'business.update')) {
+      pages.push({
+        id: 'page-billing',
+        group: tr('מעבר לעמוד'),
+        label: tr('מנוי וחיוב'),
+        icon: CreditCard,
+        to: section('billing'),
+      });
+    }
+    if (can(business.role, 'leadFields.manage')) {
+      pages.push({
+        id: 'page-lead-fields',
+        group: tr('מעבר לעמוד'),
+        label: tr('שדות לידים'),
+        icon: ListChecks,
+        to: section('leads/fields'),
+      });
+    }
     const term = q.trim();
     const match = (c: Command) => !term || c.label.includes(term);
     const found: Command[] = (term.length >= 2 ? (leads.data ?? []) : []).map((l) => ({

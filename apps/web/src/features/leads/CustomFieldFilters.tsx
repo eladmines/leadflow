@@ -6,6 +6,8 @@ import {
   type LeadFieldFilters,
 } from '@simplecatch/shared';
 import { useCallback, useEffect, useId, useState } from 'react';
+import { Settings2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { SelectMenu } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { isRtl, tr } from '../../i18n';
@@ -33,12 +35,21 @@ export function CustomFieldFilters({
   fields,
   filters,
   onChange,
+  manageTo,
 }: {
   fields: LeadFieldDefinition[];
   filters: LeadFieldFilters;
   onChange: SetFieldFilter;
+  /** The lead-fields page, for those who may manage fields (`leadFields.manage`). */
+  manageTo?: string;
 }) {
-  if (fields.length === 0) return null;
+  if (fields.length === 0) {
+    return manageTo ? (
+      <div className="flex basis-full">
+        <ManageFieldsLink to={manageTo} />
+      </div>
+    ) : null;
+  }
   return (
     <div
       role="group"
@@ -48,7 +59,21 @@ export function CustomFieldFilters({
       {fields.map((f) => (
         <FieldFilter key={f.id} field={f} filter={filters[f.id] ?? {}} onChange={onChange} />
       ))}
+      {manageTo && <ManageFieldsLink to={manageTo} />}
     </div>
+  );
+}
+
+/** "ניהול שדות": a shortcut to the lead-fields page (D-206). */
+export function ManageFieldsLink({ to }: { to: string }) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex h-8 items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+    >
+      <Settings2 aria-hidden className="h-4 w-4" />
+      {tr('ניהול שדות')}
+    </Link>
   );
 }
 

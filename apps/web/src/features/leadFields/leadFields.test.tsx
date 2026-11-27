@@ -33,7 +33,7 @@ afterEach(() => vi.unstubAllGlobals());
 const id = testBusiness.id;
 const lf = apiPaths.leadFields;
 const meKey = `GET ${apiPaths.auth.me}`;
-const page = `${businessWebPaths.section(id, 'settings')}?tab=fields`;
+const page = businessWebPaths.section(id, 'leads/fields');
 const asRole = (role: Business['role']) => ({
   [`GET ${apiPaths.businesses.detail(id)}`]: () =>
     json(200, { business: { ...testBusiness, role } }),
@@ -41,7 +41,7 @@ const asRole = (role: Business['role']) => ({
 const list = (fields: LeadFieldDefinition[]) => () => json(200, { fields });
 const newId = 'f1000000-0000-4000-8000-0000000000aa';
 
-describe('Settings → Lead fields (F34)', () => {
+describe('Leads → Lead fields page (F34, D-206)', () => {
   it('lists active fields in order and archived ones apart, for an owner', async () => {
     mockApi({ [meKey]: me(testUser), [`GET ${lf.list(id)}`]: list(allFields) });
     renderApp(page);
@@ -64,7 +64,7 @@ describe('Settings → Lead fields (F34)', () => {
     expect(within(rows[0]!).getByText('דגם הרכב').tagName).toBe('BDI');
   });
 
-  it('a manager manages fields too (no "owner only" notice on this tab)', async () => {
+  it('a manager manages fields too (no "owner only" notice)', async () => {
     mockApi({ [meKey]: me(testUser), ...asRole('MANAGER'), [`GET ${lf.list(id)}`]: list([]) });
     renderApp(page);
     expect(await screen.findByText('עדיין אין שדות משלכם')).toBeInTheDocument();

@@ -70,7 +70,6 @@ export const enPart4: Record<string, string> = {
   פרטים: 'Details',
   'אפשר להוסיף לכל ליד שדות משלכם, למשל תאריך האירוע או דגם הרכב.':
     'You can add your own fields to every lead, such as the event date or the car model.',
-  'להגדרת השדות': 'Set up fields',
   ריק: 'empty',
   'שדה נוסף': 'Custom field',
   'שונה ל': 'changed to',
@@ -133,4 +132,12 @@ export const enPart4: Record<string, string> = {
   'הסינון לפי שדה נוסף אינו תקין': 'The custom field filter is not valid',
   'הטקסט מכיל תווים לא תקינים. מחקו אותם ונסו שוב':
     'The text contains invalid characters. Delete them and try again.',
+
+  // D-206: user menu, billing page, lead fields in Leads
+  'תפריט המשתמש': 'User menu',
+  'תפריט המשתמש: {0}': 'User menu: {0}',
+  'מנוי והחיוב': 'plan and billing',
+  'ניהול שדות': 'Manage fields',
+  'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. בלשונית השנייה: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק).':
+    "Business details, opening hours (which decide the hours offered for appointments) and service areas, all in one tab, each card with its own save button. The second tab: channels (connecting the business's WhatsApp and Facebook page).",
 };

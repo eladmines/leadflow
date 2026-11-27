@@ -181,16 +181,16 @@ describe('lead card: Details block (F34)', () => {
     expect(screen.queryByText('טוענים את השדות…')).not.toBeInTheDocument();
   });
 
-  it('a manager with no fields yet is pointed to the settings', async () => {
+  it('a manager with no fields yet is pointed to the lead-fields page', async () => {
     mockApi({
       [meKey]: me(testUser),
       ...asRole('MANAGER'),
       [`GET ${lp.detail(id, lead().id)}`]: () => detail(lead({ customFields: {} })),
     });
     renderApp(detailPath());
-    expect(await screen.findByRole('link', { name: 'להגדרת השדות' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'ניהול שדות' })).toHaveAttribute(
       'href',
-      `${businessWebPaths.section(id, 'settings')}?tab=fields`,
+      businessWebPaths.section(id, 'leads/fields'),
     );
   });
 
@@ -431,7 +431,7 @@ describe('long labels never widen the page (QA-F34-04)', () => {
 
   it('a long field name in the Settings list is truncated with the full name as a tooltip', async () => {
     mockApi({ [meKey]: me(testUser), [fieldsKey]: () => json(200, { fields: [field] }) });
-    renderApp(`${businessWebPaths.section(id, 'settings')}?tab=fields`);
+    renderApp(businessWebPaths.section(id, 'leads/fields'));
     const name = await within(await screen.findByRole('list', { name: 'שדות פעילים' })).findByText(
       longField,
     );
@@ -461,7 +461,7 @@ describe('invalid characters (NUL, lone surrogates)', () => {
       [meKey]: me(testUser),
       [fieldsKey]: () => json(200, { fields: [] }),
     });
-    const { user } = renderApp(`${businessWebPaths.section(id, 'settings')}?tab=fields`);
+    const { user } = renderApp(businessWebPaths.section(id, 'leads/fields'));
     await user.click(await screen.findByRole('button', { name: 'הוספת שדה' }));
     const dialog = await screen.findByRole('dialog', { name: 'שדה חדש' });
     fireEvent.change(within(dialog).getByLabelText(/שם השדה/), {
