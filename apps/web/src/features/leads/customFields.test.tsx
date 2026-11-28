@@ -311,8 +311,7 @@ describe('lead card: "פרטים" with custom fields (F34, D-219)', () => {
         ]),
     });
     const { user } = renderApp(detailPath());
-    // D-220: the history is in "מידע".
-    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
+    await user.click(await screen.findByRole('tab', { name: /^היסטוריה/ }));
     const history = await screen.findByRole('list', { name: 'היסטוריית הליד' });
     expect(within(history).getByText('עודכנו: תגיות, שדות נוספים')).toBeInTheDocument();
     await waitFor(() =>

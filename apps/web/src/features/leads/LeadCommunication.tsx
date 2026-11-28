@@ -8,6 +8,7 @@ import { useChannels } from '../settings/channelsApi';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { formatDateTime, timeAgo } from './api';
+import { LeadSourceIcon } from './SourceIcon';
 
 /** The "תקשורת" tab's channels (D-221), in this order. No call log yet, so no phone. */
 export const COMM_CHANNELS = ['whatsapp', 'email', 'messenger', 'instagram'] as const;
@@ -114,18 +115,12 @@ export function LeadCommunication({
 
   return (
     <div className="flex flex-col gap-3">
-      {waiting && (
-        <p className="flex items-center gap-1.5 rounded-lg bg-warning-50 px-3 py-2 text-sm text-warning-600">
-          <MessageCircle aria-hidden className="h-4 w-4 shrink-0" />
-          <span>
-            {tr('ממתין לתשובה שלך:')}{' '}
-            <time dateTime={waiting.createdAt} title={formatDateTime(waiting.createdAt)}>
-              {timeAgo(waiting.createdAt)}
-            </time>
-          </span>
-        </p>
-      )}
-      <div role="tablist" aria-label={tr('ערוצי תקשורת')} className="flex flex-wrap gap-1.5">
+      {/* A second row of tabs right under the main ones (owner, 2026-11-28). */}
+      <div
+        role="tablist"
+        aria-label={tr('ערוצי תקשורת')}
+        className="-mx-2 -mt-2 flex flex-wrap border-b border-surface-border bg-surface-muted/60 px-3 sm:-mx-3 sm:-mt-3"
+      >
         {shown.map((c, i) => {
           const n = waitingIn(c);
           const label = subTabLabels[c]();
@@ -145,13 +140,17 @@ export function LeadCommunication({
               onClick={() => onSelect(c)}
               onKeyDown={(e) => onKeyDown(e, i)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
+                '-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400',
                 channel === c
-                  ? 'bg-brand-50 text-brand-700 ring-brand-600'
-                  : 'text-ink-muted ring-surface-border hover:bg-surface-muted hover:text-ink',
+                  ? 'border-brand-600 text-brand-700'
+                  : 'border-transparent text-ink-muted hover:text-ink',
               )}
             >
               {n > 0 && <span aria-hidden className="h-2 w-2 rounded-full bg-success-600" />}
+              <LeadSourceIcon
+                source={c === 'messenger' ? 'facebook' : c}
+                className="h-4 w-4 shrink-0"
+              />
               <span aria-hidden>{label}</span>
               {n > 0 && (
                 <span aria-hidden className="text-xs font-normal">
@@ -162,6 +161,17 @@ export function LeadCommunication({
           );
         })}
       </div>
+      {waiting && (
+        <p className="flex items-center gap-1.5 rounded-lg bg-warning-50 px-3 py-2 text-sm text-warning-600">
+          <MessageCircle aria-hidden className="h-4 w-4 shrink-0" />
+          <span>
+            {tr('ממתין לתשובה שלך:')}{' '}
+            <time dateTime={waiting.createdAt} title={formatDateTime(waiting.createdAt)}>
+              {timeAgo(waiting.createdAt)}
+            </time>
+          </span>
+        </p>
+      )}
       <div
         id={`lead-comm-panel-${channel}`}
         role="tabpanel"

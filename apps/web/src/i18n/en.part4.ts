@@ -268,7 +268,6 @@ export const enPart4: Record<string, string> = {
   // D-219: tabs with counts and a communication panel.
   '{0}, {1} הודעות חדשות': '{0}, {1} new messages',
   'אין פרטי קשר לליד הזה.': 'No contact details for this lead.',
-  'הוספה לליד': 'Add to the lead',
   הליד: 'The lead',
   הערה: 'Note',
   'הערות, {0}': 'Notes, {0}',
@@ -324,4 +323,8 @@ export const enPart4: Record<string, string> = {
   'סה״כ רכישות': 'Total purchases',
   'איתנו מאז': 'With us since',
   'פניות נוספות': 'Other inquiries',
+  // Lead page history tab (owner, 2026-11-28).
+  'אין עדיין אירועים.': 'No events yet.',
+  'היסטוריה, {0}': 'History, {0}',
+  הלקוח: 'The customer',
 };

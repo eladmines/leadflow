@@ -6,7 +6,7 @@ import {
   type SendWhatsAppRequest,
 } from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bot, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { useScrollToLatest } from '../../lib/useScrollToLatest';
@@ -15,7 +15,7 @@ import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { formatDateTime, timeAgo } from '../leads/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
-import { usePauseBot, useSendWhatsApp, useWhatsAppThread } from './api';
+import { useSendWhatsApp, useWhatsAppThread } from './api';
 import { tr, intlLocale } from '../../i18n';
 import { messageBody } from '../../lib/messageBody';
 
@@ -68,7 +68,6 @@ export function WhatsAppThread({
   const thread = useWhatsAppThread(business.id, leadId);
   const listRef = useScrollToLatest<HTMLOListElement>(thread.data?.messages.at(-1)?.id);
   const send = useSendWhatsApp(business.id, leadId);
-  const pause = usePauseBot(business.id, leadId);
   const form = useForm<SendWhatsAppRequest>({
     resolver: zodResolver(sendWhatsAppRequestSchema),
     defaultValues: { text: '' },
@@ -90,7 +89,7 @@ export function WhatsAppThread({
       </Card>
     );
   }
-  const { connected, replyUntil, botPaused } = thread.data;
+  const { connected, replyUntil } = thread.data;
   // Where a reply goes: the channel of the customer's last message.
   const replyChannel = thread.data.channel ?? 'whatsapp';
   const view = channel ?? replyChannel;
@@ -142,23 +141,7 @@ export function WhatsAppThread({
           />
           {title}
         </h2>
-        {connected && view === 'whatsapp' && (
-          // The booking bot for this customer only (D-108): pause it to talk yourself.
-          <div className="flex items-center gap-2 text-xs text-ink-muted">
-            <Bot aria-hidden className="h-4 w-4" />
-            <span>{botPaused ? tr('הבוט מושהה בשיחה הזו') : tr('הבוט יכול לענות בשיחה הזו')}</span>
-            <Button
-              size="sm"
-              variant="secondary"
-              loading={pause.isPending}
-              onClick={() => pause.mutate(!botPaused)}
-            >
-              {botPaused ? tr('הפעלת הבוט') : tr('השהיית הבוט')}
-            </Button>
-          </div>
-        )}
       </div>
-      {pause.isError && <Alert tone="danger">{errorMessage(pause.error)}</Alert>}
       {messages.length === 0 ? (
         <p className="text-sm text-ink-muted">
           {mail
@@ -169,8 +152,8 @@ export function WhatsAppThread({
         <ol
           ref={listRef}
           aria-label={tr(listNames[view])}
-          // Its own scroll box, at most half the screen, so the reply box stays in view.
-          className="scrollbar-visible flex max-h-[min(28rem,50dvh)] flex-col gap-2 overflow-y-auto overscroll-contain"
+          // Its own scroll box, sized so the whole tab (name, tabs, reply box) fits on the screen.
+          className="scrollbar-visible flex max-h-[max(12rem,calc(100dvh-30rem))] flex-col gap-2 overflow-y-auto overscroll-contain"
         >
           {messages.map((m) => {
             const out = m.direction === 'OUT';

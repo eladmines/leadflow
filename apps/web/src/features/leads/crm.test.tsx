@@ -266,17 +266,16 @@ describe('lead page', () => {
       'href',
       'tel:+972527654321',
     );
-    // D-220: the history and owner are in "מידע", the first tab.
-    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
+    // The history has its own tab; the owner is in "מידע".
+    await user.click(await screen.findByRole('tab', { name: /^היסטוריה/ }));
     const history = screen.getByRole('list', { name: 'היסטוריית הליד' });
     expect(within(history).getByText('השלב שונה מ"חדש" ל"נוצר קשר"')).toBeInTheDocument();
     expect(within(history).getByText('הליד נוצר מטופס באתר')).toBeInTheDocument();
 
+    await user.click(screen.getByRole('tab', { name: 'מידע' }));
     await choose(user, screen.getByLabelText('שלב'), contacted!.name);
     await choose(user, screen.getByLabelText('אחראי'), 'יוסי מזרחי');
-    // No notes yet, so the notes tab is hidden; the "+" menu opens it (D-219).
-    await user.click(screen.getByRole('button', { name: 'הוספה לליד' }));
-    await user.click(screen.getByRole('menuitem', { name: 'הערה' }));
+    await user.click(screen.getByRole('tab', { name: /^הערות/ }));
     await user.type(screen.getByLabelText('הוספת הערה'), 'דיברנו בטלפון');
     await user.click(screen.getByRole('button', { name: 'שמירת הערה' }));
     await waitFor(() =>
@@ -355,12 +354,19 @@ describe('lead page', () => {
       [`DELETE ${lp.detail(id, lead().id)}`]: () => noContent(),
     });
     const { user } = renderApp(`${leadsPath}/${lead().id}`);
-    await user.click(await screen.findByRole('button', { name: 'מחיקת הליד' }));
+    // Delete sits behind "⋯" beside the name.
+    const openDelete = async () => {
+      if (!screen.queryByRole('button', { name: 'מחיקת הליד' }))
+        await user.click(await screen.findByRole('button', { name: 'עוד' }));
+      await user.click(screen.getByRole('button', { name: 'מחיקת הליד' }));
+    };
+    await screen.findByRole('heading', { name: 'דנה כהן', level: 1 });
+    await openDelete();
     const dialog = screen.getByRole('dialog', { name: 'למחוק את הליד של דנה כהן?' });
     await user.click(within(dialog).getByRole('button', { name: 'ביטול' }));
     expect(callsTo(fetchMock, 'DELETE', lp.detail(id, lead().id))).toHaveLength(0);
 
-    await user.click(screen.getByRole('button', { name: 'מחיקת הליד' }));
+    await openDelete();
     await user.click(screen.getByRole('button', { name: 'מחיקה לצמיתות' }));
     expect(await screen.findByRole('button', { name: 'ליד חדש' })).toBeInTheDocument();
     expect(callsTo(fetchMock, 'DELETE', lp.detail(id, lead().id))).toHaveLength(1);
@@ -377,6 +383,7 @@ describe('lead page', () => {
     renderApp(`${leadsPath}/${lead().id}`);
     await screen.findByRole('heading', { name: 'דנה כהן', level: 1 });
     expect(screen.queryByRole('button', { name: 'מחיקת הליד' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'עוד' })).not.toBeInTheDocument();
   });
 
   it('shows "not found" for a lead outside the user\'s view (API 404)', async () => {

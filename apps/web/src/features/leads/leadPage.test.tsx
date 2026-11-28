@@ -12,7 +12,6 @@ import { allFields } from '../../test/leadFields';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
-  callsTo,
   json,
   me,
   mockApi,
@@ -177,7 +176,7 @@ describe('lead page tabs (D-219)', () => {
     expect(info).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByRole('region', { name: 'הפעולה הבאה' })).not.toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'מאפייני הליד' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^עוד/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^עוד פרטים/ })).not.toBeInTheDocument();
     const panel = screen.getByRole('tabpanel');
     // The conversations are in "תקשורת" (D-221), not in "מידע".
     expect(within(panel).queryByRole('region', { name: 'תקשורת' })).not.toBeInTheDocument();
@@ -202,7 +201,7 @@ describe('lead page tabs (D-219)', () => {
     expect(tabByName(/^הצעות/)).toHaveAttribute('aria-selected', 'true');
     expect(location()).toBe(`${page}?tab=quotes`);
     await user.keyboard('{End}');
-    expect(tabByName(/^הערות/)).toHaveFocus();
+    expect(tabByName(/^היסטוריה/)).toHaveFocus();
     await user.keyboard('{Home}');
     const first = screen.getAllByRole('tab')[0];
     expect(first).toHaveFocus();
@@ -217,57 +216,10 @@ describe('lead page tabs (D-219)', () => {
     const notes = await screen.findByRole('list', { name: 'הערות' });
     expect(within(notes).getAllByRole('listitem')).toHaveLength(1);
     expect(screen.queryByText('השלב שונה מ"חדש" ל"נוצר קשר"')).not.toBeInTheDocument();
-    await openInfo(user);
+    await user.click(screen.getByRole('tab', { name: /^היסטוריה/ }));
     const history = screen.getByRole('list', { name: 'היסטוריית הליד' });
     expect(within(history).getAllByRole('listitem')).toHaveLength(2);
     expect(within(history).queryByText('ביקש לחזור אחרי 17:00')).not.toBeInTheDocument();
-  });
-
-  it('the "+" menu adds a note, a task, a quote, an appointment and opens its tab', async () => {
-    const fetchMock = mockApi({
-      [meKey]: me(testUser),
-      [`GET ${lp.detail(id, leadId)}`]: () => detail(),
-      [`GET ${apiPaths.businesses.members(id)}`]: () => json(200, { members: [] }),
-      [`GET ${apiPaths.appointments.services(id)}`]: () => json(200, { services: [] }),
-      [`POST ${apiPaths.tasks.list(id)}`]: () => json(201, { task: task() }),
-    });
-    const { user, location } = renderApp(page);
-    await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
-    const plus = await screen.findByRole('button', { name: 'הוספה לליד' });
-    expect(plus).toHaveAttribute('aria-haspopup', 'menu');
-
-    await user.click(plus);
-    expect(screen.getByRole('menuitem', { name: 'הערה' })).toHaveFocus();
-    await user.keyboard('{Escape}');
-    expect(plus).toHaveFocus();
-    await user.click(plus);
-    await user.click(screen.getByRole('menuitem', { name: 'הערה' }));
-    expect(tabByName(/^הערות/)).toHaveAttribute('aria-selected', 'true');
-    await waitFor(() => expect(screen.getByLabelText('הוספת הערה')).toHaveFocus());
-
-    await user.click(plus);
-    await user.click(screen.getByRole('menuitem', { name: 'משימה' }));
-    expect(tabByName(/^משימות/)).toHaveAttribute('aria-selected', 'true');
-    const form = screen.getByRole('form', { name: 'משימה חדשה' });
-    expect(within(form).getByRole('textbox', { name: 'משימה חדשה' })).toHaveFocus();
-    await user.type(within(form).getByRole('textbox', { name: 'משימה חדשה' }), 'להתקשר');
-    await user.click(within(form).getByRole('button', { name: 'הוספה' }));
-    await waitFor(() =>
-      expect(callsTo(fetchMock, 'POST', apiPaths.tasks.list(id))).toHaveLength(1),
-    );
-
-    await user.click(plus);
-    await user.click(screen.getByRole('menuitem', { name: 'תור' }));
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
-    await user.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(tabByName(/^תורים/)).toHaveAttribute('aria-selected', 'true');
-
-    await user.click(plus);
-    await user.click(screen.getByRole('menuitem', { name: 'הצעת מחיר' }));
-    await waitFor(() =>
-      expect(location()).toBe(`${businessWebPaths.section(id, 'quotes')}/new?leadId=${leadId}`),
-    );
   });
 
   it('the quotes tab: statuses and totals, "+ הצעה"; the value is at the top of this tab', async () => {
@@ -350,8 +302,7 @@ describe('lead page tabs (D-219)', () => {
         fail ? apiError(500, 'INTERNAL_ERROR', 'משהו השתבש') : json(200, { tasks: [] }),
     });
     const { user } = renderApp(page);
-    await user.click(await screen.findByRole('button', { name: 'הוספה לליד' }));
-    await user.click(screen.getByRole('menuitem', { name: 'משימה' }));
+    await user.click(await screen.findByRole('tab', { name: /^משימות/ }));
     const panel = screen.getByRole('tabpanel');
     expect(await within(panel).findByRole('alert')).toBeInTheDocument();
     fail = false;
@@ -403,25 +354,30 @@ describe('old tab links (D-219, D-220)', () => {
     );
   });
 
-  it('?tab=related opens "לקוח"', async () => {
+  it('?tab=related (and ?tab=customer) open "מידע", where the customer section is', async () => {
     mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withActivities() });
     const { location } = renderApp(`${page}?tab=related`);
-    expect(await screen.findByRole('tab', { name: 'לקוח' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    await waitFor(() => expect(location()).toBe(`${page}?tab=customer`));
-  });
-
-  it.each(['more', 'history'])('?tab=%s opens "מידע"', async (old) => {
-    mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withActivities() });
-    const { location } = renderApp(`${page}?tab=${old}`);
     expect(await screen.findByRole('tab', { name: 'מידע' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
-    expect(await screen.findByRole('list', { name: 'היסטוריית הליד' })).toBeInTheDocument();
     await waitFor(() => expect(location()).toBe(`${page}?tab=info`));
+  });
+
+  it('?tab=more opens "מידע"; ?tab=history opens the history tab', async () => {
+    mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withActivities() });
+    const { location } = renderApp(`${page}?tab=more`);
+    expect(await screen.findByRole('tab', { name: 'מידע' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await waitFor(() => expect(location()).toBe(`${page}?tab=info`));
+  });
+
+  it('?tab=history opens the history tab', async () => {
+    mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withActivities() });
+    renderApp(`${page}?tab=history`);
+    expect(await screen.findByRole('list', { name: 'היסטוריית הליד' })).toBeInTheDocument();
   });
 });
 
@@ -462,7 +418,7 @@ describe('the "מידע" tab (D-220)', () => {
     const sections = within(panel)
       .getAllByRole('heading', { level: 2 })
       .map((h) => h.textContent);
-    expect(sections).toEqual(['הליד', 'פרטים', 'היסטוריה (2)']);
+    expect(sections).toEqual(['הליד', 'פרטים', 'הלקוח', 'פניות נוספות (2)']);
     expect(screen.queryByRole('complementary', { name: 'מאפייני הליד' })).not.toBeInTheDocument();
     const info = within(panel).getByRole('region', { name: 'הליד' });
     expect(within(info).getByRole('combobox', { name: 'שלב' })).toBeInTheDocument();
@@ -486,11 +442,12 @@ describe('the "מידע" tab (D-220)', () => {
     ).toBeInTheDocument();
     // The conversation is in "תקשורת", with the new message counted.
     expect(await screen.findByRole('tab', { name: 'תקשורת, 1 הודעות חדשות' })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /^היסטוריה/ }));
     expect(
       within(screen.getByRole('list', { name: 'היסטוריית הליד' })).getAllByRole('listitem'),
     ).toHaveLength(2);
-    // The contact's other leads are in "לקוח".
-    await user.click(screen.getByRole('tab', { name: 'לקוח' }));
+    // The contact's other leads are in "מידע", under "הלקוח".
+    await user.click(screen.getByRole('tab', { name: 'מידע' }));
     const links = within(screen.getByRole('list', { name: 'לידים קשורים' })).getAllByRole('link');
     expect(links[0]).toHaveAttribute('href', `${leadsPath}/${related[0]!.id}`);
     expect(links[0]).toHaveTextContent(/נסגר.*3,000/);
@@ -508,7 +465,7 @@ describe('the "מידע" tab (D-220)', () => {
       [`GET ${lp.detail(id, other.id)}`]: () =>
         json(200, { lead: other, activities: [], relatedLeads: [] }),
     });
-    const { user, location } = renderApp(`${page}?tab=customer`);
+    const { user, location } = renderApp(page);
     const list = await screen.findByRole('list', { name: 'לידים קשורים' });
     await user.click(within(list).getAllByRole('link')[0]!);
     await waitFor(() => expect(location()).toBe(`${leadsPath}/${related[0]!.id}`));
@@ -549,8 +506,7 @@ describe('the WhatsApp buttons', () => {
     expect(location()).toBe(`${page}?tab=communication&channel=whatsapp`);
 
     // From the phone bar too, after moving elsewhere.
-    await user.click(screen.getByRole('button', { name: 'הוספה לליד' }));
-    await user.click(screen.getByRole('menuitem', { name: 'הערה' }));
+    await user.click(screen.getByRole('tab', { name: /^הערות/ }));
     expect(screen.getByRole('tab', { name: /^הערות/ })).toHaveAttribute('aria-selected', 'true');
     const bar = screen.getByRole('navigation', { name: 'פעולות מהירות' });
     await user.click(within(bar).getByRole('button', { name: 'WhatsApp: מעבר לשיחה בעמוד' }));
@@ -660,17 +616,17 @@ describe('no header (D-220): the name, then the tabs', () => {
       [`GET ${threadPath}`]: () =>
         json(200, { connected, messages: [], replyUntil: null, botPaused: false }),
     });
-    const { user } = renderApp(page);
+    renderApp(page);
     const heading = await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     // Nothing between the name and the tabs: no avatar, icon buttons, stage badge or meta line.
     expect(heading.closest('header')).toBeNull();
-    expect(heading.nextElementSibling).toContainElement(screen.getByRole('tablist'));
+    // The name's row (with the "⋯" actions), then the tabs.
+    expect(heading.parentElement!.nextElementSibling).toContainElement(screen.getByRole('tablist'));
     expect(screen.queryByText(/^הגיע מ־/)).not.toBeInTheDocument();
     const info = screen.getByRole('region', { name: 'הליד' });
     expect(within(info).getByRole('combobox', { name: 'אחראי' })).toBeInTheDocument();
     expect(within(info).getByText('מקור').nextElementSibling).toHaveTextContent(/Google Ads/);
-    // Call and email live in "לקוח".
-    await user.click(screen.getByRole('tab', { name: 'לקוח' }));
+    // Call and email are in the customer section of "מידע".
     const call = screen.getByRole('link', { name: 'התקשרות ל־052-1112233' });
     expect(call).toHaveAttribute('href', 'tel:+972521112233');
     expect(screen.getByRole('link', { name: 'מייל ל־ron@example.com' })).toHaveAttribute(
@@ -681,11 +637,11 @@ describe('no header (D-220): the name, then the tabs', () => {
     await waitFor(() => expect(call.className.includes('bg-brand-600')).toBe(!connected));
   });
 
-  it('phone and email are copied from "לקוח", and the copy is announced', async () => {
+  it('phone and email are copied from "הלקוח" in "מידע", and the copy is announced', async () => {
     // user-event puts its own clipboard on `navigator` (readable back below).
     mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withContact() });
-    const { user } = renderApp(`${page}?tab=customer`);
-    const section = await screen.findByRole('region', { name: 'רון לוי' });
+    const { user } = renderApp(page);
+    const section = await screen.findByRole('region', { name: /^הלקוח/ });
     expect(within(section).getByText('ron@example.com')).toHaveAttribute('dir', 'ltr');
     await user.click(within(section).getByRole('button', { name: 'העתקת אימייל' }));
     await expect(navigator.clipboard.readText()).resolves.toBe('ron@example.com');

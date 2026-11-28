@@ -4,8 +4,8 @@ import { choose } from './choose';
 /** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const info = page.getByRole('tab', { name: 'מידע' });
-  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
+  // The history has its own tab (owner, 2026-11-28).
+  await page.getByRole('tab', { name: /^היסטוריה/ }).click();
 }
 
 /** F08: manual lead → board (drag or stage menu) → lead page (stage, note, history) → search. */
@@ -73,9 +73,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await choose(page, page.getByLabel('שלב', { exact: true }), 'ממתין');
   await openLeadHistory(page);
   await expect(page.getByText('השלב שונה מ"נוצר קשר" ל"ממתין"')).toBeVisible();
-  // D-219: no notes yet, so the notes tab is opened from the "+" menu.
-  await page.getByRole('button', { name: 'הוספה לליד' }).click();
-  await page.getByRole('menuitem', { name: 'הערה' }).click();
+  await page.getByRole('tab', { name: /^הערות/ }).click();
   await page.getByLabel('הוספת הערה').fill('נשלחה הצעה של ₪650, מחכה לאישור');
   await page.getByRole('button', { name: 'שמירת הערה' }).click();
   const history = page.getByRole('list', { name: 'היסטוריית הליד' });

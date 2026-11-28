@@ -4,8 +4,8 @@ import { choose } from './choose';
 /** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const info = page.getByRole('tab', { name: 'מידע' });
-  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
+  // The history has its own tab (owner, 2026-11-28).
+  await page.getByRole('tab', { name: /^היסטוריה/ }).click();
 }
 
 /** The custom-field form: "פרטים" in the "מידע" tab (D-220). */
@@ -228,7 +228,7 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await expect(page.getByRole('dialog', { name: 'ליד חדש' }).getByText('סוג טיפול')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await page.getByRole('link', { name: 'אבי כהן' }).first().click();
-  await openLeadHistory(page);
+  await page.getByRole('tab', { name: 'מידע' }).click();
   await expect(page.getByRole('heading', { name: 'שדות בארכיון' })).toBeVisible();
   const archivedSection = page.getByRole('region', { name: 'שדות בארכיון' });
   await expect(archivedSection).toContainText('סוג טיפול');

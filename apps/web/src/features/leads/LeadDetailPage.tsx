@@ -17,17 +17,23 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ArrowRight,
+  CalendarDays,
   Check,
   ChevronDown,
   Copy,
+  FileText,
+  History as HistoryIcon,
+  Info,
+  ListTodo,
   Mail,
   MessageCircle,
   MessageSquareText,
   Phone,
-  Plus,
+  StickyNote,
   Trash2,
+  type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -36,6 +42,7 @@ import {
   buttonClasses,
   DialogShell,
   EmptyState,
+  MoreMenu,
   SelectMenu,
   Spinner,
   Textarea,
@@ -334,21 +341,10 @@ const systemEvents = (activities: Activity[]) => activities.filter((a) => a.type
 function History({ activities }: { activities: Activity[] }) {
   const events = systemEvents(activities);
   return (
-    // Folds open/closed by its heading (owner, 2026-11-28); open by default.
-    <details open className="group flex flex-col gap-2">
-      <summary
-        id="lead-history-title"
-        className="flex cursor-pointer list-none items-center gap-2 rounded-md text-base font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 [&::-webkit-details-marker]:hidden"
-      >
-        <h2 className="text-base font-semibold">
-          {tr('היסטוריה')} ({events.length})
-        </h2>
-        <ChevronDown
-          aria-hidden
-          className="h-4 w-4 text-ink-muted transition-transform group-open:rotate-180"
-        />
-      </summary>
-      <ol aria-label={tr('היסטוריית הליד')} className="mt-2 flex flex-col">
+    // Its own tab (owner, 2026-11-28): system events, newest first as stored.
+    <section aria-label={tr('היסטוריה')} className="p-4">
+      {events.length === 0 && <p className="text-sm text-ink-muted">{tr('אין עדיין אירועים.')}</p>}
+      <ol aria-label={tr('היסטוריית הליד')} className="flex flex-col">
         {events.map((a) => (
           <li key={a.id} className="relative flex gap-3 pb-4 last:pb-0">
             <span
@@ -368,7 +364,7 @@ function History({ activities }: { activities: Activity[] }) {
           </li>
         ))}
       </ol>
-    </details>
+    </section>
   );
 }
 
@@ -472,7 +468,8 @@ export function LeadDetailPage() {
 }
 
 /** Old `?tab=` values (D-211/D-212/D-219) whose content is now in "מידע". */
-const INFO_ALIASES: readonly string[] = ['more', 'history'];
+// Old links: the customer tab and related leads are part of "מידע" now (owner, 2026-11-28).
+const INFO_ALIASES: readonly string[] = ['more', 'related', 'customer'];
 
 function LeadPage({
   lead,
@@ -492,12 +489,10 @@ function LeadPage({
   const quotes = useLeadQuotes(lead);
   const appts = useLeadAppointments(lead);
   const tasks = useLeadOpenTasks(lead);
-  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const asked = params.get('tab');
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
-  const [noteFocus, setNoteFocus] = useState(0);
 
   const phone = lead.contact.phone;
   // The conversation the page already loads (the WhatsApp tab's query, shared from the cache).
@@ -541,7 +536,6 @@ function LeadPage({
   // "מידע"; `?tab=whatsapp` → "תקשורת" on WhatsApp.
   useEffect(() => {
     if (INFO_ALIASES.includes(asked ?? '')) selectTab('info');
-    else if (asked === 'related') selectTab('customer');
     else if (asked === 'whatsapp') selectTab('communication', 'whatsapp');
     // Only for the address the page opened with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -568,18 +562,6 @@ function LeadPage({
   const addTask = () => {
     selectTab('tasks');
     setTaskFormOpen(true);
-  };
-  const add = (what: AddKind) => {
-    if (what === 'note') {
-      selectTab('notes');
-      setNoteFocus((n) => n + 1);
-    } else if (what === 'task') addTask();
-    else if (what === 'quote')
-      navigate(`${businessWebPaths.section(business.id, 'quotes')}/new?leadId=${lead.id}`);
-    else {
-      selectTab('appointments');
-      setBookOpen(true);
-    }
   };
 
   const unsavedDialog = (
@@ -612,24 +594,27 @@ function LeadPage({
         <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
         {tr('כל הלידים')}
       </Link>
-      <h1 className="min-w-0 text-2xl font-semibold text-ink [overflow-wrap:anywhere]" dir="auto">
-        {lead.contact.name}
-      </h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="min-w-0 text-2xl font-semibold text-ink [overflow-wrap:anywhere]" dir="auto">
+          {lead.contact.name}
+        </h1>
+        {/* Rare actions behind "⋯" beside the name (owner, 2026-11-28); none → no button. */}
+        {can(business.role, 'leads.delete') && <DeleteLead lead={lead} leave={guard.leave} />}
+      </div>
       <div className="min-w-0 rounded-2xl border border-surface-border bg-surface shadow-card">
         <LeadTabArea
           lead={lead}
           tab={tab}
           onSelect={selectTab}
-          onAdd={add}
           messages={messages}
           notes={notes}
+          historyCount={systemEvents(activities).length}
           tasks={tasks}
           quotes={quotes}
           appts={appts}
         >
-          {tab === 'info' && <LeadInfo lead={lead} activities={activities} draft={draft} />}
-          {tab === 'customer' && (
-            <LeadCustomer lead={lead} related={related} whatsappInApp={whatsappInApp} />
+          {tab === 'info' && (
+            <LeadInfo lead={lead} draft={draft} related={related} whatsappInApp={whatsappInApp} />
           )}
           {tab === 'communication' && (
             <LeadCommunication
@@ -640,7 +625,8 @@ function LeadPage({
               onSelect={(ch) => selectTab('communication', ch)}
             />
           )}
-          {tab === 'notes' && <Notes leadId={lead.id} activities={activities} focus={noteFocus} />}
+          {tab === 'notes' && <Notes leadId={lead.id} activities={activities} />}
+          {tab === 'history' && <History activities={activities} />}
           {tab === 'tasks' && (
             <div className="flex flex-col gap-3 p-3">
               <LeadTasks
@@ -666,7 +652,6 @@ function LeadPage({
           )}
         </LeadTabArea>
       </div>
-      {can(business.role, 'leads.delete') && <DeleteLead lead={lead} leave={guard.leave} />}
       {!desktop && (
         <QuickBar
           phone={phone}
@@ -766,18 +751,21 @@ function ContactValue({
  */
 function LeadInfo({
   lead,
-  activities,
   draft,
+  related,
+  whatsappInApp,
 }: {
   lead: Lead;
-  activities: Activity[];
   draft: CustomFieldsDraft;
+  related: RelatedLead[];
+  whatsappInApp: boolean;
 }) {
+  // The deal, its custom fields, then the person behind it (owner, 2026-11-28: one tab).
   return (
     <div className="flex flex-col divide-y divide-surface-border px-2 sm:px-3 [&>*]:py-5 [&>*:first-child]:pt-2">
       <BasicInfo lead={lead} />
       <CustomFieldsPanel draft={draft} />
-      <History activities={activities} />
+      <LeadCustomer lead={lead} related={related} whatsappInApp={whatsappInApp} />
     </div>
   );
 }
@@ -804,11 +792,11 @@ function LeadCustomer({
   const bought = all.some((l) => (l.value?.won ?? 0) > 0 || l.stage.kind === 'WON');
   const since = all.reduce((min, l) => (l.createdAt < min ? l.createdAt : min), lead.createdAt);
   return (
-    <div className="flex flex-col divide-y divide-surface-border px-2 sm:px-3 [&>*]:py-5 [&>*:first-child]:pt-2">
+    <>
       <section aria-labelledby="lead-customer-title" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <h2 id="lead-customer-title" className="text-base font-semibold text-ink">
-            {lead.contact.name}
+            {tr('הלקוח')}
           </h2>
           {bought && (
             <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
@@ -857,7 +845,7 @@ function LeadCustomer({
           <RelatedLeads businessId={business.id} related={related} />
         </section>
       )}
-    </div>
+    </>
   );
 }
 
@@ -870,7 +858,7 @@ function BasicInfo({ lead }: { lead: Lead }) {
   const message = lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null;
   return (
     <section aria-labelledby="lead-basic-title">
-      <h2 id="lead-basic-title" className="sr-only">
+      <h2 id="lead-basic-title" className="mb-4 text-base font-semibold text-ink">
         {tr('הליד')}
       </h2>
       <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -891,99 +879,36 @@ function BasicInfo({ lead }: { lead: Lead }) {
   );
 }
 
-type AddKind = 'note' | 'task' | 'quote' | 'appointment';
-
-/** "+" beside the tabs (D-219): add a note, task, quote or appointment — also to a hidden tab. */
-function AddMenu({ onAdd }: { onAdd: (what: AddKind) => void }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuId = useId();
-  const items: { kind: AddKind; label: string }[] = [
-    { kind: 'note', label: tr('הערה') },
-    { kind: 'task', label: tr('משימה') },
-    { kind: 'quote', label: tr('הצעת מחיר') },
-    { kind: 'appointment', label: tr('תור') },
-  ];
-  useEffect(() => {
-    if (!open) return;
-    rootRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
-    const onDown = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const list = [...(rootRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
-    const at = list.indexOf(document.activeElement as HTMLElement);
-    const move = (i: number) => {
-      e.preventDefault();
-      list[(i + list.length) % list.length]?.focus();
-    };
-    if (e.key === 'ArrowDown') move(at + 1);
-    else if (e.key === 'ArrowUp') move(at - 1);
-    else if (e.key === 'Home') move(0);
-    else if (e.key === 'End') move(list.length - 1);
-    else if (e.key === 'Escape') {
-      e.preventDefault();
-      setOpen(false);
-      buttonRef.current?.focus();
-    } else if (e.key === 'Tab') setOpen(false);
-  };
-  return (
-    <div ref={rootRef} className="relative shrink-0" onKeyDown={onKeyDown}>
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        aria-label={tr('הוספה לליד')}
-        title={tr('הוספה לליד')}
-        onClick={() => setOpen((o) => !o)}
-        className="flex h-9 w-9 items-center justify-center rounded-full text-ink ring-1 ring-inset ring-surface-border hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
-      >
-        <Plus aria-hidden className="h-5 w-5" />
-      </button>
-      {open && (
-        <div
-          id={menuId}
-          role="menu"
-          aria-label={tr('הוספה לליד')}
-          className="absolute end-0 top-full z-30 mt-1 flex w-44 flex-col rounded-xl border border-surface-border bg-surface p-1 shadow-lift"
-        >
-          {items.map((it) => (
-            <button
-              key={it.kind}
-              type="button"
-              role="menuitem"
-              tabIndex={-1}
-              onClick={() => {
-                setOpen(false);
-                onAdd(it.kind);
-              }}
-              className="rounded-lg px-3 py-2 text-start text-sm text-ink hover:bg-surface-muted focus:bg-surface-muted focus:outline-none"
-            >
-              {it.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // Work order (owner, 2026-11-28): talk, follow up, quote, book; internal notes last.
 const LEAD_TABS = [
   'info',
-  'customer',
   'communication',
   'tasks',
   'quotes',
   'appointments',
   'notes',
+  'history',
 ] as const;
+/** An icon per tab (owner, 2026-11-28); the same ones as the sidebar where they exist. */
+const TAB_ICONS: Record<(typeof LEAD_TABS)[number], LucideIcon> = {
+  info: Info,
+  communication: MessageCircle,
+  tasks: ListTodo,
+  quotes: FileText,
+  appointments: CalendarDays,
+  notes: StickyNote,
+  history: HistoryIcon,
+};
+/** The sidebar's section colours (D-137) where a tab matches a section; only the icon is coloured. */
+const TAB_ICON_COLORS: Record<(typeof LEAD_TABS)[number], string> = {
+  info: 'text-violet-500',
+  communication: 'text-emerald-500',
+  tasks: 'text-amber-500',
+  quotes: 'text-orange-500',
+  appointments: 'text-rose-500',
+  notes: 'text-sky-500',
+  history: 'text-slate-500',
+};
 type LeadTab = (typeof LEAD_TABS)[number];
 
 /**
@@ -996,9 +921,9 @@ function LeadTabArea({
   lead,
   tab,
   onSelect,
-  onAdd,
   messages,
   notes,
+  historyCount,
   tasks,
   quotes,
   appts,
@@ -1007,9 +932,9 @@ function LeadTabArea({
   lead: Lead;
   tab: LeadTab;
   onSelect: (tab: LeadTab) => void;
-  onAdd: (what: AddKind) => void;
   messages: WhatsAppMessage[];
   notes: Activity[];
+  historyCount: number;
   tasks: ReturnType<typeof useLeadOpenTasks>;
   quotes: ReturnType<typeof useLeadQuotes>;
   appts: ReturnType<typeof useLeadAppointments>;
@@ -1022,8 +947,6 @@ function LeadTabArea({
   const labels: Record<LeadTab, { text: string; count?: string; spoken: string; alert?: boolean }> =
     {
       info: { text: tr('מידע'), spoken: tr('מידע') },
-      // The person behind the lead (owner, 2026-11-28): contact details and all their leads.
-      customer: { text: tr('לקוח'), spoken: tr('לקוח') },
       // Customer messages waiting for a reply (D-221).
       communication: {
         text: tr('תקשורת'),
@@ -1035,6 +958,11 @@ function LeadTabArea({
         text: tr('הערות'),
         count: nonZero(notes.length),
         spoken: tr('הערות, {0}', notes.length),
+      },
+      history: {
+        text: tr('היסטוריה'),
+        count: nonZero(historyCount),
+        spoken: tr('היסטוריה, {0}', historyCount),
       },
       tasks: {
         text: tr('משימות'),
@@ -1103,6 +1031,12 @@ function LeadTabArea({
                     : 'border-transparent text-ink-muted hover:text-ink',
                 )}
               >
+                {(() => {
+                  const Icon = TAB_ICONS[t];
+                  return (
+                    <Icon aria-hidden className={cn('h-4 w-4 shrink-0', TAB_ICON_COLORS[t])} />
+                  );
+                })()}
                 <span aria-hidden>{l.text}</span>
                 {l.count !== undefined && (
                   <span
@@ -1121,7 +1055,6 @@ function LeadTabArea({
             );
           })}
         </div>
-        <AddMenu onAdd={onAdd} />
       </div>
       <div
         id={`lead-panel-${tab}`}
@@ -1306,15 +1239,12 @@ function DeleteLead({ lead, leave }: { lead: Lead; leave: (go: () => void) => vo
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="self-start text-danger-600"
-        onClick={() => setOpen(true)}
-      >
-        <Trash2 aria-hidden className="h-4 w-4" />
-        {tr('מחיקת הליד')}
-      </Button>
+      <MoreMenu>
+        <Button variant="ghost" size="sm" className="text-danger-600" onClick={() => setOpen(true)}>
+          <Trash2 aria-hidden className="h-4 w-4" />
+          {tr('מחיקת הליד')}
+        </Button>
+      </MoreMenu>
       <DialogShell
         open={open}
         onOpenChange={setOpen}

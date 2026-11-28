@@ -106,8 +106,8 @@ describe('WhatsApp on the lead page', () => {
     expect(items[0]).toHaveTextContent('היי, אפשר לקבוע תור?');
     expect(items[1]).toHaveTextContent('נשלחה על ידי סיגלית:');
     expect(items[1]).toHaveTextContent('נקראה');
-    // The history is in "מידע" (D-220).
-    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
+    // The history has its own tab.
+    await user.click(await screen.findByRole('tab', { name: /^היסטוריה/ }));
     expect(await screen.findByText('הליד נוצר מהודעת וואטסאפ')).toBeInTheDocument();
   });
 
@@ -138,7 +138,6 @@ describe('WhatsApp on the lead page', () => {
     expect(screen.getByLabelText('תשובה בפייסבוק')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'שליחה בפייסבוק' })).toBeInTheDocument();
     // No booking bot on Facebook.
-    expect(screen.queryByRole('button', { name: 'השהיית הבוט' })).not.toBeInTheDocument();
   });
 
   it('sends a reply while the window is open', async () => {
@@ -185,38 +184,6 @@ describe('WhatsApp on the lead page', () => {
     renderApp(`${page}?tab=whatsapp`);
     expect(await screen.findByText(whatsappMessages.windowClosed)).toBeInTheDocument();
     expect(screen.queryByLabelText('תשובה בוואטסאפ')).not.toBeInTheDocument();
-  });
-
-  it('pauses the booking bot for this customer, and resumes it (D-108)', async () => {
-    let paused = false;
-    const fetchMock = mockApi(
-      routes(
-        { connected: true, messages: [incoming], replyUntil: open(), botPaused: false },
-        {
-          [`GET ${threadPath}`]: () =>
-            json(200, {
-              connected: true,
-              messages: [incoming],
-              replyUntil: open(),
-              botPaused: paused,
-            }),
-          [`PUT ${apiPaths.whatsapp.botPause(testBusiness.id, leadId)}`]: (body: unknown) => {
-            paused = (body as { paused: boolean }).paused;
-            return new Response(null, { status: 204 });
-          },
-        },
-      ),
-    );
-    const { user } = renderApp(`${page}?tab=whatsapp`);
-    expect(await screen.findByText('הבוט יכול לענות בשיחה הזו')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'השהיית הבוט' }));
-    expect(await screen.findByText('הבוט מושהה בשיחה הזו')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'הפעלת הבוט' }));
-    expect(await screen.findByText('הבוט יכול לענות בשיחה הזו')).toBeInTheDocument();
-    expect(callsTo(fetchMock, 'PUT', apiPaths.whatsapp.botPause(testBusiness.id, leadId))).toEqual([
-      { paused: true },
-      { paused: false },
-    ]);
   });
 
   it('says there is no conversation when WhatsApp is not connected and there is no history', async () => {

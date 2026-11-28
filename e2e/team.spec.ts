@@ -4,8 +4,8 @@ import { choose } from './choose';
 /** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const info = page.getByRole('tab', { name: 'מידע' });
-  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
+  // The history has its own tab (owner, 2026-11-28).
+  await page.getByRole('tab', { name: /^היסטוריה/ }).click();
 }
 
 /** F09: owner invites → email link → new user registers and joins → sees only assigned leads. */
@@ -104,8 +104,9 @@ test('owner invites an employee who registers from the email and joins with limi
   await expect(page.getByRole('list', { name: 'חברי הצוות' })).toContainText('יוסי מזרחי');
   await page.goto(`/b/${business.id}/leads/${lead.id}`);
   // Owner and history: in "מידע" (D-220).
-  await openLeadHistory(page);
+  await page.getByRole('tab', { name: 'מידע' }).click();
   await choose(page, page.getByLabel('אחראי', { exact: true }), 'יוסי מזרחי');
+  await openLeadHistory(page);
   await expect(page.getByText('הליד שויך ליוסי מזרחי')).toBeVisible();
 
   await emp.reload();

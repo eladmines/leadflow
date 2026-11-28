@@ -3,8 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 /** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const info = page.getByRole('tab', { name: 'מידע' });
-  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
+  // The history has its own tab (owner, 2026-11-28).
+  await page.getByRole('tab', { name: /^היסטוריה/ }).click();
 }
 
 /** F18: quote from a lead → totals → send → customer accepts on the private page → lead history. */
@@ -35,18 +35,17 @@ async function ownerWithLead(page: Page) {
 
 test('quote from a lead, sent, accepted by the customer', async ({ page, browser }) => {
   const { id, leadId } = await ownerWithLead(page);
-  // D-219: quotes are a tab (hidden while there are none); "+" → "הצעת מחיר" opens the editor.
+  // Quotes are a tab; its "+ הצעה" opens the editor.
   await page.goto(`/b/${id}/leads/${leadId}`);
   const openQuotes = () => page.getByRole('tab', { name: /^הצעות/ }).click();
   const quotesCard = page.getByRole('tabpanel');
-  // D-218: the value is one line in "מידע" (D-220): "₪X פתוח · ₪Y נסגר".
+  // The value is a line at the top of the quotes tab, shown only when there is one.
   const value = async () => {
-    await openLeadHistory(page);
-    return page.getByText('ערך לפי הצעות מחיר').locator('xpath=following-sibling::div');
+    await openQuotes();
+    return quotesCard;
   };
-  await expect(await value()).toHaveText(/^\D*0\D*פתוח · \D*0\D*נסגר$/);
-  await page.getByRole('button', { name: 'הוספה לליד' }).click();
-  await page.getByRole('menuitem', { name: 'הצעת מחיר' }).click();
+  await expect(await value()).not.toContainText('פתוח ·');
+  await quotesCard.getByRole('link', { name: '+ הצעה' }).click();
   await expect(page.getByRole('heading', { name: 'הצעת מחיר חדשה' })).toBeVisible();
 
   await page.getByLabel('תיאור שורה 1').fill('החלפת ברז');
@@ -71,7 +70,7 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   // Sent and still open: the lead's open value is the quote's total, in whole shekels (D-208).
   await page.goto(`/b/${id}/leads/${leadId}`);
   await openQuotes();
-  await expect(await value()).toHaveText(/886\D*פתוח · \D*0\D*נסגר$/);
+  await expect(await value()).toContainText(/886\D*פתוח · \D*0\D*נסגר/);
   await expect(quotesCard.getByRole('listitem').first()).toContainText('נשלחה');
 
   // The customer, with no login.
@@ -88,6 +87,6 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   await expect(page.getByText('הצעת מחיר מס׳ 1001 אושרה על ידי הלקוח')).toBeVisible();
   await openQuotes();
   // Accepted: the value moves from open to won (D-207).
-  await expect(await value()).toHaveText(/^\D*0\D*פתוח · \D*886\D*נסגר$/);
+  await expect(await value()).toContainText(/0\D*פתוח · \D*886\D*נסגר/);
   await expect(quotesCard.getByRole('listitem').first()).toContainText('אושרה');
 });

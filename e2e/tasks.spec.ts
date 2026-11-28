@@ -3,8 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 /** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const info = page.getByRole('tab', { name: 'מידע' });
-  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
+  // The history has its own tab (owner, 2026-11-28).
+  await page.getByRole('tab', { name: /^היסטוריה/ }).click();
 }
 
 /** F10: task from a lead → overdue on the tasks page → done → lead history; reminder email. */
@@ -111,7 +111,7 @@ test('on a phone: the tabs, a quick-actions bar, no side scrolling', async ({ pa
   );
   // The end of the page scrolls clear of the bar.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  const last = page.getByRole('button', { name: 'מחיקת הליד' });
+  const last = page.getByRole('tabpanel');
   expect((await last.boundingBox())!.y + (await last.boundingBox())!.height).toBeLessThanOrEqual(
     (await bar.boundingBox())!.y,
   );
