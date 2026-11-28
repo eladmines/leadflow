@@ -333,4 +333,6 @@ export const enPart4: Record<string, string> = {
   'הסתרת העמודה {0}': 'Hide the {0} column',
   'הסתרת העמודה': 'Hide the column',
   '{0} לקוחות': '{0} customers',
+  'עדיין לא הגדרתם שירותים.': "You haven't set up services yet.",
+  'הגדרת שירותים': 'Set up services',
 };

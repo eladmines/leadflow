@@ -4,18 +4,10 @@ import {
   type Appointment,
   type AppointmentStatus,
 } from '@simplecatch/shared';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  Alert,
-  Button,
-  Card,
-  CollapseButton,
-  EmptyState,
-  SelectMenu,
-  Spinner,
-} from '../../components/ui';
+import { Alert, Button, Card, CollapseButton, SelectMenu, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
@@ -32,6 +24,7 @@ import {
   toDateInput,
   useAppointmentRequests,
   useAppointments,
+  useServices,
 } from './api';
 import { AppointmentDialog } from './AppointmentDialog';
 import { NewAppointmentDialog } from './NewAppointmentDialog';
@@ -160,6 +153,8 @@ export function AppointmentsPage() {
     );
   }, [wanted, list.data, setParams]);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const services = useServices(business.id);
+  const noServices = manager && services.isSuccess && services.data.length === 0;
   // Folded by default: the list can be long and the calendar is the page.
   const [requestsOpen, setRequestsOpen] = useState(false);
   const requestsId = useId();
@@ -314,6 +309,19 @@ export function AppointmentsPage() {
           </div>
         ) : (
           <div className="flex flex-col">
+            {/* The grid always shows (owner, 2026-11-28); one line only when nothing is set up. */}
+            {noServices && (
+              <p className="flex flex-wrap items-center gap-2 border-b border-surface-border px-4 py-2 text-sm text-ink-muted">
+                {tr('עדיין לא הגדרתם שירותים.')}
+                <button
+                  type="button"
+                  onClick={() => setServicesOpen(true)}
+                  className="font-medium text-brand-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+                >
+                  {tr('הגדרת שירותים')}
+                </button>
+              </p>
+            )}
             <TimeGrid
               days={days}
               appointments={list.data ?? []}
@@ -328,19 +336,6 @@ export function AppointmentsPage() {
           </div>
         )}
       </section>
-
-      {list.data?.length === 0 && pending.length === 0 && (
-        <EmptyState
-          icon={CalendarDays}
-          tone="bg-rose-500"
-          title={tr('אין פגישות בתקופה הזו')}
-          description={
-            manager
-              ? tr('כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע פגישה ראשונה.')
-              : tr('כשייקבעו לך פגישות, הן יופיעו כאן.')
-          }
-        />
-      )}
 
       <NewAppointmentDialog
         open={newOpen || slot !== null}

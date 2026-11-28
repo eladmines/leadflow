@@ -520,11 +520,6 @@ export const enPart3: Record<string, string> = {
     'Search by name, phone or email. The "Filter" button filters by stage, owner or source.',
   'בכפתור "עוד": השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת הפגישה באתר וברשימה של הבוט בוואטסאפ.':
     'Under "More": the services your business offers, with duration and price. They appear in the website booking request and in the WhatsApp bot\'s list.',
-  'אין פגישות בתקופה הזו': 'No appointments in this period',
-  'כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע פגישה ראשונה.':
-    'Start by setting up your services (under "More"), then book a first appointment.',
-  'כשייקבעו לך פגישות, הן יופיעו כאן.':
-    'When appointments are booked for you, they will appear here.',
   ללידים: 'Go to Leads',
   'חלקי הליד': 'Lead sections',
   'אין שיחת וואטסאפ עם הליד. אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.':
