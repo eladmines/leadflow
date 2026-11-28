@@ -152,8 +152,9 @@ export function WhatsAppThread({
         <ol
           ref={listRef}
           aria-label={tr(listNames[view])}
-          // Its own scroll box, sized so the whole tab (name, tabs, reply box) fits on the screen.
-          className="scrollbar-visible flex max-h-[max(12rem,calc(100dvh-30rem))] flex-col gap-2 overflow-y-auto overscroll-contain"
+          // Its own scroll box, sized so the whole tab fits on the screen. `relative` keeps the
+          // messages' screen-reader text (sr-only = absolute) inside it, or it stretches the page.
+          className="scrollbar-visible relative flex max-h-[max(12rem,calc(100dvh-37rem))] flex-col gap-2 overflow-y-auto overscroll-contain"
         >
           {messages.map((m) => {
             const out = m.direction === 'OUT';

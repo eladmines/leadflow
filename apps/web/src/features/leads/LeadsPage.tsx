@@ -70,6 +70,16 @@ import {
 const leadPath = (businessId: string, leadId: string) =>
   `${businessWebPaths.section(businessId, 'leads')}/${leadId}`;
 
+/** A short "when" for cards: the time today, otherwise day and month ("8 בנוב׳"). */
+function shortWhen(iso: string) {
+  const d = new Date(iso);
+  const today = new Date().toDateString() === d.toDateString();
+  return new Intl.DateTimeFormat(
+    intlLocale(),
+    today ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' },
+  ).format(d);
+}
+
 /**
  * What the lead said: the latest WhatsApp message when there is one (who wrote it and when),
  * otherwise the original enquiry.
@@ -84,6 +94,20 @@ function LeadPreview({ lead, compact = false }: { lead: Lead; compact?: boolean 
       <p className="line-clamp-3 whitespace-pre-line text-sm text-ink">{lead.message}</p>
     );
   }
+  if (compact)
+    // Board card (owner, 2026-11-28): one tidy line — icon, the message, a short time.
+    return (
+      <div className="flex min-w-0 items-start gap-1.5 text-xs text-ink-muted">
+        <MessageCircle aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success-600" />
+        <p className="line-clamp-2 min-w-0 flex-1 whitespace-pre-line text-ink">
+          {last.direction === 'OUT' && <span className="text-ink-muted">{tr('אתם:')} </span>}
+          {messageBody(last.body)}
+        </p>
+        <time dateTime={last.createdAt} title={timeAgo(last.createdAt)} className="shrink-0">
+          {shortWhen(last.createdAt)}
+        </time>
+      </div>
+    );
   return (
     <div className={cn('flex flex-col gap-0.5', compact ? 'text-xs' : 'text-sm')}>
       <p className="flex items-center gap-1 text-xs text-ink-muted">
@@ -236,7 +260,12 @@ function BoardCard({
       <LeadPreview lead={lead} compact />
       <CardFieldValues fields={cardFields} values={lead.customFields} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-        <time dateTime={lead.createdAt}>{timeAgo(lead.createdAt)}</time>
+        <span>
+          {tr('נוצר')}{' '}
+          <time dateTime={lead.createdAt} title={timeAgo(lead.createdAt)}>
+            {shortWhen(lead.createdAt)}
+          </time>
+        </span>
         {amount > 0 && (
           <span className="font-medium text-ink" title={tr('לפי הצעות המחיר')}>
             {shekel.format(amount)}
@@ -384,9 +413,10 @@ function Board({
           board swipes. */}
       <div
         ref={scroller.ref}
-        className="scrollbar-visible relative -mx-4 overflow-x-auto px-4 pb-3 md:max-h-[calc(100dvh-22rem)] md:min-h-72 md:overflow-auto"
+        className="scrollbar-visible relative -mx-4 overflow-x-auto px-4 pb-3 md:h-[calc(100dvh-17rem)] md:min-h-72 md:overflow-auto"
       >
-        <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4">
+        {/* min-h-full: the columns reach the bottom of the board even when they're short. */}
+        <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4 md:min-h-full">
           {stages.map((stage) => {
             const items = leads.filter((l) => l.stage.id === stage.id);
             const color = stageColor(stage, stages);
