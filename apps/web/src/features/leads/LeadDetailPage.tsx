@@ -470,7 +470,7 @@ export function LeadDetailPage() {
 }
 
 /** Old `?tab=` values (D-211/D-212/D-219) whose content is now in "מידע". */
-const INFO_ALIASES: readonly string[] = ['more', 'history', 'related'];
+const INFO_ALIASES: readonly string[] = ['more', 'history'];
 
 function LeadPage({
   lead,
@@ -539,6 +539,7 @@ function LeadPage({
   // "מידע"; `?tab=whatsapp` → "תקשורת" on WhatsApp.
   useEffect(() => {
     if (INFO_ALIASES.includes(asked ?? '')) selectTab('info');
+    else if (asked === 'related') selectTab('customer');
     else if (asked === 'whatsapp') selectTab('communication', 'whatsapp');
     // Only for the address the page opened with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -624,14 +625,9 @@ function LeadPage({
           quotes={quotes}
           appts={appts}
         >
-          {tab === 'info' && (
-            <LeadInfo
-              lead={lead}
-              activities={activities}
-              related={related}
-              draft={draft}
-              whatsappInApp={whatsappInApp}
-            />
+          {tab === 'info' && <LeadInfo lead={lead} activities={activities} draft={draft} />}
+          {tab === 'customer' && (
+            <LeadCustomer lead={lead} related={related} whatsappInApp={whatsappInApp} />
           )}
           {tab === 'communication' && (
             <LeadCommunication
@@ -769,41 +765,96 @@ function ContactValue({
 function LeadInfo({
   lead,
   activities,
-  related,
   draft,
-  whatsappInApp,
 }: {
   lead: Lead;
   activities: Activity[];
-  related: RelatedLead[];
   draft: CustomFieldsDraft;
+}) {
+  return (
+    <div className="flex flex-col divide-y divide-surface-border px-2 sm:px-3 [&>*]:py-5 [&>*:first-child]:pt-2">
+      <BasicInfo lead={lead} />
+      <CustomFieldsPanel draft={draft} />
+      <History activities={activities} />
+    </div>
+  );
+}
+
+/**
+ * The person behind the lead (owner, 2026-11-28): one contact can have several leads. Contact
+ * details, whether they bought before, and all their leads. The totals come from the related
+ * leads this member may see (D-215), so an employee's view counts only their own.
+ */
+function LeadCustomer({
+  lead,
+  related,
+  whatsappInApp,
+}: {
+  lead: Lead;
+  related: RelatedLead[];
   whatsappInApp: boolean;
 }) {
   const business = useCurrentBusiness();
+  const phone = lead.contact.phone;
+  const email = lead.contact.email;
+  const all = [{ value: lead.value, stage: lead.stage, createdAt: lead.createdAt }, ...related];
+  const purchases = all.reduce((sum, l) => sum + (l.value?.won ?? 0), 0);
+  const bought = all.some((l) => (l.value?.won ?? 0) > 0 || l.stage.kind === 'WON');
+  const since = all.reduce((min, l) => (l.createdAt < min ? l.createdAt : min), lead.createdAt);
   return (
     <div className="flex flex-col divide-y divide-surface-border px-2 sm:px-3 [&>*]:py-5 [&>*:first-child]:pt-2">
-      <BasicInfo lead={lead} whatsappInApp={whatsappInApp} />
-      <CustomFieldsPanel draft={draft} />
+      <section aria-labelledby="lead-customer-title" className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 id="lead-customer-title" className="text-base font-semibold text-ink">
+            {lead.contact.name}
+          </h2>
+          {bought && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
+              {tr('לקוח')}
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+          {phone && (
+            <Property label={tr('טלפון')}>
+              <ContactValue
+                value={formatIsraeliPhone(phone)}
+                label={tr('טלפון')}
+                href={`tel:${phone}`}
+                actionLabel={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
+                icon={<Phone aria-hidden className="h-4 w-4" />}
+                primary={!whatsappInApp}
+              />
+            </Property>
+          )}
+          {email && (
+            <Property label={tr('אימייל')}>
+              <ContactValue
+                value={email}
+                label={tr('אימייל')}
+                href={`mailto:${email}`}
+                actionLabel={tr('מייל ל־{0}', email)}
+                icon={<Mail aria-hidden className="h-4 w-4" />}
+              />
+            </Property>
+          )}
+          <Property label={tr('פניות')}>{all.length}</Property>
+          {purchases > 0 && (
+            <Property label={tr('סה״כ רכישות')}>{shekel.format(purchases)}</Property>
+          )}
+          <Property label={tr('איתנו מאז')}>
+            <time dateTime={since}>{relatedDateFmt.format(new Date(since))}</time>
+          </Property>
+        </div>
+      </section>
       {related.length > 0 && (
-        <details open className="group flex flex-col gap-2">
-          <summary
-            id="lead-related-title"
-            className="flex cursor-pointer list-none items-center gap-2 rounded-md text-base font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 [&::-webkit-details-marker]:hidden"
-          >
-            <h2 className="text-base font-semibold">
-              {tr('לידים קשורים')} ({related.length})
-            </h2>
-            <ChevronDown
-              aria-hidden
-              className="h-4 w-4 text-ink-muted transition-transform group-open:rotate-180"
-            />
-          </summary>
-          <div className="mt-2">
-            <RelatedLeads businessId={business.id} related={related} />
-          </div>
-        </details>
+        <section aria-labelledby="lead-related-title" className="flex flex-col gap-2">
+          <h2 id="lead-related-title" className="text-base font-semibold text-ink">
+            {tr('פניות נוספות')} ({related.length})
+          </h2>
+          <RelatedLeads businessId={business.id} related={related} />
+        </section>
       )}
-      <History activities={activities} />
     </div>
   );
 }
@@ -813,9 +864,7 @@ function LeadInfo({
  * phone and email, value from quotes, created, and what they asked (unless the conversation
  * already shows it).
  */
-function BasicInfo({ lead, whatsappInApp }: { lead: Lead; whatsappInApp: boolean }) {
-  const phone = lead.contact.phone;
-  const email = lead.contact.email;
+function BasicInfo({ lead }: { lead: Lead }) {
   const message = lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null;
   return (
     <section aria-labelledby="lead-basic-title">
@@ -826,29 +875,6 @@ function BasicInfo({ lead, whatsappInApp }: { lead: Lead; whatsappInApp: boolean
         <StageField lead={lead} />
         <OwnerField lead={lead} />
         <SourceProperty lead={lead} />
-        {phone && (
-          <Property label={tr('טלפון')}>
-            <ContactValue
-              value={formatIsraeliPhone(phone)}
-              label={tr('טלפון')}
-              href={`tel:${phone}`}
-              actionLabel={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
-              icon={<Phone aria-hidden className="h-4 w-4" />}
-              primary={!whatsappInApp}
-            />
-          </Property>
-        )}
-        {email && (
-          <Property label={tr('אימייל')}>
-            <ContactValue
-              value={email}
-              label={tr('אימייל')}
-              href={`mailto:${email}`}
-              actionLabel={tr('מייל ל־{0}', email)}
-              icon={<Mail aria-hidden className="h-4 w-4" />}
-            />
-          </Property>
-        )}
         {message && (
           <div className="sm:col-span-2">
             <Property label={tr('מה ביקשו')}>
@@ -947,7 +973,15 @@ function AddMenu({ onAdd }: { onAdd: (what: AddKind) => void }) {
 }
 
 // Work order (owner, 2026-11-28): talk, follow up, quote, book; internal notes last.
-const LEAD_TABS = ['info', 'communication', 'tasks', 'quotes', 'appointments', 'notes'] as const;
+const LEAD_TABS = [
+  'info',
+  'customer',
+  'communication',
+  'tasks',
+  'quotes',
+  'appointments',
+  'notes',
+] as const;
 type LeadTab = (typeof LEAD_TABS)[number];
 
 /**
@@ -986,6 +1020,8 @@ function LeadTabArea({
   const labels: Record<LeadTab, { text: string; count?: string; spoken: string; alert?: boolean }> =
     {
       info: { text: tr('מידע'), spoken: tr('מידע') },
+      // The person behind the lead (owner, 2026-11-28): contact details and all their leads.
+      customer: { text: tr('לקוח'), spoken: tr('לקוח') },
       // Customer messages waiting for a reply (D-221).
       communication: {
         text: tr('תקשורת'),

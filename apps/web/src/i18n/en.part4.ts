@@ -318,4 +318,10 @@ export const enPart4: Record<string, string> = {
     'No emails yet. When the customer emails the business, the conversation will show here.',
   'תשובה מהעמוד נשלחת ב־{0}, הערוץ שבו הלקוח כתב לאחרונה.':
     'A reply from this page goes out on {0}, the channel the customer wrote in last.',
+  // Lead page "לקוח" tab (owner, 2026-11-28).
+  לקוח: 'Customer',
+  פניות: 'Inquiries',
+  'סה״כ רכישות': 'Total purchases',
+  'איתנו מאז': 'With us since',
+  'פניות נוספות': 'Other inquiries',
 };
