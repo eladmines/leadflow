@@ -51,15 +51,7 @@ import { errorMessage } from '../auth/serverErrors';
 import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { PageHeader } from '../shell/PageHeader';
-import {
-  leadsQueryKey,
-  shekel,
-  timeAgo,
-  useLeads,
-  useLeadTags,
-  usePipeline,
-  useUpdateLead,
-} from './api';
+import { leadsQueryKey, shekel, timeAgo, useLeads, usePipeline, useUpdateLead } from './api';
 import { NewLeadDialog } from './NewLeadDialog';
 import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
 import { sourceName } from './Attribution';
@@ -168,19 +160,6 @@ function InboxNotice({ businessId }: { businessId: string }) {
 }
 
 /** List view card. */
-function TagChips({ tags }: { tags: string[] }) {
-  if (tags.length === 0) return null;
-  return (
-    <ul aria-label={tr('תגיות')} className="flex flex-wrap gap-1">
-      {tags.map((t) => (
-        <li key={t} className="rounded-full bg-accent-50 px-2 py-0.5 text-xs text-accent-700">
-          {t}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function LeadCard({
   lead,
   stages,
@@ -233,7 +212,6 @@ function LeadCard({
       <LeadPreview lead={lead} />
       <NextTaskLine lead={lead} />
       <CardFieldValues fields={cardFields} values={lead.customFields} />
-      <TagChips tags={lead.tags} />
       <div className="flex flex-wrap gap-2">
         {phone && (
           <a
@@ -291,7 +269,6 @@ function BoardCard({
       <LeadPreview lead={lead} compact />
       <NextTaskLine lead={lead} />
       <CardFieldValues fields={cardFields} values={lead.customFields} />
-      <TagChips tags={lead.tags} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
         <time dateTime={lead.createdAt}>{timeAgo(lead.createdAt)}</time>
         {amount > 0 && (
@@ -512,6 +489,7 @@ function exportParams(params: URLSearchParams, cf: ReturnType<typeof usableFilte
   const p = new URLSearchParams(params);
   p.delete('view');
   p.delete('new');
+  p.delete('tag'); // D-222: old tag links are ignored.
   for (const key of [...p.keys()]) if (isFieldFilterKey(key)) p.delete(key);
   for (const [k, v] of leadFieldFilterParams(cf)) p.append(k, v);
   return p.toString();
@@ -531,7 +509,6 @@ export function LeadsPage() {
     source: (params.get('source') as LeadListQuery['source']) ?? undefined,
     from: (params.get('from') as LeadListQuery['from']) ?? undefined,
     campaign: params.get('campaign') ?? undefined,
-    tag: params.get('tag') ?? undefined,
   };
   // F34: custom-field filters from the address, minus stale ones (archived or unknown fields).
   const leadFields = useLeadFields(business.id);
@@ -572,7 +549,6 @@ export function LeadsPage() {
       );
     }
   };
-  const tags = useLeadTags(business.id).data ?? [];
   const filtered = Boolean(
     query.q ||
     query.stageId ||
@@ -580,13 +556,11 @@ export function LeadsPage() {
     query.source ||
     query.from ||
     query.campaign ||
-    query.tag ||
     cfCount,
   );
   const activeFilters =
-    [query.stageId, query.ownerId, query.source, query.from, query.campaign, query.tag].filter(
-      Boolean,
-    ).length + cfCount;
+    [query.stageId, query.ownerId, query.source, query.from, query.campaign].filter(Boolean)
+      .length + cfCount;
   // Filters sit behind one button (D-138); open on arrival when some are already on.
   const [filtersOpen, setFiltersOpen] = useState(
     activeFilters > 0 || Object.keys(rawCf).length > 0,
@@ -595,12 +569,13 @@ export function LeadsPage() {
     setParams(
       (p) => {
         const next = new URLSearchParams(p);
-        for (const k of ['stageId', 'ownerId', 'source', 'from', 'campaign', 'tag']) next.delete(k);
+        for (const k of ['stageId', 'ownerId', 'source', 'from', 'campaign']) next.delete(k);
         for (const k of [...next.keys()]) if (isFieldFilterKey(k)) next.delete(k);
         return next;
       },
       { replace: true },
     );
+  const exportQuery = exportParams(params, cf);
   const view = params.get('view') === 'list' ? 'list' : 'board';
   const scroller = useBoardScroll(`${view}:${stages.data?.length ?? 0}:${leads.data?.length ?? 0}`);
 
@@ -672,7 +647,7 @@ export function LeadsPage() {
                 <RefreshButton
                   onRefresh={() =>
                     Promise.all([
-                      // Leads, tags and the WhatsApp notice (new numbers waiting).
+                      // Leads and the WhatsApp notice (new numbers waiting).
                       queryClient.invalidateQueries({ queryKey: leadsQueryKey(business.id) }),
                       queryClient.invalidateQueries({
                         queryKey: ['businesses', business.id, 'whatsapp'],
@@ -683,7 +658,7 @@ export function LeadsPage() {
                 {can(business.role, 'leads.export') && (
                   <a
                     // Plain link: the browser downloads the CSV with the session cookie.
-                    href={`${apiPaths.leads.exportCsv(business.id)}${params.toString() ? `?${exportParams(params, cf)}` : ''}`}
+                    href={`${apiPaths.leads.exportCsv(business.id)}${exportQuery ? `?${exportQuery}` : ''}`}
                     download
                     className={buttonClasses('secondary', 'md')}
                   >
@@ -835,23 +810,6 @@ export function LeadsPage() {
                 {tr('קמפיין')}: <bdi>{query.campaign}</bdi>
                 <X aria-hidden className="h-3.5 w-3.5" />
               </button>
-            )}
-            {(tags.length > 0 || query.tag) && (
-              <SelectMenu
-                compact
-                labelHidden
-                className="min-w-36"
-                label={tr('סינון לפי תגית')}
-                value={query.tag ?? ''}
-                onChange={(v) => setParam('tag', v || undefined)}
-                options={[
-                  { value: '', label: tr('כל התגיות') },
-                  ...(query.tag && !tags.includes(query.tag)
-                    ? [{ value: query.tag, label: query.tag }]
-                    : []),
-                  ...tags.map((t) => ({ value: t, label: t })),
-                ]}
-              />
             )}
             <CustomFieldFilters
               fields={fieldsForFilters}

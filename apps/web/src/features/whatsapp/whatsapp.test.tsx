@@ -128,8 +128,9 @@ describe('WhatsApp on the lead page', () => {
       [`GET ${apiPaths.leads.detail(id, leadId)}`]: () =>
         json(200, { lead: fbLead, activities: [] }),
     });
-    renderApp(`${page}?tab=whatsapp`);
-    expect(await screen.findByRole('tab', { name: 'פייסבוק' })).toHaveAttribute(
+    // "תקשורת" opens on the latest message's channel (D-221).
+    renderApp(`${page}?tab=communication`);
+    expect(await screen.findByRole('tab', { name: 'פייסבוק, 1 הודעות חדשות' })).toHaveAttribute(
       'aria-selected',
       'true',
     );

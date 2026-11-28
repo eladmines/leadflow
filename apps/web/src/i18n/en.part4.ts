@@ -191,8 +191,6 @@ export const enPart4: Record<string, string> = {
   'פעולות מהירות': 'Quick actions',
   'המשימה הפתוחה הקרובה: מה לעשות, מתי ומי אחראי. "בוצע" מסמן אותה, "+ משימה" מוסיף חדשה, ושאר המשימות ב"כל המשימות".':
     'The nearest open task: what to do, when and who\'s responsible. "Done" marks it, "+ Task" adds a new one, and the other tasks are under "All tasks".',
-  'הצעות מחיר (עם ערך הליד), תורים ועוד פרטים: מקור, אחראי, תגיות והיסטוריה מלאה. לחיצה על שורה פותחת אותה.':
-    "Quotes (with the lead's value), appointments and more details: source, owner, tags and the full history. Click a row to open it.",
   'השיחה עם הלקוח (אפשר לענות בוואטסאפ עד 24 שעות מההודעה האחרונה שלו) וההערות של הצוות.':
     "The conversation with the customer (you can reply on WhatsApp up to 24 hours after their last message) and the team's notes.",
   'מה הלקוח כתב והפרטים שמילאתם. "עריכה" פותחת את הטופס, ושומרים בכפתור "שמירה".':
@@ -299,6 +297,25 @@ export const enPart4: Record<string, string> = {
   מידע: 'Info',
   'מידע, השיחה, ההערות, המשימות, ההצעות והתורים, כל אחד עם המספר שלו. הכפתור + מוסיף פריט חדש.':
     'Info, the conversation, notes, tasks, quotes and appointments, each with its count. The + button adds a new item.',
-  'השלב, האחראי, המקור, הטלפון והאימייל, התגיות ומה ביקשו. מתחת: תקשורת, השדות שלכם, לידים קשורים והיסטוריה.':
-    'The stage, owner, source, phone and email, tags and what they asked for. Below: communication, your fields, related leads and history.',
+  'השלב, האחראי, המקור, הטלפון והאימייל ומה ביקשו. מתחת: תקשורת, השדות שלכם, לידים קשורים והיסטוריה.':
+    'The stage, owner, source, phone and email and what they asked for. Below: communication, your fields, related leads and history.',
+  // D-221: a "תקשורת" tab with channel sub-tabs.
+  'ערוצי תקשורת': 'Communication channels',
+  'אין מספר טלפון לליד.': 'This lead has no phone number.',
+  'פתיחה ב־WhatsApp': 'Open in WhatsApp',
+  'אין כתובת מייל לליד.': 'This lead has no email address.',
+  '+ מייל': '+ Email',
+  'שיחת מייל': 'Email conversation',
+  'שיחת פייסבוק': 'Facebook conversation',
+  'שיחת אינסטגרם': 'Instagram conversation',
+  'אין שיחת וואטסאפ עם הליד.': 'No WhatsApp conversation with this lead.',
+  'אין עדיין מיילים עם הליד.': 'No emails with this lead yet.',
+  'אין שיחת פייסבוק עם הליד.': 'No Facebook conversation with this lead.',
+  'אין שיחת אינסטגרם עם הליד.': 'No Instagram conversation with this lead.',
+  'אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.':
+    'Once a WhatsApp number is connected to the business, messages will show here.',
+  'עדיין אין מיילים. כשהלקוח יכתוב לעסק במייל, השיחה תופיע כאן.':
+    'No emails yet. When the customer emails the business, the conversation will show here.',
+  'תשובה מהעמוד נשלחת ב־{0}, הערוץ שבו הלקוח כתב לאחרונה.':
+    'A reply from this page goes out on {0}, the channel the customer wrote in last.',
 };

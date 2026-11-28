@@ -179,7 +179,8 @@ describe('lead page tabs (D-219)', () => {
     expect(screen.queryByRole('complementary', { name: 'מאפייני הליד' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^עוד/ })).not.toBeInTheDocument();
     const panel = screen.getByRole('tabpanel');
-    expect(within(panel).getByRole('region', { name: 'תקשורת' })).toBeInTheDocument();
+    // The conversations are in "תקשורת" (D-221), not in "מידע".
+    expect(within(panel).queryByRole('region', { name: 'תקשורת' })).not.toBeInTheDocument();
     expect(within(panel).getByRole('region', { name: 'הליד' })).toBeInTheDocument();
   });
 
@@ -191,22 +192,23 @@ describe('lead page tabs (D-219)', () => {
       [`GET ${apiPaths.quotes.list(id)}`]: () => json(200, { quotes: [quote()] }),
     });
     const { user, location } = renderApp(page);
-    const notesTab = await screen.findByRole('tab', { name: /^הערות/ });
+    const tasksTab = await screen.findByRole('tab', { name: /^משימות/ });
     await waitFor(() => expect(screen.getAllByRole('tab')).toHaveLength(6));
-    notesTab.focus();
-    // Hebrew is right to left: the next tab is to the left.
+    tasksTab.focus();
+    // Hebrew is right to left: the next tab is to the left (order: info, communication, tasks,
+    // quotes, appointments, notes).
     await user.keyboard('{ArrowLeft}');
-    expect(tabByName(/^משימות/)).toHaveFocus();
-    expect(tabByName(/^משימות/)).toHaveAttribute('aria-selected', 'true');
-    expect(location()).toBe(`${page}?tab=tasks`);
+    expect(tabByName(/^הצעות/)).toHaveFocus();
+    expect(tabByName(/^הצעות/)).toHaveAttribute('aria-selected', 'true');
+    expect(location()).toBe(`${page}?tab=quotes`);
     await user.keyboard('{End}');
-    expect(tabByName(/^תורים/)).toHaveFocus();
+    expect(tabByName(/^הערות/)).toHaveFocus();
     await user.keyboard('{Home}');
     const first = screen.getAllByRole('tab')[0];
     expect(first).toHaveFocus();
     expect(first).toHaveAccessibleName('מידע');
     expect(first).toHaveAttribute('tabindex', '0');
-    expect(tabByName(/^משימות/)).toHaveAttribute('tabindex', '-1');
+    expect(tabByName(/^הצעות/)).toHaveAttribute('tabindex', '-1');
   });
 
   it('"הערות" holds notes only; system events are in the history', async () => {
@@ -268,7 +270,7 @@ describe('lead page tabs (D-219)', () => {
     );
   });
 
-  it('the quotes tab: statuses and totals, "+ הצעה"; the value is in "מידע" once', async () => {
+  it('the quotes tab: statuses and totals, "+ הצעה"; the value is at the top of this tab', async () => {
     mockApi({
       [meKey]: me(testUser),
       [`GET ${lp.detail(id, leadId)}`]: () => detail(lead({ value: { won: 2360, open: 1180 } })),
@@ -296,10 +298,10 @@ describe('lead page tabs (D-219)', () => {
       'href',
       `${businessWebPaths.section(id, 'quotes')}/new?leadId=${leadId}`,
     );
+    // The value sits at the top of the quotes tab only, not in "מידע".
+    expect(screen.getByRole('tabpanel')).toHaveTextContent(/1,180.*פתוח · .*2,360.*נסגר/);
     await openInfo(user);
-    expect(screen.getByText('ערך לפי הצעות מחיר').nextElementSibling).toHaveTextContent(
-      /1,180.*פתוח · .*2,360.*נסגר/,
-    );
+    expect(screen.queryByText('ערך לפי הצעות מחיר')).not.toBeInTheDocument();
   });
 
   it('the appointments tab lists upcoming ones first and "+ תור" opens the booking form', async () => {
@@ -416,7 +418,7 @@ describe('old tab links (D-219, D-220)', () => {
 describe('the "מידע" tab (D-220)', () => {
   const threadPath = apiPaths.whatsapp.thread(id, leadId);
 
-  it('wide screens: one column — the facts, "תקשורת", "פרטים", related leads, history', async () => {
+  it('wide screens: one column — the facts, "פרטים", related leads, history', async () => {
     asDesktop();
     mockApi({
       [meKey]: me(testUser),
@@ -450,34 +452,29 @@ describe('the "מידע" tab (D-220)', () => {
     const sections = within(panel)
       .getAllByRole('heading', { level: 2 })
       .map((h) => h.textContent);
-    expect(sections).toEqual(['הליד', 'תקשורת', 'פרטים', 'לידים קשורים (2)', 'היסטוריה']);
+    expect(sections).toEqual(['הליד', 'פרטים', 'לידים קשורים (2)', 'היסטוריה (2)']);
     expect(screen.queryByRole('complementary', { name: 'מאפייני הליד' })).not.toBeInTheDocument();
     const info = within(panel).getByRole('region', { name: 'הליד' });
     expect(within(info).getByRole('combobox', { name: 'שלב' })).toBeInTheDocument();
     expect(within(info).getByLabelText('אחראי')).toBeInTheDocument();
     expect(within(info).getByText('052-1112233')).toHaveAttribute('dir', 'ltr');
-    expect(within(info).getByText('ערך לפי הצעות מחיר').nextElementSibling).toHaveTextContent(
-      /1,180.*פתוח/,
-    );
-    expect(within(info).getByText('נוצר')).toBeInTheDocument();
-    expect(within(info).getByText('VIP')).toBeInTheDocument();
+    // No value row and no separate "created" row: when it came is on the source line.
+    expect(within(info).queryByText('ערך לפי הצעות מחיר')).not.toBeInTheDocument();
+    expect(within(info).queryByText('נוצר')).not.toBeInTheDocument();
+    // D-222: no tags, even when the lead still has some.
+    expect(within(info).queryByText('VIP')).not.toBeInTheDocument();
     expect(within(info).getByText('מה ביקשו').nextElementSibling).toHaveTextContent(
       'מבקש הצעת מחיר לשיפוץ מטבח',
     );
-    const comm = within(panel).getByRole('region', { name: 'תקשורת' });
-    expect(await within(comm).findByText(/^ממתין לתשובה שלך:/)).toBeInTheDocument();
-    expect(
-      within(comm).getByRole('button', { name: 'WhatsApp: מעבר לשיחה בעמוד' }),
-    ).toBeInTheDocument();
-    // The phone isn't repeated under "תקשורת" (D-218).
-    expect(within(comm).queryByText('052-1112233')).not.toBeInTheDocument();
+    // "ממתין לתשובה שלך" moved to "תקשורת" (D-221).
+    expect(within(panel).queryByText(/^ממתין לתשובה שלך:/)).not.toBeInTheDocument();
     expect(
       await within(within(panel).getByRole('region', { name: 'פרטים' })).findByLabelText(
         'דגם הרכב',
       ),
     ).toBeInTheDocument();
-    // The conversation is in its tab, with the new message counted.
-    expect(screen.getByRole('tab', { name: 'WhatsApp, 1 הודעות חדשות' })).toBeInTheDocument();
+    // The conversation is in "תקשורת", with the new message counted.
+    expect(await screen.findByRole('tab', { name: 'תקשורת, 1 הודעות חדשות' })).toBeInTheDocument();
     const links = within(screen.getByRole('list', { name: 'לידים קשורים' })).getAllByRole('link');
     expect(links[0]).toHaveAttribute('href', `${leadsPath}/${related[0]!.id}`);
     expect(links[0]).toHaveTextContent(/נסגר.*3,000/);
@@ -525,16 +522,17 @@ describe('the WhatsApp buttons', () => {
     const { user, location } = renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     const buttons = await screen.findAllByRole('button', { name: 'WhatsApp: מעבר לשיחה בעמוד' });
-    // The "תקשורת" row and the phone bar; no wa.me links.
-    expect(buttons).toHaveLength(2);
+    // The phone bar; no wa.me links.
+    expect(buttons).toHaveLength(1);
     expect(screen.queryByRole('link', { name: /^WhatsApp/ })).not.toBeInTheDocument();
-    // D-220: the conversation tab is always there, even before the first message.
-    expect(screen.getByRole('tab', { name: /^WhatsApp/ })).toBeInTheDocument();
+    // D-220/D-221: "תקשורת" is always there, even before the first message.
+    expect(screen.getByRole('tab', { name: 'תקשורת' })).toBeInTheDocument();
 
     await user.click(buttons[0]!);
+    expect(screen.getByRole('tab', { name: 'תקשורת' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'WhatsApp' })).toHaveAttribute('aria-selected', 'true');
     await waitFor(() => expect(screen.getByLabelText('תשובה בוואטסאפ')).toHaveFocus());
-    expect(location()).toBe(`${page}?tab=whatsapp`);
+    expect(location()).toBe(`${page}?tab=communication&channel=whatsapp`);
 
     // From the phone bar too, after moving elsewhere.
     await user.click(screen.getByRole('button', { name: 'הוספה לליד' }));
@@ -555,7 +553,7 @@ describe('the WhatsApp buttons', () => {
     await user.click(
       (await screen.findAllByRole('button', { name: 'WhatsApp: מעבר לשיחה בעמוד' }))[0]!,
     );
-    await waitFor(() => expect(screen.getByRole('tabpanel')).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('tabpanel', { name: 'WhatsApp' })).toHaveFocus());
   });
 
   it.each([
@@ -577,8 +575,8 @@ describe('the WhatsApp buttons', () => {
     renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     await waitFor(() =>
-      // The phone bar and the "תקשורת" row.
-      expect(screen.getAllByRole('link', { name: 'WhatsApp: פתיחה בחלון חדש' })).toHaveLength(2),
+      // The phone bar.
+      expect(screen.getAllByRole('link', { name: 'WhatsApp: פתיחה בחלון חדש' })).toHaveLength(1),
     );
     for (const link of screen.getAllByRole('link', { name: 'WhatsApp: פתיחה בחלון חדש' })) {
       expect(link).toHaveAttribute('href', 'https://wa.me/972521112233');
@@ -661,13 +659,8 @@ describe('no header (D-220): the name, then the tabs', () => {
       'href',
       'mailto:ron@example.com',
     );
-    const comm = screen.getByRole('region', { name: 'תקשורת' });
-    const wa = await within(comm).findByRole(connected ? 'button' : 'link', {
-      name: connected ? 'WhatsApp: מעבר לשיחה בעמוד' : 'WhatsApp: פתיחה בחלון חדש',
-    });
     // Filled = primary; the others are outlined.
-    expect(wa.className.includes('bg-brand-600')).toBe(connected);
-    expect(call.className.includes('bg-brand-600')).toBe(!connected);
+    await waitFor(() => expect(call.className.includes('bg-brand-600')).toBe(!connected));
     expect(within(info).getByRole('combobox', { name: 'אחראי' })).toBeInTheDocument();
     expect(within(info).getByText('מקור').nextElementSibling).toHaveTextContent(/Google Ads/);
   });
@@ -683,5 +676,129 @@ describe('no header (D-220): the name, then the tabs', () => {
     expect(await within(section).findByText('הועתק')).toBeInTheDocument();
     await user.click(within(section).getByRole('button', { name: 'העתקת טלפון' }));
     await expect(navigator.clipboard.readText()).resolves.toBe('052-1112233');
+  });
+});
+
+describe('"תקשורת" with channel sub-tabs (D-221)', () => {
+  const threadPath = apiPaths.whatsapp.thread(id, leadId);
+  const msg = (n: number, over: Record<string, unknown> = {}) => ({
+    id: `8b000000-0000-4000-8000-00000000000${n}`,
+    direction: 'IN',
+    body: `הודעה ${n}`,
+    status: 'received',
+    sender: null,
+    createdAt: hours(n - 10),
+    ...over,
+  });
+  const withEmail = () =>
+    detail(
+      lead({
+        contact: {
+          id: '5d000000-0000-4000-8000-000000000001',
+          name: 'רון לוי',
+          phone: '+972521112233',
+          email: 'ron@example.com',
+        },
+      }),
+    );
+
+  it("waiting banner on top; opens on the latest message's channel; Facebook only with messages", async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () => withEmail(),
+      [`GET ${threadPath}`]: () =>
+        json(200, {
+          connected: true,
+          replyUntil: hours(10),
+          botPaused: false,
+          channel: 'messenger',
+          messages: [msg(1), msg(2, { channel: 'messenger', body: 'שאלה מפייסבוק' })],
+        }),
+    });
+    const { user, location } = renderApp(`${page}?tab=communication`);
+    const comm = await screen.findByRole('tab', { name: 'תקשורת, 2 הודעות חדשות' });
+    expect(comm).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText(/^ממתין לתשובה שלך:/)).toBeInTheDocument();
+    const sub = screen.getByRole('tablist', { name: 'ערוצי תקשורת' });
+    expect(
+      within(sub)
+        .getAllByRole('tab')
+        .map((t) => t.getAttribute('aria-label')),
+    ).toEqual(['WhatsApp, 1 הודעות חדשות', 'אימייל', 'פייסבוק, 1 הודעות חדשות']);
+    // The latest message is on Facebook: its conversation, with the reply box.
+    expect(within(sub).getByRole('tab', { name: /^פייסבוק/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByText('שאלה מפייסבוק')).toBeInTheDocument();
+    expect(screen.queryByText('הודעה 1')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('תשובה בפייסבוק')).toBeInTheDocument();
+
+    // Keyboard: Home → WhatsApp; its messages, no reply box (replies go to Facebook), wa.me.
+    within(sub)
+      .getByRole('tab', { name: /^פייסבוק/ })
+      .focus();
+    await user.keyboard('{Home}');
+    const wa = within(sub).getByRole('tab', { name: /^WhatsApp/ });
+    expect(wa).toHaveFocus();
+    expect(wa).toHaveAttribute('aria-selected', 'true');
+    expect(location()).toBe(`${page}?tab=communication&channel=whatsapp`);
+    expect(screen.getByText('הודעה 1')).toBeInTheDocument();
+    expect(screen.queryByLabelText('תשובה בוואטסאפ')).not.toBeInTheDocument();
+    expect(screen.getByText(/נשלחת ב־Facebook Messenger/)).toBeInTheDocument();
+    // Hebrew is right to left: the next sub-tab is to the left.
+    await user.keyboard('{ArrowLeft}');
+    expect(within(sub).getByRole('tab', { name: 'אימייל' })).toHaveFocus();
+    expect(await screen.findByText('אין עדיין מיילים עם הליד.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '+ מייל ron@example.com' })).toHaveAttribute(
+      'href',
+      'mailto:ron@example.com',
+    );
+  });
+
+  it('?channel= opens that channel; Instagram shows when connected; nothing waiting, no banner', async () => {
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () => withEmail(),
+      [`GET ${apiPaths.channels.list(id)}`]: () =>
+        json(200, {
+          whatsapp: { channel: 'whatsapp', connected: true, name: null, source: null },
+          messenger: { channel: 'messenger', connected: false, name: null, source: null },
+          instagram: { channel: 'instagram', connected: true, name: 'shop', source: 'business' },
+          gmail: { channel: 'email', connected: false, name: null, source: null },
+          email: { channel: 'email', connected: false, name: null, source: null },
+          emailInbound: false,
+          facebookLogin: true,
+          gmailLogin: false,
+        }),
+      [`GET ${threadPath}`]: () =>
+        json(200, {
+          connected: true,
+          replyUntil: null,
+          botPaused: false,
+          messages: [msg(1, { direction: 'OUT', status: 'read' })],
+        }),
+    });
+    renderApp(`${page}?tab=communication&channel=email`);
+    const sub = await screen.findByRole('tablist', { name: 'ערוצי תקשורת' });
+    expect(await within(sub).findByRole('tab', { name: 'Instagram' })).toBeInTheDocument();
+    expect(within(sub).queryByRole('tab', { name: /^פייסבוק/ })).not.toBeInTheDocument();
+    expect(within(sub).getByRole('tab', { name: 'אימייל' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByRole('tab', { name: 'תקשורת' })).toBeInTheDocument();
+    expect(screen.queryByText(/^ממתין לתשובה שלך:/)).not.toBeInTheDocument();
+  });
+
+  it('old ?tab=whatsapp opens "תקשורת" on WhatsApp', async () => {
+    mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => detail() });
+    const { location } = renderApp(`${page}?tab=whatsapp`);
+    expect(await screen.findByRole('tab', { name: 'תקשורת' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByRole('tab', { name: 'WhatsApp' })).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => expect(location()).toBe(`${page}?tab=communication&channel=whatsapp`));
   });
 });

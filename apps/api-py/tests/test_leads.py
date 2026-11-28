@@ -441,8 +441,8 @@ async def test_export_is_excel_friendly_csv_with_hebrew_headers_and_safe_cells(c
     assert body[0] == "﻿"
     header = body[1:].split("\r\n")[0]
     # D-207/D-209: no estimated-value or next-action columns.
-    assert header == "שם,טלפון,אימייל,שלב,מקור,אחראי,תגיות,פרטי הפנייה,נוצר"
-    assert '"דנה, כהן",052-7654321,,חדש,הוזן ידנית,,,"שורה ראשונה\nשורה ""שנייה""",' in body
+    assert header == "שם,טלפון,אימייל,שלב,מקור,אחראי,פרטי הפנייה,נוצר"
+    assert '"דנה, כהן",052-7654321,,חדש,הוזן ידנית,,"שורה ראשונה\nשורה ""שנייה""",' in body
     assert """"'=HYPERLINK(""http://evil"",""x"")\"""" in body
     audit = (
         await db.execute(select(models.AuditLog).where(models.AuditLog.action == "leads.exported"))

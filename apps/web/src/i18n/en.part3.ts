@@ -516,8 +516,8 @@ export const enPart3: Record<string, string> = {
   'ניקוי הסינון': 'Clear filters',
   'רענון (פניות חדשות מופיעות לבד, והכפתור מביא אותן מיד) וייצוא הלידים לאקסל.':
     'Refresh (new leads appear by themselves; this brings them in right away) and export your leads to Excel.',
-  'מחפשים לפי שם, טלפון או אימייל. הכפתור "סינון" פותח סינון לפי שלב, אחראי, מקור או תגית.':
-    'Search by name, phone or email. The "Filter" button filters by stage, owner, source or tag.',
+  'מחפשים לפי שם, טלפון או אימייל. הכפתור "סינון" פותח סינון לפי שלב, אחראי או מקור.':
+    'Search by name, phone or email. The "Filter" button filters by stage, owner or source.',
   'בכפתור "עוד": השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת התור באתר וברשימה של הבוט בוואטסאפ.':
     'Under "More": the services your business offers, with duration and price. They appear in the website booking request and in the WhatsApp bot\'s list.',
   'אין תורים בתקופה הזו': 'No appointments in this period',

@@ -116,6 +116,8 @@ const emptyReport: ReportSummary = {
   byCampaign: [],
 };
 
+const off = (channel: string) => ({ channel, connected: false, name: null, source: null });
+
 export function mockApi(routes: Record<string, Handler>) {
   // Signed-in flows end at /app, which loads the user's businesses; default to one active business.
   routes = {
@@ -127,7 +129,6 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.businesses.notifications(testBusiness.id)}`]: () =>
       json(200, { prefs: { newLeadEmail: true } }),
     [`GET ${apiPaths.reports.summary(testBusiness.id)}`]: () => json(200, emptyReport),
-    [`GET ${apiPaths.leads.tags(testBusiness.id)}`]: () => json(200, { tags: [] }),
     [`GET ${apiPaths.leadFields.list(testBusiness.id)}`]: () => json(200, { fields: [] }),
     [`GET ${apiPaths.leads.pipeline(testBusiness.id)}`]: () => json(200, { stages: testStages }),
     [`GET ${apiPaths.tasks.list(testBusiness.id)}`]: () => json(200, { tasks: [] }),
@@ -145,6 +146,18 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.conversations.unread(testBusiness.id)}`]: () => json(200, { unreadCount: 0 }),
     [`GET ${apiPaths.notifications.list(testBusiness.id)}`]: () =>
       json(200, { notifications: [], unreadCount: 0 }),
+    // The lead page's "תקשורת" asks which channels are connected (D-221); default: none.
+    [`GET ${apiPaths.channels.list(testBusiness.id)}`]: () =>
+      json(200, {
+        whatsapp: off('whatsapp'),
+        messenger: off('messenger'),
+        instagram: off('instagram'),
+        gmail: off('email'),
+        email: off('email'),
+        emailInbound: false,
+        facebookLogin: false,
+        gmailLogin: false,
+      }),
     [`GET ${apiPaths.media.assets(testBusiness.id)}`]: () =>
       json(200, { assets: [], usedBytes: 0, quotaBytes: 200 * 1024 * 1024 }),
     ...routes,

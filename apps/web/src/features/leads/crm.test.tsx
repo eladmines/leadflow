@@ -291,7 +291,7 @@ describe('lead page', () => {
       'href',
       'tel:+972527654321',
     );
-    // D-220: the history, owner and tags are in "מידע", the first tab.
+    // D-220: the history and owner are in "מידע", the first tab.
     await user.click(await screen.findByRole('tab', { name: 'מידע' }));
     const history = screen.getByRole('list', { name: 'היסטוריית הליד' });
     expect(within(history).getByText('השלב שונה מ"חדש" ל"נוצר קשר"')).toBeInTheDocument();
@@ -358,26 +358,18 @@ describe('lead page', () => {
     expect(screen.queryByRole('combobox', { name: 'אחראי' })).not.toBeInTheDocument();
   });
 
-  it('adds a tag with Enter (no duplicates) and removes one', async () => {
-    const fetchMock = mockApi({
+  it('has no tag field (D-222)', async () => {
+    mockApi({
       [meKey]: me(testUser),
       ...members,
       [`GET ${lp.detail(id, lead().id)}`]: () =>
         json(200, { ...detail, lead: lead({ tags: ['VIP'] }) }),
-      [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead({ tags: ['VIP'] }) }),
     });
     const { user } = renderApp(`${leadsPath}/${lead().id}`);
     await user.click(await screen.findByRole('tab', { name: 'מידע' }));
-    const input = await screen.findByLabelText('תגיות');
-    await user.type(input, 'חוזר{Enter}');
-    await user.type(input, 'vip{Enter}');
-    await user.click(screen.getByRole('button', { name: 'הסרת התגית VIP' }));
-    await waitFor(() =>
-      expect(callsTo(fetchMock, 'PATCH', lp.detail(id, lead().id))).toEqual([
-        { tags: ['VIP', 'חוזר'] },
-        { tags: [] },
-      ]),
-    );
+    expect(screen.getByLabelText('שלב')).toBeInTheDocument();
+    expect(screen.queryByLabelText('תגיות')).not.toBeInTheDocument();
+    expect(screen.queryByText('VIP')).not.toBeInTheDocument();
   });
 
   it('the owner deletes a lead after confirming and returns to the list', async () => {
@@ -422,27 +414,22 @@ describe('lead page', () => {
   });
 });
 
-describe('tags in the list', () => {
-  it('shows tags on cards and filters by tag through the URL and API', async () => {
+describe('no tags in the list (D-222)', () => {
+  it('shows no tag chips or tag filter, and ignores an old ?tag= link', async () => {
     const fetchMock = mockApi({
       [meKey]: me(testUser),
       ...members,
       [`GET ${lp.list(id)}`]: () => json(200, { leads: [lead({ tags: ['VIP'] })] }),
-      [`GET ${lp.tags(id)}`]: () => json(200, { tags: ['VIP', 'חוזר'] }),
     });
-    const { user } = renderApp(`${leadsPath}?view=list`);
-    const chips = await screen.findByRole('list', { name: 'תגיות' });
-    expect(within(chips).getByText('VIP')).toBeInTheDocument();
-    // Filters open from one button (D-138).
+    const { user } = renderApp(`${leadsPath}?view=list&tag=VIP`);
+    expect(await screen.findByRole('link', { name: 'דנה כהן' })).toBeInTheDocument();
+    expect(screen.queryByText('VIP')).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('tag='))).toBe(false);
     await user.click(screen.getByRole('button', { name: 'סינון' }));
-    await choose(user, await screen.findByLabelText('סינון לפי תגית'), 'חוזר');
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some(
-          ([u]) => String(u) === `${lp.list(id)}?tag=${encodeURIComponent('חוזר')}`,
-        ),
-      ).toBe(true),
-    );
+    expect(screen.queryByLabelText('סינון לפי תגית')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'עוד' }));
+    const exportLink = await screen.findByRole('link', { name: 'ייצוא לאקסל' });
+    expect(exportLink).toHaveAttribute('href', lp.exportCsv(id));
   });
 });
 

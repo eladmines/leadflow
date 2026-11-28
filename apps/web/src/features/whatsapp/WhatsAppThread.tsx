@@ -2,10 +2,12 @@ import {
   sendWhatsAppRequestSchema,
   whatsappMessages,
   whatsappStatusLabels,
+  type Channel,
   type SendWhatsAppRequest,
 } from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bot, MessageCircle } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { useScrollToLatest } from '../../lib/useScrollToLatest';
 import { Alert, Button, Card, Spinner, Textarea } from '../../components/ui';
@@ -22,11 +24,46 @@ const timeFmt = new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute:
 /** The reply box, so the lead page's WhatsApp button can put the cursor there. */
 export const WHATSAPP_REPLY_ID = 'whatsapp-reply';
 
+/** The channel's name, as the lead page's sub-tabs and the conversation heading show it. */
+export function channelName(channel: Channel) {
+  return channel === 'email'
+    ? tr('אימייל')
+    : channel === 'messenger'
+      ? 'Facebook Messenger'
+      : channel === 'instagram'
+        ? 'Instagram'
+        : 'WhatsApp';
+}
+
+const listNames: Record<Channel, string> = {
+  whatsapp: 'שיחת וואטסאפ',
+  email: 'שיחת מייל',
+  messenger: 'שיחת פייסבוק',
+  instagram: 'שיחת אינסטגרם',
+};
+
+const emptyTexts: Record<Channel, string> = {
+  whatsapp: 'אין שיחת וואטסאפ עם הליד.',
+  email: 'אין עדיין מיילים עם הליד.',
+  messenger: 'אין שיחת פייסבוק עם הליד.',
+  instagram: 'אין שיחת אינסטגרם עם הליד.',
+};
+
 /**
- * WhatsApp conversation with the lead's contact (F12 POC). Hidden for businesses without a
- * connected number, unless older messages exist.
+ * The conversation with the lead's contact (F12, F23, F27, F28). On the lead page's "תקשורת" tab
+ * (D-221) it shows one channel's messages; the reply box is in the channel the customer wrote in
+ * last (where the server sends a reply). `action` is how to start elsewhere (wa.me, mailto).
  */
-export function WhatsAppThread({ leadId }: { leadId: string }) {
+export function WhatsAppThread({
+  leadId,
+  channel,
+  action,
+}: {
+  leadId: string;
+  /** Only this channel's messages; none = the whole conversation. */
+  channel?: Channel;
+  action?: ReactNode;
+}) {
   const business = useCurrentBusiness();
   const thread = useWhatsAppThread(business.id, leadId);
   const listRef = useScrollToLatest<HTMLOListElement>(thread.data?.messages.at(-1)?.id);
@@ -41,34 +78,47 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
   if (thread.isPending) {
     return (
       <Card>
-        <Spinner size="sm" label={tr('טוענים את שיחת הוואטסאפ…')} />
+        <Spinner size="sm" label={tr('טוענים את השיחה…')} />
       </Card>
     );
   }
   if (thread.isError) {
     return (
       <Card className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold text-ink">WhatsApp</h2>
+        <h2 className="text-lg font-semibold text-ink">{channelName(channel ?? 'whatsapp')}</h2>
         <Alert tone="danger">{errorMessage(thread.error)}</Alert>
       </Card>
     );
   }
-  const { connected, messages, replyUntil, botPaused } = thread.data;
+  const { connected, replyUntil, botPaused } = thread.data;
+  // Where a reply goes: the channel of the customer's last message.
+  const replyChannel = thread.data.channel ?? 'whatsapp';
+  const view = channel ?? replyChannel;
+  const messages = channel
+    ? thread.data.messages.filter((m) => (m.channel ?? 'whatsapp') === channel)
+    : thread.data.messages;
   // A Facebook Messenger conversation (F23): replies go there; no booking bot.
-  const fb = thread.data.channel === 'messenger';
+  const fb = view === 'messenger';
   // An Instagram conversation (F28): the same, through Instagram.
-  const ig = thread.data.channel === 'instagram';
+  const ig = view === 'instagram';
   // An email conversation (F27): replies go out by email, with no 24-hour window or booking bot.
-  const mail = thread.data.channel === 'email';
-  const title = mail ? tr('מייל') : fb ? 'Facebook Messenger' : ig ? 'Instagram' : 'WhatsApp';
-  // Its own tab on the lead page (D-140), so say why it's empty rather than show nothing.
-  if (!connected && messages.length === 0) {
+  const mail = view === 'email';
+  const title = channelName(view);
+  // Replies only go to the channel the customer wrote in last.
+  const replyHere = connected && view === replyChannel;
+  const elsewhere = connected && view !== replyChannel && thread.data.messages.length > 0;
+  // Its own tab on the lead page, so say why it's empty rather than show nothing.
+  if (messages.length === 0 && !replyHere) {
     return (
-      <Card className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-ink">WhatsApp</h2>
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold text-ink">{title}</h2>
         <p className="text-sm text-ink-muted">
-          {tr('אין שיחת וואטסאפ עם הליד. אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.')}
+          {tr(emptyTexts[view])}{' '}
+          {view === 'whatsapp' &&
+            !connected &&
+            tr('אחרי חיבור מספר WhatsApp לעסק, ההודעות יופיעו כאן.')}
         </p>
+        {action}
       </Card>
     );
   }
@@ -92,7 +142,7 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
           />
           {title}
         </h2>
-        {connected && !fb && !ig && !mail && (
+        {connected && view === 'whatsapp' && (
           // The booking bot for this customer only (D-108): pause it to talk yourself.
           <div className="flex items-center gap-2 text-xs text-ink-muted">
             <Bot aria-hidden className="h-4 w-4" />
@@ -111,12 +161,14 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
       {pause.isError && <Alert tone="danger">{errorMessage(pause.error)}</Alert>}
       {messages.length === 0 ? (
         <p className="text-sm text-ink-muted">
-          {tr('עדיין אין הודעות. כשהלקוח יכתוב לעסק בוואטסאפ, השיחה תופיע כאן.')}
+          {mail
+            ? tr('עדיין אין מיילים. כשהלקוח יכתוב לעסק במייל, השיחה תופיע כאן.')
+            : tr('עדיין אין הודעות. כשהלקוח יכתוב לעסק בוואטסאפ, השיחה תופיע כאן.')}
         </p>
       ) : (
         <ol
           ref={listRef}
-          aria-label={tr('שיחת וואטסאפ')}
+          aria-label={tr(listNames[view])}
           // Its own scroll box, at most half the screen, so the reply box stays in view.
           className="scrollbar-visible flex max-h-[min(28rem,50dvh)] flex-col gap-2 overflow-y-auto overscroll-contain"
         >
@@ -166,7 +218,13 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
           })}
         </ol>
       )}
-      {connected &&
+      {elsewhere && (
+        <p className="text-sm text-ink-muted">
+          {tr('תשובה מהעמוד נשלחת ב־{0}, הערוץ שבו הלקוח כתב לאחרונה.', channelName(replyChannel))}
+        </p>
+      )}
+      {(!replyHere || (!replyUntil && !mail)) && action}
+      {replyHere &&
         (replyUntil || mail ? (
           <form noValidate onSubmit={submit} className="flex flex-col gap-2">
             <Textarea
