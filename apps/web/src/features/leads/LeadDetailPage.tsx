@@ -729,7 +729,7 @@ function ContactValue({
       <bdi dir="ltr" className="min-w-0 truncate" title={value}>
         {value}
       </bdi>
-      <span className="ms-auto flex shrink-0 items-center gap-2">
+      <span className="flex shrink-0 items-center gap-1.5">
         <CopyButton label={label} text={value} />
         <a
           href={href}
@@ -763,8 +763,11 @@ function LeadInfo({
   // The deal, its custom fields, then the person behind it (owner, 2026-11-28: one tab).
   return (
     <div className="flex flex-col divide-y divide-surface-border px-2 sm:px-3 [&>*]:py-5 [&>*:first-child]:pt-2">
-      <BasicInfo lead={lead} />
-      <CustomFieldsPanel draft={draft} />
+      {/* The lead's facts and its custom fields are one section, "הליד". */}
+      <div className="flex flex-col gap-4">
+        <BasicInfo lead={lead} />
+        <CustomFieldsPanel draft={draft} />
+      </div>
       <LeadCustomer lead={lead} related={related} whatsappInApp={whatsappInApp} />
     </div>
   );
@@ -804,7 +807,7 @@ function LeadCustomer({
             </span>
           )}
         </div>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+        <div className="grid max-w-4xl grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
           {phone && (
             <Property label={tr('טלפון')}>
               <ContactValue
@@ -861,7 +864,7 @@ function BasicInfo({ lead }: { lead: Lead }) {
       <h2 id="lead-basic-title" className="mb-4 text-base font-semibold text-ink">
         {tr('הליד')}
       </h2>
-      <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+      <div className="grid max-w-4xl grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
         <StageField lead={lead} />
         <OwnerField lead={lead} />
         <SourceProperty lead={lead} />
@@ -1135,7 +1138,7 @@ function Property({
       <span
         id={labelId}
         aria-hidden={labelForControl || undefined}
-        className="w-28 shrink-0 text-sm text-ink-muted"
+        className="w-24 shrink-0 text-sm text-ink-muted"
       >
         {label}
       </span>

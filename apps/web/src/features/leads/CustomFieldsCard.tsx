@@ -11,6 +11,7 @@ import {
 import { useState, type FormEvent } from 'react';
 import { Alert, Button, Spinner } from '../../components/ui';
 import { ApiError } from '../../lib/api';
+import { cn } from '../../lib/cn';
 import { isRtl, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
 import { CustomFieldInput } from '../leadFields/CustomFieldInput';
@@ -136,15 +137,12 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
   if (fields.isSuccess && active.length === 0) return null;
 
   return (
+    // Part of "הליד" (owner, 2026-11-28): no heading of its own on screen, the same label-beside
+    // rows as the lead's other facts; the manage link sits quietly at the end.
     <section aria-labelledby="lead-fields-title" className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="lead-fields-title" className="text-base font-semibold text-ink">
-          {tr('פרטים')}
-        </h2>
-        {canManage && (
-          <ManageFieldsLink to={businessWebPaths.section(business.id, 'leads/fields')} />
-        )}
-      </div>
+      <h2 id="lead-fields-title" className="sr-only">
+        {tr('פרטים')}
+      </h2>
       {fields.isPending ? (
         <Spinner size="sm" label={tr('טוענים את השדות…')} />
       ) : fields.isError ? (
@@ -169,6 +167,7 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
             <CustomFieldInput
               key={f.id}
               id={`cf-${f.id}`}
+              inline
               field={f}
               value={draft.rawOf(f)}
               error={draft.errors[f.id]}
@@ -176,7 +175,13 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
             />
           ))}
           {draft.formError && <Alert tone="danger">{draft.formError}</Alert>}
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          {/* Save shows once something changed (or right after saving). */}
+          <div
+            className={cn(
+              'flex flex-wrap items-center justify-end gap-2',
+              !draft.dirty && !saving && draft.status !== 'saved' && 'sr-only',
+            )}
+          >
             <p role="status" className="me-auto text-xs text-ink-muted">
               {saving
                 ? tr('שומר…')
@@ -211,6 +216,11 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
         </dl>
       )}
       <ArchivedFieldValues lead={lead} />
+      {canManage && (
+        <div className="text-xs">
+          <ManageFieldsLink to={businessWebPaths.section(business.id, 'leads/fields')} />
+        </div>
+      )}
     </section>
   );
 }

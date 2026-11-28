@@ -18,6 +18,7 @@ export function CustomFieldInput({
   error,
   disabled,
   id,
+  inline = false,
 }: {
   field: LeadFieldDefinition;
   value: RawValue;
@@ -26,6 +27,8 @@ export function CustomFieldInput({
   error?: string;
   disabled?: boolean;
   id?: string;
+  /** The label beside the input, like the lead's other facts (owner, 2026-11-28). */
+  inline?: boolean;
 }) {
   const autoId = useId();
   const inputId = id ?? autoId;
@@ -53,6 +56,8 @@ export function CustomFieldInput({
       <SelectMenu
         id={inputId}
         label={field.label}
+        className={inline ? INLINE_ROW : undefined}
+        labelClassName={inline ? INLINE_LABEL : undefined}
         required={field.required}
         disabled={disabled}
         value={current}
@@ -74,8 +79,14 @@ export function CustomFieldInput({
   const range = rangeText(field);
 
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-sm font-medium text-ink [overflow-wrap:anywhere]">
+    <div className={inline ? INLINE_ROW : 'flex min-w-0 flex-col gap-1.5'}>
+      <label
+        htmlFor={inputId}
+        className={cn(
+          'text-sm font-medium text-ink [overflow-wrap:anywhere]',
+          inline && INLINE_LABEL,
+        )}
+      >
         <bdi>{field.label}</bdi>
         {field.required && (
           <span aria-hidden className="ms-0.5 text-danger-600">
@@ -118,3 +129,9 @@ export function CustomFieldInput({
     </div>
   );
 }
+
+/** Label beside the input: a 7rem label column, the input capped at 20rem; hints and errors
+ * sit under the input. */
+const INLINE_ROW =
+  'grid min-w-0 grid-cols-[6rem_minmax(0,20rem)] items-center gap-x-3 gap-y-1 [&>*:nth-child(n+3)]:col-start-2';
+const INLINE_LABEL = 'font-normal text-ink-muted';
