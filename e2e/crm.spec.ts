@@ -79,7 +79,10 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await page.getByLabel('הוספת הערה').fill('נשלחה הצעה של ₪650, מחכה לאישור');
   await page.getByRole('button', { name: 'שמירת הערה' }).click();
   const history = page.getByRole('list', { name: 'היסטוריית הליד' });
-  await expect(history.getByText('נשלחה הצעה של ₪650, מחכה לאישור')).toBeVisible();
+  // D-218: notes live in the notes tab; the history holds system events.
+  await expect(
+    page.getByRole('list', { name: 'הערות' }).getByText('נשלחה הצעה של ₪650, מחכה לאישור'),
+  ).toBeVisible();
   await expect(history.getByText('השלב שונה מ"חדש" ל"נוצר קשר"')).toBeVisible();
 
   // Search by phone in local format.

@@ -265,4 +265,6 @@ export const enPart4: Record<string, string> = {
   'העתקת {0}': 'Copy {0}',
   'התקשרות ל־{0}': 'Call {0}',
   'מייל ל־{0}': 'Email {0}',
+  // D-218.
+  '{0} פתוח · {1} נסגר': '{0} open · {1} won',
 };

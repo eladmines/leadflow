@@ -5,8 +5,6 @@ import {
   type Attribution,
   type AttributionSource,
 } from '@simplecatch/shared';
-import { Megaphone } from 'lucide-react';
-import { Card } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { tr } from '../../i18n';
 import { AttributionIcon } from './SourceIcon';
@@ -55,54 +53,43 @@ export function SourceBadge({
   );
 }
 
-/** "Where it came from" on the lead page (F26). */
-export function WhereFrom({ attribution }: { attribution?: Attribution | null }) {
+/** The ad, campaign, keyword and landing page of a lead's attribution, as label/value rows (F26). */
+export function attributionRows(attribution?: Attribution | null): [string, string][] {
+  if (!attribution) return [];
+  return (
+    [
+      [tr('קמפיין'), attribution.campaign],
+      [tr('מודעה'), attribution.adHeadline],
+      [tr('מילת חיפוש'), attribution.term],
+      [tr('מודעה / גרסה'), attribution.content],
+      [tr('סוג'), attribution.medium],
+      [tr('הגיע מהאתר'), attribution.source === 'referral' ? undefined : attribution.referrerHost],
+      [tr('עמוד ראשון באתר'), attribution.landingPath],
+    ] as [string, string | undefined][]
+  ).filter((r): r is [string, string] => !!r[1]);
+}
+
+/** The source's name: the referring site or UTM source when known, else the source's label. */
+export function attributionSourceName(attribution: Attribution) {
   const named =
-    attribution && (attribution.source === 'utm' || attribution.source === 'referral')
+    attribution.source === 'utm' || attribution.source === 'referral'
       ? attributionName(attribution)
       : null;
-  const rows: [string, string][] = attribution
-    ? (
-        [
-          [tr('קמפיין'), attribution.campaign],
-          [tr('מודעה'), attribution.adHeadline],
-          [tr('מילת חיפוש'), attribution.term],
-          [tr('מודעה / גרסה'), attribution.content],
-          [tr('סוג'), attribution.medium],
-          [
-            tr('הגיע מהאתר'),
-            attribution.source === 'referral' ? undefined : attribution.referrerHost,
-          ],
-          [tr('עמוד ראשון באתר'), attribution.landingPath],
-        ] as [string, string | undefined][]
-      ).filter((r): r is [string, string] => !!r[1])
-    : [];
+  return sourceName(attribution.source, named);
+}
+
+/** The rows as a definition list (the lead page's source details, D-218). */
+export function AttributionDetails({ rows }: { rows: [string, string][] }) {
   return (
-    <Card className="flex flex-col gap-3">
-      <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
-        <Megaphone aria-hidden className="h-5 w-5 text-accent-600" />
-        {tr('מאיפה הגיע')}
-      </h2>
-      <div>
-        <SourceBadge source={attribution?.source ?? 'unknown'} name={named} />
-      </div>
-      {rows.length > 0 && (
-        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-sm">
-          {rows.map(([label, value]) => (
-            <div key={label} className="contents">
-              <dt className="text-ink-muted">{label}</dt>
-              <dd className="break-words text-ink">
-                <bdi>{value}</bdi>
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {!attribution && (
-        <p className="text-sm text-ink-muted">
-          {tr('לליד הזה לא נשמר מקור. לידים חדשים מהאתר ומהמודעות יראו כאן מאיפה הגיעו.')}
-        </p>
-      )}
-    </Card>
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-sm">
+      {rows.map(([label, value]) => (
+        <div key={label} className="contents">
+          <dt className="text-ink-muted">{label}</dt>
+          <dd className="break-words text-ink">
+            <bdi>{value}</bdi>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

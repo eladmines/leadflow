@@ -11,7 +11,7 @@ import {
 import { AlarmClock, AlertTriangle, Check, ChevronDown, UserRound } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, Button, buttonClasses, Card, Spinner } from '../../components/ui';
+import { Alert, Button, buttonClasses, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { ApiError } from '../../lib/api';
 import { intlLocale, tr } from '../../i18n';
@@ -74,7 +74,8 @@ export function Fold({
 }) {
   const id = leadSectionId(sectionKey);
   return (
-    <section id={id} className="scroll-mt-24 rounded-xl border border-surface-border bg-surface">
+    // D-218: no frame of its own; the column's surface and its dividers separate the sections.
+    <section id={id} className="scroll-mt-24">
       <h2>
         <button
           id={leadSectionButtonId(sectionKey)}
@@ -181,11 +182,7 @@ export function NextAction({
   };
 
   return (
-    <Card
-      role="region"
-      aria-labelledby="lead-next-title"
-      className={cn('flex flex-col gap-3', late && 'border-danger-600/40')}
-    >
+    <section aria-labelledby="lead-next-title" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="lead-next-title" className="text-base font-semibold text-ink">
           {tr('הפעולה הבאה')}
@@ -299,7 +296,7 @@ export function NextAction({
           </div>
         )}
       </div>
-    </Card>
+    </section>
   );
 }
 
@@ -400,16 +397,13 @@ const statusTone: Record<ReturnType<typeof displayStatus>, string> = {
   EXPIRED: 'bg-warning-50 text-warning-600 ring-warning-600/30',
 };
 
-/** The lead's value as the folded quotes line says it: "₪X פתוח / ₪Y נסגר" (D-207, D-211). */
-export function quotesSummary(lead: Lead) {
+/** The lead's value from its quotes, "₪X פתוח · ₪Y נסגר" (D-207; shown once, in the properties, D-218). */
+export function valueSummary(lead: Lead) {
   const value = lead.value ?? { won: 0, open: 0 };
-  return tr('{0} פתוח / {1} נסגר', shekel.format(value.open), shekel.format(value.won));
+  return tr('{0} פתוח · {1} נסגר', shekel.format(value.open), shekel.format(value.won));
 }
 
-/**
- * Inside the folded "הצעות מחיר" section: the lead's value from its quotes (won = accepted,
- * open = the latest sent quote still open, D-207), each quote's status and total, "+ הצעה".
- */
+/** Inside the folded "הצעות מחיר" section: each quote's status and total, and "+ הצעה". */
 export function LeadQuotes({
   lead,
   quotes,
@@ -419,7 +413,6 @@ export function LeadQuotes({
 }) {
   const business = useCurrentBusiness();
   const base = businessWebPaths.section(business.id, 'quotes');
-  const value = lead.value ?? { won: 0, open: 0 };
   const { query, list } = quotes;
 
   return (
@@ -430,19 +423,6 @@ export function LeadQuotes({
       >
         {tr('+ הצעה')}
       </Link>
-      <div className="flex flex-col gap-1.5 rounded-xl bg-surface-muted p-3">
-        <p className="text-xs font-medium text-ink-muted">{tr('ערך הליד, לפי הצעות המחיר')}</p>
-        <dl className="grid grid-cols-2 gap-2 text-sm">
-          <div className="flex flex-col">
-            <dt className="text-xs text-ink-muted">{tr('נסגר (הצעות שאושרו)')}</dt>
-            <dd className="font-semibold text-ink">{shekel.format(value.won)}</dd>
-          </div>
-          <div className="flex flex-col">
-            <dt className="text-xs text-ink-muted">{tr('פתוח (ההצעה האחרונה שנשלחה)')}</dt>
-            <dd className="font-semibold text-ink">{shekel.format(value.open)}</dd>
-          </div>
-        </dl>
-      </div>
       <ListStatus
         query={query}
         loading={tr('טוענים את הצעות המחיר…')}

@@ -151,7 +151,7 @@ describe('lead page layout (D-211)', () => {
     // Header: the stage badge and the meta sentence (D-217); call and WhatsApp in the phone bar.
     await waitFor(() => expect(screen.getByLabelText('שלב')).toHaveTextContent('חדש'));
     expect(screen.getByText('הגיע מ־הוזן ידנית').closest('p')).toHaveTextContent(
-      /הגיע מ־הוזן ידנית.*עכשיו.*ללא אחראי/,
+      /^הגיע מ־הוזן ידנית\s*·\s*עכשיו$/,
     );
     expect(screen.getByRole('link', { name: 'התקשרות' })).toHaveAttribute(
       'href',
@@ -168,7 +168,8 @@ describe('lead page layout (D-211)', () => {
     for (const name of [/^הצעות מחיר/, /^תורים/, /^עוד פרטים/]) {
       expect(fold(name)).toHaveAttribute('aria-expanded', 'false');
     }
-    await waitFor(() => expect(fold(/^הצעות מחיר \(0\)/)).toHaveTextContent(/0.*פתוח.*0.*נסגר/));
+    // D-218: the quotes line shows the count only.
+    await waitFor(() => expect(fold(/^הצעות מחיר \(0\)/)).not.toHaveTextContent('פתוח'));
     expect(fold(/^עוד פרטים/)).toHaveTextContent('ללא אחראי');
     // D-207 / D-209: no typed value and no next-action date.
     expect(screen.queryByLabelText(/ערך משוער/)).not.toBeInTheDocument();
@@ -188,7 +189,9 @@ describe('lead page layout (D-211)', () => {
     await user.keyboard('{Enter}');
     expect(more).toHaveAttribute('aria-expanded', 'true');
     const history = screen.getByRole('list', { name: 'היסטוריית הליד' });
-    expect(within(history).getAllByRole('listitem')).toHaveLength(3);
+    // D-218: system events only (the note is in the notes tab).
+    expect(within(history).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(history).queryByText('ביקש לחזור אחרי 17:00')).not.toBeInTheDocument();
     expect(within(history).getByText('השלב שונה מ"חדש" ל"נוצר קשר"')).toBeInTheDocument();
     expect(within(history).getByText('הליד נוצר ידנית')).toBeInTheDocument();
     expect(screen.getByLabelText('אחראי')).toBeInTheDocument();
@@ -234,11 +237,14 @@ describe('lead page layout (D-211)', () => {
     const { user } = renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     const button = await waitFor(() => fold(/^הצעות מחיר \(2\)/));
-    expect(button).toHaveTextContent(/1,180.*פתוח.*2,360.*נסגר/);
+    // D-218: the value is shown once, in the properties ("עוד פרטים" on phones).
+    expect(button).not.toHaveTextContent('פתוח');
     await user.click(button);
     const section = screen.getByRole('region', { name: /^הצעות מחיר/ });
-    expect(within(section).getByText('נסגר (הצעות שאושרו)').nextElementSibling).toHaveTextContent(
-      /2,360/,
+    expect(within(section).queryByText('נסגר (הצעות שאושרו)')).not.toBeInTheDocument();
+    await user.click(fold(/^עוד פרטים/));
+    expect(screen.getByText('ערך לפי הצעות מחיר').nextElementSibling).toHaveTextContent(
+      /1,180.*פתוח · .*2,360.*נסגר/,
     );
     const rows = within(
       within(section).getByRole('list', { name: 'הצעות המחיר של הליד' }),
@@ -592,11 +598,11 @@ describe('wide screens: story and properties panel (D-212)', () => {
     mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withActivities() });
     const { user } = renderApp(page);
     const history = await screen.findByRole('button', { name: /^היסטוריה/ });
-    expect(history).toHaveTextContent('3 אירועים');
+    expect(history).toHaveTextContent('2 אירועים');
     await user.click(history);
     expect(
       within(screen.getByRole('list', { name: 'היסטוריית הליד' })).getAllByRole('listitem'),
-    ).toHaveLength(3);
+    ).toHaveLength(2);
     expect(
       within(screen.getByRole('list', { name: 'הערות' })).getAllByRole('listitem'),
     ).toHaveLength(1);
@@ -678,7 +684,7 @@ describe('the header (D-217)', () => {
     });
     renderApp(page);
     const heading = await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
-    const header = heading.closest('section')!;
+    const header = heading.closest('header')!;
     const call = within(header).getByRole('link', { name: 'התקשרות ל־052-1112233' });
     expect(call).toHaveAttribute('href', 'tel:+972521112233');
     expect(call).toHaveAttribute('title', 'התקשרות ל־052-1112233');
@@ -698,7 +704,11 @@ describe('the header (D-217)', () => {
     const meta = within(header)
       .getByText(/^הגיע מ־/)
       .closest('p')!;
-    expect(meta).toHaveTextContent(/הגיע מ־Google Ads \(חורף\).*באחריות דנה כהן/);
+    // The meta names the campaign; the owner is only in the properties (D-218).
+    expect(meta).toHaveTextContent(/הגיע מ־Google Ads \(חורף\)/);
+    expect(meta).not.toHaveTextContent('דנה כהן');
+    const panel = screen.getByRole('complementary', { name: 'מאפייני הליד' });
+    expect(within(panel).getByLabelText('אחראי')).toBeInTheDocument();
     expect(within(meta).getByText('עכשיו')).toHaveAttribute('title');
   });
 

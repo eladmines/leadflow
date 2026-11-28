@@ -43,9 +43,12 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   const openQuotes = () => page.getByRole('button', { name: /^הצעות מחיר/ }).click();
   await openQuotes();
   const quotesCard = page.getByRole('region', { name: /^הצעות מחיר/ });
-  const amount = (label: RegExp) =>
-    quotesCard.locator('dl > div').filter({ hasText: label }).locator('dd');
-  await expect(amount(/^פתוח/)).toHaveText(/^\D*0\D*$/);
+  // D-218: the value is one line in the properties ("עוד פרטים" on phones): "₪X פתוח · ₪Y נסגר".
+  const value = async () => {
+    await openLeadHistory(page);
+    return page.getByText('ערך לפי הצעות מחיר').locator('xpath=following-sibling::div');
+  };
+  await expect(await value()).toHaveText(/^\D*0\D*פתוח · \D*0\D*נסגר$/);
   await quotesCard.getByRole('link', { name: '+ הצעה' }).click();
   await expect(page.getByRole('heading', { name: 'הצעת מחיר חדשה' })).toBeVisible();
 
@@ -71,8 +74,7 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   // Sent and still open: the lead's open value is the quote's total, in whole shekels (D-208).
   await page.goto(`/b/${id}/leads/${leadId}`);
   await openQuotes();
-  await expect(amount(/^פתוח/)).toContainText('886');
-  await expect(amount(/^נסגר/)).toHaveText(/^\D*0\D*$/);
+  await expect(await value()).toHaveText(/886\D*פתוח · \D*0\D*נסגר$/);
   await expect(quotesCard.getByRole('listitem').first()).toContainText('נשלחה');
 
   // The customer, with no login.
@@ -89,7 +91,6 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   await expect(page.getByText('הצעת מחיר מס׳ 1001 אושרה על ידי הלקוח')).toBeVisible();
   await openQuotes();
   // Accepted: the value moves from open to won (D-207).
-  await expect(amount(/^נסגר/)).toContainText('886');
-  await expect(amount(/^פתוח/)).toHaveText(/^\D*0\D*$/);
+  await expect(await value()).toHaveText(/^\D*0\D*פתוח · \D*886\D*נסגר$/);
   await expect(quotesCard.getByRole('listitem').first()).toContainText('אושרה');
 });

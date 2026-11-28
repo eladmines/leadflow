@@ -10,7 +10,7 @@ import {
 } from '@simplecatch/shared';
 import { Pencil } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Alert, Button, Card, Spinner } from '../../components/ui';
+import { Alert, Button, Spinner } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { isRtl, tr } from '../../i18n';
 import { errorMessage } from '../auth/serverErrors';
@@ -175,7 +175,7 @@ export function WhatTheyAsked({
 
   if (!showFields) {
     return (
-      <Card role="region" aria-labelledby="lead-asked-title" className="flex flex-col gap-3">
+      <section aria-labelledby="lead-asked-title" className="flex flex-col gap-3">
         <h2 id="lead-asked-title" className="text-base font-semibold text-ink">
           {tr('מה ביקשו')}
         </h2>
@@ -187,12 +187,12 @@ export function WhatTheyAsked({
             {message}
           </p>
         )}
-      </Card>
+      </section>
     );
   }
 
   return (
-    <Card role="region" aria-labelledby="lead-asked-title" className="flex flex-col gap-3">
+    <section aria-labelledby="lead-asked-title" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="lead-asked-title" className="text-base font-semibold text-ink">
           {tr('מה ביקשו')}
@@ -291,7 +291,7 @@ export function WhatTheyAsked({
           {tr('השינויים נשמרו')}
         </p>
       )}
-    </Card>
+    </section>
   );
 }
 
@@ -312,7 +312,7 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
   };
 
   return (
-    <Card role="region" aria-labelledby="lead-fields-title" className="flex flex-col gap-4">
+    <section aria-labelledby="lead-fields-title" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="lead-fields-title" className="text-base font-semibold text-ink">
           {tr('פרטים')}
@@ -387,7 +387,7 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
         </dl>
       )}
       <ArchivedFieldValues lead={lead} />
-    </Card>
+    </section>
   );
 }
 

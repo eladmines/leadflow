@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   Copy,
   Mail,
   MessageCircle,
@@ -33,7 +34,6 @@ import {
   Alert,
   Button,
   buttonClasses,
-  Card,
   DialogShell,
   EmptyState,
   SelectMenu,
@@ -58,7 +58,12 @@ import {
   usePipeline,
   useUpdateLead,
 } from './api';
-import { sourceName, WhereFrom } from './Attribution';
+import {
+  AttributionDetails,
+  attributionRows,
+  attributionSourceName,
+  sourceName,
+} from './Attribution';
 import { stageColor } from './stageColors';
 import { WHATSAPP_REPLY_ID, WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { useWhatsAppThread } from '../whatsapp/api';
@@ -79,7 +84,7 @@ import {
   leadSectionButtonId,
   leadSectionId,
   NextAction,
-  quotesSummary,
+  valueSummary,
   useLeadAppointments,
   useLeadQuotes,
   type LeadSectionKey,
@@ -392,15 +397,18 @@ function ActivityMeta({ activity: a }: { activity: Activity }) {
   );
 }
 
-/** Everything that happened on the lead, notes included ("עוד פרטים"). */
+/** What happened on the lead: system events only; notes are in the notes tab (D-218). */
+const systemEvents = (activities: Activity[]) => activities.filter((a) => a.type !== 'lead.note');
+
 function History({ activities }: { activities: Activity[] }) {
+  const events = systemEvents(activities);
   return (
     <section aria-labelledby="lead-history-title" className="flex flex-col gap-2">
       <h3 id="lead-history-title" className="text-sm font-semibold text-ink">
         {tr('היסטוריה')}
       </h3>
       <ol aria-label={tr('היסטוריית הליד')} className="flex flex-col">
-        {activities.map((a) => (
+        {events.map((a) => (
           <li key={a.id} className="relative flex gap-3 pb-4 last:pb-0">
             <span
               aria-hidden
@@ -505,8 +513,8 @@ const roundButton = (primary: boolean) =>
   );
 
 /**
- * "הגיע מ… · לפני … · באחריות …" (D-217): where the lead came from (the ad or campaign when known),
- * when (the full date on hover), and who handles it.
+ * "הגיע מ… · לפני …" (D-217, D-218): where the lead came from (the ad or campaign when known) and
+ * when (the full date on hover). The owner is in the properties only.
  */
 function MetaLine({ lead }: { lead: Lead }) {
   const a = lead.attribution;
@@ -524,8 +532,6 @@ function MetaLine({ lead }: { lead: Lead }) {
       <time dateTime={lead.createdAt} title={formatDateTime(lead.createdAt)}>
         {timeAgo(lead.createdAt)}
       </time>
-      <span aria-hidden>·</span>
-      <span>{lead.owner ? tr('באחריות {0}', lead.owner.name) : tr('ללא אחראי')}</span>
     </p>
   );
 }
@@ -720,7 +726,7 @@ function LeadPage({
   );
 
   const header = (
-    <section className="flex flex-col gap-2 rounded-2xl border border-surface-border bg-surface p-5 shadow-card">
+    <header className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
         <span
           aria-hidden
@@ -769,7 +775,7 @@ function LeadPage({
         <StageSelect lead={lead} />
       </div>
       <MetaLine lead={lead} />
-    </section>
+    </header>
   );
 
   const nextAction = (
@@ -786,7 +792,6 @@ function LeadPage({
     <Fold
       sectionKey="quotes"
       title={`${tr('הצעות מחיר')}${quoteCount}`}
-      summary={quotesSummary(lead)}
       open={open.quotes}
       onOpenChange={toggle('quotes')}
     >
@@ -839,60 +844,59 @@ function LeadPage({
     <DeleteLead lead={lead} leave={guard.leave} />
   );
 
+  const surface =
+    'min-w-0 divide-y divide-surface-border rounded-2xl border border-surface-border bg-surface shadow-card';
+  const historyFold = (
+    <Fold
+      sectionKey="history"
+      title={tr('היסטוריה')}
+      summary={tr('{0} אירועים', systemEvents(activities).length)}
+      open={open.history}
+      onOpenChange={toggle('history')}
+    >
+      <History activities={activities} />
+    </Fold>
+  );
+
   if (desktop) {
-    // D-212: the story in the main column; properties and the folded sections at the end side.
+    // D-212, D-218: one surface for the story, one for the properties; sections split by dividers.
     return (
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
         {backLink}
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,340px)] items-start gap-6">
           <div className="flex min-w-0 flex-col gap-4">
-            {header}
-            {nextAction}
-            {message && (
-              <WhatTheyAsked
-                draft={draft}
-                editing={false}
-                onEditingChange={setEditing}
-                message={message}
-                showFields={false}
-              />
-            )}
-            <LeadTabs lead={lead} activities={activities} />
+            <div className={surface}>
+              <div className="p-5">{header}</div>
+              <div className="p-5">{nextAction}</div>
+              {message && (
+                <div className="p-5">
+                  <WhatTheyAsked
+                    draft={draft}
+                    editing={false}
+                    onEditingChange={setEditing}
+                    message={message}
+                    showFields={false}
+                  />
+                </div>
+              )}
+              <LeadTabs lead={lead} activities={activities} />
+            </div>
             {deleteLead}
           </div>
-          <aside aria-label={tr('מאפייני הליד')} className="flex min-w-0 flex-col gap-3">
-            <Card className="flex flex-col gap-4">
-              <h2 className="text-base font-semibold text-ink">{tr('מאפיינים')}</h2>
-              <ContactDetails lead={lead} />
-              <OwnerField lead={lead} />
-              <Property label={tr('מקור')}>
-                <span className="inline-flex items-center gap-1.5">
-                  <LeadSourceIcon source={lead.source} className="h-4 w-4" />
-                  {tr(leadSourceLabels[lead.source])}
-                </span>
-                <span className="block text-xs text-ink-muted">
-                  {tr('נוצר')} {formatDateTime(lead.createdAt)}
-                </span>
-              </Property>
-              <Property label={tr('ערך לפי הצעות מחיר')}>{quotesSummary(lead)}</Property>
-              <TagsField lead={lead} />
-            </Card>
-            <CustomFieldsPanel draft={draft} />
-            <WhereFrom attribution={lead.attribution} />
-            <div className="flex flex-col gap-2">
-              {quotesFold}
-              {appointmentsFold}
-              {relatedFold}
-              <Fold
-                sectionKey="history"
-                title={tr('היסטוריה')}
-                summary={tr('{0} אירועים', activities.length)}
-                open={open.history}
-                onOpenChange={toggle('history')}
-              >
-                <History activities={activities} />
-              </Fold>
+          <aside aria-label={tr('מאפייני הליד')} className={surface}>
+            <section aria-labelledby="lead-properties-title" className="flex flex-col gap-4 p-5">
+              <h2 id="lead-properties-title" className="text-base font-semibold text-ink">
+                {tr('מאפיינים')}
+              </h2>
+              <Properties lead={lead} />
+            </section>
+            <div className="p-5">
+              <CustomFieldsPanel draft={draft} />
             </div>
+            {quotesFold}
+            {appointmentsFold}
+            {relatedFold}
+            {historyFold}
           </aside>
         </div>
         {unsavedDialog}
@@ -901,37 +905,33 @@ function LeadPage({
   }
 
   return (
-    // Room at the bottom for the quick-actions bar.
+    // D-218: the whole page one surface with dividers; room at the bottom for the quick-actions bar.
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-24">
       {backLink}
-      {header}
-      {nextAction}
-      <WhatTheyAsked
-        draft={draft}
-        editing={editing}
-        onEditingChange={setEditing}
-        message={message}
-      />
-      <LeadTabs lead={lead} activities={activities} />
-      <div className="flex flex-col gap-2">
+      <div className={surface}>
+        <div className="p-4">{header}</div>
+        <div className="p-4">{nextAction}</div>
+        <div className="p-4">
+          <WhatTheyAsked
+            draft={draft}
+            editing={editing}
+            onEditingChange={setEditing}
+            message={message}
+          />
+        </div>
+        <LeadTabs lead={lead} activities={activities} />
         {quotesFold}
         {appointmentsFold}
         {relatedFold}
         <Fold
           sectionKey="more"
           title={tr('עוד פרטים')}
-          summary={`${tr(leadSourceLabels[lead.source])} · ${lead.owner?.name ?? tr('ללא אחראי')}`}
+          summary={lead.owner?.name ?? tr('ללא אחראי')}
           open={open.more}
           onOpenChange={toggle('more')}
         >
-          <p className="text-sm text-ink-muted">
-            {tr('נוצר')} {formatDateTime(lead.createdAt)}
-          </p>
-          <ContactDetails lead={lead} />
-          <OwnerField lead={lead} />
-          <TagsField lead={lead} />
+          <Properties lead={lead} />
           <ArchivedFieldValues lead={lead} />
-          <WhereFrom attribution={lead.attribution} />
           <History activities={activities} />
         </Fold>
       </div>
@@ -947,7 +947,61 @@ function LeadPage({
   );
 }
 
-/** A read-only row of the properties panel. */
+/**
+ * The lead's properties, each once (D-218): owner (editable), source (one line; the ad, campaign,
+ * keyword and landing page behind "פרטים"), value from quotes, phone, email and tags.
+ */
+function Properties({ lead }: { lead: Lead }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <OwnerField lead={lead} />
+      <SourceProperty lead={lead} />
+      <Property label={tr('ערך לפי הצעות מחיר')}>{valueSummary(lead)}</Property>
+      <ContactDetails lead={lead} />
+      <TagsField lead={lead} />
+    </div>
+  );
+}
+
+function SourceProperty({ lead }: { lead: Lead }) {
+  const [open, setOpen] = useState(false);
+  const rows = attributionRows(lead.attribution);
+  const panelId = `lead-source-details-${lead.id}`;
+  return (
+    <Property label={tr('מקור')}>
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="inline-flex items-center gap-1.5">
+          <LeadSourceIcon source={lead.source} className="h-4 w-4" />
+          {lead.attribution
+            ? attributionSourceName(lead.attribution)
+            : tr(leadSourceLabels[lead.source])}
+        </span>
+        {rows.length > 0 && (
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={() => setOpen((o) => !o)}
+            className="inline-flex items-center gap-0.5 rounded text-xs font-medium text-brand-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+          >
+            {tr('פרטים')}
+            <ChevronDown
+              aria-hidden
+              className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')}
+            />
+          </button>
+        )}
+      </span>
+      {open && (
+        <div id={panelId} className="mt-2">
+          <AttributionDetails rows={rows} />
+        </div>
+      )}
+    </Property>
+  );
+}
+
+/** A row of the properties: its label, then the value. */
 function Property({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
@@ -1088,7 +1142,7 @@ function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) 
           : 'WhatsApp',
   };
   return (
-    <section className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card">
+    <section aria-label={tr('שיחה והערות')}>
       <ScrollTabs
         label={tr('חלקי הליד')}
         activeKey={tab}

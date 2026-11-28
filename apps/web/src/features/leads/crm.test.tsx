@@ -331,8 +331,11 @@ describe('lead page', () => {
     });
     const { user } = renderApp(`${leadsPath}/${lead().id}`);
     await user.click(await screen.findByRole('button', { name: /^עוד פרטים/ }));
-    expect(await screen.findByRole('heading', { name: 'מאיפה הגיע' })).toBeInTheDocument();
-    expect(screen.getByText('Google Ads')).toBeInTheDocument();
+    // D-218: the source is one line in the properties; its details open with "פרטים".
+    expect(screen.getByText('מקור').nextElementSibling).toHaveTextContent('Google Ads');
+    const details = screen.getByRole('button', { name: 'פרטים' });
+    expect(details).toHaveAttribute('aria-expanded', 'false');
+    await user.click(details);
     expect(screen.getByText('תספורת קיץ')).toBeInTheDocument();
     expect(screen.getByText('מספרה בחיפה')).toBeInTheDocument();
     expect(screen.getByText('/about')).toBeInTheDocument();
