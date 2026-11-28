@@ -38,6 +38,7 @@ import {
   Alert,
   Button,
   buttonClasses,
+  Checkbox,
   MoreMenu,
   RefreshButton,
   SelectMenu,
@@ -361,18 +362,48 @@ function BoardArrows({ scroller }: { scroller: BoardScroll }) {
   );
 }
 
+/**
+ * Stages hidden on the board (owner, 2026-11-28), per business, in this browser. Leads in a hidden
+ * stage stay in the list view and in search; cards can still be moved to it.
+ */
+function useHiddenStages(businessId: string): [string[], (ids: string[]) => void] {
+  const key = `sc:hiddenStages:${businessId}`;
+  const [ids, setIds] = useState<string[]>(() => {
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(key) ?? '[]');
+      return Array.isArray(saved) ? saved.filter((x): x is string => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
+  const save = useCallback(
+    (next: string[]) => {
+      setIds(next);
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        // Not remembered; the choice lasts for this visit.
+      }
+    },
+    [key],
+  );
+  return [ids, save];
+}
+
 function Board({
   leads,
   stages,
   businessId,
   scroller,
   cardFields,
+  hidden = [],
 }: {
   leads: Lead[];
   stages: PipelineStage[];
   businessId: string;
   scroller: BoardScroll;
   cardFields: LeadFieldDefinition[];
+  hidden?: string[];
 }) {
   const update = useUpdateLead(businessId);
   const [over, setOver] = useState<string | null>(null);
@@ -417,61 +448,63 @@ function Board({
       >
         {/* min-h-full: the columns reach the bottom of the board even when they're short. */}
         <ol aria-label={tr('לוח לידים')} className="flex min-w-max gap-4 md:min-h-full">
-          {stages.map((stage) => {
-            const items = leads.filter((l) => l.stage.id === stage.id);
-            const color = stageColor(stage, stages);
-            // D-208: by the column's kind (open quotes, accepted quotes, or nothing when lost).
-            const total = items.reduce(
-              (sum, l) => sum + leadValueForStageKind(l.value ?? { won: 0, open: 0 }, stage.kind),
-              0,
-            );
-            return (
-              <li
-                key={stage.id}
-                aria-label={tr('{0}: {1} לידים', tr(stage.name), items.length)}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setOver(stage.id);
-                }}
-                onDragLeave={() => setOver((o) => (o === stage.id ? null : o))}
-                onDrop={(e) => onDrop(e, stage)}
-                className={cn(
-                  'relative flex w-72 shrink-0 flex-col gap-3 overflow-hidden rounded-xl border border-surface-border bg-surface-muted p-3 pt-4 transition-colors',
-                  over === stage.id && 'bg-brand-50 ring-2 ring-brand-300',
-                )}
-              >
-                {/* Each stage in its colour (D-138). */}
-                <span aria-hidden className={cn('absolute inset-x-0 top-0 h-1', color.bar)} />
-                <div className="flex items-center justify-between border-b border-surface-border px-1 pb-2.5">
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-                    <span aria-hidden className={cn('h-2.5 w-2.5 rounded-full', color.dot)} />
-                    {tr(stage.name)}
-                    <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-ink-muted ring-1 ring-surface-border">
-                      {items.length}
-                    </span>
-                  </h2>
-                  {total > 0 && (
-                    <span className="text-xs text-ink-muted" title={tr('לפי הצעות המחיר')}>
-                      {shekel.format(total)}
-                    </span>
+          {stages
+            .filter((stage) => !hidden.includes(stage.id))
+            .map((stage) => {
+              const items = leads.filter((l) => l.stage.id === stage.id);
+              const color = stageColor(stage, stages);
+              // D-208: by the column's kind (open quotes, accepted quotes, or nothing when lost).
+              const total = items.reduce(
+                (sum, l) => sum + leadValueForStageKind(l.value ?? { won: 0, open: 0 }, stage.kind),
+                0,
+              );
+              return (
+                <li
+                  key={stage.id}
+                  aria-label={tr('{0}: {1} לידים', tr(stage.name), items.length)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setOver(stage.id);
+                  }}
+                  onDragLeave={() => setOver((o) => (o === stage.id ? null : o))}
+                  onDrop={(e) => onDrop(e, stage)}
+                  className={cn(
+                    'relative flex w-72 shrink-0 flex-col gap-3 overflow-hidden rounded-xl border border-surface-border bg-surface-muted p-3 pt-4 transition-colors',
+                    over === stage.id && 'bg-brand-50 ring-2 ring-brand-300',
                   )}
-                </div>
-                <ul className="flex min-h-24 flex-col gap-2">
-                  {items.map((lead) => (
-                    <li key={lead.id}>
-                      <BoardCard
-                        lead={lead}
-                        stages={stages}
-                        businessId={businessId}
-                        onMove={move}
-                        cardFields={cardFields}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            );
-          })}
+                >
+                  {/* Each stage in its colour (D-138). */}
+                  <span aria-hidden className={cn('absolute inset-x-0 top-0 h-1', color.bar)} />
+                  <div className="flex items-center justify-between border-b border-surface-border px-1 pb-2.5">
+                    <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                      <span aria-hidden className={cn('h-2.5 w-2.5 rounded-full', color.dot)} />
+                      {tr(stage.name)}
+                      <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-ink-muted ring-1 ring-surface-border">
+                        {items.length}
+                      </span>
+                    </h2>
+                    {total > 0 && (
+                      <span className="text-xs text-ink-muted" title={tr('לפי הצעות המחיר')}>
+                        {shekel.format(total)}
+                      </span>
+                    )}
+                  </div>
+                  <ul className="flex min-h-24 flex-col gap-2">
+                    {items.map((lead) => (
+                      <li key={lead.id}>
+                        <BoardCard
+                          lead={lead}
+                          stages={stages}
+                          businessId={businessId}
+                          onMove={move}
+                          cardFields={cardFields}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
         </ol>
       </div>
     </>
@@ -529,6 +562,7 @@ export function LeadsPage() {
   const cardFields = cardFieldIds.flatMap((fid) => fieldsForFilters.filter((f) => f.id === fid));
   const queryClient = useQueryClient();
   const stages = usePipeline(business.id);
+  const [hiddenStages, setHiddenStages] = useHiddenStages(business.id);
   const members = useMembers(business.id, can(business.role, 'members.view'));
   // `?new=1` (from quick search) opens the new-lead dialog.
   const [newOpen, setNewOpenState] = useState(params.get('new') === '1');
@@ -640,6 +674,33 @@ export function LeadsPage() {
               </Button>
               {/* The rest behind "More" (D-138): one main action per page. */}
               <MoreMenu>
+                {view === 'board' && (stages.data?.length ?? 0) > 0 && (
+                  // Which stages show as columns (owner, 2026-11-28); at least one stays.
+                  <fieldset className="flex flex-col gap-2 rounded-lg p-1">
+                    <legend className="mb-1 text-xs font-medium text-ink-muted">
+                      {tr('עמודות בלוח')}
+                    </legend>
+                    {stages.data!.map((st) => {
+                      const shown = !hiddenStages.includes(st.id);
+                      const last = shown && stages.data!.length - hiddenStages.length <= 1;
+                      return (
+                        <Checkbox
+                          key={st.id}
+                          label={tr(st.name)}
+                          checked={shown}
+                          disabled={last}
+                          onChange={() =>
+                            setHiddenStages(
+                              shown
+                                ? [...hiddenStages, st.id]
+                                : hiddenStages.filter((x) => x !== st.id),
+                            )
+                          }
+                        />
+                      );
+                    })}
+                  </fieldset>
+                )}
                 <RefreshButton
                   onRefresh={() =>
                     Promise.all([
@@ -865,13 +926,28 @@ export function LeadsPage() {
               )}
             </div>
           ) : view === 'board' ? (
-            <Board
-              leads={leads.data}
-              stages={stages.data}
-              businessId={business.id}
-              scroller={scroller}
-              cardFields={cardFields}
-            />
+            <>
+              {hiddenStages.length > 0 && (
+                <p className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+                  {tr('{0} עמודות מוסתרות בלוח', hiddenStages.length)}
+                  <button
+                    type="button"
+                    onClick={() => setHiddenStages([])}
+                    className="font-medium text-brand-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+                  >
+                    {tr('הצגת הכול')}
+                  </button>
+                </p>
+              )}
+              <Board
+                leads={leads.data}
+                stages={stages.data}
+                businessId={business.id}
+                scroller={scroller}
+                cardFields={cardFields}
+                hidden={hiddenStages}
+              />
+            </>
           ) : leads.data.length === 0 ? (
             <p className="py-10 text-center text-sm text-ink-muted">
               {tr('לא נמצאו לידים שמתאימים לחיפוש.')}

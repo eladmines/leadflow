@@ -327,4 +327,7 @@ export const enPart4: Record<string, string> = {
   'אין עדיין אירועים.': 'No events yet.',
   'היסטוריה, {0}': 'History, {0}',
   הלקוח: 'The customer',
+  'עמודות בלוח': 'Board columns',
+  '{0} עמודות מוסתרות בלוח': '{0} board columns hidden',
+  'הצגת הכול': 'Show all',
 };
