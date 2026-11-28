@@ -270,9 +270,10 @@ describe('tasks elsewhere', () => {
       [`POST ${tp.list(id)}`]: () => json(201, { task: task() }),
     });
     const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}/${leadId}`);
-    // D-211: the tasks sit behind the next action ("כל המשימות"); "+ משימה" opens the form.
-    const card = await screen.findByRole('region', { name: 'הפעולה הבאה' });
-    await user.click(await within(card).findByRole('button', { name: 'כל המשימות (1)' }));
+    // D-219: the tasks have their own tab (with its count); "+ משימה" in it opens the form.
+    const tab = await screen.findByRole('tab', { name: 'משימות, 1 פתוחות' });
+    expect(tab).toHaveAttribute('aria-selected', 'true');
+    const card = screen.getByRole('tabpanel');
     const list = await within(card).findByRole('list', { name: 'משימות הליד' });
     expect(within(list).getByText('לחזור לרון')).toBeInTheDocument();
     expect(within(card).queryByRole('form', { name: 'משימה חדשה' })).not.toBeInTheDocument();

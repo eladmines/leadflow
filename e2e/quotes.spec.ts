@@ -1,12 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
- * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
+ * panel's "עוד" on wide screens (D-219). Opens it if closed.
  */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
   if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
 }
 
@@ -38,18 +38,18 @@ async function ownerWithLead(page: Page) {
 
 test('quote from a lead, sent, accepted by the customer', async ({ page, browser }) => {
   const { id, leadId } = await ownerWithLead(page);
-  // D-211: quotes are a folded section on the lead page; "+ הצעה" opens the quote editor.
+  // D-219: quotes are a tab (hidden while there are none); "+" → "הצעת מחיר" opens the editor.
   await page.goto(`/b/${id}/leads/${leadId}`);
-  const openQuotes = () => page.getByRole('button', { name: /^הצעות מחיר/ }).click();
-  await openQuotes();
-  const quotesCard = page.getByRole('region', { name: /^הצעות מחיר/ });
+  const openQuotes = () => page.getByRole('tab', { name: /^הצעות/ }).click();
+  const quotesCard = page.getByRole('tabpanel');
   // D-218: the value is one line in the properties ("עוד פרטים" on phones): "₪X פתוח · ₪Y נסגר".
   const value = async () => {
     await openLeadHistory(page);
     return page.getByText('ערך לפי הצעות מחיר').locator('xpath=following-sibling::div');
   };
   await expect(await value()).toHaveText(/^\D*0\D*פתוח · \D*0\D*נסגר$/);
-  await quotesCard.getByRole('link', { name: '+ הצעה' }).click();
+  await page.getByRole('button', { name: 'הוספה לליד' }).click();
+  await page.getByRole('menuitem', { name: 'הצעת מחיר' }).click();
   await expect(page.getByRole('heading', { name: 'הצעת מחיר חדשה' })).toBeVisible();
 
   await page.getByLabel('תיאור שורה 1').fill('החלפת ברז');

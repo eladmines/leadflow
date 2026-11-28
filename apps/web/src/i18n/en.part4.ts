@@ -267,4 +267,32 @@ export const enPart4: Record<string, string> = {
   'מייל ל־{0}': 'Email {0}',
   // D-218.
   '{0} פתוח · {1} נסגר': '{0} open · {1} won',
+  // D-219: tabs with counts and a communication panel.
+  '{0}, {1} הודעות חדשות': '{0}, {1} new messages',
+  'אין פרטי קשר לליד הזה.': 'No contact details for this lead.',
+  'הוספה לליד': 'Add to the lead',
+  הליד: 'The lead',
+  הערה: 'Note',
+  'הערות, {0}': 'Notes, {0}',
+  הצעות: 'Quotes',
+  'הצעות, {0} · {1} פתוח': 'Quotes, {0} · {1} open',
+  'הצעות, {0}': 'Quotes, {0}',
+  'השיחה בעמוד הזה': 'Conversation on this page',
+  'ממתין לתשובה שלך:': 'Waiting for your reply:',
+  משימה: 'Task',
+  'משימות, {0} פתוחות': 'Tasks, {0} open',
+  'נפתח בחלון חדש': 'Opens in a new window',
+  'עדיין אין כאן הערות, משימות, הצעות או תורים. הכפתור + מוסיף את הראשון.':
+    'No notes, tasks, quotes or appointments yet. The + button adds the first one.',
+  'שיחה, הערות ומשימות': 'Conversation, notes and tasks',
+  'תורים, {0} קרובים': 'Appointments, {0} upcoming',
+  תקשורת: 'Communication',
+  'הכול בלשוניות': 'Everything in tabs',
+  'המשימה הפתוחה הקרובה: מה לעשות, מתי ומי אחראי. "בוצע" מסמן אותה ו"+ משימה" מוסיף חדשה.':
+    'The nearest open task: what to do, when and who\'s responsible. "Done" marks it and "+ Task" adds a new one.',
+  'הפרטים בצד': 'The details at the side',
+  'השיחה, ההערות, המשימות, ההצעות והתורים, כל אחד עם המספר שלו. לשונית ריקה לא מוצגת, והכפתור + מוסיף פריט חדש.':
+    'The conversation, notes, tasks, quotes and appointments, each with its count. An empty tab is hidden, and the + button adds a new item.',
+  'תקשורת (וואטסאפ, טלפון ואימייל), פרטי הליד והשדות שלכם. בסוף, ב"עוד": לידים קשורים והיסטוריה.':
+    'Communication (WhatsApp, phone and email), the lead\'s details and your fields. At the end, under "More": related leads and history.',
 };

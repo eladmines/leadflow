@@ -300,6 +300,9 @@ describe('lead page', () => {
 
     await choose(user, screen.getByLabelText('שלב'), contacted!.name);
     await choose(user, screen.getByLabelText('אחראי'), 'יוסי מזרחי');
+    // No notes yet, so the notes tab is hidden; the "+" menu opens it (D-219).
+    await user.click(screen.getByRole('button', { name: 'הוספה לליד' }));
+    await user.click(screen.getByRole('menuitem', { name: 'הערה' }));
     await user.type(screen.getByLabelText('הוספת הערה'), 'דיברנו בטלפון');
     await user.click(screen.getByRole('button', { name: 'שמירת הערה' }));
     await waitFor(() =>

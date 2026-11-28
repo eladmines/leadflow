@@ -2,23 +2,23 @@ import { expect, test, type Browser, type Locator, type Page } from '@playwright
 import { choose } from './choose';
 
 /**
- * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
- * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
+ * panel's "עוד" on wide screens (D-219). Opens it if closed.
  */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
   if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
 }
 
-/** Phones open the custom-field form with "עריכה" (D-211); wide screens show it in the panel. */
-async function editLeadFields(page: Page, label = 'עריכה') {
+/** The custom-field form (D-219): in the side panel's "פרטים"; on phones under "עוד פרטים". */
+async function editLeadFields(page: Page, formName = 'פרטים') {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const edit = page.getByRole('button', { name: label, exact: true });
-  const form = page.getByRole('form', { name: label === 'Edit' ? 'Details' : 'פרטים' });
-  // Wait for the fields to load: one of the two shows.
-  await expect(edit.or(form).first()).toBeVisible();
-  if (await edit.isVisible()) await edit.click();
+  const more = page.locator('#lead-more-details-button');
+  if ((await more.count()) > 0 && (await more.getAttribute('aria-expanded')) !== 'true') {
+    await more.click();
+  }
+  await expect(page.getByRole('form', { name: formName })).toBeVisible();
 }
 
 /**
@@ -163,7 +163,6 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
 
   // Lead card: "מה ביקשו" shows the values; "עריכה" opens the form, saved with one "שמירה"
   // (D-207, D-211).
-  await expect(page.getByRole('heading', { name: /^(מה ביקשו|פרטים)$/ }).first()).toBeVisible();
   await editLeadFields(page);
   const save = page.getByRole('form', { name: 'פרטים' }).getByRole('button', { name: 'שמירה' });
   const model = page.getByLabel(/^דגם רכב/);
@@ -352,7 +351,7 @@ test.describe('375px', () => {
     await noHorizontalScroll(page);
     await page.keyboard.press('Escape');
     await page.goto(`/b/${id}/leads/${lead.id}`);
-    await page.getByRole('button', { name: 'עריכה' }).click();
+    await editLeadFields(page);
     await expect(page.getByLabel(/^שם ארוך מאוד/)).toBeVisible(); // fields loaded, not the spinner
     await expect(page.getByLabel(/^בחירה/)).toContainText('קצר');
     await noHorizontalScroll(page);
@@ -373,7 +372,7 @@ test.describe('375px', () => {
     ).json();
     await page.goto(`/b/${id}/leads/${lead.id}`);
     await noHorizontalScroll(page); // the read view
-    await page.getByRole('button', { name: 'עריכה' }).click();
+    await editLeadFields(page);
     await expect(page.getByLabel(/^בחירה/)).toContainText('אפשרות ארוכה');
     await noHorizontalScroll(page);
   });
@@ -531,10 +530,8 @@ test.describe('English', () => {
       })
     ).json();
     await page.goto(`/b/${id}/leads/${lead.id}`);
-    await expect(
-      page.getByRole('heading', { name: /^(What they asked for|Details)$/ }).first(),
-    ).toBeVisible();
-    await editLeadFields(page, 'Edit');
+    await editLeadFields(page, 'Details');
+    await expect(page.getByRole('heading', { name: 'The lead', exact: true })).toBeVisible();
     await page.getByLabel(/^Guests/).fill('99');
     await page.getByLabel(/^Guests/).press('Enter');
     await expect(page.getByText('The number must be at most 50')).toBeVisible();

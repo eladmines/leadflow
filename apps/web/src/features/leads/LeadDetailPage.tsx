@@ -10,6 +10,7 @@ import {
   type Activity,
   type AddNoteRequest,
   type Lead,
+  type WhatsAppMessage,
   MAX_LEAD_TAGS,
   appointmentStatusLabels,
   formatAgorot,
@@ -24,10 +25,11 @@ import {
   MessageCircle,
   MessageSquareText,
   Phone,
+  Plus,
   Trash2,
   X,
 } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -39,7 +41,6 @@ import {
   SelectMenu,
   Spinner,
   Textarea,
-  ScrollTabs,
 } from '../../components/ui';
 import { inputClasses } from '../../components/ui/Field';
 import { cn } from '../../lib/cn';
@@ -69,29 +70,22 @@ import { WHATSAPP_REPLY_ID, WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { useWhatsAppThread } from '../whatsapp/api';
 import { LeadSourceIcon } from './SourceIcon';
 import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
+import { CustomFieldChanges, CustomFieldsPanel, useCustomFieldsDraft } from './CustomFieldsCard';
 import {
-  ArchivedFieldValues,
-  CustomFieldChanges,
-  CustomFieldsPanel,
-  useCustomFieldsDraft,
-  WhatTheyAsked,
-} from './CustomFieldsCard';
-import {
-  Fold,
-  LEAD_SECTIONS,
+  Disclosure,
   LeadAppointments,
   LeadQuotes,
-  leadSectionButtonId,
-  leadSectionId,
+  LeadTasks,
   NextAction,
   valueSummary,
   useLeadAppointments,
+  useLeadOpenTasks,
   useLeadQuotes,
-  type LeadSectionKey,
 } from './LeadCards';
+import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { useUnsavedChangesGuard } from '../../lib/useUnsavedChangesGuard';
 import { useMediaQuery } from '../../lib/useMediaQuery';
-import { tr, intlLocale } from '../../i18n';
+import { isRtl, tr, intlLocale } from '../../i18n';
 
 /** Old history entries keep their labels (the fields were removed by D-207 and D-209). */
 const fieldLabels: Record<string, string> = {
@@ -339,7 +333,16 @@ function SaveState({ update }: { update: ReturnType<typeof useUpdateLead> }) {
 }
 
 /** The "הערות" tab (D-211): the team's notes only; system events are in the history. */
-function Notes({ leadId, activities }: { leadId: string; activities: Activity[] }) {
+function Notes({
+  leadId,
+  activities,
+  focus = 0,
+}: {
+  leadId: string;
+  activities: Activity[];
+  /** Bumped by the "+" menu's "הערה": the cursor goes to the note box. */
+  focus?: number;
+}) {
   const business = useCurrentBusiness();
   const addNote = useAddNote(business.id, leadId);
   const form = useForm<AddNoteRequest>({
@@ -351,6 +354,10 @@ function Notes({ leadId, activities }: { leadId: string; activities: Activity[] 
     form.reset();
   });
   const notes = activities.filter((a) => a.type === 'lead.note');
+  const { setFocus } = form;
+  useEffect(() => {
+    if (focus > 0) setFocus('text');
+  }, [focus, setFocus]);
 
   return (
     <div className="flex flex-col gap-4 p-3">
@@ -537,68 +544,6 @@ function MetaLine({ lead }: { lead: Lead }) {
 }
 
 /**
- * Phone and email as text with a copy button (D-217; properties panel / "עוד פרטים"). The copy is
- * announced ("הועתק").
- */
-function ContactDetails({ lead }: { lead: Lead }) {
-  const rows = [
-    lead.contact.phone && {
-      key: 'phone',
-      label: tr('טלפון'),
-      value: formatIsraeliPhone(lead.contact.phone),
-      raw: lead.contact.phone,
-    },
-    lead.contact.email && {
-      key: 'email',
-      label: tr('אימייל'),
-      value: lead.contact.email,
-      raw: lead.contact.email,
-    },
-  ].filter(Boolean) as { key: string; label: string; value: string; raw: string }[];
-  const [copied, setCopied] = useState<string | null>(null);
-  if (rows.length === 0) return null;
-  const copy = async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      window.setTimeout(() => setCopied((c) => (c === key ? null : c)), 2000);
-    } catch {
-      setCopied(null);
-    }
-  };
-  return (
-    <dl className="flex flex-col gap-3">
-      {rows.map((r) => (
-        <div key={r.key} className="flex flex-col gap-1">
-          <dt className="text-sm font-medium text-ink">{r.label}</dt>
-          <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
-            <bdi dir="ltr" className="min-w-0 truncate" title={r.value}>
-              {r.value}
-            </bdi>
-            <button
-              type="button"
-              onClick={() => void copy(r.key, r.key === 'phone' ? r.value : r.raw)}
-              aria-label={tr('העתקת {0}', r.label)}
-              title={tr('העתקה')}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-muted hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
-            >
-              {copied === r.key ? (
-                <Check aria-hidden className="h-4 w-4 text-success-600" />
-              ) : (
-                <Copy aria-hidden className="h-4 w-4" />
-              )}
-            </button>
-            <span role="status" className="text-xs text-success-600">
-              {copied === r.key ? tr('הועתק') : ''}
-            </span>
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-/**
  * `/b/:businessId/leads/:leadId` (D-211): who (header with stage, call and WhatsApp), what to do
  * next (the nearest open task), what they asked, then the conversation and notes. Quotes,
  * appointments and "more details" are folded one-line sections.
@@ -647,31 +592,24 @@ function LeadPage({
   related: RelatedLead[];
 }) {
   const business = useCurrentBusiness();
-  // D-212: two columns from `lg` up; phones and tablets keep D-211's single column.
+  // D-212: two columns from `lg` up; phones and tablets keep one column.
   const desktop = useMediaQuery('(min-width: 1024px)');
   const back = businessWebPaths.section(business.id, 'leads');
   const draft = useCustomFieldsDraft(lead);
   const guard = useUnsavedChangesGuard(draft.dirty);
   const quotes = useLeadQuotes(lead);
   const appts = useLeadAppointments(lead);
-  const [params] = useSearchParams();
-  // Old `?tab=tasks|appointments|quotes` links (D-209) open the matching section.
-  const [asked] = useState(() => {
-    const t = params.get('tab');
-    return (LEAD_SECTIONS as readonly string[]).includes(t ?? '') ? (t as LeadSectionKey) : null;
-  });
-  const [open, setOpen] = useState<Record<LeadSectionKey, boolean>>(() => ({
-    tasks: asked === 'tasks',
-    appointments: asked === 'appointments',
-    quotes: asked === 'quotes',
-    more: asked === 'more',
-    related: false,
-    history: asked === 'history',
-  }));
-  const toggle = (key: LeadSectionKey) => (o: boolean) => setOpen((s) => ({ ...s, [key]: o }));
+  const tasks = useLeadOpenTasks(lead);
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('tab');
+  // Old links to "more", "history" or "related" (D-211/D-212) open the panel's "עוד".
+  const [moreOpen, setMoreOpen] = useState(() => MORE_TABS.includes(asked ?? ''));
   const [taskFormOpen, setTaskFormOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
-  useOldTabLinks(asked);
+  const [bookOpen, setBookOpen] = useState(false);
+  const [noteFocus, setNoteFocus] = useState(0);
+  // Tabs shown even while empty, because the "+" menu just added (or is adding) their first item.
+  const [forced, setForced] = useState<LeadTab[]>([]);
 
   const phone = lead.contact.phone;
   // The conversation the page already loads (the WhatsApp tab's query, shared from the cache).
@@ -679,18 +617,47 @@ function LeadPage({
   const whatsappInApp = Boolean(
     thread.data?.connected && (thread.data.channel ?? 'whatsapp') === 'whatsapp',
   );
-  const [tabParams, setTabParams] = useSearchParams();
-  const currentTab = tabParams.get('tab');
-  const [focusReply, setFocusReply] = useState(false);
-  const openConversation = () => {
-    setTabParams(
+  const messages = thread.data?.messages ?? [];
+  const notes = activities.filter((a) => a.type === 'lead.note');
+
+  /** D-219: each tab with its count; a tab with nothing in it is hidden. */
+  // `pending`: still loading or failed; a tab asked for in the address stays, to show that state.
+  const counts: Record<LeadTab, { has: boolean; pending: boolean }> = {
+    whatsapp: {
+      has:
+        messages.length > 0 ||
+        Boolean(lead.lastWhatsApp) ||
+        CONVERSATION_SOURCES.includes(lead.source),
+      pending: thread.isPending || thread.isError,
+    },
+    notes: { has: notes.length > 0, pending: false },
+    tasks: { has: tasks.open.length > 0, pending: !tasks.query.isSuccess },
+    quotes: { has: quotes.list.length > 0, pending: !quotes.query.isSuccess },
+    appointments: { has: appts.ordered.length > 0, pending: !appts.query.isSuccess },
+  };
+  const visible = LEAD_TABS.filter(
+    (t) => counts[t].has || forced.includes(t) || (t === asked && counts[t].pending),
+  );
+  const tab: LeadTab | null =
+    asked && (visible as string[]).includes(asked) ? (asked as LeadTab) : (visible[0] ?? null);
+
+  const selectTab = (t: LeadTab) =>
+    setParams(
       (p) => {
         const next = new URLSearchParams(p);
-        next.set('tab', 'whatsapp');
+        next.set('tab', t);
         return next;
       },
       { replace: true },
     );
+  const show = (t: LeadTab) => {
+    setForced((f) => (f.includes(t) ? f : [...f, t]));
+    selectTab(t);
+  };
+
+  const [focusReply, setFocusReply] = useState(false);
+  const openConversation = () => {
+    show('whatsapp');
     setFocusReply(true);
   };
   // Once the conversation tab shows: the reply box, or the conversation when the reply window is
@@ -703,17 +670,42 @@ function LeadPage({
     el.scrollIntoView?.({ block: 'center' });
     el.focus({ preventScroll: true });
     setFocusReply(false);
-  }, [focusReply, currentTab]);
-  const addTask = () => {
-    setTaskFormOpen(true);
-    document.getElementById('lead-next-title')?.scrollIntoView?.({ block: 'center' });
-  };
-  const quoteCount = quotes.query.isSuccess ? ` (${quotes.list.length})` : '';
-  const apptCount = appts.query.isSuccess ? ` (${appts.ordered.length})` : '';
+  }, [focusReply, tab]);
 
-  const message =
-    // A conversation lead's first message is the start of its conversation.
-    lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null;
+  const addTask = () => {
+    show('tasks');
+    setTaskFormOpen(true);
+  };
+  const add = (what: AddKind) => {
+    if (what === 'note') {
+      show('notes');
+      setNoteFocus((n) => n + 1);
+    } else if (what === 'task') addTask();
+    else if (what === 'quote')
+      navigate(`${businessWebPaths.section(business.id, 'quotes')}/new?leadId=${lead.id}`);
+    else {
+      show('appointments');
+      setBookOpen(true);
+    }
+  };
+
+  // Old "more" links: open "עוד" and focus it; the parameter goes.
+  const moreId = desktop ? 'lead-more' : 'lead-more-details';
+  useEffect(() => {
+    if (!MORE_TABS.includes(asked ?? '')) return;
+    document.getElementById(moreId)?.scrollIntoView?.({ block: 'start' });
+    document.getElementById(`${moreId}-button`)?.focus({ preventScroll: true });
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        next.delete('tab');
+        return next;
+      },
+      { replace: true },
+    );
+    // Only for the address the page opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const backLink = (
     <Link
@@ -778,47 +770,74 @@ function LeadPage({
     </header>
   );
 
-  const nextAction = (
-    <NextAction
+  const tabArea = (
+    <LeadTabArea
       lead={lead}
-      formOpen={taskFormOpen}
-      onFormOpenChange={setTaskFormOpen}
-      tasksOpen={open.tasks}
-      onTasksOpenChange={toggle('tasks')}
-    />
+      tab={tab}
+      visible={visible}
+      onSelect={selectTab}
+      onAdd={add}
+      messages={messages}
+      notes={notes}
+      tasks={tasks}
+      quotes={quotes}
+      appts={appts}
+    >
+      {tab === 'whatsapp' && <WhatsAppThread leadId={lead.id} />}
+      {tab === 'notes' && <Notes leadId={lead.id} activities={activities} focus={noteFocus} />}
+      {tab === 'tasks' && (
+        <div className="flex flex-col gap-3 p-3">
+          <LeadTasks
+            lead={lead}
+            tasks={tasks}
+            formOpen={taskFormOpen}
+            onFormOpenChange={setTaskFormOpen}
+          />
+        </div>
+      )}
+      {tab === 'quotes' && (
+        <div className="flex flex-col gap-3 p-3">
+          <LeadQuotes lead={lead} quotes={quotes} />
+        </div>
+      )}
+      {tab === 'appointments' && (
+        <div className="flex flex-col gap-3 p-3">
+          <LeadAppointments appts={appts} onBook={() => setBookOpen(true)} />
+        </div>
+      )}
+    </LeadTabArea>
   );
 
-  const quotesFold = (
-    <Fold
-      sectionKey="quotes"
-      title={`${tr('הצעות מחיר')}${quoteCount}`}
-      open={open.quotes}
-      onOpenChange={toggle('quotes')}
-    >
-      <LeadQuotes lead={lead} quotes={quotes} />
-    </Fold>
+  const panel = (
+    <>
+      <PanelSection id="lead-communication" title={tr('תקשורת')}>
+        <Communication
+          lead={lead}
+          whatsappInApp={whatsappInApp}
+          onOpenConversation={openConversation}
+          messages={messages}
+        />
+      </PanelSection>
+      <PanelSection id="lead-info" title={tr('הליד')}>
+        <LeadInfo lead={lead} />
+      </PanelSection>
+      <div className="p-5">
+        <CustomFieldsPanel draft={draft} />
+      </div>
+    </>
   );
-  const appointmentsFold = (
-    <Fold
-      sectionKey="appointments"
-      title={`${tr('תורים')}${apptCount}`}
-      summary={appts.upcoming > 0 ? tr('{0} קרובים', appts.upcoming) : undefined}
-      open={open.appointments}
-      onOpenChange={toggle('appointments')}
-    >
-      <LeadAppointments lead={lead} appts={appts} />
-    </Fold>
-  );
-  // Nothing when the server sends no related leads (or an older server sends none at all).
-  const relatedFold = related.length > 0 && (
-    <Fold
-      sectionKey="related"
-      title={`${tr('לידים קשורים')} (${related.length})`}
-      open={open.related}
-      onOpenChange={toggle('related')}
-    >
-      <RelatedLeads businessId={business.id} related={related} />
-    </Fold>
+  const moreContent = (
+    <>
+      {related.length > 0 && (
+        <section aria-labelledby="lead-related-title" className="flex flex-col gap-2">
+          <h3 id="lead-related-title" className="text-sm font-semibold text-ink">
+            {tr('לידים קשורים')} ({related.length})
+          </h3>
+          <RelatedLeads businessId={business.id} related={related} />
+        </section>
+      )}
+      <History activities={activities} />
+    </>
   );
 
   const unsavedDialog = (
@@ -843,23 +862,15 @@ function LeadPage({
   const deleteLead = can(business.role, 'leads.delete') && (
     <DeleteLead lead={lead} leave={guard.leave} />
   );
-
+  const bookDialog = (
+    <NewAppointmentDialog open={bookOpen} onOpenChange={setBookOpen} lead={lead} />
+  );
   const surface =
     'min-w-0 divide-y divide-surface-border rounded-2xl border border-surface-border bg-surface shadow-card';
-  const historyFold = (
-    <Fold
-      sectionKey="history"
-      title={tr('היסטוריה')}
-      summary={tr('{0} אירועים', systemEvents(activities).length)}
-      open={open.history}
-      onOpenChange={toggle('history')}
-    >
-      <History activities={activities} />
-    </Fold>
-  );
+  const historySummary = tr('{0} אירועים', systemEvents(activities).length);
 
   if (desktop) {
-    // D-212, D-218: one surface for the story, one for the properties; sections split by dividers.
+    // D-219: the story (header, next action, tabs) and a side panel of stable facts.
     return (
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
         {backLink}
@@ -867,73 +878,58 @@ function LeadPage({
           <div className="flex min-w-0 flex-col gap-4">
             <div className={surface}>
               <div className="p-5">{header}</div>
-              <div className="p-5">{nextAction}</div>
-              {message && (
-                <div className="p-5">
-                  <WhatTheyAsked
-                    draft={draft}
-                    editing={false}
-                    onEditingChange={setEditing}
-                    message={message}
-                    showFields={false}
-                  />
-                </div>
-              )}
-              <LeadTabs lead={lead} activities={activities} />
+              <div className="p-5">
+                <NextAction lead={lead} onAddTask={addTask} />
+              </div>
+              {tabArea}
             </div>
             {deleteLead}
           </div>
           <aside aria-label={tr('מאפייני הליד')} className={surface}>
-            <section aria-labelledby="lead-properties-title" className="flex flex-col gap-4 p-5">
-              <h2 id="lead-properties-title" className="text-base font-semibold text-ink">
-                {tr('מאפיינים')}
-              </h2>
-              <Properties lead={lead} />
-            </section>
-            <div className="p-5">
-              <CustomFieldsPanel draft={draft} />
-            </div>
-            {quotesFold}
-            {appointmentsFold}
-            {relatedFold}
-            {historyFold}
+            {panel}
+            <Disclosure
+              id="lead-more"
+              title={tr('עוד')}
+              summary={
+                related.length > 0
+                  ? `${tr('לידים קשורים')} (${related.length}) · ${historySummary}`
+                  : historySummary
+              }
+              open={moreOpen}
+              onOpenChange={setMoreOpen}
+            >
+              {moreContent}
+            </Disclosure>
           </aside>
         </div>
+        {bookDialog}
         {unsavedDialog}
       </div>
     );
   }
 
   return (
-    // D-218: the whole page one surface with dividers; room at the bottom for the quick-actions bar.
+    // Phones: header, next action, tabs, then the panel under "עוד פרטים"; room for the bottom bar.
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-24">
       {backLink}
       <div className={surface}>
         <div className="p-4">{header}</div>
-        <div className="p-4">{nextAction}</div>
         <div className="p-4">
-          <WhatTheyAsked
-            draft={draft}
-            editing={editing}
-            onEditingChange={setEditing}
-            message={message}
-          />
+          <NextAction lead={lead} onAddTask={addTask} />
         </div>
-        <LeadTabs lead={lead} activities={activities} />
-        {quotesFold}
-        {appointmentsFold}
-        {relatedFold}
-        <Fold
-          sectionKey="more"
+        {tabArea}
+        <Disclosure
+          id="lead-more-details"
           title={tr('עוד פרטים')}
           summary={lead.owner?.name ?? tr('ללא אחראי')}
-          open={open.more}
-          onOpenChange={toggle('more')}
+          open={moreOpen}
+          onOpenChange={setMoreOpen}
         >
-          <Properties lead={lead} />
-          <ArchivedFieldValues lead={lead} />
-          <History activities={activities} />
-        </Fold>
+          <div className="-mx-4 -my-4 divide-y divide-surface-border">
+            {panel}
+            <div className="flex flex-col gap-5 p-5">{moreContent}</div>
+          </div>
+        </Disclosure>
       </div>
       {deleteLead}
       <QuickBar
@@ -942,24 +938,430 @@ function LeadPage({
         onOpenConversation={openConversation}
         onAddTask={addTask}
       />
+      {bookDialog}
       {unsavedDialog}
     </div>
   );
 }
 
+/** Old `?tab=` values that now live in the panel's "עוד" (history, related leads). */
+const MORE_TABS: readonly string[] = ['more', 'history', 'related'];
+
+function PanelSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4 p-5">
+      <h2 id={`${id}-title`} className="text-base font-semibold text-ink">
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+/** Customer's messages after the team's last reply (the conversation tab's "new" count). */
+function awaitingReply(messages: WhatsAppMessage[]) {
+  let n = 0;
+  for (let i = messages.length - 1; i >= 0 && messages[i]!.direction === 'IN'; i--) n += 1;
+  return n;
+}
+
 /**
- * The lead's properties, each once (D-218): owner (editable), source (one line; the ad, campaign,
- * keyword and landing page behind "פרטים"), value from quotes, phone, email and tags.
+ * "תקשורת" (D-219): one row per channel — WhatsApp (in the page when connected, else wa.me), phone
+ * and email, each with copy and its action — and "ממתין לתשובה שלך" when the customer wrote last.
  */
-function Properties({ lead }: { lead: Lead }) {
+function Communication({
+  lead,
+  whatsappInApp,
+  onOpenConversation,
+  messages,
+}: {
+  lead: Lead;
+  whatsappInApp: boolean;
+  onOpenConversation: () => void;
+  messages: WhatsAppMessage[];
+}) {
+  const phone = lead.contact.phone;
+  const email = lead.contact.email;
+  const last = messages.at(-1);
+  const waiting = last?.direction === 'IN' ? last : null;
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = async (key: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      window.setTimeout(() => setCopied((c) => (c === key ? null : c)), 2000);
+    } catch {
+      setCopied(null);
+    }
+  };
+  const small = (primary = false) =>
+    cn(
+      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
+      primary
+        ? 'bg-brand-600 text-white hover:bg-brand-700'
+        : 'text-ink-muted ring-1 ring-inset ring-surface-border hover:bg-surface-muted hover:text-ink',
+    );
+  const copyButton = (key: string, label: string, text: string) => (
+    <>
+      <button
+        type="button"
+        onClick={() => void copy(key, text)}
+        aria-label={tr('העתקת {0}', label)}
+        title={tr('העתקה')}
+        className={small()}
+      >
+        {copied === key ? (
+          <Check aria-hidden className="h-4 w-4 text-success-600" />
+        ) : (
+          <Copy aria-hidden className="h-4 w-4" />
+        )}
+      </button>
+      <span role="status" className="text-xs text-success-600">
+        {copied === key ? tr('הועתק') : ''}
+      </span>
+    </>
+  );
+
+  if (!phone && !email && !whatsappInApp) {
+    return <p className="text-sm text-ink-muted">{tr('אין פרטי קשר לליד הזה.')}</p>;
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {waiting && (
+        <p className="flex items-center gap-1.5 rounded-lg bg-warning-50 px-3 py-2 text-sm text-warning-600">
+          <MessageCircle aria-hidden className="h-4 w-4 shrink-0" />
+          <span>
+            {tr('ממתין לתשובה שלך:')}{' '}
+            <time dateTime={waiting.createdAt} title={formatDateTime(waiting.createdAt)}>
+              {timeAgo(waiting.createdAt)}
+            </time>
+          </span>
+        </p>
+      )}
+      <dl className="flex flex-col gap-3">
+        {(phone || whatsappInApp) && (
+          <div className="flex flex-col gap-1">
+            <dt className="text-sm font-medium text-ink">WhatsApp</dt>
+            <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
+              <span className="min-w-0 flex-1 truncate text-ink-muted">
+                {whatsappInApp ? tr('השיחה בעמוד הזה') : tr('נפתח בחלון חדש')}
+              </span>
+              <WhatsAppAction
+                phone={phone}
+                inApp={whatsappInApp}
+                onOpen={onOpenConversation}
+                iconOnly
+                className={small(whatsappInApp)}
+              />
+            </dd>
+          </div>
+        )}
+        {phone && (
+          <div className="flex flex-col gap-1">
+            <dt className="text-sm font-medium text-ink">{tr('טלפון')}</dt>
+            <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
+              <bdi dir="ltr" className="min-w-0 truncate" title={formatIsraeliPhone(phone)}>
+                {formatIsraeliPhone(phone)}
+              </bdi>
+              <span className="ms-auto flex items-center gap-2">
+                {copyButton('phone', tr('טלפון'), formatIsraeliPhone(phone))}
+                <a
+                  href={`tel:${phone}`}
+                  aria-label={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
+                  title={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
+                  className={small(!whatsappInApp)}
+                >
+                  <Phone aria-hidden className="h-4 w-4" />
+                </a>
+              </span>
+            </dd>
+          </div>
+        )}
+        {email && (
+          <div className="flex flex-col gap-1">
+            <dt className="text-sm font-medium text-ink">{tr('אימייל')}</dt>
+            <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
+              <bdi dir="ltr" className="min-w-0 truncate" title={email}>
+                {email}
+              </bdi>
+              <span className="ms-auto flex items-center gap-2">
+                {copyButton('email', tr('אימייל'), email)}
+                <a
+                  href={`mailto:${email}`}
+                  aria-label={tr('מייל ל־{0}', email)}
+                  title={tr('מייל ל־{0}', email)}
+                  className={small()}
+                >
+                  <Mail aria-hidden className="h-4 w-4" />
+                </a>
+              </span>
+            </dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+}
+
+/**
+ * "הליד" (D-219): what they asked (the original enquiry, unless the conversation already shows it),
+ * owner, source (+ details), value from quotes and tags; each once (D-218).
+ */
+function LeadInfo({ lead }: { lead: Lead }) {
+  const message = lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null;
   return (
     <div className="flex flex-col gap-4">
+      {message && (
+        <Property label={tr('מה ביקשו')}>
+          <p className="whitespace-pre-line [overflow-wrap:anywhere]" dir="auto">
+            {message}
+          </p>
+        </Property>
+      )}
       <OwnerField lead={lead} />
       <SourceProperty lead={lead} />
       <Property label={tr('ערך לפי הצעות מחיר')}>{valueSummary(lead)}</Property>
-      <ContactDetails lead={lead} />
       <TagsField lead={lead} />
     </div>
+  );
+}
+
+type AddKind = 'note' | 'task' | 'quote' | 'appointment';
+
+/** "+" beside the tabs (D-219): add a note, task, quote or appointment — also to a hidden tab. */
+function AddMenu({ onAdd }: { onAdd: (what: AddKind) => void }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+  const items: { kind: AddKind; label: string }[] = [
+    { kind: 'note', label: tr('הערה') },
+    { kind: 'task', label: tr('משימה') },
+    { kind: 'quote', label: tr('הצעת מחיר') },
+    { kind: 'appointment', label: tr('תור') },
+  ];
+  useEffect(() => {
+    if (!open) return;
+    rootRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const list = [...(rootRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
+    const at = list.indexOf(document.activeElement as HTMLElement);
+    const move = (i: number) => {
+      e.preventDefault();
+      list[(i + list.length) % list.length]?.focus();
+    };
+    if (e.key === 'ArrowDown') move(at + 1);
+    else if (e.key === 'ArrowUp') move(at - 1);
+    else if (e.key === 'Home') move(0);
+    else if (e.key === 'End') move(list.length - 1);
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+      buttonRef.current?.focus();
+    } else if (e.key === 'Tab') setOpen(false);
+  };
+  return (
+    <div ref={rootRef} className="relative shrink-0" onKeyDown={onKeyDown}>
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        aria-label={tr('הוספה לליד')}
+        title={tr('הוספה לליד')}
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-9 w-9 items-center justify-center rounded-full text-ink ring-1 ring-inset ring-surface-border hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+      >
+        <Plus aria-hidden className="h-5 w-5" />
+      </button>
+      {open && (
+        <div
+          id={menuId}
+          role="menu"
+          aria-label={tr('הוספה לליד')}
+          className="absolute end-0 top-full z-30 mt-1 flex w-44 flex-col rounded-xl border border-surface-border bg-surface p-1 shadow-lift"
+        >
+          {items.map((it) => (
+            <button
+              key={it.kind}
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              onClick={() => {
+                setOpen(false);
+                onAdd(it.kind);
+              }}
+              className="rounded-lg px-3 py-2 text-start text-sm text-ink hover:bg-surface-muted focus:bg-surface-muted focus:outline-none"
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const LEAD_TABS = ['whatsapp', 'notes', 'tasks', 'quotes', 'appointments'] as const;
+type LeadTab = (typeof LEAD_TABS)[number];
+
+/**
+ * D-219: one tab area for everything that has a list — the conversation, notes, tasks, quotes and
+ * appointments — each with its count (read out too: "משימות, 3 פתוחות"); empty tabs are hidden and
+ * the "+" menu adds the first item. The tab is in the address (`?tab=`). Arrow keys move between
+ * tabs (in the reading direction), Home/End jump to the ends.
+ */
+function LeadTabArea({
+  lead,
+  tab,
+  visible,
+  onSelect,
+  onAdd,
+  messages,
+  notes,
+  tasks,
+  quotes,
+  appts,
+  children,
+}: {
+  lead: Lead;
+  tab: LeadTab | null;
+  visible: readonly LeadTab[];
+  onSelect: (tab: LeadTab) => void;
+  onAdd: (what: AddKind) => void;
+  messages: WhatsAppMessage[];
+  notes: Activity[];
+  tasks: ReturnType<typeof useLeadOpenTasks>;
+  quotes: ReturnType<typeof useLeadQuotes>;
+  appts: ReturnType<typeof useLeadAppointments>;
+  children: ReactNode;
+}) {
+  const channel =
+    lead.source === 'facebook'
+      ? tr('פייסבוק')
+      : lead.source === 'instagram'
+        ? 'Instagram'
+        : 'WhatsApp';
+  const unread = awaitingReply(messages);
+  const openValue = lead.value?.open ?? 0;
+  const labels: Record<LeadTab, { text: string; count?: string; spoken: string; dot?: boolean }> = {
+    whatsapp: {
+      text: channel,
+      count: unread > 0 ? String(unread) : undefined,
+      dot: unread > 0,
+      spoken: unread > 0 ? tr('{0}, {1} הודעות חדשות', channel, unread) : channel,
+    },
+    notes: {
+      text: tr('הערות'),
+      count: String(notes.length),
+      spoken: tr('הערות, {0}', notes.length),
+    },
+    tasks: {
+      text: tr('משימות'),
+      count: String(tasks.open.length),
+      spoken: tr('משימות, {0} פתוחות', tasks.open.length),
+    },
+    quotes: {
+      text: tr('הצעות'),
+      count:
+        openValue > 0
+          ? `${quotes.list.length} · ${shekel.format(openValue)}`
+          : String(quotes.list.length),
+      spoken:
+        openValue > 0
+          ? tr('הצעות, {0} · {1} פתוח', quotes.list.length, shekel.format(openValue))
+          : tr('הצעות, {0}', quotes.list.length),
+    },
+    appointments: {
+      text: tr('תורים'),
+      count: String(appts.upcoming),
+      spoken: tr('תורים, {0} קרובים', appts.upcoming),
+    },
+  };
+  const tabRefs = useRef<Partial<Record<LeadTab, HTMLButtonElement | null>>>({});
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, at: number) => {
+    const forward = isRtl() ? 'ArrowLeft' : 'ArrowRight';
+    const backward = isRtl() ? 'ArrowRight' : 'ArrowLeft';
+    let to: number | null = null;
+    if (e.key === forward) to = (at + 1) % visible.length;
+    else if (e.key === backward) to = (at - 1 + visible.length) % visible.length;
+    else if (e.key === 'Home') to = 0;
+    else if (e.key === 'End') to = visible.length - 1;
+    if (to === null) return;
+    e.preventDefault();
+    const next = visible[to]!;
+    onSelect(next);
+    tabRefs.current[next]?.focus();
+  };
+
+  return (
+    <section aria-label={tr('שיחה, הערות ומשימות')}>
+      <div className="flex items-start gap-2 border-b border-surface-border px-3 pt-2">
+        {/* Wraps instead of scrolling sideways on narrow screens. */}
+        <div role="tablist" aria-label={tr('חלקי הליד')} className="flex min-w-0 flex-1 flex-wrap">
+          {visible.map((t, i) => {
+            const l = labels[t];
+            return (
+              <button
+                key={t}
+                ref={(el) => {
+                  tabRefs.current[t] = el;
+                }}
+                id={`lead-tab-${t}`}
+                type="button"
+                role="tab"
+                aria-selected={tab === t}
+                aria-controls={`lead-panel-${t}`}
+                aria-label={l.spoken}
+                tabIndex={tab === t ? 0 : -1}
+                onClick={() => onSelect(t)}
+                onKeyDown={(e) => onKeyDown(e, i)}
+                className={cn(
+                  '-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400',
+                  tab === t
+                    ? 'border-brand-600 text-brand-700'
+                    : 'border-transparent text-ink-muted hover:text-ink',
+                )}
+              >
+                {l.dot && <span aria-hidden className="h-2 w-2 rounded-full bg-success-600" />}
+                <span aria-hidden>{l.text}</span>
+                {l.count !== undefined && (
+                  <span
+                    aria-hidden
+                    className="rounded-full bg-surface-muted px-1.5 text-xs font-normal text-ink-muted"
+                  >
+                    {l.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <AddMenu onAdd={onAdd} />
+      </div>
+      {tab ? (
+        <div
+          id={`lead-panel-${tab}`}
+          role="tabpanel"
+          tabIndex={-1}
+          aria-labelledby={`lead-tab-${tab}`}
+          className="p-2 sm:p-3 [&>*]:border-0 [&>*]:shadow-none"
+        >
+          {children}
+        </div>
+      ) : (
+        <p className="p-5 text-sm text-ink-muted">
+          {tr('עדיין אין כאן הערות, משימות, הצעות או תורים. הכפתור + מוסיף את הראשון.')}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -1090,105 +1492,6 @@ function QuickBar({
         </button>
       </div>
     </nav>
-  );
-}
-
-/** Focuses the section an old `?tab=` link asked for, and drops the parameter. */
-function useOldTabLinks(asked: LeadSectionKey | null) {
-  const [, setParams] = useSearchParams();
-  useEffect(() => {
-    if (!asked) return;
-    document.getElementById(leadSectionId(asked))?.scrollIntoView?.({ block: 'start' });
-    document.getElementById(leadSectionButtonId(asked))?.focus({ preventScroll: true });
-    setParams(
-      (p) => {
-        const next = new URLSearchParams(p);
-        next.delete('tab');
-        return next;
-      },
-      { replace: true },
-    );
-  }, [asked, setParams]);
-}
-
-const LEAD_TABS = ['whatsapp', 'notes'] as const;
-type LeadTab = (typeof LEAD_TABS)[number];
-
-/**
- * The conversation and notes (D-211), one at a time. The tab is kept in the address (`?tab=`); a
- * lead that came from a conversation opens on it.
- */
-function LeadTabs({ lead, activities }: { lead: Lead; activities: Activity[] }) {
-  const [params, setParams] = useSearchParams();
-  const fallback: LeadTab =
-    lead.source === 'whatsapp' ||
-    lead.source === 'facebook' ||
-    lead.source === 'instagram' ||
-    lead.lastWhatsApp
-      ? 'whatsapp'
-      : 'notes';
-  const asked = params.get('tab');
-  const tab: LeadTab = (LEAD_TABS as readonly string[]).includes(asked ?? '')
-    ? (asked as LeadTab)
-    : fallback;
-  const labels: Record<LeadTab, string> = {
-    notes: tr('הערות'),
-    // The conversation: WhatsApp, or Facebook for a lead that came from the Page (F23).
-    whatsapp:
-      lead.source === 'facebook'
-        ? tr('פייסבוק')
-        : lead.source === 'instagram'
-          ? 'Instagram'
-          : 'WhatsApp',
-  };
-  return (
-    <section aria-label={tr('שיחה והערות')}>
-      <ScrollTabs
-        label={tr('חלקי הליד')}
-        activeKey={tab}
-        className="border-b border-surface-border px-3"
-      >
-        {LEAD_TABS.map((t) => (
-          <button
-            key={t}
-            id={`lead-tab-${t}`}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            aria-controls={`lead-panel-${t}`}
-            onClick={() =>
-              setParams(
-                (p) => {
-                  const next = new URLSearchParams(p);
-                  next.set('tab', t);
-                  return next;
-                },
-                { replace: true },
-              )
-            }
-            className={cn(
-              '-mb-px shrink-0 border-b-2 px-3 py-3 text-sm font-medium transition-colors',
-              tab === t
-                ? 'border-brand-600 text-brand-700'
-                : 'border-transparent text-ink-muted hover:text-ink',
-            )}
-          >
-            {labels[t]}
-          </button>
-        ))}
-      </ScrollTabs>
-      {/* The parts keep their own cards; inside the tab they lose the frame. */}
-      <div
-        id={`lead-panel-${tab}`}
-        tabIndex={-1}
-        role="tabpanel"
-        aria-labelledby={`lead-tab-${tab}`}
-        className="p-2 sm:p-3 [&>*]:border-0 [&>*]:shadow-none"
-      >
-        {tab === 'notes' && <Notes leadId={lead.id} activities={activities} />}
-        {tab === 'whatsapp' && <WhatsAppThread leadId={lead.id} />}
-      </div>
-    </section>
   );
 }
 

@@ -21,26 +21,8 @@ import { NewTaskForm } from '../tasks/NewTaskForm';
 import { TaskItem } from '../tasks/TaskItem';
 import { dueLabel, useTasks, useUpdateTask } from '../tasks/api';
 import { useAppointments } from '../appointments/api';
-import { NewAppointmentDialog } from '../appointments/NewAppointmentDialog';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { shekel } from './api';
-
-/**
- * The lead page's folded parts (D-211). Old `?tab=tasks|appointments|quotes` links open the
- * matching one and focus its button.
- */
-export const LEAD_SECTIONS = [
-  'tasks',
-  'appointments',
-  'quotes',
-  'more',
-  'related',
-  'history',
-] as const;
-export type LeadSectionKey = (typeof LEAD_SECTIONS)[number];
-export const leadSectionId = (key: LeadSectionKey) => `lead-section-${key}`;
-/** The disclosure button of a section (what an old link focuses). */
-export const leadSectionButtonId = (key: LeadSectionKey) => `${leadSectionId(key)}-button`;
 
 const apptWhenFmt = new Intl.DateTimeFormat(intlLocale(), {
   weekday: 'short',
@@ -50,43 +32,35 @@ const apptWhenFmt = new Intl.DateTimeFormat(intlLocale(), {
   minute: '2-digit',
 });
 
-const disclosureClasses =
-  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2';
-
 /**
- * A folded one-line section (D-211): a heading button with a count or summary that opens the
- * content below it (`aria-expanded`, keyboard: Enter/Space as any button).
+ * A disclosure (D-219: "עוד" at the end of the side panel, "עוד פרטים" on phones): a heading button
+ * that opens the content below it (`aria-expanded`; Enter/Space as any button).
  */
-export function Fold({
-  sectionKey,
+export function Disclosure({
+  id,
   title,
   summary,
   open,
   onOpenChange,
   children,
 }: {
-  sectionKey: LeadSectionKey;
+  id: string;
   title: string;
   summary?: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
 }) {
-  const id = leadSectionId(sectionKey);
   return (
-    // D-218: no frame of its own; the column's surface and its dividers separate the sections.
     <section id={id} className="scroll-mt-24">
       <h2>
         <button
-          id={leadSectionButtonId(sectionKey)}
+          id={`${id}-button`}
           type="button"
           aria-expanded={open}
           aria-controls={`${id}-panel`}
           onClick={() => onOpenChange(!open)}
-          className={cn(
-            'flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-surface-muted',
-            disclosureClasses,
-          )}
+          className="flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"
         >
           <span className="font-semibold text-ink">{title}</span>
           {summary && (
@@ -105,8 +79,8 @@ export function Fold({
         <div
           id={`${id}-panel`}
           role="region"
-          aria-labelledby={leadSectionButtonId(sectionKey)}
-          className="flex flex-col gap-3 border-t border-surface-border px-4 py-3"
+          aria-labelledby={`${id}-button`}
+          className="flex flex-col gap-5 border-t border-surface-border px-4 py-4"
         >
           {children}
         </div>
@@ -150,36 +124,15 @@ const isLate = (dueAt: string, now = Date.now()) => new Date(dueAt).getTime() < 
 const byDue = (a: Task, b: Task) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
 
 /**
- * Next action (D-209, D-211): the lead's nearest open task the member may see (`lead.nextTask`)
- * with a "done" button and "+ משימה"; the lead's other open tasks behind "כל המשימות (N)".
+ * Next action (D-209, pinned above the tabs by D-219): the lead's nearest open task the member may
+ * see (`lead.nextTask`) with a "done" button, and "+ משימה" (which opens the tasks tab's form).
  * Overdue is said in words, not only in red.
  */
-export function NextAction({
-  lead,
-  formOpen,
-  onFormOpenChange,
-  tasksOpen,
-  onTasksOpenChange,
-}: {
-  lead: Lead;
-  formOpen: boolean;
-  onFormOpenChange: (open: boolean) => void;
-  tasksOpen: boolean;
-  onTasksOpenChange: (open: boolean) => void;
-}) {
+export function NextAction({ lead, onAddTask }: { lead: Lead; onAddTask: () => void }) {
   const business = useCurrentBusiness();
-  const tasks = useTasks(business.id, { leadId: lead.id });
   const update = useUpdateTask(business.id);
-  const addRef = useRef<HTMLButtonElement>(null);
   const next = lead.nextTask ?? null;
   const late = next ? isLate(next.dueAt) : false;
-  const open = (tasks.data ?? []).filter((t) => t.status === 'OPEN').sort(byDue);
-  const formId = `${leadSectionId('tasks')}-form`;
-  const listId = `${leadSectionId('tasks')}-panel`;
-  const closeForm = () => {
-    onFormOpenChange(false);
-    addRef.current?.focus();
-  };
 
   return (
     <section aria-labelledby="lead-next-title" className="flex flex-col gap-3">
@@ -187,15 +140,7 @@ export function NextAction({
         <h2 id="lead-next-title" className="text-base font-semibold text-ink">
           {tr('הפעולה הבאה')}
         </h2>
-        <Button
-          ref={addRef}
-          type="button"
-          size="sm"
-          variant="secondary"
-          aria-expanded={formOpen}
-          aria-controls={formOpen ? formId : undefined}
-          onClick={() => (formOpen ? closeForm() : onFormOpenChange(true))}
-        >
+        <Button type="button" size="sm" variant="secondary" onClick={onAddTask}>
           {tr('+ משימה')}
         </Button>
       </div>
@@ -244,59 +189,74 @@ export function NextAction({
         </p>
       )}
       {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+    </section>
+  );
+}
+
+/** The lead's open tasks, nearest first (the tasks tab, D-219). */
+export function useLeadOpenTasks(lead: Lead) {
+  const business = useCurrentBusiness();
+  const query = useTasks(business.id, { leadId: lead.id });
+  return { query, open: (query.data ?? []).filter((t) => t.status === 'OPEN').sort(byDue) };
+}
+
+/** The tasks tab: "+ משימה" (its form opens on demand) and the open tasks. */
+export function LeadTasks({
+  lead,
+  tasks,
+  formOpen,
+  onFormOpenChange,
+}: {
+  lead: Lead;
+  tasks: ReturnType<typeof useLeadOpenTasks>;
+  formOpen: boolean;
+  onFormOpenChange: (open: boolean) => void;
+}) {
+  const business = useCurrentBusiness();
+  const addRef = useRef<HTMLButtonElement>(null);
+  const formId = `lead-task-form-${lead.id}`;
+  const close = () => {
+    onFormOpenChange(false);
+    addRef.current?.focus();
+  };
+  return (
+    <>
+      <Button
+        ref={addRef}
+        type="button"
+        size="sm"
+        variant="secondary"
+        className="self-start"
+        aria-expanded={formOpen}
+        aria-controls={formOpen ? formId : undefined}
+        onClick={() => (formOpen ? close() : onFormOpenChange(true))}
+      >
+        {tr('+ משימה')}
+      </Button>
       {formOpen && (
         <div id={formId} className="flex flex-col gap-2 rounded-xl bg-surface-muted p-3">
-          <NewTaskForm leadId={lead.id} compact autoFocus onCreated={closeForm} />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="self-start"
-            onClick={closeForm}
-          >
+          <NewTaskForm leadId={lead.id} compact autoFocus onCreated={close} />
+          <Button type="button" variant="ghost" size="sm" className="self-start" onClick={close}>
             {tr('ביטול')}
           </Button>
         </div>
       )}
-      <div id={leadSectionId('tasks')} className="scroll-mt-24 border-t border-surface-border pt-2">
-        <button
-          id={leadSectionButtonId('tasks')}
-          type="button"
-          aria-expanded={tasksOpen}
-          aria-controls={listId}
-          onClick={() => onTasksOpenChange(!tasksOpen)}
-          className={cn(
-            'inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline',
-            disclosureClasses,
-          )}
-        >
-          {tasks.isSuccess ? tr('כל המשימות ({0})', open.length) : tr('כל המשימות')}
-          <ChevronDown
-            aria-hidden
-            className={cn('h-4 w-4 transition-transform', tasksOpen && 'rotate-180')}
-          />
-        </button>
-        {tasksOpen && (
-          <div id={listId} className="mt-2 flex flex-col gap-2">
-            <ListStatus
-              query={tasks}
-              loading={tr('טוענים את המשימות…')}
-              forbidden={tr('אין לך הרשאה לראות את המשימות של הליד הזה.')}
-            />
-            {tasks.isSuccess &&
-              (open.length > 0 ? (
-                <ul aria-label={tr('משימות הליד')} className="divide-y divide-surface-border">
-                  {open.map((t) => (
-                    <TaskItem key={t.id} task={t} businessId={business.id} showLead={false} />
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-ink-muted">{tr('אין משימות פתוחות לליד הזה.')}</p>
-              ))}
-          </div>
-        )}
-      </div>
-    </section>
+      <ListStatus
+        query={tasks.query}
+        loading={tr('טוענים את המשימות…')}
+        forbidden={tr('אין לך הרשאה לראות את המשימות של הליד הזה.')}
+      />
+      {tasks.query.isSuccess &&
+        (tasks.open.length > 0 ? (
+          <ul aria-label={tr('משימות הליד')} className="divide-y divide-surface-border">
+            {tasks.open.map((t) => (
+              <TaskItem key={t.id} task={t} businessId={business.id} showLead={false} />
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-ink-muted">{tr('אין משימות פתוחות לליד הזה.')}</p>
+        ))}
+    </>
   );
 }
 
@@ -328,25 +288,19 @@ export function useLeadAppointments(lead: Lead) {
   return { query, ordered, upcoming, now: range.now };
 }
 
-/** Inside the folded "תורים" section: the list and "+ תור". */
+/** The appointments tab (D-219): "+ תור" and the list, upcoming first. */
 export function LeadAppointments({
-  lead,
   appts,
+  onBook,
 }: {
-  lead: Lead;
   appts: ReturnType<typeof useLeadAppointments>;
+  /** Opens the booking dialog (the page owns it, so the "+" menu can open it too). */
+  onBook: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const { query, ordered, now } = appts;
   return (
     <>
-      <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        className="self-start"
-        onClick={() => setOpen(true)}
-      >
+      <Button type="button" size="sm" variant="secondary" className="self-start" onClick={onBook}>
         {tr('+ תור')}
       </Button>
       <ListStatus
@@ -375,7 +329,6 @@ export function LeadAppointments({
         ) : (
           <p className="text-sm text-ink-muted">{tr('אין תורים קרובים.')}</p>
         ))}
-      <NewAppointmentDialog open={open} onOpenChange={setOpen} lead={lead} />
     </>
   );
 }
@@ -403,7 +356,7 @@ export function valueSummary(lead: Lead) {
   return tr('{0} פתוח · {1} נסגר', shekel.format(value.open), shekel.format(value.won));
 }
 
-/** Inside the folded "הצעות מחיר" section: each quote's status and total, and "+ הצעה". */
+/** The quotes tab (D-219): "+ הצעה" and each quote with its status and total. */
 export function LeadQuotes({
   lead,
   quotes,

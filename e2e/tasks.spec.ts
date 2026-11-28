@@ -1,12 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
- * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
+ * panel's "עוד" on wide screens (D-219). Opens it if closed.
  */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
   if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
 }
 
@@ -48,12 +48,11 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   page,
 }) => {
   const { id, leadId } = await ownerWithLead(page);
-  // D-211: the tasks sit behind the next action ("כל המשימות"); "+ משימה" opens the form. An old
-  // `?tab=tasks` link opens and focuses that list.
+  // D-219: tasks are a tab; the next action's "+ משימה" opens it with the form. An old
+  // `?tab=tasks` link to a lead with no tasks falls back to the first visible tab.
   await page.goto(`/b/${id}/leads/${leadId}?tab=tasks`);
   const nextAction = page.getByRole('region', { name: 'הפעולה הבאה' });
-  await expect(nextAction.getByRole('button', { name: /^כל המשימות/ })).toBeFocused();
-  await expect(page).not.toHaveURL(/tab=/);
+  await expect(page.getByRole('tab', { name: /^משימות/ })).toHaveCount(0);
   await expect(nextAction).toContainText('אין פעולה הבאה');
   await nextAction.getByRole('button', { name: '+ משימה' }).click();
   const form = page.getByRole('form', { name: 'משימה חדשה' });
@@ -101,7 +100,7 @@ test('the next action\'s "בוצע" completes the task and the next one moves up
   await expect(nextAction).toContainText('להתקשר');
   await nextAction.getByRole('button', { name: 'סימון כבוצעה: להתקשר' }).click();
   await expect(nextAction).toContainText('לשלוח הצעה');
-  await expect(nextAction.getByRole('button', { name: 'כל המשימות (1)' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'משימות, 1 פתוחות' })).toBeVisible();
 });
 
 test('on a phone: next action and what they asked above the tabs, a quick-actions bar, no side scrolling', async ({
@@ -112,12 +111,11 @@ test('on a phone: next action and what they asked above the tabs, a quick-action
   const { id, leadId } = await ownerWithLead(page);
   await page.goto(`/b/${id}/leads/${leadId}`);
   const nextAction = page.getByRole('region', { name: 'הפעולה הבאה' });
-  const asked = page.getByRole('region', { name: 'מה ביקשו' });
-  const tabs = page.getByRole('tab', { name: 'הערות' });
+  // D-219: header, next action, then the tabs (here only the "+" menu: nothing to list yet).
+  const tabs = page.getByRole('button', { name: 'הוספה לליד' });
   await expect(tabs).toBeAttached();
   const top = async (l: typeof tabs) => (await l.boundingBox())!.y;
   expect(await top(nextAction)).toBeLessThan(await top(tabs));
-  expect(await top(asked)).toBeLessThan(await top(tabs));
   const bar = page.getByRole('navigation', { name: 'פעולות מהירות' });
   await expect(bar).toBeVisible();
   await expect(bar.getByRole('link', { name: 'התקשרות' })).toHaveAttribute('href', /^tel:/);

@@ -2,12 +2,12 @@ import { expect, test, type Page } from '@playwright/test';
 import { choose } from './choose';
 
 /**
- * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
- * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
+ * panel's "עוד" on wide screens (D-219). Opens it if closed.
  */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
   if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
 }
 
@@ -76,6 +76,9 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await choose(page, page.getByLabel('שלב', { exact: true }), 'ממתין');
   await openLeadHistory(page);
   await expect(page.getByText('השלב שונה מ"נוצר קשר" ל"ממתין"')).toBeVisible();
+  // D-219: no notes yet, so the notes tab is opened from the "+" menu.
+  await page.getByRole('button', { name: 'הוספה לליד' }).click();
+  await page.getByRole('menuitem', { name: 'הערה' }).click();
   await page.getByLabel('הוספת הערה').fill('נשלחה הצעה של ₪650, מחכה לאישור');
   await page.getByRole('button', { name: 'שמירת הערה' }).click();
   const history = page.getByRole('list', { name: 'היסטוריית הליד' });

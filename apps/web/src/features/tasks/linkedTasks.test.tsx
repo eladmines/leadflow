@@ -218,7 +218,8 @@ describe('linking a task to a quote or an appointment', () => {
     const { user } = renderApp(leadPage);
     const next = await screen.findByRole('region', { name: 'הפעולה הבאה' });
     await user.click(within(next).getByRole('button', { name: '+ משימה' }));
-    const form = within(next).getByRole('form', { name: 'משימה חדשה' });
+    // D-219: the form opens in the tasks tab.
+    const form = screen.getByRole('form', { name: 'משימה חדשה' });
     await user.type(within(form).getByRole('textbox', { name: 'משימה חדשה' }), 'לשלוח תזכורת');
     const picker = within(form).getByLabelText('קשור ל…');
     await waitFor(() => expect(picker).toBeEnabled());
@@ -251,7 +252,8 @@ describe('linking a task to a quote or an appointment', () => {
     const { user } = renderApp(leadPage);
     const next = await screen.findByRole('region', { name: 'הפעולה הבאה' });
     await user.click(within(next).getByRole('button', { name: '+ משימה' }));
-    const form = within(next).getByRole('form', { name: 'משימה חדשה' });
+    // D-219: the form opens in the tasks tab.
+    const form = screen.getByRole('form', { name: 'משימה חדשה' });
     await user.type(within(form).getByRole('textbox', { name: 'משימה חדשה' }), 'לבדוק');
     const picker = within(form).getByLabelText('קשור ל…');
     await waitFor(() => expect(picker).toBeEnabled());
