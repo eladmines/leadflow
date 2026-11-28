@@ -11,7 +11,8 @@ async function openLeadHistory(page: Page) {
 /** The custom-field form: "פרטים" in the "מידע" tab (D-220). */
 async function editLeadFields(page: Page, formName = 'פרטים') {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const info = page.getByRole('tab', { name: 'מידע' });
+  // "מידע" in Hebrew, "Info" in English.
+  const info = page.getByRole('tab', { name: /^(מידע|Info)$/ });
   if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
   await expect(page.getByRole('form', { name: formName })).toBeVisible();
 }

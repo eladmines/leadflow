@@ -62,7 +62,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   if (isMobile) {
     await choose(page, card.getByLabel('העברת אבי כהן לשלב'), 'נוצר קשר');
   } else {
-    await card.dragTo(target);
+    await card.dragTo(target, { targetPosition: { x: 120, y: 80 } });
   }
   await expect(target.getByRole('link', { name: 'אבי כהן' })).toBeVisible();
   await expect(board.getByRole('listitem', { name: 'נוצר קשר: 1 לידים' })).toBeVisible();
@@ -81,6 +81,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await expect(
     page.getByRole('list', { name: 'הערות' }).getByText('נשלחה הצעה של ₪650, מחכה לאישור'),
   ).toBeVisible();
+  await openLeadHistory(page);
   await expect(history.getByText('השלב שונה מ"חדש" ל"נוצר קשר"')).toBeVisible();
 
   // Search by phone in local format.
