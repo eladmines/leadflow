@@ -397,6 +397,7 @@ function Board({
   scroller,
   cardFields,
   hidden = [],
+  onHide,
 }: {
   leads: Lead[];
   stages: PipelineStage[];
@@ -404,7 +405,9 @@ function Board({
   scroller: BoardScroll;
   cardFields: LeadFieldDefinition[];
   hidden?: string[];
+  onHide?: (stageId: string) => void;
 }) {
+  const visibleCount = stages.filter((st) => !hidden.includes(st.id)).length;
   const update = useUpdateLead(businessId);
   const [over, setOver] = useState<string | null>(null);
   // A lead moved to "Quote sent" without a quote: offer to write one instead of an error.
@@ -483,11 +486,25 @@ function Board({
                         {items.length}
                       </span>
                     </h2>
-                    {total > 0 && (
-                      <span className="text-xs text-ink-muted" title={tr('לפי הצעות המחיר')}>
-                        {shekel.format(total)}
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1">
+                      {total > 0 && (
+                        <span className="text-xs text-ink-muted" title={tr('לפי הצעות המחיר')}>
+                          {shekel.format(total)}
+                        </span>
+                      )}
+                      {/* Hide this column (owner, 2026-11-28); the last visible one stays. */}
+                      {onHide && visibleCount > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onHide(stage.id)}
+                          aria-label={tr('הסתרת העמודה {0}', tr(stage.name))}
+                          title={tr('הסתרת העמודה')}
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-ink-subtle hover:bg-surface hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+                        >
+                          <X aria-hidden className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </span>
                   </div>
                   <ul className="flex min-h-24 flex-col gap-2">
                     {items.map((lead) => (
@@ -946,6 +963,7 @@ export function LeadsPage() {
                 scroller={scroller}
                 cardFields={cardFields}
                 hidden={hiddenStages}
+                onHide={(sid) => setHiddenStages([...hiddenStages, sid])}
               />
             </>
           ) : leads.data.length === 0 ? (

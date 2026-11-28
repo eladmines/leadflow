@@ -330,4 +330,6 @@ export const enPart4: Record<string, string> = {
   'עמודות בלוח': 'Board columns',
   '{0} עמודות מוסתרות בלוח': '{0} board columns hidden',
   'הצגת הכול': 'Show all',
+  'הסתרת העמודה {0}': 'Hide the {0} column',
+  'הסתרת העמודה': 'Hide the column',
 };
