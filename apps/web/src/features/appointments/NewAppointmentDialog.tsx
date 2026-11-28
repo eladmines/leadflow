@@ -89,7 +89,7 @@ export function NewAppointmentDialog({
   };
 
   return (
-    <DialogShell open={open} onOpenChange={onOpenChange} title={tr('תור חדש')}>
+    <DialogShell open={open} onOpenChange={onOpenChange} title={tr('פגישה חדשה')}>
       <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
         {create.isError && !(create.error instanceof ApiError && create.error.fields) && (
           <Alert tone="danger">{errorMessage(create.error)}</Alert>
@@ -220,7 +220,7 @@ export function NewAppointmentDialog({
             {tr('ביטול')}
           </Button>
           <Button type="submit" loading={create.isPending}>
-            {tr('קביעת התור')}
+            {tr('קביעת הפגישה')}
           </Button>
         </div>
       </form>

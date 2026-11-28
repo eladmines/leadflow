@@ -39,14 +39,14 @@ test('book, clash, cancel, and see it from the calendar', async ({ page }) => {
   const tomorrow = new Date(Date.now() + 86_400_000);
   const ymd = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
   const bookAt = async (name: string, phone: string) => {
-    await page.getByRole('button', { name: 'תור חדש' }).click();
-    const dialog = page.getByRole('dialog', { name: 'תור חדש' });
+    await page.getByRole('button', { name: 'פגישה חדשה' }).click();
+    const dialog = page.getByRole('dialog', { name: 'פגישה חדשה' });
     await dialog.getByLabel('שם הלקוח').fill(name);
     await dialog.getByLabel('טלפון').fill(phone);
     await choose(page, dialog.getByLabel('שירות'), 'תספורת · 45 דק׳');
     await dialog.getByLabel('תאריך').fill(ymd);
     await dialog.getByLabel('שעה').fill('10:00');
-    await dialog.getByRole('button', { name: 'קביעת התור' }).click();
+    await dialog.getByRole('button', { name: 'קביעת הפגישה' }).click();
     return dialog;
   };
   await page.goto(`/b/${id}/appointments?date=${ymd}`);
@@ -58,11 +58,11 @@ test('book, clash, cancel, and see it from the calendar', async ({ page }) => {
 
   // The same slot for the same staff member is refused.
   const second = await bookAt('דנה כהן', '052-7654321');
-  await expect(second.getByText(/יש כבר תור בזמן הזה/)).toBeVisible();
+  await expect(second.getByText(/יש כבר פגישה בזמן הזה/)).toBeVisible();
   await page.keyboard.press('Escape');
 
   // Cancel the first; it stays visible as cancelled.
   await chip.click();
-  await page.getByRole('button', { name: 'ביטול התור' }).click();
-  await expect(page.getByRole('button', { name: /רון לוי/ })).toContainText('בוטל');
+  await page.getByRole('button', { name: 'ביטול הפגישה' }).click();
+  await expect(page.getByRole('button', { name: /רון לוי/ })).toContainText('בוטלה');
 });

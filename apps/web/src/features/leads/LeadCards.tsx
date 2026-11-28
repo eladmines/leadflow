@@ -160,7 +160,7 @@ export function useLeadAppointments(lead: Lead) {
   return { query, ordered, upcoming, now: range.now };
 }
 
-/** The appointments tab (D-219): "+ תור" and the list, upcoming first. */
+/** The appointments tab (D-219): "+ פגישה" and the list, upcoming first. */
 export function LeadAppointments({
   appts,
   onBook,
@@ -173,16 +173,16 @@ export function LeadAppointments({
   return (
     <>
       <Button type="button" size="sm" variant="secondary" className="self-start" onClick={onBook}>
-        {tr('+ תור')}
+        {tr('+ פגישה')}
       </Button>
       <ListStatus
         query={query}
-        loading={tr('טוענים את התורים…')}
-        forbidden={tr('אין לך הרשאה לראות את התורים של הליד הזה.')}
+        loading={tr('טוענים את הפגישות…')}
+        forbidden={tr('אין לך הרשאה לראות את הפגישות של הליד הזה.')}
       />
       {query.isSuccess &&
         (ordered.length > 0 ? (
-          <ul aria-label={tr('תורי הליד')} className="flex flex-col gap-1.5">
+          <ul aria-label={tr('הפגישות של הליד')} className="flex flex-col gap-1.5">
             {ordered.map((a) => {
               const past = new Date(a.startsAt).getTime() < now;
               return (
@@ -199,7 +199,7 @@ export function LeadAppointments({
             })}
           </ul>
         ) : (
-          <p className="text-sm text-ink-muted">{tr('אין תורים קרובים.')}</p>
+          <p className="text-sm text-ink-muted">{tr('אין פגישות קרובות.')}</p>
         ))}
     </>
   );

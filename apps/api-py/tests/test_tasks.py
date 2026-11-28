@@ -323,7 +323,7 @@ async def test_link_a_task_to_a_quote_or_an_appointment_and_the_lead_defaults(cl
         owner["token"],
         {"title": "x", "dueAt": in_hours(5), "quoteId": qid, "appointmentId": appt["id"]},
     )
-    assert _fields(both) == {"appointmentId": "אפשר לקשר משימה להצעה או לתור, לא לשניהם"}
+    assert _fields(both) == {"appointmentId": "אפשר לקשר משימה להצעה או לפגישה, לא לשניהם"}
     plain = (await _create(client, bid, owner["token"], {"title": "רגילה", "dueAt": in_hours(5)})).json()[
         "task"
     ]
@@ -338,7 +338,7 @@ async def test_a_lead_other_than_the_subjects_is_refused(client, db, email):
         owner["token"],
         {"title": "x", "dueAt": in_hours(5), "quoteId": qid, "leadId": other["id"]},
     )
-    assert _fields(res) == {"leadId": "ההצעה או התור שייכים לליד אחר. בטלו את הקישור או בחרו את הליד שלהם."}
+    assert _fields(res) == {"leadId": "ההצעה או הפגישה שייכות לליד אחר. בטלו את הקישור או בחרו את הליד שלהם."}
     # An appointment without a lead + a lead on the task: same error.
     no_lead = (
         await req(
@@ -380,7 +380,7 @@ async def test_unknown_other_business_and_invisible_subjects_are_refused_alike(c
     res = await _create(
         client, bid, owner["token"], {"title": "x", "dueAt": in_hours(1), "appointmentId": str(_uuid.uuid4())}
     )
-    assert _fields(res) == {"appointmentId": "התור שנבחר אינו קיים"}
+    assert _fields(res) == {"appointmentId": "הפגישה שנבחרה אינה קיימת"}
 
     # The employee: a quote on someone else's lead, an appointment booked on the owner → refused.
     res = await _create(client, bid, emp["token"], {"title": "x", "dueAt": in_hours(1), "quoteId": other_qid})
@@ -388,7 +388,7 @@ async def test_unknown_other_business_and_invisible_subjects_are_refused_alike(c
     res = await _create(
         client, bid, emp["token"], {"title": "x", "dueAt": in_hours(1), "appointmentId": appt["id"]}
     )
-    assert _fields(res) == {"appointmentId": "התור שנבחר אינו קיים"}
+    assert _fields(res) == {"appointmentId": "הפגישה שנבחרה אינה קיימת"}
     # …but a quote on their own lead is fine.
     res = await _create(client, bid, emp["token"], {"title": "x", "dueAt": in_hours(1), "quoteId": qid})
     assert res.status_code == 201 and res.json()["task"]["lead"]["id"] == lead["id"]
@@ -505,7 +505,7 @@ async def test_list_filters_by_subject_and_employees_see_only_their_own(client, 
         {"title": "של העובד", "dueAt": in_hours(2), "quoteId": qid, "assigneeId": emp["user_id"]},
     )
     await _create(
-        client, bid, owner["token"], {"title": "על התור", "dueAt": in_hours(3), "appointmentId": appt["id"]}
+        client, bid, owner["token"], {"title": "על הפגישה", "dueAt": in_hours(3), "appointmentId": appt["id"]}
     )
 
     def titles(res):
@@ -520,7 +520,7 @@ async def test_list_filters_by_subject_and_employees_see_only_their_own(client, 
     by_appt = titles(
         await req(client, "GET", tasks_url(bid) + f"?appointmentId={appt['id']}", owner["token"])
     )
-    assert "על התור" in by_appt and all(t in ("על התור", "לאשר את התור") for t in by_appt)
+    assert "על הפגישה" in by_appt and all(t in ("על הפגישה", "לאשר את הפגישה") for t in by_appt)
     assert (
         titles(await req(client, "GET", tasks_url(bid) + f"?appointmentId={appt['id']}", emp["token"])) == []
     )

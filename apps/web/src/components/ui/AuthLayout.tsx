@@ -30,8 +30,8 @@ const benefits = [
   },
   {
     icon: CalendarDays,
-    title: tr('יומן ותורים'),
-    text: tr('הלקוחות קובעים תור בעצמם, ואתם מאשרים במערכת.'),
+    title: tr('יומן ופגישות'),
+    text: tr('הלקוחות קובעים פגישה בעצמם, ואתם מאשרים במערכת.'),
   },
   {
     icon: FileText,

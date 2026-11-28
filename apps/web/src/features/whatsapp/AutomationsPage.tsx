@@ -53,7 +53,7 @@ export function AutomationsPage() {
           inPanel
           title={tr('אוטומציות')}
           description={tr(
-            'מה קורה כשלקוח כותב בוואטסאפ: מענה לפי הסטטוס שלך, קביעת תורים והצצה לעסק.',
+            'מה קורה כשלקוח כותב בוואטסאפ: מענה לפי הסטטוס שלך, קביעת פגישות והצצה לעסק.',
           )}
         />
         <div className="flex flex-col gap-5 p-4 sm:p-5">
@@ -161,7 +161,9 @@ function Steps({
           icon={CalendarCheck}
           tone="bg-violet-500"
           title={tr('לקוחות קובעים לבד')}
-          description={tr('מוסיף "לקביעת תור" להודעה: הלקוח רואה זמנים פנויים וקובע תור או הזמנה.')}
+          description={tr(
+            'מוסיף "לקביעת פגישה" להודעה: הלקוח רואה זמנים פנויים וקובע פגישה או הזמנה.',
+          )}
           on={booking}
           busy={update.isPending}
           disabled={!auto}
@@ -171,12 +173,12 @@ function Steps({
             booking
               ? tr(
                   '{0} · אישור: {1}',
-                  saved.flow === 'event' ? tr('הזמנות') : tr('תורים'),
+                  saved.flow === 'event' ? tr('הזמנות') : tr('פגישות'),
                   saved.autoConfirm ? tr('מיד') : tr('ידני'),
                 )
               : tr('כבוי: אפשר לקבוע רק מול הצוות.')
           }
-          settingsLabel={tr('הגדרות קביעת התורים')}
+          settingsLabel={tr('הגדרות קביעת הפגישות')}
           settings={<BookingBotCard businessId={businessId} />}
           nextOff={!peek}
         />
@@ -186,7 +188,7 @@ function Steps({
           tone="bg-amber-500"
           title={tr('הצצה לעסק')}
           description={tr(
-            'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.',
+            'מיד אחרי שהלקוח מחליט (זמן לשיחה, פגישה או הזמנה), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.',
           )}
           on={peek}
           busy={update.isPending}

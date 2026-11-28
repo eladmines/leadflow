@@ -233,7 +233,7 @@ describe('dashboard', () => {
         }),
     });
     renderApp(home);
-    const box = await screen.findByRole('link', { name: /תורים היום/ });
+    const box = await screen.findByRole('link', { name: /פגישות היום/ });
     await waitFor(() => expect(box).toHaveTextContent(/^1/));
     expect(box).toHaveTextContent(/הבא ב-23:59/);
   });

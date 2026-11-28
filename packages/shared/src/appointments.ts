@@ -16,11 +16,11 @@ export const APPOINTMENT_STATUSES = [
 ] as const;
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
 export const appointmentStatusLabels: Record<AppointmentStatus, string> = {
-  REQUESTED: 'ממתין לאישור',
-  CONFIRMED: 'מאושר',
-  COMPLETED: 'בוצע',
+  REQUESTED: 'ממתינה לאישור',
+  CONFIRMED: 'מאושרת',
+  COMPLETED: 'בוצעה',
   NO_SHOW: 'לא הגיע/ה',
-  CANCELLED: 'בוטל',
+  CANCELLED: 'בוטלה',
 };
 /** Statuses that hold the staff member's time (and so can clash). */
 export const BLOCKING_STATUSES: AppointmentStatus[] = ['REQUESTED', 'CONFIRMED'];
@@ -37,8 +37,8 @@ export const appointmentMessages = {
   serviceInvalid: 'השירות שנבחר אינו קיים',
   staffInvalid: 'אפשר לשבץ רק חבר צוות פעיל בעסק',
   leadInvalid: 'הליד שנבחר אינו קיים',
-  clash: 'יש כבר תור בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.',
-  staffRequired: 'כדי לאשר תור יש לשבץ איש צוות',
+  clash: 'יש כבר פגישה בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.',
+  staffRequired: 'כדי לאשר פגישה יש לשבץ איש צוות',
 } as const;
 
 const duration = z

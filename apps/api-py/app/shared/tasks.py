@@ -71,7 +71,7 @@ def appointment_confirm_due_at(starts_at: datetime, now: datetime, tz: str) -> d
 
 
 def _he_confirm(details: str | None = None) -> str:
-    return f"לאשר את התור: {details}" if details else "לאשר את התור"
+    return f"לאשר את הפגישה: {details}" if details else "לאשר את הפגישה"
 
 
 def _en_confirm(details: str | None = None) -> str:

@@ -434,7 +434,7 @@ export type TemplateKey = z.infer<typeof templateKeySchema>;
 export const templateInfo: Record<TemplateKey, { label: string; description: string }> = {
   beauty: {
     label: 'יופי וטיפוח',
-    description: 'למספרות, קוסמטיקה וסטודיו: שירותים, מחירון, המלצות וקביעת תור.',
+    description: 'למספרות, קוסמטיקה וסטודיו: שירותים, מחירון, המלצות וקביעת פגישה.',
   },
   trades: {
     label: 'בעלי מקצוע ושירות',

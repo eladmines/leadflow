@@ -95,7 +95,7 @@ export function LinkedTasks({
         )
       ) : list.length > 0 ? (
         <ul
-          aria-label={subject.kind === 'quote' ? tr('משימות על ההצעה') : tr('משימות על התור')}
+          aria-label={subject.kind === 'quote' ? tr('משימות על ההצעה') : tr('משימות על הפגישה')}
           className="divide-y divide-surface-border"
         >
           {list.map((t) => (
@@ -106,7 +106,7 @@ export function LinkedTasks({
         <p className="text-sm text-ink-muted">
           {subject.kind === 'quote'
             ? tr('אין משימות על ההצעה הזו.')
-            : tr('אין משימות על התור הזה.')}
+            : tr('אין משימות על הפגישה הזו.')}
         </p>
       )}
     </section>

@@ -13,11 +13,11 @@ from app.shared.business import _phone as validate_phone
 APPOINTMENT_STATUSES = ("REQUESTED", "CONFIRMED", "COMPLETED", "NO_SHOW", "CANCELLED")
 AppointmentStatus = Literal["REQUESTED", "CONFIRMED", "COMPLETED", "NO_SHOW", "CANCELLED"]
 APPOINTMENT_STATUS_LABELS = {
-    "REQUESTED": "ממתין לאישור",
-    "CONFIRMED": "מאושר",
-    "COMPLETED": "בוצע",
+    "REQUESTED": "ממתינה לאישור",
+    "CONFIRMED": "מאושרת",
+    "COMPLETED": "בוצעה",
     "NO_SHOW": "לא הגיע/ה",
-    "CANCELLED": "בוטל",
+    "CANCELLED": "בוטלה",
 }
 BLOCKING_STATUSES = ("REQUESTED", "CONFIRMED")  # statuses that hold the staff member's time
 
@@ -33,8 +33,8 @@ APPOINTMENT_MESSAGES = {
     "serviceInvalid": "השירות שנבחר אינו קיים",
     "staffInvalid": "אפשר לשבץ רק חבר צוות פעיל בעסק",
     "leadInvalid": "הליד שנבחר אינו קיים",
-    "clash": "יש כבר תור בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.",
-    "staffRequired": "כדי לאשר תור יש לשבץ איש צוות",
+    "clash": "יש כבר פגישה בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.",
+    "staffRequired": "כדי לאשר פגישה יש לשבץ איש צוות",
 }
 M = APPOINTMENT_MESSAGES
 _DATETIME = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$")

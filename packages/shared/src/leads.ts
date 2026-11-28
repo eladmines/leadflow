@@ -27,9 +27,9 @@ export const leadMessages = {
   messageTooLong: 'ההודעה ארוכה מדי (עד 1,000 תווים)',
   consentRequired: 'יש לאשר את יצירת הקשר כדי לשלוח',
   formExpired: 'תוקף הטופס פג. רעננו את הדף ונסו שוב.',
-  slotIncomplete: 'לבקשת תור יש לבחור גם תאריך וגם שעה',
-  slotInvalid: 'המועד שנבחר לתור אינו תקין',
-  slotPast: 'אפשר לבקש תור רק למועד עתידי (עד 4 חודשים קדימה)',
+  slotIncomplete: 'לבקשת פגישה יש לבחור גם תאריך וגם שעה',
+  slotInvalid: 'המועד שנבחר לפגישה אינו תקין',
+  slotPast: 'אפשר לבקש פגישה רק למועד עתידי (עד 4 חודשים קדימה)',
 } as const;
 
 const optionalText = (max: number, message: string) =>

@@ -9,7 +9,6 @@ import { Link } from 'react-router-dom';
 import { Button, Card } from '../../components/ui';
 import { AdsGuideDialog } from './AdsGuideDialog';
 import { shekel } from '../leads/api';
-import { CardRefresh } from '../shell/CardRefresh';
 import { SourceBadge } from '../leads/Attribution';
 import { tr } from '../../i18n';
 
@@ -40,7 +39,7 @@ export function CustomerSources({
     return `${businessWebPaths.section(businessId, 'leads')}?${q}`;
   };
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-3 p-4">
       <AdsGuideDialog businessId={businessId} open={guideOpen} onOpenChange={setGuideOpen} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
@@ -59,7 +58,6 @@ export function CustomerSources({
             <Plug aria-hidden className="h-4 w-4" />
             {tr('חיבור המודעות שלכם')}
           </Button>
-          <CardRefresh scope="reports" title={tr('מאיפה מגיעים הלקוחות')} />
         </div>
       </div>
       {report.byAttribution.length === 0 ? (

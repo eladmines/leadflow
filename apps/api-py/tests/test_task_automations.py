@@ -114,11 +114,11 @@ def test_titles_and_constants_match_the_shared_package_byte_for_byte():
     assert f"export const QUOTE_FOLLOW_UP_DAYS = {st.QUOTE_FOLLOW_UP_DAYS};" in src
     assert "quote_followup: (number: number) => `לחזור לגבי הצעה #${number}`," in src
     assert "quote_followup: (number: number) => `Follow up on quote #${number}`," in src
-    assert "details ? `לאשר את התור: ${details}` : 'לאשר את התור'," in src
+    assert "details ? `לאשר את הפגישה: ${details}` : 'לאשר את הפגישה'," in src
     assert "details ? `Confirm the appointment: ${details}` : 'Confirm the appointment'," in src
     assert AUTO_TASK_TITLES["he"]["quote_followup"](12) == "לחזור לגבי הצעה #12"
     assert AUTO_TASK_TITLES["en"]["appointment_confirm"]() == "Confirm the appointment"
-    assert AUTO_TASK_TITLES["he"]["appointment_confirm"]("דנה · תספורת") == "לאשר את התור: דנה · תספורת"
+    assert AUTO_TASK_TITLES["he"]["appointment_confirm"]("דנה · תספורת") == "לאשר את הפגישה: דנה · תספורת"
     assert (
         AUTO_TASK_TITLES["en"]["appointment_confirm"]("Dana · Haircut")
         == "Confirm the appointment: Dana · Haircut"
@@ -557,7 +557,7 @@ async def test_team_booking_creates_a_confirm_task_with_weekend_rules(client, db
         client, t, {"startsAt": at(6, 9), "leadId": lead["id"], "staffId": t["employee"]["user_id"]}
     )
     [task] = await _tasks(db, appointment_id=uuid.UUID(a["id"]))
-    assert task.auto_kind == "appointment_confirm" and task.title == "לאשר את התור" and task.remind is True
+    assert task.auto_kind == "appointment_confirm" and task.title == "לאשר את הפגישה" and task.remind is True
     assert iso(task.due_at) == "2030-01-06T07:00:00.000Z" and task.lead_id == uuid.UUID(lead["id"])
     assert str(task.assignee_id) == t["employee"]["user_id"] and task.created_by_id is None
     # Saturday → Thursday 09:00. Without a lead or staff: the first active owner.
@@ -666,7 +666,7 @@ async def test_customer_bookings_make_one_task_the_notice_is_the_confirm_task(cl
     confirmed = await svc.book_from_whatsapp(bid, cid, lid, None, "תספורת", staff, d(at(8, 9)), 30, True)
     [task] = await _tasks(db, appointment_id=confirmed)
     assert task.auto_kind == "appointment_confirm" and task.title.startswith(
-        "לאשר את התור: רון לוי · תספורת · "
+        "לאשר את הפגישה: רון לוי · תספורת · "
     )
     assert (
         iso(task.due_at) == "2030-01-07T07:00:00.000Z" and task.remind is True and task.assignee_id == staff
@@ -676,7 +676,7 @@ async def test_customer_bookings_make_one_task_the_notice_is_the_confirm_task(cl
     [task] = await _tasks(db, appointment_id=requested)
     assert task.auto_kind == "appointment_confirm" and task.remind is False
     assert abs((task.due_at - datetime.now(UTC)).total_seconds()) < 60
-    assert task.notes == "מחכה לאישור שלכם בעמוד התורים."
+    assert task.notes == "מחכה לאישור שלכם בעמוד הפגישות."
     # Website request and event request: one task each, linked.
     await svc.request_from_website(bid, lid, cid, None, d(at(10, 9)))
     event = await svc.request_event_from_whatsapp(
@@ -684,7 +684,7 @@ async def test_customer_bookings_make_one_task_the_notice_is_the_confirm_task(cl
     )
     [task] = await _tasks(db, appointment_id=event)
     assert task.auto_kind == "appointment_confirm" and task.title.startswith(
-        "לאשר את התור: רון לוי · חתונה · "
+        "לאשר את הפגישה: רון לוי · חתונה · "
     )
     assert len(await _tasks(db, business_id=bid)) == 4
     assert all(tk.appointment_id for tk in await _tasks(db, business_id=bid))
@@ -705,7 +705,7 @@ async def test_customer_bookings_make_one_task_the_notice_is_the_confirm_task(cl
     tasks = await _tasks(db, appointment_id=confirmed)
     by_kind = {tk.auto_kind: tk for tk in tasks}
     assert by_kind["appointment_confirm"].status == models.TaskStatus.DONE
-    assert by_kind[None].title.startswith("תור בוטל: ") and by_kind[None].status == models.TaskStatus.OPEN
+    assert by_kind[None].title.startswith("פגישה בוטלה: ") and by_kind[None].status == models.TaskStatus.OPEN
 
 
 async def test_customer_bookings_with_the_switch_off_keep_the_plain_linked_notice(client, db):
@@ -716,7 +716,7 @@ async def test_customer_bookings_with_the_switch_off_keep_the_plain_linked_notic
         bid, cid, lid, None, "תספורת", staff, d(at(8, 9)), 30, True
     )
     [task] = await _tasks(db, appointment_id=appt)
-    assert task.auto_kind is None and task.title.startswith("תור חדש: רון לוי · ")
+    assert task.auto_kind is None and task.title.startswith("פגישה חדשה: רון לוי · ")
     assert task.remind is False and abs((task.due_at - datetime.now(UTC)).total_seconds()) < 60
     # A plain notice is never closed by the system.
     await AppointmentService(db).cancel_from_whatsapp(bid, appt, cid)

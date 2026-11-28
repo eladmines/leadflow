@@ -90,7 +90,7 @@ describe('task subject (F35, D-213)', () => {
     expect(autoTaskTitles.en.appointment_confirm()).toBe('Confirm the appointment');
     // D-216 (2): the customer's own booking keeps its details in the title.
     expect(autoTaskTitles.he.appointment_confirm('דנה · תספורת')).toBe(
-      'לאשר את התור: דנה · תספורת',
+      'לאשר את הפגישה: דנה · תספורת',
     );
     expect(autoTaskTitles.en.appointment_confirm('Dana · Haircut')).toBe(
       'Confirm the appointment: Dana · Haircut',

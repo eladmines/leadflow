@@ -49,7 +49,7 @@ export function CustomersPage() {
         refresh
         title={tr('לקוחות')}
         description={tr(
-          'מי שקנה מכם (ליד בשלב "נסגר" או הצעת מחיר שאושרה) ומי שקבע תור, גם אם ביטל.',
+          'מי שקנה מכם (ליד בשלב "נסגר" או הצעת מחיר שאושרה) ומי שקבע פגישה, גם אם ביטל.',
         )}
         actions={
           canImport && (
@@ -80,7 +80,7 @@ export function CustomersPage() {
           />
         </div>
       </div>
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-3 p-4">
         {customers.isPending ? (
           <Spinner label={tr('טוענים לקוחות…')} />
         ) : customers.isError ? (
@@ -96,7 +96,7 @@ export function CustomersPage() {
             description={
               q
                 ? tr('נסו שם או מספר אחר.')
-                : tr('כשליד יעבור לשלב "נסגר", יאשר הצעת מחיר או יקבע תור, הוא יופיע כאן.')
+                : tr('כשליד יעבור לשלב "נסגר", יאשר הצעת מחיר או יקבע פגישה, הוא יופיע כאן.')
             }
             action={
               q ? undefined : (
@@ -112,9 +112,12 @@ export function CustomersPage() {
         ) : (
           <>
             <p className="text-sm text-ink-muted">
-              {tr('{0} לקוחות · סך הכול {1}', customers.data.length, shekel.format(total))}
+              {total > 0
+                ? tr('{0} לקוחות · סך הכול {1}', customers.data.length, shekel.format(total))
+                : tr('{0} לקוחות', customers.data.length)}
             </p>
-            <ul className="flex flex-col gap-2">
+            {/* One list with dividers instead of separate boxes (owner, 2026-11-28). */}
+            <ul className="flex flex-col divide-y divide-surface-border overflow-hidden rounded-xl border border-surface-border">
               {customers.data.map((c) => (
                 <CustomerRow key={c.contactId} customer={c} businessId={business.id} />
               ))}
@@ -137,8 +140,8 @@ function summary(c: Customer) {
     c.bookings.length === 0
       ? null
       : c.bookings.length === 1
-        ? tr('תור אחד')
-        : tr('{0} תורים', c.bookings.length),
+        ? tr('פגישה אחת')
+        : tr('{0} פגישות', c.bookings.length),
   ];
   return parts.filter(Boolean).join(' · ');
 }
@@ -151,23 +154,23 @@ function CustomerRow({ customer: c, businessId }: { customer: Customer; business
       ? attributionName(c.attribution)
       : null;
   return (
-    <li className="rounded-2xl border border-surface-border">
+    <li>
       <button
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl p-4 text-start hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+        className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2.5 text-start hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"
       >
         <span
           aria-hidden
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 font-semibold text-amber-800"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-800"
         >
           {c.name.trim().charAt(0)}
         </span>
-        <span className="flex min-w-0 flex-1 flex-col">
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
           <span className="font-medium text-ink">{c.name}</span>
-          <span className="text-sm text-ink-muted">
+          <span className="text-xs text-ink-muted">
             {c.phone ? (
               <bdi dir="ltr">{formatIsraeliPhone(c.phone)}</bdi>
             ) : (
@@ -175,14 +178,13 @@ function CustomerRow({ customer: c, businessId }: { customer: Customer; business
             )}
           </span>
         </span>
-        <SourceBadge source={c.attribution?.source ?? 'unknown'} name={named} />
-        <span className="flex flex-col items-end text-sm">
-          {c.purchases.length > 0 && (
-            <span className="font-semibold tabular-nums text-emerald-700">
-              <bdi>{shekel.format(c.totalValue)}</bdi>
-            </span>
-          )}
-          <span className="text-ink-muted">{summary(c)}</span>
+        {/* Fixed-width columns so rows line up; nothing shown when there's nothing to say. */}
+        <span className="w-32 text-sm text-ink-muted">{summary(c)}</span>
+        <span className="flex w-36 justify-start">
+          {c.attribution && <SourceBadge source={c.attribution.source} name={named} />}
+        </span>
+        <span className="w-20 text-end text-sm font-semibold tabular-nums text-ink">
+          {c.totalValue > 0 && <bdi>{shekel.format(c.totalValue)}</bdi>}
         </span>
         <ChevronDown
           aria-hidden
@@ -213,7 +215,7 @@ function CustomerRow({ customer: c, businessId }: { customer: Customer; business
           )}
           {c.bookings.length > 0 && (
             <ul
-              aria-label={tr('התורים של {0}', c.name)}
+              aria-label={tr('הפגישות של {0}', c.name)}
               className={cn(
                 'flex flex-col',
                 c.purchases.length > 0 && 'border-t border-surface-border',
@@ -233,7 +235,7 @@ function CustomerRow({ customer: c, businessId }: { customer: Customer; business
                     className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm hover:bg-surface-muted"
                   >
                     <span className="text-ink">{formatDateTime(b.startsAt)}</span>
-                    <span className="text-ink-muted">{b.serviceName ?? tr('תור')}</span>
+                    <span className="text-ink-muted">{b.serviceName ?? tr('פגישה')}</span>
                     <span
                       className={cn(
                         'rounded-full px-2 py-0.5 text-xs font-medium',

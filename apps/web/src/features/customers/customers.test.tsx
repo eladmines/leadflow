@@ -92,14 +92,14 @@ describe('customers page (D-163)', () => {
     });
     const { user } = renderApp(page);
     const row = await screen.findByRole('button', { name: /נועה לוי/ });
-    expect(within(row).getByText('2 תורים')).toBeInTheDocument();
+    expect(within(row).getByText('2 פגישות')).toBeInTheDocument();
     // No purchase, so no amount.
     expect(row.textContent).not.toContain(shekel.format(0));
 
     await user.click(row);
-    const bookings = screen.getByRole('list', { name: 'התורים של נועה לוי' });
-    expect(within(bookings).getByText('בוטל')).toBeInTheDocument();
-    expect(within(bookings).getByText('בוצע')).toBeInTheDocument();
+    const bookings = screen.getByRole('list', { name: 'הפגישות של נועה לוי' });
+    expect(within(bookings).getByText('בוטלה')).toBeInTheDocument();
+    expect(within(bookings).getByText('בוצעה')).toBeInTheDocument();
     expect(within(bookings).getByText('תספורת')).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'הרכישות של נועה לוי' })).not.toBeInTheDocument();
   });

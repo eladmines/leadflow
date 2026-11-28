@@ -206,7 +206,7 @@ export function TimeGrid({
                     key={m}
                     type="button"
                     onClick={() => onPick(day, time)}
-                    aria-label={tr('פנוי: קביעת תור ב{0}', label)}
+                    aria-label={tr('פנוי: קביעת פגישה ב{0}', label)}
                     className={cn(
                       base,
                       'group flex items-center justify-center bg-success-50/40 hover:bg-success-50 focus-visible:z-30 focus-visible:bg-success-50',
@@ -304,18 +304,18 @@ export function TimeGridLegend() {
           aria-hidden
           className="h-3 w-3 rounded-sm border border-success-600/30 bg-success-50"
         />
-        {tr('פנוי — לחצו לקביעת תור')}
+        {tr('פנוי — לחצו לקביעת פגישה')}
       </li>
       <li className="flex items-center gap-1.5">
         <span aria-hidden className="h-3 w-3 rounded-sm border border-brand-300 bg-brand-50" />
-        {tr('תור')}
+        {tr('פגישה')}
       </li>
       <li className="flex items-center gap-1.5">
         <span
           aria-hidden
           className="h-3 w-3 rounded-sm border border-warning-600/50 bg-warning-50"
         />
-        {tr('ממתין לאישור')}
+        {tr('ממתינה לאישור')}
       </li>
       <li className="flex items-center gap-1.5">
         <span

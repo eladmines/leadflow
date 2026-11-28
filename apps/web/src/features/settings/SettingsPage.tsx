@@ -373,7 +373,7 @@ export function HoursSection({
   return (
     <Section
       title={tr('שעות פעילות')}
-      description={tr('מופיעות באתר, ומהן נקבעות השעות שמוצעות לתורים.')}
+      description={tr('מופיעות באתר, ומהן נקבעות השעות שמוצעות לפגישות.')}
       icon={Clock}
       tone="bg-amber-500"
       id="settings-hours"

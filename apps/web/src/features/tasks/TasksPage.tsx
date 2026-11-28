@@ -25,7 +25,7 @@ type TypeFilter = (typeof TYPES)[number];
 const typeLabels: Record<TypeFilter, string> = {
   all: tr('כל הסוגים'),
   quote_followup: tr('מעקב אחרי הצעות'),
-  appointment_confirm: tr('אישור תורים'),
+  appointment_confirm: tr('אישור פגישות'),
   manual: tr('ידניות'),
 };
 const ofType = (t: Task, type: TypeFilter) =>

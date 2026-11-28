@@ -755,10 +755,10 @@ class AppointmentService:
         en = business.language == "en"
         when = format_when(starts_at, business.timezone, "en" if en else "he", with_time=kind != "event")
         label = {
-            "booked": "New appointment" if en else "תור חדש",
-            "request": "New appointment request" if en else "בקשה חדשה לתור",
+            "booked": "New appointment" if en else "פגישה חדשה",
+            "request": "New appointment request" if en else "בקשה חדשה לפגישה",
             "event": "New booking request" if en else "הזמנה חדשה",
-            "cancelled": "Appointment cancelled" if en else "תור בוטל",
+            "cancelled": "Appointment cancelled" if en else "פגישה בוטלה",
         }[kind]
         title = " · ".join(x for x in (contact_name, what, when) if x)
         notes = None
@@ -766,7 +766,7 @@ class AppointmentService:
             notes = (
                 "Waiting for your approval on the Appointments page."
                 if en
-                else "מחכה לאישור שלכם בעמוד התורים."
+                else "מחכה לאישור שלכם בעמוד הפגישות."
             )
         now = now_ms()
         full_title = f"{label}: {title}"

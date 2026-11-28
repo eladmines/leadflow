@@ -109,7 +109,7 @@ describe('template picker', () => {
       const preview = cards[0]!.querySelector('iframe')!.getAttribute('srcdoc')!;
       expect(preview).toContain('<html lang="en" dir="ltr">');
       expect(preview).toContain('Book an appointment');
-      expect(preview).not.toContain('לקביעת תור');
+      expect(preview).not.toContain('לקביעת פגישה');
       await user.click(within(cards[0]!).getByRole('button', { name: 'Choose template' }));
       await waitFor(() =>
         expect(callsTo(fetchMock, 'POST', sp.site(testBusiness.id))).toEqual([

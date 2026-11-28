@@ -383,7 +383,7 @@ function WhatsAppRow({ status, canEdit }: { status: ChannelStatus; canEdit: bool
       tone="bg-emerald-500"
       title="WhatsApp"
       description={tr(
-        'הודעות מלקוחות בוואטסאפ יגיעו לתיבת השיחות, ושם גם המענה האוטומטי וקביעת התורים.',
+        'הודעות מלקוחות בוואטסאפ יגיעו לתיבת השיחות, ושם גם המענה האוטומטי וקביעת הפגישות.',
       )}
       state={stateOf(status)}
       detail={detailOf(status)}

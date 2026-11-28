@@ -11,7 +11,6 @@ import { NoPermission } from '../shell/NoPermission';
 import { PageHeader } from '../shell/PageHeader';
 import { durationLabel, shortDate, useReportSummary } from './api';
 import { BehaviorCard } from './BehaviorCard';
-import { CardRefresh } from '../shell/CardRefresh';
 import { CustomerSources } from './CustomerSources';
 import { HBars } from './HBars';
 import { LeadSourceIcon } from '../leads/SourceIcon';
@@ -77,7 +76,7 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
   const decided = r.byStage.filter((s) => s.kind !== 'OPEN').reduce((a, s) => a + s.count, 0);
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         <StatTile
           icon={Eye}
           tone="bg-rose-500"
@@ -131,13 +130,15 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
           }
         />
       </div>
-      <LeadsOverTime series={r.series} />
-      <LeadsByHour byHour={r.byHour} />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col gap-4">
+      {/* Side by side on wide screens, shorter (owner, 2026-11-28: less empty space). */}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <LeadsOverTime series={r.series} />
+        <LeadsByHour byHour={r.byHour} />
+      </div>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Card className="flex flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-lg font-semibold text-ink">{tr('פניות לפי שלב')}</h2>
-            <CardRefresh scope="reports" title={tr('פניות לפי שלב')} />
           </div>
           <HBars
             label={tr('פניות לפי שלב')}
@@ -149,10 +150,9 @@ function ReportBody({ r, businessId }: { r: ReportSummary; businessId: string })
             }))}
           />
         </Card>
-        <Card className="flex flex-col gap-4">
+        <Card className="flex flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-lg font-semibold text-ink">{tr('מאיפה הגיעו הפניות')}</h2>
-            <CardRefresh scope="reports" title={tr('מאיפה הגיעו הפניות')} />
           </div>
           <HBars
             label={tr('פניות לפי מקור')}
@@ -186,23 +186,20 @@ function StatTile({
   tone: string;
 }) {
   return (
-    <Card className="flex flex-col gap-1">
-      <span className="flex items-center gap-2 text-sm text-ink-muted">
-        <span
-          aria-hidden
-          className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm',
-            tone,
-          )}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-        {label}
-      </span>
-      <span className="text-2xl font-semibold tabular-nums text-ink sm:text-3xl">
+    // Compact (owner, 2026-11-28): the icon is a faint picture in the corner, not a coloured box.
+    <Card className="relative flex flex-col gap-0.5 overflow-hidden p-4">
+      <Icon
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute end-3 top-1/2 h-14 w-14 -translate-y-1/2 opacity-10',
+          tone.replace(/\bbg-/g, 'text-'),
+        )}
+      />
+      <span className="text-sm text-ink-muted">{label}</span>
+      <span className="text-2xl font-semibold leading-tight tabular-nums text-ink">
         <bdi>{value}</bdi>
       </span>
-      <span className="text-xs text-ink-muted">{note}</span>
+      <span className="relative text-xs text-ink-muted">{note}</span>
     </Card>
   );
 }
@@ -213,10 +210,18 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
   const max = Math.max(1, ...series.points.map((p) => p.count));
   const dateLabel = (d: string) =>
     series.unit === 'week' ? tr('שבוע מ־{0}', shortDate(d)) : shortDate(d);
-  const tickEvery = Math.ceil(series.points.length / 8);
+  // Axis labels (owner, 2026-11-28): every day for a week; each Sunday for a month; the 1st
+  // and 15th for longer ranges. Each column still says its own date on hover/focus.
+  const n = series.points.length;
+  const showTick = (date: string, i: number) => {
+    if (n <= 8) return true;
+    const d = new Date(`${date.slice(0, 10)}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return i % Math.ceil(n / 8) === 0;
+    return n <= 31 ? d.getDay() === 0 : d.getDate() === 1 || d.getDate() === 15;
+  };
 
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-ink">
           {tr('פניות לאורך זמן')}{' '}
@@ -232,7 +237,6 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
           >
             {asTable ? tr('הצגה כגרף') : tr('הצגה כטבלה')}
           </button>
-          <CardRefresh scope="reports" title={tr('פניות לאורך זמן')} />
         </div>
       </div>
       {asTable ? (
@@ -261,7 +265,7 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
           <div
             role="list"
             aria-label={tr('פניות לאורך זמן')}
-            className="flex h-44 items-end gap-0.5 border-b border-chart-grid"
+            className="flex h-32 items-end gap-0.5 border-b border-chart-grid"
           >
             {series.points.map((p) => (
               <div
@@ -287,7 +291,7 @@ function LeadsOverTime({ series }: { series: ReportSummary['series'] }) {
           <div aria-hidden className="mt-1 flex gap-0.5 text-[11px] text-ink-muted">
             {series.points.map((p, i) => (
               <span key={p.date} className="flex-1 text-center">
-                {i % tickEvery === 0 ? shortDate(p.date) : ''}
+                {showTick(p.date, i) ? shortDate(p.date) : ''}
               </span>
             ))}
           </div>
@@ -308,13 +312,12 @@ function LeadsByHour({ byHour }: { byHour: number[] }) {
   const night = byHour.reduce((a, c, h) => (h >= 18 || h < 9 ? a + c : a), 0);
   const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-lg font-semibold text-ink">
           {tr('פניות לפי שעה')}{' '}
           <span className="text-sm font-normal text-ink-muted">{tr('בשעון העסק')}</span>
         </h2>
-        <CardRefresh scope="reports" title={tr('פניות לפי שעה')} />
       </div>
       {total === 0 ? (
         <p className="text-sm text-ink-muted">{tr('עדיין אין פניות בתקופה הזו')}</p>
@@ -323,7 +326,7 @@ function LeadsByHour({ byHour }: { byHour: number[] }) {
           <div
             role="list"
             aria-label={tr('פניות לפי שעה')}
-            className="flex h-36 items-end gap-0.5 border-b border-chart-grid"
+            className="flex h-32 items-end gap-0.5 border-b border-chart-grid"
           >
             {byHour.map((count, h) => (
               <div

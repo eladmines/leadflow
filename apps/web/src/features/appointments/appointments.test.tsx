@@ -103,7 +103,7 @@ describe('appointments page', () => {
     const at = (h: number, m = 0) =>
       new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), h, m);
     const slot = (time: string) =>
-      screen.queryByRole('button', { name: new RegExp(`^פנוי: קביעת תור ב.* ${time}$`) });
+      screen.queryByRole('button', { name: new RegExp(`^פנוי: קביעת פגישה ב.* ${time}$`) });
 
     it('marks open, untaken times as free and books one with its time filled in', async () => {
       mockApi({
@@ -126,7 +126,7 @@ describe('appointments page', () => {
       expect(slot('18:00')).not.toBeInTheDocument();
 
       await user.click(slot('11:00')!);
-      const dialog = await screen.findByRole('dialog', { name: 'תור חדש' });
+      const dialog = await screen.findByRole('dialog', { name: 'פגישה חדשה' });
       expect(within(dialog).getByLabelText('תאריך')).toHaveValue(ymd);
       expect(within(dialog).getByLabelText('שעה')).toHaveValue('11:00');
     });
@@ -154,13 +154,13 @@ describe('appointments page', () => {
       [`POST ${ap.list(id)}`]: () => json(201, { appointment: appt() }),
     });
     const { user } = renderApp(page);
-    await user.click(await screen.findByRole('button', { name: 'תור חדש' }));
-    const dialog = await screen.findByRole('dialog', { name: 'תור חדש' });
+    await user.click(await screen.findByRole('button', { name: 'פגישה חדשה' }));
+    const dialog = await screen.findByRole('dialog', { name: 'פגישה חדשה' });
     await user.type(within(dialog).getByLabelText('שם הלקוח'), 'רון לוי');
     await user.type(within(dialog).getByLabelText('טלפון'), '052-1112233');
     await choose(user, within(dialog).getByLabelText('שירות'), /תספורת/);
     expect(within(dialog).getByLabelText('משך (דק׳)')).toHaveValue('45');
-    await user.click(within(dialog).getByRole('button', { name: 'קביעת התור' }));
+    await user.click(within(dialog).getByRole('button', { name: 'קביעת הפגישה' }));
     await waitFor(() => expect(callsTo(fetchMock, 'POST', ap.list(id))).toHaveLength(1));
     expect(callsTo(fetchMock, 'POST', ap.list(id))[0]).toMatchObject({
       durationMin: 45,
@@ -178,16 +178,16 @@ describe('appointments page', () => {
         apiError(
           409,
           'CONFLICT',
-          'יש כבר תור בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.',
+          'יש כבר פגישה בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.',
         ),
     });
     const { user } = renderApp(page);
-    await user.click(await screen.findByRole('button', { name: 'תור חדש' }));
-    const dialog = await screen.findByRole('dialog', { name: 'תור חדש' });
+    await user.click(await screen.findByRole('button', { name: 'פגישה חדשה' }));
+    const dialog = await screen.findByRole('dialog', { name: 'פגישה חדשה' });
     await user.type(within(dialog).getByLabelText('שם הלקוח'), 'רון לוי');
     await user.type(within(dialog).getByLabelText('טלפון'), '052-1112233');
-    await user.click(within(dialog).getByRole('button', { name: 'קביעת התור' }));
-    expect(await within(dialog).findByText(/יש כבר תור בזמן הזה/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'קביעת הפגישה' }));
+    expect(await within(dialog).findByText(/יש כבר פגישה בזמן הזה/)).toBeInTheDocument();
   });
 
   it('pending website requests are listed and can be confirmed', async () => {
@@ -209,7 +209,7 @@ describe('appointments page', () => {
     const dialog = await screen.findByRole('dialog', { name: 'רון לוי' });
     expect(within(dialog).getByText(/בקשה מהאתר/)).toBeInTheDocument();
     await choose(user, within(dialog).getByLabelText('איש צוות'), 'דנה כהן');
-    await user.click(within(dialog).getByRole('button', { name: 'אישור התור' }));
+    await user.click(within(dialog).getByRole('button', { name: 'אישור הפגישה' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PATCH', ap.appointment(id, request.id))).toEqual([
         { status: 'CONFIRMED', staffId: testUser.id },

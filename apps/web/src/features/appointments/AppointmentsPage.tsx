@@ -202,12 +202,12 @@ export function AppointmentsPage() {
           inPanel
           refresh
           title={tr('יומן')}
-          description={tr('היומן של העסק: תורים, בקשות מהאתר ושירותים.')}
+          description={tr('היומן של העסק: פגישות, בקשות מהאתר ושירותים.')}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Button onClick={() => setNewOpen(true)}>
                 <Plus aria-hidden className="h-4 w-4" />
-                {tr('תור חדש')}
+                {tr('פגישה חדשה')}
               </Button>
               {manager && (
                 <Button
@@ -333,11 +333,11 @@ export function AppointmentsPage() {
         <EmptyState
           icon={CalendarDays}
           tone="bg-rose-500"
-          title={tr('אין תורים בתקופה הזו')}
+          title={tr('אין פגישות בתקופה הזו')}
           description={
             manager
-              ? tr('כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע תור ראשון.')
-              : tr('כשייקבעו לך תורים, הם יופיעו כאן.')
+              ? tr('כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע פגישה ראשונה.')
+              : tr('כשייקבעו לך פגישות, הן יופיעו כאן.')
           }
         />
       )}

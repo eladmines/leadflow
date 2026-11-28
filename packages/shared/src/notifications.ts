@@ -73,7 +73,7 @@ export function notificationText(n: Pick<Notification, 'type' | 'data'>): {
                   ? 'ליד חדש ממייל'
                   : 'ליד חדש מהאתר',
         body: str(d.appointment)
-          ? `${str(d.name)} · בקשה לתור: ${str(d.appointment)}`
+          ? `${str(d.name)} · בקשה לפגישה: ${str(d.appointment)}`
           : str(d.name),
       };
     case 'whatsapp.message':
@@ -90,11 +90,11 @@ export function notificationText(n: Pick<Notification, 'type' | 'data'>): {
       };
     case 'appointment.booked':
       return {
-        title: d.pending ? 'בקשה לתור מוואטסאפ' : 'תור חדש מוואטסאפ',
+        title: d.pending ? 'בקשה לפגישה מוואטסאפ' : 'פגישה חדשה מוואטסאפ',
         body: `${str(d.name)} · ${str(d.when)}`,
       };
     case 'appointment.cancelled':
-      return { title: 'לקוח ביטל תור בוואטסאפ', body: `${str(d.name)} · ${str(d.when)}` };
+      return { title: 'לקוח ביטל פגישה בוואטסאפ', body: `${str(d.name)} · ${str(d.when)}` };
     case 'quote.accepted':
       return { title: 'הצעת מחיר אושרה', body: `${str(d.name)} · הצעה מס׳ ${str(d.number)}` };
     case 'quote.rejected':

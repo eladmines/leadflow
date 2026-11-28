@@ -61,7 +61,10 @@ function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): Si
       theme: { palette: 'rose', font: 'rubik', logoAssetId: null },
       seo: {
         title: b.name.slice(0, 70),
-        description: `${b.name} — טיפולים מקצועיים באווירה נעימה. קבעו תור עוד היום.`.slice(0, 160),
+        description: `${b.name} — טיפולים מקצועיים באווירה נעימה. קבעו פגישה עוד היום.`.slice(
+          0,
+          160,
+        ),
       },
       sections: [
         {
@@ -70,7 +73,7 @@ function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): Si
           visible: true,
           title: b.name,
           subtitle: 'טיפולים מקצועיים באווירה אישית ונעימה. נשמח לראות אותך!',
-          buttonLabel: 'לקביעת תור',
+          buttonLabel: 'לקביעת פגישה',
           buttonAction: b.phone ? 'call' : 'contact',
           imageAssetId: null,
         },
@@ -113,7 +116,7 @@ function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): Si
           title: 'מה הלקוחות מספרים',
           items: [
             { quote: 'שירות מדהים ותוצאה בדיוק כמו שרציתי. ממליצה בחום!', author: 'מיכל' },
-            { quote: 'מקצועיות, סבלנות ואווירה נעימה. כבר קבעתי תור הבא.', author: 'נועה' },
+            { quote: 'מקצועיות, סבלנות ואווירה נעימה. כבר קבעתי את הפגישה הבאה.', author: 'נועה' },
           ],
         },
         {
@@ -123,8 +126,8 @@ function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): Si
           title: 'שאלות נפוצות',
           items: [
             {
-              question: 'צריך לקבוע תור מראש?',
-              answer: 'מומלץ לקבוע תור מראש. נשתדל לקבל גם ללא תור לפי הזמינות.',
+              question: 'צריך לקבוע פגישה מראש?',
+              answer: 'מומלץ לקבוע פגישה מראש. נשתדל לקבל גם ללא פגישה קבועה לפי הזמינות.',
             },
             { question: 'יש חניה בקרבת מקום?', answer: 'כן, יש חניה ציבורית במרחק הליכה קצר.' },
           ],
@@ -134,7 +137,7 @@ function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): Si
           type: 'contact',
           visible: true,
           title: 'יצירת קשר',
-          subtitle: 'נשמח לענות על כל שאלה ולתאם תור.',
+          subtitle: 'נשמח לענות על כל שאלה ולתאם פגישה.',
           showPhone: true,
           showAddress: true,
           showHours: true,
@@ -220,7 +223,7 @@ function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): Si
           title: 'שאלות נפוצות',
           items: [
             {
-              question: 'צריך לקבוע תור מראש?',
+              question: 'צריך לקבוע פגישה מראש?',
               answer: 'מומלץ לתאם מראש כדי שנוכל להתחיל לעבוד על הרכב מיד כשתגיעו.',
             },
             {
@@ -234,7 +237,7 @@ function buildTemplateDraftHe(templateKey: TemplateKey, b: SiteBusinessInfo): Si
           type: 'cta',
           visible: true,
           title: 'הרכב צריך טיפול?',
-          subtitle: 'התקשרו ונמצא לכם תור קרוב.',
+          subtitle: 'התקשרו ונמצא לכם פגישה קרובה.',
           buttonLabel: 'דברו איתנו',
         },
         {

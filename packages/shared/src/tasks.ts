@@ -19,7 +19,7 @@ export const taskStatusSchema = z.enum(TASK_STATUSES);
  * closed automatically; a person's task (`autoKind: null`) never is.
  * - `quote_followup`: "לחזור לגבי הצעה #N", created when a quote is sent, closed when it is
  *   accepted or rejected.
- * - `appointment_confirm`: "לאשר את התור", created when an appointment is booked (for a customer's
+ * - `appointment_confirm`: "לאשר את הפגישה", created when an appointment is booked (for a customer's
  *   own booking, D-216, the D-152 notice task is this task), closed when it is cancelled, completed
  *   or marked no-show (D-214, D-216).
  */
@@ -36,9 +36,9 @@ export const taskMessages = {
   leadInvalid: 'הליד שנבחר אינו קיים',
   /** F35 (D-213). */
   quoteInvalid: 'ההצעה שנבחרה אינה קיימת',
-  appointmentInvalid: 'התור שנבחר אינו קיים',
-  subjectBoth: 'אפשר לקשר משימה להצעה או לתור, לא לשניהם',
-  subjectOtherLead: 'ההצעה או התור שייכים לליד אחר. בטלו את הקישור או בחרו את הליד שלהם.',
+  appointmentInvalid: 'הפגישה שנבחרה אינה קיימת',
+  subjectBoth: 'אפשר לקשר משימה להצעה או לפגישה, לא לשניהם',
+  subjectOtherLead: 'ההצעה או הפגישה שייכות לליד אחר. בטלו את הקישור או בחרו את הליד שלהם.',
 } as const;
 
 const title = z
@@ -118,7 +118,7 @@ export const taskListQuerySchema = z.object({
 export type TaskListQuery = z.input<typeof taskListQuerySchema>;
 
 /**
- * F35: what a task is about, for display ("על הצעה #12" / "על התור ב-…"). The web formats the label:
+ * F35: what a task is about, for display ("על הצעה #12" / "על הפגישה ב-…"). The web formats the label:
  * the quote's number, or the appointment's start in the business's time zone. Shown even when the
  * member can't open the quote/appointment itself (the link then 404s like any hidden record).
  */
@@ -174,7 +174,7 @@ export type TaskListResponse = z.infer<typeof taskListResponseSchema>;
 export const taskAutomationsSchema = z.object({
   /** Quote sent → "לחזור לגבי הצעה #N". */
   quoteFollowUp: z.boolean(),
-  /** Appointment booked → "לאשר את התור". */
+  /** Appointment booked → "לאשר את הפגישה". */
   appointmentConfirm: z.boolean(),
 });
 export type TaskAutomations = z.infer<typeof taskAutomationsSchema>;
@@ -240,13 +240,13 @@ export function appointmentConfirmDueAt(startsAt: Date, now: Date, timeZone: str
  * Titles of automatic tasks, in the business's language (D-142: like the other system tasks,
  * D-152). Stored on the task, so a person can rename it. D-216 (2): a customer's own booking (the
  * D-152 notice) becomes the confirm task, titled with its details:
- * `appointment_confirm('דנה · תספורת · יום ב׳ 2.12 10:00')` → "לאשר את התור: דנה · תספורת · …".
+ * `appointment_confirm('דנה · תספורת · יום ב׳ 2.12 10:00')` → "לאשר את הפגישה: דנה · תספורת · …".
  */
 export const autoTaskTitles = {
   he: {
     quote_followup: (number: number) => `לחזור לגבי הצעה #${number}`,
     appointment_confirm: (details?: string) =>
-      details ? `לאשר את התור: ${details}` : 'לאשר את התור',
+      details ? `לאשר את הפגישה: ${details}` : 'לאשר את הפגישה',
   },
   en: {
     quote_followup: (number: number) => `Follow up on quote #${number}`,

@@ -42,7 +42,7 @@ async def notify_team_by_email(
     en = language == "en"
     message = data.message
     if requested:
-        label = "Appointment request" if en else "בקשה לתור"
+        label = "Appointment request" if en else "בקשה לפגישה"
         message = f"{label}: {requested}" + (f"\n\n{data.message}" if data.message else "")
     mail = new_lead_template(
         business_name=business_name,

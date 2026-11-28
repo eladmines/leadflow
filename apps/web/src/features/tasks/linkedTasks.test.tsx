@@ -128,7 +128,7 @@ describe('task rows show their subject and the automatic badge', () => {
               autoKind: 'quote_followup',
             }),
             task({
-              title: 'לאשר את התור',
+              title: 'לאשר את הפגישה',
               dueAt: hours(3),
               // 08:00 UTC = 10:00 in Israel (winter).
               subject: {
@@ -149,7 +149,7 @@ describe('task rows show their subject and the automatic badge', () => {
       `${businessWebPaths.section(id, 'quotes')}/${quoteId}`,
     );
     expect(quoteLink).toHaveTextContent('הצעה #12');
-    const apptLink = screen.getByRole('link', { name: 'על התור ב־12/02 10:00, בוטל' });
+    const apptLink = screen.getByRole('link', { name: 'על הפגישה ב־12/02 10:00, בוטלה' });
     expect(apptLink.getAttribute('href')).toBe(
       `${businessWebPaths.section(id, 'appointments')}?view=day&date=${toDateInput(new Date('2030-02-12T08:00:00.000Z'))}&appointment=${apptId}`,
     );
@@ -168,7 +168,7 @@ describe('task rows show their subject and the automatic badge', () => {
         json(200, {
           tasks: [
             task({ title: 'מעקב הצעה', autoKind: 'quote_followup' }),
-            task({ title: 'משימת אישור תור', autoKind: 'appointment_confirm' }),
+            task({ title: 'משימת אישור פגישה', autoKind: 'appointment_confirm' }),
             task({ title: 'ידנית' }),
           ],
         }),
@@ -180,12 +180,12 @@ describe('task rows show their subject and the automatic badge', () => {
     expect(location()).toBe(`${tasksPage}?type=quote_followup`);
     expect(screen.getByText('מעקב הצעה')).toBeInTheDocument();
     expect(screen.queryByText('ידנית')).not.toBeInTheDocument();
-    await choose(user, filter, 'אישור תורים');
-    expect(screen.getByText('משימת אישור תור')).toBeInTheDocument();
+    await choose(user, filter, 'אישור פגישות');
+    expect(screen.getByText('משימת אישור פגישה')).toBeInTheDocument();
     expect(screen.queryByText('מעקב הצעה')).not.toBeInTheDocument();
     await choose(user, filter, 'ידניות');
     expect(screen.getByText('ידנית')).toBeInTheDocument();
-    expect(screen.queryByText('משימת אישור תור')).not.toBeInTheDocument();
+    expect(screen.queryByText('משימת אישור פגישה')).not.toBeInTheDocument();
   });
 
   it('a type with no open tasks says so', async () => {
@@ -226,8 +226,8 @@ describe('linking a task to a quote or an appointment', () => {
     await waitFor(() => expect(picker).toBeEnabled());
     // One choice: picking the appointment replaces the quote.
     await choose(user, picker, /^הצעה #12/);
-    await choose(user, picker, /^תור 12\/02/);
-    expect(picker).toHaveTextContent(/תור 12\/02/);
+    await choose(user, picker, /^פגישה 12\/02/);
+    expect(picker).toHaveTextContent(/פגישה 12\/02/);
     await user.click(within(form).getByRole('button', { name: 'הוספה' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'POST', tp.list(id))[0]).toMatchObject({
@@ -281,7 +281,7 @@ describe('linking a task to a quote or an appointment', () => {
     const dialog = await screen.findByRole('dialog', { name: 'עריכת משימה' });
     const picker = within(dialog).getByLabelText('קשור ל…');
     await waitFor(() => expect(picker).toHaveTextContent(/הצעה #12/));
-    await choose(user, picker, /^תור 12\/02/);
+    await choose(user, picker, /^פגישה 12\/02/);
     await user.click(within(dialog).getByRole('button', { name: 'שמירה' }));
     await waitFor(() =>
       expect(callsTo(fetchMock, 'PATCH', tp.task(id, linked.id))[0]).toMatchObject({
@@ -374,7 +374,7 @@ describe('the quote and the appointment list their tasks', () => {
       [meKey]: me(testUser),
       [`GET ${apiPaths.appointments.list(id)}`]: () => json(200, { appointments: [appt()] }),
       [`GET ${tp.list(id)}`]: () =>
-        json(200, { tasks: [task({ title: 'לאשר את התור', autoKind: 'appointment_confirm' })] }),
+        json(200, { tasks: [task({ title: 'לאשר את הפגישה', autoKind: 'appointment_confirm' })] }),
       [`PATCH ${apiPaths.appointments.appointment(id, apptId)}`]: () =>
         json(200, { appointment: appt({ status: 'CANCELLED' }) }),
       [`GET ${apiPaths.businesses.members(id)}`]: () => json(200, { members: [] }),
@@ -384,13 +384,13 @@ describe('the quote and the appointment list their tasks', () => {
       `${businessWebPaths.section(id, 'appointments')}?view=day&date=${date}&appointment=${apptId}`,
     );
     const dialog = await screen.findByRole('dialog', { name: 'רון לוי' });
-    const list = await within(dialog).findByRole('list', { name: 'משימות על התור' });
-    expect(within(list).getByText('לאשר את התור')).toBeInTheDocument();
+    const list = await within(dialog).findByRole('list', { name: 'משימות על הפגישה' });
+    expect(within(list).getByText('לאשר את הפגישה')).toBeInTheDocument();
     const taskCalls = () =>
       fetchMock.mock.calls.filter(([u]) => String(u) === `${tp.list(id)}?appointmentId=${apptId}`)
         .length;
     const before = taskCalls();
-    await user.click(within(dialog).getByRole('button', { name: 'ביטול התור' }));
+    await user.click(within(dialog).getByRole('button', { name: 'ביטול הפגישה' }));
     await waitFor(() =>
       expect(
         callsTo(fetchMock, 'PATCH', apiPaths.appointments.appointment(id, apptId)),
@@ -433,7 +433,7 @@ describe('automatic tasks switches (Automations page)', () => {
     mockApi({ [meKey]: me(testUser), ...asRole('MANAGER') });
     renderApp(businessWebPaths.section(id, 'automations'));
     const card = await screen.findByRole('region', { name: 'משימות אוטומטיות' });
-    expect(await within(card).findByRole('switch', { name: 'משימת אישור תור' })).toBeEnabled();
+    expect(await within(card).findByRole('switch', { name: 'משימת אישור פגישה' })).toBeEnabled();
   });
 
   it('an employee sees them read-only, with the reason', async () => {
@@ -445,7 +445,7 @@ describe('automatic tasks switches (Automations page)', () => {
     });
     renderApp(businessWebPaths.section(id, 'automations'));
     const card = await screen.findByRole('region', { name: 'משימות אוטומטיות' });
-    for (const name of ['משימת מעקב אחרי הצעה', 'משימת אישור תור']) {
+    for (const name of ['משימת מעקב אחרי הצעה', 'משימת אישור פגישה']) {
       expect(await within(card).findByRole('switch', { name })).toBeDisabled();
     }
     expect(

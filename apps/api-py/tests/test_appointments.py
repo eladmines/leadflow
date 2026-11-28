@@ -103,7 +103,7 @@ async def test_double_booking_a_staff_member_is_prevented_back_to_back_and_other
     clash = await book(
         client, t["id"], tok, {"startsAt": at(10, 30), "durationMin": 30, "staffId": emp, "customer": c}
     )
-    assert clash.status_code == 409 and "יש כבר תור" in clash.json()["error"]["message"]
+    assert clash.status_code == 409 and "יש כבר פגישה" in clash.json()["error"]["message"]
     assert (
         await book(client, t["id"], tok, {"startsAt": at(11), "staffId": emp, "customer": c})
     ).status_code == 201
@@ -340,8 +340,8 @@ async def test_a_website_request_is_held_without_staff_and_makes_a_task_for_the_
     task = (await db.execute(select(models.Task))).scalar_one()
     assert str(task.assignee_id) == t["owner"]["user_id"] and task.remind is False
     # D-216 (2): the notice is the appointment's confirm task (REQUESTED: due now, no reminder).
-    assert task.title.startswith("לאשר את התור: רון · תספורת · ")
-    assert task.notes == "מחכה לאישור שלכם בעמוד התורים."
+    assert task.title.startswith("לאשר את הפגישה: רון · תספורת · ")
+    assert task.notes == "מחכה לאישור שלכם בעמוד הפגישות."
     assert task.auto_kind == "appointment_confirm" and task.appointment_id is not None
     detail = (
         await req(client, "GET", business_url(t["id"], f"/leads/{lead['id']}"), t["owner"]["token"])
@@ -382,7 +382,7 @@ async def test_the_whatsapp_booking_paths_hold_time_and_conflicts_are_reported(c
     done = await svc.cancel_from_whatsapp(bus, appt_id, other)
     assert done == {"leadId": lid, "staffId": staff}
     titles = [r[0] for r in await db.execute(select(models.Task.title))]
-    assert any(x.startswith("תור בוטל: רון") for x in titles)
+    assert any(x.startswith("פגישה בוטלה: רון") for x in titles)
     again = await svc.book_from_whatsapp(bus, cid, lid, None, None, staff, starts, 30, confirmed=False)
     assert again
 

@@ -1,6 +1,6 @@
 /** English copy, keyed by the Hebrew source text (D-100). Part 3: site editor, tasks, team, tours, WhatsApp. */
 export const enPart3: Record<string, string> = {
-  'בקשת תור: שירות, תאריך ושעה (מגיע לאישור ביומן)':
+  'בקשת פגישה: שירות, תאריך ושעה (מגיעה לאישור ביומן)':
     'Appointment request: service, date and time (arrives for approval in the calendar)',
   'טקסט כפתור השליחה': 'Submit button text',
   'הודעה אחרי שליחה': 'Message after sending',
@@ -228,7 +228,7 @@ export const enPart3: Record<string, string> = {
     'New numbers that wrote on WhatsApp wait here. "Business" creates a lead, "Personal" keeps them out.',
   'תזכורות למעקב, למשל מתי לחזור ללקוח. מקבלים מייל כשמגיע הזמן.':
     "Follow-up reminders, like when to get back to a customer. You get an email when it's time.",
-  'היומן, ובקשות לתור שהגיעו מהאתר ומחכות לאישור.':
+  'היומן, ובקשות לפגישה שהגיעו מהאתר ומחכות לאישור.':
     'The appointment calendar, and website requests waiting for approval.',
   'הצעת מחיר מסודרת מתוך ליד, שליחה בקישור או בוואטסאפ, והלקוח מאשר אונליין.':
     'A proper quote from a lead, sent by link or WhatsApp, accepted online by the customer.',
@@ -272,7 +272,7 @@ export const enPart3: Record<string, string> = {
   'בלוח רואים את הלידים לפי שלב וגוררים ביניהם. ברשימה רואים יותר פרטים על כל ליד.':
     'The board shows leads by stage, and you drag between them. The list shows more detail on each lead.',
   הלידים: 'The leads',
-  'לחיצה על שם פותחת את הליד: פרטים, הערות, משימות, תורים, הצעות מחיר ושיחת וואטסאפ.':
+  'לחיצה על שם פותחת את הליד: פרטים, הערות, משימות, פגישות, הצעות מחיר ושיחת וואטסאפ.':
     'Click a name to open the lead: details, notes, tasks, appointments, quotes and the WhatsApp conversation.',
   'כרטיס הליד': 'The lead',
   'שיחת וואטסאפ': 'WhatsApp conversation',
@@ -283,7 +283,7 @@ export const enPart3: Record<string, string> = {
   פרטי: 'Personal',
   'מספרים פרטיים': 'Personal numbers',
   הרשימה: 'The list',
-  'קובעים תור ללקוח: שירות, איש צוות ושעה. המערכת לא תאפשר שני תורים באותה שעה.':
+  'קובעים פגישה ללקוח: שירות, איש צוות ושעה. המערכת לא תאפשר שתי פגישות באותה שעה.':
     "Book a customer: service, staff member and time. SimpleCatch won't allow two appointments at the same time.",
   'יום או שבוע': 'Day or week',
   'בוחרים איך לראות את היומן, ועוברים בין ימים או שבועות בחיצים.':
@@ -347,19 +347,19 @@ export const enPart3: Record<string, string> = {
     'New messages arrive on their own every few seconds. This button fetches them right away.',
   'החדשות למעלה. נקודה ירוקה: וואטסאפ, כחולה: פייסבוק. כל פונה חדש נכנס כליד. "לא נקראו" מסנן את הרשימה.':
     'Newest first. Green dot: WhatsApp, blue: Facebook. Every new sender becomes a lead. "Unread" filters the list.',
-  'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע תור בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שלא מבינים אותו פעמיים, עובר אליכם מיד. לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
+  'עונה ללקוחות בוואטסאפ גם כשאתם עסוקים: מציע שעות פנויות מהיומן וקובע פגישה בלחיצה, או בעסקי אירועים אוסף את פרטי האירוע. לקוח שמבקש לדבר איתכם, או שלא מבינים אותו פעמיים, עובר אליכם מיד. לא עונה למספרים פרטיים, ושותק ברגע שמישהו מהצוות כותב בשיחה.':
     "Answers customers on WhatsApp even when you're busy: offers free times from your calendar and books in a tap, or for event businesses collects the event details. A customer who asks to talk to you, or isn't understood twice, is passed to you at once. It never answers personal numbers, and goes quiet as soon as a team member writes in the chat.",
-  'אישור התורים': 'Confirming bookings',
+  'אישור הפגישות': 'Confirming bookings',
   'ההודעות ללקוחות': 'Messages to customers',
-  'פתחו כדי לכתוב את ההודעות במילים שלכם. שם העסק נכתב כמו שהוא, והשירות ומועד התור מתמלאים לבד לפי מה שהלקוח בחר. מתחת לכל הודעה רואים בדיוק מה הלקוח יקבל. "ברירת מחדל" מחזיר את הנוסח המקורי.':
+  'פתחו כדי לכתוב את ההודעות במילים שלכם. שם העסק נכתב כמו שהוא, והשירות ומועד הפגישה מתמלאים לבד לפי מה שהלקוח בחר. מתחת לכל הודעה רואים בדיוק מה הלקוח יקבל. "ברירת מחדל" מחזיר את הנוסח המקורי.':
     'Open this to write the messages in your own words. The business name is written as it is, and the service and the time fill in by themselves from what the customer chose. Under each message you see exactly what the customer gets. "Default" restores the original wording.',
-  'כל עמודה היא יום וכל שורה חצי שעה. תור מופיע כבלוק בגודל הזמן שהוא תופס; לחיצה עליו פותחת אותו לשינוי, לשיבוץ איש צוות או לביטול.':
+  'כל עמודה היא יום וכל שורה חצי שעה. פגישה מופיעה כבלוק בגודל הזמן שהיא תופסת; לחיצה עליה פותחת אותה לשינוי, לשיבוץ איש צוות או לביטול.':
     'Each column is a day and each row half an hour. An appointment shows as a block the size of the time it takes; click it to change it, assign a staff member or cancel.',
   'שעה פנויה': 'A free time',
-  'השעות הירוקות פנויות. לחיצה על שעה פנויה פותחת תור חדש עם התאריך והשעה כבר ממולאים.':
+  'השעות הירוקות פנויות. לחיצה על שעה פנויה פותחת פגישה חדשה עם התאריך והשעה כבר ממולאים.':
     'Green times are free. Clicking a free time opens a new appointment with the date and time already filled in.',
   'מה כל צבע אומר': 'What the colours mean',
-  'ירוק: פנוי. מקווקו: מחוץ לשעות הפעילות. הסטטוס של כל תור כתוב עליו.':
+  'ירוק: פנוי. מקווקו: מחוץ לשעות הפעילות. הסטטוס של כל פגישה כתוב עליה.':
     'Green: free. Hatched: outside opening hours. Each appointment shows its status in text.',
   'בקשות ממתינות לאישור': 'Pending requests',
   'בקשות ממתינות': 'Pending requests',
@@ -369,7 +369,7 @@ export const enPart3: Record<string, string> = {
     'Choose how to see the calendar, and move between days or weeks with the arrows. "Today" jumps back to today.',
   'רואים את היומן של כל הצוות או של אדם אחד. השעות הפנויות מתעדכנות בהתאם.':
     "See the whole team's calendar or one person's. The free times update to match.",
-  'הפעמון מראה כמה דברים חדשים מחכים: פנייה, הודעה בוואטסאפ, תור שנקבע בבוט או הצעה שאושרה. לחיצה על התראה לוקחת אליה.':
+  'הפעמון מראה כמה דברים חדשים מחכים: פנייה, הודעה בוואטסאפ, פגישה שנקבעה בבוט או הצעה שאושרה. לחיצה על התראה לוקחת אליה.':
     'The bell shows how many new things are waiting: an inquiry, a WhatsApp message, a booking from the bot or an accepted quote. Click a notification to go to it.',
   שפה: 'Language',
   'לוחצים על הדגל כדי להחליף בין אנגלית לעברית. ההחלפה נשמרת בדפדפן הזה.':
@@ -377,7 +377,7 @@ export const enPart3: Record<string, string> = {
   'העוזר של SimpleCatch': 'The SimpleCatch helper',
   'בכל עמוד אפשר ללחוץ עליי: סיור בעמוד שמסביר מה יש בו, סיור במערכת כולה, וחיפוש מהיר.':
     "Click me on any page: a page tour that explains what's on it, the full product tour, and quick search.",
-  'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט התורים או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.':
+  'כל מי שפנה לעסק: מטופס האתר, מוואטסאפ, מבוט הפגישות או שהוספתם בעצמכם. כל ליד עובר שלבים עד שהוא נסגר.':
     "Everyone who contacted the business: from the website form, WhatsApp, the booking bot or added by you. Each lead moves through stages until it's closed.",
   'כותבים מה צריך לעשות ומתי, ולוחצים "הוספה". אפשר לשייך לעובד, ומקבלים מייל ופעמון כשמגיע הזמן.':
     'Write what needs doing and when, then click "Add". You can assign it to a teammate, and you get an email and a bell notification when it\'s due.',
@@ -435,7 +435,7 @@ export const enPart3: Record<string, string> = {
   'החלפת הסרטון': 'Replace video',
   'הוספת סרטון': 'Add a video',
   'MP4 עד 16MB. סרטון קצר נשלח מהר יותר.': 'MP4 up to 16MB. A short video sends faster.',
-  'לקוחות רואים זמנים פנויים וקובעים לבד תור או בקשה לאירוע.':
+  'לקוחות רואים זמנים פנויים וקובעים לבד פגישה או בקשה לאירוע.':
     'Customers see your free times and book an appointment or event request on their own.',
   באירוע: 'At an event',
   בפגישה: 'In a meeting',
@@ -461,13 +461,13 @@ export const enPart3: Record<string, string> = {
   '{0} מחכות לתשובה': '{0} awaiting a reply',
   'מה צריך לעשות ומתי': 'What needs doing, and when',
   'מה מחכה לכם היום': 'What needs you today',
-  'פניות פתוחות, תורים היום, משימות באיחור ושיחות שלא נקראו. לחיצה על קופסה פותחת את העמוד שלה; כל שאר החלקים נמצאים בתפריט.':
+  'פניות פתוחות, פגישות היום, משימות באיחור ושיחות שלא נקראו. לחיצה על קופסה פותחת את העמוד שלה; כל שאר החלקים נמצאים בתפריט.':
     'Open leads, today’s appointments, late tasks and unread conversations. Click a box to open its page; everything else is in the menu.',
   'פניות פתוחות': 'Open leads',
   '{0} חדשות השבוע': '{0} new this week',
-  'תורים היום': 'Appointments today',
+  'פגישות היום': 'Appointments today',
   'הבא ב-{0}': 'Next at {0}',
-  'אין עוד תורים היום': 'No more appointments today',
+  'אין עוד פגישות היום': 'No more appointments today',
   'משימות באיחור': 'Late tasks',
   'ועוד {0} להיום': '+{0} due today',
   'הכול מטופל, אין דברים שמחכים לכם 🎉': 'All caught up, nothing is waiting for you 🎉',
@@ -479,7 +479,7 @@ export const enPart3: Record<string, string> = {
   // Simpler Conversations page (D-129)
   'סטטוס חדש': 'New status',
   'עריכת הסטטוס {0}': 'Edit the status {0}',
-  'הגדרות קביעת התורים': 'Booking settings',
+  'הגדרות קביעת הפגישות': 'Booking settings',
   'הלקוח עונה על כמה שאלות על האירוע (סוג, תאריך, אורחים ואזור), והבקשה מחכה לאישור שלכם בעמוד היומן.':
     'The customer answers a few questions about the event (type, date, guests and area), and the request waits for your approval on the Calendar page.',
   הודעות: 'Messages',
@@ -518,12 +518,12 @@ export const enPart3: Record<string, string> = {
     'Refresh (new leads appear by themselves; this brings them in right away) and export your leads to Excel.',
   'מחפשים לפי שם, טלפון או אימייל. הכפתור "סינון" פותח סינון לפי שלב, אחראי או מקור.':
     'Search by name, phone or email. The "Filter" button filters by stage, owner or source.',
-  'בכפתור "עוד": השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת התור באתר וברשימה של הבוט בוואטסאפ.':
+  'בכפתור "עוד": השירותים שהעסק נותן, עם משך ומחיר. הם מופיעים בבקשת הפגישה באתר וברשימה של הבוט בוואטסאפ.':
     'Under "More": the services your business offers, with duration and price. They appear in the website booking request and in the WhatsApp bot\'s list.',
-  'אין תורים בתקופה הזו': 'No appointments in this period',
-  'כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע תור ראשון.':
+  'אין פגישות בתקופה הזו': 'No appointments in this period',
+  'כדאי להתחיל בהגדרת השירותים שלכם (בכפתור "עוד"), ואז לקבוע פגישה ראשונה.':
     'Start by setting up your services (under "More"), then book a first appointment.',
-  'כשייקבעו לך תורים, הם יופיעו כאן.':
+  'כשייקבעו לך פגישות, הן יופיעו כאן.':
     'When appointments are booked for you, they will appear here.',
   ללידים: 'Go to Leads',
   'חלקי הליד': 'Lead sections',
@@ -531,7 +531,7 @@ export const enPart3: Record<string, string> = {
     'No WhatsApp conversation with this lead. Once a WhatsApp number is connected to the business, messages will appear here.',
   'חלקי ההגדרות': 'Settings sections',
   'ההגדרות, בלשוניות': 'Settings, in tabs',
-  'פרטי העסק (מופיעים באתר, בכפתור החיוג ובמיילים), אזורי שירות, שעות פעילות (קובעות אילו שעות מוצעות לתורים), ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי. כל לשונית נשמרת בכפתור משלה.':
+  'פרטי העסק (מופיעים באתר, בכפתור החיוג ובמיילים), אזורי שירות, שעות פעילות (קובעות אילו שעות מוצעות לפגישות), ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי. כל לשונית נשמרת בכפתור משלה.':
     "Business details (shown on the website, the call button and in emails), service areas, opening hours (they decide which times are offered for appointments), channels (connecting the business's WhatsApp and Facebook Page) and your plan. Each tab saves with its own button.",
   'שפת הלקוחות': 'Customer language',
   'ההודעות בוואטסאפ, המיילים ללקוחות ואתר חדש יהיו בשפה הזו.':
@@ -546,35 +546,35 @@ export const enPart3: Record<string, string> = {
   'לחיצה אחת, למשל "באירוע", ומתחת רואים בדיוק מה לקוחות מקבלים עכשיו — ואפשר לשנות את ההודעה שם. אפשר לבחור לכמה זמן ולהוסיף סרטון, ו"זמין" מחזיר את ההודעה הכללית.':
     'One click, for example "At an event", and below you see exactly what customers get now — and can change the message right there. You can choose for how long and add a video; "Available" brings back the general message.',
   'הסתרת ההגדרות': 'Hide settings',
-  'שתי דרכים לענות: מענה אוטומטי או קביעת תורים אוטומטית. לכל אחת ההגדרות שלה, שנשמרות גם כשהיא כבויה. מדליקים את המתג של מה שרוצים — אחת בכל פעם.':
+  'שתי דרכים לענות: מענה אוטומטי או קביעת פגישות אוטומטית. לכל אחת ההגדרות שלה, שנשמרות גם כשהיא כבויה. מדליקים את המתג של מה שרוצים — אחת בכל פעם.':
     'Two ways to answer: an automatic reply or automatic booking. Each keeps its own settings, even while off. Turn on the switch of the one you want — one at a time.',
   'מה לקוחות יכולים להזמין?': 'What can customers book?',
   'מה לקוחות יכולים להזמין': 'What can customers book',
-  'תור בשעה פנויה': 'An appointment at a free time',
+  'פגישה בשעה פנויה': 'An appointment at a free time',
   'הלקוח רואה ימים ושעות פנויים מהיומן.':
     'The customer sees free days and times from your calendar.',
   'בקשה לאירוע': 'An event request',
   'הלקוח כותב תאריך, מספר אורחים ואזור, ואתם מאשרים.':
     'The customer writes a date, number of guests and area, and you approve.',
   'מתאים לתחום שלכם': 'suits your field',
-  'כשלקוח קובע תור:': 'When a customer books:',
-  'התור מאושר מיד': "It's confirmed straight away",
-  'הלקוח מקבל אישור, והתור נכנס ליומן.':
+  'כשלקוח קובע פגישה:': 'When a customer books:',
+  'הפגישה מאושרת מיד': "It's confirmed straight away",
+  'הלקוח מקבל אישור, והפגישה נכנסת ליומן.':
     'The customer gets a confirmation, and it goes into your calendar.',
-  'התור מחכה לאישור שלי': 'It waits for my approval',
+  'הפגישה מחכה לאישור שלי': 'It waits for my approval',
   'השעה שמורה בינתיים. מאשרים בעמוד היומן.':
     'The time is held meanwhile. You approve it on the Calendar page.',
   'עריכת ההצצה': 'Edit',
-  '"תור בשעה פנויה": הלקוח בוחר שירות, יום ושעה. "בקשה לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
+  '"פגישה בשעה פנויה": הלקוח בוחר שירות, יום ושעה. "בקשה לאירוע": הלקוח כותב תאריך ומספר על האירוע, ואתם מאשרים. האפשרות שמתאימה לתחום שלכם מסומנת.':
     '"An appointment at a free time": the customer picks a service, day and time. "An event request": the customer writes a date and tells you about the event, and you approve. The option that suits your field is marked.',
-  '"התור מאושר מיד": התור נכנס ליומן כמאושר. "התור מחכה לאישור שלי": השעה נשמרת, והתור מחכה לכם ב"בקשות ממתינות לאישור" בעמוד היומן.':
+  '"הפגישה מאושרת מיד": הפגישה נכנסת ליומן כמאושרת. "הפגישה מחכה לאישור שלי": השעה נשמרת, והפגישה מחכה לכם ב"בקשות ממתינות לאישור" בעמוד היומן.':
     '"It\'s confirmed straight away": it goes into the calendar as confirmed. "It waits for my approval": the time is held, and the appointment waits for you under "Requests waiting for approval" on the Calendar page.',
-  'אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
+  'אחרי המענה האוטומטי, או ללקוח שלא סיים לקבוע פגישה, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
     "After the automatic reply, or to a customer who didn't finish booking, a message goes out with a link, up to 3 photos and a video of your business. At most once a day per customer. The switch turns it on and off.",
   'סרטון (לא חובה)': 'Video (optional)',
   'סרטון להצצה': 'Video for the showcase',
   סרטון: 'Video',
-  'לקוח ביטל תור בוואטסאפ': 'A customer cancelled on WhatsApp',
+  'לקוח ביטל פגישה בוואטסאפ': 'A customer cancelled on WhatsApp',
   'הסתרת התצוגה המקדימה': 'Hide preview',
   'משתמש/ת פייסבוק': 'Facebook user',
   פייסבוק: 'Facebook',
@@ -656,7 +656,7 @@ export const enPart3: Record<string, string> = {
     "Customers' emails will reach your conversations inbox, and you'll reply from there.",
   מחובר: 'Connected',
   'דרך הגדרות המערכת': 'Through the system settings',
-  'הודעות מלקוחות בוואטסאפ יגיעו לתיבת השיחות, ושם גם המענה האוטומטי וקביעת התורים.':
+  'הודעות מלקוחות בוואטסאפ יגיעו לתיבת השיחות, ושם גם המענה האוטומטי וקביעת הפגישות.':
     'WhatsApp messages from customers reach your conversations inbox, along with the automatic reply and booking.',
   'הודעות לדף הפייסבוק של העסק יגיעו לתיבת השיחות, ותוכלו לענות להם משם.':
     "Messages to the business's Facebook Page reach your conversations inbox, and you reply from there.",
@@ -761,13 +761,13 @@ export const enPart3: Record<string, string> = {
   'כל לקוח שכותב מקבל הודעה לפי הסטטוס שלך, ובוחר מתי נוח לדבר.':
     'Every customer who writes gets a message based on your status, and chooses when to talk.',
   'לקוחות קובעים לבד': 'Customers book by themselves',
-  'מוסיף "לקביעת תור" להודעה: לקוחות רואים זמנים פנויים וקובעים תור או בקשה לאירוע.':
+  'מוסיף "לקביעת פגישה" להודעה: לקוחות רואים זמנים פנויים וקובעים פגישה או בקשה לאירוע.':
     'Adds "Book now" to the message: customers see free times and book an appointment or an event request.',
-  'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
+  'מיד אחרי שהלקוח מחליט (זמן לשיחה, פגישה או אירוע), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
     'Right after the customer decides (a time to talk, an appointment or an event), they get a link, photos and a video from the business. At most once a day.',
   'מתחת להודעה הלקוח בוחר שעה לשיחה (היום או מחר, בין 09:00 ל־20:00) או זמן אחר. שעה שנבחרה נכנסת ליומן, ואתם מקבלים משימה לחזור אליו.':
     'Under the message, the customer picks an hour to talk (today or tomorrow, 09:00–20:00) or another time. A chosen hour goes into your appointments calendar, and you get a task to call them back.',
-  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
+  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, פגישה או אירוע): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
     'Sent right after the customer decides (a time to talk, an appointment or an event): the message with the link, then the video and photos.',
   'כך תיראה השיחה': 'How the conversation looks',
   'היי, אפשר לשאול משהו?': 'Hi, can I ask something?',
@@ -777,7 +777,7 @@ export const enPart3: Record<string, string> = {
   'היום ב־19:00': 'Today at 19:00',
   'מחר ב־09:00': 'Tomorrow at 09:00',
   'זמן אחר': 'Another time',
-  '📅 לקביעת תור': '📅 Book now',
+  '📅 לקביעת פגישה': '📅 Book now',
   'מעולה! נחזור אליכם {0} 🙏': "Great! We'll get back to you {0} 🙏",
   '"הצצה לעסק" כבויה, אז השיחה מסתיימת כאן.':
     '"A peek at the business" is off, so the conversation ends here.',
@@ -786,7 +786,7 @@ export const enPart3: Record<string, string> = {
   אוטומציות: 'Automations',
   'מענה אוטומטי: פועל': 'Auto-reply: on',
   'מענה אוטומטי: כבוי': 'Auto-reply: off',
-  'מה קורה כשלקוח כותב לכם בוואטסאפ: מענה אוטומטי, קביעת תורים והצצה לעסק.':
+  'מה קורה כשלקוח כותב לכם בוואטסאפ: מענה אוטומטי, קביעת פגישות והצצה לעסק.':
     'What happens when a customer writes to you on WhatsApp: auto-reply, booking and a peek at the business.',
   'הפניות ב-7 הימים האחרונים': 'Leads in the last 7 days',
   'לכל הדוחות': 'All reports',
@@ -807,13 +807,13 @@ export const enPart3: Record<string, string> = {
   'שליחת מייל עוד לא הוגדרה בשרת, ולכן אי אפשר לענות כאן.':
     'Sending email isn’t set up on the server, so replies can’t go out from here.',
   'ליד חדש ממייל': 'New lead from email',
-  'מי שקנה מכם (ליד בשלב "נסגר" או הצעת מחיר שאושרה) ומי שקבע תור, גם אם ביטל.':
+  'מי שקנה מכם (ליד בשלב "נסגר" או הצעת מחיר שאושרה) ומי שקבע פגישה, גם אם ביטל.':
     'People who bought (a lead in "Won" or an accepted quote) and people who booked, even if they cancelled.',
-  'כשליד יעבור לשלב "נסגר", יאשר הצעת מחיר או יקבע תור, הוא יופיע כאן.':
+  'כשליד יעבור לשלב "נסגר", יאשר הצעת מחיר או יקבע פגישה, הוא יופיע כאן.':
     'When a lead reaches "Won", accepts a quote or books an appointment, they appear here.',
-  'תור אחד': 'One booking',
-  '{0} תורים': '{0} bookings',
-  'התורים של {0}': '{0}’s bookings',
+  'פגישה אחת': 'One booking',
+  '{0} פגישות': '{0} bookings',
+  'הפגישות של {0}': '{0}’s bookings',
   'בניית אתר חדש ב-SimpleCatch': 'Build a new website in SimpleCatch',
   'להסיר את האתר מהמערכת?': 'Remove the website from SimpleCatch?',
   'הכתובת {0} תוסר מ-SimpleCatch. האתר עצמו לא ייפגע והוא ימשיך לעבוד כרגיל. אפשר להוסיף אותו שוב בכל זמן.':
@@ -960,7 +960,7 @@ export const enPart3: Record<string, string> = {
   'מצפיות הדף': 'Of the page’s views',
   'לחיצות על כפתורים שנבחרו': 'Clicks on chosen buttons',
   'כפתורים שנבחרו לספירה': 'Buttons chosen for counting',
-  'רוצים לספור לחיצות על כפתור מסוים (למשל "קבע תור")? הוסיפו לכפתור שם, ותראו אותו בדוחות:':
+  'רוצים לספור לחיצות על כפתור מסוים (למשל "קבע פגישה")? הוסיפו לכפתור שם, ותראו אותו בדוחות:':
     'Want to count clicks on a particular button (for example "Book an appointment")? Give the button a name and you will see it in Reports:',
   'בונה אתרים שלא מאפשר להוסיף תכונות? כתבו על תגית הסקריפט data-track עם רשימה של מסמן=שם, מופרדים בנקודה-פסיק:':
     'A site builder that doesn’t let you add attributes? Add data-track to the script tag with a list of selector=name, separated by semicolons:',
@@ -1024,7 +1024,7 @@ export const enPart3: Record<string, string> = {
     'Want inquiries from your website\'s form to reach you as leads? In the form tag of your "Contact us" form add data-simplecatch, and give the fields these names: name, phone, email, message and consent (a tick box):',
   'הטלפון חובה, ובלי תיבת אישור הפנייה לא תתקבל.':
     "The phone is required, and without a tick box the inquiry won't be accepted.",
-  'רוצים לדעת כמה לוחצים על כפתור מסוים (למשל "קבע תור")? תנו לכפתור שם, ותראו אותו בדוחות:':
+  'רוצים לדעת כמה לוחצים על כפתור מסוים (למשל "קבע פגישה")? תנו לכפתור שם, ותראו אותו בדוחות:':
     'Want to know how many click a particular button (for example "Book an appointment")? Give the button a name and you will see it in Reports:',
   'אי אפשר להוסיף תכונה לכפתור? כתבו על שורת הסקריפט את המזהה (id) של הכפתור ואת השם, כך:':
     "Can't add an attribute to the button? On the script line, write the button's id and a name, like this:",
@@ -1041,7 +1041,7 @@ export const enPart3: Record<string, string> = {
   'עכשיו: {0}': 'Now: {0}',
   'כבוי: הלקוח לא מקבל הודעה אוטומטית.': 'Off: the customer gets no automatic message.',
   'הגדרות הסטטוס וההודעה': 'Status and message settings',
-  'מוסיף "לקביעת תור" להודעה: הלקוח רואה זמנים פנויים וקובע תור או בקשה לאירוע.':
+  'מוסיף "לקביעת פגישה" להודעה: הלקוח רואה זמנים פנויים וקובע פגישה או בקשה לאירוע.':
     'Adds "Book an appointment" to the message: the customer sees free times and books an appointment or an event request.',
   'פועל רק כשהמענה לפי הסטטוס דלוק.': 'Works only while the answer by status is on.',
   '{0} · אישור: {1}': '{0} · Approval: {1}',
@@ -1055,22 +1055,22 @@ export const enPart3: Record<string, string> = {
   'כבוי.': 'Off.',
   'מצב האוטומציות': 'Automations status',
   'מענה לפי סטטוס': 'Answer by status',
-  'קביעת תורים': 'Booking',
+  'קביעת פגישות': 'Booking',
   פועל: 'On',
   'מה פועל עכשיו': 'What is on now',
   'נקודה ירוקה אומרת שהשלב פועל, ואפורה שהוא כבוי. כך רואים במבט אחד מה הלקוחות מקבלים.':
     'A green dot means the step is on, a grey one that it is off. So you see at a glance what customers get.',
-  'מה קורה כשלקוח כותב לכם בוואטסאפ, צעד אחרי צעד: מענה לפי הסטטוס, קביעת תורים והצצה לעסק.':
+  'מה קורה כשלקוח כותב לכם בוואטסאפ, צעד אחרי צעד: מענה לפי הסטטוס, קביעת פגישות והצצה לעסק.':
     'What happens when a customer writes to you on WhatsApp, step by step: an answer by status, booking and a peek at the business.',
-  'הרצף של הלקוח, לפי הסדר: הוא כותב, מקבל הודעה לפי הסטטוס שלך, אפשר שיקבע תור בעצמו, ואז מקבל הצצה לעסק. לכל שלב מתג אחד, שורה שאומרת מה הוא עושה עכשיו, וכפתור הגדרות שפותח את ההגדרות שלו.':
+  'הרצף של הלקוח, לפי הסדר: הוא כותב, מקבל הודעה לפי הסטטוס שלך, אפשר שיקבע פגישה בעצמו, ואז מקבל הצצה לעסק. לכל שלב מתג אחד, שורה שאומרת מה הוא עושה עכשיו, וכפתור הגדרות שפותח את ההגדרות שלו.':
     "The customer's sequence, in order: they write, get a message by your status, may book by themselves, then get a peek at the business. Each step has one switch, a line saying what it does now, and a settings button that opens its settings.",
   'בהגדרות בוחרים סטטוס בלחיצה אחת, למשל "באירוע", ורואים מה לקוחות מקבלים עכשיו. אפשר לבחור לכמה זמן, להוסיף סרטון ולשנות את ההודעה. "זמין" מחזיר את ההודעה הכללית.':
     'In the settings you pick a status with one click, for example "At an event", and see what customers get now. You can choose for how long, and edit the message. "Available" brings back the general message.',
-  'הלקוח רואה שעות פנויות מהיומן וקובע תור בלחיצה, או משאיר בקשת הזמנה עם תאריך ופרטים. הוא פועל רק כשהמענה לפי הסטטוס דלוק. בהגדרות בוחרים מה אפשר להזמין, אם התור מאושר מיד או מחכה לכם, ואפשר לכתוב את ההודעות במילים שלכם.':
+  'הלקוח רואה שעות פנויות מהיומן וקובע פגישה בלחיצה, או משאיר בקשת הזמנה עם תאריך ופרטים. הוא פועל רק כשהמענה לפי הסטטוס דלוק. בהגדרות בוחרים מה אפשר להזמין, אם הפגישה מאושרת מיד או מחכה לכם, ואפשר לכתוב את ההודעות במילים שלכם.':
     'The customer sees free hours from the calendar and books with a click, or leaves a booking request with a date and details. It works only while the answer by status is on. In the settings you choose what can be booked, whether the appointment is confirmed at once or waits for you, and you can write the messages in your own words.',
-  'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לתורים) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. עוד: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי.':
+  'פרטי העסק, שעות פעילות (קובעות אילו שעות מוצעות לפגישות) ואזורי שירות, כולם בלשונית אחת, כל כרטיס עם כפתור שמירה משלו. עוד: ערוצים (חיבור הוואטסאפ ודף הפייסבוק של העסק) ומנוי.':
     "Business details, opening hours (which decide the hours offered for appointments) and service areas, all in one tab, each card with its own save button. Also: channels (connecting the business's WhatsApp and Facebook page) and the subscription.",
-  'מופיעות באתר, ומהן נקבעות השעות שמוצעות לתורים.':
+  'מופיעות באתר, ומהן נקבעות השעות שמוצעות לפגישות.':
     'Shown on the website, and they set the hours offered for appointments.',
   הזמנה: 'Booking request',
   הזמנות: 'Booking requests',
@@ -1079,11 +1079,11 @@ export const enPart3: Record<string, string> = {
     'The customer writes a date and details, and you confirm.',
   'הלקוח עונה על כמה שאלות (סוג, תאריך ופרטים נוספים), וההזמנה מחכה לאישור שלכם בעמוד היומן.':
     'The customer answers a few questions (type, date and more details), and the booking request waits for your confirmation on the calendar page.',
-  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
+  'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, פגישה או הזמנה): ההודעה עם הקישור, אחריה הסרטון והתמונות.':
     'Sent right after the customer decides (a time to talk, an appointment or a booking request): the message with the link, then the video and photos.',
-  'מוסיף "לקביעת תור" להודעה: הלקוח רואה זמנים פנויים וקובע תור או הזמנה.':
+  'מוסיף "לקביעת פגישה" להודעה: הלקוח רואה זמנים פנויים וקובע פגישה או הזמנה.':
     'Adds "Book an appointment" to the message: the customer sees free times and books an appointment or a booking request.',
-  'מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
+  'מיד אחרי שהלקוח מחליט (זמן לשיחה, פגישה או הזמנה), הוא מקבל קישור, תמונות וסרטון מהעסק. לכל היותר פעם ביום.':
     'Right after the customer decides (a time to talk, an appointment or a booking request), they get a link, photos and a video from the business. At most once a day.',
   'בקשות מהאתר ומהבוט בוואטסאפ, כולל הזמנות. לוחצים על בקשה, משבצים איש צוות ומאשרים.':
     'Requests from the website and the WhatsApp bot, booking requests included. Click one, assign a staff member and confirm.',
@@ -1161,22 +1161,23 @@ export const enPart3: Record<string, string> = {
   'השאלות נשמרו.': 'The questions were saved.',
   'אחרי ההודעה הבוט שואל את השאלות שכתבתם, אחת אחרי השנייה, ואתם מקבלים את כל התשובות במשימה ובליד. המתג מכבה את השאלות בלי למחוק אותן, והן חוזרות כשמדליקים. הוא פועל רק כשהמענה לפי הסטטוס דלוק.':
     'After the message the bot asks the questions you wrote, one after another, and you get all the answers as a task and on the lead. The switch turns the questions off without deleting them, and they come back when you turn it on. It works only while the answer by status is on.',
-  'הרצף של הלקוח, לפי הסדר: הוא כותב, מקבל הודעה לפי הסטטוס שלך, עונה על השאלות שלכם, אפשר שיקבע תור בעצמו, ואז מקבל הצצה לעסק. לכל שלב מתג אחד, שורה שאומרת מה הוא עושה עכשיו, וכפתור הגדרות שפותח את ההגדרות שלו.':
+  'הרצף של הלקוח, לפי הסדר: הוא כותב, מקבל הודעה לפי הסטטוס שלך, עונה על השאלות שלכם, אפשר שיקבע פגישה בעצמו, ואז מקבל הצצה לעסק. לכל שלב מתג אחד, שורה שאומרת מה הוא עושה עכשיו, וכפתור הגדרות שפותח את ההגדרות שלו.':
     "The customer's sequence, in order: they write, get a message by your status, answer your questions, may book by themselves, then get a peek at the business. Each step has one switch, a line saying what it does now, and a settings button that opens its settings.",
   '(לפי שעון העסק)': "(by the business's clock)",
   '"סוף היום" ו"מחר בבוקר" לפי שעון העסק ({0}), לא לפי המכשיר שלכם.':
     '"End of the day" and "tomorrow morning" follow the business\'s clock ({0}), not your device.',
   'כל ההודעות מוואטסאפ ומפייסבוק במקום אחד.':
     'All your WhatsApp and Facebook messages in one place.',
-  'מה קורה כשלקוח כותב בוואטסאפ: מענה לפי הסטטוס שלך, קביעת תורים והצצה לעסק.':
+  'מה קורה כשלקוח כותב בוואטסאפ: מענה לפי הסטטוס שלך, קביעת פגישות והצצה לעסק.':
     'What happens when a customer writes on WhatsApp: a reply based on your status, booking appointments and a peek at your business.',
   'האתר הקיים של העסק, לצפייה בלבד.': "The business's existing website, view only.",
   'מצאו את ה-id של הטופס. בקוד של הטופס יש תגית form, והמילה אחרי id= היא ה-id. למשל, כאן ה-id הוא contact-form:':
     "Find the form's id. In the form's code there is a form tag, and the word after id= is the id. For example, here the id is contact-form:",
   'תוקף הטופס פג. רעננו את הדף ונסו שוב.': 'The form has expired. Refresh the page and try again.',
-  'לבקשת תור יש לבחור גם תאריך וגם שעה': 'To request an appointment, choose both a date and a time',
-  'המועד שנבחר לתור אינו תקין': 'The chosen appointment time is not valid',
-  'אפשר לבקש תור רק למועד עתידי (עד 4 חודשים קדימה)':
+  'לבקשת פגישה יש לבחור גם תאריך וגם שעה':
+    'To request an appointment, choose both a date and a time',
+  'המועד שנבחר לפגישה אינו תקין': 'The chosen appointment time is not valid',
+  'אפשר לבקש פגישה רק למועד עתידי (עד 4 חודשים קדימה)':
     'You can only request an appointment in the future (up to 4 months ahead)',
   אינסטגרם: 'Instagram',
   'אפשר לייבא עד {0} שורות בכל פעם': 'You can import up to {0} rows at a time',
@@ -1212,6 +1213,6 @@ export const enPart3: Record<string, string> = {
   'כדי להעביר את {0} ל"הצעה נשלחה" צריך קודם ליצור ולשלוח לו הצעת מחיר. אחרי השליחה הוא יעבור לשלב הזה בעצמו.':
     'To move {0} to "Quote sent", first create and send a quote. Once it is sent, the lead moves to that stage by itself.',
   'יצירת הצעת מחיר': 'Create a quote',
-  'אחרי המענה, או ללקוח שלא סיים לקבוע תור, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
+  'אחרי המענה, או ללקוח שלא סיים לקבוע פגישה, נשלחת הודעה עם קישור, עד 3 תמונות וסרטון מהעסק. לכל היותר פעם ביום ללקוח. המתג מדליק ומכבה אותה.':
     "After the reply, or to a customer who didn't finish booking, a message is sent with a link, up to 3 photos and a video from the business. At most once a day per customer. The switch turns it on and off.",
 };

@@ -65,13 +65,13 @@ export function TodayBoxes({ business }: { business: Business }) {
     },
     {
       segment: 'appointments',
-      label: tr('תורים היום'),
+      label: tr('פגישות היום'),
       icon: CalendarDays,
       value: booked?.length,
       detail: next
         ? tr('הבא ב-{0}', time(next.startsAt))
         : booked?.length
-          ? tr('אין עוד תורים היום')
+          ? tr('אין עוד פגישות היום')
           : null,
       attention: false,
     },

@@ -93,7 +93,7 @@ PARTS = {
     "evening": ("19:00", "23:00"),
     "unknown": ("19:00", "23:00"),
 }
-BOOK_TEXT = re.compile(r"תור|לקבוע|להזמין|הזמנה|אירוע|תאריך|book|appointment|event", re.I)
+BOOK_TEXT = re.compile(r"פגישה|תור|לקבוע|להזמין|הזמנה|אירוע|תאריך|book|appointment|event", re.I)
 CANCEL_TEXT = re.compile(r"בטל|ביטול|cancel", re.I)
 HUMAN_TEXT = re.compile(
     r"נציג|לדבר|להתקשר|תתקשר|תתקשרי|תחזור|תחזרי|שיחה|שאלה|בן אדם|אדם אמיתי|human|agent|call me|talk to", re.I

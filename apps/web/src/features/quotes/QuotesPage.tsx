@@ -20,9 +20,14 @@ export function QuotesPage() {
   const business = useCurrentBusiness();
   const [params, setParams] = useSearchParams();
   const status = (params.get('status') as QuoteStatus | null) ?? undefined;
-  const quotes = useQuotes(business.id, { status });
+  // All quotes once, filtered here, so each status tab can show its count (owner, 2026-11-28).
+  const all = useQuotes(business.id);
+  const shown = status ? (all.data ?? []).filter((q) => q.status === status) : (all.data ?? []);
+  const quotes = { ...all, data: all.data ? shown : undefined } as typeof all;
+  const countOf = (s?: QuoteStatus) =>
+    s ? (all.data ?? []).filter((q) => q.status === s).length : (all.data?.length ?? 0);
   const base = businessWebPaths.section(business.id, 'quotes');
-  const open = (quotes.data ?? []).filter((q) => q.status === 'SENT' && !q.expired);
+  const open = (all.data ?? []).filter((q) => q.status === 'SENT' && !q.expired);
   const openTotal = open.reduce((s, q) => s + q.totals.total, 0);
 
   return (
@@ -44,26 +49,38 @@ export function QuotesPage() {
             </Link>
           }
         />
-        <div className="flex flex-wrap items-center gap-3 border-b border-surface-border p-4">
-          <div
-            role="group"
-            aria-label={tr('סינון לפי סטטוס')}
-            className="flex flex-wrap rounded-lg bg-surface-sunken p-0.5"
-          >
-            {[undefined, ...QUOTE_STATUSES].map((s) => (
-              <button
-                key={s ?? 'all'}
-                type="button"
-                aria-pressed={status === s}
-                onClick={() => setParams(s ? { status: s } : {}, { replace: true })}
-                className={cn(
-                  'rounded-md px-3 py-1 text-sm',
-                  status === s ? 'bg-surface text-ink shadow-card' : 'text-ink-muted',
-                )}
-              >
-                {s ? tr(quoteStatusLabels[s]) : tr('הכול')}
-              </button>
-            ))}
+        <div className="flex flex-wrap items-center gap-3 border-b border-surface-border px-4 pt-2">
+          {/* Tabs like the lead page (underline), each with its count when it isn't 0. */}
+          <div role="group" aria-label={tr('סינון לפי סטטוס')} className="flex flex-wrap">
+            {[undefined, ...QUOTE_STATUSES].map((s) => {
+              const n = countOf(s);
+              const label = s ? tr(quoteStatusLabels[s]) : tr('הכול');
+              return (
+                <button
+                  key={s ?? 'all'}
+                  type="button"
+                  aria-pressed={status === s}
+                  aria-label={n > 0 ? `${label}, ${n}` : label}
+                  onClick={() => setParams(s ? { status: s } : {}, { replace: true })}
+                  className={cn(
+                    '-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400',
+                    status === s
+                      ? 'border-brand-600 text-brand-700'
+                      : 'border-transparent text-ink-muted hover:text-ink',
+                  )}
+                >
+                  <span aria-hidden>{label}</span>
+                  {n > 0 && (
+                    <span
+                      aria-hidden
+                      className="rounded-full bg-surface-muted px-1.5 text-xs font-normal text-ink-muted"
+                    >
+                      {n}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
           {!status && open.length > 0 && (
             <p className="text-sm text-ink-muted">

@@ -46,7 +46,7 @@ export function appointmentWhen(iso: string, timeZone: string) {
   return `${part('day')}/${part('month')} ${part('hour')}:${part('minute')}`;
 }
 
-/** The visible label, e.g. "הצעה #12" / "תור 12/02 10:00", and its status in words. */
+/** The visible label, e.g. "הצעה #12" / "פגישה 12/02 10:00", and its status in words. */
 export function subjectText(subject: TaskSubject, timeZone: string) {
   return subject.kind === 'quote'
     ? {
@@ -55,9 +55,9 @@ export function subjectText(subject: TaskSubject, timeZone: string) {
         spoken: tr('על הצעה #{0}', subject.number),
       }
     : {
-        label: tr('תור {0}', appointmentWhen(subject.startsAt, timeZone)),
+        label: tr('פגישה {0}', appointmentWhen(subject.startsAt, timeZone)),
         status: tr(appointmentStatusLabels[subject.status]),
-        spoken: tr('על התור ב־{0}', appointmentWhen(subject.startsAt, timeZone)),
+        spoken: tr('על הפגישה ב־{0}', appointmentWhen(subject.startsAt, timeZone)),
       };
 }
 
@@ -76,7 +76,7 @@ const isClosed = (s: TaskSubject) =>
     ? s.status === 'ACCEPTED' || s.status === 'REJECTED'
     : s.status === 'CANCELLED' || s.status === 'COMPLETED' || s.status === 'NO_SHOW';
 
-/** The task's subject as a link chip: "📄 הצעה #12 · נשלחה" / "📅 תור 12/02 10:00 · מאושר". */
+/** The task's subject as a link chip: "📄 הצעה #12 · נשלחה" / "📅 פגישה 12/02 10:00 · מאושרת". */
 export function SubjectChip({ subject }: { subject: TaskSubject }) {
   const business = useCurrentBusiness();
   const { label, status, spoken } = subjectText(subject, business.timezone);
@@ -101,7 +101,7 @@ export function SubjectChip({ subject }: { subject: TaskSubject }) {
 const autoExplanation = (kind: TaskAutoKind) =>
   kind === 'quote_followup'
     ? tr('נוצרה אוטומטית, ותיסגר מעצמה כשההצעה תאושר או תידחה.')
-    : tr('נוצרה אוטומטית, ותיסגר מעצמה כשהתור יבוטל, יתקיים או יסומן שלא הגיעו.');
+    : tr('נוצרה אוטומטית, ותיסגר מעצמה כשהפגישה תבוטל, תתקיים או תסומן שלא הגיעו.');
 
 /** "אוטומטית" on a task the system created (D-213), with what it means for screen readers too. */
 export function AutoBadge({ kind }: { kind: TaskAutoKind }) {
@@ -154,14 +154,14 @@ export function SubjectPicker({
     })),
     ...(appts.data ?? []).map((a) => ({
       value: encode({ kind: 'appointment', id: a.id }),
-      label: `${tr('תור {0}', appointmentWhen(a.startsAt, timeZone))} · ${tr(appointmentStatusLabels[a.status])}`,
+      label: `${tr('פגישה {0}', appointmentWhen(a.startsAt, timeZone))} · ${tr(appointmentStatusLabels[a.status])}`,
     })),
   ];
   // A chosen subject not in the lists (e.g. older) stays selectable.
   if (value && !options.some((o) => o.value === encode(value))) {
     options.push({
       value: encode(value),
-      label: value.kind === 'quote' ? tr('הצעה מקושרת') : tr('תור מקושר'),
+      label: value.kind === 'quote' ? tr('הצעה מקושרת') : tr('פגישה מקושרת'),
     });
   }
   return (
@@ -172,7 +172,7 @@ export function SubjectPicker({
       options={options}
       disabled={loading}
       placeholder={loading ? tr('טוענים…') : undefined}
-      hint={tr('הצעת מחיר או תור של הליד (לא חובה)')}
+      hint={tr('הצעת מחיר או פגישה של הליד (לא חובה)')}
       error={error}
     />
   );

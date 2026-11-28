@@ -167,7 +167,7 @@ describe('lead page tabs (D-219)', () => {
         expect.stringMatching(/^הצעות, 1 · .*1,180.* פתוח$/),
       ]),
     );
-    expect(tabByName(/^תורים/)).toBeInTheDocument();
+    expect(tabByName(/^פגישות/)).toBeInTheDocument();
     expect(screen.getByRole('tablist', { name: 'חלקי הליד' })).toBeInTheDocument();
     // "מידע" is first, selected, without a count; no next-action block, header or side panel.
     const info = screen.getAllByRole('tab')[0]!;
@@ -256,7 +256,7 @@ describe('lead page tabs (D-219)', () => {
     expect(screen.queryByText('ערך לפי הצעות מחיר')).not.toBeInTheDocument();
   });
 
-  it('the appointments tab lists upcoming ones first and "+ תור" opens the booking form', async () => {
+  it('the appointments tab lists upcoming ones first and "+ פגישה" opens the booking form', async () => {
     mockApi({
       [meKey]: me(testUser),
       [`GET ${lp.detail(id, leadId)}`]: () => detail(),
@@ -279,9 +279,9 @@ describe('lead page tabs (D-219)', () => {
       [`GET ${apiPaths.businesses.members(id)}`]: () => json(200, { members: [] }),
     });
     const { user } = renderApp(`${page}?tab=appointments`);
-    const tab = await screen.findByRole('tab', { name: 'תורים, 2 קרובים' });
+    const tab = await screen.findByRole('tab', { name: 'פגישות, 2 קרובות' });
     expect(tab).toHaveAttribute('aria-selected', 'true');
-    const rows = within(await screen.findByRole('list', { name: 'תורי הליד' })).getAllByRole(
+    const rows = within(await screen.findByRole('list', { name: 'הפגישות של הליד' })).getAllByRole(
       'listitem',
     );
     expect(rows.map((r) => r.textContent)).toEqual([
@@ -289,7 +289,7 @@ describe('lead page tabs (D-219)', () => {
       expect.stringContaining('התקנה'),
       expect.stringContaining('ביקור קודם'),
     ]);
-    await user.click(screen.getByRole('button', { name: '+ תור' }));
+    await user.click(screen.getByRole('button', { name: '+ פגישה' }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 

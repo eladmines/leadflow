@@ -5,10 +5,10 @@
  */
 export const enShared: Record<string, string> = {
   // Appointments
-  'ממתין לאישור': 'Awaiting approval',
-  מאושר: 'Confirmed',
-  בוצע: 'Done',
-  בוטל: 'Cancelled',
+  'ממתינה לאישור': 'Awaiting approval',
+  מאושרת: 'Confirmed',
+  בוצעה: 'Done',
+  בוטלה: 'Cancelled',
   'יש להזין שם לשירות': 'Enter a service name',
   'השם ארוך מדי (עד 80 תווים)': 'The name is too long (up to 80 characters)',
   'משך בין 5 דקות ל־8 שעות': 'Duration between 5 minutes and 8 hours',
@@ -20,9 +20,9 @@ export const enShared: Record<string, string> = {
   'השירות שנבחר אינו קיים': "The selected service doesn't exist",
   'אפשר לשבץ רק חבר צוות פעיל בעסק': 'You can only assign an active team member',
   'הליד שנבחר אינו קיים': "The selected lead doesn't exist",
-  'יש כבר תור בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.':
+  'יש כבר פגישה בזמן הזה לאותו איש צוות. בחרו שעה אחרת או איש צוות אחר.':
     'This staff member already has an appointment at that time. Choose another time or staff member.',
-  'כדי לאשר תור יש לשבץ איש צוות': 'Assign a staff member to confirm the appointment',
+  'כדי לאשר פגישה יש לשבץ איש צוות': 'Assign a staff member to confirm the appointment',
   'טווח לא תקין': 'Invalid range',
   // Auth
   'יש להזין שם מלא': 'Enter your full name',
@@ -198,7 +198,7 @@ export const enShared: Record<string, string> = {
   // Notifications
   'ליד חדש מוואטסאפ': 'New lead from WhatsApp',
   'ליד חדש מהאתר': 'New lead from the website',
-  '{0} · בקשה לתור: {1}': '{0} · appointment request: {1}',
+  '{0} · בקשה לפגישה: {1}': '{0} · appointment request: {1}',
   'הודעה מ{0}': 'Message from {0}',
   '{0} · מחכה לסיווג': '{0} · waiting to be classified',
   'הצעת מחיר אושרה': 'Quote accepted',
@@ -285,7 +285,7 @@ export const enShared: Record<string, string> = {
   'הצבע הראשי בהיר מדי לטקסט לבן על כפתורים. בחרו גוון כהה יותר':
     'The main colour is too light for white button text. Choose a darker shade',
   'יופי וטיפוח': 'Beauty & care',
-  'למספרות, קוסמטיקה וסטודיו: שירותים, מחירון, המלצות וקביעת תור.':
+  'למספרות, קוסמטיקה וסטודיו: שירותים, מחירון, המלצות וקביעת פגישה.':
     'For salons, cosmetics and studios: services, prices, testimonials and booking.',
   'בעלי מקצוע ושירות': 'Trades & services',
   'לחשמלאים, אינסטלטורים ושיפוצים: שירותים, אזורי שירות ו"התקשרו עכשיו".':

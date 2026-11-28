@@ -34,12 +34,12 @@
    "email": "אימייל (לא חובה)",
    "message": "איך נוכל לעזור? (לא חובה)",
    "consent": "אני מאשר/ת ש{0} יחזרו אליי בנוגע לפנייה זו.",
-   "slot": "בקשה לתור (לא חובה)",
+   "slot": "בקשה לפגישה (לא חובה)",
    "service": "שירות",
    "chooseService": "בחירת שירות",
    "date": "תאריך מבוקש",
    "time": "שעה מבוקשת",
-   "slotNote": "נחזור אליכם לאישור התור.",
+   "slotNote": "נחזור אליכם לאישור הפגישה.",
    "button": "שליחה",
    "success": "תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם."
   },
@@ -372,9 +372,9 @@
    "ההודעה ארוכה מדי (עד 1,000 תווים)": "The message is too long (up to 1,000 characters)",
    "יש לאשר את יצירת הקשר כדי לשלוח": "Please agree to be contacted so we can send this",
    "תוקף הטופס פג. רעננו את הדף ונסו שוב.": "The form has expired. Refresh the page and try again.",
-   "לבקשת תור יש לבחור גם תאריך וגם שעה": "To request an appointment, choose both a date and a time",
-   "המועד שנבחר לתור אינו תקין": "The appointment time is not valid",
-   "אפשר לבקש תור רק למועד עתידי (עד 4 חודשים קדימה)": "Appointments can only be requested for a future time (up to 4 months ahead)",
+   "לבקשת פגישה יש לבחור גם תאריך וגם שעה": "To request an appointment, choose both a date and a time",
+   "המועד שנבחר לפגישה אינו תקין": "The appointment time is not valid",
+   "אפשר לבקש פגישה רק למועד עתידי (עד 4 חודשים קדימה)": "Appointments can only be requested for a future time (up to 4 months ahead)",
    "יש להזין מספר טלפון": "Please enter a phone number",
    "מספר הטלפון אינו תקין. לדוגמה: 050-1234567": "The phone number is not valid. For example: 050-1234567"
   }

@@ -41,7 +41,7 @@ export function StepHours({ business, onSubmit, onBack }: Props) {
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-ink">{tr('מתי העסק פתוח?')}</h1>
         <p className="text-sm text-ink-muted">
-          {tr('השעות יוצגו באתר ויעזרו בהמשך בניהול תורים. מילאנו הצעה — עדכנו לפי הצורך.')}
+          {tr('השעות יוצגו באתר ויעזרו בהמשך בניהול פגישות. מילאנו הצעה — עדכנו לפי הצורך.')}
         </p>
       </header>
       {formError && <Alert tone="danger">{formError}</Alert>}

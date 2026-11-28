@@ -71,7 +71,7 @@ export const enPart2: Record<string, string> = {
   'לעסקים שמקבלים לקוחות במקום': 'For businesses that receive customers on site',
   חזרה: 'Back',
   'מתי העסק פתוח?': 'When is the business open?',
-  'השעות יוצגו באתר ויעזרו בהמשך בניהול תורים. מילאנו הצעה — עדכנו לפי הצורך.':
+  'השעות יוצגו באתר ויעזרו בהמשך בניהול פגישות. מילאנו הצעה — עדכנו לפי הצורך.':
     "The hours show on the website and help with appointments later. We've filled in a suggestion — adjust as needed.",
   'סיום והמשך למערכת': 'Finish and continue',
   'פרטי העסק': 'Business details',

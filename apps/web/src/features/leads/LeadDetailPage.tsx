@@ -159,15 +159,15 @@ function activityText(a: Activity): string {
       return `${
         d.source === 'whatsapp'
           ? d.requested
-            ? tr('הלקוח ביקש בוואטסאפ תור ל')
-            : tr('הלקוח קבע בוואטסאפ תור ל')
+            ? tr('הלקוח ביקש בוואטסאפ פגישה ל')
+            : tr('הלקוח קבע בוואטסאפ פגישה ל')
           : d.requested
-            ? tr('התקבלה מהאתר בקשה לתור ל')
-            : tr('נקבע תור ל')
+            ? tr('התקבלה מהאתר בקשה לפגישה ל')
+            : tr('נקבעה פגישה ל')
       }${apptWhen(d.startsAt)}${d.service ? ` (${String(d.service)})` : ''}`;
     case 'appointment.updated':
       return tr(
-        'התור עודכן: {0} · {1}',
+        'הפגישה עודכנה: {0} · {1}',
         apptWhen(d.startsAt),
         tr(appointmentStatusLabels[d.status as keyof typeof appointmentStatusLabels]) ?? '',
       );
@@ -984,9 +984,9 @@ function LeadTabArea({
             : tr('הצעות, {0}', quotes.list.length),
       },
       appointments: {
-        text: tr('תורים'),
+        text: tr('פגישות'),
         count: nonZero(appts.upcoming),
-        spoken: tr('תורים, {0} קרובים', appts.upcoming),
+        spoken: tr('פגישות, {0} קרובות', appts.upcoming),
       },
     };
   const tabRefs = useRef<Partial<Record<LeadTab, HTMLButtonElement | null>>>({});

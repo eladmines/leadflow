@@ -233,12 +233,12 @@ export const BOT_PLACEHOLDERS = ['{business}', '{service}', '{time}'] as const;
 export const botPlaceholderLabels: Record<(typeof BOT_PLACEHOLDERS)[number], string> = {
   '{business}': 'שם העסק',
   '{service}': 'שירות',
-  '{time}': 'מועד התור',
+  '{time}': 'מועד הפגישה',
 };
 
 export const botTextLabels: Record<BotTextKey, string> = {
   greeting: 'הודעת פתיחה',
-  confirmed: 'אישור תור',
+  confirmed: 'אישור פגישה',
   pending: 'בקשה שממתינה לאישור',
   handoff: 'מעבר לצוות',
   noTimes: 'אין זמנים פנויים',
@@ -247,7 +247,7 @@ export const botTextLabels: Record<BotTextKey, string> = {
 };
 
 export const botDefaultTexts: Record<BotTextKey, string> = {
-  greeting: 'שלום! כאן {business} 👋\nרוצים לקבוע תור? בחרו שירות:',
+  greeting: 'שלום! כאן {business} 👋\nרוצים לקבוע פגישה? בחרו שירות:',
   confirmed:
     'מעולה! קבענו לכם {service} ל{time} ✅\nנתראה ב{business}! לשינוי או ביטול, פשוט כתבו לנו כאן.',
   pending: 'קיבלנו את הבקשה ל{service} ב{time} 🙏\nנאשר לכם כאן בהקדם.',
@@ -283,7 +283,7 @@ const industryTexts: Record<string, Partial<Record<BotTextKey, string>>> = {
     pending: 'קיבלנו את הבקשה לביקור ב{time} 🙏\nנאשר לכם בהקדם.',
   },
   garage: {
-    greeting: 'היי! כאן {business} 🔧\nרוצים לקבוע תור למוסך? בחרו טיפול:',
+    greeting: 'היי! כאן {business} 🔧\nרוצים לקבוע פגישה למוסך? בחרו טיפול:',
   },
   events: {
     greeting: 'היי! כאן {business} 🎧\nאיך אפשר לעזור?',

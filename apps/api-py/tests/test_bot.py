@@ -254,7 +254,7 @@ async def test_books_new_customer_end_to_end(setup, post, wa, db, client):
     assert str(task.assignee_id) == owner["user_id"] and task.lead_id == lead.id
     assert task.status.value == "OPEN" and task.remind is False
     # D-216 (2): the D-152 notice is the confirm task, linked to the appointment.
-    assert re.match(r"^לאשר את התור: נועה לוי · תספורת נשים · ", task.title)
+    assert re.match(r"^לאשר את הפגישה: נועה לוי · תספורת נשים · ", task.title)
     assert task.auto_kind == "appointment_confirm" and task.appointment_id is not None
     assert abs((task.due_at - datetime.now(UTC)).total_seconds()) < 60
 
@@ -282,8 +282,8 @@ async def test_cancel_booked_appointment(setup, post, wa, db):
     await post(text("היי, אפשר לקבוע תור?"))
     await post(tap("cancel"))
     await post(text("אני רוצה לבטל"))
-    assert wa.sent[-1].text == "לא מצאנו תור קרוב לבטל 🙂 רוצים לקבוע תור?"
-    await post(text("אפשר לקבוע תור?"))
+    assert wa.sent[-1].text == "לא מצאנו פגישה קרובה לבטל 🙂 רוצים לקבוע פגישה?"
+    await post(text("אפשר לקבוע פגישה?"))
     haircut = next(
         sv
         for sv in (
@@ -298,15 +298,15 @@ async def test_cancel_booked_appointment(setup, post, wa, db):
     assert appt.status == models.AppointmentStatus.CONFIRMED
 
     await post(text("אני רוצה לבטל את התור"))
-    assert re.fullmatch(r"לבטל את התור לתספורת נשים ב.* בשעה \d{2}:\d{2}\?", wa.sent[-1].text, re.S)
+    assert re.fullmatch(r"לבטל את הפגישה לתספורת נשים ב.* בשעה \d{2}:\d{2}\?", wa.sent[-1].text, re.S)
     assert titles(wa.sent[-1]) == ["כן, לבטל", "לא, להשאיר"]
     await post(tap("xcl_no"))
-    assert wa.sent[-1].text == "מעולה, התור נשאר 👍"
+    assert wa.sent[-1].text == "מעולה, הפגישה נשארת 👍"
     await db.refresh(appt)
     assert appt.status == models.AppointmentStatus.CONFIRMED
     await post(text("ביטול"))
     await post(tap(f"xcl:{appt.id}"))
-    assert wa.sent[-1].text.startswith("התור בוטל ✅")
+    assert wa.sent[-1].text.startswith("הפגישה בוטלה ✅")
     await db.refresh(appt)
     assert appt.status == models.AppointmentStatus.CANCELLED
     note = (
@@ -323,9 +323,9 @@ async def test_cancel_booked_appointment(setup, post, wa, db):
     )
     assert note is not None
     tasks = (await db.execute(select(models.Task).order_by(models.Task.created_at))).scalars().all()
-    assert re.match(r"^תור בוטל: נועה לוי · תספורת נשים · ", tasks[-1].title)
+    assert re.match(r"^פגישה בוטלה: נועה לוי · תספורת נשים · ", tasks[-1].title)
     await post(tap(f"xcl:{appt.id}"))
-    assert wa.sent[-1].text == "לא מצאנו תור קרוב לבטל 🙂 רוצים לקבוע תור?"
+    assert wa.sent[-1].text == "לא מצאנו פגישה קרובה לבטל 🙂 רוצים לקבוע פגישה?"
 
 
 async def test_every_message_answered_with_talk_times(setup, post, wa):
@@ -337,7 +337,7 @@ async def test_every_message_answered_with_talk_times(setup, post, wa):
     await post(text("כמה עולה צבע?"))
     assert "cb:other" in ids(wa.sent[-1])
     await post(tap("book"))
-    assert "רוצים לקבוע תור?" in wa.sent[-1].text
+    assert "רוצים לקבוע פגישה?" in wa.sent[-1].text
 
 
 async def test_single_service_skips_to_days_and_pending_books_request(setup, post, wa, db):
@@ -396,7 +396,7 @@ async def test_taken_time_offers_others(setup, post, wa, db):
 
 async def test_after_talk_to_team_next_message_answered(setup, post, wa):
     await setup()
-    await post(text("תור"))
+    await post(text("פגישה"))
     await post(tap("human"))
     assert wa.sent[-1].text.startswith("בסדר! העברנו את השיחה לצוות")
     await post(text("vhh ,ur"))  # "היי תור" typed with the keyboard on English
@@ -411,7 +411,7 @@ def test_hebrew_layout():
 
 async def test_unknown_message_repeats_and_cancel_ends(setup, post, wa, db):
     await setup()
-    await post(text("תור"))
+    await post(text("פגישה"))
     await post(text("מה?"))
     assert wa.sent[-1].text.startswith("לא הבנתי")
     assert wa.sent[-1].choices[-1].id == "human"
@@ -489,7 +489,7 @@ async def test_own_messages_with_placeholders(setup, post, wa, client):
         "greeting": "היי מ{business}! בחרו שירות:",
         "confirmed": "נקבע: {service}, {time}. החניה מאחורי הבניין 🚗",
     }
-    await post(text("תור"))
+    await post(text("פגישה"))
     await post(tap(wa.sent[-1].choices[0].id))
     await post(tap(wa.sent[-1].choices[0].id))
     await post(tap("ok"))
@@ -558,26 +558,26 @@ def with_showcase(setup, client, db, app):
 
 async def test_showcase_after_cancel_once_a_day(with_showcase, post, wa, db):
     await with_showcase()
-    await post(text("תור"))
+    await post(text("פגישה"))
     cs = ids(wa.sent[-1])
     assert re.match(r"svc:", cs[0]) and re.match(r"svc:", cs[1]) and cs[2:] == ["showcase", "human"]
     wa.clear()
     await post(text("ביטול"))
     assert [m.text for m in wa.sent] == [
-        'בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂',
+        'בוטל. כשתרצו לקבוע פגישה, פשוט כתבו לנו "פגישה" 🙂',
         "בינתיים, הנה הצצה לעבודות שלנו ✂️\nhttps://instagram.com/sigalit.hair",
         "",
-        "כשתרצו, אפשר לקבוע תור כאן 👇",
+        "כשתרצו, אפשר לקבוע פגישה כאן 👇",
     ]
     assert wa.sent[2].image_bytes > 0
-    assert [(c.id, c.title) for c in wa.sent[-1].choices] == [("book", "📅 לקביעת תור")]
+    assert [(c.id, c.title) for c in wa.sent[-1].choices] == [("book", "📅 לקביעת פגישה")]
     number = (await db.execute(select(models.WhatsAppNumber))).scalars().one()
     assert number.bot_showcase_at is not None
     await post(tap("book"))
-    assert "רוצים לקבוע תור?" in wa.sent[-1].text
+    assert "רוצים לקבוע פגישה?" in wa.sent[-1].text
     wa.clear()
     await post(text("ביטול"))
-    assert [m.text for m in wa.sent] == ['בוטל. כשתרצו לקבוע תור, פשוט כתבו לנו "תור" 🙂']
+    assert [m.text for m in wa.sent] == ['בוטל. כשתרצו לקבוע פגישה, פשוט כתבו לנו "פגישה" 🙂']
 
 
 async def test_peek_after_choosing_a_time(with_showcase, post, wa):
@@ -590,7 +590,7 @@ async def test_peek_after_choosing_a_time(with_showcase, post, wa):
     assert texts[0].startswith("מעולה! נחזור אליכם")
     assert texts[1] == "בינתיים, הנה הצצה לעבודות שלנו ✂️\nhttps://instagram.com/sigalit.hair"
     assert wa.sent[-1].image_bytes > 0
-    assert "כשתרצו, אפשר לקבוע תור כאן 👇" not in texts
+    assert "כשתרצו, אפשר לקבוע פגישה כאן 👇" not in texts
 
 
 async def test_see_our_work_on_request(with_showcase, post, wa, db):
@@ -609,7 +609,7 @@ async def test_see_our_work_on_request(with_showcase, post, wa, db):
         )
     )
     await db.commit()
-    await post(text("תור"))
+    await post(text("פגישה"))
     wa.clear()
     await post(tap("showcase"))
     assert wa.sent[0].text == "הצצה ל[שם העסק]: עיצוב שיער סיגלית 🎧"
@@ -618,18 +618,18 @@ async def test_see_our_work_on_request(with_showcase, post, wa, db):
 
 async def test_talk_to_team_gets_showcase_and_book_reopens(with_showcase, post, wa):
     await with_showcase()
-    await post(text("תור"))
+    await post(text("פגישה"))
     wa.clear()
     await post(tap("human"))
     assert wa.sent[0].text.startswith("בסדר! העברנו את השיחה לצוות")
     assert wa.sent[-1].choices[0].id == "book"
     await post(tap("book"))
-    assert "רוצים לקבוע תור?" in wa.sent[-1].text
+    assert "רוצים לקבוע פגישה?" in wa.sent[-1].text
 
 
 async def test_abandoned_conversation_nudged_once(with_showcase, post, wa, db, app):
     s = await with_showcase()
-    await post(text("תור"))
+    await post(text("פגישה"))
     await post(tap(wa.sent[-1].choices[0].id))
     await db.execute(sql("UPDATE whatsapp_bot_sessions SET updated_at = now() - interval '40 minutes'"))
     await db.commit()
@@ -647,7 +647,7 @@ async def test_abandoned_conversation_nudged_once(with_showcase, post, wa, db, a
         .values(bot_showcase_at=None)
     )
     await db.commit()
-    await post(text("תור"))
+    await post(text("פגישה"))
     db.add(
         models.WhatsAppMessage(
             id=uuid.uuid4(),
@@ -773,7 +773,7 @@ async def test_dj_event_request_flow(setup, post, wa, db, client):
         and appt.staff_id is None
     )
     task = (await db.execute(select(models.Task))).scalars().one()
-    assert task.title.startswith("לאשר את התור: ") and task.appointment_id == appt.id  # D-216 (2)
+    assert task.title.startswith("לאשר את הפגישה: ") and task.appointment_id == appt.id  # D-216 (2)
     assert appt.starts_at == zoned_time_to_utc(day.isoformat(), "19:00", TZ)
     assert re.match(r"^בקשה מוואטסאפ · חתונה · ", appt.notes)
     assert "אורחים: 150–300 · אזור: ראשון לציון" in appt.notes
@@ -905,12 +905,14 @@ async def test_switch_flow_either_way(setup, post, wa, db, client):
     owner = s["owner"]
     get = (await req(client, "GET", bot_url(), owner["token"])).json()
     assert get["settings"]["flow"] == "appointment" and get["settings"]["flowIsDefault"] is True
-    assert get["settings"]["defaults"]["greeting"] == "שלום! כאן {business} 👋\nרוצים לקבוע תור? בחרו שירות:"
+    assert (
+        get["settings"]["defaults"]["greeting"] == "שלום! כאן {business} 👋\nרוצים לקבוע פגישה? בחרו שירות:"
+    )
     put = await req(
         client, "PUT", bot_url(), owner["token"], {"enabled": True, "autoConfirm": True, "flow": "event"}
     )
     assert put.json()["settings"]["flow"] == "event" and put.json()["settings"]["flowIsDefault"] is False
-    await post(text("תור"))
+    await post(text("פגישה"))
     await post(tap("ev_start"))
     first = (await db.execute(select(models.Service).order_by(models.Service.name))).scalars().first()
     assert f"evt:svc:{first.id}" in ids(wa.sent[-1])
@@ -937,7 +939,7 @@ async def test_personal_chat_on_first_reply(setup, post, wa):
 
 async def test_two_misses_hand_over(setup, post, wa):
     await setup()
-    await post(text("תור"))
+    await post(text("פגישה"))
     await post(text("מה?"))
     assert wa.sent[-1].text.startswith("לא הבנתי")
     await post(text("לא ברור לי"))
@@ -981,7 +983,7 @@ async def test_event_request_hold_date_setting(setup, post, wa, db, client):
 async def test_owner_pauses_bot_for_one_customer(setup, post, wa, db, client):
     s = await setup()
     owner = s["owner"]
-    await post(text("תור"))
+    await post(text("פגישה"))
     lead = (
         await req(
             client,

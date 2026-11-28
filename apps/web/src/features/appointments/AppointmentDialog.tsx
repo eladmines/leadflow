@@ -27,15 +27,15 @@ import { tr } from '../../i18n';
 /** Status actions offered for each status. */
 const actions: Partial<Record<AppointmentStatus, { to: AppointmentStatus; label: string }[]>> = {
   REQUESTED: [
-    { to: 'CONFIRMED', label: tr('אישור התור') },
+    { to: 'CONFIRMED', label: tr('אישור הפגישה') },
     { to: 'CANCELLED', label: tr('דחייה') },
   ],
   CONFIRMED: [
     { to: 'COMPLETED', label: tr('סימון כבוצע') },
     { to: 'NO_SHOW', label: tr('לא הגיע/ה') },
-    { to: 'CANCELLED', label: tr('ביטול התור') },
+    { to: 'CANCELLED', label: tr('ביטול הפגישה') },
   ],
-  CANCELLED: [{ to: 'CONFIRMED', label: tr('החזרה לתור מאושר') }],
+  CANCELLED: [{ to: 'CONFIRMED', label: tr('החזרה לפגישה מאושרת') }],
   NO_SHOW: [{ to: 'COMPLETED', label: tr('סימון כבוצע') }],
 };
 
@@ -155,7 +155,7 @@ export function AppointmentDialog({
       </div>
 
       <fieldset className="flex flex-col gap-3 border-t border-surface-border pt-4">
-        <legend className="sr-only">{tr('שינוי פרטי התור')}</legend>
+        <legend className="sr-only">{tr('שינוי פרטי הפגישה')}</legend>
         <div className="grid grid-cols-3 gap-3">
           <Field
             label={tr('תאריך')}

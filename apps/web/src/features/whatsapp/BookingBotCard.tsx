@@ -92,7 +92,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
     <section aria-labelledby="bot-settings-title" className="flex flex-col gap-3">
       {/* The card around it carries the visible title and the on/off switch (D-147). */}
       <h3 id="bot-settings-title" className="sr-only">
-        {tr('הגדרות קביעת התורים')}
+        {tr('הגדרות קביעת הפגישות')}
       </h3>
       {/* Dropdowns with the chosen option explained under each (D-173): calmer than radio lists. */}
       <div role="group" aria-label={tr('מה לקוחות יכולים להזמין?')} className="max-w-md">
@@ -125,18 +125,18 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
           </p>
         </>
       ) : (
-        <div role="group" aria-label={tr('כשלקוח קובע תור:')} className="max-w-md">
+        <div role="group" aria-label={tr('כשלקוח קובע פגישה:')} className="max-w-md">
           <Select
-            label={tr('כשלקוח קובע תור:')}
+            label={tr('כשלקוח קובע פגישה:')}
             value={settings.autoConfirm ? 'confirm' : 'approve'}
             onChange={(e) => change({ autoConfirm: e.target.value === 'confirm' })}
             options={[
-              { value: 'confirm', label: tr('התור מאושר מיד') },
-              { value: 'approve', label: tr('התור מחכה לאישור שלי') },
+              { value: 'confirm', label: tr('הפגישה מאושרת מיד') },
+              { value: 'approve', label: tr('הפגישה מחכה לאישור שלי') },
             ]}
             hint={
               settings.autoConfirm
-                ? tr('הלקוח מקבל אישור, והתור נכנס ליומן.')
+                ? tr('הלקוח מקבל אישור, והפגישה נכנסת ליומן.')
                 : tr('השעה שמורה בינתיים. מאשרים בעמוד היומן.')
             }
           />
@@ -184,7 +184,7 @@ export function BookingBotCard({ businessId }: { businessId: string }) {
 
 /** What customers can book, said plainly (D-149). */
 const FLOW_CHOICES: Record<BotFlow, { label: string; hint: string }> = {
-  appointment: { label: 'תור בשעה פנויה', hint: 'הלקוח רואה ימים ושעות פנויים מהיומן.' },
+  appointment: { label: 'פגישה בשעה פנויה', hint: 'הלקוח רואה ימים ושעות פנויים מהיומן.' },
   event: { label: 'הזמנה', hint: 'הלקוח כותב תאריך ופרטים, ואתם מאשרים.' },
 };
 
@@ -376,7 +376,7 @@ function BotTextsForm({ businessId, settings }: { businessId: string; settings: 
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-5">
       <p className="text-xs text-ink-muted">
         {tr(
-          'הלקוחות מקבלים את ההודעות בעברית. שם העסק נכתב כמו שהוא. השירות ומועד התור משתנים מלקוח ללקוח, ולכן מוסיפים אותם בכפתורים שמתחת לכל הודעה והם מתמלאים לפי מה שהלקוח בחר. הכפתורים והרשימות בוואטסאפ נשארים קבועים.',
+          'הלקוחות מקבלים את ההודעות בעברית. שם העסק נכתב כמו שהוא. השירות ומועד הפגישה משתנים מלקוח ללקוח, ולכן מוסיפים אותם בכפתורים שמתחת לכל הודעה והם מתמלאים לפי מה שהלקוח בחר. הכפתורים והרשימות בוואטסאפ נשארים קבועים.',
         )}
       </p>
       {/* The messages scroll on their own; the note above and the Save button below stay put. */}
@@ -485,7 +485,7 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
 
   const filled = fillBotText(toCodes(text, business.name), {
     business: business.name,
-    service: 'תור',
+    service: 'פגישה',
     when: '',
   });
 
@@ -493,7 +493,7 @@ export function ShowcaseForm({ businessId, settings }: { businessId: string; set
     <form noValidate onSubmit={submit} className="mt-3 flex flex-col gap-4">
       <p className="text-xs text-ink-muted">
         {tr(
-          'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, תור או הזמנה): ההודעה עם הקישור, אחריה הסרטון והתמונות.',
+          'נשלחת מיד אחרי שהלקוח מחליט (זמן לשיחה, פגישה או הזמנה): ההודעה עם הקישור, אחריה הסרטון והתמונות.',
         )}
       </p>
       <fieldset className="flex flex-col gap-4">

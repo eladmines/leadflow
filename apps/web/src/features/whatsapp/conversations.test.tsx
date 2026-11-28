@@ -118,7 +118,7 @@ async function open(user: ReturnType<typeof renderApp>['user'], name: string) {
   await user.click(await screen.findByRole('button', { name }));
 }
 const STATUS_SETTINGS = 'הגדרות הסטטוס וההודעה';
-const BOOKING_SETTINGS = 'הגדרות קביעת התורים';
+const BOOKING_SETTINGS = 'הגדרות קביעת הפגישות';
 
 describe('WhatsApp conversations inbox', () => {
   it("shows the customer's journey in order, and what is on right now", async () => {
@@ -270,11 +270,11 @@ describe('WhatsApp conversations inbox', () => {
     const { user } = renderApp(autoTab);
     await open(user, BOOKING_SETTINGS);
     // Dropdowns, the chosen option explained under each (D-173).
-    const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע תור:' });
-    expect(screen.getByText('הלקוח מקבל אישור, והתור נכנס ליומן.')).toBeInTheDocument();
+    const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע פגישה:' });
+    expect(screen.getByText('הלקוח מקבל אישור, והפגישה נכנסת ליומן.')).toBeInTheDocument();
     const saveButton = screen.getByRole('button', { name: 'שמירת ההגדרות' });
     expect(saveButton).toBeDisabled();
-    await choose(user, confirm, 'התור מחכה לאישור שלי');
+    await choose(user, confirm, 'הפגישה מחכה לאישור שלי');
     expect(screen.getByText('השעה שמורה בינתיים. מאשרים בעמוד היומן.')).toBeInTheDocument();
     // Nothing is sent until saving.
     expect(screen.getByText('יש שינויים שעוד לא נשמרו')).toBeInTheDocument();
@@ -299,11 +299,11 @@ describe('WhatsApp conversations inbox', () => {
     mockApi(routes({ connected: true, numbers: [] }));
     const { user } = renderApp(autoTab);
     await open(user, BOOKING_SETTINGS);
-    const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע תור:' });
-    await choose(user, confirm, 'התור מחכה לאישור שלי');
+    const confirm = await screen.findByRole('combobox', { name: 'כשלקוח קובע פגישה:' });
+    await choose(user, confirm, 'הפגישה מחכה לאישור שלי');
     await user.click(screen.getByRole('button', { name: 'ביטול השינויים' }));
-    expect(screen.getByRole('combobox', { name: 'כשלקוח קובע תור:' })).toHaveTextContent(
-      'התור מאושר מיד',
+    expect(screen.getByRole('combobox', { name: 'כשלקוח קובע פגישה:' })).toHaveTextContent(
+      'הפגישה מאושרת מיד',
     );
     expect(screen.getByRole('button', { name: 'שמירת ההגדרות' })).toBeDisabled();
   });
@@ -484,15 +484,15 @@ describe('WhatsApp conversations inbox', () => {
     await user.click(await screen.findByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
     // The business's name is written as itself; only what changes per booking is a tag.
     expect(screen.getByLabelText('הודעת פתיחה')).toHaveValue(
-      `שלום! כאן ${testBusiness.name} 👋\nרוצים לקבוע תור? בחרו שירות:`,
+      `שלום! כאן ${testBusiness.name} 👋\nרוצים לקבוע פגישה? בחרו שירות:`,
     );
     expect(
-      screen.queryByRole('button', { name: 'הוספה: שם העסק (אישור תור)' }),
+      screen.queryByRole('button', { name: 'הוספה: שם העסק (אישור פגישה)' }),
     ).not.toBeInTheDocument();
-    expect((screen.getByLabelText('אישור תור') as HTMLTextAreaElement).value).toContain(
-      '[שירות] ל[מועד התור]',
+    expect((screen.getByLabelText('אישור פגישה') as HTMLTextAreaElement).value).toContain(
+      '[שירות] ל[מועד הפגישה]',
     );
-    const confirmed = screen.getByLabelText('אישור תור');
+    const confirmed = screen.getByLabelText('אישור פגישה');
     await user.clear(confirmed);
     await user.type(confirmed, 'נתראה ב{{business}, {{name}');
     await user.click(screen.getByRole('button', { name: 'שמירת ההודעות' }));
@@ -503,9 +503,11 @@ describe('WhatsApp conversations inbox', () => {
     await user.type(confirmed, `נתראה ב${testBusiness.name}!`);
     // No preview of the customer's view any more: the box is the only place the text shows.
     expect(screen.queryByText('כך הלקוח יראה את זה:')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('אישור תור')).toHaveValue(`נתראה ב${testBusiness.name}!`);
+    expect(screen.getByLabelText('אישור פגישה')).toHaveValue(`נתראה ב${testBusiness.name}!`);
     // The messages scroll by themselves; the note above and the Save button stay outside the scroller.
-    const scroller = screen.getByLabelText('אישור תור').closest('.overflow-y-auto') as HTMLElement;
+    const scroller = screen
+      .getByLabelText('אישור פגישה')
+      .closest('.overflow-y-auto') as HTMLElement;
     expect(scroller).toHaveClass('max-h-[55vh]');
     expect(scroller).toContainElement(screen.getByLabelText('הודעת פתיחה'));
     expect(scroller).not.toContainElement(screen.getByRole('button', { name: 'שמירת ההודעות' }));
@@ -589,7 +591,7 @@ describe('WhatsApp conversations inbox', () => {
     const { user } = renderApp(autoTab);
     await open(user, BOOKING_SETTINGS);
     const flow = await screen.findByRole('combobox', { name: 'מה לקוחות יכולים להזמין?' });
-    expect(flow).toHaveTextContent('תור בשעה פנויה');
+    expect(flow).toHaveTextContent('פגישה בשעה פנויה');
     // The industry's own choice says so in the list.
     await user.click(flow);
     expect(await screen.findByRole('option', { name: /מתאים לתחום שלכם/ })).toBeInTheDocument();
@@ -599,10 +601,10 @@ describe('WhatsApp conversations inbox', () => {
       expect(callsTo(fetchMock, 'PUT', wp.bot(id)).at(-1)).toMatchObject({ flow: 'event' }),
     );
     expect(await screen.findByText(/ההזמנה מחכה לאישור שלכם בעמוד היומן/)).toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: 'כשלקוח קובע תור:' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'כשלקוח קובע פגישה:' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'עריכת ההודעות ללקוחות' }));
     expect(screen.getByLabelText('הזמנה התקבלה')).toBeInTheDocument();
-    expect(screen.queryByLabelText('אישור תור')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('אישור פגישה')).not.toBeInTheDocument();
   });
 
   it('lists personal numbers and undoes a marking', async () => {
