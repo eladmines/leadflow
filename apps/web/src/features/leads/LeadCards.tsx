@@ -139,8 +139,9 @@ export function useLeadAppointments(lead: Lead) {
     const now = Date.now();
     return {
       now,
-      from: new Date(now - 30 * 86_400_000).toISOString(),
-      to: new Date(now + 62 * 86_400_000).toISOString(),
+      // The server takes at most 62 days per request: two weeks back, seven weeks ahead.
+      from: new Date(now - 14 * 86_400_000).toISOString(),
+      to: new Date(now + 48 * 86_400_000).toISOString(),
     };
   });
   const query = useAppointments(business.id, {
