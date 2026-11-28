@@ -1,23 +1,18 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
 import { choose } from './choose';
 
-/**
- * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
- * panel's "עוד" on wide screens (D-219). Opens it if closed.
- */
+/** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
-  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+  const info = page.getByRole('tab', { name: 'מידע' });
+  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
 }
 
-/** The custom-field form (D-219): in the side panel's "פרטים"; on phones under "עוד פרטים". */
+/** The custom-field form: "פרטים" in the "מידע" tab (D-220). */
 async function editLeadFields(page: Page, formName = 'פרטים') {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const more = page.locator('#lead-more-details-button');
-  if ((await more.count()) > 0 && (await more.getAttribute('aria-expanded')) !== 'true') {
-    await more.click();
-  }
+  const info = page.getByRole('tab', { name: 'מידע' });
+  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
   await expect(page.getByRole('form', { name: formName })).toBeVisible();
 }
 
@@ -177,7 +172,7 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await model.fill('טויוטה קורולה');
   await save.click();
   await expect(page.getByText('השינויים נשמרו')).toBeVisible();
-  // The full history is under "עוד פרטים" (D-211).
+  // The full history is in "מידע" (D-220).
   await openLeadHistory(page);
   const history = page.getByRole('list', { name: 'היסטוריית הליד' });
   await expect(history).toContainText('דגם רכב');

@@ -1,14 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { choose } from './choose';
 
-/**
- * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
- * panel's "עוד" on wide screens (D-219). Opens it if closed.
- */
+/** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
-  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+  const info = page.getByRole('tab', { name: 'מידע' });
+  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
 }
 
 /** F08: manual lead → board (drag or stage menu) → lead page (stage, note, history) → search. */
@@ -53,7 +50,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await dialog.getByLabel('פרטי הפנייה').fill('טיפול 10,000 ק"מ ליונדאי i20');
   await dialog.getByRole('button', { name: 'יצירת ליד' }).click();
   await expect(page.getByRole('heading', { name: 'אבי כהן', level: 1 })).toBeVisible();
-  // The full history is under "עוד פרטים" (D-211).
+  // The full history is in "מידע" (D-220).
   await openLeadHistory(page);
   await expect(page.getByText('הליד נוצר ידנית')).toBeVisible();
 

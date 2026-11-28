@@ -1,13 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
-/**
- * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
- * panel's "עוד" on wide screens (D-219). Opens it if closed.
- */
+/** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
-  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+  const info = page.getByRole('tab', { name: 'מידע' });
+  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
 }
 
 /** F18: quote from a lead → totals → send → customer accepts on the private page → lead history. */
@@ -42,7 +39,7 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   await page.goto(`/b/${id}/leads/${leadId}`);
   const openQuotes = () => page.getByRole('tab', { name: /^הצעות/ }).click();
   const quotesCard = page.getByRole('tabpanel');
-  // D-218: the value is one line in the properties ("עוד פרטים" on phones): "₪X פתוח · ₪Y נסגר".
+  // D-218: the value is one line in "מידע" (D-220): "₪X פתוח · ₪Y נסגר".
   const value = async () => {
     await openLeadHistory(page);
     return page.getByText('ערך לפי הצעות מחיר').locator('xpath=following-sibling::div');

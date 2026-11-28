@@ -99,15 +99,15 @@ describe('WhatsApp on the lead page', () => {
         botPaused: false,
       }),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(`${page}?tab=whatsapp`);
     const list = await screen.findByRole('list', { name: 'שיחת וואטסאפ' });
     const items = within(list).getAllByRole('listitem');
     expect(items[0]).toHaveTextContent('הלקוח כתב:');
     expect(items[0]).toHaveTextContent('היי, אפשר לקבוע תור?');
     expect(items[1]).toHaveTextContent('נשלחה על ידי סיגלית:');
     expect(items[1]).toHaveTextContent('נקראה');
-    // The history is under "עוד פרטים" (D-211).
-    await user.click(screen.getByRole('button', { name: /^עוד פרטים/ }));
+    // The history is in "מידע" (D-220).
+    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
     expect(await screen.findByText('הליד נוצר מהודעת וואטסאפ')).toBeInTheDocument();
   });
 
@@ -128,7 +128,7 @@ describe('WhatsApp on the lead page', () => {
       [`GET ${apiPaths.leads.detail(id, leadId)}`]: () =>
         json(200, { lead: fbLead, activities: [] }),
     });
-    renderApp(page);
+    renderApp(`${page}?tab=whatsapp`);
     expect(await screen.findByRole('tab', { name: 'פייסבוק' })).toHaveAttribute(
       'aria-selected',
       'true',
@@ -147,7 +147,7 @@ describe('WhatsApp on the lead page', () => {
         { [`POST ${threadPath}`]: () => json(201, { message: reply }) },
       ),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(`${page}?tab=whatsapp`);
     const box = await screen.findByLabelText('תשובה בוואטסאפ');
     expect(screen.getByText(/אפשר לענות עד/)).toBeInTheDocument();
     await user.type(box, 'בטח! מתי נוח לך?');
@@ -168,7 +168,7 @@ describe('WhatsApp on the lead page', () => {
         },
       ),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(`${page}?tab=whatsapp`);
     await screen.findByLabelText('תשובה בוואטסאפ');
     await user.click(screen.getByRole('button', { name: 'שליחה בוואטסאפ' }));
     expect(await screen.findByText(whatsappMessages.textRequired)).toBeInTheDocument();
@@ -181,7 +181,7 @@ describe('WhatsApp on the lead page', () => {
 
   it('explains when the 24-hour window has closed', async () => {
     mockApi(routes({ connected: true, messages: [incoming], replyUntil: null, botPaused: false }));
-    renderApp(page);
+    renderApp(`${page}?tab=whatsapp`);
     expect(await screen.findByText(whatsappMessages.windowClosed)).toBeInTheDocument();
     expect(screen.queryByLabelText('תשובה בוואטסאפ')).not.toBeInTheDocument();
   });
@@ -206,7 +206,7 @@ describe('WhatsApp on the lead page', () => {
         },
       ),
     );
-    const { user } = renderApp(page);
+    const { user } = renderApp(`${page}?tab=whatsapp`);
     expect(await screen.findByText('הבוט יכול לענות בשיחה הזו')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'השהיית הבוט' }));
     expect(await screen.findByText('הבוט מושהה בשיחה הזו')).toBeInTheDocument();

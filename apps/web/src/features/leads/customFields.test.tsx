@@ -77,9 +77,9 @@ const listQueries = (fetchMock: ReturnType<typeof mockApi>) =>
     .filter((u) => u.split('?')[0] === lp.list(id))
     .map((u) => new URLSearchParams(u.split('?')[1] ?? ''));
 
-/** Phones: the side panel (with "פרטים") is folded under "עוד פרטים" (D-219). */
+/** "פרטים" is in the "מידע" tab (D-220). */
 const openDetails = async (user: ReturnType<typeof renderApp>['user']) => {
-  await user.click(await screen.findByRole('button', { name: /^עוד פרטים/ }));
+  await user.click(await screen.findByRole('tab', { name: 'מידע' }));
   return screen.findByRole('region', { name: 'פרטים' });
 };
 
@@ -274,29 +274,17 @@ describe('lead card: "פרטים" with custom fields (F34, D-219)', () => {
     expect(await within(card).findByLabelText('דגם הרכב')).toBeEnabled();
   });
 
-  it('without fields, an employee sees that there are none and no manage link', async () => {
-    mockApi({
-      [meKey]: me(testUser),
-      ...asRole('EMPLOYEE'),
-      [`GET ${lp.detail(id, lead().id)}`]: () => detail(lead({ customFields: {} })),
-    });
-    const { user } = renderApp(detailPath());
-    const card = await openDetails(user);
-    expect(await within(card).findByText('אין שדות נוספים.')).toBeInTheDocument();
-    expect(within(card).queryByRole('link', { name: 'ניהול שדות' })).not.toBeInTheDocument();
-  });
-
-  it('a manager with no fields yet is pointed to the lead-fields page', async () => {
+  it('without fields the "פרטים" section is not shown at all (D-220)', async () => {
     mockApi({
       [meKey]: me(testUser),
       ...asRole('MANAGER'),
       [`GET ${lp.detail(id, lead().id)}`]: () => detail(lead({ customFields: {} })),
     });
     const { user } = renderApp(detailPath());
-    const card = await openDetails(user);
-    expect(await within(card).findByRole('link', { name: 'ניהול שדות' })).toHaveAttribute(
-      'href',
-      businessWebPaths.section(id, 'leads/fields'),
+    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
+    await screen.findByRole('region', { name: 'הליד' });
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'פרטים' })).not.toBeInTheDocument(),
     );
   });
 
@@ -323,8 +311,8 @@ describe('lead card: "פרטים" with custom fields (F34, D-219)', () => {
         ]),
     });
     const { user } = renderApp(detailPath());
-    // D-211: the full history is under "עוד פרטים".
-    await user.click(await screen.findByRole('button', { name: /^עוד פרטים/ }));
+    // D-220: the history is in "מידע".
+    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
     const history = await screen.findByRole('list', { name: 'היסטוריית הליד' });
     expect(within(history).getByText('עודכנו: תגיות, שדות נוספים')).toBeInTheDocument();
     await waitFor(() =>

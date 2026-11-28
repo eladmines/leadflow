@@ -59,24 +59,22 @@ import {
   usePipeline,
   useUpdateLead,
 } from './api';
-import {
-  AttributionDetails,
-  attributionRows,
-  attributionSourceName,
-  sourceName,
-} from './Attribution';
+import { AttributionDetails, attributionRows, attributionSourceName } from './Attribution';
 import { stageColor } from './stageColors';
 import { WHATSAPP_REPLY_ID, WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { useWhatsAppThread } from '../whatsapp/api';
 import { LeadSourceIcon } from './SourceIcon';
 import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
-import { CustomFieldChanges, CustomFieldsPanel, useCustomFieldsDraft } from './CustomFieldsCard';
 import {
-  Disclosure,
+  CustomFieldChanges,
+  CustomFieldsPanel,
+  useCustomFieldsDraft,
+  type CustomFieldsDraft,
+} from './CustomFieldsCard';
+import {
   LeadAppointments,
   LeadQuotes,
   LeadTasks,
-  NextAction,
   valueSummary,
   useLeadAppointments,
   useLeadOpenTasks,
@@ -233,20 +231,19 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
   );
 }
 
-/** The stage badge at the end of the header's first line; saves at once (a move that needs a quote offers to write one). */
-function StageSelect({ lead }: { lead: Lead }) {
+/** The stage, a coloured badge with its menu; saves at once (a move that needs a quote offers to write one). */
+function StageField({ lead }: { lead: Lead }) {
   const business = useCurrentBusiness();
   const stages = usePipeline(business.id);
   const update = useUpdateLead(business.id);
   const [needsQuote, setNeedsQuote] = useState(false);
   const tone = stageColor(lead.stage, stages.data).tag;
   return (
-    <div className="flex min-w-0 shrink-0 flex-col items-end gap-1">
+    <div className="flex min-w-0 flex-col items-start gap-1.5">
       {/* D-217: a coloured badge with its menu (the name is written too, never colour only). */}
       <SelectMenu
         id="lead-stage"
         label={tr('שלב')}
-        labelHidden
         searchable={false}
         buttonClassName={cn(
           'rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
@@ -411,9 +408,9 @@ function History({ activities }: { activities: Activity[] }) {
   const events = systemEvents(activities);
   return (
     <section aria-labelledby="lead-history-title" className="flex flex-col gap-2">
-      <h3 id="lead-history-title" className="text-sm font-semibold text-ink">
+      <h2 id="lead-history-title" className="text-base font-semibold text-ink">
         {tr('היסטוריה')}
-      </h3>
+      </h2>
       <ol aria-label={tr('היסטוריית הליד')} className="flex flex-col">
         {events.map((a) => (
           <li key={a.id} className="relative flex gap-3 pb-4 last:pb-0">
@@ -444,7 +441,7 @@ const CONVERSATION_SOURCES: readonly string[] = ['whatsapp', 'facebook', 'instag
 const waLink = (phone: string) => `https://wa.me/${phone.replace(/\D/g, '')}`;
 
 /**
- * The WhatsApp button (header and phone bar). When the business's WhatsApp is connected and this
+ * The WhatsApp button ("תקשורת" and the phone bar). When the business's WhatsApp is connected and this
  * lead's conversation runs on it, the button opens the conversation tab here and puts the cursor in
  * the reply box; otherwise (not connected, another channel, or no access to the conversation) it
  * opens wa.me in a new tab. The accessible name says which.
@@ -460,7 +457,7 @@ function WhatsAppAction({
   inApp: boolean;
   onOpen: () => void;
   className: string;
-  /** A round icon button (the header, D-217); the name and tooltip still say what it does. */
+  /** A round icon button; the name and tooltip still say what it does. */
   iconOnly?: boolean;
 }) {
   const content = (
@@ -498,55 +495,10 @@ function WhatsAppAction({
   );
 }
 
-/** Avatar colours, picked by the name's first letter (the same name always gets the same one). */
-const AVATAR_COLOURS = [
-  'bg-sky-100 text-sky-800',
-  'bg-violet-100 text-violet-800',
-  'bg-amber-100 text-amber-900',
-  'bg-emerald-100 text-emerald-800',
-  'bg-rose-100 text-rose-800',
-  'bg-indigo-100 text-indigo-800',
-  'bg-teal-100 text-teal-800',
-];
-const avatarColour = (name: string) =>
-  AVATAR_COLOURS[(name.trim().codePointAt(0) ?? 0) % AVATAR_COLOURS.length]!;
-
-const roundButton = (primary: boolean) =>
-  cn(
-    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
-    primary
-      ? 'bg-brand-600 text-white hover:bg-brand-700'
-      : 'bg-surface text-ink ring-1 ring-inset ring-surface-border hover:bg-surface-muted',
-  );
-
 /**
- * "הגיע מ… · לפני …" (D-217, D-218): where the lead came from (the ad or campaign when known) and
- * when (the full date on hover). The owner is in the properties only.
- */
-function MetaLine({ lead }: { lead: Lead }) {
-  const a = lead.attribution;
-  const named = a?.campaign ?? a?.adHeadline ?? null;
-  const source = a
-    ? named
-      ? tr('{0} ({1})', sourceName(a.source), named)
-      : sourceName(a.source)
-    : tr(leadSourceLabels[lead.source]);
-  return (
-    <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-ink-muted">
-      <LeadSourceIcon source={lead.source} className="h-4 w-4" />
-      <span>{tr('הגיע מ־{0}', source)}</span>
-      <span aria-hidden>·</span>
-      <time dateTime={lead.createdAt} title={formatDateTime(lead.createdAt)}>
-        {timeAgo(lead.createdAt)}
-      </time>
-    </p>
-  );
-}
-
-/**
- * `/b/:businessId/leads/:leadId` (D-211): who (header with stage, call and WhatsApp), what to do
- * next (the nearest open task), what they asked, then the conversation and notes. Quotes,
- * appointments and "more details" are folded one-line sections.
+ * `/b/:businessId/leads/:leadId` (D-220): the lead's name, then one row of tabs — "מידע" (the
+ * lead's facts, communication, custom fields, related leads and history) first, then the
+ * conversation, notes, tasks, quotes and appointments.
  */
 export function LeadDetailPage() {
   const business = useCurrentBusiness();
@@ -573,7 +525,7 @@ export function LeadDetailPage() {
   }
   return (
     <LeadPage
-      // Another lead (e.g. a related one) starts fresh: no drafts or open sections carried over.
+      // Another lead (e.g. a related one) starts fresh: no drafts carried over.
       key={detail.data.lead.id}
       lead={detail.data.lead}
       activities={detail.data.activities}
@@ -581,6 +533,9 @@ export function LeadDetailPage() {
     />
   );
 }
+
+/** Old `?tab=` values (D-211/D-212/D-219) whose content is now in "מידע". */
+const INFO_ALIASES: readonly string[] = ['more', 'history', 'related'];
 
 function LeadPage({
   lead,
@@ -592,7 +547,7 @@ function LeadPage({
   related: RelatedLead[];
 }) {
   const business = useCurrentBusiness();
-  // D-212: two columns from `lg` up; phones and tablets keep one column.
+  // Phones and tablets keep the bottom bar (D-211); the page is one column everywhere (D-220).
   const desktop = useMediaQuery('(min-width: 1024px)');
   const back = businessWebPaths.section(business.id, 'leads');
   const draft = useCustomFieldsDraft(lead);
@@ -603,13 +558,9 @@ function LeadPage({
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const asked = params.get('tab');
-  // Old links to "more", "history" or "related" (D-211/D-212) open the panel's "עוד".
-  const [moreOpen, setMoreOpen] = useState(() => MORE_TABS.includes(asked ?? ''));
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [noteFocus, setNoteFocus] = useState(0);
-  // Tabs shown even while empty, because the "+" menu just added (or is adding) their first item.
-  const [forced, setForced] = useState<LeadTab[]>([]);
 
   const phone = lead.contact.phone;
   // The conversation the page already loads (the WhatsApp tab's query, shared from the cache).
@@ -620,26 +571,9 @@ function LeadPage({
   const messages = thread.data?.messages ?? [];
   const notes = activities.filter((a) => a.type === 'lead.note');
 
-  /** D-219: each tab with its count; a tab with nothing in it is hidden. */
-  // `pending`: still loading or failed; a tab asked for in the address stays, to show that state.
-  const counts: Record<LeadTab, { has: boolean; pending: boolean }> = {
-    whatsapp: {
-      has:
-        messages.length > 0 ||
-        Boolean(lead.lastWhatsApp) ||
-        CONVERSATION_SOURCES.includes(lead.source),
-      pending: thread.isPending || thread.isError,
-    },
-    notes: { has: notes.length > 0, pending: false },
-    tasks: { has: tasks.open.length > 0, pending: !tasks.query.isSuccess },
-    quotes: { has: quotes.list.length > 0, pending: !quotes.query.isSuccess },
-    appointments: { has: appts.ordered.length > 0, pending: !appts.query.isSuccess },
-  };
-  const visible = LEAD_TABS.filter(
-    (t) => counts[t].has || forced.includes(t) || (t === asked && counts[t].pending),
-  );
-  const tab: LeadTab | null =
-    asked && (visible as string[]).includes(asked) ? (asked as LeadTab) : (visible[0] ?? null);
+  // D-220: every tab is always shown; "מידע" unless the address asks for another.
+  const tab: LeadTab =
+    asked && (LEAD_TABS as readonly string[]).includes(asked) ? (asked as LeadTab) : 'info';
 
   const selectTab = (t: LeadTab) =>
     setParams(
@@ -650,14 +584,17 @@ function LeadPage({
       },
       { replace: true },
     );
-  const show = (t: LeadTab) => {
-    setForced((f) => (f.includes(t) ? f : [...f, t]));
-    selectTab(t);
-  };
+
+  // Old links (`?tab=more|history|related`) open "מידע"; the address says so.
+  useEffect(() => {
+    if (INFO_ALIASES.includes(asked ?? '')) selectTab('info');
+    // Only for the address the page opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [focusReply, setFocusReply] = useState(false);
   const openConversation = () => {
-    show('whatsapp');
+    selectTab('whatsapp');
     setFocusReply(true);
   };
   // Once the conversation tab shows: the reply box, or the conversation when the reply window is
@@ -673,172 +610,21 @@ function LeadPage({
   }, [focusReply, tab]);
 
   const addTask = () => {
-    show('tasks');
+    selectTab('tasks');
     setTaskFormOpen(true);
   };
   const add = (what: AddKind) => {
     if (what === 'note') {
-      show('notes');
+      selectTab('notes');
       setNoteFocus((n) => n + 1);
     } else if (what === 'task') addTask();
     else if (what === 'quote')
       navigate(`${businessWebPaths.section(business.id, 'quotes')}/new?leadId=${lead.id}`);
     else {
-      show('appointments');
+      selectTab('appointments');
       setBookOpen(true);
     }
   };
-
-  // Old "more" links: open "עוד" and focus it; the parameter goes.
-  const moreId = desktop ? 'lead-more' : 'lead-more-details';
-  useEffect(() => {
-    if (!MORE_TABS.includes(asked ?? '')) return;
-    document.getElementById(moreId)?.scrollIntoView?.({ block: 'start' });
-    document.getElementById(`${moreId}-button`)?.focus({ preventScroll: true });
-    setParams(
-      (p) => {
-        const next = new URLSearchParams(p);
-        next.delete('tab');
-        return next;
-      },
-      { replace: true },
-    );
-    // Only for the address the page opened with.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const backLink = (
-    <Link
-      to={back}
-      className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
-    >
-      <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
-      {tr('כל הלידים')}
-    </Link>
-  );
-
-  const header = (
-    <header className="flex flex-col gap-2">
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className={cn(
-            'flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-semibold',
-            avatarColour(lead.contact.name),
-          )}
-        >
-          {lead.contact.name.trim().charAt(0)}
-        </span>
-        <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold text-ink" dir="auto">
-          {lead.contact.name}
-        </h1>
-        {/* On phones the bottom bar has these. Primary: WhatsApp when connected, else the call. */}
-        {desktop && (
-          <div className="flex shrink-0 items-center gap-2">
-            {phone && (
-              <a
-                href={`tel:${phone}`}
-                aria-label={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
-                title={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
-                className={roundButton(!whatsappInApp)}
-              >
-                <Phone aria-hidden className="h-5 w-5" />
-              </a>
-            )}
-            <WhatsAppAction
-              phone={phone}
-              inApp={whatsappInApp}
-              onOpen={openConversation}
-              iconOnly
-              className={roundButton(whatsappInApp)}
-            />
-            {lead.contact.email && (
-              <a
-                href={`mailto:${lead.contact.email}`}
-                aria-label={tr('מייל ל־{0}', lead.contact.email)}
-                title={tr('מייל ל־{0}', lead.contact.email)}
-                className={roundButton(false)}
-              >
-                <Mail aria-hidden className="h-5 w-5" />
-              </a>
-            )}
-          </div>
-        )}
-        <StageSelect lead={lead} />
-      </div>
-      <MetaLine lead={lead} />
-    </header>
-  );
-
-  const tabArea = (
-    <LeadTabArea
-      lead={lead}
-      tab={tab}
-      visible={visible}
-      onSelect={selectTab}
-      onAdd={add}
-      messages={messages}
-      notes={notes}
-      tasks={tasks}
-      quotes={quotes}
-      appts={appts}
-    >
-      {tab === 'whatsapp' && <WhatsAppThread leadId={lead.id} />}
-      {tab === 'notes' && <Notes leadId={lead.id} activities={activities} focus={noteFocus} />}
-      {tab === 'tasks' && (
-        <div className="flex flex-col gap-3 p-3">
-          <LeadTasks
-            lead={lead}
-            tasks={tasks}
-            formOpen={taskFormOpen}
-            onFormOpenChange={setTaskFormOpen}
-          />
-        </div>
-      )}
-      {tab === 'quotes' && (
-        <div className="flex flex-col gap-3 p-3">
-          <LeadQuotes lead={lead} quotes={quotes} />
-        </div>
-      )}
-      {tab === 'appointments' && (
-        <div className="flex flex-col gap-3 p-3">
-          <LeadAppointments appts={appts} onBook={() => setBookOpen(true)} />
-        </div>
-      )}
-    </LeadTabArea>
-  );
-
-  const panel = (
-    <>
-      <PanelSection id="lead-communication" title={tr('תקשורת')}>
-        <Communication
-          lead={lead}
-          whatsappInApp={whatsappInApp}
-          onOpenConversation={openConversation}
-          messages={messages}
-        />
-      </PanelSection>
-      <PanelSection id="lead-info" title={tr('הליד')}>
-        <LeadInfo lead={lead} />
-      </PanelSection>
-      <div className="p-5">
-        <CustomFieldsPanel draft={draft} />
-      </div>
-    </>
-  );
-  const moreContent = (
-    <>
-      {related.length > 0 && (
-        <section aria-labelledby="lead-related-title" className="flex flex-col gap-2">
-          <h3 id="lead-related-title" className="text-sm font-semibold text-ink">
-            {tr('לידים קשורים')} ({related.length})
-          </h3>
-          <RelatedLeads businessId={business.id} related={related} />
-        </section>
-      )}
-      <History activities={activities} />
-    </>
-  );
 
   const unsavedDialog = (
     <DialogShell
@@ -859,102 +645,79 @@ function LeadPage({
       </div>
     </DialogShell>
   );
-  const deleteLead = can(business.role, 'leads.delete') && (
-    <DeleteLead lead={lead} leave={guard.leave} />
-  );
-  const bookDialog = (
-    <NewAppointmentDialog open={bookOpen} onOpenChange={setBookOpen} lead={lead} />
-  );
-  const surface =
-    'min-w-0 divide-y divide-surface-border rounded-2xl border border-surface-border bg-surface shadow-card';
-  const historySummary = tr('{0} אירועים', systemEvents(activities).length);
-
-  if (desktop) {
-    // D-219: the story (header, next action, tabs) and a side panel of stable facts.
-    return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-        {backLink}
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,340px)] items-start gap-6">
-          <div className="flex min-w-0 flex-col gap-4">
-            <div className={surface}>
-              <div className="p-5">{header}</div>
-              <div className="p-5">
-                <NextAction lead={lead} onAddTask={addTask} />
-              </div>
-              {tabArea}
-            </div>
-            {deleteLead}
-          </div>
-          <aside aria-label={tr('מאפייני הליד')} className={surface}>
-            {panel}
-            <Disclosure
-              id="lead-more"
-              title={tr('עוד')}
-              summary={
-                related.length > 0
-                  ? `${tr('לידים קשורים')} (${related.length}) · ${historySummary}`
-                  : historySummary
-              }
-              open={moreOpen}
-              onOpenChange={setMoreOpen}
-            >
-              {moreContent}
-            </Disclosure>
-          </aside>
-        </div>
-        {bookDialog}
-        {unsavedDialog}
-      </div>
-    );
-  }
 
   return (
-    // Phones: header, next action, tabs, then the panel under "עוד פרטים"; room for the bottom bar.
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-24">
-      {backLink}
-      <div className={surface}>
-        <div className="p-4">{header}</div>
-        <div className="p-4">
-          <NextAction lead={lead} onAddTask={addTask} />
-        </div>
-        {tabArea}
-        <Disclosure
-          id="lead-more-details"
-          title={tr('עוד פרטים')}
-          summary={lead.owner?.name ?? tr('ללא אחראי')}
-          open={moreOpen}
-          onOpenChange={setMoreOpen}
+    // One centred column (D-220); on phones, room for the bottom bar.
+    <div className={cn('mx-auto flex w-full max-w-4xl flex-col gap-4', !desktop && 'pb-24')}>
+      <Link
+        to={back}
+        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
+      >
+        <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
+        {tr('כל הלידים')}
+      </Link>
+      <h1 className="min-w-0 text-2xl font-semibold text-ink [overflow-wrap:anywhere]" dir="auto">
+        {lead.contact.name}
+      </h1>
+      <div className="min-w-0 rounded-2xl border border-surface-border bg-surface shadow-card">
+        <LeadTabArea
+          lead={lead}
+          tab={tab}
+          onSelect={selectTab}
+          onAdd={add}
+          messages={messages}
+          notes={notes}
+          tasks={tasks}
+          quotes={quotes}
+          appts={appts}
         >
-          <div className="-mx-4 -my-4 divide-y divide-surface-border">
-            {panel}
-            <div className="flex flex-col gap-5 p-5">{moreContent}</div>
-          </div>
-        </Disclosure>
+          {tab === 'info' && (
+            <LeadInfo
+              lead={lead}
+              activities={activities}
+              related={related}
+              draft={draft}
+              whatsappInApp={whatsappInApp}
+              onOpenConversation={openConversation}
+              messages={messages}
+            />
+          )}
+          {tab === 'whatsapp' && <WhatsAppThread leadId={lead.id} />}
+          {tab === 'notes' && <Notes leadId={lead.id} activities={activities} focus={noteFocus} />}
+          {tab === 'tasks' && (
+            <div className="flex flex-col gap-3 p-3">
+              <LeadTasks
+                lead={lead}
+                tasks={tasks}
+                formOpen={taskFormOpen}
+                onFormOpenChange={setTaskFormOpen}
+              />
+            </div>
+          )}
+          {tab === 'quotes' && (
+            <div className="flex flex-col gap-3 p-3">
+              <LeadQuotes lead={lead} quotes={quotes} />
+            </div>
+          )}
+          {tab === 'appointments' && (
+            <div className="flex flex-col gap-3 p-3">
+              <LeadAppointments appts={appts} onBook={() => setBookOpen(true)} />
+            </div>
+          )}
+        </LeadTabArea>
       </div>
-      {deleteLead}
-      <QuickBar
-        phone={phone}
-        whatsappInApp={whatsappInApp}
-        onOpenConversation={openConversation}
-        onAddTask={addTask}
-      />
-      {bookDialog}
+      {can(business.role, 'leads.delete') && <DeleteLead lead={lead} leave={guard.leave} />}
+      {!desktop && (
+        <QuickBar
+          phone={phone}
+          whatsappInApp={whatsappInApp}
+          onOpenConversation={openConversation}
+          onAddTask={addTask}
+        />
+      )}
+      <NewAppointmentDialog open={bookOpen} onOpenChange={setBookOpen} lead={lead} />
       {unsavedDialog}
     </div>
-  );
-}
-
-/** Old `?tab=` values that now live in the panel's "עוד" (history, related leads). */
-const MORE_TABS: readonly string[] = ['more', 'history', 'related'];
-
-function PanelSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return (
-    <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4 p-5">
-      <h2 id={`${id}-title`} className="text-base font-semibold text-ink">
-        {title}
-      </h2>
-      {children}
-    </section>
   );
 }
 
@@ -965,9 +728,197 @@ function awaitingReply(messages: WhatsAppMessage[]) {
   return n;
 }
 
+const smallButton = (primary = false) =>
+  cn(
+    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
+    primary
+      ? 'bg-brand-600 text-white hover:bg-brand-700'
+      : 'text-ink-muted ring-1 ring-inset ring-surface-border hover:bg-surface-muted hover:text-ink',
+  );
+
+/** Copies a text; the tick and "הועתק" (announced) show for two seconds. */
+function CopyButton({ label, text }: { label: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => void copy()}
+        aria-label={tr('העתקת {0}', label)}
+        title={tr('העתקה')}
+        className={smallButton()}
+      >
+        {copied ? (
+          <Check aria-hidden className="h-4 w-4 text-success-600" />
+        ) : (
+          <Copy aria-hidden className="h-4 w-4" />
+        )}
+      </button>
+      <span role="status" className="text-xs text-success-600">
+        {copied ? tr('הועתק') : ''}
+      </span>
+    </>
+  );
+}
+
+/** A phone number or an email: the value (left-to-right), copy, and its call or mail action. */
+function ContactValue({
+  value,
+  label,
+  href,
+  actionLabel,
+  icon,
+  primary = false,
+}: {
+  value: string;
+  label: string;
+  href: string;
+  actionLabel: string;
+  icon: ReactNode;
+  primary?: boolean;
+}) {
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <bdi dir="ltr" className="min-w-0 truncate" title={value}>
+        {value}
+      </bdi>
+      <span className="ms-auto flex shrink-0 items-center gap-2">
+        <CopyButton label={label} text={value} />
+        <a
+          href={href}
+          aria-label={actionLabel}
+          title={actionLabel}
+          className={smallButton(primary)}
+        >
+          {icon}
+        </a>
+      </span>
+    </span>
+  );
+}
+
 /**
- * "תקשורת" (D-219): one row per channel — WhatsApp (in the page when connected, else wa.me), phone
- * and email, each with copy and its action — and "ממתין לתשובה שלך" when the customer wrote last.
+ * The "מידע" tab (D-220), sections separated by lines: the lead's facts in two columns, then
+ * "תקשורת", "פרטים" (custom fields; none defined → no section), related leads and the history.
+ */
+function LeadInfo({
+  lead,
+  activities,
+  related,
+  draft,
+  whatsappInApp,
+  onOpenConversation,
+  messages,
+}: {
+  lead: Lead;
+  activities: Activity[];
+  related: RelatedLead[];
+  draft: CustomFieldsDraft;
+  whatsappInApp: boolean;
+  onOpenConversation: () => void;
+  messages: WhatsAppMessage[];
+}) {
+  const business = useCurrentBusiness();
+  return (
+    <div className="flex flex-col divide-y divide-surface-border px-2 sm:px-3 [&>*]:py-5 [&>*:first-child]:pt-2">
+      <BasicInfo lead={lead} whatsappInApp={whatsappInApp} />
+      <Communication
+        lead={lead}
+        whatsappInApp={whatsappInApp}
+        onOpenConversation={onOpenConversation}
+        messages={messages}
+      />
+      <CustomFieldsPanel draft={draft} />
+      {related.length > 0 && (
+        <section aria-labelledby="lead-related-title" className="flex flex-col gap-2">
+          <h2 id="lead-related-title" className="text-base font-semibold text-ink">
+            {tr('לידים קשורים')} ({related.length})
+          </h2>
+          <RelatedLeads businessId={business.id} related={related} />
+        </section>
+      )}
+      <History activities={activities} />
+    </div>
+  );
+}
+
+/**
+ * The lead's facts (D-220), each once (D-218): stage and owner (editable), source (+ details),
+ * phone and email, value from quotes, created, tags, and what they asked (unless the conversation
+ * already shows it).
+ */
+function BasicInfo({ lead, whatsappInApp }: { lead: Lead; whatsappInApp: boolean }) {
+  const phone = lead.contact.phone;
+  const email = lead.contact.email;
+  const message = lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null;
+  return (
+    <section aria-labelledby="lead-basic-title">
+      <h2 id="lead-basic-title" className="sr-only">
+        {tr('הליד')}
+      </h2>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+        <StageField lead={lead} />
+        <OwnerField lead={lead} />
+        <SourceProperty lead={lead} />
+        <Property label={tr('נוצר')}>
+          <time dateTime={lead.createdAt} title={timeAgo(lead.createdAt)}>
+            {formatDateTime(lead.createdAt)}
+          </time>
+        </Property>
+        {phone && (
+          <Property label={tr('טלפון')}>
+            <ContactValue
+              value={formatIsraeliPhone(phone)}
+              label={tr('טלפון')}
+              href={`tel:${phone}`}
+              actionLabel={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
+              icon={<Phone aria-hidden className="h-4 w-4" />}
+              primary={!whatsappInApp}
+            />
+          </Property>
+        )}
+        {email && (
+          <Property label={tr('אימייל')}>
+            <ContactValue
+              value={email}
+              label={tr('אימייל')}
+              href={`mailto:${email}`}
+              actionLabel={tr('מייל ל־{0}', email)}
+              icon={<Mail aria-hidden className="h-4 w-4" />}
+            />
+          </Property>
+        )}
+        <Property label={tr('ערך לפי הצעות מחיר')}>{valueSummary(lead)}</Property>
+        <div className="sm:col-span-2">
+          <TagsField lead={lead} />
+        </div>
+        {message && (
+          <div className="sm:col-span-2">
+            <Property label={tr('מה ביקשו')}>
+              <p className="whitespace-pre-line [overflow-wrap:anywhere]" dir="auto">
+                {message}
+              </p>
+            </Property>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * "תקשורת" (D-219, D-220): "ממתין לתשובה שלך" when the customer wrote last, and the WhatsApp row
+ * (in the page when connected, else wa.me). The phone and email, with copy, call and mail, are in
+ * the facts above (each fact once, D-218).
  */
 function Communication({
   lead,
@@ -981,52 +932,19 @@ function Communication({
   messages: WhatsAppMessage[];
 }) {
   const phone = lead.contact.phone;
-  const email = lead.contact.email;
   const last = messages.at(-1);
   const waiting = last?.direction === 'IN' ? last : null;
-  const [copied, setCopied] = useState<string | null>(null);
-  const copy = async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      window.setTimeout(() => setCopied((c) => (c === key ? null : c)), 2000);
-    } catch {
-      setCopied(null);
-    }
-  };
-  const small = (primary = false) =>
-    cn(
-      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
-      primary
-        ? 'bg-brand-600 text-white hover:bg-brand-700'
-        : 'text-ink-muted ring-1 ring-inset ring-surface-border hover:bg-surface-muted hover:text-ink',
-    );
-  const copyButton = (key: string, label: string, text: string) => (
-    <>
-      <button
-        type="button"
-        onClick={() => void copy(key, text)}
-        aria-label={tr('העתקת {0}', label)}
-        title={tr('העתקה')}
-        className={small()}
-      >
-        {copied === key ? (
-          <Check aria-hidden className="h-4 w-4 text-success-600" />
-        ) : (
-          <Copy aria-hidden className="h-4 w-4" />
-        )}
-      </button>
-      <span role="status" className="text-xs text-success-600">
-        {copied === key ? tr('הועתק') : ''}
-      </span>
-    </>
-  );
 
-  if (!phone && !email && !whatsappInApp) {
-    return <p className="text-sm text-ink-muted">{tr('אין פרטי קשר לליד הזה.')}</p>;
-  }
+  const row = Boolean(phone || whatsappInApp);
+  const none = !row && !lead.contact.email;
+  // Only an email (it is in the facts above) and nothing waiting: no section.
+  if (!row && !waiting && !none) return null;
   return (
-    <div className="flex flex-col gap-3">
+    <section aria-labelledby="lead-communication-title" className="flex flex-col gap-3">
+      <h2 id="lead-communication-title" className="text-base font-semibold text-ink">
+        {tr('תקשורת')}
+      </h2>
+      {none && <p className="text-sm text-ink-muted">{tr('אין פרטי קשר לליד הזה.')}</p>}
       {waiting && (
         <p className="flex items-center gap-1.5 rounded-lg bg-warning-50 px-3 py-2 text-sm text-warning-600">
           <MessageCircle aria-hidden className="h-4 w-4 shrink-0" />
@@ -1038,91 +956,24 @@ function Communication({
           </span>
         </p>
       )}
-      <dl className="flex flex-col gap-3">
-        {(phone || whatsappInApp) && (
-          <div className="flex flex-col gap-1">
-            <dt className="text-sm font-medium text-ink">WhatsApp</dt>
-            <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
-              <span className="min-w-0 flex-1 truncate text-ink-muted">
-                {whatsappInApp ? tr('השיחה בעמוד הזה') : tr('נפתח בחלון חדש')}
-              </span>
-              <WhatsAppAction
-                phone={phone}
-                inApp={whatsappInApp}
-                onOpen={onOpenConversation}
-                iconOnly
-                className={small(whatsappInApp)}
-              />
-            </dd>
-          </div>
-        )}
-        {phone && (
-          <div className="flex flex-col gap-1">
-            <dt className="text-sm font-medium text-ink">{tr('טלפון')}</dt>
-            <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
-              <bdi dir="ltr" className="min-w-0 truncate" title={formatIsraeliPhone(phone)}>
-                {formatIsraeliPhone(phone)}
-              </bdi>
-              <span className="ms-auto flex items-center gap-2">
-                {copyButton('phone', tr('טלפון'), formatIsraeliPhone(phone))}
-                <a
-                  href={`tel:${phone}`}
-                  aria-label={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
-                  title={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
-                  className={small(!whatsappInApp)}
-                >
-                  <Phone aria-hidden className="h-4 w-4" />
-                </a>
-              </span>
-            </dd>
-          </div>
-        )}
-        {email && (
-          <div className="flex flex-col gap-1">
-            <dt className="text-sm font-medium text-ink">{tr('אימייל')}</dt>
-            <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
-              <bdi dir="ltr" className="min-w-0 truncate" title={email}>
-                {email}
-              </bdi>
-              <span className="ms-auto flex items-center gap-2">
-                {copyButton('email', tr('אימייל'), email)}
-                <a
-                  href={`mailto:${email}`}
-                  aria-label={tr('מייל ל־{0}', email)}
-                  title={tr('מייל ל־{0}', email)}
-                  className={small()}
-                >
-                  <Mail aria-hidden className="h-4 w-4" />
-                </a>
-              </span>
-            </dd>
-          </div>
-        )}
-      </dl>
-    </div>
-  );
-}
-
-/**
- * "הליד" (D-219): what they asked (the original enquiry, unless the conversation already shows it),
- * owner, source (+ details), value from quotes and tags; each once (D-218).
- */
-function LeadInfo({ lead }: { lead: Lead }) {
-  const message = lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null;
-  return (
-    <div className="flex flex-col gap-4">
-      {message && (
-        <Property label={tr('מה ביקשו')}>
-          <p className="whitespace-pre-line [overflow-wrap:anywhere]" dir="auto">
-            {message}
-          </p>
-        </Property>
+      {row && (
+        <dl className="flex flex-col gap-1">
+          <dt className="text-sm font-medium text-ink">WhatsApp</dt>
+          <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
+            <span className="min-w-0 flex-1 truncate text-ink-muted">
+              {whatsappInApp ? tr('השיחה בעמוד הזה') : tr('נפתח בחלון חדש')}
+            </span>
+            <WhatsAppAction
+              phone={phone}
+              inApp={whatsappInApp}
+              onOpen={onOpenConversation}
+              iconOnly
+              className={smallButton(whatsappInApp)}
+            />
+          </dd>
+        </dl>
       )}
-      <OwnerField lead={lead} />
-      <SourceProperty lead={lead} />
-      <Property label={tr('ערך לפי הצעות מחיר')}>{valueSummary(lead)}</Property>
-      <TagsField lead={lead} />
-    </div>
+    </section>
   );
 }
 
@@ -1209,19 +1060,18 @@ function AddMenu({ onAdd }: { onAdd: (what: AddKind) => void }) {
   );
 }
 
-const LEAD_TABS = ['whatsapp', 'notes', 'tasks', 'quotes', 'appointments'] as const;
+const LEAD_TABS = ['info', 'whatsapp', 'notes', 'tasks', 'quotes', 'appointments'] as const;
 type LeadTab = (typeof LEAD_TABS)[number];
 
 /**
- * D-219: one tab area for everything that has a list — the conversation, notes, tasks, quotes and
- * appointments — each with its count (read out too: "משימות, 3 פתוחות"); empty tabs are hidden and
- * the "+" menu adds the first item. The tab is in the address (`?tab=`). Arrow keys move between
- * tabs (in the reading direction), Home/End jump to the ends.
+ * D-219/D-220: one row of tabs — "מידע", then the conversation, notes, tasks, quotes and
+ * appointments, each always shown with its count (read out too: "משימות, 3 פתוחות"); "+" adds an
+ * item. The tab is in the address (`?tab=`). Arrow keys move between tabs (in the reading
+ * direction), Home/End jump to the ends.
  */
 function LeadTabArea({
   lead,
   tab,
-  visible,
   onSelect,
   onAdd,
   messages,
@@ -1232,8 +1082,7 @@ function LeadTabArea({
   children,
 }: {
   lead: Lead;
-  tab: LeadTab | null;
-  visible: readonly LeadTab[];
+  tab: LeadTab;
   onSelect: (tab: LeadTab) => void;
   onAdd: (what: AddKind) => void;
   messages: WhatsAppMessage[];
@@ -1252,6 +1101,7 @@ function LeadTabArea({
   const unread = awaitingReply(messages);
   const openValue = lead.value?.open ?? 0;
   const labels: Record<LeadTab, { text: string; count?: string; spoken: string; dot?: boolean }> = {
+    info: { text: tr('מידע'), spoken: tr('מידע') },
     whatsapp: {
       text: channel,
       count: unread > 0 ? String(unread) : undefined,
@@ -1290,13 +1140,13 @@ function LeadTabArea({
     const forward = isRtl() ? 'ArrowLeft' : 'ArrowRight';
     const backward = isRtl() ? 'ArrowRight' : 'ArrowLeft';
     let to: number | null = null;
-    if (e.key === forward) to = (at + 1) % visible.length;
-    else if (e.key === backward) to = (at - 1 + visible.length) % visible.length;
+    if (e.key === forward) to = (at + 1) % LEAD_TABS.length;
+    else if (e.key === backward) to = (at - 1 + LEAD_TABS.length) % LEAD_TABS.length;
     else if (e.key === 'Home') to = 0;
-    else if (e.key === 'End') to = visible.length - 1;
+    else if (e.key === 'End') to = LEAD_TABS.length - 1;
     if (to === null) return;
     e.preventDefault();
-    const next = visible[to]!;
+    const next = LEAD_TABS[to]!;
     onSelect(next);
     tabRefs.current[next]?.focus();
   };
@@ -1306,7 +1156,7 @@ function LeadTabArea({
       <div className="flex items-start gap-2 border-b border-surface-border px-3 pt-2">
         {/* Wraps instead of scrolling sideways on narrow screens. */}
         <div role="tablist" aria-label={tr('חלקי הליד')} className="flex min-w-0 flex-1 flex-wrap">
-          {visible.map((t, i) => {
+          {LEAD_TABS.map((t, i) => {
             const l = labels[t];
             return (
               <button
@@ -1346,21 +1196,15 @@ function LeadTabArea({
         </div>
         <AddMenu onAdd={onAdd} />
       </div>
-      {tab ? (
-        <div
-          id={`lead-panel-${tab}`}
-          role="tabpanel"
-          tabIndex={-1}
-          aria-labelledby={`lead-tab-${tab}`}
-          className="p-2 sm:p-3 [&>*]:border-0 [&>*]:shadow-none"
-        >
-          {children}
-        </div>
-      ) : (
-        <p className="p-5 text-sm text-ink-muted">
-          {tr('עדיין אין כאן הערות, משימות, הצעות או תורים. הכפתור + מוסיף את הראשון.')}
-        </p>
-      )}
+      <div
+        id={`lead-panel-${tab}`}
+        role="tabpanel"
+        tabIndex={-1}
+        aria-labelledby={`lead-tab-${tab}`}
+        className="p-2 sm:p-3 [&>*]:border-0 [&>*]:shadow-none"
+      >
+        {children}
+      </div>
     </section>
   );
 }

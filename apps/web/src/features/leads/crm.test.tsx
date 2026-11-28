@@ -291,9 +291,8 @@ describe('lead page', () => {
       'href',
       'tel:+972527654321',
     );
-    // D-211: the full history, owner and tags are folded under "עוד פרטים".
-    expect(screen.queryByRole('list', { name: 'היסטוריית הליד' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /^עוד פרטים/ }));
+    // D-220: the history, owner and tags are in "מידע", the first tab.
+    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
     const history = screen.getByRole('list', { name: 'היסטוריית הליד' });
     expect(within(history).getByText('השלב שונה מ"חדש" ל"נוצר קשר"')).toBeInTheDocument();
     expect(within(history).getByText('הליד נוצר מטופס באתר')).toBeInTheDocument();
@@ -333,7 +332,7 @@ describe('lead page', () => {
       [`GET ${lp.detail(id, lead().id)}`]: () => json(200, { ...detail, lead: fromAd }),
     });
     const { user } = renderApp(`${leadsPath}/${lead().id}`);
-    await user.click(await screen.findByRole('button', { name: /^עוד פרטים/ }));
+    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
     // D-218: the source is one line in the properties; its details open with "פרטים".
     expect(screen.getByText('מקור').nextElementSibling).toHaveTextContent('Google Ads');
     const details = screen.getByRole('button', { name: 'פרטים' });
@@ -354,7 +353,7 @@ describe('lead page', () => {
     });
     const { user } = renderApp(`${leadsPath}/${lead().id}`);
     expect(await screen.findByRole('heading', { name: 'דנה כהן', level: 1 })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /^עוד פרטים/ }));
+    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
     expect(screen.getByLabelText('אחראי')).toHaveTextContent('דנה כהן');
     expect(screen.queryByRole('combobox', { name: 'אחראי' })).not.toBeInTheDocument();
   });
@@ -368,7 +367,7 @@ describe('lead page', () => {
       [`PATCH ${lp.detail(id, lead().id)}`]: () => json(200, { lead: lead({ tags: ['VIP'] }) }),
     });
     const { user } = renderApp(`${leadsPath}/${lead().id}`);
-    await user.click(await screen.findByRole('button', { name: /^עוד פרטים/ }));
+    await user.click(await screen.findByRole('tab', { name: 'מידע' }));
     const input = await screen.findByLabelText('תגיות');
     await user.type(input, 'חוזר{Enter}');
     await user.type(input, 'vip{Enter}');

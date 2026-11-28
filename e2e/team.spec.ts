@@ -1,14 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { choose } from './choose';
 
-/**
- * The lead's history (and, on phones, the whole side panel): "עוד פרטים" on phones, the side
- * panel's "עוד" on wide screens (D-219). Opens it if closed.
- */
+/** The lead's history (and facts): the "מידע" tab (D-220). Opens it if another tab is open. */
 async function openLeadHistory(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const fold = page.locator('#lead-more-button, #lead-more-details-button').first();
-  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+  const info = page.getByRole('tab', { name: 'מידע' });
+  if ((await info.getAttribute('aria-selected')) !== 'true') await info.click();
 }
 
 /** F09: owner invites → email link → new user registers and joins → sees only assigned leads. */
@@ -106,7 +103,7 @@ test('owner invites an employee who registers from the email and joins with limi
   await page.reload();
   await expect(page.getByRole('list', { name: 'חברי הצוות' })).toContainText('יוסי מזרחי');
   await page.goto(`/b/${business.id}/leads/${lead.id}`);
-  // Owner and history: under "עוד פרטים" on phones, the side panel on wide screens.
+  // Owner and history: in "מידע" (D-220).
   await openLeadHistory(page);
   await choose(page, page.getByLabel('אחראי', { exact: true }), 'יוסי מזרחי');
   await expect(page.getByText('הליד שויך ליוסי מזרחי')).toBeVisible();

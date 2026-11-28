@@ -117,7 +117,8 @@ export function WhatsAppThread({ leadId }: { leadId: string }) {
         <ol
           ref={listRef}
           aria-label={tr('שיחת וואטסאפ')}
-          className="scrollbar-visible flex max-h-[28rem] flex-col gap-2 overflow-y-auto"
+          // Its own scroll box, at most half the screen, so the reply box stays in view.
+          className="scrollbar-visible flex max-h-[min(28rem,50dvh)] flex-col gap-2 overflow-y-auto overscroll-contain"
         >
           {messages.map((m) => {
             const out = m.direction === 'OUT';

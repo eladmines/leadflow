@@ -216,8 +216,9 @@ describe('linking a task to a quote or an appointment', () => {
       [`POST ${tp.list(id)}`]: () => json(201, { task: task() }),
     });
     const { user } = renderApp(leadPage);
-    const next = await screen.findByRole('region', { name: 'הפעולה הבאה' });
-    await user.click(within(next).getByRole('button', { name: '+ משימה' }));
+    // D-220: no next-action block; the task form opens from the tasks tab.
+    await user.click(await screen.findByRole('tab', { name: /^משימות/ }));
+    await user.click(within(screen.getByRole('tabpanel')).getByRole('button', { name: '+ משימה' }));
     // D-219: the form opens in the tasks tab.
     const form = screen.getByRole('form', { name: 'משימה חדשה' });
     await user.type(within(form).getByRole('textbox', { name: 'משימה חדשה' }), 'לשלוח תזכורת');
@@ -250,8 +251,9 @@ describe('linking a task to a quote or an appointment', () => {
         }),
     });
     const { user } = renderApp(leadPage);
-    const next = await screen.findByRole('region', { name: 'הפעולה הבאה' });
-    await user.click(within(next).getByRole('button', { name: '+ משימה' }));
+    // D-220: no next-action block; the task form opens from the tasks tab.
+    await user.click(await screen.findByRole('tab', { name: /^משימות/ }));
+    await user.click(within(screen.getByRole('tabpanel')).getByRole('button', { name: '+ משימה' }));
     // D-219: the form opens in the tasks tab.
     const form = screen.getByRole('form', { name: 'משימה חדשה' });
     await user.type(within(form).getByRole('textbox', { name: 'משימה חדשה' }), 'לבדוק');

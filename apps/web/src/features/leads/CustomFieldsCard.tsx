@@ -118,7 +118,7 @@ function byField(fields: Record<string, string>) {
 }
 
 /**
- * "פרטים" in the side panel (D-212, D-219): the custom fields, edited in place and saved together
+ * "פרטים" in the "מידע" tab (D-220): the custom fields, edited in place and saved together
  * with one "שמירה" (D-207), "ביטול שינויים" to drop the edits; read-only for those who can't edit.
  */
 export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
@@ -132,6 +132,8 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
     e.preventDefault();
     draft.save();
   };
+  // D-220: no fields defined → no section at all (fields are managed from Leads → More).
+  if (fields.isSuccess && active.length === 0) return null;
 
   return (
     <section aria-labelledby="lead-fields-title" className="flex flex-col gap-4">
@@ -213,7 +215,7 @@ export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
   );
 }
 
-/** Values kept from fields since archived, read-only ("עוד פרטים", D-211); nothing when none. */
+/** Values kept from fields since archived, read-only (in "פרטים", D-220); nothing when none. */
 export function ArchivedFieldValues({ lead }: { lead: Lead }) {
   const business = useCurrentBusiness();
   const fields = useLeadFields(business.id);

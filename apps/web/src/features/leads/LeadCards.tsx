@@ -8,8 +8,7 @@ import {
   type Quote,
   type Task,
 } from '@simplecatch/shared';
-import { AlarmClock, AlertTriangle, Check, ChevronDown, UserRound } from 'lucide-react';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert, Button, buttonClasses, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
@@ -19,7 +18,7 @@ import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { NewTaskForm } from '../tasks/NewTaskForm';
 import { TaskItem } from '../tasks/TaskItem';
-import { dueLabel, useTasks, useUpdateTask } from '../tasks/api';
+import { useTasks } from '../tasks/api';
 import { useAppointments } from '../appointments/api';
 import { displayStatus, useQuotes } from '../quotes/api';
 import { shekel } from './api';
@@ -31,63 +30,6 @@ const apptWhenFmt = new Intl.DateTimeFormat(intlLocale(), {
   hour: '2-digit',
   minute: '2-digit',
 });
-
-/**
- * A disclosure (D-219: "עוד" at the end of the side panel, "עוד פרטים" on phones): a heading button
- * that opens the content below it (`aria-expanded`; Enter/Space as any button).
- */
-export function Disclosure({
-  id,
-  title,
-  summary,
-  open,
-  onOpenChange,
-  children,
-}: {
-  id: string;
-  title: string;
-  summary?: ReactNode;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  children: ReactNode;
-}) {
-  return (
-    <section id={id} className="scroll-mt-24">
-      <h2>
-        <button
-          id={`${id}-button`}
-          type="button"
-          aria-expanded={open}
-          aria-controls={`${id}-panel`}
-          onClick={() => onOpenChange(!open)}
-          className="flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"
-        >
-          <span className="font-semibold text-ink">{title}</span>
-          {summary && (
-            <span className="min-w-0 flex-1 truncate text-sm text-ink-muted">{summary}</span>
-          )}
-          <ChevronDown
-            aria-hidden
-            className={cn(
-              'ms-auto h-4 w-4 shrink-0 text-ink-muted transition-transform',
-              open && 'rotate-180',
-            )}
-          />
-        </button>
-      </h2>
-      {open && (
-        <div
-          id={`${id}-panel`}
-          role="region"
-          aria-labelledby={`${id}-button`}
-          className="flex flex-col gap-5 border-t border-surface-border px-4 py-4"
-        >
-          {children}
-        </div>
-      )}
-    </section>
-  );
-}
 
 /** Loading, no-permission (403) or error, for one list. */
 function ListStatus({
@@ -120,78 +62,7 @@ function ListStatus({
   );
 }
 
-const isLate = (dueAt: string, now = Date.now()) => new Date(dueAt).getTime() < now;
 const byDue = (a: Task, b: Task) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
-
-/**
- * Next action (D-209, pinned above the tabs by D-219): the lead's nearest open task the member may
- * see (`lead.nextTask`) with a "done" button, and "+ משימה" (which opens the tasks tab's form).
- * Overdue is said in words, not only in red.
- */
-export function NextAction({ lead, onAddTask }: { lead: Lead; onAddTask: () => void }) {
-  const business = useCurrentBusiness();
-  const update = useUpdateTask(business.id);
-  const next = lead.nextTask ?? null;
-  const late = next ? isLate(next.dueAt) : false;
-
-  return (
-    <section aria-labelledby="lead-next-title" className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="lead-next-title" className="text-base font-semibold text-ink">
-          {tr('הפעולה הבאה')}
-        </h2>
-        <Button type="button" size="sm" variant="secondary" onClick={onAddTask}>
-          {tr('+ משימה')}
-        </Button>
-      </div>
-      {next ? (
-        <div className="flex items-start gap-3">
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <p className="min-w-0 font-medium text-ink [overflow-wrap:anywhere]">
-              <bdi>{next.title}</bdi>
-            </p>
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1',
-                  late && 'font-semibold text-danger-700',
-                )}
-              >
-                {late ? (
-                  <AlertTriangle aria-hidden className="h-3.5 w-3.5" />
-                ) : (
-                  <AlarmClock aria-hidden className="h-3.5 w-3.5" />
-                )}
-                <time dateTime={next.dueAt}>{dueLabel(next.dueAt)}</time>
-                {late && <span>· {tr('באיחור')}</span>}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <UserRound aria-hidden className="h-3.5 w-3.5" />
-                <span className="sr-only">{tr('אחראי:')}</span>
-                {next.assignee.name}
-              </span>
-            </p>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            loading={update.isPending}
-            aria-label={tr('סימון כבוצעה: {0}', next.title)}
-            onClick={() => update.mutate({ id: next.id, body: { status: 'DONE' } })}
-          >
-            <Check aria-hidden className="h-4 w-4" />
-            {tr('בוצע')}
-          </Button>
-        </div>
-      ) : (
-        <p className="text-sm text-ink-muted">
-          {tr('אין פעולה הבאה. כדאי להוסיף משימה כדי לא לשכוח לחזור ללקוח.')}
-        </p>
-      )}
-      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
-    </section>
-  );
-}
 
 /** The lead's open tasks, nearest first (the tasks tab, D-219). */
 export function useLeadOpenTasks(lead: Lead) {

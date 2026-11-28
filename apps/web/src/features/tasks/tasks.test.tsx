@@ -269,7 +269,7 @@ describe('tasks elsewhere', () => {
       [`GET ${tp.list(id)}`]: () => json(200, { tasks: [task({ title: 'לחזור לרון' })] }),
       [`POST ${tp.list(id)}`]: () => json(201, { task: task() }),
     });
-    const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}/${leadId}`);
+    const { user } = renderApp(`${businessWebPaths.section(id, 'leads')}/${leadId}?tab=tasks`);
     // D-219: the tasks have their own tab (with its count); "+ משימה" in it opens the form.
     const tab = await screen.findByRole('tab', { name: 'משימות, 1 פתוחות' });
     expect(tab).toHaveAttribute('aria-selected', 'true');

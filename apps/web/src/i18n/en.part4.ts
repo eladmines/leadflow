@@ -295,4 +295,10 @@ export const enPart4: Record<string, string> = {
     'The conversation, notes, tasks, quotes and appointments, each with its count. An empty tab is hidden, and the + button adds a new item.',
   'תקשורת (וואטסאפ, טלפון ואימייל), פרטי הליד והשדות שלכם. בסוף, ב"עוד": לידים קשורים והיסטוריה.':
     'Communication (WhatsApp, phone and email), the lead\'s details and your fields. At the end, under "More": related leads and history.',
+  // D-220: one column, a lead-info tab.
+  מידע: 'Info',
+  'מידע, השיחה, ההערות, המשימות, ההצעות והתורים, כל אחד עם המספר שלו. הכפתור + מוסיף פריט חדש.':
+    'Info, the conversation, notes, tasks, quotes and appointments, each with its count. The + button adds a new item.',
+  'השלב, האחראי, המקור, הטלפון והאימייל, התגיות ומה ביקשו. מתחת: תקשורת, השדות שלכם, לידים קשורים והיסטוריה.':
+    'The stage, owner, source, phone and email, tags and what they asked for. Below: communication, your fields, related leads and history.',
 };
