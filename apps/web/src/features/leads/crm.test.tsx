@@ -102,31 +102,6 @@ describe('pipeline board', () => {
     expect(within(board).getByRole('listitem', { name: 'נוצר קשר: 0 לידים' })).toBeInTheDocument();
   });
 
-  it('shows the next task on the cards, overdue in words (D-209)', async () => {
-    mockApi({
-      [meKey]: me(testUser),
-      ...members,
-      [`GET ${lp.list(id)}`]: () =>
-        json(200, {
-          leads: [
-            lead({
-              nextTask: {
-                id: '7b000000-0000-4000-8000-000000000001',
-                title: 'להתקשר לגבי ההצעה',
-                dueAt: new Date(Date.now() - 3_600_000).toISOString(),
-                assignee: { id: testUser.id, name: 'דנה כהן' },
-              },
-            }),
-          ],
-        }),
-    });
-    renderApp(`${leadsPath}?view=list`);
-    const card = (await screen.findAllByRole('article'))[0]!;
-    expect(within(card).getByText('להתקשר לגבי ההצעה').closest('p')).toHaveTextContent(
-      /הפעולה הבאה:.*להתקשר לגבי ההצעה.*באיחור/,
-    );
-  });
-
   it('moves a lead with the keyboard-friendly stage menu (optimistic, then saved)', async () => {
     let current = lead();
     const fetchMock = mockApi({

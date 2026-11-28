@@ -258,19 +258,24 @@ export function SelectMenu({
           ? {
               ...(place.up ? { bottom: place.bottom } : { top: place.top }),
               ...(rtl ? { right: place.right } : { left: place.left }),
-              ...(compact ? { minWidth: place.width } : { width: place.width }),
+              ...(compact || buttonClassName
+                ? { minWidth: Math.max(place.width, 160) }
+                : { width: place.width }),
             }
           : undefined
       }
       className={cn(
         'overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lift',
         floating
-          ? // Fixed over the window; a compact control's list is as wide as its longest option.
-            cn('fixed z-50', compact && 'w-max max-w-[min(20rem,90vw)]')
+          ? // Fixed over the window; a compact or badge control's list is as wide as its longest option.
+            cn('fixed z-50', (compact || buttonClassName) && 'w-max max-w-[min(20rem,90vw)]')
           : cn(
               'absolute z-40',
               up ? 'bottom-full mb-1' : 'top-full mt-1',
-              compact ? 'start-0 w-max min-w-full max-w-[min(20rem,90vw)]' : 'inset-x-0',
+              // A badge (e.g. the lead's stage) is narrower than its options: size to them.
+              compact || buttonClassName
+                ? 'start-0 w-max min-w-[10rem] max-w-[min(20rem,90vw)]'
+                : 'inset-x-0',
             ),
       )}
     >

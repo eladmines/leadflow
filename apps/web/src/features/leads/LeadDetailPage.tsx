@@ -224,6 +224,8 @@ function OwnerField({ lead }: { lead: Lead }) {
             id="lead-owner"
             label={tr('אחראי')}
             labelHidden
+            // As wide as a name, not the whole column (owner, 2026-11-28).
+            className="w-56"
             value={lead.owner?.id ?? ''}
             onChange={(v) => update.mutate({ leadId: lead.id, body: { ownerId: v || null } })}
             options={[
