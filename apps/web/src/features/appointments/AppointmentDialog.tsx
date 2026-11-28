@@ -21,6 +21,7 @@ import {
   toTimeInput,
   useUpdateAppointment,
 } from './api';
+import { LinkedTasks } from '../tasks/LinkedTasks';
 import { tr } from '../../i18n';
 
 /** Status actions offered for each status. */
@@ -143,6 +144,15 @@ export function AppointmentDialog({
           ))}
         </div>
       )}
+
+      {/* F35: the tasks about this appointment (its confirm task too), with a linked quick add. */}
+      <div className="border-t border-surface-border pt-4">
+        <LinkedTasks
+          subject={{ kind: 'appointment', id: a.id }}
+          leadId={a.lead?.id}
+          headingLevel={3}
+        />
+      </div>
 
       <fieldset className="flex flex-col gap-3 border-t border-surface-border pt-4">
         <legend className="sr-only">{tr('שינוי פרטי התור')}</legend>

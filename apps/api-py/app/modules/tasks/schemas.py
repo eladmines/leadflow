@@ -5,7 +5,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StrictBool
 
 from app.modules.auth.schemas import _Request
 
@@ -19,6 +19,11 @@ TASK_MESSAGES = {
     "dueRequired": "יש לבחור מועד",
     "assigneeInvalid": "אפשר להקצות רק לחבר צוות פעיל בעסק",
     "leadInvalid": "הליד שנבחר אינו קיים",
+    # F35 (D-213).
+    "quoteInvalid": "ההצעה שנבחרה אינה קיימת",
+    "appointmentInvalid": "התור שנבחר אינו קיים",
+    "subjectBoth": "אפשר לקשר משימה להצעה או לתור, לא לשניהם",
+    "subjectOtherLead": "ההצעה או התור שייכים לליד אחר. בטלו את הקישור או בחרו את הליד שלהם.",
 }
 M = TASK_MESSAGES
 
@@ -70,6 +75,9 @@ class CreateTaskRequest(_Request):
     # Defaults to the creator. Employees can only assign to themselves.
     assigneeId: uuid.UUID | None = None
     leadId: uuid.UUID | None = None
+    # F35: at most one subject (checked in the service: `subjectBoth` on `appointmentId`).
+    quoteId: uuid.UUID | None = None
+    appointmentId: uuid.UUID | None = None
     remind: bool = True
 
 
@@ -83,6 +91,9 @@ class UpdateTaskRequest(BaseModel):
     dueAt: DueAt | None = None
     assigneeId: uuid.UUID | None = None
     leadId: uuid.UUID | None = None  # a lead, or null to unlink
+    # F35: set (uuid) or remove (null) the subject; setting one replaces the other.
+    quoteId: uuid.UUID | None = None
+    appointmentId: uuid.UUID | None = None
     status: TaskStatus | None = None
     remind: bool | None = None
 
@@ -93,12 +104,36 @@ class TaskListQuery(BaseModel):
     status: TaskStatus | None = None
     assigneeId: str | None = None  # 'me' or a user id
     leadId: uuid.UUID | None = None
+    quoteId: uuid.UUID | None = None
+    appointmentId: uuid.UUID | None = None
     due: Literal["overdue"] | None = None
 
 
 class Person(BaseModel):
     id: str
     name: str
+
+
+QuoteStatus = Literal["DRAFT", "SENT", "ACCEPTED", "REJECTED"]
+AppointmentStatus = Literal["REQUESTED", "CONFIRMED", "COMPLETED", "NO_SHOW", "CANCELLED"]
+TaskAutoKind = Literal["quote_followup", "appointment_confirm"]
+
+
+class QuoteSubject(BaseModel):
+    kind: Literal["quote"]
+    id: str
+    number: int
+    status: QuoteStatus
+
+
+class AppointmentSubject(BaseModel):
+    kind: Literal["appointment"]
+    id: str
+    startsAt: str
+    status: AppointmentStatus
+
+
+TaskSubject = Annotated[QuoteSubject | AppointmentSubject, Field(discriminator="kind")]
 
 
 class Task(BaseModel):
@@ -111,6 +146,9 @@ class Task(BaseModel):
     completedAt: str | None
     assignee: Person
     lead: Person | None
+    # F35: the linked quote or appointment (always sent), and the kind of an automatic task.
+    subject: TaskSubject | None
+    autoKind: TaskAutoKind | None
     createdAt: str
 
 
@@ -120,3 +158,14 @@ class TaskResponse(BaseModel):
 
 class TaskListResponse(BaseModel):
     tasks: list[Task]
+
+
+class TaskAutomations(BaseModel):
+    """F35 (D-213): the per-business switches of the automatic follow-ups (both required)."""
+
+    quoteFollowUp: StrictBool
+    appointmentConfirm: StrictBool
+
+
+class TaskAutomationsResponse(BaseModel):
+    settings: TaskAutomations

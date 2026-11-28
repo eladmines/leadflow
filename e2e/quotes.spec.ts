@@ -1,5 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 
+/**
+ * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
+ * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ */
+async function openLeadHistory(page: Page) {
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+}
+
 /** F18: quote from a lead → totals → send → customer accepts on the private page → lead history. */
 const PASSWORD = 'Sup3r-secret-pass!';
 const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
@@ -75,7 +85,7 @@ test('quote from a lead, sent, accepted by the customer', async ({ page, browser
   await expect(customer.getByText(/ההצעה אושרה/)).toBeVisible();
 
   await page.goto(`/b/${id}/leads/${leadId}`);
-  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
+  await openLeadHistory(page);
   await expect(page.getByText('הצעת מחיר מס׳ 1001 אושרה על ידי הלקוח')).toBeVisible();
   await openQuotes();
   // Accepted: the value moves from open to won (D-207).

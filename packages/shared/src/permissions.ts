@@ -42,6 +42,11 @@ export const PERMISSIONS = {
   /** Everyone has tasks; employees see and manage only tasks assigned to them. */
   'tasks.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'tasks.view.all': ['OWNER', 'MANAGER'],
+  /**
+   * F35 (D-213): switch the automatic follow-up tasks on or off for the business. Reading the
+   * switches follows `tasks.view`.
+   */
+  'automations.manage': ['OWNER', 'MANAGER'],
   /** F17: everyone works with appointments; employees see and manage only their own. */
   'appointments.view': ['OWNER', 'MANAGER', 'EMPLOYEE'],
   'appointments.view.all': ['OWNER', 'MANAGER'],

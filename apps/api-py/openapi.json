@@ -360,6 +360,42 @@
     "title": "AppointmentResponse",
     "type": "object"
    },
+   "AppointmentSubject": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "const": "appointment",
+      "title": "Kind",
+      "type": "string"
+     },
+     "startsAt": {
+      "title": "Startsat",
+      "type": "string"
+     },
+     "status": {
+      "enum": [
+       "REQUESTED",
+       "CONFIRMED",
+       "COMPLETED",
+       "NO_SHOW",
+       "CANCELLED"
+      ],
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "id",
+     "startsAt",
+     "status"
+    ],
+    "title": "AppointmentSubject",
+    "type": "object"
+   },
    "AssetListResponse": {
     "properties": {
      "assets": {
@@ -2519,6 +2555,18 @@
    },
    "CreateTaskRequest": {
     "properties": {
+     "appointmentId": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Appointmentid"
+     },
      "assigneeId": {
       "anyOf": [
        {
@@ -2558,6 +2606,18 @@
        }
       ],
       "title": "Notes"
+     },
+     "quoteId": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quoteid"
      },
      "remind": {
       "default": true,
@@ -4178,11 +4238,20 @@
      },
      "lead": {
       "$ref": "#/components/schemas/LeadOut"
+     },
+     "relatedLeads": {
+      "items": {
+       "$ref": "#/components/schemas/RelatedLead"
+      },
+      "maxItems": 10,
+      "title": "Relatedleads",
+      "type": "array"
      }
     },
     "required": [
      "lead",
-     "activities"
+     "activities",
+     "relatedLeads"
     ],
     "title": "LeadDetailResponse",
     "type": "object"
@@ -5591,6 +5660,41 @@
     "title": "QuoteResponse",
     "type": "object"
    },
+   "QuoteSubject": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "const": "quote",
+      "title": "Kind",
+      "type": "string"
+     },
+     "number": {
+      "title": "Number",
+      "type": "integer"
+     },
+     "status": {
+      "enum": [
+       "DRAFT",
+       "SENT",
+       "ACCEPTED",
+       "REJECTED"
+      ],
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "id",
+     "number",
+     "status"
+    ],
+    "title": "QuoteSubject",
+    "type": "object"
+   },
    "RegisterRequest": {
     "properties": {
      "acceptTerms": {
@@ -5615,6 +5719,33 @@
      }
     },
     "title": "RegisterRequest",
+    "type": "object"
+   },
+   "RelatedLead": {
+    "description": "Another lead of the same contact (D-212, D-215).",
+    "properties": {
+     "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "stage": {
+      "$ref": "#/components/schemas/StageOut"
+     },
+     "value": {
+      "$ref": "#/components/schemas/LeadValue"
+     }
+    },
+    "required": [
+     "id",
+     "stage",
+     "createdAt",
+     "value"
+    ],
+    "title": "RelatedLead",
     "type": "object"
    },
    "ReorderLeadFieldsRequest": {
@@ -6980,6 +7111,21 @@
      "assignee": {
       "$ref": "#/components/schemas/Person"
      },
+     "autoKind": {
+      "anyOf": [
+       {
+        "enum": [
+         "quote_followup",
+         "appointment_confirm"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Autokind"
+     },
      "completedAt": {
       "anyOf": [
        {
@@ -7036,6 +7182,31 @@
       "title": "Status",
       "type": "string"
      },
+     "subject": {
+      "anyOf": [
+       {
+        "discriminator": {
+         "mapping": {
+          "appointment": "#/components/schemas/AppointmentSubject",
+          "quote": "#/components/schemas/QuoteSubject"
+         },
+         "propertyName": "kind"
+        },
+        "oneOf": [
+         {
+          "$ref": "#/components/schemas/QuoteSubject"
+         },
+         {
+          "$ref": "#/components/schemas/AppointmentSubject"
+         }
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Subject"
+     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -7051,9 +7222,42 @@
      "completedAt",
      "assignee",
      "lead",
+     "subject",
+     "autoKind",
      "createdAt"
     ],
     "title": "Task",
+    "type": "object"
+   },
+   "TaskAutomations": {
+    "description": "F35 (D-213): the per-business switches of the automatic follow-ups (both required).",
+    "properties": {
+     "appointmentConfirm": {
+      "title": "Appointmentconfirm",
+      "type": "boolean"
+     },
+     "quoteFollowUp": {
+      "title": "Quotefollowup",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "quoteFollowUp",
+     "appointmentConfirm"
+    ],
+    "title": "TaskAutomations",
+    "type": "object"
+   },
+   "TaskAutomationsResponse": {
+    "properties": {
+     "settings": {
+      "$ref": "#/components/schemas/TaskAutomations"
+     }
+    },
+    "required": [
+     "settings"
+    ],
+    "title": "TaskAutomationsResponse",
     "type": "object"
    },
    "TaskListResponse": {
@@ -7852,6 +8056,18 @@
    "UpdateTaskRequest": {
     "description": "Every field optional; use `model_fields_set` to tell \"absent\" from \"null\".",
     "properties": {
+     "appointmentId": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Appointmentid"
+     },
      "assigneeId": {
       "anyOf": [
        {
@@ -7898,6 +8114,18 @@
        }
       ],
       "title": "Notes"
+     },
+     "quoteId": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quoteid"
      },
      "remind": {
       "anyOf": [
@@ -8913,6 +9141,92 @@
      }
     },
     "summary": "Delete Asset"
+   }
+  },
+  "/api/v1/businesses/{business_id}/automations/tasks": {
+   "get": {
+    "operationId": "get_task_automations_api_v1_businesses__business_id__automations_tasks_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "business_id",
+      "required": true,
+      "schema": {
+       "title": "Business Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskAutomationsResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Task Automations"
+   },
+   "put": {
+    "operationId": "put_task_automations_api_v1_businesses__business_id__automations_tasks_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "business_id",
+      "required": true,
+      "schema": {
+       "title": "Business Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TaskAutomations"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskAutomationsResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Put Task Automations"
    }
   },
   "/api/v1/businesses/{business_id}/channels": {
@@ -12603,6 +12917,40 @@
         }
        ],
        "title": "Leadid"
+      }
+     },
+     {
+      "in": "query",
+      "name": "quoteId",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "uuid",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Quoteid"
+      }
+     },
+     {
+      "in": "query",
+      "name": "appointmentId",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "uuid",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Appointmentid"
       }
      },
      {

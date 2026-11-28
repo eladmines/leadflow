@@ -28,6 +28,8 @@ PERMISSIONS: dict[str, tuple[Role, ...]] = {
     "leads.delete": _O,
     "tasks.view": _ALL,
     "tasks.view.all": _OM,
+    # F35 (D-213): switch the automatic follow-up tasks on or off; reading follows `tasks.view`.
+    "automations.manage": _OM,
     "appointments.view": _ALL,
     "appointments.view.all": _OM,
     "services.manage": _OM,

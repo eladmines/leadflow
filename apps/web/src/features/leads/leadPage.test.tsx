@@ -9,6 +9,7 @@ import {
 } from '@simplecatch/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { choose } from '../../test/utils';
+import { allFields, fieldIds } from '../../test/leadFields';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   apiError,
@@ -489,5 +490,154 @@ describe('the WhatsApp buttons', () => {
     expect(
       screen.queryByRole('button', { name: 'WhatsApp: מעבר לשיחה בעמוד' }),
     ).not.toBeInTheDocument();
+  });
+});
+
+/** Wide screens (≥ lg): jsdom has no layout, so the media query is answered here. */
+const asDesktop = () =>
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query === '(min-width: 1024px)',
+    media: query,
+    onchange: null,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+  }));
+
+const related = [
+  {
+    id: '5c000000-0000-4000-8000-000000000002',
+    stage: { id: testStages[2]!.id, name: testStages[2]!.name, kind: 'WON' as const },
+    createdAt: '2026-03-10T10:00:00.000Z',
+    value: { won: 3000, open: 0 },
+  },
+  {
+    id: '5c000000-0000-4000-8000-000000000003',
+    stage: { id: testStages[0]!.id, name: testStages[0]!.name, kind: 'OPEN' as const },
+    createdAt: '2026-06-01T10:00:00.000Z',
+    value: { won: 0, open: 0 },
+  },
+];
+
+describe('wide screens: story and properties panel (D-212)', () => {
+  it('shows the properties at the side and the story in the main column', async () => {
+    asDesktop();
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () =>
+        withActivities(lead({ value: { won: 0, open: 1180 }, tags: ['VIP'] })),
+      [`GET ${apiPaths.leadFields.list(id)}`]: () => json(200, { fields: allFields }),
+    });
+    renderApp(page);
+    await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
+    const panel = screen.getByRole('complementary', { name: 'מאפייני הליד' });
+    // The stage is only in the panel.
+    expect(screen.getAllByLabelText('שלב')).toHaveLength(1);
+    expect(within(panel).getByLabelText('שלב')).toBeInTheDocument();
+    expect(within(panel).getByLabelText('אחראי')).toBeInTheDocument();
+    expect(within(panel).getByText('מקור').nextElementSibling).toHaveTextContent('הוזן ידנית');
+    expect(within(panel).getByText('ערך לפי הצעות מחיר').nextElementSibling).toHaveTextContent(
+      /1,180.*פתוח/,
+    );
+    expect(within(panel).getByText('VIP')).toBeInTheDocument();
+    // Custom fields edited in place, with one Save.
+    const fields = within(panel).getByRole('region', { name: 'פרטים' });
+    expect(await within(fields).findByLabelText('דגם הרכב')).toBeInTheDocument();
+    expect(within(fields).getByRole('button', { name: 'שמירה' })).toBeDisabled();
+    // Folded at the side: quotes, appointments, history; no "more details" and no phone bar.
+    for (const name of [/^הצעות מחיר/, /^תורים/, /^היסטוריה/]) {
+      expect(within(panel).getByRole('button', { name })).toHaveAttribute('aria-expanded', 'false');
+    }
+    expect(screen.queryByRole('button', { name: /^עוד פרטים/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'פעולות מהירות' })).not.toBeInTheDocument();
+    // The story: next action, what they asked (the message only), the tabs.
+    expect(screen.getByRole('region', { name: 'הפעולה הבאה' })).toBeInTheDocument();
+    const asked = screen.getByRole('region', { name: 'מה ביקשו' });
+    expect(within(asked).getByText('מבקש הצעת מחיר לשיפוץ מטבח')).toBeInTheDocument();
+    expect(within(asked).queryByRole('button', { name: 'עריכה' })).not.toBeInTheDocument();
+    expect(panel.compareDocumentPosition(asked) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
+  it('saves the panel\'s custom fields with one "שמירה" and warns before leaving unsaved', async () => {
+    asDesktop();
+    const fetchMock = mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () => detail(),
+      [`GET ${apiPaths.leadFields.list(id)}`]: () => json(200, { fields: allFields }),
+      [`PATCH ${lp.detail(id, leadId)}`]: () => json(200, { lead: lead() }),
+    });
+    const { user } = renderApp(page);
+    const fields = await screen.findByRole('region', { name: 'פרטים' });
+    await user.type(await within(fields).findByLabelText('דגם הרכב'), 'מאזדה');
+    await user.click(screen.getByRole('link', { name: 'כל הלידים' }));
+    const dialog = await screen.findByRole('dialog', { name: 'לצאת בלי לשמור?' });
+    await user.click(within(dialog).getByRole('button', { name: 'להישאר בעמוד' }));
+    await user.click(within(fields).getByRole('button', { name: 'שמירה' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, 'PATCH', lp.detail(id, leadId))).toEqual([
+        { customFields: { [fieldIds.car]: 'מאזדה' } },
+      ]),
+    );
+    expect(await within(fields).findByText('השינויים נשמרו')).toBeInTheDocument();
+  });
+
+  it('the history fold holds every event; the "הערות" tab only notes', async () => {
+    asDesktop();
+    mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withActivities() });
+    const { user } = renderApp(page);
+    const history = await screen.findByRole('button', { name: /^היסטוריה/ });
+    expect(history).toHaveTextContent('3 אירועים');
+    await user.click(history);
+    expect(
+      within(screen.getByRole('list', { name: 'היסטוריית הליד' })).getAllByRole('listitem'),
+    ).toHaveLength(3);
+    expect(
+      within(screen.getByRole('list', { name: 'הערות' })).getAllByRole('listitem'),
+    ).toHaveLength(1);
+  });
+});
+
+describe('related leads (D-212)', () => {
+  it.each([
+    ['wide screens', true],
+    ['phones', false],
+  ])("on %s: a folded list linking to each of the contact's other leads", async (_, wide) => {
+    if (wide) asDesktop();
+    const other = lead({ id: related[0]!.id, message: 'הזמנה קודמת' });
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () =>
+        json(200, { lead: lead(), activities: [], relatedLeads: related }),
+      [`GET ${lp.detail(id, other.id)}`]: () => detail(other),
+    });
+    const { user, location } = renderApp(page);
+    const button = await screen.findByRole('button', { name: 'לידים קשורים (2)' });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    await user.click(button);
+    const list = screen.getByRole('list', { name: 'לידים קשורים' });
+    const links = within(list).getAllByRole('link');
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute('href', `${leadsPath}/${related[0]!.id}`);
+    // Won stage: its won value.
+    expect(links[0]).toHaveTextContent(/נסגר.*3,000/);
+    expect(links[1]).toHaveTextContent('חדש');
+    await user.click(links[0]!);
+    await waitFor(() => expect(location()).toBe(`${leadsPath}/${related[0]!.id}`));
+    // The other lead opens fresh.
+    expect(await screen.findByText('הזמנה קודמת')).toBeInTheDocument();
+  });
+
+  it('shows nothing when the server sends no related leads (or none at all)', async () => {
+    asDesktop();
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () =>
+        json(200, { lead: lead(), activities: [], relatedLeads: [] }),
+    });
+    renderApp(page);
+    await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
+    expect(screen.queryByRole('button', { name: /^לידים קשורים/ })).not.toBeInTheDocument();
   });
 });

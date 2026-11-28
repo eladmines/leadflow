@@ -5,19 +5,26 @@ import { Link } from 'react-router-dom';
 import { cn } from '../../lib/cn';
 import { dueLabel, useDeleteTask, useUpdateTask } from './api';
 import { EditTaskDialog } from './EditTaskDialog';
+import { AutoBadge, SubjectChip } from './subject';
 import { tr } from '../../i18n';
 
-/** One task row: tick to complete, due time (red when overdue), lead link, assignee, delete. */
+/**
+ * One task row: tick to complete, due time (red when overdue), lead link, its quote or appointment
+ * (F35), an "automatic" badge, assignee, delete.
+ */
 export function TaskItem({
   task,
   businessId,
   showLead = true,
   showAssignee = true,
+  showSubject = true,
 }: {
   task: Task;
   businessId: string;
   showLead?: boolean;
   showAssignee?: boolean;
+  /** Off where the list is already about that quote or appointment. */
+  showSubject?: boolean;
 }) {
   const update = useUpdateTask(businessId);
   const remove = useDeleteTask(businessId);
@@ -57,6 +64,9 @@ export function TaskItem({
               {task.lead.name}
             </Link>
           )}
+          {/* F35: what it is about, and whether the system made it. */}
+          {showSubject && task.subject && <SubjectChip subject={task.subject} />}
+          {task.autoKind && <AutoBadge kind={task.autoKind} />}
           {showAssignee && (
             <span className="inline-flex items-center gap-1">
               <UserRound aria-hidden className="h-3.5 w-3.5" />

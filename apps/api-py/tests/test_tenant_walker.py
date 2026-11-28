@@ -30,4 +30,9 @@ async def test_a_member_of_another_business_gets_404_on_every_tenant_route(app, 
         ("PUT", f"{lf_prefix}/order"),
         ("PATCH", f"{lf_prefix}/{{field_id}}"),
     } <= seen
+    # F35: the automatic follow-up switches.
+    assert {
+        ("GET", f"{TENANT_PREFIX}/automations/tasks"),
+        ("PUT", f"{TENANT_PREFIX}/automations/tasks"),
+    } <= seen
     assert len(seen) > 40

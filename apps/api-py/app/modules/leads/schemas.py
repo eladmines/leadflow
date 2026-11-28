@@ -444,9 +444,24 @@ class ActivityOut(BaseModel):
     createdAt: str
 
 
+# D-212 (F35): at most this many related leads are returned (newest first).
+MAX_RELATED_LEADS = 10
+
+
+class RelatedLead(BaseModel):
+    """Another lead of the same contact (D-212, D-215)."""
+
+    id: str
+    stage: StageOut
+    createdAt: str
+    value: LeadValue
+
+
 class LeadDetailResponse(BaseModel):
     lead: LeadOut
     activities: list[ActivityOut]
+    # D-215: the contact's other leads the member may see; `[]` when none. Always sent.
+    relatedLeads: list[RelatedLead] = Field(max_length=MAX_RELATED_LEADS)
 
 
 class ActivityResponse(BaseModel):

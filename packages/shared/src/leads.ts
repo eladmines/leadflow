@@ -356,9 +356,31 @@ export const activitySchema = z.object({
 });
 export type Activity = z.infer<typeof activitySchema>;
 
+/**
+ * D-212 (F35): another lead of the same contact, for the lead page's "related leads" section.
+ * Built from data already there; nothing is linked by hand.
+ */
+export const relatedLeadSchema = z.object({
+  id: z.string().uuid(),
+  stage: z.object({ id: z.string().uuid(), name: z.string(), kind: z.enum(STAGE_KINDS) }),
+  createdAt: z.string().datetime(),
+  /** Same rule as `Lead.value` (D-207, D-208, D-210). */
+  value: leadValueSchema,
+});
+export type RelatedLead = z.infer<typeof relatedLeadSchema>;
+/** At most this many related leads are returned (newest first). */
+export const MAX_RELATED_LEADS = 10;
+
 export const leadDetailResponseSchema = z.object({
   lead: leadSchema,
   activities: z.array(activitySchema),
+  /**
+   * D-212: the contact's **other** leads (this one excluded) that the member may see — employees
+   * only leads assigned to them — newest first (`createdAt` desc, then id), at most
+   * `MAX_RELATED_LEADS`. `[]` when none. The API always sends it; optional only so older payloads
+   * and fixtures still parse.
+   */
+  relatedLeads: z.array(relatedLeadSchema).max(MAX_RELATED_LEADS).optional(),
 });
 export type LeadDetailResponse = z.infer<typeof leadDetailResponseSchema>;
 export const leadResponseSchema = z.object({ lead: leadSchema });

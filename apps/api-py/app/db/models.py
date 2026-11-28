@@ -187,6 +187,13 @@ class Business(Base):
     domain_checked_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
     domain_expires_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
     domain_reminded_days: Mapped[int | None] = mapped_column(Integer)
+    # F35 (D-213): automatic follow-up tasks, each switchable per business (default on).
+    task_auto_quote_followup: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    task_auto_appointment_confirm: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
 
     sites: Mapped[list["Site"]] = relationship("Site", back_populates="business")
     assets: Mapped[list["Asset"]] = relationship("Asset", back_populates="business")
@@ -1139,6 +1146,8 @@ class Appointment(Base):
         ),
         PrimaryKeyConstraint("id", name="appointments_pkey"),
         Index("appointments_business_id_lead_id_idx", "business_id", "lead_id"),
+        # F35: target of tasks' (business_id, appointment_id) foreign key (same-business link).
+        Index("appointments_business_id_id_key", "business_id", "id", unique=True),
         Index(
             "appointments_business_id_staff_id_starts_at_idx",
             "business_id",
@@ -1246,6 +1255,8 @@ class Quote(Base):
         ),
         PrimaryKeyConstraint("id", name="quotes_pkey"),
         Index("quotes_business_id_lead_id_idx", "business_id", "lead_id"),
+        # F35: target of tasks' (business_id, quote_id) foreign key (same-business link).
+        Index("quotes_business_id_id_key", "business_id", "id", unique=True),
         Index("quotes_business_id_number_key", "business_id", "number", unique=True),
         Index("quotes_business_id_status_idx", "business_id", "status"),
         Index("quotes_public_token_key", "public_token", unique=True),
@@ -1313,8 +1324,60 @@ class Task(Base):
             onupdate="CASCADE",
             name="tasks_lead_id_fkey",
         ),
+        # F35 (D-213): the subject must be in the task's business (composite keys). In the database
+        # the action is `ON DELETE SET NULL (quote_id)` / `(appointment_id)`, so only the link is
+        # cleared, never `business_id` (Postgres 15+; written by hand in migration 0006), and the
+        # keys are checked at commit (see the migration for why).
+        ForeignKeyConstraint(
+            ["business_id", "quote_id"],
+            ["quotes.business_id", "quotes.id"],
+            ondelete="SET NULL",
+            onupdate="CASCADE",
+            deferrable=True,
+            initially="DEFERRED",
+            name="tasks_quote_fkey",
+        ),
+        ForeignKeyConstraint(
+            ["business_id", "appointment_id"],
+            ["appointments.business_id", "appointments.id"],
+            ondelete="SET NULL",
+            onupdate="CASCADE",
+            deferrable=True,
+            initially="DEFERRED",
+            name="tasks_appointment_fkey",
+        ),
+        CheckConstraint("quote_id IS NULL OR appointment_id IS NULL", name="tasks_one_subject_check"),
+        CheckConstraint(
+            "auto_kind IS NULL OR auto_kind IN ('quote_followup', 'appointment_confirm')",
+            name="tasks_auto_kind_check",
+        ),
         PrimaryKeyConstraint("id", name="tasks_pkey"),
         Index("tasks_business_id_assignee_id_status_idx", "business_id", "assignee_id", "status"),
+        Index(
+            "tasks_business_id_quote_id_idx",
+            "business_id",
+            "quote_id",
+            postgresql_where=text("quote_id IS NOT NULL"),
+        ),
+        Index(
+            "tasks_business_id_appointment_id_idx",
+            "business_id",
+            "appointment_id",
+            postgresql_where=text("appointment_id IS NOT NULL"),
+        ),
+        # One open automatic task per subject: re-sending a quote can't add a second follow-up.
+        Index(
+            "tasks_open_auto_quote_key",
+            "quote_id",
+            unique=True,
+            postgresql_where=text("auto_kind IS NOT NULL AND status = 'OPEN' AND quote_id IS NOT NULL"),
+        ),
+        Index(
+            "tasks_open_auto_appointment_key",
+            "appointment_id",
+            unique=True,
+            postgresql_where=text("auto_kind IS NOT NULL AND status = 'OPEN' AND appointment_id IS NOT NULL"),
+        ),
         Index("tasks_business_id_lead_id_idx", "business_id", "lead_id"),
         Index("tasks_business_id_status_due_at_idx", "business_id", "status", "due_at"),
         Index(
@@ -1350,10 +1413,29 @@ class Task(Base):
     lead_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     reminder_sent_at: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP(True, 3))
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    # F35 (D-213): the task's subject (at most one) and, for tasks the system created, their kind.
+    quote_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    appointment_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    auto_kind: Mapped[str | None] = mapped_column(String(32))
 
     assignee: Mapped["User"] = relationship("User", back_populates="tasks")
     business: Mapped["Business"] = relationship("Business", back_populates="tasks")
     lead: Mapped[Optional["Lead"]] = relationship("Lead", back_populates="tasks")
+    # Read-only: set `quote_id` / `appointment_id` directly (the composite keys share business_id).
+    quote: Mapped[Optional["Quote"]] = relationship(
+        "Quote",
+        primaryjoin="and_(Task.business_id == Quote.business_id, Task.quote_id == Quote.id)",
+        foreign_keys="[Task.business_id, Task.quote_id]",
+        viewonly=True,
+    )
+    appointment: Mapped[Optional["Appointment"]] = relationship(
+        "Appointment",
+        primaryjoin=(
+            "and_(Task.business_id == Appointment.business_id, Task.appointment_id == Appointment.id)"
+        ),
+        foreign_keys="[Task.business_id, Task.appointment_id]",
+        viewonly=True,
+    )
 
 
 class WhatsAppBotSession(Base):

@@ -297,6 +297,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/businesses/{business_id}/automations/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Task Automations */
+        get: operations["get_task_automations_api_v1_businesses__business_id__automations_tasks_get"];
+        /** Put Task Automations */
+        put: operations["put_task_automations_api_v1_businesses__business_id__automations_tasks_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/businesses/{business_id}/channels": {
         parameters: {
             query?: never;
@@ -1850,6 +1868,23 @@ export interface components {
         AppointmentResponse: {
             appointment: components["schemas"]["AppointmentOut"];
         };
+        /** AppointmentSubject */
+        AppointmentSubject: {
+            /** Id */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "appointment";
+            /** Startsat */
+            startsAt: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "REQUESTED" | "CONFIRMED" | "COMPLETED" | "NO_SHOW" | "CANCELLED";
+        };
         /** AssetListResponse */
         AssetListResponse: {
             /** Assets */
@@ -2615,6 +2650,8 @@ export interface components {
         };
         /** CreateTaskRequest */
         CreateTaskRequest: {
+            /** Appointmentid */
+            appointmentId?: string | null;
             /** Assigneeid */
             assigneeId?: string | null;
             /**
@@ -2626,6 +2663,8 @@ export interface components {
             leadId?: string | null;
             /** Notes */
             notes?: string | null;
+            /** Quoteid */
+            quoteId?: string | null;
             /**
              * Remind
              * @default true
@@ -3244,6 +3283,8 @@ export interface components {
             /** Activities */
             activities: components["schemas"]["ActivityOut"][];
             lead: components["schemas"]["LeadOut"];
+            /** Relatedleads */
+            relatedLeads: components["schemas"]["RelatedLead"][];
         };
         /** LeadFieldListResponse */
         LeadFieldListResponse: {
@@ -3758,6 +3799,23 @@ export interface components {
         QuoteResponse: {
             quote: components["schemas"]["QuoteOut"];
         };
+        /** QuoteSubject */
+        QuoteSubject: {
+            /** Id */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "quote";
+            /** Number */
+            number: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "DRAFT" | "SENT" | "ACCEPTED" | "REJECTED";
+        };
         /** RegisterRequest */
         RegisterRequest: {
             /**
@@ -3780,6 +3838,18 @@ export interface components {
              * @default
              */
             password?: string;
+        };
+        /**
+         * RelatedLead
+         * @description Another lead of the same contact (D-212, D-215).
+         */
+        RelatedLead: {
+            /** Createdat */
+            createdAt: string;
+            /** Id */
+            id: string;
+            stage: components["schemas"]["StageOut"];
+            value: components["schemas"]["LeadValue"];
         };
         /**
          * ReorderLeadFieldsRequest
@@ -4238,6 +4308,8 @@ export interface components {
         /** Task */
         Task: {
             assignee: components["schemas"]["Person"];
+            /** Autokind */
+            autoKind: ("quote_followup" | "appointment_confirm") | null;
             /** Completedat */
             completedAt: string | null;
             /** Createdat */
@@ -4256,8 +4328,24 @@ export interface components {
              * @enum {string}
              */
             status: "OPEN" | "DONE";
+            /** Subject */
+            subject: (components["schemas"]["QuoteSubject"] | components["schemas"]["AppointmentSubject"]) | null;
             /** Title */
             title: string;
+        };
+        /**
+         * TaskAutomations
+         * @description F35 (D-213): the per-business switches of the automatic follow-ups (both required).
+         */
+        TaskAutomations: {
+            /** Appointmentconfirm */
+            appointmentConfirm: boolean;
+            /** Quotefollowup */
+            quoteFollowUp: boolean;
+        };
+        /** TaskAutomationsResponse */
+        TaskAutomationsResponse: {
+            settings: components["schemas"]["TaskAutomations"];
         };
         /** TaskListResponse */
         TaskListResponse: {
@@ -4522,6 +4610,8 @@ export interface components {
          * @description Every field optional; use `model_fields_set` to tell "absent" from "null".
          */
         UpdateTaskRequest: {
+            /** Appointmentid */
+            appointmentId?: string | null;
             /** Assigneeid */
             assigneeId?: string | null;
             /** Dueat */
@@ -4530,6 +4620,8 @@ export interface components {
             leadId?: string | null;
             /** Notes */
             notes?: string | null;
+            /** Quoteid */
+            quoteId?: string | null;
             /** Remind */
             remind?: boolean | null;
             /** Status */
@@ -5233,6 +5325,72 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_task_automations_api_v1_businesses__business_id__automations_tasks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                business_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskAutomationsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_task_automations_api_v1_businesses__business_id__automations_tasks_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                business_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskAutomations"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskAutomationsResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -7602,6 +7760,8 @@ export interface operations {
                 status?: ("OPEN" | "DONE") | null;
                 assigneeId?: string | null;
                 leadId?: string | null;
+                quoteId?: string | null;
+                appointmentId?: string | null;
                 due?: "overdue" | null;
             };
             header?: never;

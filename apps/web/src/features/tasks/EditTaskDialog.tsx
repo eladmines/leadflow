@@ -6,9 +6,11 @@ import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import { toLocalInput, useUpdateTask } from './api';
 import { LeadPicker, type PickedLead } from './LeadPicker';
+import { ApiError } from '../../lib/api';
+import { SubjectPicker, subjectBody, type SubjectRef } from './subject';
 import { tr } from '../../i18n';
 
-/** Change a task: what to do, notes, when, who, and which customer it is about. */
+/** Change a task: what to do, notes, when, who, which customer, and its quote or appointment (F35). */
 export function EditTaskDialog({
   task,
   open,
@@ -27,13 +29,22 @@ export function EditTaskDialog({
   const [due, setDue] = useState(toLocalInput(task.dueAt));
   const [assigneeId, setAssigneeId] = useState(task.assignee.id);
   const [lead, setLead] = useState<PickedLead | null>(task.lead);
+  const initialSubject: SubjectRef | null = task.subject
+    ? { kind: task.subject.kind, id: task.subject.id }
+    : null;
+  const [subject, setSubject] = useState<SubjectRef | null>(initialSubject);
+  const [subjectError, setSubjectError] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
+  // Sent only when changed: re-linking an automatic task makes it a person's task (D-213).
+  const subjectChanged =
+    subject?.kind !== initialSubject?.kind || subject?.id !== initialSubject?.id;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return setError(tr('יש לכתוב מה צריך לעשות'));
     if (!due) return setError(tr('יש לבחור מועד'));
     setError(null);
+    setSubjectError(undefined);
     update.mutate(
       {
         id: task.id,
@@ -43,9 +54,16 @@ export function EditTaskDialog({
           dueAt: new Date(due).toISOString(),
           ...(canAssign ? { assigneeId } : {}),
           leadId: lead?.id ?? null,
+          ...(subjectChanged ? subjectBody(subject) : {}),
         },
       },
-      { onSuccess: () => onOpenChange(false) },
+      {
+        onSuccess: () => onOpenChange(false),
+        onError: (err) => {
+          const f = err instanceof ApiError ? (err.fields ?? {}) : {};
+          setSubjectError(f.quoteId ?? f.appointmentId ?? f.leadId);
+        },
+      },
     );
   };
 
@@ -79,8 +97,26 @@ export function EditTaskDialog({
             ).map((m) => ({ value: m.userId, label: m.fullName }))}
           />
         )}
-        <LeadPicker value={lead} onChange={setLead} />
-        {(error || update.isError) && (
+        <LeadPicker
+          value={lead}
+          onChange={(l) => {
+            setLead(l);
+            // A quote or appointment belongs to its lead: another lead drops the link.
+            if (l?.id !== lead?.id) setSubject(null);
+          }}
+        />
+        {lead && (
+          <SubjectPicker
+            leadId={lead.id}
+            value={subject}
+            onChange={(v) => {
+              setSubject(v);
+              setSubjectError(undefined);
+            }}
+            error={subjectError}
+          />
+        )}
+        {(error || (update.isError && !subjectError)) && (
           <Alert tone="danger">{error ?? errorMessage(update.error)}</Alert>
         )}
         <div className="flex flex-wrap justify-end gap-2">

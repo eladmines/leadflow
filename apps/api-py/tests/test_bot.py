@@ -253,7 +253,9 @@ async def test_books_new_customer_end_to_end(setup, post, wa, db, client):
     task = (await db.execute(select(models.Task))).scalars().one()
     assert str(task.assignee_id) == owner["user_id"] and task.lead_id == lead.id
     assert task.status.value == "OPEN" and task.remind is False
-    assert re.match(r"^תור חדש: נועה לוי · תספורת נשים · ", task.title)
+    # D-216 (2): the D-152 notice is the confirm task, linked to the appointment.
+    assert re.match(r"^לאשר את התור: נועה לוי · תספורת נשים · ", task.title)
+    assert task.auto_kind == "appointment_confirm" and task.appointment_id is not None
     assert abs((task.due_at - datetime.now(UTC)).total_seconds()) < 60
 
 
@@ -771,7 +773,7 @@ async def test_dj_event_request_flow(setup, post, wa, db, client):
         and appt.staff_id is None
     )
     task = (await db.execute(select(models.Task))).scalars().one()
-    assert task.title.startswith("הזמנה חדשה: ")
+    assert task.title.startswith("לאשר את התור: ") and task.appointment_id == appt.id  # D-216 (2)
     assert appt.starts_at == zoned_time_to_utc(day.isoformat(), "19:00", TZ)
     assert re.match(r"^בקשה מוואטסאפ · חתונה · ", appt.notes)
     assert "אורחים: 150–300 · אזור: ראשון לציון" in appt.notes

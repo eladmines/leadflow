@@ -20,6 +20,7 @@ import { useBotSettings, useUpdateBotSettings } from './api';
 import { AutoReplyCard } from './AutoReplyCard';
 import { BookingBotCard, ShowcaseForm, toRequest } from './BookingBotCard';
 import { QuestionsForm } from './QuestionsEditor';
+import { TaskAutomationsCard } from '../tasks/TaskAutomationsCard';
 import { tr } from '../../i18n';
 
 type Saved = WhatsAppBotResponse['settings'];
@@ -32,23 +33,35 @@ type Saved = WhatsAppBotResponse['settings'];
  */
 export function AutomationsPage() {
   const business = useCurrentBusiness();
-  if (!can(business.role, 'whatsapp.inbox')) return <NoPermission what={tr('אוטומציות')} />;
-  return (
-    <section
-      aria-label={tr('אוטומציות')}
-      className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
-    >
-      <PageHeader
-        inPanel
-        title={tr('אוטומציות')}
-        description={tr(
-          'מה קורה כשלקוח כותב בוואטסאפ: מענה לפי הסטטוס שלך, קביעת תורים והצצה לעסק.',
-        )}
-      />
-      <div className="flex flex-col gap-5 p-4 sm:p-5">
-        <Journey businessId={business.id} />
+  // F35: everyone sees the automatic tasks (read-only without `automations.manage`); the WhatsApp
+  // journey stays with those who see the inbox.
+  if (!can(business.role, 'whatsapp.inbox')) {
+    return (
+      <div className="flex flex-col gap-5">
+        <TaskAutomationsCard />
+        <NoPermission what={tr('אוטומציות של וואטסאפ')} />
       </div>
-    </section>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-5">
+      <section
+        aria-label={tr('אוטומציות')}
+        className="overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-card"
+      >
+        <PageHeader
+          inPanel
+          title={tr('אוטומציות')}
+          description={tr(
+            'מה קורה כשלקוח כותב בוואטסאפ: מענה לפי הסטטוס שלך, קביעת תורים והצצה לעסק.',
+          )}
+        />
+        <div className="flex flex-col gap-5 p-4 sm:p-5">
+          <Journey businessId={business.id} />
+        </div>
+      </section>
+      <TaskAutomationsCard />
+    </div>
   );
 }
 

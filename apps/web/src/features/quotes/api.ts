@@ -36,7 +36,7 @@ export function useQuote(businessId: string, id: string | null) {
   });
 }
 
-/** Quote changes show in the lead history too. */
+/** Quote changes show in the lead history too, and touch the lead's tasks (F35). */
 function useQuoteMutation<T>(businessId: string, fn: (vars: T) => Promise<QuoteResponse | void>) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -47,6 +47,8 @@ function useQuoteMutation<T>(businessId: string, fn: (vars: T) => Promise<QuoteR
       }
       void queryClient.invalidateQueries({ queryKey: [...quotesKey(businessId), 'list'] });
       void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'leads'] });
+      // F35: sending or deciding a quote creates, moves or closes its automatic follow-up.
+      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'tasks'] });
     },
   });
 }

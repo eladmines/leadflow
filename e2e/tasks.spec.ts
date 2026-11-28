@@ -1,5 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 
+/**
+ * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
+ * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ */
+async function openLeadHistory(page: Page) {
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+}
+
 /** F10: task from a lead → overdue on the tasks page → done → lead history; reminder email. */
 const PASSWORD = 'Sup3r-secret-pass!';
 const MAILPIT = 'http://localhost:8025/api/v1';
@@ -54,7 +64,7 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   // The nearest open task is the next action, overdue in words.
   await expect(nextAction).toContainText('להתקשר לגבי הטיפול');
   await expect(nextAction).toContainText('באיחור');
-  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
+  await openLeadHistory(page);
   await expect(page.getByRole('list', { name: 'היסטוריית הליד' })).toContainText(
     'נוספה משימה: להתקשר לגבי הטיפול',
   );
@@ -68,7 +78,7 @@ test('a follow-up task from a lead goes overdue, gets done, and shows in the lea
   await expect(page.getByRole('heading', { name: 'אין משימות פתוחות' })).toBeVisible();
 
   await page.goto(`/b/${id}/leads/${leadId}`);
-  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
+  await openLeadHistory(page);
   await expect(page.getByRole('list', { name: 'היסטוריית הליד' })).toContainText(
     'בוצעה משימה: להתקשר לגבי הטיפול',
   );

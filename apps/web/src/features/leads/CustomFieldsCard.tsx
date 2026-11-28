@@ -128,12 +128,15 @@ export function WhatTheyAsked({
   editing,
   onEditingChange,
   message,
+  showFields = true,
 }: {
   draft: CustomFieldsDraft;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
   /** The original enquiry; null when the conversation already shows it. */
   message: string | null;
+  /** False on wide screens (D-212): the fields are in the properties panel there. */
+  showFields?: boolean;
 }) {
   const business = useCurrentBusiness();
   const { fields, values } = draft;
@@ -169,6 +172,24 @@ export function WhatTheyAsked({
     e.preventDefault();
     draft.save();
   };
+
+  if (!showFields) {
+    return (
+      <Card role="region" aria-labelledby="lead-asked-title" className="flex flex-col gap-3">
+        <h2 id="lead-asked-title" className="text-base font-semibold text-ink">
+          {tr('מה ביקשו')}
+        </h2>
+        {message && (
+          <p
+            className="whitespace-pre-line rounded-xl border-s-4 border-brand-200 bg-surface-muted px-4 py-3 text-sm text-ink [overflow-wrap:anywhere]"
+            dir="auto"
+          >
+            {message}
+          </p>
+        )}
+      </Card>
+    );
+  }
 
   return (
     <Card role="region" aria-labelledby="lead-asked-title" className="flex flex-col gap-3">
@@ -270,6 +291,102 @@ export function WhatTheyAsked({
           {tr('השינויים נשמרו')}
         </p>
       )}
+    </Card>
+  );
+}
+
+/**
+ * The custom fields in the desktop properties panel (D-212): edited in place and saved together
+ * with one "שמירה" (D-207), "ביטול שינויים" to drop the edits; read-only for those who can't edit.
+ */
+export function CustomFieldsPanel({ draft }: { draft: CustomFieldsDraft }) {
+  const business = useCurrentBusiness();
+  const { fields, values, lead } = draft;
+  const canEdit = can(business.role, 'leads.update');
+  const canManage = can(business.role, 'leadFields.manage');
+  const active = activeFields(fields.data);
+  const saving = draft.status === 'saving';
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    draft.save();
+  };
+
+  return (
+    <Card role="region" aria-labelledby="lead-fields-title" className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="lead-fields-title" className="text-base font-semibold text-ink">
+          {tr('פרטים')}
+        </h2>
+        {canManage && (
+          <ManageFieldsLink to={businessWebPaths.section(business.id, 'leads/fields')} />
+        )}
+      </div>
+      {fields.isPending ? (
+        <Spinner size="sm" label={tr('טוענים את השדות…')} />
+      ) : fields.isError ? (
+        <Alert tone="danger" title={tr('לא הצלחנו לטעון את השדות')}>
+          {errorMessage(fields.error)}
+        </Alert>
+      ) : active.length === 0 ? (
+        <p className="text-sm text-ink-muted">
+          {canManage
+            ? tr('אפשר להוסיף לכל ליד שדות משלכם, למשל תאריך האירוע או דגם הרכב.')
+            : tr('אין שדות נוספים.')}
+        </p>
+      ) : canEdit ? (
+        <form
+          noValidate
+          onSubmit={submit}
+          aria-label={tr('פרטים')}
+          aria-busy={saving || undefined}
+          className="flex flex-col gap-4"
+        >
+          {active.map((f) => (
+            <CustomFieldInput
+              key={f.id}
+              id={`cf-${f.id}`}
+              field={f}
+              value={draft.rawOf(f)}
+              error={draft.errors[f.id]}
+              onChange={(v) => draft.setValue(f, v)}
+            />
+          ))}
+          {draft.formError && <Alert tone="danger">{draft.formError}</Alert>}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <p role="status" className="me-auto text-xs text-ink-muted">
+              {saving
+                ? tr('שומר…')
+                : draft.dirty
+                  ? tr('יש שינויים שלא נשמרו')
+                  : draft.status === 'saved'
+                    ? tr('השינויים נשמרו')
+                    : ''}
+            </p>
+            {draft.dirty && !saving && (
+              <Button type="button" variant="ghost" size="sm" onClick={draft.discard}>
+                {tr('ביטול שינויים')}
+              </Button>
+            )}
+            <Button type="submit" size="sm" disabled={!draft.dirty} loading={saving}>
+              {tr('שמירה')}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <dl aria-label={tr('פרטים')} className="flex flex-col gap-1.5 text-sm">
+          {active.map((f) => (
+            <div key={f.id} className="flex min-w-0 flex-wrap gap-x-1.5">
+              <dt className="min-w-0 text-ink-muted [overflow-wrap:anywhere]">
+                <bdi>{f.label}</bdi>:
+              </dt>
+              <dd className="min-w-0 font-medium text-ink [overflow-wrap:anywhere]" dir="auto">
+                {formatCustomValue(f, values[f.id]) ?? <span className="text-ink-subtle">—</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <ArchivedFieldValues lead={lead} />
     </Card>
   );
 }

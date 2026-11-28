@@ -1,5 +1,7 @@
 import {
   apiPaths,
+  type TaskAutomations,
+  type TaskAutomationsResponse,
   type CreateTaskRequest,
   type Task,
   type TaskListQuery,
@@ -11,7 +13,7 @@ import { apiFetch } from '../../lib/api';
 import { tr, intlLocale } from '../../i18n';
 
 const tp = apiPaths.tasks;
-const tasksQueryKey = (businessId: string) => ['businesses', businessId, 'tasks'] as const;
+export const tasksQueryKey = (businessId: string) => ['businesses', businessId, 'tasks'] as const;
 
 const qs = (q: TaskListQuery) => {
   const p = new URLSearchParams();
@@ -162,4 +164,29 @@ export function groupTasks(tasks: Task[], now = new Date()) {
     else groups.upcoming.push(t);
   }
   return groups;
+}
+
+const automationsKey = (businessId: string) =>
+  ['businesses', businessId, 'automations', 'tasks'] as const;
+
+/** F35: the automatic follow-up switches (everyone may read them). */
+export function useTaskAutomations(businessId: string) {
+  return useQuery({
+    queryKey: automationsKey(businessId),
+    queryFn: () => apiFetch<TaskAutomationsResponse>(tp.automations(businessId)),
+    select: (d) => d.settings,
+  });
+}
+
+/** F35: turn the automatic follow-ups on or off (`automations.manage`). */
+export function useUpdateTaskAutomations(businessId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: TaskAutomations) =>
+      apiFetch<TaskAutomationsResponse>(tp.automations(businessId), {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data) => queryClient.setQueryData(automationsKey(businessId), data),
+  });
 }

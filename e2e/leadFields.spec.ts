@@ -2,6 +2,26 @@ import { expect, test, type Browser, type Locator, type Page } from '@playwright
 import { choose } from './choose';
 
 /**
+ * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
+ * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ */
+async function openLeadHistory(page: Page) {
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+}
+
+/** Phones open the custom-field form with "עריכה" (D-211); wide screens show it in the panel. */
+async function editLeadFields(page: Page, label = 'עריכה') {
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const edit = page.getByRole('button', { name: label, exact: true });
+  const form = page.getByRole('form', { name: label === 'Edit' ? 'Details' : 'פרטים' });
+  // Wait for the fields to load: one of the two shows.
+  await expect(edit.or(form).first()).toBeVisible();
+  if (await edit.isVisible()) await edit.click();
+}
+
+/**
  * F34 custom lead fields (QA): owner creates a field of each type → New lead fills them (required
  * enforced) → lead card edits inline → history → leads list filter → archive (gone from New lead
  * and filters, value still on the lead) → quick "add customer" from a quote skips required (D-205).
@@ -143,8 +163,8 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
 
   // Lead card: "מה ביקשו" shows the values; "עריכה" opens the form, saved with one "שמירה"
   // (D-207, D-211).
-  await expect(page.getByRole('heading', { name: 'מה ביקשו', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'עריכה' }).click();
+  await expect(page.getByRole('heading', { name: /^(מה ביקשו|פרטים)$/ }).first()).toBeVisible();
+  await editLeadFields(page);
   const save = page.getByRole('form', { name: 'פרטים' }).getByRole('button', { name: 'שמירה' });
   const model = page.getByLabel(/^דגם רכב/);
   await expect(model).toHaveValue('מאזדה 3');
@@ -159,7 +179,7 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await save.click();
   await expect(page.getByText('השינויים נשמרו')).toBeVisible();
   // The full history is under "עוד פרטים" (D-211).
-  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
+  await openLeadHistory(page);
   const history = page.getByRole('list', { name: 'היסטוריית הליד' });
   await expect(history).toContainText('דגם רכב');
   await expect(history).toContainText('טויוטה קורולה');
@@ -214,7 +234,7 @@ test('owner defines fields, fills them on a lead, edits, filters and archives', 
   await expect(page.getByRole('dialog', { name: 'ליד חדש' }).getByText('סוג טיפול')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await page.getByRole('link', { name: 'אבי כהן' }).first().click();
-  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
+  await openLeadHistory(page);
   await expect(page.getByRole('heading', { name: 'שדות בארכיון' })).toBeVisible();
   const archivedSection = page.getByRole('region', { name: 'שדות בארכיון' });
   await expect(archivedSection).toContainText('סוג טיפול');
@@ -442,7 +462,7 @@ test('an employee sees the no-permission state and can still fill values', async
     })
   ).json();
   await emp.goto(`/b/${id}/leads/${lead.id}`);
-  await emp.getByRole('button', { name: 'עריכה' }).click();
+  await editLeadFields(emp);
   const input = emp.getByLabel(/^דגם רכב/);
   await input.fill('סקודה');
   await input.press('Enter');
@@ -512,9 +532,9 @@ test.describe('English', () => {
     ).json();
     await page.goto(`/b/${id}/leads/${lead.id}`);
     await expect(
-      page.getByRole('heading', { name: 'What they asked for', exact: true }),
+      page.getByRole('heading', { name: /^(What they asked for|Details)$/ }).first(),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Edit' }).click();
+    await editLeadFields(page, 'Edit');
     await page.getByLabel(/^Guests/).fill('99');
     await page.getByLabel(/^Guests/).press('Enter');
     await expect(page.getByText('The number must be at most 50')).toBeVisible();

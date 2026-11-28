@@ -262,3 +262,286 @@ async def test_the_reminder_job_starts_after_the_app_is_ready_and_stops_cleanly(
     await asyncio.sleep(0)
     await stop(job)
     assert job.cancelled() or job.done()
+
+
+# =========================================================================== F35: task subjects
+
+
+async def _subjects(client, db, email):
+    """A team with a lead (owned by the employee) that has a quote and an appointment, plus a
+    second lead (the owner's) with its own quote."""
+    from tests.conftest import make_quote
+
+    owner, emp, bid = await _team(client, db, email)
+    lead = await make_lead(db, bid, owner_id=emp["user_id"])
+    other = await make_lead(db, bid, owner_id=owner["user_id"], name="שירה", phone="+972529998877")
+    quote = await make_quote(db, bid, lead["id"], "SENT", 10000)
+    other_quote = await make_quote(db, bid, other["id"], "DRAFT", 5000)
+    appt = (
+        await req(
+            client,
+            "POST",
+            business_url(bid, "/appointments"),
+            owner["token"],
+            {"startsAt": "2030-01-08T09:00:00.000Z", "leadId": lead["id"], "staffId": owner["user_id"]},
+        )
+    ).json()["appointment"]
+    return owner, emp, bid, lead, other, str(quote.id), str(other_quote.id), appt
+
+
+def _fields(res):
+    assert res.status_code == 400, res.text
+    assert "Traceback" not in res.text
+    return res.json()["error"]["fields"]
+
+
+async def test_link_a_task_to_a_quote_or_an_appointment_and_the_lead_defaults(client, db, email):
+    owner, _, bid, lead, _, qid, _, appt = await _subjects(client, db, email)
+    by_quote = await _create(
+        client, bid, owner["token"], {"title": "לברר", "dueAt": in_hours(5), "quoteId": qid}
+    )
+    assert by_quote.status_code == 201
+    t = by_quote.json()["task"]
+    assert t["lead"]["id"] == lead["id"] and t["autoKind"] is None
+    assert t["subject"]["kind"] == "quote" and t["subject"]["id"] == qid and t["subject"]["status"] == "SENT"
+    by_appt = await _create(
+        client,
+        bid,
+        owner["token"],
+        {"title": "להכין", "dueAt": in_hours(5), "appointmentId": appt["id"], "leadId": lead["id"]},
+    )
+    assert by_appt.status_code == 201
+    assert by_appt.json()["task"]["subject"] == {
+        "kind": "appointment",
+        "id": appt["id"],
+        "startsAt": appt["startsAt"],
+        "status": "CONFIRMED",
+    }
+    both = await _create(
+        client,
+        bid,
+        owner["token"],
+        {"title": "x", "dueAt": in_hours(5), "quoteId": qid, "appointmentId": appt["id"]},
+    )
+    assert _fields(both) == {"appointmentId": "אפשר לקשר משימה להצעה או לתור, לא לשניהם"}
+    plain = (await _create(client, bid, owner["token"], {"title": "רגילה", "dueAt": in_hours(5)})).json()[
+        "task"
+    ]
+    assert plain["subject"] is None and plain["autoKind"] is None
+
+
+async def test_a_lead_other_than_the_subjects_is_refused(client, db, email):
+    owner, _, bid, _, other, qid, _, appt = await _subjects(client, db, email)
+    res = await _create(
+        client,
+        bid,
+        owner["token"],
+        {"title": "x", "dueAt": in_hours(5), "quoteId": qid, "leadId": other["id"]},
+    )
+    assert _fields(res) == {"leadId": "ההצעה או התור שייכים לליד אחר. בטלו את הקישור או בחרו את הליד שלהם."}
+    # An appointment without a lead + a lead on the task: same error.
+    no_lead = (
+        await req(
+            client,
+            "POST",
+            business_url(bid, "/appointments"),
+            owner["token"],
+            {"startsAt": "2030-01-09T09:00:00.000Z", "customer": {"name": "דנה", "phone": "052-1234567"}},
+        )
+    ).json()["appointment"]
+    res = await _create(
+        client,
+        bid,
+        owner["token"],
+        {"title": "x", "dueAt": in_hours(5), "appointmentId": no_lead["id"], "leadId": other["id"]},
+    )
+    assert "leadId" in _fields(res)
+    ok = await _create(
+        client, bid, owner["token"], {"title": "x", "dueAt": in_hours(5), "appointmentId": no_lead["id"]}
+    )
+    assert ok.status_code == 201 and ok.json()["task"]["lead"] is None
+
+
+async def test_unknown_other_business_and_invisible_subjects_are_refused_alike(client, db, email):
+    owner, emp, bid, lead, _, qid, other_qid, appt = await _subjects(client, db, email)
+    import uuid as _uuid
+
+    from tests.conftest import make_quote
+
+    stranger = await owner_with_business(client, "stranger")
+    sbid = stranger["business"]["id"]
+    foreign_lead = await make_lead(db, sbid)
+    foreign_quote = await make_quote(db, sbid, foreign_lead["id"], "SENT", 100)
+    for quote_id in (str(_uuid.uuid4()), str(foreign_quote.id)):
+        res = await _create(
+            client, bid, owner["token"], {"title": "x", "dueAt": in_hours(1), "quoteId": quote_id}
+        )
+        assert _fields(res) == {"quoteId": "ההצעה שנבחרה אינה קיימת"}
+    res = await _create(
+        client, bid, owner["token"], {"title": "x", "dueAt": in_hours(1), "appointmentId": str(_uuid.uuid4())}
+    )
+    assert _fields(res) == {"appointmentId": "התור שנבחר אינו קיים"}
+
+    # The employee: a quote on someone else's lead, an appointment booked on the owner → refused.
+    res = await _create(client, bid, emp["token"], {"title": "x", "dueAt": in_hours(1), "quoteId": other_qid})
+    assert _fields(res) == {"quoteId": "ההצעה שנבחרה אינה קיימת"}
+    res = await _create(
+        client, bid, emp["token"], {"title": "x", "dueAt": in_hours(1), "appointmentId": appt["id"]}
+    )
+    assert _fields(res) == {"appointmentId": "התור שנבחר אינו קיים"}
+    # …but a quote on their own lead is fine.
+    res = await _create(client, bid, emp["token"], {"title": "x", "dueAt": in_hours(1), "quoteId": qid})
+    assert res.status_code == 201 and res.json()["task"]["lead"]["id"] == lead["id"]
+
+    # PATCH: the same rule.
+    tid = res.json()["task"]["id"]
+    res = await req(client, "PATCH", tasks_url(bid, f"/{tid}"), emp["token"], {"quoteId": other_qid})
+    assert _fields(res) == {"quoteId": "ההצעה שנבחרה אינה קיימת"}
+
+
+async def test_a_direct_cross_business_link_fails_at_commit(client, db, email):
+    import uuid as _uuid
+
+    import pytest
+    from sqlalchemy.exc import IntegrityError
+
+    from tests.conftest import make_quote, make_task
+
+    owner, _, bid, _, _, _, _, _ = await _subjects(client, db, email)
+    stranger = await owner_with_business(client, "stranger")
+    sbid = stranger["business"]["id"]
+    foreign_quote = await make_quote(db, sbid, (await make_lead(db, sbid))["id"], "SENT", 100)
+    task_id = (await make_task(db, bid, None, owner["user_id"], "x", datetime.now(UTC))).id
+    foreign_id = foreign_quote.id
+    await db.execute(update(models.Task).where(models.Task.id == task_id).values(quote_id=foreign_id))
+    with pytest.raises(IntegrityError):
+        await db.commit()
+    await db.rollback()
+    assert (
+        await db.execute(select(models.Task.quote_id).where(models.Task.id == task_id))
+    ).scalar_one() is None
+    assert _uuid.UUID(bid) != _uuid.UUID(sbid)
+
+
+async def test_patch_swaps_unlinks_and_a_changed_subject_makes_an_automatic_task_a_persons(client, db, email):
+    owner, _, bid, lead, other, qid, other_qid, appt = await _subjects(client, db, email)
+    tid = (
+        await _create(client, bid, owner["token"], {"title": "x", "dueAt": in_hours(1), "quoteId": qid})
+    ).json()["task"]["id"]
+    url = tasks_url(bid, f"/{tid}")
+    swapped = (await req(client, "PATCH", url, owner["token"], {"appointmentId": appt["id"]})).json()["task"]
+    assert swapped["subject"]["kind"] == "appointment" and swapped["lead"]["id"] == lead["id"]
+    row = (await db.execute(select(models.Task).where(models.Task.id == uuid_of(tid)))).scalar_one()
+    assert row.quote_id is None and row.appointment_id is not None
+
+    # Changing the lead while the subject stays → refused; with the unlink in the same request → fine.
+    res = await req(client, "PATCH", url, owner["token"], {"leadId": other["id"]})
+    assert "leadId" in _fields(res)
+    moved = await req(client, "PATCH", url, owner["token"], {"leadId": other["id"], "appointmentId": None})
+    assert moved.status_code == 200
+    assert moved.json()["task"]["subject"] is None and moved.json()["task"]["lead"]["id"] == other["id"]
+    # Setting a subject takes its lead.
+    relinked = (await req(client, "PATCH", url, owner["token"], {"quoteId": other_qid})).json()["task"]
+    assert relinked["subject"]["id"] == other_qid and relinked["lead"]["id"] == other["id"]
+    unlinked = (await req(client, "PATCH", url, owner["token"], {"quoteId": None})).json()["task"]
+    assert unlinked["subject"] is None and unlinked["lead"]["id"] == other["id"]
+
+    # An automatic task whose subject a person changes becomes a person's task.
+    await db.execute(
+        update(models.Task)
+        .where(models.Task.id == uuid_of(tid))
+        .values(quote_id=uuid_of(qid), lead_id=uuid_of(lead["id"]), auto_kind="quote_followup")
+    )
+    await db.commit()
+    same = (await req(client, "PATCH", url, owner["token"], {"title": "שם חדש"})).json()["task"]
+    assert same["autoKind"] == "quote_followup"
+    changed = (await req(client, "PATCH", url, owner["token"], {"appointmentId": appt["id"]})).json()["task"]
+    assert changed["autoKind"] is None
+
+
+async def test_reopening_an_old_follow_up_while_a_newer_one_is_open_makes_it_a_persons(client, db, email):
+    from tests.conftest import make_quote
+
+    owner, _, bid, lead, _, qid, _, _ = await _subjects(client, db, email)
+    old = await make_quote(db, bid, lead["id"], "SENT", 100)
+    now = datetime.now(UTC)
+    for quote_id, status in ((old.id, "DONE"), (uuid_of(qid), "OPEN")):
+        db.add(
+            models.Task(
+                id=__import__("uuid").uuid4(),
+                business_id=uuid_of(bid),
+                title="מעקב",
+                due_at=now,
+                status=models.TaskStatus(status),
+                assignee_id=uuid_of(owner["user_id"]),
+                lead_id=uuid_of(lead["id"]),
+                quote_id=quote_id,
+                auto_kind="quote_followup",
+                remind=True,
+                completed_at=now if status == "DONE" else None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+    await db.commit()
+    done = (
+        await db.execute(select(models.Task).where(models.Task.status == models.TaskStatus.DONE))
+    ).scalar_one()
+    res = await req(client, "PATCH", tasks_url(bid, f"/{done.id}"), owner["token"], {"status": "OPEN"})
+    assert (
+        res.status_code == 200
+        and res.json()["task"]["autoKind"] is None
+        and res.json()["task"]["status"] == "OPEN"
+    )
+
+
+async def test_list_filters_by_subject_and_employees_see_only_their_own(client, db, email):
+    owner, emp, bid, _, _, qid, _, appt = await _subjects(client, db, email)
+    await _create(client, bid, owner["token"], {"title": "של הבעלים", "dueAt": in_hours(1), "quoteId": qid})
+    await _create(
+        client,
+        bid,
+        owner["token"],
+        {"title": "של העובד", "dueAt": in_hours(2), "quoteId": qid, "assigneeId": emp["user_id"]},
+    )
+    await _create(
+        client, bid, owner["token"], {"title": "על התור", "dueAt": in_hours(3), "appointmentId": appt["id"]}
+    )
+
+    def titles(res):
+        assert res.status_code == 200, res.text
+        return sorted(t["title"] for t in res.json()["tasks"])
+
+    assert titles(await req(client, "GET", tasks_url(bid) + f"?quoteId={qid}", owner["token"])) == [
+        "של הבעלים",
+        "של העובד",
+    ]
+    assert titles(await req(client, "GET", tasks_url(bid) + f"?quoteId={qid}", emp["token"])) == ["של העובד"]
+    by_appt = titles(
+        await req(client, "GET", tasks_url(bid) + f"?appointmentId={appt['id']}", owner["token"])
+    )
+    assert "על התור" in by_appt and all(t in ("על התור", "לאשר את התור") for t in by_appt)
+    assert (
+        titles(await req(client, "GET", tasks_url(bid) + f"?appointmentId={appt['id']}", emp["token"])) == []
+    )
+    bad = await req(client, "GET", tasks_url(bid) + "?quoteId=nope", owner["token"])
+    assert bad.status_code == 400 and "quoteId" in bad.json()["error"]["fields"]
+
+
+async def test_a_deleted_draft_quote_leaves_a_persons_task_without_a_subject(client, db, email):
+    owner, _, bid, _, other, _, other_qid, _ = await _subjects(client, db, email)
+    tid = (
+        await _create(client, bid, owner["token"], {"title": "x", "dueAt": in_hours(1), "quoteId": other_qid})
+    ).json()["task"]["id"]
+    assert (
+        await req(client, "DELETE", business_url(bid, f"/quotes/{other_qid}"), owner["token"])
+    ).status_code == 204
+    task = (await req(client, "GET", tasks_url(bid), owner["token"])).json()["tasks"]
+    [row] = [t for t in task if t["id"] == tid]
+    assert row["subject"] is None and row["lead"]["id"] == other["id"]
+
+
+def uuid_of(v):
+    import uuid as _uuid
+
+    return _uuid.UUID(str(v))

@@ -59,6 +59,8 @@ function useAppointmentMutation<T, R>(businessId: string, fn: (vars: T) => Promi
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: appointmentsKey(businessId) });
       void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'leads'] });
+      // F35: booking, moving or cancelling creates, moves or closes the confirm task.
+      void queryClient.invalidateQueries({ queryKey: ['businesses', businessId, 'tasks'] });
     },
   });
 }

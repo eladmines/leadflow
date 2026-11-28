@@ -131,6 +131,8 @@ export function mockApi(routes: Record<string, Handler>) {
     [`GET ${apiPaths.leadFields.list(testBusiness.id)}`]: () => json(200, { fields: [] }),
     [`GET ${apiPaths.leads.pipeline(testBusiness.id)}`]: () => json(200, { stages: testStages }),
     [`GET ${apiPaths.tasks.list(testBusiness.id)}`]: () => json(200, { tasks: [] }),
+    [`GET ${apiPaths.tasks.automations(testBusiness.id)}`]: () =>
+      json(200, { settings: { quoteFollowUp: true, appointmentConfirm: true } }),
     [`GET ${apiPaths.appointments.list(testBusiness.id)}`]: () => json(200, { appointments: [] }),
     [`GET ${apiPaths.appointments.requests(testBusiness.id)}`]: () =>
       json(200, { appointments: [] }),

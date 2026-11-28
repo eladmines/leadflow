@@ -4,6 +4,9 @@ import {
   can,
   formatIsraeliPhone,
   leadSourceLabels,
+  leadValueForStageKind,
+  type LeadDetailResponse,
+  type RelatedLead,
   type Activity,
   type AddNoteRequest,
   type Lead,
@@ -13,13 +16,14 @@ import {
 } from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Mail, MessageCircle, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Button,
   buttonClasses,
+  Card,
   DialogShell,
   EmptyState,
   SelectMenu,
@@ -35,6 +39,7 @@ import { useMembers } from '../businesses/api';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
 import {
   formatDateTime,
+  shekel,
   timeAgo,
   useAddNote,
   useDeleteLead,
@@ -51,6 +56,7 @@ import { isQuoteNeeded, QuoteNeededDialog } from './QuoteNeededDialog';
 import {
   ArchivedFieldValues,
   CustomFieldChanges,
+  CustomFieldsPanel,
   useCustomFieldsDraft,
   WhatTheyAsked,
 } from './CustomFieldsCard';
@@ -68,6 +74,7 @@ import {
   type LeadSectionKey,
 } from './LeadCards';
 import { useUnsavedChangesGuard } from '../../lib/useUnsavedChangesGuard';
+import { useMediaQuery } from '../../lib/useMediaQuery';
 import { tr, intlLocale } from '../../i18n';
 
 /** Old history entries keep their labels (the fields were removed by D-207 and D-209). */
@@ -248,46 +255,62 @@ function StageSelect({ lead }: { lead: Lead }) {
   );
 }
 
-/** Owner and tags ("עוד פרטים"); each change saves at once. */
-function OwnerAndTags({ lead }: { lead: Lead }) {
+/** The owner: a menu for those who assign, plain text for others; saves at once. */
+function OwnerField({ lead }: { lead: Lead }) {
   const business = useCurrentBusiness();
   const canAssign = can(business.role, 'leads.assign');
   const members = useMembers(business.id, canAssign);
   const update = useUpdateLead(business.id);
-  const save = (body: Parameters<typeof update.mutate>[0]['body']) =>
-    update.mutate({ leadId: lead.id, body });
-
   return (
-    <div className="flex flex-col gap-4">
-      {update.isError && <Alert tone="danger">{errorMessage(update.error)}</Alert>}
+    <div className="flex flex-col gap-1.5">
       {canAssign ? (
         <SelectMenu
           id="lead-owner"
           label={tr('אחראי')}
           value={lead.owner?.id ?? ''}
-          onChange={(v) => save({ ownerId: v || null })}
+          onChange={(v) => update.mutate({ leadId: lead.id, body: { ownerId: v || null } })}
           options={[
             { value: '', label: tr('ללא אחראי') },
             ...(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName })),
           ]}
         />
       ) : (
-        <div className="flex flex-col gap-1.5">
+        <>
           <span id="lead-owner-label" className="text-sm font-medium text-ink">
             {tr('אחראי')}
           </span>
           <p id="lead-owner" aria-labelledby="lead-owner-label" className="text-sm text-ink">
             {lead.owner?.name ?? tr('ללא אחראי')}
           </p>
-        </div>
+        </>
       )}
-      <TagEditor tags={lead.tags} onChange={(tags) => save({ tags })} />
-      {update.isPending && (
-        <p role="status" className="text-xs text-ink-muted">
-          {tr('שומר…')}
-        </p>
-      )}
+      <SaveState update={update} />
     </div>
+  );
+}
+
+/** Tags; each change saves at once. */
+function TagsField({ lead }: { lead: Lead }) {
+  const business = useCurrentBusiness();
+  const update = useUpdateLead(business.id);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <TagEditor
+        tags={lead.tags}
+        onChange={(tags) => update.mutate({ leadId: lead.id, body: { tags } })}
+      />
+      <SaveState update={update} />
+    </div>
+  );
+}
+
+function SaveState({ update }: { update: ReturnType<typeof useUpdateLead> }) {
+  if (update.isError) return <Alert tone="danger">{errorMessage(update.error)}</Alert>;
+  if (!update.isPending) return null;
+  return (
+    <p role="status" className="text-xs text-ink-muted">
+      {tr('שומר…')}
+    </p>
   );
 }
 
@@ -463,11 +486,29 @@ export function LeadDetailPage() {
     }
     return <Alert tone="danger">{errorMessage(detail.error)}</Alert>;
   }
-  return <LeadPage lead={detail.data.lead} activities={detail.data.activities} />;
+  return (
+    <LeadPage
+      // Another lead (e.g. a related one) starts fresh: no drafts or open sections carried over.
+      key={detail.data.lead.id}
+      lead={detail.data.lead}
+      activities={detail.data.activities}
+      related={relatedLeadsOf(detail.data)}
+    />
+  );
 }
 
-function LeadPage({ lead, activities }: { lead: Lead; activities: Activity[] }) {
+function LeadPage({
+  lead,
+  activities,
+  related,
+}: {
+  lead: Lead;
+  activities: Activity[];
+  related: RelatedLead[];
+}) {
   const business = useCurrentBusiness();
+  // D-212: two columns from `lg` up; phones and tablets keep D-211's single column.
+  const desktop = useMediaQuery('(min-width: 1024px)');
   const back = businessWebPaths.section(business.id, 'leads');
   const draft = useCustomFieldsDraft(lead);
   const guard = useUnsavedChangesGuard(draft.dirty);
@@ -484,6 +525,8 @@ function LeadPage({ lead, activities }: { lead: Lead; activities: Activity[] }) 
     appointments: asked === 'appointments',
     quotes: asked === 'quotes',
     more: asked === 'more',
+    related: false,
+    history: asked === 'history',
   }));
   const toggle = (key: LeadSectionKey) => (o: boolean) => setOpen((s) => ({ ...s, [key]: o }));
   const [taskFormOpen, setTaskFormOpen] = useState(false);
@@ -528,111 +571,223 @@ function LeadPage({ lead, activities }: { lead: Lead; activities: Activity[] }) 
   const quoteCount = quotes.query.isSuccess ? ` (${quotes.list.length})` : '';
   const apptCount = appts.query.isSuccess ? ` (${appts.ordered.length})` : '';
 
-  return (
-    // Room at the bottom on phones for the quick-actions bar.
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-24 lg:pb-0">
-      <Link
-        to={back}
-        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
-      >
-        <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
-        {tr('כל הלידים')}
-      </Link>
+  const message =
+    // A conversation lead's first message is the start of its conversation.
+    lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null;
 
-      <section className="flex flex-col gap-4 rounded-2xl border border-surface-border bg-surface p-5 shadow-card">
-        <div className="flex items-start gap-3">
-          <span
-            aria-hidden
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-100 text-lg font-semibold text-accent-700"
-          >
-            {lead.contact.name.trim().charAt(0)}
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h1 className="truncate text-2xl font-semibold text-ink" dir="auto">
-              {lead.contact.name}
-            </h1>
-            <p className="flex flex-wrap items-center gap-x-2 text-sm text-ink-muted">
-              <span className="inline-flex items-center gap-1.5">
-                <LeadSourceIcon source={lead.source} className="h-4 w-4" />
-                {tr(leadSourceLabels[lead.source])}
-              </span>
-              <span aria-hidden>·</span>
-              <span>{timeAgo(lead.createdAt)}</span>
-            </p>
-          </div>
+  const backLink = (
+    <Link
+      to={back}
+      className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-700 hover:underline"
+    >
+      <ArrowRight aria-hidden className="h-4 w-4 ltr:rotate-180" />
+      {tr('כל הלידים')}
+    </Link>
+  );
+
+  const header = (
+    <section className="flex flex-col gap-4 rounded-2xl border border-surface-border bg-surface p-5 shadow-card">
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-100 text-lg font-semibold text-accent-700"
+        >
+          {lead.contact.name.trim().charAt(0)}
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <h1 className="truncate text-2xl font-semibold text-ink" dir="auto">
+            {lead.contact.name}
+          </h1>
+          <p className="flex flex-wrap items-center gap-x-2 text-sm text-ink-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <LeadSourceIcon source={lead.source} className="h-4 w-4" />
+              {tr(leadSourceLabels[lead.source])}
+            </span>
+            <span aria-hidden>·</span>
+            <span>{timeAgo(lead.createdAt)}</span>
+          </p>
         </div>
-        <StageSelect lead={lead} />
-        {(phone || lead.contact.email || whatsappInApp) && (
-          <div className="flex flex-wrap gap-2">
-            {phone && (
-              <>
-                <a
-                  href={`tel:${phone}`}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-                >
-                  <Phone aria-hidden className="h-4 w-4" />
-                  <bdi dir="ltr">{formatIsraeliPhone(phone)}</bdi>
-                </a>
-              </>
+      </div>
+      {/* On wide screens the stage lives in the properties panel. */}
+      {!desktop && <StageSelect lead={lead} />}
+      {(phone || lead.contact.email || whatsappInApp) && (
+        <div className="flex flex-wrap gap-2">
+          {phone && (
+            <a
+              href={`tel:${phone}`}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            >
+              <Phone aria-hidden className="h-4 w-4" />
+              <bdi dir="ltr">{formatIsraeliPhone(phone)}</bdi>
+            </a>
+          )}
+          <WhatsAppAction
+            phone={phone}
+            inApp={whatsappInApp}
+            onOpen={openConversation}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-success-50 px-4 py-2 text-sm font-medium text-success-600 ring-1 ring-success-600/30 hover:bg-success-600/10"
+          />
+          {lead.contact.email && (
+            <a
+              href={`mailto:${lead.contact.email}`}
+              className="inline-flex min-w-0 items-center gap-1.5 rounded-xl bg-surface px-4 py-2 text-sm text-ink ring-1 ring-surface-border hover:bg-surface-muted"
+            >
+              <Mail aria-hidden className="h-4 w-4 shrink-0" />
+              <bdi dir="ltr" className="truncate">
+                {lead.contact.email}
+              </bdi>
+            </a>
+          )}
+        </div>
+      )}
+    </section>
+  );
+
+  const nextAction = (
+    <NextAction
+      lead={lead}
+      formOpen={taskFormOpen}
+      onFormOpenChange={setTaskFormOpen}
+      tasksOpen={open.tasks}
+      onTasksOpenChange={toggle('tasks')}
+    />
+  );
+
+  const quotesFold = (
+    <Fold
+      sectionKey="quotes"
+      title={`${tr('הצעות מחיר')}${quoteCount}`}
+      summary={quotesSummary(lead)}
+      open={open.quotes}
+      onOpenChange={toggle('quotes')}
+    >
+      <LeadQuotes lead={lead} quotes={quotes} />
+    </Fold>
+  );
+  const appointmentsFold = (
+    <Fold
+      sectionKey="appointments"
+      title={`${tr('תורים')}${apptCount}`}
+      summary={appts.upcoming > 0 ? tr('{0} קרובים', appts.upcoming) : undefined}
+      open={open.appointments}
+      onOpenChange={toggle('appointments')}
+    >
+      <LeadAppointments lead={lead} appts={appts} />
+    </Fold>
+  );
+  // Nothing when the server sends no related leads (or an older server sends none at all).
+  const relatedFold = related.length > 0 && (
+    <Fold
+      sectionKey="related"
+      title={`${tr('לידים קשורים')} (${related.length})`}
+      open={open.related}
+      onOpenChange={toggle('related')}
+    >
+      <RelatedLeads businessId={business.id} related={related} />
+    </Fold>
+  );
+
+  const unsavedDialog = (
+    <DialogShell
+      open={guard.blocked}
+      onOpenChange={(o) => !o && guard.stay()}
+      title={tr('לצאת בלי לשמור?')}
+    >
+      <p className="text-sm text-ink-muted">
+        {tr('יש בפרטים של הליד שינויים שלא נשמרו. אם יוצאים עכשיו, הם לא יישמרו.')}
+      </p>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="secondary" onClick={guard.stay}>
+          {tr('להישאר בעמוד')}
+        </Button>
+        <Button variant="danger" onClick={guard.proceed}>
+          {tr('לצאת בלי לשמור')}
+        </Button>
+      </div>
+    </DialogShell>
+  );
+  const deleteLead = can(business.role, 'leads.delete') && (
+    <DeleteLead lead={lead} leave={guard.leave} />
+  );
+
+  if (desktop) {
+    // D-212: the story in the main column; properties and the folded sections at the end side.
+    return (
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+        {backLink}
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,340px)] items-start gap-6">
+          <div className="flex min-w-0 flex-col gap-4">
+            {header}
+            {nextAction}
+            {message && (
+              <WhatTheyAsked
+                draft={draft}
+                editing={false}
+                onEditingChange={setEditing}
+                message={message}
+                showFields={false}
+              />
             )}
-            <WhatsAppAction
-              phone={phone}
-              inApp={whatsappInApp}
-              onOpen={openConversation}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-success-50 px-4 py-2 text-sm font-medium text-success-600 ring-1 ring-success-600/30 hover:bg-success-600/10"
-            />
-            {lead.contact.email && (
-              <a
-                href={`mailto:${lead.contact.email}`}
-                className="inline-flex min-w-0 items-center gap-1.5 rounded-xl bg-surface px-4 py-2 text-sm text-ink ring-1 ring-surface-border hover:bg-surface-muted"
-              >
-                <Mail aria-hidden className="h-4 w-4 shrink-0" />
-                <bdi dir="ltr" className="truncate">
-                  {lead.contact.email}
-                </bdi>
-              </a>
-            )}
+            <LeadTabs lead={lead} activities={activities} />
+            {deleteLead}
           </div>
-        )}
-      </section>
+          <aside aria-label={tr('מאפייני הליד')} className="flex min-w-0 flex-col gap-3">
+            <Card className="flex flex-col gap-4">
+              <h2 className="text-base font-semibold text-ink">{tr('מאפיינים')}</h2>
+              <StageSelect lead={lead} />
+              <OwnerField lead={lead} />
+              <Property label={tr('מקור')}>
+                <span className="inline-flex items-center gap-1.5">
+                  <LeadSourceIcon source={lead.source} className="h-4 w-4" />
+                  {tr(leadSourceLabels[lead.source])}
+                </span>
+                <span className="block text-xs text-ink-muted">
+                  {tr('נוצר')} {formatDateTime(lead.createdAt)}
+                </span>
+              </Property>
+              <Property label={tr('ערך לפי הצעות מחיר')}>{quotesSummary(lead)}</Property>
+              <TagsField lead={lead} />
+            </Card>
+            <CustomFieldsPanel draft={draft} />
+            <WhereFrom attribution={lead.attribution} />
+            <div className="flex flex-col gap-2">
+              {quotesFold}
+              {appointmentsFold}
+              {relatedFold}
+              <Fold
+                sectionKey="history"
+                title={tr('היסטוריה')}
+                summary={tr('{0} אירועים', activities.length)}
+                open={open.history}
+                onOpenChange={toggle('history')}
+              >
+                <History activities={activities} />
+              </Fold>
+            </div>
+          </aside>
+        </div>
+        {unsavedDialog}
+      </div>
+    );
+  }
 
-      <NextAction
-        lead={lead}
-        formOpen={taskFormOpen}
-        onFormOpenChange={setTaskFormOpen}
-        tasksOpen={open.tasks}
-        onTasksOpenChange={toggle('tasks')}
-      />
-
+  return (
+    // Room at the bottom for the quick-actions bar.
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-24">
+      {backLink}
+      {header}
+      {nextAction}
       <WhatTheyAsked
         draft={draft}
         editing={editing}
         onEditingChange={setEditing}
-        // A conversation lead's first message is the start of its conversation.
-        message={lead.message && !CONVERSATION_SOURCES.includes(lead.source) ? lead.message : null}
+        message={message}
       />
-
       <LeadTabs lead={lead} activities={activities} />
-
       <div className="flex flex-col gap-2">
-        <Fold
-          sectionKey="quotes"
-          title={`${tr('הצעות מחיר')}${quoteCount}`}
-          summary={quotesSummary(lead)}
-          open={open.quotes}
-          onOpenChange={toggle('quotes')}
-        >
-          <LeadQuotes lead={lead} quotes={quotes} />
-        </Fold>
-        <Fold
-          sectionKey="appointments"
-          title={`${tr('תורים')}${apptCount}`}
-          summary={appts.upcoming > 0 ? tr('{0} קרובים', appts.upcoming) : undefined}
-          open={open.appointments}
-          onOpenChange={toggle('appointments')}
-        >
-          <LeadAppointments lead={lead} appts={appts} />
-        </Fold>
+        {quotesFold}
+        {appointmentsFold}
+        {relatedFold}
         <Fold
           sectionKey="more"
           title={tr('עוד פרטים')}
@@ -643,40 +798,66 @@ function LeadPage({ lead, activities }: { lead: Lead; activities: Activity[] }) 
           <p className="text-sm text-ink-muted">
             {tr('נוצר')} {formatDateTime(lead.createdAt)}
           </p>
-          <OwnerAndTags lead={lead} />
+          <OwnerField lead={lead} />
+          <TagsField lead={lead} />
           <ArchivedFieldValues lead={lead} />
           <WhereFrom attribution={lead.attribution} />
           <History activities={activities} />
         </Fold>
       </div>
-
-      {can(business.role, 'leads.delete') && <DeleteLead lead={lead} leave={guard.leave} />}
-
+      {deleteLead}
       <QuickBar
         phone={phone}
         whatsappInApp={whatsappInApp}
         onOpenConversation={openConversation}
         onAddTask={addTask}
       />
-
-      <DialogShell
-        open={guard.blocked}
-        onOpenChange={(o) => !o && guard.stay()}
-        title={tr('לצאת בלי לשמור?')}
-      >
-        <p className="text-sm text-ink-muted">
-          {tr('יש בפרטים של הליד שינויים שלא נשמרו. אם יוצאים עכשיו, הם לא יישמרו.')}
-        </p>
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="secondary" onClick={guard.stay}>
-            {tr('להישאר בעמוד')}
-          </Button>
-          <Button variant="danger" onClick={guard.proceed}>
-            {tr('לצאת בלי לשמור')}
-          </Button>
-        </div>
-      </DialogShell>
+      {unsavedDialog}
     </div>
+  );
+}
+
+/** A read-only row of the properties panel. */
+function Property({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-sm font-medium text-ink">{label}</span>
+      <div className="text-sm text-ink">{children}</div>
+    </div>
+  );
+}
+
+/** D-212/F35: the contact's other leads; an older server sends none, so nothing shows. */
+function relatedLeadsOf(data: LeadDetailResponse): RelatedLead[] {
+  return data.relatedLeads ?? [];
+}
+
+const relatedDateFmt = new Intl.DateTimeFormat(intlLocale(), { dateStyle: 'medium' });
+
+function RelatedLeads({ businessId, related }: { businessId: string; related: RelatedLead[] }) {
+  const base = businessWebPaths.section(businessId, 'leads');
+  return (
+    <ul aria-label={tr('לידים קשורים')} className="flex flex-col gap-1">
+      {related.map((r) => {
+        const amount = leadValueForStageKind(r.value, r.stage.kind);
+        return (
+          <li key={r.id}>
+            <Link
+              to={`${base}/${r.id}`}
+              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-lg px-2 py-1.5 text-sm hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+            >
+              <span className="font-medium text-brand-700">
+                {tr('ליד מ־{0}', relatedDateFmt.format(new Date(r.createdAt)))}
+              </span>
+              <span className="text-xs text-ink-muted">
+                {tr(r.stage.name)}
+                {amount > 0 && ` · ${shekel.format(amount)}`}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

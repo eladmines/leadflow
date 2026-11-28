@@ -2,7 +2,7 @@ import { can, type Task } from '@simplecatch/shared';
 import { CheckCheck, ListTodo } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Button, Card, EmptyState, Spinner } from '../../components/ui';
+import { Alert, Button, Card, EmptyState, SelectMenu, Spinner } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { errorMessage } from '../auth/serverErrors';
 import { useCurrentBusiness } from '../shell/CurrentBusiness';
@@ -19,16 +19,43 @@ const sections: { key: keyof ReturnType<typeof groupTasks>; title: string; dot: 
   { key: 'upcoming', title: tr('בהמשך'), dot: 'bg-sky-500' },
 ];
 
+/** F35: the Tasks page's filter by type (client-side, by `autoKind`). */
+const TYPES = ['all', 'quote_followup', 'appointment_confirm', 'manual'] as const;
+type TypeFilter = (typeof TYPES)[number];
+const typeLabels: Record<TypeFilter, string> = {
+  all: tr('כל הסוגים'),
+  quote_followup: tr('מעקב אחרי הצעות'),
+  appointment_confirm: tr('אישור תורים'),
+  manual: tr('ידניות'),
+};
+const ofType = (t: Task, type: TypeFilter) =>
+  type === 'all' || (type === 'manual' ? !t.autoKind : t.autoKind === type);
+
 /** F10: follow-up tasks grouped by urgency. Managers can switch between "mine" and "everyone". */
 export function TasksPage() {
   const business = useCurrentBusiness();
   const seesAll = can(business.role, 'tasks.view.all');
   const [params, setParams] = useSearchParams();
   const scope = seesAll && params.get('scope') === 'all' ? 'all' : 'mine';
+  const asked = params.get('type') ?? 'all';
+  const type: TypeFilter = (TYPES as readonly string[]).includes(asked)
+    ? (asked as TypeFilter)
+    : 'all';
+  const setParam = (key: string, value: string | null) =>
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        return next;
+      },
+      { replace: true },
+    );
   const tasks = useTasks(business.id, scope === 'mine' ? { assigneeId: 'me' } : {});
   const complete = useCompleteTasks(business.id);
   const [showDone, setShowDone] = useState(false);
-  const groups = groupTasks(tasks.data ?? []);
+  const all = tasks.data ?? [];
+  const groups = groupTasks(all.filter((t) => ofType(t, type)));
   const openCount = groups.overdue.length + groups.today.length + groups.upcoming.length;
 
   return (
@@ -49,7 +76,7 @@ export function TasksPage() {
                   key={s}
                   type="button"
                   aria-pressed={scope === s}
-                  onClick={() => setParams(s === 'all' ? { scope: 'all' } : {}, { replace: true })}
+                  onClick={() => setParam('scope', s === 'all' ? 'all' : null)}
                   className={cn(
                     'rounded-lg px-3 py-1.5 text-sm',
                     scope === s ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
@@ -65,6 +92,15 @@ export function TasksPage() {
       <Card>
         <NewTaskForm />
       </Card>
+      <SelectMenu
+        id="task-type"
+        compact
+        label={tr('סוג משימה')}
+        className="self-start"
+        value={type}
+        onChange={(v) => setParam('type', v === 'all' ? null : v)}
+        options={TYPES.map((t) => ({ value: t, label: typeLabels[t] }))}
+      />
 
       {tasks.isPending ? (
         <Spinner label={tr('טוענים משימות…')} />
@@ -73,17 +109,26 @@ export function TasksPage() {
       ) : (
         <>
           {complete.isError && <Alert tone="danger">{errorMessage(complete.error)}</Alert>}
-          {openCount === 0 && (
+          {openCount === 0 && type !== 'all' && all.some((t) => t.status === 'OPEN') ? (
             <EmptyState
               icon={ListTodo}
               tone="bg-amber-500"
-              title={tr('אין משימות פתוחות')}
-              description={
-                groups.done.length > 0
-                  ? tr('כל המשימות בוצעו. כל הכבוד!')
-                  : tr('הוסיפו משימה למעלה, או מתוך כרטיס של ליד — למשל "להתקשר מחר בבוקר".')
-              }
+              title={tr('אין משימות פתוחות מהסוג הזה')}
+              description={tr('אפשר לבחור סוג אחר, או "כל הסוגים".')}
             />
+          ) : (
+            openCount === 0 && (
+              <EmptyState
+                icon={ListTodo}
+                tone="bg-amber-500"
+                title={tr('אין משימות פתוחות')}
+                description={
+                  groups.done.length > 0
+                    ? tr('כל המשימות בוצעו. כל הכבוד!')
+                    : tr('הוסיפו משימה למעלה, או מתוך כרטיס של ליד — למשל "להתקשר מחר בבוקר".')
+                }
+              />
+            )
           )}
           {sections.map(({ key, title, dot }) =>
             groups[key].length > 0 ? (

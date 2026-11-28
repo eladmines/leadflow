@@ -337,7 +337,7 @@ async def test_an_appointment_request_becomes_a_pending_appointment_in_the_busin
     assert (await db.execute(select(func.count()).select_from(models.Appointment))).scalar_one() == 1
     task = (await db.execute(select(models.Task))).scalar_one()  # so the request is noticed (D-152)
     assert (
-        task.title.startswith("בקשה חדשה לתור: דנה כהן · ") and task.notes == "מחכה לאישור שלכם בעמוד התורים."
+        task.title.startswith("לאשר את התור: דנה כהן · ") and task.notes == "מחכה לאישור שלכם בעמוד התורים."
     )
 
 

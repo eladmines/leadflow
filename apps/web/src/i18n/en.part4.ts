@@ -203,4 +203,60 @@ export const enPart4: Record<string, string> = {
   'שיחה והערות': 'Conversation and notes',
   'WhatsApp: מעבר לשיחה בעמוד': 'WhatsApp: go to the conversation on this page',
   'WhatsApp: פתיחה בחלון חדש': 'WhatsApp: opens in a new window',
+  // D-212: two-column lead page on wide screens.
+  'אין שדות נוספים.': 'No extra fields.',
+  'ביטול שינויים': 'Discard changes',
+  '{0} אירועים': '{0} events',
+  'ליד מ־{0}': 'Lead from {0}',
+  'לידים קשורים': 'Related leads',
+  'מאפייני הליד': 'Lead properties',
+  מאפיינים: 'Properties',
+  'ערך לפי הצעות מחיר': 'Value from quotes',
+  // F35: linked tasks and automatic follow-ups.
+  'אין לך הרשאה לראות את המשימות האלה.': "You don't have permission to see these tasks.",
+  'אין משימות על ההצעה הזו.': 'No tasks on this quote.',
+  'אין משימות על התור הזה.': 'No tasks on this appointment.',
+  'משימות על ההצעה': 'Tasks on the quote',
+  'משימות על התור': 'Tasks on the appointment',
+  'טוענים את ההגדרות…': 'Loading the settings…',
+  'כשנקבע תור נוצרת משימה "לאשר את התור", יום לפני התור ב־09:00 (שישי ושבת עוברים ליום ראשון, או ליום חמישי אם התור לפני כן). נסגרת מעצמה כשהתור מבוטל, מתקיים או מסומן שלא הגיעו.':
+    'When an appointment is booked, a task "Confirm the appointment" is created for the day before at 09:00 (Friday and Saturday move to Sunday, or to Thursday if the appointment comes first). It closes by itself when the appointment is cancelled, takes place or is marked as a no-show.',
+  'כשנשלחת הצעה נוצרת משימה "לחזור לגבי הצעה", יומיים אחרי השליחה ב־09:00 (שישי ושבת עוברים ליום ראשון). נסגרת מעצמה כשההצעה מאושרת או נדחית.':
+    'When a quote is sent, a task "Follow up on quote" is created two days later at 09:00 (Friday and Saturday move to Sunday). It closes by itself when the quote is accepted or rejected.',
+  'משימת מעקב אחרי הצעה': 'Quote follow-up task',
+  'משימת אישור תור': 'Appointment confirmation task',
+  'משימות אוטומטיות': 'Automatic tasks',
+  'משימות מעקב שהמערכת כותבת וסוגרת בשבילך. משימות שהוספתם בעצמכם לא נסגרות מעצמן.':
+    'Follow-up tasks the system writes and closes for you. Tasks you add yourselves never close by themselves.',
+  'רק בעלי העסק ומנהלים יכולים לשנות את ההגדרות האלה.':
+    'Only owners and managers can change these settings.',
+  'אין משימות פתוחות מהסוג הזה': 'No open tasks of this type',
+  'אישור תורים': 'Appointment confirmations',
+  'אפשר לבחור סוג אחר, או "כל הסוגים".': 'Choose another type, or "All types".',
+  ידניות: 'Manual',
+  'כל הסוגים': 'All types',
+  'מעקב אחרי הצעות': 'Quote follow-ups',
+  'סוג משימה': 'Task type',
+  אוטומטית: 'Automatic',
+  'הצעה #{0}': 'Quote #{0}',
+  'הצעה מקושרת': 'Linked quote',
+  'הצעת מחיר או תור של הליד (לא חובה)': "One of the lead's quotes or appointments (optional)",
+  ללא: 'None',
+  'נוצרה אוטומטית, ותיסגר מעצמה כשההצעה תאושר או תידחה.':
+    'Created automatically; it closes by itself when the quote is accepted or rejected.',
+  'נוצרה אוטומטית, ותיסגר מעצמה כשהתור יבוטל, יתקיים או יסומן שלא הגיעו.':
+    'Created automatically; it closes by itself when the appointment is cancelled, takes place or is marked as a no-show.',
+  'על הצעה #{0}': 'About quote #{0}',
+  'על התור ב־{0}': 'About the appointment on {0}',
+  'קשור ל…': 'About…',
+  'תור {0}': 'Appointment {0}',
+  'תור מקושר': 'Linked appointment',
+  'אוטומציות של וואטסאפ': 'WhatsApp automations',
+  // F35 server messages (shared taskMessages).
+  'ההצעה שנבחרה אינה קיימת': "The selected quote doesn't exist",
+  'התור שנבחר אינו קיים': "The selected appointment doesn't exist",
+  'אפשר לקשר משימה להצעה או לתור, לא לשניהם':
+    'A task can be about a quote or an appointment, not both',
+  'ההצעה או התור שייכים לליד אחר. בטלו את הקישור או בחרו את הליד שלהם.':
+    'The quote or appointment belongs to another lead. Remove the link or choose their lead.',
 };

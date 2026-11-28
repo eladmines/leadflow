@@ -40,6 +40,7 @@ from app.modules.leads.schemas import QUOTE_SENT_STAGE
 from app.modules.notifications.service import MANAGERS, notify_safe
 from app.modules.quotes import schemas as s
 from app.modules.quotes.value import quote_expired
+from app.modules.tasks import auto as task_auto
 
 log = logging.getLogger("simplecatch")
 
@@ -313,6 +314,8 @@ class QuoteService:
         q.updated_at = now_ms()
         self._activity(ctx.business_id, q.lead_id, ctx.user_id, "quote.sent", q.number, total)
         await self._advance_lead(ctx, q.lead_id)
+        # F35: the lead's follow-up task (created, moved or re-pointed), same transaction.
+        await task_auto.on_quote_sent(self.db, q, ctx.user_id)
         await self.db.commit()
         row = await self._load(q.id)
         if email and row.lead.contact.email:
@@ -347,6 +350,8 @@ class QuoteService:
             q.number,
             total,
         )
+        # F35: the customer answered, so its open follow-up closes.
+        await task_auto.on_quote_decided(self.db, ctx.business_id, q.id)
         await self.db.commit()
         return self._dto(await self._load(q.id))
 
@@ -416,6 +421,7 @@ class QuoteService:
             q.number,
             total,
         )
+        await task_auto.on_quote_decided(self.db, q.business_id, q.id)
         await self.db.commit()
         row = await self._load(q.id)
         accepted = status == QuoteStatus.ACCEPTED

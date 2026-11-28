@@ -41,6 +41,7 @@ import {
   useSaveQuote,
   useSendQuote,
 } from './api';
+import { LinkedTasks } from '../tasks/LinkedTasks';
 import { tr, intlLocale } from '../../i18n';
 
 interface Line {
@@ -488,6 +489,13 @@ export function QuoteEditorPage() {
           </dl>
         </div>
       </Card>
+
+      {/* F35: the tasks about this quote (its automatic follow-up too), with a linked quick add. */}
+      {q && (
+        <Card>
+          <LinkedTasks subject={{ kind: 'quote', id: q.id }} leadId={q.lead.id} />
+        </Card>
+      )}
 
       {q && <SendDialog quote={q} open={sendOpen} onOpenChange={setSendOpen} />}
     </>

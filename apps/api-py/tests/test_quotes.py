@@ -160,7 +160,10 @@ async def test_send_page_accept_updates_status_history_and_team_email_drafts_sta
         await pub(client, "POST", f"/api/v1/public/quotes/{token}/decision", {"decision": "reject"})
     ).status_code == 409
     detail = (await req(client, "GET", business_url(bid, f"/leads/{lead['id']}"), o["token"])).json()
-    assert detail["activities"][0]["type"] == "quote.accepted" and detail["activities"][0]["actor"] is None
+    # F35: the follow-up closed itself right after the customer's answer.
+    by_type = {x["type"]: x for x in detail["activities"][:2]}
+    assert set(by_type) == {"task.completed", "quote.accepted"}
+    assert by_type["quote.accepted"]["actor"] is None and by_type["task.completed"]["data"]["auto"] is True
 
 
 async def test_expired_quotes_show_as_expired_and_cannot_be_accepted(client, db):

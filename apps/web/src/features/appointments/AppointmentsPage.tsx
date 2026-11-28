@@ -5,7 +5,7 @@ import {
   type AppointmentStatus,
 } from '@simplecatch/shared';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Alert,
@@ -143,6 +143,22 @@ export function AppointmentsPage() {
   const members = useMembers(business.id, manager);
   const [open, setOpen] = useState<Appointment | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  // F35: a task's link opens its appointment here (`?appointment=<id>`, on its day).
+  const wanted = params.get('appointment');
+  useEffect(() => {
+    if (!wanted) return;
+    const found = list.data?.find((x) => x.id === wanted);
+    if (!found) return;
+    setOpen(found);
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        next.delete('appointment');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [wanted, list.data, setParams]);
   const [servicesOpen, setServicesOpen] = useState(false);
   // Folded by default: the list can be long and the calendar is the page.
   const [requestsOpen, setRequestsOpen] = useState(false);

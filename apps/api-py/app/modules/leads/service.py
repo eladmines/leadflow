@@ -46,6 +46,7 @@ from app.modules.lead_fields.service import filter_conditions, has_filter_params
 from app.modules.leads import schemas as s
 from app.modules.quotes.value import ZERO as ZERO_VALUE
 from app.modules.quotes.value import LeadValue, lead_values
+from app.modules.tasks import auto as task_auto
 from app.shared.attribution import parse_attribution
 from app.shared.lead_fields import (
     apply_custom_fields_patch,
@@ -356,7 +357,41 @@ class LeadService:
             for r in rows
             if r.type in s.ACTIVITY_TYPES
         ]
-        return s.LeadDetailResponse(lead=(await self._dtos(ctx, [lead]))[0], activities=activities)
+        return s.LeadDetailResponse(
+            lead=(await self._dtos(ctx, [lead]))[0],
+            activities=activities,
+            relatedLeads=await self._related(ctx, lead),
+        )
+
+    async def _related(self, ctx: TenantContext, lead: Lead) -> list[s.RelatedLead]:
+        """D-212/D-215: the contact's other leads this member may see, newest first, at most
+        `MAX_RELATED_LEADS`, with their value from quotes (one query for the batch)."""
+        rows = (
+            (
+                await self.db.execute(
+                    select(Lead)
+                    .options(joinedload(Lead.stage))
+                    .where(*self._visible(ctx), Lead.contact_id == lead.contact_id, Lead.id != lead.id)
+                    .order_by(Lead.created_at.desc(), Lead.id.desc())
+                    .limit(s.MAX_RELATED_LEADS)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        values = await lead_values(self.db, ctx.business_id, [r.id for r in rows])
+        out = []
+        for r in rows:
+            v = values.get(r.id, ZERO_VALUE)
+            out.append(
+                s.RelatedLead(
+                    id=str(r.id),
+                    stage=s.StageOut(id=str(r.stage.id), name=r.stage.name, kind=r.stage.kind.value),
+                    createdAt=iso(r.created_at),
+                    value=s.LeadValue(won=v.won, open=v.open),
+                )
+            )
+        return out
 
     # -- checks ----------------------------------------------------------------
 
@@ -708,6 +743,8 @@ class LeadService:
                 )
             )
         if owner_changed:
+            # F35 (D-216 (3)): the open automatic quote follow-up follows the new owner.
+            await task_auto.on_lead_owner_changed(self.db, ctx.business_id, lead.id, lead.owner_id)
             add_audit(
                 self.db,
                 "lead.assigned",
@@ -749,6 +786,8 @@ class LeadService:
         behind."""
         lead = await self.find_visible(ctx, lead_id)
         contact_id, phone, lid = lead.contact_id, lead.contact.phone, lead.id
+        # F35: automatic tasks mean nothing without the lead's quotes/appointments; they go first.
+        await task_auto.delete_for_lead(self.db, ctx.business_id, lid)
         # Core deletes: the database's foreign keys cascade or unlink the dependents.
         await self.db.execute(delete(Lead).where(Lead.id == lid))
         remaining = (

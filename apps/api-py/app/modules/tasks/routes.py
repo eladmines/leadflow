@@ -1,4 +1,4 @@
-"""Follow-up tasks (F10), inside the tenant scope."""
+"""Follow-up tasks (F10) and their automatic follow-ups (F35), inside the tenant scope."""
 
 from typing import Annotated
 
@@ -31,3 +31,19 @@ async def update_task(task_id: str, body: s.UpdateTaskRequest, ctx: Tenant, db: 
 async def delete_task(task_id: str, ctx: Tenant, db: Db):
     await TaskService(db).remove(ctx, task_id)
     return Response(status_code=204)
+
+
+# F35 (D-213, D-214): the automatic follow-up switches. Everyone reads them; owners and managers
+# change them.
+@tenant.get("/automations/tasks", response_model=s.TaskAutomationsResponse, dependencies=VIEW)
+async def get_task_automations(ctx: Tenant, db: Db):
+    return {"settings": await TaskService(db).get_automations(ctx)}
+
+
+@tenant.put(
+    "/automations/tasks",
+    response_model=s.TaskAutomationsResponse,
+    dependencies=[require_permission("automations.manage")],
+)
+async def put_task_automations(body: s.TaskAutomations, ctx: Tenant, db: Db):
+    return {"settings": await TaskService(db).set_automations(ctx, body)}

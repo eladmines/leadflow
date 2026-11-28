@@ -1,5 +1,6 @@
 """Leads CRM (F08), tags, deletion and CSV export, ported from apps/api/src/modules/leads/*.test.ts."""
 
+import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
@@ -467,3 +468,66 @@ async def test_only_the_owner_can_export(client, db):
         assert (
             await req(client, "GET", leads_url(o["business"]["id"], "/export.csv"), token)
         ).status_code == 403
+
+
+# --------------------------------------------------------------------------- related leads (F35, D-212, D-215)
+
+
+async def test_related_leads_are_the_contacts_other_visible_leads_newest_first_capped(client, db):
+    from sqlalchemy import update as sa_update
+
+    from app.db import models as m
+    from tests.conftest import make_quote
+
+    t = await _team(client, db)
+    bid, tok = t["id"], t["owner"]["token"]
+    phone = "052-4445566"
+    first = (await create(client, bid, tok, {"name": "מיכל", "phone": phone})).json()["lead"]
+    others = []
+    for i in range(11):
+        body = {"name": "מיכל", "phone": phone}
+        if i == 0:
+            body["ownerId"] = t["employee"]["user_id"]
+        others.append((await create(client, bid, tok, body)).json()["lead"])
+    assert {o["contact"]["id"] for o in others} == {first["contact"]["id"]}
+    # Distinct, known creation times: lead k is k minutes after the first.
+    base = datetime(2030, 1, 1, tzinfo=UTC)
+    for k, lead in enumerate([first, *others]):
+        await db.execute(
+            sa_update(m.Lead)
+            .where(m.Lead.id == uuid.UUID(lead["id"]))
+            .values(created_at=base + timedelta(minutes=k))
+        )
+    await db.commit()
+    await make_quote(db, bid, others[-1]["id"], "SENT", 120000)
+    # Another contact's lead and another business's lead never show.
+    await create(client, bid, tok, {"name": "אחר", "phone": "052-9999999"})
+    stranger = await owner_with_business(client, "stranger")
+    await create(client, stranger["business"]["id"], stranger["token"], {"name": "מיכל", "phone": phone})
+
+    detail = (await req(client, "GET", leads_url(bid, f"/{first['id']}"), tok)).json()
+    related = detail["relatedLeads"]
+    assert len(related) == 10
+    assert [r["id"] for r in related] == [o["id"] for o in reversed(others)][:10]
+    assert first["id"] not in {r["id"] for r in related}
+    assert related[0]["value"] == {"won": 0, "open": 1200} and related[1]["value"] == {"won": 0, "open": 0}
+    assert set(related[0]["stage"]) == {"id", "name", "kind"} and related[0]["createdAt"].endswith("Z")
+
+    # The employee sees only leads assigned to them.
+    mine = others[0]
+    emp = (await req(client, "GET", leads_url(bid, f"/{mine['id']}"), t["employee"]["token"])).json()
+    assert emp["relatedLeads"] == []
+    await req(
+        client, "PATCH", leads_url(bid, f"/{others[1]['id']}"), tok, {"ownerId": t["employee"]["user_id"]}
+    )
+    emp = (await req(client, "GET", leads_url(bid, f"/{mine['id']}"), t["employee"]["token"])).json()
+    assert [r["id"] for r in emp["relatedLeads"]] == [others[1]["id"]]
+
+
+async def test_a_lead_without_other_leads_has_an_empty_related_list(client, db):
+    t = await _team(client, db)
+    lead = (
+        await create(client, t["id"], t["owner"]["token"], {"name": "יחיד", "phone": "052-1010101"})
+    ).json()["lead"]
+    detail = (await req(client, "GET", leads_url(t["id"], f"/{lead['id']}"), t["owner"]["token"])).json()
+    assert detail["relatedLeads"] == []

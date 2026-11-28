@@ -1,6 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
 import { choose } from './choose';
 
+/**
+ * The lead's full history (and, on phones, owner and tags): under "עוד פרטים" on phones (D-211),
+ * the "היסטוריה" fold of the side panel on wide screens (D-212). Opens it if closed.
+ */
+async function openLeadHistory(page: Page) {
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const fold = page.getByRole('button', { name: /^(עוד פרטים|היסטוריה)/ }).first();
+  if ((await fold.getAttribute('aria-expanded')) !== 'true') await fold.click();
+}
+
 /** F08: manual lead → board (drag or stage menu) → lead page (stage, note, history) → search. */
 const PASSWORD = 'Sup3r-secret-pass!';
 const API_HEADERS = { 'X-Requested-With': 'SimpleCatch', Origin: 'http://localhost:5173' };
@@ -44,7 +54,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await dialog.getByRole('button', { name: 'יצירת ליד' }).click();
   await expect(page.getByRole('heading', { name: 'אבי כהן', level: 1 })).toBeVisible();
   // The full history is under "עוד פרטים" (D-211).
-  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
+  await openLeadHistory(page);
   await expect(page.getByText('הליד נוצר ידנית')).toBeVisible();
 
   // Board: move to "נוצר קשר" — drag on desktop, stage menu on mobile.
@@ -64,7 +74,7 @@ test('owner works a lead through the pipeline', async ({ page, isMobile }) => {
   await target.getByRole('link', { name: 'אבי כהן' }).click();
   await expect(page.getByLabel('שלב', { exact: true })).toContainText(/.+/);
   await choose(page, page.getByLabel('שלב', { exact: true }), 'ממתין');
-  await page.getByRole('button', { name: /^עוד פרטים/ }).click();
+  await openLeadHistory(page);
   await expect(page.getByText('השלב שונה מ"נוצר קשר" ל"ממתין"')).toBeVisible();
   await page.getByLabel('הוספת הערה').fill('נשלחה הצעה של ₪650, מחכה לאישור');
   await page.getByRole('button', { name: 'שמירת הערה' }).click();

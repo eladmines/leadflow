@@ -32,6 +32,8 @@ from app.db.models import (
 from app.deps import TenantContext
 from app.errors import AppError
 from app.modules.appointments import schemas as s
+from app.modules.tasks import auto as task_auto
+from app.shared.tasks import APPOINTMENT_CONFIRM, appointment_confirm_due_at, titles_for
 
 DEFAULT_DURATION = 30
 CALL_BACK_MINUTES = 15  # how long a WhatsApp call-back holds in the calendar (D-171)
@@ -344,6 +346,8 @@ class AppointmentService:
                     created_at=now,
                 )
             )
+        # F35: the team's booking gets its confirm task (same transaction).
+        await task_auto.on_appointment_booked(self.db, created, ctx.user_id)
         await self.db.commit()
         return to_dto(created)
 
@@ -368,6 +372,7 @@ class AppointmentService:
                 await self._require_service(ctx, data.serviceId)
             appt.service_id = data.serviceId
         previous_status = appt.status
+        previous_start = appt.starts_at
         starts_at = data.startsAt or appt.starts_at
         minutes = data.durationMin or (appt.ends_at - appt.starts_at).total_seconds() / 60
         ends_at = starts_at + timedelta(minutes=minutes)
@@ -415,6 +420,14 @@ class AppointmentService:
                     created_at=now_ms(),
                 )
             )
+        # F35: move, hand over or close the open confirm task.
+        await task_auto.on_appointment_changed(
+            self.db,
+            appt,
+            time_changed=bool(data.startsAt) and starts_at != previous_start,
+            staff_changed=staff_changed,
+            status_changed=status_changed,
+        )
         await self.db.commit()
         return to_dto(await self._load(appt.id))
 
@@ -441,24 +454,31 @@ class AppointmentService:
             ).scalar_one_or_none()
         now = now_ms()
         ends_at = starts_at + timedelta(minutes=service.duration_min if service else DEFAULT_DURATION)
-        self.db.add(
-            Appointment(
-                id=uuid.uuid4(),
-                business_id=business_id,
-                contact_id=contact_id,
-                lead_id=lead_id,
-                service_id=service.id if service else None,
-                staff_id=None,
-                starts_at=starts_at,
-                ends_at=ends_at,
-                status=AppointmentStatus.REQUESTED,
-                source="website",
-                created_at=now,
-                updated_at=now,
-            )
+        appt = Appointment(
+            id=uuid.uuid4(),
+            business_id=business_id,
+            contact_id=contact_id,
+            lead_id=lead_id,
+            service_id=service.id if service else None,
+            staff_id=None,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            status=AppointmentStatus.REQUESTED,
+            source="website",
+            created_at=now,
+            updated_at=now,
         )
+        self.db.add(appt)
+        await self.db.flush()
         await self._awareness_task(
-            business_id, contact_id, lead_id, None, service.name if service else None, starts_at, "request"
+            business_id,
+            contact_id,
+            lead_id,
+            None,
+            service.name if service else None,
+            starts_at,
+            "request",
+            appt,
         )
         self.db.add(
             Activity(
@@ -526,6 +546,7 @@ class AppointmentService:
                 created_at=now,
             )
         )
+        await self.db.flush()
         await self._awareness_task(
             business_id,
             contact_id,
@@ -534,6 +555,7 @@ class AppointmentService:
             service_name,
             starts_at,
             "booked" if confirmed else "request",
+            appt,
         )
         await self.db.commit()
         return appt.id
@@ -626,7 +648,10 @@ class AppointmentService:
                 created_at=now,
             )
         )
-        await self._awareness_task(business_id, contact_id, lead_id, None, event_type, starts_at, "event")
+        await self.db.flush()
+        await self._awareness_task(
+            business_id, contact_id, lead_id, None, event_type, starts_at, "event", appt
+        )
         await self.db.commit()
         return appt.id
 
@@ -675,7 +700,10 @@ class AppointmentService:
                 appt.service.name if appt.service else None,
                 appt.starts_at,
                 "cancelled",
+                appt,
             )
+        # F35: the customer cancelled, so the open confirm task closes (same transaction).
+        await task_auto.close_open(self.db, business_id, appointment_id=appt.id)
         await self.db.commit()
         return {"leadId": appt.lead_id, "staffId": appt.staff_id}
 
@@ -688,13 +716,22 @@ class AppointmentService:
         what: str | None,
         starts_at: datetime,
         kind: str,
+        appt: Appointment,
     ) -> None:
         """D-152: a customer's own booking (WhatsApp or the website) also becomes a task due now, so
         the team notices it: who, what and when, linked to the lead. It goes to the staff member
-        who has it, or else the owner; no reminder email (the booking already notifies the team)."""
+        who has it, or else the owner; no reminder email (the booking already notifies the team).
+
+        F35 (D-216 (2)): the notice is always linked to its appointment. With the business's
+        appointment-confirm switch on, a booking's notice **is** the confirm task (no second task):
+        `auto_kind = appointment_confirm`, the confirm title with the same details, due now while
+        REQUESTED, and by the confirm rule (with a reminder) when CONFIRMED and not same-day. The
+        cancellation notice stays a plain notice."""
         business = (
             await self.db.execute(
-                select(Business.language, Business.timezone).where(Business.id == business_id)
+                select(Business.language, Business.timezone, Business.task_auto_appointment_confirm).where(
+                    Business.id == business_id
+                )
             )
         ).one()
         contact_name = (
@@ -732,16 +769,27 @@ class AppointmentService:
                 else "מחכה לאישור שלכם בעמוד התורים."
             )
         now = now_ms()
+        full_title = f"{label}: {title}"
+        due_at, remind, auto_kind = now, False, None
+        if kind != "cancelled" and business.task_auto_appointment_confirm:
+            auto_kind = APPOINTMENT_CONFIRM
+            full_title = titles_for(business.language)[APPOINTMENT_CONFIRM](title)
+            if appt.status == AppointmentStatus.CONFIRMED:
+                confirm_due = appointment_confirm_due_at(starts_at, now, business.timezone)
+                if confirm_due is not None:
+                    due_at, remind = confirm_due, True
         self.db.add(
             Task(
                 id=uuid.uuid4(),
                 business_id=business_id,
-                title=f"{label}: {title}"[:200],
+                title=full_title[:200],
                 notes=notes,
-                due_at=now,
+                due_at=due_at,
                 assignee_id=assignee,
                 lead_id=lead_id,
-                remind=False,
+                appointment_id=appt.id,
+                auto_kind=auto_kind,
+                remind=remind,
                 created_at=now,
                 updated_at=now,
             )

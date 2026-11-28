@@ -29,7 +29,14 @@ import { shekel } from './api';
  * The lead page's folded parts (D-211). Old `?tab=tasks|appointments|quotes` links open the
  * matching one and focus its button.
  */
-export const LEAD_SECTIONS = ['tasks', 'appointments', 'quotes', 'more'] as const;
+export const LEAD_SECTIONS = [
+  'tasks',
+  'appointments',
+  'quotes',
+  'more',
+  'related',
+  'history',
+] as const;
 export type LeadSectionKey = (typeof LEAD_SECTIONS)[number];
 export const leadSectionId = (key: LeadSectionKey) => `lead-section-${key}`;
 /** The disclosure button of a section (what an old link focuses). */

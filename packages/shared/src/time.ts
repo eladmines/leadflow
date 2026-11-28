@@ -45,7 +45,17 @@ export function dateInZone(instant: Date, timeZone: string): string {
 
 /** The calendar day after a `YYYY-MM-DD`. */
 export function nextDate(date: string): string {
+  return addDays(date, 1);
+}
+
+/** Day of the week of a `YYYY-MM-DD` calendar date: 0 = Sunday … 5 = Friday, 6 = Saturday. */
+export function weekdayOf(date: string): number {
+  return new Date(`${date}T12:00:00Z`).getUTCDay();
+}
+
+/** A `YYYY-MM-DD` moved by `days` calendar days (negative = earlier). */
+export function addDays(date: string, days: number): string {
   const d = new Date(`${date}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }

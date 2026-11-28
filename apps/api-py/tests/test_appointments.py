@@ -192,8 +192,11 @@ async def test_books_from_a_lead_and_records_it_in_the_lead_history(client, db):
     a = res.json()["appointment"]
     assert a["lead"] == {"id": lead["id"]} and a["customer"]["name"] == "רון"
     detail = (await req(client, "GET", business_url(t["id"], f"/leads/{lead['id']}"), tok)).json()
-    assert detail["activities"][0]["type"] == "appointment.created"
-    assert detail["activities"][0]["data"]["service"] == "תספורת"
+    # F35: the booking's confirm task lands in the history right after it.
+    by_type = {x["type"]: x for x in detail["activities"][:2]}
+    assert set(by_type) == {"task.created", "appointment.created"}
+    assert by_type["task.created"]["data"]["auto"] == "appointment_confirm"
+    assert by_type["appointment.created"]["data"]["service"] == "תספורת"
     by_lead = (await req(client, "GET", f"{appts(t['id'])}{list_qs(f'&leadId={lead["id"]}')}", tok)).json()
     assert len(by_lead["appointments"]) == 1
     assert (await book(client, t["id"], tok, {"startsAt": at(9)})).status_code == 400  # no customer
@@ -336,8 +339,10 @@ async def test_a_website_request_is_held_without_staff_and_makes_a_task_for_the_
     assert reqs[0]["endsAt"] == at(9, 45)
     task = (await db.execute(select(models.Task))).scalar_one()
     assert str(task.assignee_id) == t["owner"]["user_id"] and task.remind is False
-    assert task.title.startswith("בקשה חדשה לתור: רון · תספורת · ")
+    # D-216 (2): the notice is the appointment's confirm task (REQUESTED: due now, no reminder).
+    assert task.title.startswith("לאשר את התור: רון · תספורת · ")
     assert task.notes == "מחכה לאישור שלכם בעמוד התורים."
+    assert task.auto_kind == "appointment_confirm" and task.appointment_id is not None
     detail = (
         await req(client, "GET", business_url(t["id"], f"/leads/{lead['id']}"), t["owner"]["token"])
     ).json()
