@@ -286,7 +286,8 @@ describe('lead page', () => {
     });
     const { user } = renderApp(`${leadsPath}/${lead().id}`);
     expect(await screen.findByRole('heading', { name: 'דנה כהן', level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /052-7654321/ })).toHaveAttribute(
+    // D-217: on phones the call is in the bottom bar.
+    expect(screen.getByRole('link', { name: 'התקשרות' })).toHaveAttribute(
       'href',
       'tel:+972527654321',
     );

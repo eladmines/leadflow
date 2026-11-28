@@ -259,4 +259,10 @@ export const enPart4: Record<string, string> = {
     'A task can be about a quote or an appointment, not both',
   'ההצעה או התור שייכים לליד אחר. בטלו את הקישור או בחרו את הליד שלהם.':
     'The quote or appointment belongs to another lead. Remove the link or choose their lead.',
+  // D-217: lead page header.
+  'באחריות {0}': 'Owned by {0}',
+  'הגיע מ־{0}': 'Came from {0}',
+  'העתקת {0}': 'Copy {0}',
+  'התקשרות ל־{0}': 'Call {0}',
+  'מייל ל־{0}': 'Email {0}',
 };

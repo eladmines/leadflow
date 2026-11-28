@@ -48,6 +48,8 @@ interface SelectMenuProps {
   className?: string;
   /** Classes for the label (a smaller one in a side menu, for example). */
   labelClassName?: string;
+  /** Replaces the button's own look (e.g. a coloured badge); focus and layout classes stay. */
+  buttonClassName?: string;
 }
 
 /**
@@ -73,6 +75,7 @@ export function SelectMenu({
   labelHidden,
   className,
   labelClassName,
+  buttonClassName,
 }: SelectMenuProps) {
   const autoId = useId();
   const buttonId = id ?? autoId;
@@ -374,7 +377,7 @@ export function SelectMenu({
           onClick={() => (open ? setOpen(false) : openList())}
           onKeyDown={onKeyDown}
           className={cn(
-            compact ? compactClasses(!!error) : inputClasses(!!error),
+            buttonClassName ?? (compact ? compactClasses(!!error) : inputClasses(!!error)),
             'flex min-w-0 cursor-pointer items-center justify-between gap-2 text-start disabled:cursor-not-allowed disabled:opacity-60',
           )}
         >

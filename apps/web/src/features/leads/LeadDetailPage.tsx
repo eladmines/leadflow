@@ -15,7 +15,17 @@ import {
   formatAgorot,
 } from '@simplecatch/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, Mail, MessageCircle, MessageSquareText, Phone, Trash2, X } from 'lucide-react';
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  Mail,
+  MessageCircle,
+  MessageSquareText,
+  Phone,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -48,7 +58,8 @@ import {
   usePipeline,
   useUpdateLead,
 } from './api';
-import { WhereFrom } from './Attribution';
+import { sourceName, WhereFrom } from './Attribution';
+import { stageColor } from './stageColors';
 import { WHATSAPP_REPLY_ID, WhatsAppThread } from '../whatsapp/WhatsAppThread';
 import { useWhatsAppThread } from '../whatsapp/api';
 import { LeadSourceIcon } from './SourceIcon';
@@ -223,17 +234,25 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
   );
 }
 
-/** The stage, in the header; saves at once (a move that needs a quote offers to write one). */
+/** The stage badge at the end of the header's first line; saves at once (a move that needs a quote offers to write one). */
 function StageSelect({ lead }: { lead: Lead }) {
   const business = useCurrentBusiness();
   const stages = usePipeline(business.id);
   const update = useUpdateLead(business.id);
   const [needsQuote, setNeedsQuote] = useState(false);
+  const tone = stageColor(lead.stage, stages.data).tag;
   return (
-    <div className="flex min-w-0 flex-col gap-1">
+    <div className="flex min-w-0 shrink-0 flex-col items-end gap-1">
+      {/* D-217: a coloured badge with its menu (the name is written too, never colour only). */}
       <SelectMenu
         id="lead-stage"
         label={tr('שלב')}
+        labelHidden
+        searchable={false}
+        buttonClassName={cn(
+          'rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
+          tone,
+        )}
         value={lead.stage.id}
         onChange={(v) =>
           update.mutate(
@@ -420,23 +439,28 @@ function WhatsAppAction({
   inApp,
   onOpen,
   className,
+  iconOnly = false,
 }: {
   phone: string | null;
   inApp: boolean;
   onOpen: () => void;
   className: string;
+  /** A round icon button (the header, D-217); the name and tooltip still say what it does. */
+  iconOnly?: boolean;
 }) {
   const content = (
     <>
-      <MessageCircle aria-hidden className="h-4 w-4 shrink-0" />
-      WhatsApp
+      <MessageCircle aria-hidden className={iconOnly ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
+      {!iconOnly && 'WhatsApp'}
     </>
   );
   if (inApp) {
+    const name = tr('WhatsApp: מעבר לשיחה בעמוד');
     return (
       <button
         type="button"
-        aria-label={tr('WhatsApp: מעבר לשיחה בעמוד')}
+        aria-label={name}
+        title={iconOnly ? name : undefined}
         onClick={onOpen}
         className={className}
       >
@@ -451,10 +475,120 @@ function WhatsAppAction({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={tr('WhatsApp: פתיחה בחלון חדש')}
+      title={iconOnly ? tr('WhatsApp: פתיחה בחלון חדש') : undefined}
       className={className}
     >
       {content}
     </a>
+  );
+}
+
+/** Avatar colours, picked by the name's first letter (the same name always gets the same one). */
+const AVATAR_COLOURS = [
+  'bg-sky-100 text-sky-800',
+  'bg-violet-100 text-violet-800',
+  'bg-amber-100 text-amber-900',
+  'bg-emerald-100 text-emerald-800',
+  'bg-rose-100 text-rose-800',
+  'bg-indigo-100 text-indigo-800',
+  'bg-teal-100 text-teal-800',
+];
+const avatarColour = (name: string) =>
+  AVATAR_COLOURS[(name.trim().codePointAt(0) ?? 0) % AVATAR_COLOURS.length]!;
+
+const roundButton = (primary: boolean) =>
+  cn(
+    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
+    primary
+      ? 'bg-brand-600 text-white hover:bg-brand-700'
+      : 'bg-surface text-ink ring-1 ring-inset ring-surface-border hover:bg-surface-muted',
+  );
+
+/**
+ * "הגיע מ… · לפני … · באחריות …" (D-217): where the lead came from (the ad or campaign when known),
+ * when (the full date on hover), and who handles it.
+ */
+function MetaLine({ lead }: { lead: Lead }) {
+  const a = lead.attribution;
+  const named = a?.campaign ?? a?.adHeadline ?? null;
+  const source = a
+    ? named
+      ? tr('{0} ({1})', sourceName(a.source), named)
+      : sourceName(a.source)
+    : tr(leadSourceLabels[lead.source]);
+  return (
+    <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-ink-muted">
+      <LeadSourceIcon source={lead.source} className="h-4 w-4" />
+      <span>{tr('הגיע מ־{0}', source)}</span>
+      <span aria-hidden>·</span>
+      <time dateTime={lead.createdAt} title={formatDateTime(lead.createdAt)}>
+        {timeAgo(lead.createdAt)}
+      </time>
+      <span aria-hidden>·</span>
+      <span>{lead.owner ? tr('באחריות {0}', lead.owner.name) : tr('ללא אחראי')}</span>
+    </p>
+  );
+}
+
+/**
+ * Phone and email as text with a copy button (D-217; properties panel / "עוד פרטים"). The copy is
+ * announced ("הועתק").
+ */
+function ContactDetails({ lead }: { lead: Lead }) {
+  const rows = [
+    lead.contact.phone && {
+      key: 'phone',
+      label: tr('טלפון'),
+      value: formatIsraeliPhone(lead.contact.phone),
+      raw: lead.contact.phone,
+    },
+    lead.contact.email && {
+      key: 'email',
+      label: tr('אימייל'),
+      value: lead.contact.email,
+      raw: lead.contact.email,
+    },
+  ].filter(Boolean) as { key: string; label: string; value: string; raw: string }[];
+  const [copied, setCopied] = useState<string | null>(null);
+  if (rows.length === 0) return null;
+  const copy = async (key: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      window.setTimeout(() => setCopied((c) => (c === key ? null : c)), 2000);
+    } catch {
+      setCopied(null);
+    }
+  };
+  return (
+    <dl className="flex flex-col gap-3">
+      {rows.map((r) => (
+        <div key={r.key} className="flex flex-col gap-1">
+          <dt className="text-sm font-medium text-ink">{r.label}</dt>
+          <dd className="flex min-w-0 items-center gap-2 text-sm text-ink">
+            <bdi dir="ltr" className="min-w-0 truncate" title={r.value}>
+              {r.value}
+            </bdi>
+            <button
+              type="button"
+              onClick={() => void copy(r.key, r.key === 'phone' ? r.value : r.raw)}
+              aria-label={tr('העתקת {0}', r.label)}
+              title={tr('העתקה')}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-muted hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+            >
+              {copied === r.key ? (
+                <Check aria-hidden className="h-4 w-4 text-success-600" />
+              ) : (
+                <Copy aria-hidden className="h-4 w-4" />
+              )}
+            </button>
+            <span role="status" className="text-xs text-success-600">
+              {copied === r.key ? tr('הועתק') : ''}
+            </span>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -586,60 +720,55 @@ function LeadPage({
   );
 
   const header = (
-    <section className="flex flex-col gap-4 rounded-2xl border border-surface-border bg-surface p-5 shadow-card">
-      <div className="flex items-start gap-3">
+    <section className="flex flex-col gap-2 rounded-2xl border border-surface-border bg-surface p-5 shadow-card">
+      <div className="flex items-center gap-3">
         <span
           aria-hidden
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-100 text-lg font-semibold text-accent-700"
+          className={cn(
+            'flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-semibold',
+            avatarColour(lead.contact.name),
+          )}
         >
           {lead.contact.name.trim().charAt(0)}
         </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h1 className="truncate text-2xl font-semibold text-ink" dir="auto">
-            {lead.contact.name}
-          </h1>
-          <p className="flex flex-wrap items-center gap-x-2 text-sm text-ink-muted">
-            <span className="inline-flex items-center gap-1.5">
-              <LeadSourceIcon source={lead.source} className="h-4 w-4" />
-              {tr(leadSourceLabels[lead.source])}
-            </span>
-            <span aria-hidden>·</span>
-            <span>{timeAgo(lead.createdAt)}</span>
-          </p>
-        </div>
+        <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold text-ink" dir="auto">
+          {lead.contact.name}
+        </h1>
+        {/* On phones the bottom bar has these. Primary: WhatsApp when connected, else the call. */}
+        {desktop && (
+          <div className="flex shrink-0 items-center gap-2">
+            {phone && (
+              <a
+                href={`tel:${phone}`}
+                aria-label={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
+                title={tr('התקשרות ל־{0}', formatIsraeliPhone(phone))}
+                className={roundButton(!whatsappInApp)}
+              >
+                <Phone aria-hidden className="h-5 w-5" />
+              </a>
+            )}
+            <WhatsAppAction
+              phone={phone}
+              inApp={whatsappInApp}
+              onOpen={openConversation}
+              iconOnly
+              className={roundButton(whatsappInApp)}
+            />
+            {lead.contact.email && (
+              <a
+                href={`mailto:${lead.contact.email}`}
+                aria-label={tr('מייל ל־{0}', lead.contact.email)}
+                title={tr('מייל ל־{0}', lead.contact.email)}
+                className={roundButton(false)}
+              >
+                <Mail aria-hidden className="h-5 w-5" />
+              </a>
+            )}
+          </div>
+        )}
+        <StageSelect lead={lead} />
       </div>
-      {/* On wide screens the stage lives in the properties panel. */}
-      {!desktop && <StageSelect lead={lead} />}
-      {(phone || lead.contact.email || whatsappInApp) && (
-        <div className="flex flex-wrap gap-2">
-          {phone && (
-            <a
-              href={`tel:${phone}`}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              <Phone aria-hidden className="h-4 w-4" />
-              <bdi dir="ltr">{formatIsraeliPhone(phone)}</bdi>
-            </a>
-          )}
-          <WhatsAppAction
-            phone={phone}
-            inApp={whatsappInApp}
-            onOpen={openConversation}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-success-50 px-4 py-2 text-sm font-medium text-success-600 ring-1 ring-success-600/30 hover:bg-success-600/10"
-          />
-          {lead.contact.email && (
-            <a
-              href={`mailto:${lead.contact.email}`}
-              className="inline-flex min-w-0 items-center gap-1.5 rounded-xl bg-surface px-4 py-2 text-sm text-ink ring-1 ring-surface-border hover:bg-surface-muted"
-            >
-              <Mail aria-hidden className="h-4 w-4 shrink-0" />
-              <bdi dir="ltr" className="truncate">
-                {lead.contact.email}
-              </bdi>
-            </a>
-          )}
-        </div>
-      )}
+      <MetaLine lead={lead} />
     </section>
   );
 
@@ -734,7 +863,7 @@ function LeadPage({
           <aside aria-label={tr('מאפייני הליד')} className="flex min-w-0 flex-col gap-3">
             <Card className="flex flex-col gap-4">
               <h2 className="text-base font-semibold text-ink">{tr('מאפיינים')}</h2>
-              <StageSelect lead={lead} />
+              <ContactDetails lead={lead} />
               <OwnerField lead={lead} />
               <Property label={tr('מקור')}>
                 <span className="inline-flex items-center gap-1.5">
@@ -798,6 +927,7 @@ function LeadPage({
           <p className="text-sm text-ink-muted">
             {tr('נוצר')} {formatDateTime(lead.createdAt)}
           </p>
+          <ContactDetails lead={lead} />
           <OwnerField lead={lead} />
           <TagsField lead={lead} />
           <ArchivedFieldValues lead={lead} />

@@ -148,9 +148,12 @@ describe('lead page layout (D-211)', () => {
     mockApi({ [meKey]: me(testUser), [`GET ${lp.detail(id, leadId)}`]: () => withActivities() });
     renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
-    // Header: stage, call and WhatsApp.
+    // Header: the stage badge and the meta sentence (D-217); call and WhatsApp in the phone bar.
     await waitFor(() => expect(screen.getByLabelText('שלב')).toHaveTextContent('חדש'));
-    expect(screen.getByRole('link', { name: /052-111-2233|052-1112233/ })).toHaveAttribute(
+    expect(screen.getByText('הגיע מ־הוזן ידנית').closest('p')).toHaveTextContent(
+      /הגיע מ־הוזן ידנית.*עכשיו.*ללא אחראי/,
+    );
+    expect(screen.getByRole('link', { name: 'התקשרות' })).toHaveAttribute(
       'href',
       'tel:+972521112233',
     );
@@ -432,8 +435,8 @@ describe('the WhatsApp buttons', () => {
     const { user, location } = renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     const buttons = await screen.findAllByRole('button', { name: 'WhatsApp: מעבר לשיחה בעמוד' });
-    // Header and phone bar; no wa.me links.
-    expect(buttons).toHaveLength(2);
+    // The phone bar (the header has no icon buttons on phones, D-217); no wa.me links.
+    expect(buttons).toHaveLength(1);
     expect(screen.queryByRole('link', { name: /^WhatsApp/ })).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'הערות' })).toHaveAttribute('aria-selected', 'true');
 
@@ -481,7 +484,7 @@ describe('the WhatsApp buttons', () => {
     renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     await waitFor(() =>
-      expect(screen.getAllByRole('link', { name: 'WhatsApp: פתיחה בחלון חדש' })).toHaveLength(2),
+      expect(screen.getAllByRole('link', { name: 'WhatsApp: פתיחה בחלון חדש' })).toHaveLength(1),
     );
     for (const link of screen.getAllByRole('link', { name: 'WhatsApp: פתיחה בחלון חדש' })) {
       expect(link).toHaveAttribute('href', 'https://wa.me/972521112233');
@@ -533,9 +536,10 @@ describe('wide screens: story and properties panel (D-212)', () => {
     renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     const panel = screen.getByRole('complementary', { name: 'מאפייני הליד' });
-    // The stage is only in the panel.
+    // The stage is only in the header now (D-217); phone and email are in the panel.
     expect(screen.getAllByLabelText('שלב')).toHaveLength(1);
-    expect(within(panel).getByLabelText('שלב')).toBeInTheDocument();
+    expect(within(panel).queryByLabelText('שלב')).not.toBeInTheDocument();
+    expect(within(panel).getByText('טלפון').nextElementSibling).toHaveTextContent('052-1112233');
     expect(within(panel).getByLabelText('אחראי')).toBeInTheDocument();
     expect(within(panel).getByText('מקור').nextElementSibling).toHaveTextContent('הוזן ידנית');
     expect(within(panel).getByText('ערך לפי הצעות מחיר').nextElementSibling).toHaveTextContent(
@@ -639,5 +643,89 @@ describe('related leads (D-212)', () => {
     renderApp(page);
     await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
     expect(screen.queryByRole('button', { name: /^לידים קשורים/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('the header (D-217)', () => {
+  const threadPath = apiPaths.whatsapp.thread(id, leadId);
+
+  it.each([
+    ['WhatsApp not connected: the call is primary', false],
+    ['WhatsApp connected: WhatsApp is primary', true],
+  ])('wide screens, %s', async (_, connected) => {
+    asDesktop();
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () =>
+        detail(
+          lead({
+            contact: {
+              id: '5d000000-0000-4000-8000-000000000001',
+              name: 'רון לוי',
+              phone: '+972521112233',
+              email: 'ron@example.com',
+            },
+            owner: { id: testUser.id, name: 'דנה כהן' },
+            attribution: {
+              source: 'google_ads',
+              campaign: 'חורף',
+              seenAt: new Date().toISOString(),
+            },
+          }),
+        ),
+      [`GET ${threadPath}`]: () =>
+        json(200, { connected, messages: [], replyUntil: null, botPaused: false }),
+    });
+    renderApp(page);
+    const heading = await screen.findByRole('heading', { name: 'רון לוי', level: 1 });
+    const header = heading.closest('section')!;
+    const call = within(header).getByRole('link', { name: 'התקשרות ל־052-1112233' });
+    expect(call).toHaveAttribute('href', 'tel:+972521112233');
+    expect(call).toHaveAttribute('title', 'התקשרות ל־052-1112233');
+    expect(within(header).getByRole('link', { name: 'מייל ל־ron@example.com' })).toHaveAttribute(
+      'href',
+      'mailto:ron@example.com',
+    );
+    const wa = await within(header).findByRole(connected ? 'button' : 'link', {
+      name: connected ? 'WhatsApp: מעבר לשיחה בעמוד' : 'WhatsApp: פתיחה בחלון חדש',
+    });
+    // Filled = primary; the others are outlined.
+    expect(wa.className.includes('bg-brand-600')).toBe(connected);
+    expect(call.className.includes('bg-brand-600')).toBe(!connected);
+    // The stage badge at the end of the line, with its menu.
+    expect(within(header).getByLabelText('שלב')).toHaveAttribute('role', 'combobox');
+    // The meta sentence names the campaign and the owner; the full date is on the time.
+    const meta = within(header)
+      .getByText(/^הגיע מ־/)
+      .closest('p')!;
+    expect(meta).toHaveTextContent(/הגיע מ־Google Ads \(חורף\).*באחריות דנה כהן/);
+    expect(within(meta).getByText('עכשיו')).toHaveAttribute('title');
+  });
+
+  it('phone and email are copied from "עוד פרטים", and the copy is announced', async () => {
+    // user-event puts its own clipboard on `navigator` (readable back below).
+    mockApi({
+      [meKey]: me(testUser),
+      [`GET ${lp.detail(id, leadId)}`]: () =>
+        detail(
+          lead({
+            contact: {
+              id: '5d000000-0000-4000-8000-000000000001',
+              name: 'רון לוי',
+              phone: '+972521112233',
+              email: 'ron@example.com',
+            },
+          }),
+        ),
+    });
+    const { user } = renderApp(page);
+    await user.click(await screen.findByRole('button', { name: /^עוד פרטים/ }));
+    const section = screen.getByRole('region', { name: /^עוד פרטים/ });
+    expect(within(section).getByText('ron@example.com')).toHaveAttribute('dir', 'ltr');
+    await user.click(within(section).getByRole('button', { name: 'העתקת אימייל' }));
+    await expect(navigator.clipboard.readText()).resolves.toBe('ron@example.com');
+    expect(await within(section).findByText('הועתק')).toBeInTheDocument();
+    await user.click(within(section).getByRole('button', { name: 'העתקת טלפון' }));
+    await expect(navigator.clipboard.readText()).resolves.toBe('052-1112233');
   });
 });
